@@ -5,6 +5,7 @@ import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { ReactComponent as DownloadIcon } from '../../../assets/ic_download.svg';
 
 import SubJobTable from '../SubJobTable/SubJobTable';
@@ -325,7 +326,8 @@ const JobMonitoringTable = () => {
             filterOptions: [
                 { value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING },
                 { value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED },
-                { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED }
+                { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED },
+                { value: JOB_MONITORING_STATUS.WARNING, label: GENERAL.JM_WARNING }
             ],
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -347,6 +349,7 @@ const JobMonitoringTable = () => {
                                 />
                             )}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
+                            {cellData === JOB_MONITORING_STATUS.WARNING && <Warning />}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>
                     </div>

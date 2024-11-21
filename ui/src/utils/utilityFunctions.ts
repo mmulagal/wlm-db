@@ -1013,6 +1013,8 @@ export const jobMonitoringStatusMapping = (val: string) => {
         statusValue = GENERAL.JM_FAILED;
     } else if (val === JOB_MONITORING_STATUS.IN_PROGRESS) {
         statusValue = GENERAL.JM_RUNNING;
+    } else if (val === JOB_MONITORING_STATUS.WARNING) {
+        statusValue = GENERAL.JM_WARNING;
     }
     return statusValue;
 };
