@@ -17,8 +17,13 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { Subnets } from '../../../../utils/types/mssqlTypes';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { WIZARD_TYPE } from '../../../../utils/consts';
 
-const AvailabilityZone = () => {
+type AvailabilityZoneProps = {
+    wizardType?: string;
+};
+
+const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
     const dispatch = useDispatch();
 
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
@@ -271,7 +276,11 @@ const AvailabilityZone = () => {
                         </Typography>
 
                         <div className={styles.firstContainer}>
-                            <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_1}</Typography>
+                            <Typography variant="Regular_14">
+                                {wizardType === WIZARD_TYPE.MSSQL
+                                    ? GENERAL.CLUSTER_CONFIG_NODE_1
+                                    : GENERAL.CLUSTER_CONFIG_PGSQL}
+                            </Typography>
                             <SelectField
                                 label={GENERAL.AZ_Zone}
                                 ref={az1Ref}

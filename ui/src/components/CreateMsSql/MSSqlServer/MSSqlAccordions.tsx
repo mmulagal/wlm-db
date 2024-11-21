@@ -34,6 +34,7 @@ import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
 import SqlServerCollation from '../ApplicationSettings/Collation/SqlServerCollation';
 import SnapshotPolicy from '../InfrastructureSettings/SnapshotPolicy/SnapshotPolicy';
+import { WIZARD_TYPE } from '../../../utils/consts';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -122,7 +123,7 @@ const MSSqlAccordions = () => {
                 {/* <MssqlApis /> */}
                 <AwsAccount />
                 <RegionVpc />
-                <AvailabilityZone />
+                <AvailabilityZone wizardType={WIZARD_TYPE.MSSQL} />
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SecurityGroup />}
 
                 <Typography

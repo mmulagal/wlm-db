@@ -82,7 +82,7 @@ function PostgressLayout() {
                     </div>
                     <AwsAccount />
                     <RegionVpc />
-                    <AvailabilityZone />
+                    <AvailabilityZone wizardType={WIZARD_TYPE.PGSQL} />
                     <SecurityGroup />
 
                     <Typography
