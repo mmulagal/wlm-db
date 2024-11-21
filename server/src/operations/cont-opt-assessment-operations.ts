@@ -767,6 +767,27 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
         : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
         ? JOBSTATUS.WARNING
         : JOBSTATUS.IN_PROGRESS;
+
+    // Create dummy compute right sizing assessment jobs for each managed resource
+    if (masterJobStatus !== JOBSTATUS.IN_PROGRESS) {
+        const allManagedResources = allSubJobs
+            .map(item => item.resource_name)
+            .filter((value, index, self) => self.indexOf(value) === index);
+        allManagedResources.forEach(async resource => {
+            const resourceName = resource.split('\\')[0]!;
+            const jobString = `Assessing SQL Server host ${resourceName} compute right sizing`;
+            await registerJob(accountId, '', '', {
+                name: jobString,
+                description: jobString,
+                resourceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId: masterAssessmentJobId
+            });
+        });
+    }
     await updateJobDetails(accountId, masterAssessmentJobId, {
         status: masterJobStatus,
         endTime: Date.now()
@@ -949,22 +970,6 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     startTime: Date.now(),
                     status: JOBSTATUS.IN_PROGRESS,
                     type: JOBTYPE.ASSESSMENT
-                });
-
-                const allManagedResources = managedInstances.map(instance => instance.resource.resource_name);
-
-                allManagedResources.forEach(async resource => {
-                    const jobString = `Assessing SQL Server host ${resource} compute right sizing`;
-                    await registerJob(accountId, '', '', {
-                        name: jobString,
-                        description: jobString,
-                        resourceName: resource!,
-                        startTime: Date.now(),
-                        endTime: Date.now(),
-                        status: JOBSTATUS.COMPLETED,
-                        type: JOBTYPE.ASSESSMENT,
-                        parentJobId
-                    });
                 });
 
                 try {
