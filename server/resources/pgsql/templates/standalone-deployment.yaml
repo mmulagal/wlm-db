@@ -191,8 +191,8 @@ Resources:
             check_status "Failed to create directories"
 
             # Add NFS entries to /etc/fstab
-            echo "$fsxNFSIP:$fsxdatamountpoint /${fsxdatavolumename} nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
-            echo "$fsxNFSIP:$fsxlogmountpoint /${fsxlogvolumename} nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
+            echo "$fsxNFSIP:$fsxdatamountpoint /$fsxdatavolumename nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
+            echo "$fsxNFSIP:$fsxlogmountpoint /$fsxlogvolumename nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
             
             # Mount NFS volumes
             echo "sudo mount -t nfs $fsxNFSIP:$fsxdatamountpoint /$fsxdatavolumename"
