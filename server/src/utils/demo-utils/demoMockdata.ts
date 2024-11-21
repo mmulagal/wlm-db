@@ -1596,7 +1596,7 @@ function assessmentJobData(
         account_id: accountId,
         credentials_id: credentialsId,
         region,
-        name: `Assess ${instanceNames.length} managed SQL Server instances in your account (<Number of Instances>) for best practice misalignments`,
+        name: `Assess online SQL Server instances from ${instanceNames.length} managed instances in your account ${accountId} for best practice misalignments.`,
         status: JOBSTATUS.COMPLETED,
         resource_name: accountId,
         type: JOBTYPE.ASSESSMENT,

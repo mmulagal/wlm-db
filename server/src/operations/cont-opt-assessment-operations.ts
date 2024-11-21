@@ -20,7 +20,7 @@ import {
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
-import { ACCOUNT_ID, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
 import { listAllManagedInstances, listResources } from '../lib/database/db';
@@ -46,7 +46,6 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listJobs } from '../lib/database/job';
-import { setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -821,8 +820,6 @@ async function triggerAssessment(
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
 
-    setAsyncLocalStorageResource(ACCOUNT_ID, managedInstance.account_id);
-
     let jobStatus: string = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     const {
@@ -845,6 +842,26 @@ async function triggerAssessment(
         sqlServerDeploymentType: RESOURCESTYPE.MSSQL
     });
 
+    let activeNodeInstanceId;
+    let newDatabaseInstanceDetails;
+    let cloudProviderAccountId;
+    try {
+        const instanceDetails = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+
+        activeNodeInstanceId = instanceDetails.activeNodeInstanceId;
+        newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
+        cloudProviderAccountId = instanceDetails.cloudProviderAccountId;
+    } catch (error: any) {
+        logger.error(`Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`);
+        return;
+    }
+
     const jobName = `Assessing SQL Server instance ${resourceWithInstanceName}`;
     const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
@@ -857,28 +874,20 @@ async function triggerAssessment(
         parentJobId
     });
     try {
-        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
-        );
-
         const {
             database_instance_name: savedInstanceName,
             fsxn_ids: fileSystemId,
             sqlAuthEnabled
-        } = newDatabaseInstanceDetails;
+        } = newDatabaseInstanceDetails || {};
 
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
-            name: savedInstanceName,
+            name: savedInstanceName!,
             type: RESOURCESTYPE.MSSQL,
             region,
             sqlAuthEnabled: sqlAuthEnabled || false,
-            activeNodeInstanceid: activeNodeInstanceId,
-            fsxFileSystem: fileSystemId,
+            activeNodeInstanceid: activeNodeInstanceId!,
+            fsxFileSystem: fileSystemId!,
             cloudProviderAccountId: cloudProviderAccountId || '',
             resourceName: resource.resource_name || ''
         };
@@ -931,7 +940,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 const errorMessage = `No managed instances found for account ${accountId}.`;
                 logger.error(errorMessage);
             } else {
-                const jobDescription = `Assess ${managedInstances.length} managed SQL Server instances in your account ${accountId} for best practice misalignments.`;
+                const jobDescription = `Assess online SQL Server instances from ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
                     description: jobDescription,
