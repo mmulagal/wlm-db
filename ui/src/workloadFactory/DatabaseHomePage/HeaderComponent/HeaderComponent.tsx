@@ -649,7 +649,26 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             label: 'PostgreSQL Server',
                                                             onClick: () => {
                                                                 dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
-                                                                navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                                if (isWorkloadFactory) {
+                                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                                    postBlueXPMessage({
+                                                                        type: BlueXPListeners.navigate,
+                                                                        payload: {
+                                                                            pathname: './postgreSQL-deploy-wizard',
+                                                                            replace: true
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                                    postBlueXPMessage({
+                                                                        type: BlueXPListeners.navigate,
+                                                                        payload: {
+                                                                            pathname:
+                                                                                '../../fsxdb/postgreSQL-deploy-wizard',
+                                                                            replace: true
+                                                                        }
+                                                                    });
+                                                                }
                                                             }
                                                         }
                                                     ]
