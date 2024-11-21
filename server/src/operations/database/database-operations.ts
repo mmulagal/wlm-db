@@ -29,10 +29,9 @@ const logger = getLogger();
 async function getSavedConfig(accountId: string, id: string): Promise<FormConfigObjectResponseType> {
     logger.info('Load individual saved config ', accountId);
     try {
-        const [{ user, creation_time: creationTime, data, name, modified_time: modifiedTime }] = await listConfig(
-            accountId,
-            id
-        );
+        const [
+            { user, creation_time: creationTime, data, name, modified_time: modifiedTime, database_type: databaseType }
+        ] = await listConfig(accountId, id);
         return {
             accountId,
             id,
@@ -40,7 +39,8 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
             creationTime: moment(creationTime).unix() * 1000,
             data,
             name,
-            ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 })
+            ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 }),
+            databaseType
         };
     } catch (error) {
         logger.error(`Error occurred while fetching saved config ${id}. Error: ${error}`);
@@ -66,14 +66,23 @@ async function getAllSavedConfig(accountId: string): Promise<FormConfigListRespo
 
     const data = await listConfig(accountId);
     return data.map(
-        ({ id, user, creation_time: creationTime, data: configData, name, modified_time: modifiedTime }) => ({
+        ({
+            id,
+            user,
+            creation_time: creationTime,
+            data: configData,
+            name,
+            modified_time: modifiedTime,
+            database_type: databaseType
+        }) => ({
             accountId,
             id,
             user,
             name,
             creationTime: moment(creationTime).unix() * 1000,
             data: configData as object,
-            ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 })
+            ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 }),
+            databaseType
         })
     );
 }
@@ -82,7 +91,8 @@ async function saveConfig(
     accountId: string,
     user: string,
     name: string,
-    data: object
+    data: object,
+    databaseType?: string
 ): Promise<FormConfigCreateResponseType> {
     logger.info('Save config ', accountId);
     logger.debug('Save config data', data);
@@ -92,7 +102,8 @@ async function saveConfig(
         user,
         name,
         creationTime: Date.now(),
-        data
+        data,
+        databaseType
     });
     return {
         id,
