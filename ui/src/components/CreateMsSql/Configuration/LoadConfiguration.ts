@@ -12,10 +12,11 @@ import {
     setSavedConfig
 } from '../../../store/mssql/msSqlActionSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
-import { API_NAME, FROM_DIALOG } from '../../../utils/consts';
+import { API_NAME, FROM_DIALOG, WIZARD_TYPE } from '../../../utils/consts';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import { setIsWizardTouched, setLoadConfigClicked } from '../../../store/chatbot/chatbotSlice';
 import { removePasswordInConfig } from '../../../utils/utilityFunctions';
+import { setPostgreForm } from '../../../store/postgre/postgreFormSlice';
 
 /*
 This function is used to load config data on click on config load. 
@@ -24,7 +25,8 @@ export const LoadConfiguration = (
     dispatch: Dispatch,
     loadConfigDataExe: any,
     closeDialog: any,
-    selectedConfig?: string | undefined
+    selectedConfig?: string | undefined,
+    databaseType: string = WIZARD_TYPE.MSSQL
 ) => {
     if (!selectedConfig) {
         const state = store.getState();
@@ -36,12 +38,13 @@ export const LoadConfiguration = (
         .then((data: any) => {
             if (data?.data?.data) {
                 dispatch(setSavedConfig(data?.data?.data));
-                const apiList = apiCallsList(dispatch, data?.data?.data);
+                const apiList = apiCallsList(dispatch, data?.data?.data, databaseType);
                 if (apiList) {
                     dispatch(setRefetchApiCountExpected(apiList));
                     dispatch(setRefetchApiCountLoading(true));
                 }
                 dispatch(setMssqlForm(data?.data?.data));
+                dispatch(setPostgreForm(data?.data?.data));
                 dispatch(setIsWizardTouched(true));
                 dispatch(setLoadConfigClicked(true));
             } else {
@@ -124,7 +127,7 @@ export const resetRefetchApiCheck = (dispatch: Dispatch) => {
 On click of load config this function will check how many get APIs call will run on change on any dependent fields.
 Get APIs calls are required on change fields as to show latest data in accordions dropdown.
 */
-export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
+export const apiCallsList = (dispatch: Dispatch, loadData: any, databaseType: string) => {
     const state = store.getState();
     let apis = [];
     const credId = loadData?.awsAccount?.selectedCredential?.data?.credentialsId;
@@ -148,12 +151,16 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     }
     if (credId && regionId && (!isSameRegion || !isSameCred)) {
         apis.push(API_NAME.VPC);
-        apis.push(API_NAME.ADS);
+        if (databaseType === WIZARD_TYPE.MSSQL) {
+            apis.push(API_NAME.ADS);
+        }
         apis.push(API_NAME.SNS);
         apis.push(API_NAME.KMS);
         apis.push(API_NAME.KEYPAIR);
         apis.push(API_NAME.INSTANCE);
-        apis.push(API_NAME.CUSTOM_AMI);
+        if (databaseType === WIZARD_TYPE.MSSQL) {
+            apis.push(API_NAME.CUSTOM_AMI);
+        }
     }
     if (credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)) {
         apis.push(API_NAME.FSXN);
@@ -167,9 +174,11 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
         dbVersion &&
         (!isSameRegion || !isSameCred || !isSameOs || !isSameDbVersion || !isSameDbEdition)
     ) {
-        apis.push(API_NAME.AMI);
+        if (databaseType === WIZARD_TYPE.MSSQL) {
+            apis.push(API_NAME.AMI);
+        }
     }
-    if (dbVersion && !isSameDbVersion) {
+    if (dbVersion && !isSameDbVersion && databaseType === WIZARD_TYPE.MSSQL) {
         apis.push(API_NAME.COLLATION);
     }
     return apis;
@@ -183,12 +192,19 @@ export const SaveConfiguration = (
     saveConfigData: any,
     configListRefetch: any,
     closeDialog: any,
-    dialogFrom: string
+    dialogFrom: string,
+    databaseType: string = WIZARD_TYPE.MSSQL
 ) => {
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
     const existingSavedConfig = state.msSqlAction.savedConfig;
-    const payload = { name: saveConfigName, data: removePasswordInConfig(state.mssqlForm) };
+    const formData =
+        databaseType === WIZARD_TYPE.MSSQL ? state.mssqlForm : { ...state.mssqlForm, ...state.postgreForm };
+    const payload = {
+        name: saveConfigName,
+        data: removePasswordInConfig(formData),
+        databaseType
+    };
     const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
     if (isDuplicate) {
         dispatch(
