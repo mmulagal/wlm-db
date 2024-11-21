@@ -28,12 +28,15 @@ const postgreFormSlice = createSlice({
         setPostgreServerName: (state, action: PayloadAction<string>) => {
             state.postgreServerName = action.payload;
         },
-        // databaseCredentials
         setPostgreDBCredentialsName(state, action: PayloadAction<any>) {
             state.dbCredentials.name = action.payload;
         },
         setPostgreDBCredentialsPassword(state, action: PayloadAction<any>) {
             state.dbCredentials.password = action.payload;
+        },
+        //Update full form
+        setPostgreForm(state, action: PayloadAction<any>) {
+            return { ...state, ...action.payload };
         }
     }
 });
@@ -45,7 +48,8 @@ export const {
     setPostgreVersion,
     setPostgreServerName,
     setPostgreDBCredentialsName,
-    setPostgreDBCredentialsPassword
+    setPostgreDBCredentialsPassword,
+    setPostgreForm
 } = postgreFormSlice.actions;
 
 export default postgreFormSlice;

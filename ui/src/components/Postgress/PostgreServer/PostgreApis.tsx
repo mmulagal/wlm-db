@@ -1,5 +1,6 @@
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
+    useGetConfigListQuery,
     useGetCredentialsQuery,
     useGetFsxnListQuery,
     useGetInstanceTypesQuery,
@@ -20,6 +21,7 @@ import {
     addKmsKeysList,
     addPolicies,
     addRegions,
+    addSavedConfigList,
     addSGList,
     addSnsList,
     addVpcList,
@@ -31,10 +33,7 @@ import { API_NAME, AWS_ASSUME_ROLE, VPC_API_FIELDS } from '../../../utils/consts
 import { formatKmsData } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
-import {
-    selectDefaultEncryption,
-    selectDefaultInstanceType,
-} from '../../CreateMsSql/MSSqlServer/MSSqlUtils';
+import { selectDefaultEncryption, selectDefaultInstanceType } from '../../CreateMsSql/MSSqlServer/MSSqlUtils';
 
 const PostgreApis = () => {
     const dispatch = useAppDispatch();
@@ -178,6 +177,9 @@ const PostgreApis = () => {
             skip: vpcDependentApiSkip
         }
     );
+
+    // API call to get saved configuration list
+    const { data: configData, isFetching: configLoading, isError: configError } = useGetConfigListQuery({});
 
     // To add policies information in MssqlEntities
     useEffect(() => {
@@ -383,6 +385,17 @@ const PostgreApis = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fsxnData, fsxnLoading, fsxnError, selectedVpcData]);
+
+    // To add saved configuration list
+    useEffect(() => {
+        if (configError) {
+            dispatch(addSavedConfigList({ undefined, configLoading, configError }));
+        } else {
+            dispatch(addSavedConfigList({ configData, configLoading, configError }));
+        }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [configData, configLoading, configError]);
 
     return;
 };

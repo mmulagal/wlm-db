@@ -11,7 +11,7 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
 import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
@@ -52,6 +52,24 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     }, [isAssessmentAvailable, loading]);
 
     const { setDialog, closeDialog } = useDialog();
+
+    const disableOptimizeButton = useMemo(() => {
+        if (cardData?.id === 'headroom') {
+            return (
+                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED
+            );
+        }
+        if (cardData?.id === 'compute-rightsizing') {
+            return (
+                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
+            );
+        }
+        return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
+    }, [cardData]);
+
     const setImage = (value: string) => {
         if (value === GETWELL_STATUS.OPTIMIZED) {
             return <Optimized />;
@@ -405,7 +423,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <DsButton
                             variant="secondary"
                             onClick={() => handleDialog()}
-                            isDisabled={loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED}
+                            isDisabled={loading || disableOptimizeButton}
                         >
                             Optimize
                         </DsButton>
