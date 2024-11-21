@@ -170,21 +170,17 @@ async function updateFsxVolumeSize(
     fsxVolumeSizeBytes: number
 ) {
     logger.info('Updating FSX volume', { credentialsId, region, fsxVolumeId });
-    try {
-        const client = await getFSxClient(credentialsId, region, accountId);
-        const response = await client.send(
-            new UpdateVolumeCommand({
-                VolumeId: fsxVolumeId,
-                OntapConfiguration: {
-                    SizeInMegabytes: fsxVolumeSizeBytes / 1024 / 1024,
-                    SizeInBytes: fsxVolumeSizeBytes // if only SizeInMegabytes is provided, SizeInBytes was not reflected in describe volumes response. Seems like a bug on AWS SDK.
-                }
-            })
-        );
-        logger.debug('FSX volume updated successfully:', response);
-    } catch (err) {
-        logger.error('Error updating FSX volume:', err);
-    }
+
+    const client = await getFSxClient(credentialsId, region, accountId);
+    const response = await client.send(
+        new UpdateVolumeCommand({
+            VolumeId: fsxVolumeId,
+            OntapConfiguration: {
+                SizeInBytes: fsxVolumeSizeBytes
+            }
+        })
+    );
+    logger.debug('FSX volume updated successfully:', response);
 }
 
 async function updateFsxCapacity(
