@@ -1,3 +1,4 @@
+import randomize from 'randomatic';
 import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
@@ -1483,6 +1484,8 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'autoscaling:DescribeAutoScalingGroups',
     'autoscaling:DescribeAutoScalingInstances'
 ];
+const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
+const DEMO_DEFAULT_REGION = 'us-east-1';
 
 export {
     WLMDB,
@@ -1796,5 +1799,7 @@ export {
     TF_VARS_CONFIG,
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     INITIALIZER,
-    MSSQL
+    MSSQL,
+    DEMO_AWS_ACCOUNT_ID,
+    DEMO_DEFAULT_REGION
 };

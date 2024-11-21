@@ -1,3 +1,4 @@
+import { Type } from '@sinclair/typebox';
 import { RouteTags } from '../../utils/consts';
 import { CredentialsIdParams } from '../types/generic.types';
 import {
@@ -43,4 +44,20 @@ const GetManagedResourcesSchema = {
     }
 };
 
-export { FileSystemsCredentialsStatusSchema, FileSystemCredentialsStatusSchema, GetManagedResourcesSchema };
+const CreateDemoDataSchema = {
+    tags: [RouteTags.RESOURCE],
+    params: CredentialsIdParams,
+    hide: process.env.NODE_ENV === 'production',
+    summary: 'Create Demo derfault resources',
+    description: 'Create Demo derfault resources for the given region',
+    response: {
+        200: Type.String()
+    }
+};
+
+export {
+    FileSystemsCredentialsStatusSchema,
+    FileSystemCredentialsStatusSchema,
+    GetManagedResourcesSchema,
+    CreateDemoDataSchema
+};

@@ -3,9 +3,11 @@ import { FastifyInstance } from 'fastify/types/instance';
 import {
     FileSystemsCredentialsStatusSchema,
     FileSystemCredentialsStatusSchema,
-    GetManagedResourcesSchema
+    GetManagedResourcesSchema,
+    CreateDemoDataSchema
 } from './schemas/resource-schema';
 import {
+    createDemoDataforRegion,
     getFileSystemCredentialsStatus,
     getFileSystemsCredentialsStatus,
     getManagedResources
@@ -54,6 +56,18 @@ export default function resourceRoutes(fastify: FastifyInstance) {
             } = request;
             const response = await getManagedResources(accountId, credentialsId, region, pageSize, nextToken);
             return reply.send(response);
+        }
+    );
+
+    server.post(
+        `${MSSQL_API_PATH_RESOURCES}/create-demo-resources`,
+        { schema: CreateDemoDataSchema },
+        async request => {
+            const {
+                params: { accountId, credentialsId, region }
+            } = request;
+            const response = await createDemoDataforRegion(accountId, credentialsId, region);
+            return response;
         }
     );
 }

@@ -2,9 +2,10 @@ import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
 import {
-    AWS_REGIONS,
     DatabaseTypes,
     DEFAULT_INSTANCE_NAME,
+    DEMO_AWS_ACCOUNT_ID,
+    DEMO_DEFAULT_REGION,
     RESOURCE_SOURCE,
     STORAGE_PROTOCOLS,
     USER_TOKEN
@@ -199,6 +200,7 @@ async function createDemoResourcesPerRegion(
             await createJobs(accountId, operatingSystemOptimizeJobMockData);
         });
     }
+    return 'Demo Data created';
 }
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {
@@ -208,14 +210,14 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         (item: { name: string }) => item.name === 'DemoDefaultCredential'
     );
     let credentialsId: string;
-    const awsAccountId = randomize('0', 12);
+
     if (matchingCredentials) {
         logger.info('DemoDefaultCredential credential exists', matchingCredentials.credentialsId);
         credentialsId = matchingCredentials.credentialsId;
     } else {
         logger.info('Creating DemoDefaultCredential credentials');
         const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
-        const arn = `arn:aws:iam::${awsAccountId}:role/demo_role`;
+        const arn = `arn:aws:iam::${DEMO_AWS_ACCOUNT_ID}:role/demo_role`;
         const externalId = randomUUID();
         const credentialsName = 'DemoDefaultCredential';
         // create a new  credentials and get the credentials ID
@@ -234,13 +236,10 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
-        createConfigurations(accountId, awsAccountId, credentialsId);
+        createConfigurations(accountId, DEMO_AWS_ACCOUNT_ID, credentialsId);
     }
 
-    const regionCodes = Array.from(AWS_REGIONS.keys());
-    for (const regionCode of regionCodes) {
-        createDemoResourcesPerRegion(accountId, credentialsId, regionCode, awsAccountId);
-    }
+    createDemoResourcesPerRegion(accountId, credentialsId, DEMO_DEFAULT_REGION, DEMO_AWS_ACCOUNT_ID);
 }
 
 async function returnInventorydata(instances?: string[]) {
@@ -317,4 +316,4 @@ async function createDatabaseInstances(
     return databaseInstanceId;
 }
 
-export { creadteDemoDBData, returnInventorydata, createConfigurations };
+export { creadteDemoDBData, returnInventorydata, createConfigurations, createDemoResourcesPerRegion };

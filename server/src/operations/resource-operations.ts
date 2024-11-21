@@ -4,6 +4,7 @@ import throat from 'throat';
 import {
     CURRENT_SCRIPT_VERSION,
     DBCREATE_RELATIVE_PATH,
+    DEMO_AWS_ACCOUNT_ID,
     HttpErrorCodes,
     RESOURCESTYPE,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
@@ -18,6 +19,7 @@ import { getArtifactsRegionBucketName, sqlResponseParsing } from '../utils/utils
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
 import { READ_SCRIPT_VERSION } from './workloads/mssql/ssm-script-utils';
+import { createDemoResourcesPerRegion } from '../utils/demo-utils/demoDefaultUtils';
 
 const logger = getLogger();
 
@@ -143,10 +145,17 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
     }
 }
 
+async function createDemoDataforRegion(accountId: string, credentialsId: string, region: string) {
+    logger.info('Creating demo data for region', accountId, credentialsId, region);
+    const response = await createDemoResourcesPerRegion(accountId, credentialsId, region, DEMO_AWS_ACCOUNT_ID);
+    return response;
+}
+
 export {
     getFileSystemsCredentialsStatus,
     getFileSystemCredentialsStatus,
     getManagedResources,
     checkScriptNeedsUpdate,
-    copyScriptsToHost
+    copyScriptsToHost,
+    createDemoDataforRegion
 };
