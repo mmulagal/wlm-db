@@ -19,7 +19,10 @@ const initialState: GetWellSliceInterface = {
     gwTimestamp: '',
     optimizingData: {},
     optimizingInstanceData: false,
-    selectedRecommendedInstance: null
+    selectedRecommendedInstance: null,
+    credIdFromJM: '',
+    regionFromJM: '',
+    landingFrom: ''
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -93,11 +96,23 @@ const getWellOptimizeSlice = createSlice({
         },
         setSelectedRecommendedInstance: (state, action: PayloadAction<any>) => {
             state.selectedRecommendedInstance = action.payload;
+        },
+        setCredIdFromJM: (state, action: PayloadAction<any>) => {
+            state.credIdFromJM = action.payload;
+        },
+        setRegionFromJM: (state, action: PayloadAction<any>) => {
+            state.regionFromJM = action.payload;
+        },
+        setLandingFrom: (state, action: PayloadAction<any>) => {
+            state.landingFrom = action.payload;
         }
     }
 });
 
 export const {
+    setLandingFrom,
+    setCredIdFromJM,
+    setRegionFromJM,
     setOptimizePageLoading,
     setDriftAssessmentData,
     setIsAssessmentAvailable,

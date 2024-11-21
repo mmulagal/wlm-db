@@ -20,6 +20,9 @@ export interface GetWellSliceInterface {
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
+    credIdFromJM: string;
+    regionFromJM: string;
+    landingFrom: string;
 }
 
 interface CountBreakDown {

@@ -21,14 +21,23 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { setGwDatabaseInstance, setGwDatabaseInstanceName, setGwDatabaseStorageType, setGwHostname, setGwResourceId } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setCredIdFromJM,
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwDatabaseStorageType,
+    setGwHostname,
+    setGwResourceId,
+    setLandingFrom,
+    setRegionFromJM
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>({});
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
     useEffect(() => {
         let sortedSubTaskList = subJobsData?.subJobs;
@@ -47,10 +56,10 @@ const SubJobTable = ({ jobId, statusType }: any) => {
 
         // Extract the JSON part of the split message
         const jsonString = splitMessage[1];
-        
+
         // Parse the JSON string into an object
         const jsonObject = JSON.parse(jsonString);
-        
+
         // Extract the required properties
         const resourceId = jsonObject.resourceId;
         const databaseInstanceId = jsonObject.databaseInstanceId; // Assuming you want the first ID in the array
@@ -59,12 +68,15 @@ const SubJobTable = ({ jobId, statusType }: any) => {
 
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setCredIdFromJM(subJobsData?.credentialsId));
+        dispatch(setRegionFromJM(subJobsData?.region?.code));
+        dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
         dispatch(setGwHostname(subJobsData?.resourceName));
         dispatch(setGwResourceId(resourceId));
         dispatch(setGwDatabaseInstance(databaseInstanceId));
         dispatch(setGwDatabaseInstanceName(databaseInstanceName));
         dispatch(setGwDatabaseStorageType(sqlServerDeploymentType));
-    }
+    };
 
     const JobsColDefs: ColumnProps[] = [
         {
@@ -106,37 +118,38 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             width: '676px',
             isSticky: true,
             renderCell: (cellData: any) => {
-               
-                if(cellData.includes('databaseInstanceId') && cellData.includes('resourceId')) {                     
-
+                if (cellData.includes('databaseInstanceId') && cellData.includes('resourceId')) {
                     const splitMessage = cellData.split(';');
 
                     // Extract the first part of the split message
                     let extractedMessage = splitMessage[0];
-                    
+
                     // Remove the trailing period if it exists
                     if (extractedMessage.endsWith('.')) {
                         extractedMessage = extractedMessage.slice(0, -1);
                     }
-                    return <div className={styles.linkMessage} title={extractedMessage}>
-                        <span>{extractedMessage}</span>&nbsp;
-                        <span>
-                            <Button variant="link" onClick={() => {
-                                navigateToContinuosOptimization(cellData)
-                            }}>
-                            instance optimization dashboard
+                    return (
+                        <div className={styles.linkMessage} title={extractedMessage}>
+                            <span>{extractedMessage}</span>&nbsp;
+                            <span>
+                                <Button
+                                    variant="link"
+                                    onClick={() => {
+                                        navigateToContinuosOptimization(cellData);
+                                    }}
+                                >
+                                    instance optimization dashboard
                                 </Button>
-                        </span>
-
-                    </div>
-                }else {
+                            </span>
+                        </div>
+                    );
+                } else {
                     return (
                         <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
                             {cellData}
                         </div>
                     );
                 }
-               
             }
         },
         // {

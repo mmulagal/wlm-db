@@ -9,11 +9,13 @@ import {
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
+import { WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceId, selectedDatabaseInstance, gwRefreshPage } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -30,8 +32,9 @@ const GetWellApi = () => {
         try {
             dispatch(setOptimizePageLoading(true));
             const result: { data?: any; error?: any } = await assessmentDetailsApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance
             });

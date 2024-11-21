@@ -62,7 +62,8 @@ import {
     setGwDatabaseInstanceName,
     setGwDatabaseStorageType,
     setGwHostname,
-    setGwResourceId
+    setGwResourceId,
+    setLandingFrom
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const ManagedHostSubTable = ({
@@ -208,6 +209,7 @@ const ManagedHostSubTable = ({
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
         );
         dispatch(setGwHostname(hostname));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setGwResourceId(targettedHost?.resourceId));
         dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
         dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
