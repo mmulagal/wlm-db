@@ -492,6 +492,8 @@ async function describeAddresses(credentialsId: string, region: string, params: 
     return response;
 }
 
+const waitForInstanceOkWrapper = { waitForInstanceOk };
+
 export {
     getEC2Client,
     describeVpc,
@@ -520,5 +522,6 @@ export {
     startInstance,
     modifyInstanceType,
     waitForInstanceOk,
-    describeAddresses
+    describeAddresses,
+    waitForInstanceOkWrapper
 };

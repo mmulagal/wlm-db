@@ -48,7 +48,7 @@ import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attribut
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 import instanceTypesFromRequirements from '../../responses/aws/ec2-instance-types-from-requirements.json';
 import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
-import * as ec2Utils from '../../../../src/lib/aws/ec2';
+import { waitForInstanceOkWrapper } from '../../../../src/lib/aws/ec2';
 import { TEST_STOPPED_EC2_INSTANCE_ID } from '../../../utils/consts';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
@@ -355,7 +355,7 @@ ec2Mock.on(DescribeAddressesCommand).resolves({'$metadata': {
 })
 */
 
-sinon.stub(ec2Utils, 'waitForInstanceOk').resolves({
+sinon.stub(waitForInstanceOkWrapper, 'waitForInstanceOk').resolves({
     state: 'SUCCESS',
     reason: {
         $metadata: {
