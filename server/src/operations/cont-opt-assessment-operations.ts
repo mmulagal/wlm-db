@@ -20,7 +20,7 @@ import {
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
-import { ACCOUNT_ID, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
 import { listAllManagedInstances, listResources } from '../lib/database/db';
@@ -46,7 +46,6 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listJobs } from '../lib/database/job';
-import { setAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -820,8 +819,6 @@ async function triggerAssessment(
     fields?: string
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
-
-    setAsyncLocalStorageResource(ACCOUNT_ID, managedInstance.account_id);
 
     let jobStatus: string = JOBSTATUS.COMPLETED;
     let errorMessage = '';

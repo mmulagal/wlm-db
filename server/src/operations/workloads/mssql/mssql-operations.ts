@@ -1209,7 +1209,7 @@ async function getActiveSqlNodeAndInstanceDetails(
     });
     try {
         for (const nodeId of nodeIds) {
-            const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId);
+            const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const instanceDetails = await getAllInstanceDetails(credentialsId, region, [nodeId], accountId);
                 const sql = await getSQLAuthFromSSMParameterStore(credentialsId, region, nodeId);
