@@ -85,10 +85,15 @@ async function getParametersByPath(credentialsId?: string, region?: string, path
     return pathParameters;
 }
 
-async function getConnectionStatus(credentialsId: string, region: string, params: GetConnectionStatusCommandInput) {
-    logger.info('Getting command invocation details for command', params);
+async function getConnectionStatus(
+    credentialsId: string,
+    region: string,
+    params: GetConnectionStatusCommandInput,
+    accountId?: string
+) {
+    logger.info('Getting command invocation details for command', params, accountId);
 
-    const ssmClient = await getSSMClient(region, credentialsId);
+    const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const response: GetConnectionStatusCommandOutput = await ssmClient.send(new GetConnectionStatusCommand(params));
     logger.info('SSM Command response', response);
     return response;
