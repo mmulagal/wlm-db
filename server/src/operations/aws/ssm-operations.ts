@@ -299,11 +299,16 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
     }
 }
 
-async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {
-    logger.info('Check for successful SSM connection', { credentialId, region, instanceId });
-    return getConnectionStatus(credentialId, region, {
-        Target: instanceId
-    });
+async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string, accountId?: string) {
+    logger.info('Check for successful SSM connection', { credentialId, region, instanceId, accountId });
+    return getConnectionStatus(
+        credentialId,
+        region,
+        {
+            Target: instanceId
+        },
+        accountId
+    );
 }
 
 async function ssmPutParameters(credentialsId: string, region: string, credentials: SSMParamterObject[]) {
