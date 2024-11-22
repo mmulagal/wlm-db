@@ -1,7 +1,7 @@
 import randomize from 'randomatic';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { AWS_REGIONS, RESOURCESTYPE } from '../consts';
+import { AL2023_AMI_NAME, AWS_REGIONS, DEMO_DEFAULT_REGION, RESOURCESTYPE } from '../consts';
 
 function masterStackData(
     accountId: string,
@@ -1798,6 +1798,25 @@ function optimizeOperatingSystemJobData(
         }
     ];
 }
+
+function ssmGetParamsAmazonLinuxAMIs(region: string | undefined) {
+    if (!region) {
+        region = DEMO_DEFAULT_REGION;
+    }
+    return {
+        Parameters: [
+            {
+                Name: `${AL2023_AMI_NAME}`,
+                Type: 'String',
+                Value: 'ami-012967cc5a8c9f891',
+                Version: 94,
+                LastModifiedDate: '2024-11-15T01:04:56.373000+05:30',
+                ARN: `arn:aws:ssm:${region}::parameter${AL2023_AMI_NAME}`,
+                DataType: 'text'
+            }
+        ]
+    };
+}
 export {
     masterStackData,
     validationStack1Data,
@@ -1811,5 +1830,6 @@ export {
     sandboxJobData,
     assessmentJobData,
     optimizeStorageJobData,
-    optimizeOperatingSystemJobData
+    optimizeOperatingSystemJobData,
+    ssmGetParamsAmazonLinuxAMIs
 };
