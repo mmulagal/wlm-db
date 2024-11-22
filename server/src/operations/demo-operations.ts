@@ -2,8 +2,7 @@ import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { faker } from '@faker-js/faker';
-import { compact } from 'lodash-es';
+import { compact, sample } from 'lodash-es';
 import {
     CloudProviders,
     RESOURCESTYPE,
@@ -671,11 +670,21 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
+    let fsxVolIds = volumes.map(volume => volume.VolumeId) || [];
+    if (volumeUuids.length > fsxVolIds.length) {
+        // If the number of volumeUuids is more than the number of fsx volumes, then repeating the fsxVolIds
+        fsxVolIds = Array(volumeUuids.length).fill(sample(fsxVolIds));
+    }
 
-    volumeUuids.forEach(volumeUuid => {
-        const { VolumeId = '' } = volumes[0];
-        volumeIds.push(`fsvol-${faker.random.alphaNumeric(17)}`);
-        uuidVolumeIdMap[VolumeId] = volumeUuid;
+    volumes.forEach(volume => {
+        const { OntapConfiguration: { UUID = '' } = {}, VolumeId = '' } = volume;
+        if (volumeUuids.includes(UUID)) {
+            volumeIds.push(VolumeId);
+            uuidVolumeIdMap[VolumeId] = UUID;
+        } else {
+            volumeIds.push(sample(fsxVolIds) || '');
+            uuidVolumeIdMap[VolumeId] = sample(volumeUuids) || '';
+        }
     });
 
     logger.debug('List volume ids in an fsx response', volumeIds);
