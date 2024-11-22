@@ -613,6 +613,7 @@ Write-Output $jsonResult
 `;
 
 const CHECK_NODE_STATUS = (nodeName: string) => `
+    #Check Node Status
     Function Check-NodeStatus {
         param (
             [Parameter(Mandatory = $true)]
@@ -641,7 +642,9 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
     Write-Output $jsonResult
 `;
 
-const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `Function Move-AllClusterGroups {
+const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
+#Move Cluster Groups
+Function Move-AllClusterGroups {
     param (
         [Parameter(Mandatory = $true)]
         [string]$TargetNodeName

@@ -512,6 +512,8 @@ const setMpioPolicy = {
 
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
+const moveClusterGroupsRegex = /#Move Cluster Groups/;
+const checkNodeStatusRegex = /#Check Node Status/;
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -657,6 +659,14 @@ ssmMock
         return rescanExtendRegex.test(params.Parameters.commands[0]);
     })
     .resolves(listSendCommandCommandResponse.rescanAndExtendLogLunCommand)
+    .on(SendCommandCommand, params => {
+        return checkNodeStatusRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.checkNodeStatusCommand)
+    .on(SendCommandCommand, params => {
+        return moveClusterGroupsRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.moveClusterGroupsCommand)
     .on(SendCommandCommand, { Parameters: validateMpio })
     .resolves(listSendCommandCommandResponse.validateMpioCommand)
     .on(SendCommandCommand, { Parameters: setMpioPolicy })
@@ -811,6 +821,14 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-rescanAndExtendLogLunCommand'
     })
     .resolves(getCommandInvocationResponse.rescanAndExtendLogLunResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkNodeStatusCommand'
+    })
+    .resolves(getCommandInvocationResponse.checkNodeStatusResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-moveClusterGroupsCommand'
+    })
+    .resolves(getCommandInvocationResponse.moveClusterGroupsResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand'
     })
