@@ -266,8 +266,6 @@ else {
     }
 }
 
-
-
 function Invoke-CommandExecution {
     param(
         [Parameter(Mandatory = $true)]
@@ -296,42 +294,57 @@ function Invoke-CommandExecution {
         # Write the command to the log file before executing it
         Add-Content -Path $logFile -Value $command.Command
 
-        try {
-            Write-Output "Starting to execute command: $commandString"
-            if ($command.UseExecutionPolicy) {
-                if ($usePwsh) {
-                    & pwsh -ExecutionPolicy RemoteSigned -Command $command.Command
-                }
-                else {
-                    & powershell.exe -ExecutionPolicy RemoteSigned -Command $command.Command
-                }
-            }
-            else {
-                if ($usePwsh) {
-                    & pwsh -Command $command.Command
-                }
-                else {
-                    & powershell.exe -Command $command.Command
-                }
-            }
-            if ($LASTEXITCODE -ne 0) {
-                throw "Command $commandString failed with exit code $LASTEXITCODE"
-            }
-            Write-Output "Successfully executed command: $commandString"
+        $retryCount = 0
+        $maxRetries = 3
+        $success = $false
 
-            # Write a success marker to the log file
-            Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
-            # If the command is to restart computer lets pause the script for 3 minutes
-            if ($command.Command -like "*Restart-Computer.ps1*") {
-                Write-Output "Restart command executed, pausing script for 3 minutes..."
-                Start-Sleep -Seconds 180
+        while ($retryCount -lt $maxRetries -and -not $success) {
+            try {
+                Write-Output "Starting to execute command: $commandString (Attempt $($retryCount + 1))"
+                if ($command.UseExecutionPolicy) {
+                    if ($usePwsh) {
+                        & pwsh -ExecutionPolicy RemoteSigned -Command $command.Command
+                    }
+                    else {
+                        & powershell.exe -ExecutionPolicy RemoteSigned -Command $command.Command
+                    }
+                }
+                else {
+                    if ($usePwsh) {
+                        & pwsh -Command $command.Command
+                    }
+                    else {
+                        & powershell.exe -Command $command.Command
+                    }
+                }
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Command $commandString failed with exit code $LASTEXITCODE"
+                }
+                Write-Output "Successfully executed command: $commandString"
+
+                # Write a success marker to the log file
+                Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
+                $success = $true
+
+                # If the command is to restart computer lets pause the script for 3 minutes
+                if ($command.Command -like "*Restart-Computer.ps1*") {
+                    Write-Output "Restart command executed, pausing script for 3 minutes..."
+                    Start-Sleep -Seconds 180
+                }
             }
-        }
-        catch {
-            Write-Output "An error occurred while executing command $commandString"
-            Write-Output $_
-            Write-Error $_.Exception.Message
-            exit $LASTEXITCODE
+            catch {
+                Write-Output "An error occurred while executing command $commandString (Attempt $($retryCount + 1))"
+                Write-Output $_
+                Write-Error $_.Exception.Message
+                $retryCount++
+                if ($retryCount -ge $maxRetries) {
+                    Write-Output "Command $commandString failed after $maxRetries attempts"
+                    exit $LASTEXITCODE
+                }
+                else {
+                    Write-Output "Retrying command $commandString..."
+                }
+            }
         }
     }
 }
@@ -371,42 +384,65 @@ function Invoke-RemoteCommands {
             Write-Output "Starting to execute command: $commandValue"
             $commandString = $command | ConvertTo-Json -Compress
 
-            $result = Invoke-Command -ComputerName localhost -ScriptBlock {
-                param($commandString)
-                $command = ConvertFrom-Json $commandString
-                $res = [PSCustomObject]@{
-                    ExitCode = $null
-                    Command  = $command.Command
-                }
+            $retryCount = 0
+            $maxRetries = 3
+            $success = $false
+
+            while ($retryCount -lt $maxRetries -and -not $success) {
                 try {
-                    $process = Start-Process -FilePath "powershell.exe" -ArgumentList "-Command $($command.Command)" -NoNewWindow -Wait -PassThru
-                    # Return the process exit code
-                    $res.ExitCode = $process.ExitCode
-                    if ($process.ExitCode -ne 0) {
-                        Write-Output "Command execution failed with exit code $($process.ExitCode): $($command.Command)"
-                        throw "Command execution failed with exit code $($process.ExitCode)"
+                    $result = Invoke-Command -ComputerName localhost -ScriptBlock {
+                        param($commandString)
+                        $command = ConvertFrom-Json $commandString
+                        $res = [PSCustomObject]@{
+                            ExitCode = $null
+                            Command  = $command.Command
+                        }
+                        try {
+                            $process = Start-Process -FilePath "powershell.exe" -ArgumentList "-Command $($command.Command)" -NoNewWindow -Wait -PassThru
+                            # Return the process exit code
+                            $res.ExitCode = $process.ExitCode
+                            if ($process.ExitCode -ne 0) {
+                                Write-Output "Command execution failed with exit code $($process.ExitCode): $($command.Command)"
+                                throw "Command execution failed with exit code $($process.ExitCode)"
+                            }
+                        }
+                        catch {
+                            Write-Output "Command execution failed: $($command.Command)"
+                            throw
+                        }
+                        return $res
+                    } -ArgumentList $commandString -Credential $Credential -Authentication Credssp
+
+                    if ($result.ExitCode -eq 0) {
+                        Write-Output "Successfully executed command: $commandValue"
+                        # Write a success marker to the log file
+                        Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
+                        $success = $true
+                    }
+                    else {
+                        Write-Output "Command failed with exit code $($result.ExitCode): $commandValue"
+                        throw "Command execution failed $commandValue"
+                    }
+
+                    # If the command is to restart computer, pause the script for 3 minutes
+                    if ($command.Command -like "*Restart-Computer.ps1*") {
+                        Write-Output "Restart command executed, pausing script for 3 minutes..."
+                        Start-Sleep -Seconds 180
                     }
                 }
                 catch {
-                    Write-Output "Command execution failed: $($command.Command)"
-                    throw
+                    Write-Output "An error occurred while executing command $commandValue (Attempt $($retryCount + 1))"
+                    Write-Output $_
+                    Write-Error $_.Exception.Message
+                    $retryCount++
+                    if ($retryCount -ge $maxRetries) {
+                        Write-Output "Command $commandValue failed after $maxRetries attempts"
+                        exit $LASTEXITCODE
+                    }
+                    else {
+                        Write-Output "Retrying command $commandValue..."
+                    }
                 }
-                return $res
-            } -ArgumentList $commandString -Credential $Credential -Authentication Credssp
-
-            if ($result.ExitCode -eq 0) {
-                Write-Output "Successfully executed command: $commandValue"
-                # Write a success marker to the log file
-                Add-Content -Path $logFile -Value ("SUCCESS: " + $command.Command)
-            }
-            else {
-                Write-Output "Command failed with exit code $($result.ExitCode): $commandValue"
-                throw "Command execution failed $commandValue"
-            }
-            # If the command is to restart computer, pause the script for 3 minutes
-            if ($command.Command -like "*Restart-Computer.ps1*") {
-                Write-Output "Restart command executed, pausing script for 3 minutes..."
-                Start-Sleep -Seconds 180
             }
         }
     }
