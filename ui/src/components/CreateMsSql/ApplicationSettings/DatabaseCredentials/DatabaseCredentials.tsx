@@ -110,18 +110,22 @@ const DatabaseCredentials = () => {
                             <TextField
                                 label={GENERAL.USER_NAME}
                                 info={
-                                    <div className={styles.userNameTooltip}>
-                                        <div className={styles.list}>
-                                            <div className={styles.listItem}>
-                                                <Bullet />
-                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
-                                            </div>
-                                            <div className={styles.listItem}>
-                                                <Bullet />
-                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                                    databaseType === DBType.POSTGRESQL ? (
+                                        ''
+                                    ) : (
+                                        <div className={styles.userNameTooltip}>
+                                            <div className={styles.list}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )
                                 }
                                 error={useDelayedError(isValidUserName(credName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
