@@ -15,13 +15,14 @@ import { ManageResourcesResponseType } from '../routes/types/resource.types';
 import { getResources } from './database/database-operations';
 import { Metadata } from '../utils/common-types';
 import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-consts';
-import { getArtifactsRegionBucketName, sqlResponseParsing } from '../utils/utils';
+import { getArtifactsRegionBucketName, isDemo, sqlResponseParsing } from '../utils/utils';
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
 import { READ_SCRIPT_VERSION } from './workloads/mssql/ssm-script-utils';
 import { createDemoResourcesPerRegion } from '../utils/demo-utils/demoDefaultUtils';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -147,8 +148,11 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
 
 async function createDemoDataforRegion(accountId: string, credentialsId: string, region: string) {
     logger.info('Creating demo data for region', accountId, credentialsId, region);
-    const response = await createDemoResourcesPerRegion(accountId, credentialsId, region, DEMO_AWS_ACCOUNT_ID);
-    return response;
+    if (isDemoFlow) {
+        const response = await createDemoResourcesPerRegion(accountId, credentialsId, region, DEMO_AWS_ACCOUNT_ID);
+        return response;
+    }
+    throw createError('API not available in non-demo mode');
 }
 
 export {
