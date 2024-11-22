@@ -360,27 +360,20 @@ async function calculateStorageDrift(
                 const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
                 );
-                logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
 
                 // each database is on separate data and log volume
                 const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
                 );
-                logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
 
                 const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
                 );
-                logger.info({ databasesAbove500Gb }); // Todo: remove this line
 
                 const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
                 const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
                 const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
                 const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
-                logger.info({ groupByDataVolume }); // Todo: remove this line
-                logger.info({ groupByLogVolume }); // Todo: remove this line
-                logger.info({ groupByDataLun }); // Todo: remove this line
-                logger.info({ groupByLogLun }); // Todo: remove this line
 
                 const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
                 const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
