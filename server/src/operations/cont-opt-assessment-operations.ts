@@ -23,7 +23,7 @@ import {
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listAllManagedInstances, listResources } from '../lib/database/db';
+import { listAllManagedInstances, listDatabaseInstances } from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -1086,51 +1086,31 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         fields
     });
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    const managedInstances = (await listDatabaseInstances(accountId, {
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    })) as DatabaseInstancesIncludingResource[];
+    if (isEmpty(managedInstances)) {
+        logger.error(
+            `No  managed database instance by ${accountId} ${credentialsId} ${databaseHostId} ${databaseInstanceId} found.`
+        );
+        return;
     }
 
-    const resourceName = resourceDetail.resource_name!;
     try {
-        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
-        );
-        const {
-            database_instance_name: savedInstanceName,
-            fsxn_ids: fileSystemId,
-            sqlAuthEnabled
-        } = newDatabaseInstanceDetails;
-
-        const instanceRecord: WorkloadInstance = {
-            id: databaseInstanceId,
-            name: savedInstanceName,
-            type: RESOURCESTYPE.MSSQL,
-            region,
-            sqlAuthEnabled: sqlAuthEnabled || false,
-            activeNodeInstanceid: activeNodeInstanceId,
-            fsxFileSystem: fileSystemId,
-            cloudProviderAccountId: cloudProviderAccountId || '',
-            resourceName: resourceName || ''
-        };
-
+        const savedInstanceName = managedInstances[0].database_instance_name;
         const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobString,
             description: jobString,
-            resourceName: resourceName!,
+            resourceName: savedInstanceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
             type: JOBTYPE.ASSESSMENT
         });
-        driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceRecord, fields);
+        triggerAssessment(managedInstances[0], jobId, fields);
 
         return { jobId };
     } catch (error) {
