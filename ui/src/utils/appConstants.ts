@@ -17,7 +17,8 @@ export const SELECT_CONFIG = {
     DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server',
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
-    NO_SAVED_CONFIG: 'There are no saved configurations.',
+    NO_SAVED_CONFIG: 'There are no saved Microsoft SQL configurations.',
+    NO_SAVED_CONFIG_PGSQL: `There are no saved PostgreSQL configurations.`,
     MAX_CONFIG_LIMIT:
         "You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you'll need to delete an old configuration first.",
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',

@@ -3,7 +3,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
 import styles from './PostgressHeader.module.scss';
 
-import { FORM_TO_WLF_NAVIGATE_BLUEXP, FROM_DIALOG } from '../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE_BLUEXP, FROM_DIALOG, MAX_SAVED_CONFIG, WIZARD_TYPE } from '../../../utils/consts';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import SaveConfig from '../../CreateMsSql/SaveConfig/SaveConfig';
@@ -17,7 +17,7 @@ import { useDispatch } from 'react-redux';
 import { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation } from '../../../utils/apiService';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import LoadConfig from '../../CreateMsSql/LoadConfig/LoadConfig';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 const _ = require('lodash');
 
 const PostgressHeader = () => {
@@ -29,6 +29,9 @@ const PostgressHeader = () => {
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+    const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+
+    const [isConfig, setIsConfig] = useState(false);
 
     const [saveConfigData] = useSaveConfigDataMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
@@ -46,7 +49,6 @@ const PostgressHeader = () => {
 
     useEffect(() => {
         if (isLoadConfig) {
-            console.log(refetchApiCount);
             if (
                 refetchApiCount?.isLoading &&
                 (refetchApiCount?.expected.length === 0 ||
@@ -58,15 +60,24 @@ const PostgressHeader = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoadConfig, refetchApiCount]);
 
+    useEffect(() => {
+        const pgsqlConfigData = configData?.filter((item: any) => item?.databaseType === WIZARD_TYPE.PGSQL);
+        if (pgsqlConfigData && pgsqlConfigData.length > 0) {
+            setIsConfig(true);
+        } else {
+            setIsConfig(false);
+        }
+    }, [configData]);
+
     const handleLoadConfiguration = () => {
         setDialog(
             <DialogComponent
                 header={GENERAL.LOAD_CONFIG_PGSQL_HEADER}
-                content={<LoadConfig formType="pgsql" />}
+                content={<LoadConfig formType={WIZARD_TYPE.PGSQL} />}
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    LoadConfiguration(dispatch, loadConfigDataExe, closeDialog, undefined, 'pgsql');
+                    LoadConfiguration(dispatch, loadConfigDataExe, closeDialog, undefined, WIZARD_TYPE.PGSQL);
                 }}
                 closeCallback={() => {
                     // dispatch(setIsLoadConfig(false));
@@ -86,7 +97,14 @@ const PostgressHeader = () => {
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() =>
-                    SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog, dialogFrom, 'pgsql')
+                    SaveConfiguration(
+                        dispatch,
+                        saveConfigData,
+                        configListRefetch,
+                        closeDialog,
+                        dialogFrom,
+                        WIZARD_TYPE.PGSQL
+                    )
                 }
                 closeCallback={() => {
                     // dispatch(setSaveConfigName(''));
@@ -126,23 +144,25 @@ const PostgressHeader = () => {
             style={{ width: '100vw' }}
         >
             <div className={styles['header-button-pgsql']}>
-                <Button Component="button" onClick={handleLoadConfiguration} variant="text">
-                    {SELECT_CONFIG.LOAD_CONFIG}
-                </Button>
+                {isConfig && (
+                    <Button Component="button" onClick={handleLoadConfiguration} variant="text">
+                        {SELECT_CONFIG.LOAD_CONFIG}
+                    </Button>
+                )}
 
-                {/* {!isConfig && (
+                {!isConfig && (
                     <Button
                         Component="button"
                         variant="text"
                         isDisabled={!isConfig}
-                        title={SELECT_CONFIG.NO_SAVED_CONFIG}
+                        title={SELECT_CONFIG.NO_SAVED_CONFIG_PGSQL}
                     >
                         {SELECT_CONFIG.LOAD_CONFIG}
                     </Button>
-                )} */}
+                )}
 
                 <div className={styles.separator}></div>
-                {/* {configData?.length >= MAX_SAVED_CONFIG && (
+                {configData?.length >= MAX_SAVED_CONFIG && (
                     <Popover
                         popoverClass={styles['popover']}
                         children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
@@ -153,11 +173,13 @@ const PostgressHeader = () => {
                             </Button>
                         }
                     />
-                )} */}
+                )}
 
-                <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
-                    {SELECT_CONFIG.SAVE_CONFIG}
-                </Button>
+                {configData?.length < MAX_SAVED_CONFIG && (
+                    <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
+                        {SELECT_CONFIG.SAVE_CONFIG}
+                    </Button>
+                )}
             </div>
         </Header>
     );
