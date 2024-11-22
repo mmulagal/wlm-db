@@ -12,24 +12,24 @@ import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 import CardComponentConfig from '../../../common/CardComponent/CardComponentConfig';
 import { useEffect } from 'react';
-import { DBType } from '../../../utils/consts';
+import { DBType, WIZARD_TYPE } from '../../../utils/consts';
 
 type SC = {
     isDisabled?: boolean;
+    wizardType?: string;
 };
 
-const SelectConfig = ({ isDisabled = false }: SC) => {
+const SelectConfig = ({ isDisabled = false, wizardType }: SC) => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
-    const selectedDatabaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
 
     useEffect(() => {
-        if (selectedDatabaseType === DBType.POSTGRESQL) {
+        if (wizardType === WIZARD_TYPE.PGSQL) {
             dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
         } else {
             dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
         }
-    }, [selectedDatabaseType]);
+    }, []);
 
     const clickHandler = (val: string) => {
         dispatch(setSelectConfig(val));
