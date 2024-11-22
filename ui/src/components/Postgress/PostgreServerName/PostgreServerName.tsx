@@ -41,11 +41,10 @@ const PostgreServerName = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBClusterNameFilled, isCreateHit]);
 
-
     //Check for valid server name
     function isValidDBName() {
         const firstChar = credName && credName.charAt(0);
-      
+
         if (!credName || credName.length === 0) {
             return GENERAL.ACTION_REQUIRED;
         } else if (
@@ -75,7 +74,7 @@ const PostgreServerName = () => {
                                         <div className={styles.list}>
                                             <div className={styles.listItem}>
                                                 <Bullet />
-                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP1}</div>
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP1_PGSQL}</div>
                                             </div>
                                             <div className={styles.listItem}>
                                                 <Bullet />
