@@ -1146,7 +1146,10 @@ const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
 
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
-const DATABASE_TYPE = 'Microsoft SQL Server';
+enum DATABASE_TYPE {
+    MS_SQL = 'Microsoft SQL Server',
+    PG_SQL = 'PostgreSQL server'
+}
 
 // SQL software types
 const SQL_STD = 'SQL std';

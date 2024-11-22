@@ -88,7 +88,8 @@ import {
     AuditStatus,
     FCI,
     PGSQL_MASTER_TEMPLATE_PATH,
-    AL2023_AMI_NAME
+    AL2023_AMI_NAME,
+    DATABASE_TYPE
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -113,7 +114,11 @@ import { MissingPermissionInterface, NetworkViolation } from '../utils/common-ty
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
-import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
+import {
+    createDeploymentMockDataInDB,
+    createFileSystemForDemo,
+    createDeploymentMockDataInDBForPgSql
+} from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -1287,6 +1292,7 @@ async function deployCloudFormationTemplate(
             awsAccountId,
             sqlConfiguration?.sqlServerName,
             false,
+            undefined,
             STORAGE_PROTOCOLS.ISCSI
         );
         if (!fsxConfiguration.fsxFileSystemId) {
@@ -1660,17 +1666,16 @@ async function deployCfTemplateForPgSql(
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
-        createDeploymentMockDataInDB(
+        createDeploymentMockDataInDBForPgSql(
             accountId,
             stackId,
             stackName,
             region,
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
-            fsxConfiguration?.fsxFileSystemId,
             awsAccountId,
             sqlConfiguration?.sqlServerName,
-            false
+            DATABASE_TYPE.PG_SQL
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory

@@ -12,7 +12,8 @@ import {
     RESOURCE_SOURCE,
     DatabaseTypes,
     SqlServerDeploymentModel,
-    DEMO_STANADLONE_SQL_SERVER_ID
+    DEMO_STANADLONE_SQL_SERVER_ID,
+    STORAGE_PROTOCOLS
 } from '../utils/consts';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import {
@@ -651,6 +652,113 @@ async function createOperatingSystemOptimizeJobMockData(
     );
 }
 
+async function createDeploymentMockDataInDBForPgSql(
+    accountId: string,
+    stackId: string,
+    stackName: string,
+    region: string,
+    credentialsId: string,
+    sqlDeploymentMode: string,
+    awsAccountId: string,
+    serverName: string,
+    storageProtocol: string = STORAGE_PROTOCOLS.NFS,
+    resourceId?: string
+) {
+    logger.info('create deployment, resource and job table mock data in database', {
+        accountId,
+        stackId,
+        stackName,
+        region,
+        credentialsId,
+        sqlDeploymentMode,
+        serverName
+    });
+    serverName = serverName || `sqldatabase${randomize('a0', 4)}`;
+
+    const cloudProviderId = awsAccountId;
+    const resourceName = serverName;
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        sqlDeploymentMode = 'FCI';
+    } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
+        sqlDeploymentMode = 'Standalone';
+    }
+    await createDeployment(accountId, {
+        deploymentId: stackId,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        credentialsId,
+        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
+        startTime: new Date().valueOf(),
+        region,
+        deploymentName: stackName,
+        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        endTime: new Date().valueOf(),
+        data: {
+            databaseType: DATABASE_TYPE.PG_SQL,
+            resourceName,
+            fileSystemType: STORAGE_TYPE.FSXN
+        }
+    });
+
+    const instanceId = randomUUID();
+
+    resourceId = resourceId || randomUUID();
+    const fsxId = `fs-${randomize('0', 8)}`;
+
+    const metadata: Metadata = {
+        sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        node1InstanceId: `i-${randomize('A0', 17)}`,
+        creationDate: new Date().getTime().toString(),
+        fsxSvmId: 'svm-0491dd89a76b7ca3d',
+        sandboxCreated: true,
+        storageProtocol
+    };
+
+    await createResource(accountId, {
+        resourceId,
+        credentialsId,
+        storageType: STORAGE_TYPE.FSXN,
+        resourceName,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        resourceType: RESOURCESTYPE.PGSQL,
+        coRelationId: fsxId,
+        region,
+        metadata
+    });
+
+    const instanceRecord = {
+        resourceId,
+        credentialsId,
+        region,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: 'PostgresSQL',
+        fsxnIds: fsxId,
+        isDefault: true,
+        source: RESOURCE_SOURCE.DEPLOY,
+        sqlDeploymentType: sqlDeploymentMode,
+        fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
+        numberofUserDbsCreated: 1,
+        storageProtocol,
+        databaseType: DatabaseTypes.PG_SQL,
+        storageType: STORAGE_TYPE.FSXN
+    };
+
+    await upsertDatabaseInstance(accountId, instanceRecord);
+
+    const data = await createJobMockData(
+        accountId,
+        resourceName,
+        stackName,
+        sqlDeploymentMode,
+        undefined,
+        credentialsId,
+        region
+    );
+
+    await createJobs(accountId, data);
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -664,5 +772,6 @@ export {
     createAssessmentJobMockData,
     createOptimizeJobMockData,
     updateOptimizedConfigNameInInstanceTable,
-    createOperatingSystemOptimizeJobMockData
+    createOperatingSystemOptimizeJobMockData,
+    createDeploymentMockDataInDBForPgSql
 };
