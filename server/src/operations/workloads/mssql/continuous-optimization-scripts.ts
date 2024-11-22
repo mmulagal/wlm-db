@@ -64,13 +64,14 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                 # check in winvolume volume id is null or empty string
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
                     
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
+                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
                         "fileName" = $winvolume.filename
                         "lunSerialNumber" = $vol.serialnumber
                         "sizeInMb" = $winvolume.sizeInMb
+                        "diskNumber" = $vol.number
                     }
                     $type = 'data'
                     if ($winvolume.name -Contains "tempdev") {
@@ -470,6 +471,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetails.ontapVolumeName
                 $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetails.lunUuid
                 $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetails.svmName
+                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetails.diskNumber
+                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetails.lunSerialNumber
                 }
                 
             }
@@ -481,6 +484,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $tempdbVolumeLunDetails.ontapVolumeName
                 $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $tempdbVolumeLunDetails.lunUuid
                 $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $tempdbVolumeLunDetails.svmName
+                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetails.diskNumber
+                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetails.lunSerialNumber
                 }
                 
             }

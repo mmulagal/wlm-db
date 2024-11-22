@@ -17,7 +17,8 @@ const SizingViolationResponse = Type.Object({
     ontapVolumeUuid: Type.Optional(Type.String()),
     lunUuid: Type.Optional(Type.String()),
     tempdbAccessPath: Type.Optional(Type.String()),
-    tempdbDriveTotalSizeMB: Type.Optional(Type.Number())
+    tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
+    diskSerialNumber: Type.Optional(Type.String())
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
