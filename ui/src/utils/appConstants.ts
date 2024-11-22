@@ -239,7 +239,7 @@ export const GENERAL = {
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_PGSQL_TOOLTIP:
-        'Specify the PostgreSQL data drive size only. The provisioning for log drive, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
+        'Specify the PostgreSQL data drive size only. The provisioning for log drive, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for PostgreSQL configuration. You can change the recommended defaults to meet your requirements.',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
     ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 86 TiB.',
