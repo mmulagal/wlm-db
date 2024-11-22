@@ -151,14 +151,16 @@ const PostgressHeader = () => {
                 )}
 
                 {!isConfig && (
-                    <Button
-                        Component="button"
-                        variant="text"
-                        isDisabled={!isConfig}
-                        title={SELECT_CONFIG.NO_SAVED_CONFIG_PGSQL}
-                    >
-                        {SELECT_CONFIG.LOAD_CONFIG}
-                    </Button>
+                    <Popover
+                        popoverClass={styles['popover']}
+                        children={SELECT_CONFIG.NO_SAVED_CONFIG_PGSQL}
+                        trigger="hover"
+                        container={
+                            <Button Component="button" variant="text" isDisabled={true}>
+                                {SELECT_CONFIG.LOAD_CONFIG}
+                            </Button>
+                        }
+                    />
                 )}
 
                 <div className={styles.separator}></div>
