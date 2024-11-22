@@ -186,15 +186,7 @@ async function triggerAssessmentAfterOptimization(
         await sleep(5000);
     }
 
-    await driftAssessmentDataCollection(
-        accountId,
-        credentialsId,
-        region,
-        jobId,
-        databaseHostId,
-        instanceToAssess,
-        serverNameWithHostName
-    );
+    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceToAssess);
     await updateJobDetails(accountId, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
@@ -725,7 +717,7 @@ async function resizeLogLun(
     svmName: string,
     fileSystemId: string,
     lunUuid: string,
-    requiredLogVolumeSizeMB: number,
+    requiredLogVolumeSizeBytes: number,
     activeNodeInstanceId: string
 ) {
     logger.info('Resizing log LUN ', {
@@ -734,7 +726,7 @@ async function resizeLogLun(
         svmName,
         fileSystemId,
         lunUuid,
-        requiredLogVolumeSizeMB,
+        requiredLogVolumeSizeBytes,
         activeNodeInstanceId
     });
 
@@ -745,7 +737,7 @@ async function resizeLogLun(
         region,
         apiEndpoint,
         apiQueryFilter: '',
-        apiBody: JSON.stringify({ space: { size: 21474836480 } })
+        apiBody: JSON.stringify({ space: { size: requiredLogVolumeSizeBytes } })
     });
     try {
         await callSsmExecution(
