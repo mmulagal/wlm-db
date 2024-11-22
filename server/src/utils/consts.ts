@@ -1352,6 +1352,7 @@ const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
+const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
 
 const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -1800,6 +1801,7 @@ export {
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     INITIALIZER,
     MSSQL,
+    AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
     DEMO_DEFAULT_REGION
 };
