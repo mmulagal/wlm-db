@@ -577,7 +577,43 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     
 `;
 
+const RESCAN_EXTEND_LOG_LUN = (diskSerialNumber: string) => `
+#Rescan and extend the LUN
+Function Rescan-ExtendLUN {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$DiskSerialNumber
+    )
+    
+    try {
+        # Rescan and extend the LUN
+        $null = (echo "RESCAN" | diskpart)
+        $disk = Get-Disk | Where-Object { $_.SerialNumber -eq "$DiskSerialNumber" }
+            
+        if ($null -eq $disk) {
+            throw "No disk found with SerialNumber $DiskSerialNumber"
+        }
+        
+        $diskNumber = $disk.Number
+        $partition = Get-Partition -DiskNumber $diskNumber | Where-Object Type -eq 'Basic'
+        $size = ($partition | Get-PartitionSupportedSize).SizeMax
+        $partitionNumber = $partition.PartitionNumber
+        Resize-Partition -DiskNumber $diskNumber -PartitionNumber $partitionNumber -Size $size
+        $result = @{ status = 'success' }
+    } catch {
+        # Handle any errors that occur
+        $result = @{ status = 'failed'; error = $_.Exception.Message }
+    } finally {
+        # Convert the result to JSON
+        $result | ConvertTo-Json -Compress
+    }
+}
+$jsonResult = Rescan-ExtendLUN -DiskSerialNumber '${diskSerialNumber}'
+Write-Output $jsonResult
+`;
+
 const CHECK_NODE_STATUS = (nodeName: string) => `
+    #Check Node Status
     Function Check-NodeStatus {
         param (
             [Parameter(Mandatory = $true)]
@@ -606,7 +642,9 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
     Write-Output $jsonResult
 `;
 
-const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `Function Move-AllClusterGroups {
+const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
+#Move Cluster Groups
+Function Move-AllClusterGroups {
     param (
         [Parameter(Mandatory = $true)]
         [string]$TargetNodeName
@@ -653,4 +691,10 @@ $jsonResult = Move-AllClusterGroups -TargetNodeName "${nodeName}"
 Write-Output $jsonResult
 `;
 
-export { STORAGE_CONFIGURATION_ASSESSMENT, OPTIMIZE_STORAGE_PARAMS_SCRIPT, CHECK_NODE_STATUS, MOVE_ALL_CLUSTER_GROUPS };
+export {
+    STORAGE_CONFIGURATION_ASSESSMENT,
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    CHECK_NODE_STATUS,
+    RESCAN_EXTEND_LOG_LUN,
+    MOVE_ALL_CLUSTER_GROUPS
+};

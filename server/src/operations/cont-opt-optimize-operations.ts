@@ -17,7 +17,8 @@ import { getInstanceInfo, getResources } from './database/database-operations';
 import {
     CHECK_NODE_STATUS,
     MOVE_ALL_CLUSTER_GROUPS,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    RESCAN_EXTEND_LOG_LUN
 } from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
@@ -714,18 +715,18 @@ async function headroomOptimization(
 async function resizeLogLun(
     credentialsId: string,
     region: string,
-    svmName: string,
     fileSystemId: string,
     lunUuid: string,
+    diskSerialNumber: string,
     requiredLogVolumeSizeBytes: number,
     activeNodeInstanceId: string
 ) {
     logger.info('Resizing log LUN ', {
         credentialsId,
         region,
-        svmName,
         fileSystemId,
         lunUuid,
+        diskSerialNumber,
         requiredLogVolumeSizeBytes,
         activeNodeInstanceId
     });
@@ -739,13 +740,10 @@ async function resizeLogLun(
         apiQueryFilter: '',
         apiBody: JSON.stringify({ space: { size: requiredLogVolumeSizeBytes } })
     });
+
+    const rescanExtendLunSsmCommand = RESCAN_EXTEND_LOG_LUN(diskSerialNumber);
     try {
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand, '$null = (echo "RESCAN" | diskpart)'],
-            activeNodeInstanceId
-        );
+        await callSsmExecution(credentialsId, region, [ssmCommand, rescanExtendLunSsmCommand], activeNodeInstanceId);
     } catch (error) {
         throw createError(400, `Error while resizing log LUN ${error}`);
     }
@@ -814,7 +812,7 @@ async function logDriveOptimization(
 
             await Promise.all(
                 underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
-                    const { dataDriveTotalSizeMB = 0, lunUuid, ontapVolumeUuid, svmName } = drive;
+                    const { dataDriveTotalSizeMB = 0, lunUuid, diskSerialNumber, ontapVolumeUuid } = drive;
                     if (dataDriveTotalSizeMB > 0) {
                         const requiredLogVolumeSizeMB = dataDriveTotalSizeMB * 0.25; // Increase log volume to 25% of data volume
                         const requiredLogVolumeSizeBytes = convertToBytes(requiredLogVolumeSizeMB, 'MiB') || 0;
@@ -849,9 +847,9 @@ async function logDriveOptimization(
                             await resizeLogLun(
                                 credentialsId,
                                 region,
-                                svmName!,
                                 fileSystemId,
                                 lunUuid!,
+                                diskSerialNumber!,
                                 logLunSizeBytes,
                                 activeNodeInstanceId
                             );
@@ -1002,11 +1000,11 @@ async function optimizeSizing(
     );
     const {
         config_data: configData,
-        database_instances: { database_instance_name: instanceName } = {},
-        resource: { resource_name: sqlServerName } = {}
-    } = persistedConfigurationData;
+        database_instances: { database_instance_name: instanceName = '' } = {},
+        resource: { resource_name: sqlServerName = '' } = {}
+    } = persistedConfigurationData || {};
     const storageAssessmentConfigData = configData as unknown as StorageAssessment;
-    const { filesystemId } = storageAssessmentConfigData;
+    const { filesystemId = '' } = storageAssessmentConfigData || {};
 
     if (!instanceName || !sqlServerName) {
         logger.error('Instance name or sql server name is missing');
