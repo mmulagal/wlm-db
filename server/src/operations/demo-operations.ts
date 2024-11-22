@@ -2,6 +2,8 @@ import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { faker } from '@faker-js/faker';
+import { compact } from 'lodash-es';
 import {
     CloudProviders,
     RESOURCESTYPE,
@@ -47,6 +49,7 @@ import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cl
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
+import { describeFSxVolumes } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -651,6 +654,37 @@ async function createOperatingSystemOptimizeJobMockData(
     );
 }
 
+async function demoGetFsxnVolIdsFromOntapVolIds(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumeUuids: string[]
+) {
+    logger.info('Demo Get the Fsxn volume ids from the ontap volume ids', {
+        credentialsId,
+        region,
+        fsxId,
+        volumeUuids
+    });
+
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, fsxId);
+
+    const volumeIds: string[] = [];
+    const uuidVolumeIdMap: Record<string, string> = {};
+
+    volumeUuids.forEach(volumeUuid => {
+        const { VolumeId = '' } = volumes[0];
+        volumeIds.push(`fsvol-${faker.random.alphaNumeric(17)}`);
+        uuidVolumeIdMap[VolumeId] = volumeUuid;
+    });
+
+    logger.debug('List volume ids in an fsx response', volumeIds);
+
+    return {
+        volumeIds: compact(volumeIds),
+        uuidVolumeIdMap
+    };
+}
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -664,5 +698,6 @@ export {
     createAssessmentJobMockData,
     createOptimizeJobMockData,
     updateOptimizedConfigNameInInstanceTable,
-    createOperatingSystemOptimizeJobMockData
+    createOperatingSystemOptimizeJobMockData,
+    demoGetFsxnVolIdsFromOntapVolIds
 };

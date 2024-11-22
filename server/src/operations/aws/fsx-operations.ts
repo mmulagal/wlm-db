@@ -28,10 +28,11 @@ import {
 import { getNetworkInterfacesList } from './ec2-operations';
 import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { convertToBytes, getFsxArn } from '../../utils/utils';
+import { convertToBytes, getFsxArn, isDemo } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
+import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 
 const logger = getLogger();
 
@@ -257,7 +258,9 @@ async function getFsxnVolIdsFromOntapVolIds(
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
-
+    if (isDemo()) {
+        return demoGetFsxnVolIdsFromOntapVolIds(credentialsId, region, fsxId, volumeUuids);
+    }
     volumes.forEach(volume => {
         const { OntapConfiguration: { UUID = '' } = {}, VolumeId = '' } = volume;
         if (volumeUuids.includes(UUID)) {

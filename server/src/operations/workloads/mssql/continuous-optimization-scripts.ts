@@ -578,7 +578,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
 `;
 
 const RESCAN_EXTEND_LOG_LUN = (diskSerialNumber: string) => `
-# Rescan and extend the LUN
+#Rescan and extend the LUN
 Function Rescan-ExtendLUN {
     param (
         [Parameter(Mandatory = $true)]

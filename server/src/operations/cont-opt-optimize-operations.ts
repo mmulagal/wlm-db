@@ -1000,11 +1000,11 @@ async function optimizeSizing(
     );
     const {
         config_data: configData,
-        database_instances: { database_instance_name: instanceName } = {},
-        resource: { resource_name: sqlServerName } = {}
-    } = persistedConfigurationData;
+        database_instances: { database_instance_name: instanceName = '' } = {},
+        resource: { resource_name: sqlServerName = '' } = {}
+    } = persistedConfigurationData || {};
     const storageAssessmentConfigData = configData as unknown as StorageAssessment;
-    const { filesystemId } = storageAssessmentConfigData;
+    const { filesystemId = '' } = storageAssessmentConfigData || {};
 
     if (!instanceName || !sqlServerName) {
         logger.error('Instance name or sql server name is missing');
