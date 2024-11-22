@@ -55,7 +55,8 @@ import {
     CODEBOX_REST_RES,
     AWS_CLI_HIGHLIGHT_STRINGS,
     UI_IDS,
-    DEPLOY_ENDPOINT
+    DEPLOY_ENDPOINT,
+    WIZARD_TYPE
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
@@ -177,8 +178,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
 
     useEffect(() => {
-        setConfigData(configDataList);
-        setDataToCheck(configDataList);
+        const mssqlConfigs = configDataList?.filter((item: any) => item.databaseType !== WIZARD_TYPE.PGSQL) || [];
+        setConfigData(mssqlConfigs);
+        setDataToCheck(mssqlConfigs);
     }, [configDataList]);
 
     useEffect(() => {
@@ -679,13 +681,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //Handle Search
     const handleSearch = (val: string) => {
+        const mssqlConfigs = configDataList?.filter((item: any) => item.databaseType !== WIZARD_TYPE.PGSQL) || [];
         if (val.length) {
-            const newVal = configDataList.filter((text: any) => {
-                return text?.name.includes(val);
+            const newVal = mssqlConfigs.filter((text: any) => {
+                return text?.name.includes(val) && text.databaseType !== WIZARD_TYPE.PGSQL;
             });
             setDataToCheck(newVal);
         } else {
-            setDataToCheck(configDataList);
+            setDataToCheck(mssqlConfigs);
         }
     };
 

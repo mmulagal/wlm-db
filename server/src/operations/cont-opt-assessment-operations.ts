@@ -360,27 +360,20 @@ async function calculateStorageDrift(
                 const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
                 );
-                logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
 
                 // each database is on separate data and log volume
                 const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
                 );
-                logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
 
                 const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
                 );
-                logger.info({ databasesAbove500Gb }); // Todo: remove this line
 
                 const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
                 const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
                 const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
                 const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
-                logger.info({ groupByDataVolume }); // Todo: remove this line
-                logger.info({ groupByLogVolume }); // Todo: remove this line
-                logger.info({ groupByDataLun }); // Todo: remove this line
-                logger.info({ groupByLogLun }); // Todo: remove this line
 
                 const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
                 const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
@@ -767,6 +760,27 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
         : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
         ? JOBSTATUS.WARNING
         : JOBSTATUS.IN_PROGRESS;
+
+    // Create dummy compute right sizing assessment jobs for each managed resource
+    if (masterJobStatus !== JOBSTATUS.IN_PROGRESS) {
+        const allManagedResources = allSubJobs
+            .map(item => item.resource_name)
+            .filter((value, index, self) => self.indexOf(value) === index);
+        allManagedResources.forEach(async resource => {
+            const resourceName = resource.split('\\')[0]!;
+            const jobString = `Assessing SQL Server host ${resourceName} compute right sizing`;
+            await registerJob(accountId, '', '', {
+                name: jobString,
+                description: jobString,
+                resourceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId: masterAssessmentJobId
+            });
+        });
+    }
     await updateJobDetails(accountId, masterAssessmentJobId, {
         status: masterJobStatus,
         endTime: Date.now()
@@ -949,22 +963,6 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     startTime: Date.now(),
                     status: JOBSTATUS.IN_PROGRESS,
                     type: JOBTYPE.ASSESSMENT
-                });
-
-                const allManagedResources = managedInstances.map(instance => instance.resource.resource_name);
-
-                allManagedResources.forEach(async resource => {
-                    const jobString = `Assessing SQL Server host ${resource} compute right sizing`;
-                    await registerJob(accountId, '', '', {
-                        name: jobString,
-                        description: jobString,
-                        resourceName: resource!,
-                        startTime: Date.now(),
-                        endTime: Date.now(),
-                        status: JOBSTATUS.COMPLETED,
-                        type: JOBTYPE.ASSESSMENT,
-                        parentJobId
-                    });
                 });
 
                 try {

@@ -17,7 +17,8 @@ export const SELECT_CONFIG = {
     DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server',
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
-    NO_SAVED_CONFIG: 'There are no saved configurations.',
+    NO_SAVED_CONFIG: 'There are no saved Microsoft SQL configurations.',
+    NO_SAVED_CONFIG_PGSQL: `There are no saved PostgreSQL configurations.`,
     MAX_CONFIG_LIMIT:
         "You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you'll need to delete an old configuration first.",
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
@@ -231,6 +232,7 @@ export const GENERAL = {
     DB_NAME_TOOLTIP:
         'The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).',
     DB_NAME_TOOLTIP1: 'The cluster name must be 15 characters or less',
+    DB_NAME_TOOLTIP1_PGSQL: 'The server name must be 15 characters or less',
     DB_NAME_TOOLTIP2: 'The first character can be a letter (a-z or A-Z) or a number (0-9)',
     DB_NAME_TOOLTIP3: 'Subsequent characters can be a letter, number, or hyphen (-)',
     KEY_PAIR_NAME: 'Key pair',
@@ -238,7 +240,7 @@ export const GENERAL = {
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_PGSQL_TOOLTIP:
-        'Specify the PostgreSQL data drive size only. The provisioning for log drive, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
+        'Specify the PostgreSQL data drive size only. The provisioning for log drive, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for PostgreSQL configuration. You can change the recommended defaults to meet your requirements.',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
     ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 86 TiB.',
@@ -302,8 +304,7 @@ export const GENERAL = {
     //DB credential
     DATABASE_CREDENTIAL_TEXT:
         'Create a new service account for SQL server or use existing service account credentials in the Active Directory',
-    DATABASE_CREDENTIAL_TEXT_PGSQL:
-        'Create a new service account for PostgreSQL server or use existing service account credentials in the Active Directory',
+    DATABASE_CREDENTIAL_TEXT_PGSQL: 'Create a new service account for PostgreSQL server',
     USERNAME_TOOLTIP:
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
