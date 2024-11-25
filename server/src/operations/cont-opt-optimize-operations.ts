@@ -28,8 +28,8 @@ import {
     sleep,
     sqlResponseParsing,
     convertToBytes,
-    sizeInGigaBytes,
-    getResourceNameFromTags
+    getResourceNameFromTags,
+    calculateFsxStorageCapacityForHeadroomOptimization
 } from '../utils/utils';
 import {
     calculateComputeDrift,
@@ -688,12 +688,10 @@ async function headroomOptimization(
             const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
             const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
             const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
-            let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
-            const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
-            // increase newFsxStorageCapactiy so that increment is atleast 10%
-            newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
-
-            const newFsxStorageCapactiyGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
+            const newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+                totalVolumeSizeInBytes,
+                ssdStorageCapacityInBytes
+            );
             if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapactiyGiB) {
                 return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
             }

@@ -5,7 +5,13 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { convertToBytes, getEc2Arn, isDemo, sqlResponseParsing } from '../utils/utils';
+import {
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    convertToBytes,
+    getEc2Arn,
+    isDemo,
+    sqlResponseParsing
+} from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
@@ -46,6 +52,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listJobs } from '../lib/database/job';
+import getMissingPermissionsList from './aws/iam-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -202,7 +209,30 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
               ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
             ? AssessmentStatus.OVER_PROVISIONED
             : AssessmentStatus.OPTIMIZED;
-    return { status, headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
+
+    // Check for 'fsx:UpdateFileSystem' permissions
+    const missingPermissions = [];
+    let newFsxStorageCapactiyGiB = 0;
+    if (status !== AssessmentStatus.OPTIMIZED) {
+        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, [
+            'fsx:UpdateFileSystem'
+        ]);
+        if (implicitlyDenied.length > 0 || explicitlyDenied.length > 0) {
+            missingPermissions.push('fsx:UpdateFileSystem');
+        }
+        newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+            totalVolumeSizeInBytes,
+            ssdStorageCapacityInBytes
+        );
+    }
+    return {
+        status,
+        headroomPercent,
+        ssdStorageCapacityInBytes,
+        totalVolumeSizeInBytes,
+        missingPermissions,
+        newFsxStorageCapactiyGiB
+    };
 }
 
 async function calculateStorageDrift(
@@ -486,7 +516,11 @@ async function calculateStorageDrift(
     } else {
         try {
             const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-            const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
+            const { status, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
+                credentialsId,
+                region,
+                filesystemId
+            );
 
             driftAssessmentData.sizing.push({
                 name: 'headroom',
@@ -494,7 +528,9 @@ async function calculateStorageDrift(
                 status,
                 severity: goldenData!.severity,
                 recommendation: goldenData!.recommendation,
-                tags: goldenData!.tags
+                tags: goldenData!.tags,
+                missingPermissions,
+                recommendedSize: newFsxStorageCapactiyGiB ? `${newFsxStorageCapactiyGiB} GiB` : ''
             });
         } catch (error: any) {
             logger.error(

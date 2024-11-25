@@ -698,6 +698,19 @@ function getRegionDetails(region: string): RegionDetailsType {
     };
 }
 
+function calculateFsxStorageCapacityForHeadroomOptimization(
+    totalVolumeSizeInBytes: number,
+    ssdStorageCapacityInBytes: number
+): number {
+    let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
+    const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
+    // increase newFsxStorageCapacity so that increment is at least 10%
+    newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
+
+    const newFsxStorageCapacityGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
+    return newFsxStorageCapacityGiB;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -741,5 +754,6 @@ export {
     getRedisDetails,
     getTimeDifferenceInMinutes,
     filterActions,
-    getRegionDetails
+    getRegionDetails,
+    calculateFsxStorageCapacityForHeadroomOptimization
 };

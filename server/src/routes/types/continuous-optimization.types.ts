@@ -37,7 +37,9 @@ const ParameterDriftResponse = Type.Object({
             ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
         })
     ),
-    tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars))
+    tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
+    missingPermissions: Type.Optional(Type.Array(Type.String())),
+    recommendedSize: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
