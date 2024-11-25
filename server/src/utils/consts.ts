@@ -201,8 +201,8 @@ const SECRETS: Record<string, string | undefined> = {
     AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
     AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY,
-    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY
+    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
@@ -1374,6 +1374,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     sqlServerName: 'SqlServerName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlVersion: 'SqlVersion',
 
     workloadInstanceType: 'WorkloadInstanceType',
@@ -1397,10 +1398,10 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
         name: TEMPLATE_TYPES.PGSQLSTANDALONE,
         location: './resources/pgsql/templates/standalone-deployment.yaml'
     },
-    // {
-    //     name: TEMPLATE_TYPES.ENDPOINT,
-    //     location: './resources/pgsql/templates/vpc-endpoints.yaml'
-    // },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/pgsql/templates/vpc-endpoints.yaml'
+    },
     {
         name: TEMPLATE_TYPES.NEWFSX,
         location: './resources/pgsql/templates/fsx-new.yaml'
@@ -1435,7 +1436,6 @@ const PGSQL_TEMPLATES_ASSETS = [
         name: 'FSXNewTemplate',
         url: 'pgsql/templates/fsx-new.yaml'
     },
-
     {
         name: 'FSXExistingTemplate',
         url: 'pgsql/templates/fsx-existing.yaml'
@@ -1443,6 +1443,10 @@ const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'ValidationTemplate',
         url: 'pgsql/templates/vpc-validation.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'pgsql/templates/vpc-endpoints.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',
@@ -1458,11 +1462,13 @@ const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
 const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
     fsx: TEMPLATE_FSX_ENDPOINT,
     ec2: TEMPLATE_EC2_ENDPOINT,
-    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
+    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -1484,7 +1490,9 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'autoscaling:DescribeAutoScalingGroups',
     'autoscaling:DescribeAutoScalingInstances',
     'ec2:DescribeAddresses',
-    'ec2:ModifyInstanceAttribute'
+    'ec2:ModifyInstanceAttribute',
+    'ec2:StartInstances',
+    'ec2:StopInstances'
 ];
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
 const DEMO_DEFAULT_REGION = 'us-east-1';
