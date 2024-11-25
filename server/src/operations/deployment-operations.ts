@@ -87,7 +87,8 @@ import {
     PGSQL_VERSION,
     AuditStatus,
     FCI,
-    PGSQL_MASTER_TEMPLATE_PATH
+    PGSQL_MASTER_TEMPLATE_PATH,
+    AL2023_AMI_NAME
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -98,7 +99,8 @@ import {
     sleep,
     splitDomainUsername,
     getCollationForMSSQLVersion,
-    filterActions
+    filterActions,
+    isDemo
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -112,7 +114,11 @@ import { MissingPermissionInterface, NetworkViolation } from '../utils/common-ty
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
-import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
+import {
+    createDeploymentMockDataInDB,
+    createFileSystemForDemo,
+    createDeploymentMockDataInDBForPgSql
+} from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -125,7 +131,6 @@ import { getParametersByPath } from '../lib/aws/ssm';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
-const AL2023AMINAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
 
 async function getSubnetsCidr(
     credentialsId: string,
@@ -432,7 +437,7 @@ async function getCloudformationTemplate(
     );
 
     let masterTemplateContents;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -539,7 +544,7 @@ async function getPgSqlCfTemplate(
     const { databaseSize } = fsxConfiguration;
 
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
-    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023AMINAME)?.Value;
+    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {
@@ -588,7 +593,7 @@ async function getPgSqlCfTemplate(
     );
 
     let masterTemplateContents;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -597,7 +602,7 @@ async function getPgSqlCfTemplate(
             'simulator',
             'responses',
             'aws',
-            'mock-master-template.yaml'
+            'mock-master-template-postgres.yaml'
         );
 
         const filePathDemo = path.join(
@@ -608,7 +613,7 @@ async function getPgSqlCfTemplate(
             'simulator',
             'responses',
             'aws',
-            'mock-master-template.yaml'
+            'mock-master-template-postgres.yaml'
         );
         const filePath = process.env.NODE_ENV === 'demo' ? filePathDemo : filePathSim;
         const yamlString = fs.readFileSync(filePath, 'utf8');
@@ -1268,7 +1273,7 @@ async function deployCloudFormationTemplate(
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
@@ -1457,7 +1462,7 @@ async function deployPgSql(
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
-    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023AMINAME)?.Value;
+    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {
@@ -1649,6 +1654,27 @@ async function deployCfTemplateForPgSql(
     // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
+    if (isDemo()) {
+        const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
+        const stackId = deployStackResponse.StackId || '';
+        const awsAccountId = randomize('0', 8);
+        createDeploymentMockDataInDBForPgSql(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlConfiguration?.sqlDeploymentMode,
+            fsxConfiguration?.fsxFileSystemId,
+            awsAccountId,
+            sqlConfiguration?.sqlServerName,
+            DatabaseTypes.PG_SQL
+        );
+        if (!fsxConfiguration.fsxFileSystemId) {
+            // create a new fsx record in fsx inventory
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration, false);
+        }
+    }
 
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
 }
