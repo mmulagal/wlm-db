@@ -264,12 +264,12 @@ Resources:
             check_status "Failed to create PostgreSQL archive log directory"
 
             # Create a new database
-            sudo -i -u postgres /usr/bin/psql -c "CREATE DATABASE $dbname;"
-            check_status "Failed to create database $dbname"
+            # sudo -i -u postgres /usr/bin/psql -c "CREATE DATABASE $dbname;"
+            # check_status "Failed to create database $dbname"
 
             # List all databases
-            sudo -u postgres /usr/bin/psql -c "\l"
-            check_status "Failed to list databases"
+            # sudo -u postgres /usr/bin/psql -c "\l"
+            # check_status "Failed to list databases"
 
             # Verify the data directory
             data_directory=$(sudo -u postgres /usr/bin/psql -t -c "SHOW data_directory;" | xargs)
