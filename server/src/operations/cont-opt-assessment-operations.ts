@@ -530,7 +530,7 @@ async function calculateStorageDrift(
                 recommendation: goldenData!.recommendation,
                 tags: goldenData!.tags,
                 missingPermissions,
-                recommendedSize: newFsxStorageCapactiyGiB ? `${newFsxStorageCapactiyGiB} GiB` : ''
+                recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0
             });
         } catch (error: any) {
             logger.error(
