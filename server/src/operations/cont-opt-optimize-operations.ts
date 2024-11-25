@@ -38,7 +38,7 @@ import {
     getLogVolumeDrift,
     getTempDbVolumeDrift
 } from './cont-opt-assessment-operations';
-import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
+import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -55,7 +55,11 @@ import {
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
-import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
+import {
+    getFsxVolumeDetails,
+    getFsxnVolIdsFromOntapVolIds,
+    updateVolumeSizeAndWaitForUpdate
+} from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance, modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
@@ -828,10 +832,11 @@ async function logDriveOptimization(
                             existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes &&
                             matchingFsxVolumeId
                         ) {
-                            await updateFsxVolumeSize(
+                            await updateVolumeSizeAndWaitForUpdate(
                                 credentialsId,
                                 region,
                                 accountId,
+                                fileSystemId,
                                 matchingFsxVolumeId,
                                 requiredLogVolumeSizeBytes
                             );
@@ -863,9 +868,6 @@ async function logDriveOptimization(
                     }
                 })
             );
-            jobStatus = JOBSTATUS.COMPLETED;
-
-            updateLongRunningAuditGroup(AuditStatus.SUCCESS, errorMessage);
         } else {
             errorMessage = 'Log drives are not under provisioned, no action required';
             jobStatus = JOBSTATUS.WARNING;
@@ -943,11 +945,12 @@ async function tempDbDriveOptimization(
                 existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredTempDbVolumeSizeBytes &&
                 tempDbFsxVolumeId
             ) {
-                await updateFsxVolumeSize(
+                await updateVolumeSizeAndWaitForUpdate(
                     credentialsId,
                     region,
                     accountId,
                     tempDbFsxVolumeId,
+                    fileSystemId,
                     requiredTempDbVolumeSizeBytes
                 );
             } else {
