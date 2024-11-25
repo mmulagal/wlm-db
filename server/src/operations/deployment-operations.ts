@@ -88,8 +88,7 @@ import {
     AuditStatus,
     FCI,
     PGSQL_MASTER_TEMPLATE_PATH,
-    AL2023_AMI_NAME,
-    DATABASE_TYPE
+    AL2023_AMI_NAME
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -100,7 +99,8 @@ import {
     sleep,
     splitDomainUsername,
     getCollationForMSSQLVersion,
-    filterActions
+    filterActions,
+    isDemo
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -128,7 +128,6 @@ import {
     createRootModuleFile
 } from './terraform-operations';
 import { getParametersByPath } from '../lib/aws/ssm';
-import { ssmGetParamsAmazonLinuxAMIs } from '../utils/demo-utils/demoMockdata';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -438,7 +437,7 @@ async function getCloudformationTemplate(
     );
 
     let masterTemplateContents;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -544,10 +543,7 @@ async function getPgSqlCfTemplate(
     const { sqlServerName, sqlVersion } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
 
-    const amazonLinuxAmis =
-        process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
-            ? ssmGetParamsAmazonLinuxAMIs(region).Parameters
-            : await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
+    const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
     const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
@@ -597,7 +593,7 @@ async function getPgSqlCfTemplate(
     );
 
     let masterTemplateContents;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -1277,7 +1273,7 @@ async function deployCloudFormationTemplate(
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
@@ -1292,7 +1288,6 @@ async function deployCloudFormationTemplate(
             awsAccountId,
             sqlConfiguration?.sqlServerName,
             false,
-            undefined,
             STORAGE_PROTOCOLS.ISCSI
         );
         if (!fsxConfiguration.fsxFileSystemId) {
@@ -1659,7 +1654,7 @@ async function deployCfTemplateForPgSql(
     // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
@@ -1673,7 +1668,7 @@ async function deployCfTemplateForPgSql(
             fsxConfiguration?.fsxFileSystemId,
             awsAccountId,
             sqlConfiguration?.sqlServerName,
-            DATABASE_TYPE.PG_SQL
+            DatabaseTypes.PG_SQL
         );
         if (!fsxConfiguration.fsxFileSystemId) {
             // create a new fsx record in fsx inventory

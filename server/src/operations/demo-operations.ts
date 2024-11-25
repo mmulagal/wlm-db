@@ -5,7 +5,6 @@ import { randomUUID } from 'crypto';
 import {
     CloudProviders,
     RESOURCESTYPE,
-    DATABASE_TYPE,
     MSSQL_DATABASE_TYPES,
     ONLINE,
     DEFAULT_INSTANCE_NAME,
@@ -163,7 +162,7 @@ async function createDeploymentMockDataInDB(
         deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
         endTime: new Date().valueOf(),
         data: {
-            databaseType: DATABASE_TYPE,
+            databaseType: DatabaseTypes.MS_SQL_SERVER,
             resourceName,
             fileSystemType: STORAGE_TYPE.FSXN
         }
@@ -673,7 +672,10 @@ async function createDeploymentMockDataInDBForPgSql(
         region,
         credentialsId,
         sqlDeploymentMode,
-        serverName
+        serverName,
+        awsAccountId,
+        storageProtocol,
+        resourceId
     });
     serverName = serverName || `sqldatabase${randomize('a0', 4)}`;
 
@@ -694,7 +696,7 @@ async function createDeploymentMockDataInDBForPgSql(
         deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
         endTime: new Date().valueOf(),
         data: {
-            databaseType: DATABASE_TYPE.PG_SQL,
+            databaseType: DatabaseTypes.PG_SQL,
             resourceName,
             fileSystemType: STORAGE_TYPE.FSXN
         }
@@ -746,7 +748,7 @@ async function createDeploymentMockDataInDBForPgSql(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    const data: any = await mockPGSqlStandaloneDeploymentStack(
+    let data: any = await mockPGSqlStandaloneDeploymentStack(
         accountId,
         resourceName,
         credentialsId,
@@ -754,6 +756,17 @@ async function createDeploymentMockDataInDBForPgSql(
         stackName,
         FSXFileSystemId
     );
+
+    const mockJobs: any[] = [];
+    data = [data];
+    while (data.length > 0) {
+        const job = data.pop();
+        if (job?.subJobs) {
+            data.merge(job.subJobs);
+        }
+        mockJobs.push({ ...job });
+        delete mockJobs[mockJobs.length - 1].subJobs;
+    }
 
     await createJobs(accountId, [data]);
 }
