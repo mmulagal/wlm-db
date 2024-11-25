@@ -1090,8 +1090,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
         region,
-        databaseHostId,
-        databaseInstanceId
+        resourceId: databaseHostId,
+        sqlInstanceId: databaseInstanceId
     })) as DatabaseInstancesIncludingResource[];
     if (isEmpty(managedInstance)) {
         logger.error(
