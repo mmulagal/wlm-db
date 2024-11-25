@@ -252,7 +252,7 @@ Resources:
             check_status "Failed to update PostgreSQL configuration"
 
             # Changing dynamic_shared_memory_type to mmap
-            sudo sed -i "s|^#dynamic_shared_memory_type =.*|dynamic_shared_memory_type = mmap|" /$fsxdatavolumename/postgresql.conf
+            sudo sed -i "s|^dynamic_shared_memory_type =.*|dynamic_shared_memory_type = mmap|" /$fsxdatavolumename/postgresql.conf
             check_status "Failed to change dynamic_shared_memory_type to mmap"
 
             # Change the PGDATA environment variable
@@ -291,10 +291,6 @@ Resources:
             # Set password for postgres user
             sudo -u postgres /usr/bin/psql -c "ALTER USER postgres PASSWORD '$service_account_password';"
             check_status "Failed to set password for postgres user"
-
-            # Verify the installation
-            sudo -u postgres /usr/bin/psql -c "SELECT version();"
-            check_status "Failed to verify PostgreSQL installation"
 
             # Create a new database
             # sudo -i -u postgres /usr/bin/psql -c "CREATE DATABASE $dbname;"

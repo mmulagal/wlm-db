@@ -201,8 +201,8 @@ const SECRETS: Record<string, string | undefined> = {
     AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
     AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY,
-    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY
+    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {

@@ -233,7 +233,7 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
     let FSxTempDbVolumeSize = 0;
-    if (databaseType === DatabaseTypes.PG_SQL) {
+    if (databaseType !== DatabaseTypes.PG_SQL) {
         FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
     }
     let FSxQuorumVolumeSize = 0;

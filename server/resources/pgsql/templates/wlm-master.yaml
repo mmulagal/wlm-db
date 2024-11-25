@@ -1,7 +1,7 @@
 #prettier-ignore
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: This template deploys Postgres SQL Server in the chosen deployment model (HA or a standalone instance). 
+Description: This template deploys Postgres SQL Server in the chosen deployment model (standalone instance). 
             This template creates an Amazon EC2 instance with Amazon Linux 2023 and related resources.
             You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
