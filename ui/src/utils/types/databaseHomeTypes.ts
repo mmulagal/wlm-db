@@ -99,10 +99,12 @@ export interface JobsSummaryRes {
     completed?: number;
     failed?: number;
     inProgress?: number;
+    warning?: number;
     totalJobs?: number;
     completedPercent?: number;
     failedPercent?: number;
     inProgressPercent?: number;
+    warningPercent?: number;
 }
 
 export interface StatusRes {

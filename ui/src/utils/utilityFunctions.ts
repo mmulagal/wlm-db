@@ -555,13 +555,15 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     const completed = data?.completed || 0;
     const failed = data?.failed || 0;
     const inProgress = data?.inProgress || 0;
-    const totalJobs = failed + inProgress + completed;
+    const warning = data?.warning || 0;
+    const totalJobs = failed + inProgress + completed + warning;
     const newData = {
         ...data,
         totalJobs: totalJobs,
         completedPercent: completed ? (completed / totalJobs) * 100 : 0,
         failedPercent: failed ? (failed / totalJobs) * 100 : 0,
-        inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
+        inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0,
+        warningPercent: warning ? (warning / totalJobs) * 100 : 0
     };
     return newData;
 };
