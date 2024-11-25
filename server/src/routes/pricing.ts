@@ -10,10 +10,10 @@ export default function pricingRoutes(fastify: FastifyInstance) {
 
     server.post(API_PATH_PRICING, { schema: CalculatePriceSchema }, async (request, reply) => {
         const {
-            body: { compute, fsxnStorage, vpc, ebsStorage, fsxwStorage }
+            body: { compute, fsxnStorage, vpc, ebsStorage, fsxwStorage, osType, databaseType }
         } = request;
 
-        const response = await calculatePrice(compute, fsxnStorage, vpc, ebsStorage, fsxwStorage);
+        const response = await calculatePrice(compute, fsxnStorage, vpc, ebsStorage, fsxwStorage, osType, databaseType);
         return reply.send(response);
     });
 }

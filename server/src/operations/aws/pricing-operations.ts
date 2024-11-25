@@ -102,8 +102,11 @@ function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     };
 }
 
-function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): ProductInput {
-    logger.info('Get ec2 instance input', { compute });
+function getEc2InstanceInput(
+    compute: PricingServiceRequestType['compute'],
+    osType?: PricingServiceRequestType['osType']
+): ProductInput {
+    logger.info('Get ec2 instance input', { compute, osType });
 
     const filters = {
         name: 'ec2Instance',
@@ -123,7 +126,7 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
                 {
                     Type: FilterType.TERM_MATCH,
                     Field: 'operatingSystem',
-                    Value: 'windows'
+                    Value: osType || 'windows'
                 },
                 {
                     Type: FilterType.TERM_MATCH,
@@ -135,12 +138,16 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
                     Field: 'CapacityStatus',
                     Value: 'Used' // On-demand
                 },
-                {
-                    // No license required for windows
-                    Type: FilterType.TERM_MATCH,
-                    Field: 'licenseModel',
-                    Value: 'No License required'
-                }
+                ...(osType === 'linux'
+                    ? []
+                    : [
+                          {
+                              // No license required for windows
+                              Type: FilterType.TERM_MATCH,
+                              Field: 'licenseModel',
+                              Value: 'No License required'
+                          }
+                      ])
             ],
             ...ec2Service,
             ...AWS_PRICING_FORMAT_VERSION
@@ -294,18 +301,20 @@ function getInputs(
     fsxnStorage: PricingServiceRequestType['fsxnStorage'],
     ebsStorage: PricingServiceRequestType['ebsStorage'],
     vpc: PricingServiceRequestType['vpc'],
-    fsxwStorage: PricingServiceRequestType['fsxwStorage']
+    fsxwStorage: PricingServiceRequestType['fsxwStorage'],
+    osType?: PricingServiceRequestType['osType']
 ): ProductInput[] {
     logger.info('Getting product inputs', {
         compute,
         fsxnStorage,
         vpc,
         ebsStorage,
-        fsxwStorage
+        fsxwStorage,
+        osType
     });
 
     let inputList: ProductInput[] = [
-        getEc2InstaceInput(compute),
+        getEc2InstanceInput(compute, osType),
         getEc2StorageInput(compute),
         ...((vpc && [getVpcInput(vpc)]) || [])
     ];
@@ -460,14 +469,18 @@ async function calculatePrice(
     fsxnStorage: PricingServiceRequestType['fsxnStorage'],
     vpc: PricingServiceRequestType['vpc'],
     ebsStorage?: PricingServiceRequestType['ebsStorage'],
-    fsxwStorage?: PricingServiceRequestType['fsxwStorage']
+    fsxwStorage?: PricingServiceRequestType['fsxwStorage'],
+    osType?: PricingServiceRequestType['osType'],
+    databaseType?: string
 ): Promise<PricingServiceResponseType> {
     logger.info('Calculating price for AWS resources', {
         compute,
         fsxnStorage,
         vpc,
         ebsStorage,
-        fsxwStorage
+        fsxwStorage,
+        osType,
+        databaseType
     });
 
     const ebsRootVolumes = new Array(compute.sqlDeploymentMode === FCI ? 2 : 1).fill(null).map((_, index) => ({
@@ -489,7 +502,7 @@ async function calculatePrice(
         }
     }
 
-    const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage));
+    const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage, osType));
     const productRates = await getProductRates(inputList);
 
     const {
@@ -519,14 +532,17 @@ async function calculatePrice(
                 ({ fsxnStorageCost, fsxnOperationalCost, fsxnDiskSizes } = calculateFsxnCost(
                     fsxResource,
                     productRates.fsxnStorage,
-                    compute?.sqlDeploymentMode
+                    compute?.sqlDeploymentMode,
+                    databaseType
                 ));
                 totalFsxnCost = totalFsxnCost + fsxnStorageCost + fsxnOperationalCost;
                 const sizeData = fsxnDiskSizes
                     ? {
                           data: numeral(`${fsxnDiskSizes?.FSxDataVolumeSize}MiB`).value() || 0,
                           log: numeral(`${fsxnDiskSizes?.FSxLogVolumeSize}MiB`).value() || 0,
-                          tempdb: numeral(`${fsxnDiskSizes?.FSxTempDbVolumeSize}MiB`).value() || 0,
+                          ...(fsxnDiskSizes?.FSxTempDbVolumeSize && {
+                              tempdb: numeral(`${fsxnDiskSizes?.FSxTempDbVolumeSize}MiB`).value() || 0
+                          }),
                           buffer: numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0,
                           total: numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0,
                           ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
@@ -636,8 +652,13 @@ async function calculatePrice(
     };
 }
 
-function calculateFsxnCost(fsxnStorage: any, fsxnStorageRates: any, sqlDeploymentMode: string) {
-    logger.info('Calculating cost for FSx Netapp storage', { fsxnStorage, fsxnStorageRates, sqlDeploymentMode });
+function calculateFsxnCost(fsxnStorage: any, fsxnStorageRates: any, sqlDeploymentMode: string, databaseType?: string) {
+    logger.info('Calculating cost for FSx Netapp storage', {
+        fsxnStorage,
+        fsxnStorageRates,
+        sqlDeploymentMode,
+        databaseType
+    });
 
     if (!isEmpty(fsxnStorage) && !fsxnStorage.diskSize && !fsxnStorage.storageCapacity) {
         throw new Error('FSx Netapp storage is not available');
@@ -649,7 +670,7 @@ function calculateFsxnCost(fsxnStorage: any, fsxnStorageRates: any, sqlDeploymen
     let fsxnDiskSizes;
     let fsxnDisksize;
     if (fsxnStorage?.diskSize) {
-        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize, sqlDeploymentMode);
+        fsxnDiskSizes = calculateFsxnStorageCapacity(fsxnStorage.diskSize, sqlDeploymentMode, databaseType);
         fsxnDisksize = fsxnDiskSizes.FSxStorageCapacity;
     } else {
         fsxnDisksize = fsxnStorage?.storageCapacity;
