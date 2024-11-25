@@ -1087,12 +1087,13 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         fields
     });
 
-    const managedInstances = (await listDatabaseInstances(accountId, {
+    const [managedInstance] = (await listDatabaseInstances(accountId, {
         credentialsId,
-        databaseHostId,
-        databaseInstanceId
+        region,
+        resourceId: databaseHostId,
+        sqlInstanceId: databaseInstanceId
     })) as DatabaseInstancesIncludingResource[];
-    if (isEmpty(managedInstances)) {
+    if (isEmpty(managedInstance)) {
         logger.error(
             `No  managed database instance by ${accountId} ${credentialsId} ${databaseHostId} ${databaseInstanceId} found.`
         );
@@ -1100,7 +1101,7 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     }
 
     try {
-        const savedInstanceName = managedInstances[0].database_instance_name;
+        const savedInstanceName = managedInstance.database_instance_name;
         const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobString,
@@ -1111,7 +1112,7 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             status: JOBSTATUS.IN_PROGRESS,
             type: JOBTYPE.ASSESSMENT
         });
-        triggerAssessment(managedInstances[0], jobId, fields);
+        triggerAssessment(managedInstance, jobId, fields);
 
         return { jobId };
     } catch (error) {
