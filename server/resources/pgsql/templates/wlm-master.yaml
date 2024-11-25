@@ -83,7 +83,7 @@ Metadata:
       CfDeployRoleName:
         default: CloudFormation deployment role name
       UniqueID:
-        default: Unique ID for WLMDB SQL resource group
+        default: Unique ID for WLMDB PGSQL resource group
       KeyPairName:
         default: Key pair name
       SQLAMIID:
@@ -91,7 +91,7 @@ Metadata:
       SqlVersion:
         default: PostgreSQL version
       SqlServerName:
-        default: SQL Server name
+        default: PGSQL Server name
       NodeNetBIOSNames:
         default: NetBIOS names of cluster nodes
       EBSVolumeSize:
@@ -105,7 +105,7 @@ Metadata:
       FSxStorageCapacity:
         default: FSx for ONTAP storage capacity
       PrivateSubnet1ID:
-        default: Private subnet ID for the first SQL node, for example, subnet-000dc866d93550eb0 
+        default: Private subnet ID for the first PGSQL node, for example, subnet-000dc866d93550eb0 
       RouteTable1Id:
         default: ID of the route table for private subnet 1.
       WorkloadInstanceType:
@@ -113,7 +113,7 @@ Metadata:
       ONTAPSecurityGroupID:
         default: Security Group ID for FSx for ONTAP
       SQLSvmName:
-        default: SVM for creating PG SQL volumes 
+        default: SVM for creating PGSQL volumes 
       FSxDiskIops:
         default: Provisioned SSD IOPS  
       FsxVolumeSnapshotPolicy:
@@ -127,7 +127,7 @@ Metadata:
       ValidationNodeInstanceType:
        default: Validation node instance type
       SQLDeploymentMode:
-        default: SQL server deployment mode
+        default: PGSQL server deployment mode
       S3EndpointExists:
         default: Boolean to check if an S3 endpoint exists in the vpc.
       CloudformationEndpointExists:
@@ -147,7 +147,7 @@ Metadata:
       Ec2EndpointExists:
         default: Does AWS EC2 endpoint exist in the VPC?
       SQLServiceAccountPassword:
-        default: SQL Service account password
+        default: PGSQL Service account password
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
