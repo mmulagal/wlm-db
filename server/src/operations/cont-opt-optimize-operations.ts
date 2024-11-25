@@ -1492,7 +1492,13 @@ async function handleComputeRemediation(
                         instanceIdsList.push(...clusterNodeInstanceIds);
 
                         // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
-                        await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
+
+                        try {
+                            // TODO: temporarily proceeding with the instance type change even if the pre-requisites fail; need to revisit this later
+                            await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
+                        } catch (error) {
+                            logger.warn('Pre-requisites failed for instance type change', error);
+                        }
 
                         const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
                             nodeId => nodeId !== activeNodeInstanceId

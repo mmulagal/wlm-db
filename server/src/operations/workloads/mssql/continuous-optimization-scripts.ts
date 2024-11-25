@@ -678,7 +678,7 @@ Function Move-AllClusterGroups {
                 }
                 try {
                     # Move the cluster group to the target node
-                    Move-ClusterGroup -Name $clusterGroupName -Node $TargetNodeName
+                    Move-ClusterGroup -Name $clusterGroupName -Node $TargetNodeName > $null
                     $groupResult.status = 'success'
                 } catch {
                     # Update status and error in case of failure
