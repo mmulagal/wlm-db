@@ -606,7 +606,7 @@ async function getPgSqlCfTemplate(
             'simulator',
             'responses',
             'aws',
-            'mock-master-template.yaml'
+            'mock-master-template-postgres.yaml'
         );
 
         const filePathDemo = path.join(
@@ -617,7 +617,7 @@ async function getPgSqlCfTemplate(
             'simulator',
             'responses',
             'aws',
-            'mock-master-template.yaml'
+            'mock-master-template-postgres.yaml'
         );
         const filePath = process.env.NODE_ENV === 'demo' ? filePathDemo : filePathSim;
         const yamlString = fs.readFileSync(filePath, 'utf8');
@@ -1466,10 +1466,7 @@ async function deployPgSql(
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
-    const amazonLinuxAmis =
-        process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
-            ? ssmGetParamsAmazonLinuxAMIs(region).Parameters
-            : await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
+    const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
     const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
@@ -1673,6 +1670,7 @@ async function deployCfTemplateForPgSql(
             region,
             credentialsId,
             sqlConfiguration?.sqlDeploymentMode,
+            fsxConfiguration?.fsxFileSystemId,
             awsAccountId,
             sqlConfiguration?.sqlServerName,
             DATABASE_TYPE.PG_SQL

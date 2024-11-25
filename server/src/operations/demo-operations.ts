@@ -39,7 +39,8 @@ import {
     sandboxJobData,
     assessmentJobData,
     optimizeStorageJobData,
-    optimizeOperatingSystemJobData
+    optimizeOperatingSystemJobData,
+    mockPGSqlStandaloneDeploymentStack
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -659,6 +660,7 @@ async function createDeploymentMockDataInDBForPgSql(
     region: string,
     credentialsId: string,
     sqlDeploymentMode: string,
+    FSXFileSystemId: string | undefined,
     awsAccountId: string,
     serverName: string,
     storageProtocol: string = STORAGE_PROTOCOLS.NFS,
@@ -677,9 +679,7 @@ async function createDeploymentMockDataInDBForPgSql(
 
     const cloudProviderId = awsAccountId;
     const resourceName = serverName;
-    if (sqlDeploymentMode.toLowerCase() === 'fci') {
-        sqlDeploymentMode = 'FCI';
-    } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
+    if (sqlDeploymentMode.toLowerCase() === 'standalone') {
         sqlDeploymentMode = 'Standalone';
     }
     await createDeployment(accountId, {
@@ -746,17 +746,16 @@ async function createDeploymentMockDataInDBForPgSql(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    const data = await createJobMockData(
+    const data: any = await mockPGSqlStandaloneDeploymentStack(
         accountId,
         resourceName,
-        stackName,
-        sqlDeploymentMode,
-        undefined,
         credentialsId,
-        region
+        region,
+        stackName,
+        FSXFileSystemId
     );
 
-    await createJobs(accountId, data);
+    await createJobs(accountId, [data]);
 }
 
 export {
