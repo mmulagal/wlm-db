@@ -748,7 +748,7 @@ async function createDeploymentMockDataInDBForPgSql(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    let data: any = await mockPGSqlStandaloneDeploymentStack(
+    const data: any[] = await mockPGSqlStandaloneDeploymentStack(
         accountId,
         resourceName,
         credentialsId,
@@ -757,18 +757,7 @@ async function createDeploymentMockDataInDBForPgSql(
         FSXFileSystemId
     );
 
-    const mockJobs: any[] = [];
-    data = [data];
-    while (data.length > 0) {
-        const job = data.pop();
-        if (job?.subJobs) {
-            data.merge(job.subJobs);
-        }
-        mockJobs.push({ ...job });
-        delete mockJobs[mockJobs.length - 1].subJobs;
-    }
-
-    await createJobs(accountId, [data]);
+    await createJobs(accountId, data);
 }
 
 export {
