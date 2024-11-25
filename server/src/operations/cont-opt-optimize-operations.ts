@@ -880,6 +880,7 @@ async function logDriveOptimization(
                                     logLunSizeBytes,
                                     activeNodeInstanceId
                                 );
+                                logger.info(`Log LUN size increased to ${logLunSizeBytes} bytes.`);
                             } else {
                                 logger.info('Log LUN size changed since we last assessed, no action required');
                             }
