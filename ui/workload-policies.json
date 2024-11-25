@@ -122,7 +122,6 @@
                     "compute-optimizer:GetEC2InstanceRecommendations",
                     "autoscaling:DescribeAutoScalingGroups",
                     "autoscaling:DescribeAutoScalingInstances",
-                    "ec2:DescribeAddresses",
                     "ec2:StartInstances",
                     "ec2:StopInstances",
                     "ec2:ModifyInstanceAttribute"
