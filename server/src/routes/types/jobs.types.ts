@@ -20,7 +20,8 @@ type JobSummaryQueryType = Static<typeof JobSummaryQueryString>;
 const JobSummaryResponse = Type.Object({
     inProgress: Type.Number(),
     completed: Type.Number(),
-    failed: Type.Number()
+    failed: Type.Number(),
+    warning: Type.Number()
 });
 
 type JobSummaryResponseType = Static<typeof JobSummaryResponse>;
@@ -28,7 +29,8 @@ type JobSummaryResponseType = Static<typeof JobSummaryResponse>;
 const JobSummaryByTimeRecord = Type.Object({
     endTime: Type.Number(),
     completed: Type.Optional(Type.Number()),
-    failed: Type.Optional(Type.Number())
+    failed: Type.Optional(Type.Number()),
+    warning: Type.Optional(Type.Number())
 });
 
 const JobSummaryByTimeResponse = Type.Array(Type.Optional(JobSummaryByTimeRecord));

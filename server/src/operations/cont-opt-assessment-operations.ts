@@ -1075,7 +1075,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     databaseHostId: string,
     databaseInstanceId: string,
     initiatedBy: string,
-    fields?: string
+    fields?: string,
+    parentJobId?: string
 ) {
     logger.info('On-demand trigger drift assessment', {
         accountId,
@@ -1084,7 +1085,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         databaseInstanceId,
         databaseHostId,
         initiatedBy,
-        fields
+        fields,
+        parentJobId
     });
 
     const [managedInstance] = (await listDatabaseInstances(accountId, {
@@ -1099,9 +1101,12 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         );
         return;
     }
-
+    const {
+        resource: { resource_name: resourceName },
+        database_instance_name: instanceName
+    } = managedInstance;
     try {
-        const savedInstanceName = managedInstance.database_instance_name;
+        const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobString,
@@ -1110,7 +1115,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
         });
         triggerAssessment(managedInstance, jobId, fields);
 
