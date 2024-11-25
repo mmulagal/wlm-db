@@ -58,7 +58,7 @@ const PostgreCodebox = () => {
 
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
-    const selectedDBName = useAppSelector(state => state.postgreForm.postgreDBName);
+    const selectedDBName = useAppSelector(state => state.postgreForm.postgreServerName);
     const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
 
     const [loadTemplateData] = useGetPgsqlTemplatesMutation();
