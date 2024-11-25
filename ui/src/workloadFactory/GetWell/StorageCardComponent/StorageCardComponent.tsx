@@ -313,7 +313,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
-                content={<DialogContent type={type} recommendationOptions={cardData?.recommendationOptions} />}
+                content={
+                    <DialogContent
+                        type={type}
+                        recommendationOptions={cardData?.recommendationOptions}
+                        missingPermissions={cardData?.missingPermissions}
+                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                    />
+                }
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -323,7 +330,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     closeDialog();
                 }}
                 customClass={styles.colorSet}
-                hidePrimaryButton={type === 'User data files (.mdf) placement'}
+                hidePrimaryButton={
+                    type === 'User data files (.mdf) placement' ||
+                    (type === 'File system headroom' &&
+                        cardData?.missingPermissions &&
+                        cardData?.missingPermissions.length > 0)
+                }
             />
         );
     };

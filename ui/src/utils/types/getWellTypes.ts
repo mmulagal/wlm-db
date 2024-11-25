@@ -63,6 +63,8 @@ export interface PerConfigInterface {
     objectsInViolation?: string[] | null;
     recommendationOptions?: any;
     errorMessage?: string;
+    missingPermissions?: string[];
+    recommendedSizeInGib?: number;
 }
 
 export interface GwCardDataInterface {

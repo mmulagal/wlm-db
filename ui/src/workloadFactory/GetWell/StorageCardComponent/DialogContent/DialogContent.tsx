@@ -1,6 +1,7 @@
 import styles from './DialogContent.module.scss';
 import { DsTypography, SelectField } from '@netapp/design-system';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedRecommendedInstance } from '../../../../store/workloadFactory/getWellOptimizeSlice';
@@ -8,13 +9,22 @@ import { useDispatch } from 'react-redux';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
 
 type DialogType = {
     type: string;
     recommendationOptions?: any;
+    missingPermissions?: string[];
+    recommendedSizeInGib?: number;
 };
 
-const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
+const DialogContent = ({
+    type,
+    recommendationOptions = null,
+    missingPermissions,
+    recommendedSizeInGib
+}: DialogType) => {
     const dispatch = useDispatch();
     const { selectedRecommendedInstance, selectedDatabaseStorageType } = useAppSelector(state => state.getWellOptimize);
 
@@ -136,7 +146,102 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                     </div>
                 );
             case 'File system headroom':
-                return (
+                return missingPermissions && missingPermissions.length ? (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends increasing the FSx for ONTAP file system capacity to
+                                maintain the right headroom. However, the required modify permissions are currently
+                                missing.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Action required
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">Choose one of the following options.</DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Option 1: Grant FSx for ONTAP modify permissions
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ width: '712px' }}>
+                                Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with
+                                this action.
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Sign in to the AWS Management Console and open the IAM service.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Edit the policy for role and add AWS FSx for ONTAP modify permissions.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles['dialog-body']}>
+                                    <div className={styles['code-box']}>
+                                        <div className={styles['code']}>
+                                            <DsTypography variant="Regular_14">
+                                                {missingPermissions.map((permission: string) => (
+                                                    <DsTypography variant="Regular_14">{permission}</DsTypography>
+                                                ))}
+                                            </DsTypography>
+                                            <div className={styles['copy']}>
+                                                <CopyToClipboard text={missingPermissions}>
+                                                    <CopyIcon />
+                                                </CopyToClipboard>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Option 2: AWS Management Console
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ width: '712px' }}>
+                                Increase the file system capacity directly from the AWS Management Console.
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Semibold_14">1|</DsTypography>
+                                    <DsTypography variant="Regular_14">Open the Amazon FSx console.</DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Semibold_14">2|</DsTypography>
+                                    <DsTypography variant="Regular_14">Choose File systems.</DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Semibold_14">3|</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        Select the FSx for ONTAP file system that you want to update SSD storage
+                                        capacity.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <DsTypography variant="Semibold_14">4|</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        Update storage capacity to the desired capacity{' '}
+                                        {recommendedSizeInGib ? `${recommendedSizeInGib} GiB.` : '.'}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
@@ -157,7 +262,7 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                                     </div>
                                     <DsTypography variant="Regular_14">
                                         Storage capacity update: The capacity of your FSx for ONTAP file system will be
-                                        increased.
+                                        increased {recommendedSizeInGib ? ` to ${recommendedSizeInGib} GiB.` : '.'}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -701,7 +806,6 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
                                     : GETWELL_DIALOG_CONTENT.DOWNTIME_WARNING}
                             </DsTypography>
                             <div className={styles.content}>
-
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
