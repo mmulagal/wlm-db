@@ -164,7 +164,7 @@ async function createDeploymentMockDataInDB(
         deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
         endTime: new Date().valueOf(),
         data: {
-            databaseType: DatabaseTypes.MS_SQL_SERVER,
+            databaseType: 'Microsoft SQL Server',
             resourceName,
             fileSystemType: STORAGE_TYPE.FSXN
         }
