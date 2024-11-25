@@ -702,6 +702,15 @@ export const inventoryApiV2 = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            createDemoResources: builder.mutation({
+                query: ({ credentialsId, regionId }) => ({
+                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/resources/create-demo-resources`,
+                    method: 'POST',
+                    responseHandler: response => {
+                        return response.text();
+                    }
+                })
             })
         };
     }
@@ -976,7 +985,8 @@ export const {
     useLazyGetDatabaseHostsListV2Query,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
-    useManageMssqlInstanceMutation
+    useManageMssqlInstanceMutation,
+    useCreateDemoResourcesMutation
 } = inventoryApiV2;
 
 export const {
