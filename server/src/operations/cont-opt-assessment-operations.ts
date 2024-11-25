@@ -361,19 +361,14 @@ async function calculateStorageDrift(
                     (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
                 );
 
-                logger.info({ databasesOnSameDataLogLun });
-
                 // each database is on separate data and log volume
-                logger.info({ dataLogVolumeDetails });
                 const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.ontapVolumeUuid === data.logVolumeUuid
                 );
-                logger.info({ databasesOnSameDataLogVolume });
 
                 const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
                 );
-                logger.info({ databasesAbove500Gb });
 
                 const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
                 const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
