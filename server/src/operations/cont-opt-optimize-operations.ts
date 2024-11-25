@@ -33,10 +33,10 @@ import {
 } from '../utils/utils';
 import {
     calculateComputeDrift,
-    driftAssessmentDataCollection,
     getHeadroomDrift,
     getLogVolumeDrift,
-    getTempDbVolumeDrift
+    getTempDbVolumeDrift,
+    onDemandTriggerDriftAssessmentDataCollection
 } from './cont-opt-assessment-operations';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -47,7 +47,8 @@ import {
     OptimizeStorageApiData,
     AssessmentCategories,
     AssessmentStatus,
-    OPTIMIZE_SIZING_CONFIGS
+    OPTIMIZE_SIZING_CONFIGS,
+    AssessmentTriggeredBy
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -172,22 +173,21 @@ async function triggerAssessmentAfterOptimization(
         instanceToAssess
     });
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Assessment for ${serverNameWithHostName} after optimization`,
-        description: `Assessment for ${serverNameWithHostName} after optimization`,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZATION,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
-
     // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
     if (!isDemoFlow) {
         await sleep(5000);
     }
 
-    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceToAssess);
+    await onDemandTriggerDriftAssessmentDataCollection(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceToAssess.id,
+        AssessmentTriggeredBy.SYSTEM,
+        '',
+        parentJobId
+    );
     await updateJobDetails(accountId, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
