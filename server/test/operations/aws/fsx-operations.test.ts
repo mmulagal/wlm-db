@@ -15,7 +15,8 @@ import {
     isFsxnAwsBackupEnabled,
     getMappedOntapVolumes,
     tagFsxResource,
-    isFsxwAwsBackupEnabled
+    isFsxwAwsBackupEnabled,
+    updateVolumeSizeAndWaitForUpdate
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
@@ -86,5 +87,20 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID
         );
         expect(response).toEqual(true);
+    });
+
+    it('Update FSx volume and wait for update', async () => {
+        try {
+            await updateVolumeSizeAndWaitForUpdate(
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                ACCOUNT_ID,
+                FSX_FILESYSTEM_ID,
+                'fsvol-0b1b3b3b3b3b3b3b3',
+                1048576
+            );
+        } catch (error) {
+            expect(error).toBeUndefined();
+        }
     });
 });
