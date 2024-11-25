@@ -696,9 +696,12 @@ const DialogContent = ({ type, recommendationOptions = null }: DialogType) => {
 
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                {GETWELL_DIALOG_CONTENT.DOWNTIME_WARNING}
+                                {selectedDatabaseStorageType === 'FCI'
+                                    ? GENERAL.NOTE
+                                    : GETWELL_DIALOG_CONTENT.DOWNTIME_WARNING}
                             </DsTypography>
                             <div className={styles.content}>
+
                                 <div className={styles.row}>
                                     <div>
                                         <Bullet />
