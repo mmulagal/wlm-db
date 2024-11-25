@@ -217,6 +217,7 @@
                     "ec2:DescribeInstanceTypeOfferings",
                     "ec2:DescribeSnapshots",
                     "ec2:DescribeVolumes",
+                    "ec2:DescribeAddresses",
                     "kms:ListAliases",
                     "kms:ListKeys",
                     "kms:DescribeKey",
