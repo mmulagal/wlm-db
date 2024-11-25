@@ -16,6 +16,7 @@ import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
 import {
     CHECK_NODE_STATUS,
+    GET_ONTAP_LUN_DETAILS,
     MOVE_ALL_CLUSTER_GROUPS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     RESCAN_EXTEND_LOG_LUN
@@ -825,41 +826,75 @@ async function logDriveOptimization(
                         const existingVolumeDetails = underProvisionedVolumeDetails.find(
                             volume => volume.VolumeId === matchingFsxVolumeId
                         );
-                        if (
-                            existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
-                            existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes &&
-                            matchingFsxVolumeId
-                        ) {
-                            await updateVolumeSizeAndWaitForUpdate(
+
+                        if (matchingFsxVolumeId) {
+                            if (
+                                existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
+                                existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes
+                            ) {
+                                await updateVolumeSizeAndWaitForUpdate(
+                                    credentialsId,
+                                    region,
+                                    accountId,
+                                    fileSystemId,
+                                    matchingFsxVolumeId,
+                                    requiredLogVolumeSizeBytes
+                                );
+                                logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
+                            } else {
+                                logger.info('Log volume size changed since we last assessed, no action required');
+                            }
+
+                            const ssmCommand = GET_ONTAP_LUN_DETAILS({
+                                fsxId: fileSystemId,
+                                region,
+                                apiEndpoint: `/storage/luns/${lunUuid}`,
+                                apiQueryFilter: 'fields=space'
+                            });
+
+                            const resp = await callSsmExecution(
                                 credentialsId,
                                 region,
-                                accountId,
-                                fileSystemId,
-                                matchingFsxVolumeId,
-                                requiredLogVolumeSizeBytes
+                                [ssmCommand],
+                                activeNodeInstanceId!
                             );
-                            logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
-
+                            const parsedResp = sqlResponseParsing(resp);
+                            const {
+                                space: { size: existingLogLunSizeBytes }
+                            } = parsedResp || {};
                             /*
                             dataVolSize  = dataLun + 10% dataLun = 1.1 dataLun
                             dataLunSize = dataVolSize / 1.1
                             logLunSize = 25% dataLunSize
                             logLunSize = 25% (dataVolSize / 1.1)  = .227 dataVolSize
                             */
+
                             const logLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * 0.227, 'MiB') || 0;
-                            await resizeLogLun(
-                                credentialsId,
-                                region,
-                                fileSystemId,
-                                lunUuid!,
-                                diskSerialNumber!,
-                                logLunSizeBytes,
-                                activeNodeInstanceId
-                            );
+                            if (existingLogLunSizeBytes < logLunSizeBytes) {
+                                await resizeLogLun(
+                                    credentialsId,
+                                    region,
+                                    fileSystemId,
+                                    lunUuid!,
+                                    diskSerialNumber!,
+                                    logLunSizeBytes,
+                                    activeNodeInstanceId
+                                );
+                            } else {
+                                logger.info('Log LUN size changed since we last assessed, no action required');
+                            }
+
+                            if (
+                                existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
+                                existingVolumeDetails.OntapConfiguration.SizeInBytes >= requiredLogVolumeSizeBytes &&
+                                existingLogLunSizeBytes >= requiredLogVolumeSizeBytes
+                            ) {
+                                errorMessage =
+                                    'Some log drives configuration changed since we last assessed, no action required for those';
+                                jobStatus = JOBSTATUS.WARNING;
+                            }
                         } else {
-                            errorMessage =
-                                'Some log drives configuration changed since we last assessed, no action required for those';
-                            jobStatus = JOBSTATUS.WARNING;
+                            throw createError(400, 'Cannot find matching FSx volume for the log drive');
                         }
                     } else {
                         throw createError(400, 'Data drive size is unavailable, cannot calculate log drive size');
