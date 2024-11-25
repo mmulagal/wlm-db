@@ -2,6 +2,7 @@ import randomize from 'randomatic';
 import { Volume } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { compact, sample } from 'lodash-es';
 import {
     CloudProviders,
     RESOURCESTYPE,
@@ -48,6 +49,7 @@ import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cl
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
 import { ASSESMENT_CONFIG_DATA } from '../utils/demo-utils/demoInventoryData';
+import { describeFSxVolumes } from '../lib/aws/fsx';
 
 const logger = getLogger();
 
@@ -760,6 +762,47 @@ async function createDeploymentMockDataInDBForPgSql(
     await createJobs(accountId, data);
 }
 
+async function demoGetFsxnVolIdsFromOntapVolIds(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumeUuids: string[]
+) {
+    logger.info('Demo Get the Fsxn volume ids from the ontap volume ids', {
+        credentialsId,
+        region,
+        fsxId,
+        volumeUuids
+    });
+
+    const { Volumes: volumes = [] } = await describeFSxVolumes(credentialsId, region, fsxId);
+
+    const volumeIds: string[] = [];
+    const uuidVolumeIdMap: Record<string, string> = {};
+    let fsxVolIds = volumes.map(volume => volume.VolumeId) || [];
+    if (volumeUuids.length > fsxVolIds.length) {
+        // If the number of volumeUuids is more than the number of fsx volumes, then repeating the fsxVolIds
+        fsxVolIds = Array(volumeUuids.length).fill(sample(fsxVolIds));
+    }
+
+    volumes.forEach(volume => {
+        const { OntapConfiguration: { UUID = '' } = {}, VolumeId = '' } = volume;
+        if (volumeUuids.includes(UUID)) {
+            volumeIds.push(VolumeId);
+            uuidVolumeIdMap[VolumeId] = UUID;
+        } else {
+            volumeIds.push(sample(fsxVolIds) || '');
+            uuidVolumeIdMap[VolumeId] = sample(volumeUuids) || '';
+        }
+    });
+
+    logger.debug('List volume ids in an fsx response', volumeIds);
+
+    return {
+        volumeIds: compact(volumeIds),
+        uuidVolumeIdMap
+    };
+}
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -773,6 +816,7 @@ export {
     createAssessmentJobMockData,
     createOptimizeJobMockData,
     updateOptimizedConfigNameInInstanceTable,
+    createDeploymentMockDataInDBForPgSql,
     createOperatingSystemOptimizeJobMockData,
-    createDeploymentMockDataInDBForPgSql
+    demoGetFsxnVolIdsFromOntapVolIds
 };

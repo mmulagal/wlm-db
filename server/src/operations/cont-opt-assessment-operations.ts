@@ -23,7 +23,7 @@ import {
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listAllManagedInstances, listResources } from '../lib/database/db';
+import { listAllManagedInstances, listDatabaseInstances } from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -360,27 +360,20 @@ async function calculateStorageDrift(
                 const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
                 );
-                logger.info({ databasesOnSameDataLogLun }); // Todo: remove this line
 
                 // each database is on separate data and log volume
                 const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
                 );
-                logger.info({ databasesOnSameDataLogVolume }); // Todo: remove this line
 
                 const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
                     (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
                 );
-                logger.info({ databasesAbove500Gb }); // Todo: remove this line
 
                 const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
                 const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
                 const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
                 const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
-                logger.info({ groupByDataVolume }); // Todo: remove this line
-                logger.info({ groupByLogVolume }); // Todo: remove this line
-                logger.info({ groupByDataLun }); // Todo: remove this line
-                logger.info({ groupByLogLun }); // Todo: remove this line
 
                 const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
                 const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
@@ -651,12 +644,13 @@ async function initiateStorageAssessmentCollection(
 
     const resourceWithInstanceName = `${instanceRecord.resourceName}\\${instanceRecord.name}`;
     const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
-    const configJobStatus =
-        isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
-            ? JOBSTATUS.FAILED
-            : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
-            ? JOBSTATUS.COMPLETED
-            : JOBSTATUS.WARNING;
+    const configJobStatus = isDemo()
+        ? JOBSTATUS.COMPLETED
+        : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
+        ? JOBSTATUS.FAILED
+        : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
+        ? JOBSTATUS.COMPLETED
+        : JOBSTATUS.WARNING;
 
     await registerJob(accountId, credentialsId, region, {
         name: 'Storage configuration assessment',
@@ -674,7 +668,7 @@ async function initiateStorageAssessmentCollection(
         resourceName: resourceWithInstanceName,
         startTime: Date.now(),
         endTime: Date.now(),
-        status: isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
@@ -684,7 +678,7 @@ async function initiateStorageAssessmentCollection(
         resourceName: resourceWithInstanceName,
         startTime: Date.now(),
         endTime: Date.now(),
-        status: isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
@@ -767,6 +761,27 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
         : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
         ? JOBSTATUS.WARNING
         : JOBSTATUS.IN_PROGRESS;
+
+    // Create dummy compute right sizing assessment jobs for each managed resource
+    if (masterJobStatus !== JOBSTATUS.IN_PROGRESS) {
+        const allManagedResources = allSubJobs
+            .map(item => item.resource_name)
+            .filter((value, index, self) => self.indexOf(value) === index);
+        allManagedResources.forEach(async resource => {
+            const resourceName = resource.split('\\')[0]!;
+            const jobString = `Assessing SQL Server host ${resourceName} compute right sizing`;
+            await registerJob(accountId, '', '', {
+                name: jobString,
+                description: jobString,
+                resourceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: JOBSTATUS.COMPLETED,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId: masterAssessmentJobId
+            });
+        });
+    }
     await updateJobDetails(accountId, masterAssessmentJobId, {
         status: masterJobStatus,
         endTime: Date.now()
@@ -951,22 +966,6 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     type: JOBTYPE.ASSESSMENT
                 });
 
-                const allManagedResources = managedInstances.map(instance => instance.resource.resource_name);
-
-                allManagedResources.forEach(async resource => {
-                    const jobString = `Assessing SQL Server host ${resource} compute right sizing`;
-                    await registerJob(accountId, '', '', {
-                        name: jobString,
-                        description: jobString,
-                        resourceName: resource!,
-                        startTime: Date.now(),
-                        endTime: Date.now(),
-                        status: JOBSTATUS.COMPLETED,
-                        type: JOBTYPE.ASSESSMENT,
-                        parentJobId
-                    });
-                });
-
                 try {
                     await Promise.all(
                         managedInstances.map(
@@ -1076,7 +1075,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     databaseHostId: string,
     databaseInstanceId: string,
     initiatedBy: string,
-    fields?: string
+    fields?: string,
+    parentJobId?: string
 ) {
     logger.info('On-demand trigger drift assessment', {
         accountId,
@@ -1085,54 +1085,40 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         databaseInstanceId,
         databaseHostId,
         initiatedBy,
-        fields
+        fields,
+        parentJobId
     });
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
-
-    const resourceName = resourceDetail.resource_name!;
-    try {
-        const { activeNodeInstanceId, newDatabaseInstanceDetails, cloudProviderAccountId } = await getInstanceDetails(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
+    const [managedInstance] = (await listDatabaseInstances(accountId, {
+        credentialsId,
+        region,
+        resourceId: databaseHostId,
+        sqlInstanceId: databaseInstanceId
+    })) as DatabaseInstancesIncludingResource[];
+    if (isEmpty(managedInstance)) {
+        logger.error(
+            `No  managed database instance by ${accountId} ${credentialsId} ${databaseHostId} ${databaseInstanceId} found.`
         );
-        const {
-            database_instance_name: savedInstanceName,
-            fsxn_ids: fileSystemId,
-            sqlAuthEnabled
-        } = newDatabaseInstanceDetails;
-
-        const instanceRecord: WorkloadInstance = {
-            id: databaseInstanceId,
-            name: savedInstanceName,
-            type: RESOURCESTYPE.MSSQL,
-            region,
-            sqlAuthEnabled: sqlAuthEnabled || false,
-            activeNodeInstanceid: activeNodeInstanceId,
-            fsxFileSystem: fileSystemId,
-            cloudProviderAccountId: cloudProviderAccountId || '',
-            resourceName: resourceName || ''
-        };
-
+        return;
+    }
+    const {
+        resource: { resource_name: resourceName },
+        database_instance_name: instanceName
+    } = managedInstance;
+    try {
+        const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobString,
             description: jobString,
-            resourceName: resourceName!,
+            resourceName: savedInstanceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
         });
-        driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceRecord, fields);
+        triggerAssessment(managedInstance, jobId, fields);
 
         return { jobId };
     } catch (error) {

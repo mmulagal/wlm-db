@@ -17,7 +17,8 @@ import { getInstanceInfo, getResources } from './database/database-operations';
 import {
     CHECK_NODE_STATUS,
     MOVE_ALL_CLUSTER_GROUPS,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    RESCAN_EXTEND_LOG_LUN
 } from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { getJobs, registerJob, updateJobDetails } from './database/job-operations';
@@ -32,12 +33,12 @@ import {
 } from '../utils/utils';
 import {
     calculateComputeDrift,
-    driftAssessmentDataCollection,
     getHeadroomDrift,
     getLogVolumeDrift,
-    getTempDbVolumeDrift
+    getTempDbVolumeDrift,
+    onDemandTriggerDriftAssessmentDataCollection
 } from './cont-opt-assessment-operations';
-import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
+import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -46,7 +47,8 @@ import {
     OptimizeStorageApiData,
     AssessmentCategories,
     AssessmentStatus,
-    OPTIMIZE_SIZING_CONFIGS
+    OPTIMIZE_SIZING_CONFIGS,
+    AssessmentTriggeredBy
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -54,7 +56,11 @@ import {
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
-import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
+import {
+    getFsxVolumeDetails,
+    getFsxnVolIdsFromOntapVolIds,
+    updateVolumeSizeAndWaitForUpdate
+} from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance, modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
@@ -171,29 +177,20 @@ async function triggerAssessmentAfterOptimization(
         instanceToAssess
     });
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Assessment for ${serverNameWithHostName} after optimization`,
-        description: `Assessment for ${serverNameWithHostName} after optimization`,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZATION,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
-
     // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
     if (!isDemoFlow) {
         await sleep(5000);
     }
 
-    await driftAssessmentDataCollection(
+    await onDemandTriggerDriftAssessmentDataCollection(
         accountId,
         credentialsId,
         region,
-        jobId,
         databaseHostId,
-        instanceToAssess,
-        serverNameWithHostName
+        instanceToAssess.id,
+        AssessmentTriggeredBy.SYSTEM,
+        '',
+        parentJobId
     );
     await updateJobDetails(accountId, parentJobId, {
         status: JOBSTATUS.COMPLETED,
@@ -565,6 +562,15 @@ async function modifySizingAttributes(
     let errorMessage = '';
     let jobStatus;
     try {
+        const { sqlAuthEnabled, activeNodeInstanceId, fsxId, instanceId, instanceName, databaseType, awsAccountId } =
+            await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+
+        if (!activeNodeInstanceId) {
+            errorMessage = `Unable to retrieve the active node instance ID from the MS SQL configuration. Drive size optimization for the database instance ${databaseInstanceId} cannot be performed.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
         for (const type of typesList) {
             switch (type) {
                 case OPTIMIZE_SIZING_CONFIGS.HEADROOM:
@@ -583,7 +589,8 @@ async function modifySizingAttributes(
                         parentJobId,
                         serverNameWithHostName,
                         databaseHostId,
-                        databaseInstanceId
+                        databaseInstanceId,
+                        activeNodeInstanceId
                     );
                     break;
                 }
@@ -608,6 +615,29 @@ async function modifySizingAttributes(
                     throw createError('Invalid optimization type');
             }
         }
+
+        const instanceToAssess: WorkloadInstance = {
+            id: instanceId,
+            name: instanceName,
+            type: databaseType,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            fsxFileSystem: fsxId,
+            activeNodeInstanceid: activeNodeInstanceId!,
+            cloudProviderAccountId: awsAccountId!,
+            resourceName: serverNameWithHostName
+        };
+
+        await triggerAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess
+        );
+
         jobStatus = JOBSTATUS.COMPLETED;
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
@@ -689,19 +719,19 @@ async function headroomOptimization(
 async function resizeLogLun(
     credentialsId: string,
     region: string,
-    svmName: string,
     fileSystemId: string,
     lunUuid: string,
-    requiredLogVolumeSizeMB: number,
+    diskSerialNumber: string,
+    requiredLogVolumeSizeBytes: number,
     activeNodeInstanceId: string
 ) {
     logger.info('Resizing log LUN ', {
         credentialsId,
         region,
-        svmName,
         fileSystemId,
         lunUuid,
-        requiredLogVolumeSizeMB,
+        diskSerialNumber,
+        requiredLogVolumeSizeBytes,
         activeNodeInstanceId
     });
 
@@ -712,15 +742,12 @@ async function resizeLogLun(
         region,
         apiEndpoint,
         apiQueryFilter: '',
-        apiBody: JSON.stringify({ space: { size: 21474836480 } })
+        apiBody: JSON.stringify({ space: { size: requiredLogVolumeSizeBytes } })
     });
+
+    const rescanExtendLunSsmCommand = RESCAN_EXTEND_LOG_LUN(diskSerialNumber);
     try {
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand, '$null = (echo "RESCAN" | diskpart)'],
-            activeNodeInstanceId
-        );
+        await callSsmExecution(credentialsId, region, [ssmCommand, rescanExtendLunSsmCommand], activeNodeInstanceId);
     } catch (error) {
         throw createError(400, `Error while resizing log LUN ${error}`);
     }
@@ -735,7 +762,8 @@ async function logDriveOptimization(
     parentJobId: string,
     serverNameWithHostName: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    activeNodeInstanceId: string
 ) {
     logger.info('Optimizing log drive ', {
         accountId,
@@ -746,7 +774,8 @@ async function logDriveOptimization(
         parentJobId,
         serverNameWithHostName,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceId,
+        activeNodeInstanceId
     });
     const jobId = await handleOptimizeJobCreation(
         accountId,
@@ -785,98 +814,60 @@ async function logDriveOptimization(
                 fsxVolumeIdList
             );
 
-            const {
-                sqlAuthEnabled,
-                activeNodeInstanceId,
-                fsxId,
-                instanceId,
-                instanceName,
-                databaseType,
-                awsAccountId
-            } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
-
-            if (activeNodeInstanceId) {
-                await Promise.all(
-                    underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
-                        const { dataDriveTotalSizeMB = 0, lunUuid, ontapVolumeUuid, svmName } = drive;
-                        if (dataDriveTotalSizeMB > 0) {
-                            const requiredLogVolumeSizeMB = dataDriveTotalSizeMB * 0.25; // Increase log volume to 25% of data volume
-                            const requiredLogVolumeSizeBytes = convertToBytes(requiredLogVolumeSizeMB, 'MiB') || 0;
-                            const [matchingFsxVolumeId] =
-                                Object.entries(uuidVolumeIdMap).find(
-                                    ([, ontapVolumeId]) => ontapVolumeId === ontapVolumeUuid
-                                ) || [];
-                            const existingVolumeDetails = underProvisionedVolumeDetails.find(
-                                volume => volume.VolumeId === matchingFsxVolumeId
+            await Promise.all(
+                underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
+                    const { dataDriveTotalSizeMB = 0, lunUuid, diskSerialNumber, ontapVolumeUuid } = drive;
+                    if (dataDriveTotalSizeMB > 0) {
+                        const requiredLogVolumeSizeMB = dataDriveTotalSizeMB * 0.25; // Increase log volume to 25% of data volume
+                        const requiredLogVolumeSizeBytes = convertToBytes(requiredLogVolumeSizeMB, 'MiB') || 0;
+                        const [matchingFsxVolumeId] =
+                            Object.entries(uuidVolumeIdMap).find(
+                                ([, ontapVolumeId]) => ontapVolumeId === ontapVolumeUuid
+                            ) || [];
+                        const existingVolumeDetails = underProvisionedVolumeDetails.find(
+                            volume => volume.VolumeId === matchingFsxVolumeId
+                        );
+                        if (
+                            existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
+                            existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes &&
+                            matchingFsxVolumeId
+                        ) {
+                            await updateVolumeSizeAndWaitForUpdate(
+                                credentialsId,
+                                region,
+                                accountId,
+                                fileSystemId,
+                                matchingFsxVolumeId,
+                                requiredLogVolumeSizeBytes
                             );
-                            if (
-                                existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
-                                existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes &&
-                                matchingFsxVolumeId
-                            ) {
-                                await updateFsxVolumeSize(
-                                    credentialsId,
-                                    region,
-                                    accountId,
-                                    matchingFsxVolumeId,
-                                    requiredLogVolumeSizeBytes
-                                );
-                                logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
+                            logger.info(`Log volume size increased to ${requiredLogVolumeSizeBytes} bytes.`);
 
-                                /*
-                                dataVolSize  = dataLun + 10% dataLun = 1.1 dataLun
-                                dataLunSize = dataVolSize / 1.1
-                                logLunSize = 25% dataLunSize
-                                logLunSize = 25% (dataVolSize / 1.1)  = .227 dataVolSize
-                                */
-                                const logLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * 0.227, 'MiB') || 0;
-                                await resizeLogLun(
-                                    credentialsId,
-                                    region,
-                                    svmName!,
-                                    fileSystemId,
-                                    lunUuid!,
-                                    logLunSizeBytes,
-                                    activeNodeInstanceId
-                                );
-
-                                const instanceToAssess: WorkloadInstance = {
-                                    id: instanceId,
-                                    name: instanceName,
-                                    type: databaseType,
-                                    region,
-                                    sqlAuthEnabled: sqlAuthEnabled || false,
-                                    fsxFileSystem: fsxId,
-                                    activeNodeInstanceid: activeNodeInstanceId!,
-                                    cloudProviderAccountId: awsAccountId!,
-                                    resourceName: serverNameWithHostName
-                                };
-                                await triggerAssessmentAfterOptimization(
-                                    credentialsId,
-                                    region,
-                                    accountId,
-                                    databaseHostId,
-                                    serverNameWithHostName,
-                                    parentJobId,
-                                    instanceToAssess
-                                );
-                            } else {
-                                errorMessage =
-                                    'Some log drives configuration changed since we last assessed, no action required for those';
-                                jobStatus = JOBSTATUS.WARNING;
-                            }
+                            /*
+                            dataVolSize  = dataLun + 10% dataLun = 1.1 dataLun
+                            dataLunSize = dataVolSize / 1.1
+                            logLunSize = 25% dataLunSize
+                            logLunSize = 25% (dataVolSize / 1.1)  = .227 dataVolSize
+                            */
+                            const logLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * 0.227, 'MiB') || 0;
+                            await resizeLogLun(
+                                credentialsId,
+                                region,
+                                fileSystemId,
+                                lunUuid!,
+                                diskSerialNumber!,
+                                logLunSizeBytes,
+                                activeNodeInstanceId
+                            );
                         } else {
-                            throw createError(400, 'Data drive size is unavailable, cannot calculate log drive size');
+                            errorMessage =
+                                'Some log drives configuration changed since we last assessed, no action required for those';
+                            jobStatus = JOBSTATUS.WARNING;
                         }
-                    })
-                );
-                jobStatus = JOBSTATUS.COMPLETED;
-
-                updateLongRunningAuditGroup(AuditStatus.SUCCESS, errorMessage);
-            } else {
-                errorMessage = `Unable to get active node instance id or svm details associated with log LUN, cannot optimize log drive size for database instance ${databaseInstanceId}`;
-                jobStatus = JOBSTATUS.WARNING;
-            }
+                    } else {
+                        throw createError(400, 'Data drive size is unavailable, cannot calculate log drive size');
+                    }
+                })
+            );
         } else {
             errorMessage = 'Log drives are not under provisioned, no action required';
             jobStatus = JOBSTATUS.WARNING;
@@ -954,42 +945,13 @@ async function tempDbDriveOptimization(
                 existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredTempDbVolumeSizeBytes &&
                 tempDbFsxVolumeId
             ) {
-                await updateFsxVolumeSize(
+                await updateVolumeSizeAndWaitForUpdate(
                     credentialsId,
                     region,
                     accountId,
                     tempDbFsxVolumeId,
+                    fileSystemId,
                     requiredTempDbVolumeSizeBytes
-                );
-                const {
-                    sqlAuthEnabled,
-                    activeNodeInstanceId,
-                    fsxId,
-                    instanceId,
-                    instanceName,
-                    databaseType,
-                    awsAccountId
-                } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
-
-                const instanceToAssess: WorkloadInstance = {
-                    id: instanceId,
-                    name: instanceName,
-                    type: databaseType,
-                    region,
-                    sqlAuthEnabled: sqlAuthEnabled || false,
-                    fsxFileSystem: fsxId,
-                    activeNodeInstanceid: activeNodeInstanceId!,
-                    cloudProviderAccountId: awsAccountId!,
-                    resourceName: serverNameWithHostName
-                };
-                await triggerAssessmentAfterOptimization(
-                    credentialsId,
-                    region,
-                    accountId,
-                    databaseHostId,
-                    serverNameWithHostName,
-                    parentJobId,
-                    instanceToAssess
                 );
             } else {
                 errorMessage = 'TempDB drive volume size changed since we last assessed, no action required';
@@ -1041,11 +1003,11 @@ async function optimizeSizing(
     );
     const {
         config_data: configData,
-        database_instances: { database_instance_name: instanceName } = {},
-        resource: { resource_name: sqlServerName } = {}
-    } = persistedConfigurationData;
+        database_instances: { database_instance_name: instanceName = '' } = {},
+        resource: { resource_name: sqlServerName = '' } = {}
+    } = persistedConfigurationData || {};
     const storageAssessmentConfigData = configData as unknown as StorageAssessment;
-    const { filesystemId } = storageAssessmentConfigData;
+    const { filesystemId = '' } = storageAssessmentConfigData || {};
 
     if (!instanceName || !sqlServerName) {
         logger.error('Instance name or sql server name is missing');
@@ -1577,7 +1539,8 @@ async function handleComputeRemediation(
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus || JOBSTATUS.COMPLETED,
-            endTime: Date.now()
+            endTime: Date.now(),
+            error: errorMessage
         });
     }
 }

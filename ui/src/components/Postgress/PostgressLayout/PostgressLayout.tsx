@@ -50,7 +50,7 @@ function PostgressLayout() {
     return (
         <>
             <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']} ${styles.protectLayout}`}>
-                <SelectConfig isDisabled={true} />
+                <SelectConfig isDisabled={true} wizardType={WIZARD_TYPE.PGSQL} />
                 <AccordionController isGrouped>
                     {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                         <div className={styles['header-buttons']}>

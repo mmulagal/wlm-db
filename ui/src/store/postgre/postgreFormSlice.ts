@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL } from '../../utils/appConstants';
+import { DBType } from '../../utils/consts';
 
 export const initialPostgreState: any = {
-    selectedDatabaseType: '',
+    selectedDatabaseType: DBType.MSSQL,
     postgreDeploymentType: GENERAL.STANDALONE_INSTANCE,
     postgreOS: {},
     postgreVersion: '16',

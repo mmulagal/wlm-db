@@ -37,7 +37,12 @@ import {
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
-import { inventoryApi, inventoryApiV2, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
+import {
+    inventoryApi,
+    inventoryApiV2,
+    useCreateDemoResourcesMutation,
+    workloadFactoryResourceApiV2
+} from '../../../utils/apiService';
 import {
     setFromTime,
     setJobsList,
@@ -103,6 +108,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+
+    const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
     HeaderComponentApi();
     InventoryApisV2();
@@ -208,17 +215,45 @@ const HeaderComponent = ({ tab }: Tab) => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedRegion) {
+            const defaultOption: any = options[0];
             if (localStorage.getItem('selectedRegion')) {
                 //@ts-ignore
                 const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
-                    dispatch(setHeaderSelectedRegion(regionValue));
+                    if (isDemoMode) {
+                        createDemoResourcesApi({
+                            credentialsId: headerSelectedCred?.data?.credentialsId,
+                            regionId: regionValue?.data?.regionCode
+                        }).then(() => {
+                            dispatch(setHeaderSelectedRegion(regionValue));
+                        });
+                    } else {
+                        dispatch(setHeaderSelectedRegion(regionValue));
+                    }
                 } else {
-                    dispatch(setHeaderSelectedRegion(options[0]));
+                    if (isDemoMode) {
+                        createDemoResourcesApi({
+                            credentialsId: headerSelectedCred?.data?.credentialsId,
+                            regionId: defaultOption?.data?.regionCode
+                        }).then(() => {
+                            dispatch(setHeaderSelectedRegion(defaultOption));
+                        });
+                    } else {
+                        dispatch(setHeaderSelectedRegion(defaultOption));
+                    }
                 }
             } else {
-                dispatch(setHeaderSelectedRegion(options[0]));
+                if (isDemoMode) {
+                    createDemoResourcesApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: defaultOption?.data?.regionCode
+                    }).then(() => {
+                        dispatch(setHeaderSelectedRegion(defaultOption));
+                    });
+                } else {
+                    dispatch(setHeaderSelectedRegion(defaultOption));
+                }
             }
         }
         return options;
@@ -327,12 +362,24 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isClearable={false}
                         value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
                         onChange={(selectedOptions: any): void => {
-                            if (localStorage.getItem('selectedRegion')) {
-                                localStorage.removeItem('selectedRegion');
+                            function updateRegion() {
+                                if (localStorage.getItem('selectedRegion')) {
+                                    localStorage.removeItem('selectedRegion');
+                                }
+                                localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                                dispatch(updateRefreshBlocked(false));
+                                dispatch(setHeaderSelectedRegion(selectedOptions));
                             }
-                            localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
-                            dispatch(updateRefreshBlocked(false));
-                            dispatch(setHeaderSelectedRegion(selectedOptions));
+                            if (isDemoMode) {
+                                createDemoResourcesApi({
+                                    credentialsId: headerSelectedCred?.data?.credentialsId,
+                                    regionId: selectedOptions?.data?.regionCode
+                                }).then(() => {
+                                    updateRegion();
+                                });
+                            } else {
+                                updateRegion();
+                            }
                         }}
                         placeholder="Select a Region"
                         isSearchable={generateRegionsData.length > 5}

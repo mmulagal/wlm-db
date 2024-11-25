@@ -1821,13 +1821,12 @@ async function formatPgSqlTemplateParameters(
         topicArn
     };
 
-    const skipPassword = false;
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (PG_TEMPLATE_CONFIG_MAPPING[key]) {
             templateParams.push({
                 ParameterKey: PG_TEMPLATE_CONFIG_MAPPING[key],
                 ParameterValue:
-                    skipPassword && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(PG_TEMPLATE_CONFIG_MAPPING[key])
+                    skipPasswords && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(PG_TEMPLATE_CONFIG_MAPPING[key])
                         ? ''
                         : value.toString()
             });
