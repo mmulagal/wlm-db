@@ -2,6 +2,7 @@ import randomize from 'randomatic';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { AWS_REGIONS, RESOURCESTYPE } from '../consts';
+import { checkAccount } from '../utils';
 
 function masterStackData(
     accountId: string,
@@ -1809,62 +1810,62 @@ function mockPGSqlStandaloneDeployementValidationStack(
     return [
         {
             id: stackId,
-            accountId,
+            account_id: accountId,
             name: 'Deploying WLMDB-PgSqlStandaloneStack-1732253190348-ValidationStack1-1UCL90TQ3CFAP',
             status: 'COMPLETED',
-            resourceName,
-            credentialsId,
+            resource_name: resourceName,
+            credentials_id: credentialsId,
             type: 'DEPLOYMENT',
-            startTime: new Date(Date.now() - 6000),
+            start_time: new Date(Date.now() - 6000),
             description: 'Subnet Validation for deployment',
-            parentJobId,
-            endTime: new Date(Date.now()),
+            parent_job_id: parentJobId,
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying ValidationNode1(AWS::EC2::Instance)',
             description: 'Validating outbound connection to deployment resources in Amazon S3',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying ValidationInstanceProfile(AWS::IAM::InstanceProfile)',
             description: 'Attaching an instance profile to the validation instance',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying DisableIMDSv1(AWS::EC2::LaunchTemplate)',
             description: 'Disabling instance metadata service v1 to use more secure v2',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         }
     ];
 }
@@ -1883,127 +1884,128 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
     const FSXDeployementJobStack = [
         {
             id: stackId,
-            accountId,
+            account_id: accountId,
             name: `Deploying ${stackName}-${fsxType}-${randomize('A0', 17)}`,
             status: 'COMPLETED',
-            resourceName,
-            credentialsId,
+            resource_name: resourceName,
+            credentials_id: credentialsId,
             type: 'DEPLOYMENT',
-            startTime: new Date(Date.now() - 6000),
+            start_time: new Date(Date.now() - 6000),
             description:
                 fsxType === 'NewFSxStack'
                     ? 'Deploying new FSx for ONTAP file system for SQL Server workload'
                     : 'Deploying a storage virtual machine for the SQL Server workload on the FSx for ONTAP file system',
-            parentJobId,
-            endTime: new Date(Date.now()),
+            parent_job_id: parentJobId,
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying FSxTempDbVolumeConfiguration(AWS::FSx::Volume)',
             description: 'Creating a volume to host tempdb',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying FSxDataVolumeConfiguration(AWS::FSx::Volume)',
             description: 'Creating a volume to host data files',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying FSxLogVolumeConfiguration(AWS::FSx::Volume)',
             description: 'Creating a volume to host log files',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)',
             description: 'Creating a dedicated storage virtual machine (SVM) for the database workload',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
-            status: 'IN_PROGRESS',
-            resourceName,
+            status: 'COMPLETED',
+            resource_name: resourceName,
             name: 'Deploying FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)',
             description: 'Creating a virtual machine (SVM) for the database workload',
-            startTime: new Date(Date.now() - 6000),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         }
     ];
 
     if (fsxType === 'NewFSxStack') {
         FSXDeployementJobStack.push({
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying FSxFileSystemConfiguration(AWS::FSx::FileSystem)',
             description: 'Creating a new FSx for ONTAP file system',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         });
         FSXDeployementJobStack.push({
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying ONTAPSecurityGroup(AWS::EC2::SecurityGroup)',
             description: 'Creating a security group for FSx for ONTAP',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         });
     }
     return FSXDeployementJobStack;
@@ -2020,62 +2022,62 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
     return [
         {
             id: stackId,
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             name: 'Deploying WLMDB-PgSqlStandaloneStack-1732253190348-SQLStandaloneStack-UT03Q9P3LGW2',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             type: 'DEPLOYMENT',
-            startTime: new Date(Date.now() - 6000),
+            start_time: new Date(Date.now() - 6000),
             description: 'Deploying an SQL Server standalone instance with recommended best practices',
-            parentJobId,
-            endTime: new Date(Date.now()),
+            parent_job_id: parentJobId,
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying SqlNode(AWS::EC2::Instance)',
             description: 'Configuring SQL Server standalone on an EC2 instance',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying WorkloadSecurityGroup(AWS::EC2::SecurityGroup)',
             description: 'Creating a security group for SQL Server workloads',
-            startTime: new Date(Date.now() - 6000),
-            endTime: new Date(Date.now()),
+            start_time: new Date(Date.now() - 6000),
+            end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         },
         {
             id: randomUUID(),
-            accountId,
-            credentialsId,
+            account_id: accountId,
+            credentials_id: credentialsId,
             region,
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             name: 'Deploying LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)',
             description: 'Attaching an instance profile to EC2 instances for SQL Server nodes',
-            startTime: new Date(Date.now() - 6000),
-            endTime: Date.now(),
+            start_time: new Date(Date.now() - 6000),
+            end_time: Date.now(),
             initiator: 'SYSTEM',
-            parentJobId: stackId
+            parent_job_id: stackId
         }
     ];
 }
@@ -2088,19 +2090,20 @@ async function mockPGSqlStandaloneDeploymentStack(
     stackName: string,
     FSXFileSystemId: string | undefined
 ) {
+    accountId = checkAccount(accountId);
     const stackId = randomUUID();
     const parentStack = [
         {
             id: stackId,
-            accountId,
+            account_id: accountId,
             name: `PostgreSQL server deployment with stack ${stackName};href:mocklink`,
             status: 'COMPLETED',
-            resourceName,
+            resource_name: resourceName,
             type: 'DEPLOYMENT',
-            startTime: new Date(Date.now() - 6000).getTime(),
-            credentialsId,
+            start_time: new Date(Date.now() - 6000).getTime(),
+            credentials_id: credentialsId,
             region,
-            endTime: Date.now()
+            end_time: Date.now()
         }
     ];
     const pgServerStack = mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
