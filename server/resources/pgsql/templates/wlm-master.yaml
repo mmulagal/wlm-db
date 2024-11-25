@@ -1,8 +1,8 @@
 #prettier-ignore
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: This template deploys Postgres SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
-            This template creates an Amazon EC2 Windows instance and related resources.
+Description: This template deploys Postgres SQL Server in the chosen deployment model (HA or a standalone instance). 
+            This template creates an Amazon EC2 instance with Amazon Linux 2023 and related resources.
             You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   AWS::CloudFormation::Interface:
@@ -18,7 +18,12 @@ Metadata:
           - S3EndpointExists
           - CloudformationEndpointExists
           - SqsEndpointExists
+          - SsmEndpointExists
           - Ec2MessagesEndpointExists
+          - SSMMessagesEndpointExists
+          - FsxEndpointExists
+          - CloudwatchLogsEndpointExists
+          - Ec2EndpointExists
           - S3EndpointRouteTables
       - Label:
           default: Amazon EC2 Configuration
@@ -29,6 +34,7 @@ Metadata:
           - ValidationNodeInstanceType
           - CfDeployRoleName
           - EBSVolumeSize
+          - NodeNetBIOSNames
       - Label:
           default: Amazon FSx for ONTAP configuration
         Parameters:  
@@ -43,16 +49,21 @@ Metadata:
           - FSxDataVolumeSize
           - FSxLogVolumeName
           - FSxLogVolumeSize
-          - FSxTempDbVolumeName
-          - FSxTempDbVolumeSize
-          - FSxQuorumVolumeName
-          - FSxQuorumVolumeSize
           - FSxDataLunSize
           - FSxVolumeThroughputCapacity
           - ONTAPSecurityGroupID
           - FileSystemEncryptionKeyId
           - FSxDiskIops
           - SQLSvmName
+          - FSxVolumeSnapshotPolicy
+      - Label:
+          default: PostgreSQL Server Configuration
+        Parameters:
+          - SQLDeploymentMode
+          - SqlVersion
+          - SQLAMIID
+          - SqlServerName
+          - SQLServiceAccountPassword
       - Label:
           default: CloudWatch, SNS Topic and Resource Tags configuration
         Parameters:
@@ -71,14 +82,18 @@ Metadata:
         default: File system deployment mode
       CfDeployRoleName:
         default: CloudFormation deployment role name
-      SqlFSxWSFCName:
-        default: Windows Server Failover Cluster name
+      UniqueID:
+        default: Unique ID for WLMDB SQL resource group
       KeyPairName:
         default: Key pair name
       SQLAMIID:
-        default: PG SQL node ami id
+        default: Amazon Linux 2023 Image ID
       SqlVersion:
-        default: PG SQL version
+        default: PostgreSQL version
+      SqlServerName:
+        default: SQL Server name
+      NodeNetBIOSNames:
+        default: NetBIOS names of cluster nodes
       EBSVolumeSize:
         default: Size of the EBS Volume.
       VPCName:
@@ -91,12 +106,8 @@ Metadata:
         default: FSx for ONTAP storage capacity
       PrivateSubnet1ID:
         default: Private subnet ID for the first SQL node, for example, subnet-000dc866d93550eb0 
-      PrivateSubnet2ID:
-        default: Private subnet ID for the second SQL node, for example, subnet-000dc866d93550eb0 
       RouteTable1Id:
         default: ID of the route table for private subnet 1.
-      RouteTable2Id:
-        default: ID of the route table for private subnet 2.
       WorkloadInstanceType:
         default: Instance type for cluster nodes
       ONTAPSecurityGroupID:
@@ -121,8 +132,22 @@ Metadata:
         default: Boolean to check if an S3 endpoint exists in the vpc.
       CloudformationEndpointExists:
         default: Boolean to check if a Cloudformation endpoint exists in the vpc.
+      SsmEndpointExists:
+        default: Does AWS SSM endpoint exist in the VPC?
+      SSMMessagesEndpointExists:
+        default: Does AWS SSMMessages endpoint exist in the VPC?
+      Ec2MessagesEndpointExists:
+        default: Does AWS EC2Messages endpoint exist in the VPC?
       SqsEndpointExists:
         default: Boolean to check if a SQS endpoint exists in the vpc.
+      CloudwatchLogsEndpointExists:
+        default: Does AWS Cloudwatch Logs endpoint exist in the VPC?
+      FsxEndpointExists:
+        default: Does AWS FSx endpoint exist in the VPC?
+      Ec2EndpointExists:
+        default: Does AWS EC2 endpoint exist in the VPC?
+      SQLServiceAccountPassword:
+        default: SQL Service account password
 Parameters: 
   UniqueID:
     Description: Automation execution unique ID.
@@ -139,6 +164,8 @@ Parameters:
   {{{SQLAMIID}}}
 
   {{{SqlServerName}}}
+
+  {{{NodeNetBIOSNames}}}
 
   {{{EBSVolumeSize}}}
 
@@ -165,14 +192,6 @@ Parameters:
   {{{FSxLogVolumeName}}}
   
   {{{FSxLogVolumeSize}}}
-  
-  {{{FSxTempDbVolumeName}}}
-  
-  {{{FSxTempDbVolumeSize}}}
-  
-  {{{FSxQuorumVolumeName}}}
-  
-  {{{FSxQuorumVolumeSize}}}
 
   {{{FSxDataLunSize}}}
 
@@ -224,6 +243,8 @@ Parameters:
 
   {{{CloudformationEndpointExists}}}
 
+  {{{SsmEndpointExists}}}
+
   {{{SqsEndpointExists}}}
 
   {{{CloudwatchLogsEndpointExists}}}
@@ -234,6 +255,8 @@ Parameters:
 
   {{{Ec2MessagesEndpointExists}}}
 
+  {{{SSMMessagesEndpointExists}}}
+
   {{{S3EndpointRouteTables}}}
 
   {{{PrivateSubnet1Cidrblock}}}
@@ -241,7 +264,9 @@ Parameters:
   {{{PrivateSubnet2Cidrblock}}}
 
   {{{SqlVersion}}}
-       
+
+  {{{SQLServiceAccountPassword}}}
+
 Conditions:
   NewOntapFsx: !Equals [!Ref "FSxFileSystemId", ""]
   ExistingOntapFsx:
@@ -254,6 +279,23 @@ Conditions:
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
   
 Resources:
+  CredentialsSsmParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /netapp/wlmdb/${AWS::StackName}
+      Description: SSM Parameter for FSxN and other credentials
+      Type: String
+      Value: !Sub '{
+                    "fsx": {
+                      "username": "${FSxAdminUsername}",
+                      "password": "${FSxAdminPassword}"
+                    },
+                    "pgsql": {
+                      "username": "postgres",
+                      "password": "${SQLServiceAccountPassword}"
+                    }
+                  }'
+
   EC2IAMRole:
     Type: AWS::IAM::Role
     Properties:
@@ -421,10 +463,60 @@ Resources:
         - !Ref WaitConditionHandle
       Timeout: '3600'
       Count: '0'
-  ValidationStack1:
+  VpcEndpointStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - TrackStackDeploymentWaitCondition
+    Properties:
+      TemplateURL: {{{VpcEndpointTemplate}}}
+      Parameters:
+        VPCId:
+          Ref: VPCID
+        VPCCIDR:
+          Ref: VPCCIDR
+        PreferredSubnetId:
+          Ref: PrivateSubnet1ID
+        StandbySubnetId: !If [IsFailoverCluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]      
+        S3EndpointExists:
+          Ref: S3EndpointExists
+        CloudformationEndpointExists:
+          Ref: CloudformationEndpointExists
+        SsmEndpointExists:
+          Ref: SsmEndpointExists
+        SqsEndpointExists:
+          Ref: SqsEndpointExists
+        CloudwatchLogsEndpointExists:
+          Ref: CloudwatchLogsEndpointExists
+        FsxEndpointExists:
+          Ref: FsxEndpointExists
+        Ec2EndpointExists:
+          Ref: Ec2EndpointExists
+        Ec2MessagesEndpointExists:
+          Ref: Ec2MessagesEndpointExists
+        SSMMessagesEndpointExists:
+          Ref: SSMMessagesEndpointExists
+        S3EndpointRouteTables:
+          Ref: S3EndpointRouteTables
+        PreferredSubnetCidrblock:
+          Ref: PrivateSubnet1Cidrblock
+        StandbySubnetCidrblock: !If [IsFailoverCluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
+      NotificationARNs:
+        Fn::If:
+        - IncludeNotification
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN]
+        - Fn::If: 
+          - ShouldSendSaasNotification
+          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - []
+      {{{Tags}}}
+  ValidationStack1:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - VpcEndpointStack
+      - EC2IAMRole
     Properties:
       TemplateURL: {{{ValidationTemplate}}}
       Parameters:
@@ -505,14 +597,6 @@ Resources:
           Ref: FSxLogVolumeName
         FSxLogVolumeSize:
           Ref: FSxLogVolumeSize
-        FSxTempDbVolumeName:
-          Ref: FSxTempDbVolumeName
-        FSxTempDbVolumeSize:
-          Ref: FSxTempDbVolumeSize
-        FSxClusterQuorumVolumeName:
-          Ref: FSxQuorumVolumeName
-        FSxClusterQuorumVolumeSize:
-          Ref: FSxQuorumVolumeSize
         FSxAdministratorPassword:
           Ref: FSxAdminPassword
         FSxSvmName:
@@ -571,14 +655,6 @@ Resources:
           Ref: FSxLogVolumeName
         FSxLogVolumeSize:
           Ref: FSxLogVolumeSize
-        FSxTempDbVolumeName:
-          Ref: FSxTempDbVolumeName
-        FSxTempDbVolumeSize:
-          Ref: FSxTempDbVolumeSize
-        FSxClusterQuorumVolumeName:
-          Ref: FSxQuorumVolumeName
-        FSxClusterQuorumVolumeSize:
-          Ref: FSxQuorumVolumeSize
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -610,6 +686,12 @@ Resources:
           Ref: SQLAMIID
         SQLVersion:
           Ref: SqlVersion
+        SqlFSxServerNetBIOSName:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -637,6 +719,10 @@ Resources:
           Ref: FSxLogVolumeName
         EBSVolumeSize:
           Ref: EBSVolumeSize
+        SqlServerName:
+          Ref: SqlServerName
+        SQLServiceAccountPassword:
+          Ref: SQLServiceAccountPassword
       NotificationARNs:
         Fn::If:
         - IncludeNotification

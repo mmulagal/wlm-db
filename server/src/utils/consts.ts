@@ -1374,6 +1374,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     sqlServerName: 'SqlServerName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlVersion: 'SqlVersion',
 
     workloadInstanceType: 'WorkloadInstanceType',
@@ -1397,10 +1398,10 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
         name: TEMPLATE_TYPES.PGSQLSTANDALONE,
         location: './resources/pgsql/templates/standalone-deployment.yaml'
     },
-    // {
-    //     name: TEMPLATE_TYPES.ENDPOINT,
-    //     location: './resources/pgsql/templates/vpc-endpoints.yaml'
-    // },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/pgsql/templates/vpc-endpoints.yaml'
+    },
     {
         name: TEMPLATE_TYPES.NEWFSX,
         location: './resources/pgsql/templates/fsx-new.yaml'
@@ -1435,7 +1436,6 @@ const PGSQL_TEMPLATES_ASSETS = [
         name: 'FSXNewTemplate',
         url: 'pgsql/templates/fsx-new.yaml'
     },
-
     {
         name: 'FSXExistingTemplate',
         url: 'pgsql/templates/fsx-existing.yaml'
@@ -1443,6 +1443,10 @@ const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'ValidationTemplate',
         url: 'pgsql/templates/vpc-validation.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'pgsql/templates/vpc-endpoints.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',
@@ -1458,11 +1462,13 @@ const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
 const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
     fsx: TEMPLATE_FSX_ENDPOINT,
     ec2: TEMPLATE_EC2_ENDPOINT,
-    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
+    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
