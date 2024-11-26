@@ -67,6 +67,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
+        if (cardData?.id === 'log-drive-size' || cardData?.id === 'tempdb-drive-size') {
+            return (
+                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED
+            );
+        }
         return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
     }, [cardData]);
 
@@ -336,6 +342,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         cardData?.missingPermissions &&
                         cardData?.missingPermissions.length > 0)
                 }
+                primaryButtonDisabled={cardData?.id === 'compute-rightsizing'}
+                primaryButtonTooltip={GENERAL.COMING_SOON}
             />
         );
     };
