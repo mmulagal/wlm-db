@@ -935,10 +935,7 @@ async function deployStackOrCreateTemplateURL(
         logger.error(errorMsg, err);
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
-        throw createError(
-            err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while deploying stack ${errorMsg}.`
-        );
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }
 
@@ -1565,10 +1562,7 @@ async function deployPgSql(
         logger.error(errorMsg, err);
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
-        throw createError(
-            err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while deploying stack ${errorMsg}.`
-        );
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }
 
