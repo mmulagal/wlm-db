@@ -25,7 +25,6 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    subJobDescriptions,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
     HttpErrorCodes,
@@ -51,6 +50,10 @@ const logger = getLogger();
 
 const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
 const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
+
+type SubJobDescriptions = {
+    [key: string]: string;
+};
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -482,10 +485,11 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
 }
 
 // Return job decription for corresponding Job name
-function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
-    logger.info('Return job decription for job name:', jobName);
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string, dbEngineType: string = 'SQL') {
+    logger.info('Return job decription for job name:', { jobName, stackSqlDeploymentType, dbEngineType });
     // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
     // Diffrentiating between the deployment type to provide appropriate description.
+    const subJobDescriptions = getSubJobDescriptions(dbEngineType);
     if (jobName.includes('ValidationStack1')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
@@ -719,6 +723,66 @@ function calculateFsxStorageCapacityForHeadroomOptimization(
 
     const newFsxStorageCapacityGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
     return newFsxStorageCapacityGiB;
+}
+
+function getSubJobDescriptions(dbEngineType: string) {
+    logger.info('Get sub job descriptions', { dbEngineType });
+
+    const subJobDescriptions: SubJobDescriptions = {
+        SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
+        NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
+        ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
+        'ValidationStack1-standalone': 'Subnet Validation for deployment',
+        'ValidationStack1-fci': `Primary subnet validation for ${dbEngineType} Server FCI deployment`,
+        ValidationStack2: `Standby subnet validation for ${dbEngineType} Server FCI deployment`,
+        'SqlNode(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server standalone on an EC2 instance`,
+        'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
+        'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': `Creating a security group for ${dbEngineType} Server workloads`,
+        'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)': `Attaching an instance profile to EC2 instances for ${dbEngineType} Server nodes`,
+        'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
+        'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
+        'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host witness disk for Windows Cluster',
+        'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
+        'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
+        'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+            'Creating a dedicated storage virtual machine (SVM) for the database workload',
+        'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
+        'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
+        'ValidationNode1(AWS::EC2::Instance)':
+            'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+        'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+        'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
+        'ValidationInstanceProfile(AWS::IAM::InstanceProfile)':
+            'Attaching an instance profile to the validation instance',
+        'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+            'Signaling wait condition to resume next steps',
+        'SqlFSxInstanceMAD1(AWS::EC2::Instance)': `Configuring Windows Cluster and ${dbEngineType} FCI instance on primary node`,
+        'SqlFSxInstanceMAD2(AWS::EC2::Instance)': `Configuring Windows Cluster and ${dbEngineType} FCI instance on standby node`,
+        'NetworkInterface2(AWS::EC2::NetworkInterface)':
+            'Creating network interfaces for the EC2 instance in standby subnet',
+        'NetworkInterface1(AWS::EC2::NetworkInterface)':
+            'Creating network interfaces for the EC2 instance in primary subnet',
+        'ValidationNode2(AWS::EC2::Instance)':
+            'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+        'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+        'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+            'Signaling wait condition to resume next steps',
+        VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+        'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
+        'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
+        'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
+        'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
+        'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
+        'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
+        'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
+        'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
+        'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
+        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
+    };
+
+    return subJobDescriptions;
 }
 
 export {
