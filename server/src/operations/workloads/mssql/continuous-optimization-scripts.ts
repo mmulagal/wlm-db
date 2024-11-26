@@ -65,6 +65,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
                     
                     $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                    $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
@@ -72,6 +73,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                         "lunSerialNumber" = $vol.serialnumber
                         "sizeInMb" = $winvolume.sizeInMb
                         "diskNumber" = $vol.number
+                        "accessPaths" = $partition.accesspaths
                     }
                     $type = 'data'
                     if ($winvolume.name -Contains "tempdev") {
