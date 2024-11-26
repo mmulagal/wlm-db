@@ -1648,7 +1648,12 @@ async function handleComputeRemediation(
                 }
             } else {
                 // single node cluster/standalone
-                await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
+                try {
+                    // TODO: temporarily proceeding with the instance type change even if the pre-requisites fail; need to revisit this later
+                    await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
+                } catch (error) {
+                    logger.warn('Pre-requisites failed for instance type change', error);
+                }
             }
 
             await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
