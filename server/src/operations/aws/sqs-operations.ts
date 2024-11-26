@@ -407,7 +407,12 @@ async function processCloudFormationMessages() {
                                         Metrics: trackMetrics
                                     } = resourceProperties;
 
-                                    const trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+                                    let trackMetricsJson = {};
+                                    try {
+                                        trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+                                    } catch {
+                                        logger.error('Failed to convert metrics to object', trackMetrics);
+                                    }
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
                                     try {
