@@ -134,7 +134,7 @@ function PostgressLayout() {
                         <Encryption />
                         <Tags />
                         <SimpleNotificationService />
-                        <CloudWatch />
+                        <CloudWatch wizardType={WIZARD_TYPE.PGSQL} />
                         <ResourceRollBack />
                     </>
 

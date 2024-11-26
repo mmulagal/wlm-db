@@ -6,15 +6,22 @@ import { useDispatch } from 'react-redux';
 import { setCloudWatch } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
-import { DBType } from '../../../../utils/consts';
+import { DBType, WIZARD_TYPE } from '../../../../utils/consts';
 
-const CloudWatch = () => {
+type CloudWatchProps = {
+    wizardType?: string;
+};
+
+const CloudWatch = ({ wizardType }: CloudWatchProps) => {
     const dispatch = useDispatch();
 
     const toggle = useAppSelector(state => state.mssqlForm.cloudWatch);
     const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
     //Set the Header text here
     const setHeader = () => {
+        if (wizardType === WIZARD_TYPE.PGSQL) {
+            return <Typography variant="Regular_14">{'Disabled'}</Typography>;
+        }
         return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
     };
 
@@ -32,11 +39,16 @@ const CloudWatch = () => {
             >
                 <AccordionCardContent>
                     <Typography>
-                        <ToggleSelector value={toggle} className="" onChange={handleChange} isDisabled={false}>
+                        <ToggleSelector
+                            value={wizardType === WIZARD_TYPE.PGSQL ? false : toggle}
+                            className=""
+                            onChange={handleChange}
+                            isDisabled={wizardType === WIZARD_TYPE.PGSQL ? true : false}
+                        >
                             {GENERAL.CLOUD_WATCH_MONITORING}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
-                            {databaseType === DBType.MSSQL ?  GENERAL.CLOUD_WATCH_TEXT : GENERAL.CLOUD_WATCH_TEXT_PGSQL}
+                            {databaseType === DBType.MSSQL ? GENERAL.CLOUD_WATCH_TEXT : GENERAL.CLOUD_WATCH_TEXT_PGSQL}
                         </Typography>
                     </Typography>
                 </AccordionCardContent>

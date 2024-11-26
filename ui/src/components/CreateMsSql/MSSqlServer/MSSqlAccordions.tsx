@@ -190,7 +190,7 @@ const MSSqlAccordions = () => {
                         <Encryption />
                         <Tags />
                         <SimpleNotificationService />
-                        <CloudWatch />
+                        <CloudWatch wizardType={WIZARD_TYPE.MSSQL} />
                         <ResourceRollBack />
                     </>
                 )}
