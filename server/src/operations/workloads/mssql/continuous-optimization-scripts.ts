@@ -588,7 +588,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     
 `;
 
-const RESCAN_EXTEND_LOG_LUN = (diskSerialNumber: string) => `
+const RESCAN_EXTEND_LUN = (diskSerialNumber: string) => `
 #Rescan and extend the LUN
 Function Rescan-ExtendLUN {
     param (
@@ -707,6 +707,6 @@ export {
     GET_ONTAP_LUN_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     CHECK_NODE_STATUS,
-    RESCAN_EXTEND_LOG_LUN,
+    RESCAN_EXTEND_LUN,
     MOVE_ALL_CLUSTER_GROUPS
 };
