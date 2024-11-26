@@ -1545,7 +1545,7 @@ export const updateInstanceStatus = (
 ) => {
     let updatedState = store.getState();
     let { inventoryTableData }: any = updatedState?.inventoryV2;
-    const targettedHostId = inventoryTableData[hostData.resourceId] ? hostData.resourceId : hostData.ec2InstanceId;
+    const targettedHostId = inventoryTableData?.[hostData?.resourceId] ? hostData?.resourceId : hostData?.ec2InstanceId;
     const updatedInventoryTableData = { ...inventoryTableData };
     if (action === 'unmanage') {
         updatedInventoryTableData[targettedHostId] = {
