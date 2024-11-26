@@ -894,8 +894,6 @@ async function processCloudFormationMessages() {
 
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
-                                const { DatabaseType: trackdatabaseType } = isValid ? message : {};
-                                const dbEngineType = trackdatabaseType === 'Microsoft SQL server' ? 'SQL' : 'PGSQL';
                                 const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
                                 if (masterStackDeployment) {
                                     const {
@@ -918,6 +916,7 @@ async function processCloudFormationMessages() {
                                         : JOBSTATUS.FAILED;
 
                                     const { databaseType } = data as JSONObject;
+                                    const dbEngineType = databaseType === 'PostgreSQL' ? 'PGSQL' : 'SQL';
                                     const masterJobName = `${databaseType} deployment with stack ${stackName}`;
                                     const masterJob = await getMatchingMasterJob(
                                         accountId,
