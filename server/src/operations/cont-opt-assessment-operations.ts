@@ -22,6 +22,7 @@ import {
     databaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     LogDriveDetails,
+    Metadata,
     StorageAssessment,
     TempDbDriveDetails,
     WorkloadInstance
@@ -29,7 +30,7 @@ import {
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listAllManagedInstances, listDatabaseInstances } from '../lib/database/db';
+import { listAllManagedInstances, listDatabaseInstances, listResources } from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -572,6 +573,8 @@ async function calculateComputeDrift(
                         ? underProvisionedRecommendationMessage
                         : overProvisionedRecommendationMessage;
                 recommendationMessage += ` ${genericRecommendationMessage}`;
+            } else {
+                recommendationMessage = 'Your current instance is optimized for your workload.';
             }
 
             objectsInViolation = findingReasonCodes?.map(code => translateFindingReasonCode(code));
@@ -1049,8 +1052,6 @@ async function fetchDriftAssessment(
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
-
-            logger.info('Instance metadata:', instanceMetadata);
             const storgaeConfigsOptimized =
                 (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
             const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
@@ -1095,19 +1096,15 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(computeAssessmentResponse)) {
+        driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
         if (isDemoFlow) {
-            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
-            const computeConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.COMPUTE || '';
-
-            computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-
+            const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId)) || [];
+            const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
             if (computeConfigsOptimized) {
+                computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+                computeAssessmentResponse.recommendation = 'Your current instance is optimized for your workload.';
                 driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
             }
-        } else {
-            driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
         }
     }
     return driftAssessmentData;
