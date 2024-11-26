@@ -394,7 +394,9 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     id: item?.name,
                     category: categoryVal,
                     recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null,
-                    isMissingPermissions: index === 2 ? computeMissingPermissions : null
+                    isMissingPermissions: index === 2 ? computeMissingPermissions : null,
+                    missingPermissions: item?.missingPermissions,
+                    recommendedSizeInGib: item?.recommendedSizeInGib
                 }
             };
         });

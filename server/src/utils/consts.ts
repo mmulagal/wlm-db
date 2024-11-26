@@ -201,8 +201,8 @@ const SECRETS: Record<string, string | undefined> = {
     AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
     AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY,
-    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY
+    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
@@ -1146,8 +1146,6 @@ const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
 
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
-const DATABASE_TYPE = 'Microsoft SQL Server';
-
 // SQL software types
 const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
@@ -1352,6 +1350,7 @@ const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
+const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
 
 const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -1374,6 +1373,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     sqlServerName: 'SqlServerName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlVersion: 'SqlVersion',
 
     workloadInstanceType: 'WorkloadInstanceType',
@@ -1397,10 +1397,10 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
         name: TEMPLATE_TYPES.PGSQLSTANDALONE,
         location: './resources/pgsql/templates/standalone-deployment.yaml'
     },
-    // {
-    //     name: TEMPLATE_TYPES.ENDPOINT,
-    //     location: './resources/pgsql/templates/vpc-endpoints.yaml'
-    // },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/pgsql/templates/vpc-endpoints.yaml'
+    },
     {
         name: TEMPLATE_TYPES.NEWFSX,
         location: './resources/pgsql/templates/fsx-new.yaml'
@@ -1435,7 +1435,6 @@ const PGSQL_TEMPLATES_ASSETS = [
         name: 'FSXNewTemplate',
         url: 'pgsql/templates/fsx-new.yaml'
     },
-
     {
         name: 'FSXExistingTemplate',
         url: 'pgsql/templates/fsx-existing.yaml'
@@ -1443,6 +1442,10 @@ const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'ValidationTemplate',
         url: 'pgsql/templates/vpc-validation.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'pgsql/templates/vpc-endpoints.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',
@@ -1458,11 +1461,13 @@ const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
 const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
     fsx: TEMPLATE_FSX_ENDPOINT,
     ec2: TEMPLATE_EC2_ENDPOINT,
-    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
+    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -1484,7 +1489,9 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'autoscaling:DescribeAutoScalingGroups',
     'autoscaling:DescribeAutoScalingInstances',
     'ec2:DescribeAddresses',
-    'ec2:ModifyInstanceAttribute'
+    'ec2:ModifyInstanceAttribute',
+    'ec2:StartInstances',
+    'ec2:StopInstances'
 ];
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
 const DEMO_DEFAULT_REGION = 'us-east-1';
@@ -1673,7 +1680,6 @@ export {
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
-    DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
     REQUEST_IN_PROGRESS_TYPE,
     CONFIG_NOT_FOUND,
@@ -1802,6 +1808,7 @@ export {
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     INITIALIZER,
     MSSQL,
+    AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
     DEMO_DEFAULT_REGION
 };

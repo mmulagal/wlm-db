@@ -5,7 +5,13 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { convertToBytes, getEc2Arn, isDemo, sqlResponseParsing } from '../utils/utils';
+import {
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    convertToBytes,
+    getEc2Arn,
+    isDemo,
+    sqlResponseParsing
+} from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
@@ -46,6 +52,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listJobs } from '../lib/database/job';
+import getMissingPermissionsList from './aws/iam-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -202,7 +209,30 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
               ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
             ? AssessmentStatus.OVER_PROVISIONED
             : AssessmentStatus.OPTIMIZED;
-    return { status, headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
+
+    // Check for 'fsx:UpdateFileSystem' permissions
+    const missingPermissions = [];
+    let newFsxStorageCapactiyGiB = 0;
+    if (status !== AssessmentStatus.OPTIMIZED) {
+        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, [
+            'fsx:UpdateFileSystem'
+        ]);
+        if (implicitlyDenied.length > 0 || explicitlyDenied.length > 0) {
+            missingPermissions.push('fsx:UpdateFileSystem');
+        }
+        newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+            totalVolumeSizeInBytes,
+            ssdStorageCapacityInBytes
+        );
+    }
+    return {
+        status,
+        headroomPercent,
+        ssdStorageCapacityInBytes,
+        totalVolumeSizeInBytes,
+        missingPermissions,
+        newFsxStorageCapactiyGiB
+    };
 }
 
 async function calculateStorageDrift(
@@ -363,7 +393,7 @@ async function calculateStorageDrift(
 
                 // each database is on separate data and log volume
                 const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                    (data: DatabaseVolumeRecord) => data.volumeUuid === data.logVolumeUuid
+                    (data: DatabaseVolumeRecord) => data.ontapVolumeUuid === data.logVolumeUuid
                 );
 
                 const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
@@ -389,10 +419,14 @@ async function calculateStorageDrift(
                     recommended = 'separate-data-log-lun-per-database';
                     status = AssessmentStatus.NOT_OPTIMIZED;
                     severity = 'critical';
+                    recommendationString =
+                        'Separate system databases from user databases to different drives/luns and different volumes';
                 } else if (!isEmpty(databasesOnSameDataLogVolume)) {
                     recommended = 'separate-data-log-volume-per-database';
                     status = AssessmentStatus.NOT_OPTIMIZED;
                     severity = 'warning';
+                    recommendationString =
+                        'Separate system databases from user databases to different drives/luns and different volumes';
                 } else if (databasesAbove500Gb.length > 1) {
                     if (
                         !isEmpty(databasesSharingDataVolumes) ||
@@ -486,7 +520,11 @@ async function calculateStorageDrift(
     } else {
         try {
             const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-            const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
+            const { status, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
+                credentialsId,
+                region,
+                filesystemId
+            );
 
             driftAssessmentData.sizing.push({
                 name: 'headroom',
@@ -494,7 +532,9 @@ async function calculateStorageDrift(
                 status,
                 severity: goldenData!.severity,
                 recommendation: goldenData!.recommendation,
-                tags: goldenData!.tags
+                tags: goldenData!.tags,
+                missingPermissions,
+                recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0
             });
         } catch (error: any) {
             logger.error(
@@ -1032,23 +1072,62 @@ async function fetchDriftAssessment(
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
 
             logger.info('Instance metadata:', instanceMetadata);
-            const configsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized || [];
-            storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
-                volume => {
-                    const vol = volume as ParameterDriftResponseType;
-                    if (configsOptimized.includes(vol.name)) {
-                        vol.status = AssessmentStatus.OPTIMIZED;
-                        vol.objectsInViolation = [];
+            const storgaeConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+            const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
+            const sizingConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+
+            if (storgaeConfigsOptimized.length > 0) {
+                storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
+                    volume => {
+                        const vol = volume as ParameterDriftResponseType;
+                        if (storgaeConfigsOptimized.includes(vol.name)) {
+                            vol.status = AssessmentStatus.OPTIMIZED;
+                            vol.objectsInViolation = [];
+                        }
+                        return vol;
                     }
-                    return vol;
-                }
-            );
+                );
+            }
+            if (osConfigsOptimized.length > 0) {
+                storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(
+                    osConfig => {
+                        const os = osConfig as ParameterDriftResponseType;
+                        if (osConfigsOptimized.includes(os.name)) {
+                            os.status = AssessmentStatus.OPTIMIZED;
+                        }
+                        return os;
+                    }
+                );
+            }
+            if (sizingConfigsOptimized.length > 0) {
+                storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
+                    const sizing = sizingConfig as ParameterDriftResponseType;
+                    if (sizingConfigsOptimized.includes(sizing.name)) {
+                        sizing.status = AssessmentStatus.OPTIMIZED;
+                    }
+                    return sizing;
+                });
+            }
         }
+
         driftAssessmentData.storage = storageAssessmentResponse;
     }
 
     if (!isEmpty(computeAssessmentResponse)) {
-        driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
+        if (isDemoFlow) {
+            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+            const computeConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.COMPUTE || '';
+
+            computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+
+            if (computeConfigsOptimized) {
+                driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
+            }
+        }
     }
     return driftAssessmentData;
 }
@@ -1075,7 +1154,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     databaseHostId: string,
     databaseInstanceId: string,
     initiatedBy: string,
-    fields?: string
+    fields?: string,
+    parentJobId?: string
 ) {
     logger.info('On-demand trigger drift assessment', {
         accountId,
@@ -1084,7 +1164,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         databaseInstanceId,
         databaseHostId,
         initiatedBy,
-        fields
+        fields,
+        parentJobId
     });
 
     const [managedInstance] = (await listDatabaseInstances(accountId, {
@@ -1099,9 +1180,12 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         );
         return;
     }
-
+    const {
+        resource: { resource_name: resourceName },
+        database_instance_name: instanceName
+    } = managedInstance;
     try {
-        const savedInstanceName = managedInstance.database_instance_name;
+        const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobString,
@@ -1110,7 +1194,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
         });
         triggerAssessment(managedInstance, jobId, fields);
 

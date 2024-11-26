@@ -5,6 +5,7 @@ import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
 import { attempt, compact, isEmpty } from 'lodash-es';
+import ms from 'ms';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -13,7 +14,8 @@ import {
     listResourceTags,
     createTag,
     describeFSx,
-    describeVolumes
+    describeVolumes,
+    updateFsxVolumeSize
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -28,7 +30,7 @@ import {
 import { getNetworkInterfacesList } from './ec2-operations';
 import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { convertToBytes, getFsxArn, isDemo } from '../../utils/utils';
+import { convertToBytes, getFsxArn, isDemo, sleep } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
@@ -650,6 +652,55 @@ async function getFsxVolumeDetails(credentialsId: string, region: string, fsxId:
     return fsxVolumes;
 }
 
+async function updateVolumeSizeAndWaitForUpdate(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    fsxId: string,
+    fsxVolumeId: string,
+    fsxVolumeSizeBytes: number
+) {
+    logger.info('Update FSx volume size and waiting for it to update', {
+        credentialsId,
+        region,
+        accountId,
+        fsxId,
+        fsxVolumeId,
+        fsxVolumeSizeBytes
+    });
+
+    await updateFsxVolumeSize(credentialsId, region, accountId, fsxVolumeId, fsxVolumeSizeBytes);
+
+    let currentVolumeSizeBytes;
+    const maxRetries = 10;
+    const intervalSeconds = '10s';
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const [volumeDetails] = await getFsxVolumeDetails(credentialsId, region, fsxId, [fsxVolumeId]);
+            currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
+            logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
+
+            if (currentVolumeSizeBytes === fsxVolumeSizeBytes) {
+                logger.info(`Volume ${fsxVolumeId} has reached the desired size: ${fsxVolumeSizeBytes} bytes`);
+                return;
+            }
+
+            retries += 1;
+            logger.info(`Waiting for ${intervalSeconds} before checking again...`);
+            await sleep(ms(intervalSeconds));
+        } catch (error) {
+            logger.error('Error while polling volume size:', error);
+            retries += 1;
+            await sleep(ms(intervalSeconds));
+        }
+    }
+
+    const errMsg = `Volume ${fsxVolumeId} did not get resized to the desired size: ${fsxVolumeSizeBytes} bytes`;
+    logger.error(errMsg);
+    throw createError(errMsg);
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -665,5 +716,6 @@ export {
     getStorageDataFromOntap,
     getFsxStorageDetails,
     getFsxVolumeDetails,
-    getFsxnVolIdsFromOntapVolIds
+    getFsxnVolIdsFromOntapVolIds,
+    updateVolumeSizeAndWaitForUpdate
 };

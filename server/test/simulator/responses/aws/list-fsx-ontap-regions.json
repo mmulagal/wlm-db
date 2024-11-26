@@ -7,6 +7,16 @@
     },
     "Parameters": [
         {
+
+            "Name": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "Type": "String",
+            "Value": "ami-012967cc5a8c9f891",
+            "Version": 94,
+            "LastModifiedDate": "2024-11-15T01:04:56.373000+05:30",
+            "ARN": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "DataType": "text"
+        },
+        {
             "ARN": "arn:aws:ssm:ap-southeast-1::parameter/aws/service/global-infrastructure/services/fsx-ontap/regions/af-south-1",
             "DataType": "text",
             "LastModifiedDate": "2021-09-10T17:22:26.060Z",

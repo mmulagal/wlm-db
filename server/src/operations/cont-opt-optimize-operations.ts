@@ -28,17 +28,17 @@ import {
     sleep,
     sqlResponseParsing,
     convertToBytes,
-    sizeInGigaBytes,
-    getResourceNameFromTags
+    getResourceNameFromTags,
+    calculateFsxStorageCapacityForHeadroomOptimization
 } from '../utils/utils';
 import {
     calculateComputeDrift,
-    driftAssessmentDataCollection,
     getHeadroomDrift,
     getLogVolumeDrift,
-    getTempDbVolumeDrift
+    getTempDbVolumeDrift,
+    onDemandTriggerDriftAssessmentDataCollection
 } from './cont-opt-assessment-operations';
-import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity, updateFsxVolumeSize } from '../lib/aws/fsx';
+import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -47,7 +47,8 @@ import {
     OptimizeStorageApiData,
     AssessmentCategories,
     AssessmentStatus,
-    OPTIMIZE_SIZING_CONFIGS
+    OPTIMIZE_SIZING_CONFIGS,
+    AssessmentTriggeredBy
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -55,7 +56,11 @@ import {
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
-import { getFsxVolumeDetails, getFsxnVolIdsFromOntapVolIds } from './aws/fsx-operations';
+import {
+    getFsxVolumeDetails,
+    getFsxnVolIdsFromOntapVolIds,
+    updateVolumeSizeAndWaitForUpdate
+} from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import { CHECK_MPIO_POLICY, REMEDIATE_MPIO_POLICY } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance, modifyInstanceType, startInstance, stopInstance, waitForInstanceOk } from '../lib/aws/ec2';
@@ -64,7 +69,7 @@ import {
     instanceTypeChangePreReqs,
     waitForInstanceToBeStopped
 } from './aws/ec2-operations';
-import { listResources } from '../lib/database/db';
+import { listResources, updateResourceMetaData } from '../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 
 const isDemoFlow = isDemo();
@@ -172,22 +177,21 @@ async function triggerAssessmentAfterOptimization(
         instanceToAssess
     });
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Assessment for ${serverNameWithHostName} after optimization`,
-        description: `Assessment for ${serverNameWithHostName} after optimization`,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZATION,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
-
     // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
     if (!isDemoFlow) {
         await sleep(5000);
     }
 
-    await driftAssessmentDataCollection(accountId, credentialsId, region, jobId, databaseHostId, instanceToAssess);
+    await onDemandTriggerDriftAssessmentDataCollection(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceToAssess.id,
+        AssessmentTriggeredBy.SYSTEM,
+        '',
+        parentJobId
+    );
     await updateJobDetails(accountId, parentJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now(),
@@ -252,7 +256,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             accountId,
             instanceId,
             configurationNames,
-            instanceMetadata || {}
+            'STORAGE',
+            instanceMetadata || { configsOptimized: {} }
         );
     }
     await triggerAssessmentAfterOptimization(
@@ -558,8 +563,16 @@ async function modifySizingAttributes(
     let errorMessage = '';
     let jobStatus;
     try {
-        const { sqlAuthEnabled, activeNodeInstanceId, fsxId, instanceId, instanceName, databaseType, awsAccountId } =
-            await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+        const {
+            sqlAuthEnabled,
+            activeNodeInstanceId,
+            fsxId,
+            instanceId,
+            instanceName,
+            databaseType,
+            awsAccountId,
+            instanceMetadata
+        } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
         if (!activeNodeInstanceId) {
             errorMessage = `Unable to retrieve the active node instance ID from the MS SQL configuration. Drive size optimization for the database instance ${databaseInstanceId} cannot be performed.`;
@@ -624,6 +637,16 @@ async function modifySizingAttributes(
             resourceName: serverNameWithHostName
         };
 
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                typesList,
+                'SIZING',
+                instanceMetadata as databaseInstanceMetadata
+            );
+        }
+
         await triggerAssessmentAfterOptimization(
             credentialsId,
             region,
@@ -684,12 +707,10 @@ async function headroomOptimization(
             const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
             const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
             const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
-            let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
-            const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
-            // increase newFsxStorageCapactiy so that increment is atleast 10%
-            newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
-
-            const newFsxStorageCapactiyGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
+            const newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+                totalVolumeSizeInBytes,
+                ssdStorageCapacityInBytes
+            );
             if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapactiyGiB) {
                 return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
             }
@@ -828,10 +849,11 @@ async function logDriveOptimization(
                             existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredLogVolumeSizeBytes &&
                             matchingFsxVolumeId
                         ) {
-                            await updateFsxVolumeSize(
+                            await updateVolumeSizeAndWaitForUpdate(
                                 credentialsId,
                                 region,
                                 accountId,
+                                fileSystemId,
                                 matchingFsxVolumeId,
                                 requiredLogVolumeSizeBytes
                             );
@@ -863,9 +885,6 @@ async function logDriveOptimization(
                     }
                 })
             );
-            jobStatus = JOBSTATUS.COMPLETED;
-
-            updateLongRunningAuditGroup(AuditStatus.SUCCESS, errorMessage);
         } else {
             errorMessage = 'Log drives are not under provisioned, no action required';
             jobStatus = JOBSTATUS.WARNING;
@@ -943,11 +962,12 @@ async function tempDbDriveOptimization(
                 existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredTempDbVolumeSizeBytes &&
                 tempDbFsxVolumeId
             ) {
-                await updateFsxVolumeSize(
+                await updateVolumeSizeAndWaitForUpdate(
                     credentialsId,
                     region,
                     accountId,
                     tempDbFsxVolumeId,
+                    fileSystemId,
                     requiredTempDbVolumeSizeBytes
                 );
             } else {
@@ -1212,7 +1232,8 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
         databaseHostId,
         awsAccountId,
         activeNodeInstanceId,
-        sqlDeploymentType
+        sqlDeploymentType,
+        instanceMetadata
     } = optimizeMpioPolicyParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -1232,6 +1253,16 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             // Case set to RR on standby
             // 1. Check if ownership was changed from primary to standby, if yes change back to primary. Else no action needed
             await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, false);
+        }
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                ['mpio-load-balance-policy'],
+                'OS',
+                instanceMetadata || {}
+            );
         }
 
         // Trigger assessment after optimization
@@ -1317,7 +1348,8 @@ async function optimizeOperatingSystemSettings(
         fsxn_ids: fsxId,
         database_instance_name: instanceName,
         database_instance_id: instanceId,
-        database_type: databaseType
+        database_type: databaseType,
+        metadata: instanceMetadata
     } = instanceDetail as unknown as DatabaseInstance;
 
     const sqlAuthEnabled =
@@ -1373,7 +1405,8 @@ async function optimizeOperatingSystemSettings(
             awsAccountId: resourceDetail.cloud_provider_account_id!,
             standbyNodeInstanceId,
             activeNodeName,
-            standbyNodeName
+            standbyNodeName,
+            instanceMetadata
         });
     } catch (error) {
         const errorMessage = `Error while optimizing operating system settings ${error}`;
@@ -1557,7 +1590,6 @@ async function optimizeCompute(
         databaseInstanceId,
         instanceType
     });
-
     const { recommendationOptions } = await calculateComputeDrift(
         accountId,
         credentialsId,
@@ -1595,7 +1627,7 @@ async function optimizeCompute(
 
     const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
 
-    const [{ resource_name: resourceName }] = resourceDetails;
+    const [{ resource_name: resourceName, metadata }] = resourceDetails;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1608,6 +1640,10 @@ async function optimizeCompute(
 
     handleComputeRemediation(credentialsId, region, accountId, instanceType, resourceDetails, jobId);
 
+    if (isDemoFlow) {
+        (metadata as unknown as Metadata).isComputeOptimized = true;
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    }
     return { jobId };
 }
 

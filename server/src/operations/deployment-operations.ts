@@ -87,7 +87,8 @@ import {
     PGSQL_VERSION,
     AuditStatus,
     FCI,
-    PGSQL_MASTER_TEMPLATE_PATH
+    PGSQL_MASTER_TEMPLATE_PATH,
+    AL2023_AMI_NAME
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -98,7 +99,8 @@ import {
     sleep,
     splitDomainUsername,
     getCollationForMSSQLVersion,
-    filterActions
+    filterActions,
+    isDemo
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -110,9 +112,13 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { MissingPermissionInterface, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
-import PARAMETERS from '../utils/template-parameters';
+import getConfigParameters from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
-import { createDeploymentMockDataInDB, createFileSystemForDemo } from './demo-operations';
+import {
+    createDeploymentMockDataInDB,
+    createFileSystemForDemo,
+    createDeploymentMockDataInDBForPgSql
+} from './demo-operations';
 import { describeSubnets, getAmis } from '../lib/aws/ec2';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -125,7 +131,6 @@ import { getParametersByPath } from '../lib/aws/ssm';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
-const AL2023AMINAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
 
 async function getSubnetsCidr(
     credentialsId: string,
@@ -327,9 +332,13 @@ async function formatTemplateParameters(
     return { stackName, templateParameters: templateParams };
 }
 
-async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
+async function formatTemplateParametersToCf(
+    templateParameters: Parameter[],
+    databaseType: DatabaseTypes.MS_SQL_SERVER | DatabaseTypes.PG_SQL = DatabaseTypes.MS_SQL_SERVER
+) {
     logger.info('Add parameters to template in cloud formation format');
     const parameters = {};
+    const PARAMETERS = getConfigParameters(databaseType);
     PARAMETERS.forEach(parameter => {
         const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
             parameter;
@@ -432,7 +441,7 @@ async function getCloudformationTemplate(
     );
 
     let masterTemplateContents;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -539,7 +548,7 @@ async function getPgSqlCfTemplate(
     const { databaseSize } = fsxConfiguration;
 
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
-    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023AMINAME)?.Value;
+    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {
@@ -575,7 +584,7 @@ async function getPgSqlCfTemplate(
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters, DatabaseTypes.PG_SQL);
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
@@ -588,7 +597,7 @@ async function getPgSqlCfTemplate(
     );
 
     let masterTemplateContents;
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const filePathSim = path.join(
             process.cwd(),
             '..',
@@ -597,7 +606,7 @@ async function getPgSqlCfTemplate(
             'simulator',
             'responses',
             'aws',
-            'mock-master-template.yaml'
+            'mock-master-template-postgres.yaml'
         );
 
         const filePathDemo = path.join(
@@ -608,7 +617,7 @@ async function getPgSqlCfTemplate(
             'simulator',
             'responses',
             'aws',
-            'mock-master-template.yaml'
+            'mock-master-template-postgres.yaml'
         );
         const filePath = process.env.NODE_ENV === 'demo' ? filePathDemo : filePathSim;
         const yamlString = fs.readFileSync(filePath, 'utf8');
@@ -1268,7 +1277,7 @@ async function deployCloudFormationTemplate(
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+    if (isDemo()) {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
         const awsAccountId = randomize('0', 8);
@@ -1457,7 +1466,7 @@ async function deployPgSql(
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
-    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023AMINAME)?.Value;
+    const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {
@@ -1619,7 +1628,7 @@ async function deployCfTemplateForPgSql(
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams);
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams, DatabaseTypes.PG_SQL);
 
     logger.info('Template parameters in CF format', templateParamsInCfFormat);
 
@@ -1649,6 +1658,27 @@ async function deployCfTemplateForPgSql(
     // logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
     const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
+    if (isDemo()) {
+        const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
+        const stackId = deployStackResponse.StackId || '';
+        const awsAccountId = randomize('0', 8);
+        createDeploymentMockDataInDBForPgSql(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlConfiguration?.sqlDeploymentMode,
+            fsxConfiguration?.fsxFileSystemId,
+            awsAccountId,
+            sqlConfiguration?.sqlServerName,
+            DatabaseTypes.PG_SQL
+        );
+        if (!fsxConfiguration.fsxFileSystemId) {
+            // create a new fsx record in fsx inventory
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration, false);
+        }
+    }
 
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
 }
@@ -1795,13 +1825,12 @@ async function formatPgSqlTemplateParameters(
         topicArn
     };
 
-    const skipPassword = false;
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (PG_TEMPLATE_CONFIG_MAPPING[key]) {
             templateParams.push({
                 ParameterKey: PG_TEMPLATE_CONFIG_MAPPING[key],
                 ParameterValue:
-                    skipPassword && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(PG_TEMPLATE_CONFIG_MAPPING[key])
+                    skipPasswords && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(PG_TEMPLATE_CONFIG_MAPPING[key])
                         ? ''
                         : value.toString()
             });
@@ -2007,7 +2036,7 @@ async function createCfTemplateForPgsqlDeployment(
     });
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList);
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList, DatabaseTypes.PG_SQL);
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(

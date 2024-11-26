@@ -74,6 +74,20 @@ Parameters:
   SQLVersion:
     Description: The version of PostgreSQL to install.
     Type: String
+  SqlFSxServerNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: SqlFSx1
+    Description: NetBIOS name of the SQL Server (up to 15 characters).
+    MaxLength: '15'
+    MinLength: '1'
+    Type: String
+  SqlServerName:
+    Description: Name of the SQL Server.
+    Type: String
+  SQLServiceAccountPassword:
+    Description: Password for the SQL service account.
+    Type: String
+    NoEcho: true
 
 Resources:
   LaunchWizardSqlFSxProfile:
@@ -105,6 +119,9 @@ Resources:
       IamInstanceProfile: !Ref LaunchWizardSqlFSxProfile
       InstanceType: !Ref WorkloadInstanceType
       ImageId: !Ref AMIID
+      Tags:
+        - Key: Name
+          Value: !Ref 'SqlFSxServerNetBIOSName'
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -134,6 +151,8 @@ Resources:
             psql_svcs=postgresql
             dbname=testDB
             pgsql_version=${SQLVersion}
+            service_account_password=${SQLServiceAccountPassword}
+            sql_server_name=${SqlServerName}
 
             echo $fsxsvmid
 
@@ -232,6 +251,10 @@ Resources:
             sudo sed -i "s|^#log_directory =.*|log_directory = '/$fsxlogvolumename'|" /$fsxdatavolumename/postgresql.conf
             check_status "Failed to update PostgreSQL configuration"
 
+            # Changing dynamic_shared_memory_type to mmap
+            sudo sed -i "s|^dynamic_shared_memory_type =.*|dynamic_shared_memory_type = mmap|" /$fsxdatavolumename/postgresql.conf
+            check_status "Failed to change dynamic_shared_memory_type to mmap"
+
             # Change the PGDATA environment variable
             sudo sed -i "s|^Environment=PGDATA=.*|Environment=PGDATA=/$fsxdatavolumename|" /usr/lib/systemd/system/postgresql.service
 
@@ -245,11 +268,6 @@ Resources:
             # Start the PostgreSQL service
             sudo systemctl start postgresql
             check_status "Failed to start PostgreSQL service"
-
-            # Verify the installation
-            sudo -u postgres /usr/bin/psql -c "SELECT version();"
-            check_status "Failed to verify PostgreSQL installation"
-            
 
             # Switch to postgres user and move wal logs to log volume
             sudo chown -R postgres:postgres /$fsxdatavolumename/pg_wal
@@ -266,13 +284,21 @@ Resources:
             sudo -u postgres mkdir -p $archive_dir
             check_status "Failed to create PostgreSQL archive log directory"
 
+            # Restart the PostgreSQL service
+            sudo systemctl restart postgresql
+            check_status "Failed to restart PostgreSQL service"
+
+            # Set password for postgres user
+            sudo -u postgres /usr/bin/psql -c "ALTER USER postgres PASSWORD '$service_account_password';"
+            check_status "Failed to set password for postgres user"
+
             # Create a new database
-            sudo -i -u postgres /usr/bin/psql -c "CREATE DATABASE $dbname;"
-            check_status "Failed to create database $dbname"
+            # sudo -i -u postgres /usr/bin/psql -c "CREATE DATABASE $dbname;"
+            # check_status "Failed to create database $dbname"
 
             # List all databases
-            sudo -u postgres /usr/bin/psql -c "\l"
-            check_status "Failed to list databases"
+            # sudo -u postgres /usr/bin/psql -c "\l"
+            # check_status "Failed to list databases"
 
             # Verify the data directory
             data_directory=$(sudo -u postgres /usr/bin/psql -t -c "SHOW data_directory;" | xargs)
