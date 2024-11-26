@@ -1,4 +1,4 @@
-import { OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
+import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     DEFAULT_DATA_DRIVE_SIZE,
@@ -12,6 +12,17 @@ import {
     TEMPDB_DRIVE_SIZE
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+
+const GET_ONTAP_LUN_DETAILS = (params: OntapRequestParams) => `
+#Get ONTAP LUN details Script
+$WarningPreference = 'SilentlyContinue';
+$FSxID = '${params.fsxId}'
+$FSxRegion = '${params.region}'
+$apiEndpoint = '${params.apiEndpoint}'
+${ontapRestRequest}
+$ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
+$ontapResponse | ConvertTo-Json
+`;
 
 const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
     $WarningPreference = 'SilentlyContinue';
@@ -667,7 +678,7 @@ Function Move-AllClusterGroups {
                 }
                 try {
                     # Move the cluster group to the target node
-                    Move-ClusterGroup -Name $clusterGroupName -Node $TargetNodeName
+                    Move-ClusterGroup -Name $clusterGroupName -Node $TargetNodeName > $null
                     $groupResult.status = 'success'
                 } catch {
                     # Update status and error in case of failure
@@ -693,6 +704,7 @@ Write-Output $jsonResult
 
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
+    GET_ONTAP_LUN_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     CHECK_NODE_STATUS,
     RESCAN_EXTEND_LOG_LUN,

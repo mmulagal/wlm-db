@@ -292,12 +292,13 @@ interface DriftAssessmentJob {
     resourceId: string;
     managedInstanceIds: string[];
 }
-
-interface OptimizeStorageParams {
+interface OntapRequestParams {
     fsxId: string;
     region: string;
     apiEndpoint: string;
     apiQueryFilter: string;
+}
+interface OptimizeStorageParams extends OntapRequestParams {
     apiBody: string;
 }
 
@@ -368,6 +369,7 @@ export {
     TempDbDriveDetails,
     StorageAssessment,
     DriftAssessmentJob,
+    OntapRequestParams,
     OptimizeStorageParams,
     VolumeSpaceRecord,
     OptimizeMpioPolicyParams,

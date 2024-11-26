@@ -1473,6 +1473,31 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
+    "getLunDetailsResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{    \"uuid\":  \"713810d1-79be-4205-a090-aef6337b7b8c\",    \"svm\":  {                \"uuid\":  \"9615e4e9-a587-11ef-8dba-75539f3dc73f\",                \"name\":  \"Carnival\",                \"_links\":  {                               \"self\":  \"@{href=/api/svm/svms/9615e4e9-a587-11ef-8dba-75539f3dc73f}\"                           }            },    \"name\":  \"/vol/wlmdb_sqllog_1732463374/sqllog\",    \"location\":  {                     \"logical_unit\":  \"sqllog\",                     \"node\":  {                                  \"name\":  \"FsxId0fdac60dc56d374c1-01\",                                  \"uuid\":  \"484f55df-a578-11ef-8dba-75539f3dc73f\",                                  \"_links\":  \"@{self=}\"                              },                     \"volume\":  {                                    \"uuid\":  \"b916cb2a-aa7b-11ef-9e0c-597f857bb5c3\",                                    \"name\":  \"wlmdb_sqllog_1732463374\",                                    \"_links\":  \"@{self=}\"                                }                 },    \"class\":  \"regular\",    \"create_time\":  \"2024-11-24T15:50:11+00:00\",    \"enabled\":  true,    \"os_type\":  \"windows_2008\",    \"serial_number\":  \"lWB4c$XRevTI\",    \"space\":  {                  \"scsi_thin_provisioning_support_enabled\":  true,                  \"size\":  1126170624,                  \"used\":  19398656,                  \"guarantee\":  {                                    \"requested\":  true,                                    \"reserved\":  false                                }              },    \"status\":  {                   \"container_state\":  \"online\",                   \"mapped\":  true,                   \"read_only\":  false,                   \"state\":  \"online\"               },    \"vvol\":  {                 \"is_bound\":  false             },    \"_links\":  {                   \"self\":  {                                \"href\":  \"/api/storage/luns/713810d1-79be-4205-a090-aef6337b7b8c\"                            }               }}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
     "validateMpioCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,
