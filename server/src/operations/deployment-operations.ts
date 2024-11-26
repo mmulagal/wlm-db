@@ -112,7 +112,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { MissingPermissionInterface, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
-import PARAMETERS from '../utils/template-parameters';
+import getConfigParameters from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
 import {
     createDeploymentMockDataInDB,
@@ -332,9 +332,13 @@ async function formatTemplateParameters(
     return { stackName, templateParameters: templateParams };
 }
 
-async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
+async function formatTemplateParametersToCf(
+    templateParameters: Parameter[],
+    databaseType: DatabaseTypes.MS_SQL_SERVER | DatabaseTypes.PG_SQL = DatabaseTypes.MS_SQL_SERVER
+) {
     logger.info('Add parameters to template in cloud formation format');
     const parameters = {};
+    const PARAMETERS = getConfigParameters(databaseType);
     PARAMETERS.forEach(parameter => {
         const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
             parameter;
@@ -580,7 +584,7 @@ async function getPgSqlCfTemplate(
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters, DatabaseTypes.PG_SQL);
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
@@ -1624,7 +1628,7 @@ async function deployCfTemplateForPgSql(
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams);
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParams, DatabaseTypes.PG_SQL);
 
     logger.info('Template parameters in CF format', templateParamsInCfFormat);
 
@@ -2032,7 +2036,7 @@ async function createCfTemplateForPgsqlDeployment(
     });
 
     // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
-    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList);
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList, DatabaseTypes.PG_SQL);
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
