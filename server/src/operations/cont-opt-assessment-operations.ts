@@ -112,8 +112,12 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     });
     key = 'log-drive-size';
     status =
-        !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
+        !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
             ? AssessmentStatus.NOT_OPTIMIZED
+            : !isEmpty(overProvisionedDrives) && isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.OVER_PROVISIONED
+            : isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.UNDER_PROVISIONED
             : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
             ? AssessmentStatus.NOT_APPLICABLE
             : AssessmentStatus.OPTIMIZED;
