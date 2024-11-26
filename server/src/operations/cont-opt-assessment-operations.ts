@@ -133,29 +133,12 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     const ignoredDrives: SizingViolationResponseType[] = [];
 
     let tempdbPercent = 0;
-    const {
-        dataDriveTotalSizeMB,
-        tempdbDriveTotalSizeMB,
-        defaultDataDriveLetter,
-        tempdbDriveLetter,
-        lunUuid,
-        svmName,
-        ontapVolumeName,
-        ontapVolumeUuid
-    } = value;
+    const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
+        value;
     if (defaultDataDriveLetter === tempdbDriveLetter) {
         status = AssessmentStatus.NOT_APPLICABLE;
 
-        ignoredDrives.push({
-            dataDriveTotalSizeMB,
-            tempdbDriveTotalSizeMB,
-            dataAccessPath: defaultDataDriveLetter,
-            tempdbAccessPath: tempdbDriveLetter,
-            lunUuid,
-            svmName,
-            ontapVolumeName,
-            ontapVolumeUuid
-        });
+        ignoredDrives.push(value);
     } else {
         tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         status =
@@ -165,31 +148,22 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
                 ? AssessmentStatus.UNDER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
         if (status === AssessmentStatus.OVER_PROVISIONED) {
-            overProvisionedDrives.push({
-                dataDriveTotalSizeMB,
-                tempdbDriveTotalSizeMB,
-                dataAccessPath: defaultDataDriveLetter,
-                tempdbAccessPath: tempdbDriveLetter,
-                lunUuid,
-                svmName,
-                ontapVolumeName,
-                ontapVolumeUuid
-            });
+            overProvisionedDrives.push(value);
         } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
-            underProvisionedDrives.push({
-                dataDriveTotalSizeMB,
-                tempdbDriveTotalSizeMB,
-                dataAccessPath: defaultDataDriveLetter,
-                tempdbAccessPath: tempdbDriveLetter,
-                lunUuid,
-                svmName,
-                ontapVolumeName,
-                ontapVolumeUuid
-            });
+            underProvisionedDrives.push(value);
         }
     }
     key = 'tempdb-drive-size';
-    return { status, key, tempdbPercent, dataDriveTotalSizeMB, ontapVolumeUuid };
+    return {
+        status,
+        key,
+        tempdbPercent,
+        dataDriveTotalSizeMB,
+        ontapVolumeUuid,
+        underProvisionedDrives,
+        overProvisionedDrives,
+        ignoredDrives
+    };
 }
 
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
@@ -502,7 +476,8 @@ async function calculateStorageDrift(
                     ));
                 }
                 if (key === 'data-tempdb-drive-details') {
-                    ({ status, key } = getTempDbVolumeDrift(value, status, key));
+                    ({ status, key, overProvisionedDrives, underProvisionedDrives, ignoredDrives } =
+                        getTempDbVolumeDrift(value, status, key));
                 }
 
                 driftAssessmentData.sizing.push({
