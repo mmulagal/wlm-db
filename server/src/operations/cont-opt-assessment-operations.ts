@@ -1131,6 +1131,8 @@ async function fetchDriftAssessment(
             if (computeConfigsOptimized) {
                 driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
             }
+        } else {
+            driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
         }
     }
     return driftAssessmentData;
