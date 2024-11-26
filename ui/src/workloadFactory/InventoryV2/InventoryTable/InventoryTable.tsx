@@ -609,7 +609,9 @@ const InventoryTable = () => {
                     <div>
                         {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
                             <>
-                                <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
+                                <Typography variant="Semibold_14">
+                                    {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
+                                </Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
                         ) : (

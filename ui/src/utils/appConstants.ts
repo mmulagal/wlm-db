@@ -1290,7 +1290,7 @@ export const GETWELL_DIALOG_CONTENT = {
     COMPUTE_RS_WWH_DESC_STANDALONE:
         'Workload Factory will change the instance type for your Amazon EC2 instance from the current instance type to the recommended instance type.',
     COMPUTE_RS_DTW_NOTES_FCI: [
-        'There will be some performance degradation during failover and switchback of the Failover Cluster Instances (FCI) cluster role.',
+        'You can expect slower performance during failover and failback from the primary node in your SQL Server Always on FCI.',
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf.'
     ],
     COMPUTE_RS_DTW_NOTES_STANDALONE: [
