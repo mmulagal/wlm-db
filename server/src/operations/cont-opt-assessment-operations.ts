@@ -133,29 +133,12 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     const ignoredDrives: SizingViolationResponseType[] = [];
 
     let tempdbPercent = 0;
-    const {
-        dataDriveTotalSizeMB,
-        tempdbDriveTotalSizeMB,
-        defaultDataDriveLetter,
-        tempdbDriveLetter,
-        lunUuid,
-        svmName,
-        ontapVolumeName,
-        ontapVolumeUuid
-    } = value;
+    const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
+        value;
     if (defaultDataDriveLetter === tempdbDriveLetter) {
         status = AssessmentStatus.NOT_APPLICABLE;
 
-        ignoredDrives.push({
-            dataDriveTotalSizeMB,
-            tempdbDriveTotalSizeMB,
-            dataAccessPath: defaultDataDriveLetter,
-            tempdbAccessPath: tempdbDriveLetter,
-            lunUuid,
-            svmName,
-            ontapVolumeName,
-            ontapVolumeUuid
-        });
+        ignoredDrives.push(value);
     } else {
         tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         status =
@@ -165,31 +148,22 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
                 ? AssessmentStatus.UNDER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
         if (status === AssessmentStatus.OVER_PROVISIONED) {
-            overProvisionedDrives.push({
-                dataDriveTotalSizeMB,
-                tempdbDriveTotalSizeMB,
-                dataAccessPath: defaultDataDriveLetter,
-                tempdbAccessPath: tempdbDriveLetter,
-                lunUuid,
-                svmName,
-                ontapVolumeName,
-                ontapVolumeUuid
-            });
+            overProvisionedDrives.push(value);
         } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
-            underProvisionedDrives.push({
-                dataDriveTotalSizeMB,
-                tempdbDriveTotalSizeMB,
-                dataAccessPath: defaultDataDriveLetter,
-                tempdbAccessPath: tempdbDriveLetter,
-                lunUuid,
-                svmName,
-                ontapVolumeName,
-                ontapVolumeUuid
-            });
+            underProvisionedDrives.push(value);
         }
     }
     key = 'tempdb-drive-size';
-    return { status, key, tempdbPercent, dataDriveTotalSizeMB, ontapVolumeUuid };
+    return {
+        status,
+        key,
+        tempdbPercent,
+        dataDriveTotalSizeMB,
+        ontapVolumeUuid,
+        underProvisionedDrives,
+        overProvisionedDrives,
+        ignoredDrives
+    };
 }
 
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
@@ -502,7 +476,8 @@ async function calculateStorageDrift(
                     ));
                 }
                 if (key === 'data-tempdb-drive-details') {
-                    ({ status, key } = getTempDbVolumeDrift(value, status, key));
+                    ({ status, key, overProvisionedDrives, underProvisionedDrives, ignoredDrives } =
+                        getTempDbVolumeDrift(value, status, key));
                 }
 
                 driftAssessmentData.sizing.push({
@@ -1191,11 +1166,18 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         database_instance_name: instanceName
     } = managedInstance;
     try {
+        const instanceDetailsForJob = JSON.stringify({
+            hostName: resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            databaseInstanceName: instanceName,
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+        });
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
+        const jobDescription = `Assess SQL Server instance ${savedInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobString,
-            description: jobString,
+            name: `Assess SQL Server instance ${savedInstanceName}`,
+            description: jobDescription,
             resourceName: savedInstanceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),
