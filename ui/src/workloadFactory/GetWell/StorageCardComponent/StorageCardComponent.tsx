@@ -438,7 +438,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <div
                         className={styles.buttonSection}
                         style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
-                        id={'assessment-optimization'}
+                        id={`${cardData?.id}-optimize`}
                     >
                         <DsButton
                             variant="secondary"
