@@ -1,5 +1,6 @@
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
+import { checkAccount } from './db';
 
 const logger = getLogger();
 
@@ -16,7 +17,9 @@ interface DatabaseInstanceConfigData {
 }
 async function createDatabaseInstanceConfigData(records: DatabaseInstanceConfigData[]) {
     logger.info('Creating database instance config data', { records });
-
+    records.forEach(record => {
+        record.account_id = checkAccount(record.account_id);
+    });
     return prisma.client.database_instance_config_data.createMany({
         data: records
     });
@@ -40,6 +43,7 @@ async function listDatabaseInstanceConfigData(
         databaseInstanceId,
         configDataType
     });
+    accountId = checkAccount(accountId!);
 
     return prisma.client.database_instance_config_data.findMany({
         where: {

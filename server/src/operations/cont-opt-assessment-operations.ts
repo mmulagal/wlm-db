@@ -1068,23 +1068,62 @@ async function fetchDriftAssessment(
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
 
             logger.info('Instance metadata:', instanceMetadata);
-            const configsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized || [];
-            storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
-                volume => {
-                    const vol = volume as ParameterDriftResponseType;
-                    if (configsOptimized.includes(vol.name)) {
-                        vol.status = AssessmentStatus.OPTIMIZED;
-                        vol.objectsInViolation = [];
+            const storgaeConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+            const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
+            const sizingConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+
+            if (storgaeConfigsOptimized.length > 0) {
+                storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
+                    volume => {
+                        const vol = volume as ParameterDriftResponseType;
+                        if (storgaeConfigsOptimized.includes(vol.name)) {
+                            vol.status = AssessmentStatus.OPTIMIZED;
+                            vol.objectsInViolation = [];
+                        }
+                        return vol;
                     }
-                    return vol;
-                }
-            );
+                );
+            }
+            if (osConfigsOptimized.length > 0) {
+                storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(
+                    osConfig => {
+                        const os = osConfig as ParameterDriftResponseType;
+                        if (osConfigsOptimized.includes(os.name)) {
+                            os.status = AssessmentStatus.OPTIMIZED;
+                        }
+                        return os;
+                    }
+                );
+            }
+            if (sizingConfigsOptimized.length > 0) {
+                storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
+                    const sizing = sizingConfig as ParameterDriftResponseType;
+                    if (sizingConfigsOptimized.includes(sizing.name)) {
+                        sizing.status = AssessmentStatus.OPTIMIZED;
+                    }
+                    return sizing;
+                });
+            }
         }
+
         driftAssessmentData.storage = storageAssessmentResponse;
     }
 
     if (!isEmpty(computeAssessmentResponse)) {
-        driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
+        if (isDemoFlow) {
+            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+            const computeConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.COMPUTE || '';
+
+            computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+
+            if (computeConfigsOptimized) {
+                driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
+            }
+        }
     }
     return driftAssessmentData;
 }

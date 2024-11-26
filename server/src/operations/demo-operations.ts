@@ -423,12 +423,25 @@ async function updateOptimizedConfigNameInInstanceTable(
     accountId: string,
     instanceId: string,
     configNames: string[],
+    configType: string,
     metaData: databaseInstanceMetadata
 ) {
-    logger.info('updating optimized config name into instance meta data', accountId, instanceId, configNames);
+    logger.info(
+        'updating optimized config name into instance meta data',
+        accountId,
+        instanceId,
+        configNames,
+        configType
+    );
 
-    const existingConfigs = metaData.configsOptimized || [];
-    metaData.configsOptimized = Array.from(new Set([...existingConfigs, ...configNames]));
+    const existingConfigs = metaData.configsOptimized || {};
+
+    existingConfigs[configType] = existingConfigs[configType]
+        ? [...existingConfigs[configType], ...configNames]
+        : [...configNames];
+
+    // Update metaData.configsOptimized with the modified existingConfigs
+    metaData.configsOptimized = existingConfigs;
     await updateInstanceMetadata(accountId, instanceId, metaData);
 }
 
