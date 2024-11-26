@@ -809,7 +809,7 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
             .filter((value, index, self) => self.indexOf(value) === index);
         allManagedResources.forEach(async resource => {
             const resourceName = resource.split('\\')[0]!;
-            const jobString = `Assessing SQL Server host ${resourceName} compute right sizing`;
+            const jobString = `Assess SQL Server host ${resourceName} compute right sizing`;
             await registerJob(accountId, '', '', {
                 name: jobString,
                 description: jobString,
@@ -917,8 +917,8 @@ async function triggerAssessment(
         return;
     }
 
-    const jobName = `Assessing SQL Server instance ${resourceWithInstanceName}`;
-    const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+    const jobName = `Assess SQL Server instance ${resourceWithInstanceName}`;
+    const jobDescription = `Assess SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         name: jobName,
         description: jobDescription,
