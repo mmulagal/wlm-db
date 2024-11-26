@@ -1,6 +1,6 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { cloneDeep, compact, isEmpty } from 'lodash-es';
 import { Volume } from '@aws-sdk/client-fsx';
 import {
     Metadata,
@@ -1549,7 +1549,7 @@ async function handleComputeRemediation(
     let errorMessage = '';
 
     try {
-        const [{ metadata }] = resourceDetails;
+        const [{ id: resourceId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1663,6 +1663,11 @@ async function handleComputeRemediation(
                 logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
             }
             jobStatus = JOBSTATUS.COMPLETED;
+            if (isDemoFlow) {
+                const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
+                updatedMetadata.isComputeOptimized = true;
+                await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
+            }
             return;
         }
 
