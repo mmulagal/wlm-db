@@ -265,7 +265,8 @@ async function createOrUpdateChildJobs(
     checkEventsOrder: boolean = false,
     stackSqlDeploymentType: string,
     stackName?: string,
-    resourceStatus?: string
+    resourceStatus?: string,
+    dbEngineType?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
     /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
@@ -311,7 +312,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!),
+                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!, dbEngineType),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -893,6 +894,8 @@ async function processCloudFormationMessages() {
 
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
+                                const { DatabaseType: trackdatabaseType } = isValid ? message : {};
+                                const dbEngineType = trackdatabaseType === 'Microsoft SQL server' ? 'SQL' : 'PGSQL';
                                 const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
                                 if (masterStackDeployment) {
                                     const {
@@ -944,7 +947,8 @@ async function processCloudFormationMessages() {
                                             false,
                                             stackSqlDeploymentType!,
                                             stackName,
-                                            resourceStatus
+                                            resourceStatus,
+                                            dbEngineType
                                         );
                                     }
                                     /**
@@ -1148,7 +1152,8 @@ async function processCloudFormationMessages() {
                                             true,
                                             stackSqlDeploymentType!,
                                             stackName,
-                                            resourceStatus
+                                            resourceStatus,
+                                            dbEngineType
                                         );
                                     }
                                 }
