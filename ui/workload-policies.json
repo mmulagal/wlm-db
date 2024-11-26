@@ -120,11 +120,7 @@
                     "compute-optimizer:PutRecommendationPreferences",
                     "compute-optimizer:GetEffectiveRecommendationPreferences",
                     "compute-optimizer:GetEC2InstanceRecommendations",
-                    "autoscaling:DescribeAutoScalingGroups",
-                    "autoscaling:DescribeAutoScalingInstances",
-                    "ec2:StartInstances",
-                    "ec2:StopInstances",
-                    "ec2:ModifyInstanceAttribute"
+                    "autoscaling:DescribeAutoScalingGroups"
                 ],
                 "Resource": "*"
             },
