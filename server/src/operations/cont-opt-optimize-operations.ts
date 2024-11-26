@@ -742,7 +742,7 @@ async function resizeLun(
     fileSystemId: string,
     lunUuid: string,
     diskSerialNumber: string,
-    requiredLogVolumeSizeBytes: number,
+    requiredLunSizeBytes: number,
     activeNodeInstanceId: string
 ) {
     logger.info('Resizing LUN ', {
@@ -751,7 +751,7 @@ async function resizeLun(
         fileSystemId,
         lunUuid,
         diskSerialNumber,
-        requiredLogVolumeSizeBytes,
+        requiredLunSizeBytes,
         activeNodeInstanceId
     });
 
@@ -762,7 +762,7 @@ async function resizeLun(
         region,
         apiEndpoint,
         apiQueryFilter: '',
-        apiBody: JSON.stringify({ space: { size: requiredLogVolumeSizeBytes } })
+        apiBody: JSON.stringify({ space: { size: requiredLunSizeBytes } })
     });
 
     const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
@@ -973,7 +973,7 @@ async function resizeVolumeAndLunSize(
         existingVolumeDetails.OntapConfiguration.SizeInBytes >= requiredLunSizeBytes &&
         existingLogLunSizeBytes >= requiredLunSizeBytes
     ) {
-        errorMessage = `Some ${driveType} drives configuration changed since we last assessed, no action required for those`;
+        errorMessage = `${driveType} drives configuration changed since we last assessed, no action required for those`;
         jobStatus = JOBSTATUS.WARNING;
     }
     return { errorMessage, jobStatus };
