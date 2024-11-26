@@ -1095,19 +1095,16 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(computeAssessmentResponse)) {
+        driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
             const computeConfigsOptimized =
                 (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.COMPUTE || '';
-
-            computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-
             if (computeConfigsOptimized) {
+                computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
                 driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
             }
-        } else {
-            driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
         }
     }
     return driftAssessmentData;
