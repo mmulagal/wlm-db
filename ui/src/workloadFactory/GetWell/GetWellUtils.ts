@@ -366,13 +366,27 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
         } else if (index === 2) {
             categoryVal = 'compute';
         }
+
+        // user-database-layout is newly added and to check status for User data files (.mdf) placement we need to check status of user-database-layout also along with default-data-files-location
+        let userDataStatus: string = '';
+        category?.map((item: PerConfigInterface) => {
+            if (item?.name === 'user-database-layout') {
+                userDataStatus = item?.status || '';
+            }
+        });
         category?.map((item: PerConfigInterface) => {
             let itemName = item?.name || '';
             let status = item?.status || '';
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
             }
+
+            if (itemName === 'default-data-files-location' && userDataStatus === 'not-optimized') {
+                status = 'not-optimized';
+            }
+
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
             cardsData = {
                 ...cardsData,
                 [itemName]: {
