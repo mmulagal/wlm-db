@@ -999,7 +999,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 const errorMessage = `No managed instances found for account ${accountId}.`;
                 logger.error(errorMessage);
             } else {
-                const jobDescription = `Assess online SQL Server instances from ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
                     description: jobDescription,
