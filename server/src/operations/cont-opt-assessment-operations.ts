@@ -1166,11 +1166,18 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         database_instance_name: instanceName
     } = managedInstance;
     try {
+        const instanceDetailsForJob = JSON.stringify({
+            hostName: resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            databaseInstanceName: instanceName,
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+        });
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
+        const jobDescription = `Assess SQL Server instance ${savedInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobString,
-            description: jobString,
+            name: `Assess SQL Server instance ${savedInstanceName}`,
+            description: jobDescription,
             resourceName: savedInstanceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),

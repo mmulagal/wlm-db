@@ -1611,6 +1611,7 @@ function assessmentJobData(
         credentials_id: credentialsId,
         region,
         name: `Assess SQL Server host ${resourceName} compute right sizing`,
+        description: `Assess SQL Server host ${resourceName} compute right sizing`,
         status: JOBSTATUS.COMPLETED,
         resource_name: resourceName,
         parent_job_id: parentJobId,
