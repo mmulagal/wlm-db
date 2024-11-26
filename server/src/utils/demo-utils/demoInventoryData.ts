@@ -936,9 +936,67 @@ const ASSESMENT_CONFIG_DATA = {
         'default-data-files-location': 'separate-drive'
     },
     sizing: {
-        'log-drive-size': 24.95199566128725,
         'performance-tier': true,
-        'tempdb-drive-size': 9.9423947935447
+        'data-log-drive-details': [
+            {
+                databaseName: 'msdb',
+                logDrivePath: 'S:\\mssql\\system\\MSSQL15.MSSQLSERVER\\MSSQL\\DATA\\MSDBLog.ldf',
+                dataDrivePath: 'S:\\mssql\\system\\MSSQL15.MSSQLSERVER\\MSSQL\\DATA\\MSDBData.mdf',
+                logAccessPath: 'S:\\mssql',
+                dataAccessPath: 'S:\\mssql',
+                logDriveLetter: 'S:',
+                dataDriveLetter: 'S:',
+                logDriveTotalSizeMB: 307182,
+                dataDriveTotalSizeMB: 307182
+            },
+            {
+                lunUuid: 'ce0cca99-e9fd-42af-9daa-50039625d44d',
+                svmName: 'wlmdb_sqlsvm_1731915150431',
+                diskNumber: 8,
+                databaseName: 'Nachos',
+                logDrivePath: 'G:\\MSSQL\\log\\Nachos_log.ldf',
+                dataDrivePath: 'F:\\MSSQL\\data\\Nachos_data.mdf',
+                logAccessPath: 'G:\\MSSQL',
+                dataAccessPath: 'F:\\MSSQL',
+                logDriveLetter: 'G:',
+                dataDriveLetter: 'F:',
+                ontapVolumeName: 'wlmdb_sqllog_1731988070',
+                ontapVolumeUuid: '1c3c25e9-a629-11ef-8dba-75539f3dc73f',
+                diskSerialNumber: 'lWB4c$XRevTA',
+                logDriveTotalSizeMB: 9731,
+                dataDriveTotalSizeMB: 42942
+            },
+            {
+                lunUuid: '74897647-0db1-4e4c-934a-8faa6cae7087',
+                svmName: 'wlmdb_sqlsvm_1731915150431',
+                diskNumber: 6,
+                databaseName: 'Primordial',
+                logDrivePath: 'E:\\MSSQL\\log\\Primordial_log.ldf',
+                dataDrivePath: 'D:\\MSSQL\\data\\Primordial_data.mdf',
+                logAccessPath: 'E:\\MSSQL',
+                dataAccessPath: 'D:\\MSSQL',
+                logDriveLetter: 'E:',
+                dataDriveLetter: 'D:',
+                ontapVolumeName: 'wlmdb_sqllog_1731987160',
+                ontapVolumeUuid: 'f3c8df60-a626-11ef-8dba-75539f3dc73f',
+                diskSerialNumber: 'lWB4c$XRevT9',
+                logDriveTotalSizeMB: 10722,
+                dataDriveTotalSizeMB: 10722
+            }
+        ],
+        'data-tempdb-drive-details': {
+            lunUuid: 'ab3fd3b5-b2e2-4c97-b026-52ba19accc41',
+            svmName: 'wlmdb_sqlsvm_1731915150431',
+            diskNumber: 6,
+            ontapVolumeName: 'wlmdb_sqltemp_1731915150431',
+            ontapVolumeUuid: 'c4585626-a581-11ef-8dba-75539f3dc73f',
+            tempdbDrivePath: 'T:\\mssql\\data\\tempdb.mdf',
+            diskSerialNumber: 'lWB4c$XRevT9',
+            tempdbDriveLetter: 'T:',
+            dataDriveTotalSizeMB: 9731,
+            defaultDataDriveLetter: 'S:',
+            tempdbDriveTotalSizeMB: 42942
+        }
     },
     volumes: [
         {

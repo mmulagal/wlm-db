@@ -69,7 +69,7 @@ import {
     instanceTypeChangePreReqs,
     waitForInstanceToBeStopped
 } from './aws/ec2-operations';
-import { listResources } from '../lib/database/db';
+import { listResources, updateResourceMetaData } from '../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 
 const isDemoFlow = isDemo();
@@ -256,7 +256,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             accountId,
             instanceId,
             configurationNames,
-            instanceMetadata || {}
+            'STORAGE',
+            instanceMetadata || { configsOptimized: {} }
         );
     }
     await triggerAssessmentAfterOptimization(
@@ -562,8 +563,16 @@ async function modifySizingAttributes(
     let errorMessage = '';
     let jobStatus;
     try {
-        const { sqlAuthEnabled, activeNodeInstanceId, fsxId, instanceId, instanceName, databaseType, awsAccountId } =
-            await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+        const {
+            sqlAuthEnabled,
+            activeNodeInstanceId,
+            fsxId,
+            instanceId,
+            instanceName,
+            databaseType,
+            awsAccountId,
+            instanceMetadata
+        } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
         if (!activeNodeInstanceId) {
             errorMessage = `Unable to retrieve the active node instance ID from the MS SQL configuration. Drive size optimization for the database instance ${databaseInstanceId} cannot be performed.`;
@@ -627,6 +636,16 @@ async function modifySizingAttributes(
             cloudProviderAccountId: awsAccountId!,
             resourceName: serverNameWithHostName
         };
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                typesList,
+                'SIZING',
+                instanceMetadata as databaseInstanceMetadata
+            );
+        }
 
         await triggerAssessmentAfterOptimization(
             credentialsId,
@@ -1213,7 +1232,8 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
         databaseHostId,
         awsAccountId,
         activeNodeInstanceId,
-        sqlDeploymentType
+        sqlDeploymentType,
+        instanceMetadata
     } = optimizeMpioPolicyParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -1233,6 +1253,16 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             // Case set to RR on standby
             // 1. Check if ownership was changed from primary to standby, if yes change back to primary. Else no action needed
             await validateAndRemediateMpioPolicy(optimizeMpioPolicyParams, false);
+        }
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                ['mpio-load-balance-policy'],
+                'OS',
+                instanceMetadata || {}
+            );
         }
 
         // Trigger assessment after optimization
@@ -1318,7 +1348,8 @@ async function optimizeOperatingSystemSettings(
         fsxn_ids: fsxId,
         database_instance_name: instanceName,
         database_instance_id: instanceId,
-        database_type: databaseType
+        database_type: databaseType,
+        metadata: instanceMetadata
     } = instanceDetail as unknown as DatabaseInstance;
 
     const sqlAuthEnabled =
@@ -1374,7 +1405,8 @@ async function optimizeOperatingSystemSettings(
             awsAccountId: resourceDetail.cloud_provider_account_id!,
             standbyNodeInstanceId,
             activeNodeName,
-            standbyNodeName
+            standbyNodeName,
+            instanceMetadata
         });
     } catch (error) {
         const errorMessage = `Error while optimizing operating system settings ${error}`;
@@ -1558,7 +1590,6 @@ async function optimizeCompute(
         databaseInstanceId,
         instanceType
     });
-
     const { recommendationOptions } = await calculateComputeDrift(
         accountId,
         credentialsId,
@@ -1596,7 +1627,7 @@ async function optimizeCompute(
 
     const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
 
-    const [{ resource_name: resourceName }] = resourceDetails;
+    const [{ resource_name: resourceName, metadata }] = resourceDetails;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1609,6 +1640,10 @@ async function optimizeCompute(
 
     handleComputeRemediation(credentialsId, region, accountId, instanceType, resourceDetails, jobId);
 
+    if (isDemoFlow) {
+        (metadata as unknown as Metadata).isComputeOptimized = true;
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    }
     return { jobId };
 }
 
