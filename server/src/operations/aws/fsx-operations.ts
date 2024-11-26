@@ -681,7 +681,7 @@ async function updateVolumeSizeAndWaitForUpdate(
             currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
             logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
 
-            if (currentVolumeSizeBytes === fsxVolumeSizeBytes) {
+            if (currentVolumeSizeBytes === fsxVolumeSizeBytes || isDemo()) {
                 logger.info(`Volume ${fsxVolumeId} has reached the desired size: ${fsxVolumeSizeBytes} bytes`);
                 return;
             }
