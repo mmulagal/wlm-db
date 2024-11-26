@@ -582,16 +582,25 @@ async function modifySizingAttributes(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
 
+        const childJobsStatus = [];
         for (const type of typesList) {
             switch (type) {
-                case OPTIMIZE_SIZING_CONFIGS.HEADROOM:
-                    await headroomOptimization(accountId, credentialsId, region, filesystemId, parentJobId);
+                case OPTIMIZE_SIZING_CONFIGS.HEADROOM: {
+                    const result = await headroomOptimization(
+                        accountId,
+                        credentialsId,
+                        region,
+                        filesystemId,
+                        parentJobId
+                    );
+                    childJobsStatus.push(result);
                     break;
+                }
                 case OPTIMIZE_SIZING_CONFIGS.LOG_DRIVE_SIZE: {
                     const {
                         sizing: { 'data-log-drive-details': logDriveDetails }
                     } = configData as unknown as StorageAssessment;
-                    await logDriveOptimization(
+                    const result = await logDriveOptimization(
                         accountId,
                         credentialsId,
                         region,
@@ -603,13 +612,14 @@ async function modifySizingAttributes(
                         databaseInstanceId,
                         activeNodeInstanceId
                     );
+                    childJobsStatus.push(result);
                     break;
                 }
                 case OPTIMIZE_SIZING_CONFIGS.TEMPDB_DRIVE_SIZE: {
                     const {
                         sizing: { 'data-tempdb-drive-details': tempdbDriveDetails }
                     } = configData as unknown as StorageAssessment;
-                    await tempDbDriveOptimization(
+                    const result = await tempDbDriveOptimization(
                         accountId,
                         credentialsId,
                         region,
@@ -621,24 +631,13 @@ async function modifySizingAttributes(
                         databaseInstanceId,
                         activeNodeInstanceId
                     );
+                    childJobsStatus.push(result);
                     break;
                 }
                 default:
                     throw createError('Invalid optimization type');
             }
         }
-
-        const instanceToAssess: WorkloadInstance = {
-            id: instanceId,
-            name: instanceName,
-            type: databaseType,
-            region,
-            sqlAuthEnabled: sqlAuthEnabled || false,
-            fsxFileSystem: fsxId,
-            activeNodeInstanceid: activeNodeInstanceId!,
-            cloudProviderAccountId: awsAccountId!,
-            resourceName: serverNameWithHostName
-        };
 
         if (isDemoFlow) {
             await updateOptimizedConfigNameInInstanceTable(
@@ -650,18 +649,37 @@ async function modifySizingAttributes(
             );
         }
 
-        await triggerAssessmentAfterOptimization(
-            credentialsId,
-            region,
-            accountId,
-            databaseHostId,
-            serverNameWithHostName,
-            parentJobId,
-            instanceToAssess
-        );
+        if (childJobsStatus.some(job => job?.jobStatus !== JOBSTATUS.FAILED)) {
+            // run assessment only if any of the child jobs are not failed (completed or warning - run assessment if its either of them)
+            const instanceToAssess: WorkloadInstance = {
+                id: instanceId,
+                name: instanceName,
+                type: databaseType,
+                region,
+                sqlAuthEnabled: sqlAuthEnabled || false,
+                fsxFileSystem: fsxId,
+                activeNodeInstanceid: activeNodeInstanceId!,
+                cloudProviderAccountId: awsAccountId!,
+                resourceName: serverNameWithHostName
+            };
 
-        jobStatus = JOBSTATUS.COMPLETED;
-        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            await triggerAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess
+            );
+            jobStatus = childJobsStatus.some(job => job?.jobStatus === JOBSTATUS.WARNING)
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.COMPLETED;
+            updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+        } else {
+            jobStatus = JOBSTATUS.FAILED;
+            updateLongRunningAuditGroup(AuditStatus.FAILED, 'Failed to optimize sizing');
+        }
     } catch (error) {
         errorMessage = `Error while optimizing sizing: ${error}`;
         logger.error(errorMessage);
@@ -734,6 +752,7 @@ async function headroomOptimization(
             error: errorMessage
         });
     }
+    return { jobStatus, errorMessage };
 }
 
 async function resizeLun(
@@ -889,6 +908,7 @@ async function logDriveOptimization(
             error: errorMessage
         });
     }
+    return { jobStatus, errorMessage };
 }
 
 async function resizeVolumeAndLunSize(
@@ -1072,6 +1092,7 @@ async function tempDbDriveOptimization(
             error: errorMessage
         });
     }
+    return { jobStatus, errorMessage };
 }
 
 function getServerNameWithHostname(sqlServerName: string, instanceName: string) {
