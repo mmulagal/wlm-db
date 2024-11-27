@@ -38,7 +38,8 @@ import {
     DatabaseTypes,
     MAX_DATA_LUN_SIZE_IN_GIB,
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
-    AWS_REGIONS
+    AWS_REGIONS,
+    RESOURCESTYPE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -783,6 +784,13 @@ function getSubJobDescriptions(dbEngineType: string) {
         'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
         'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
     };
+
+    if (dbEngineType === RESOURCESTYPE.PGSQL) {
+        subJobDescriptions['ValidationNode1(AWS::EC2::Instance)'] =
+            'Validating outbound connection to deployment resources in Amazon S3';
+        subJobDescriptions['ValidationNode2(AWS::EC2::Instance)'] =
+            'Validating outbound connection to deployment resources in Amazon S3';
+    }
 
     return subJobDescriptions;
 }

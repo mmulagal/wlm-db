@@ -2089,6 +2089,48 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
     ];
 }
 
+function mockCreateVpcEndpoint(
+    accountId: string,
+    resourceName: string,
+    parentJobId: string,
+    credentialsId: string,
+    region: string
+) {
+    const stackId = randomUUID();
+    return [
+        {
+            id: stackId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying WLMDB-PgSqlStandaloneStack-1732697250244-VpcEndpointStack-DEZ6RSGUG92G',
+            description: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+            start_time: new Date(Date.now() - 60000 * 18),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM',
+            parent_job_id: parentJobId
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying HttpsSecurityGroup(AWS::EC2::SecurityGroup)',
+            description: 'Creating security group to allow HTTPs access',
+            start_time: new Date(Date.now() - 60000 * 19),
+            end_time: Date.now(),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        }
+    ];
+}
+
 async function mockPGSqlStandaloneDeploymentStack(
     accountId: string,
     resourceName: string,
@@ -2136,7 +2178,8 @@ async function mockPGSqlStandaloneDeploymentStack(
         credentialsId,
         region
     );
-    return [...parentStack, ...validationStack, ...fsxStack, ...pgServerStack];
+    const vpcEndpointStack = mockCreateVpcEndpoint(accountId, resourceName, stackId, credentialsId, region);
+    return [...parentStack, ...vpcEndpointStack, ...validationStack, ...fsxStack, ...pgServerStack];
 }
 export {
     masterStackData,
