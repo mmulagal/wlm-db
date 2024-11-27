@@ -2036,7 +2036,7 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
             resource_name: resourceName,
             type: 'DEPLOYMENT',
             start_time: new Date(Date.now() - 60000 * 2),
-            description: 'Deploying an SQL Server standalone instance with recommended best practices',
+            description: getSubJobDescriptions('PGSQL').SQLStandaloneStack,
             parent_job_id: parentJobId,
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -2066,7 +2066,7 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
             resource_name: resourceName,
             name: 'Deploying WorkloadSecurityGroup(AWS::EC2::SecurityGroup)',
             description: getSubJobDescriptions('PGSQL')['WorkloadSecurityGroup(AWS::EC2::SecurityGroup)'],
-            start_time: new Date(Date.now() - 60000 * 16),
+            start_time: new Date(Date.now() - 60000 * 4),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
