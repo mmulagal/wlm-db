@@ -1575,29 +1575,18 @@ function sandboxJobData(
 
 function assessmentJobData(
     accountId: string,
-    resourceName: string,
-    instanceNames: string[],
+    instanceDetails: any,
     credentialsId: string,
     region: string,
-    parentJobId: string,
-    instanceIds: string,
-    resourceId: string
+    parentJobId: string
 ) {
-    const instanceDetailsForJob = {
-        hostName: resourceName,
-        resourceId,
-        databaseInstanceId: instanceIds,
-        databaseInstanceName: instanceNames.join(','),
-        sqlServerDeploymentType: 'MSSQL'
-    };
-    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
     const jobs = [];
     jobs.push({
         id: parentJobId,
         account_id: accountId,
         credentials_id: credentialsId,
         region,
-        name: `Assess online SQL Server instances out of ${instanceNames.length} managed instances in your account ${accountId} for best practice misalignments.`,
+        name: `Assess online SQL Server instances out of 8 managed instances in your account ${accountId} for best practice misalignments.`,
         status: JOBSTATUS.COMPLETED,
         resource_name: accountId,
         type: JOBTYPE.ASSESSMENT,
@@ -1605,38 +1594,55 @@ function assessmentJobData(
         end_time: new Date(Date.now()),
         initiator: 'SYSTEM'
     });
-    jobs.push({
-        id: randomUUID(),
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        name: `Assess SQL Server host ${resourceName} compute right sizing`,
-        description: `Assess SQL Server host ${resourceName} compute right sizing`,
-        status: JOBSTATUS.COMPLETED,
-        resource_name: resourceName,
-        parent_job_id: parentJobId,
-        type: JOBTYPE.ASSESSMENT,
-        start_time: new Date(Date.now()),
-        end_time: new Date(Date.now()),
-        initiator: 'SYSTEM'
-    });
-    instanceNames.forEach(instanceName => {
-        jobs.push({
-            id: randomUUID(),
-            account_id: accountId,
-            credentials_id: credentialsId,
-            region,
-            name: `Assess SQL Server instance ${resourceName}\\${instanceName}`,
-            description: `Assess SQL Server instance ${resourceName}\\${instanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJobString}`,
-            status: JOBSTATUS.COMPLETED,
-            resource_name: `${resourceName}\\${instanceName}`,
-            parent_job_id: parentJobId,
-            type: JOBTYPE.ASSESSMENT,
-            start_time: new Date(Date.now()),
-            end_time: new Date(Date.now()),
-            initiator: 'SYSTEM'
-        });
-    });
+    instanceDetails.forEach(
+        (host: {
+            resourceId: string;
+            hostName: string;
+            sqlInstances: { sqlInstanceId: string; sqlInstanceName: string }[];
+        }) => {
+            jobs.push({
+                id: randomUUID(),
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                name: `Assess SQL Server host ${host.hostName} compute right sizing`,
+                description: `Assess SQL Server host ${host.hostName} compute right sizing`,
+                status: JOBSTATUS.COMPLETED,
+                resource_name: host.hostName,
+                parent_job_id: parentJobId,
+                type: JOBTYPE.ASSESSMENT,
+                start_time: new Date(Date.now()),
+                end_time: new Date(Date.now()),
+                initiator: 'SYSTEM'
+            });
+            host.sqlInstances.forEach((sqlInstance: { sqlInstanceId: string; sqlInstanceName: string }) => {
+                sqlInstance.sqlInstanceName = sqlInstance.sqlInstanceName.replace(host.hostName, '');
+                const instanceDetailsForJob = {
+                    hostName: host.hostName,
+                    resourceId: host.resourceId,
+                    databaseInstanceId: sqlInstance.sqlInstanceId,
+                    databaseInstanceName: sqlInstance.sqlInstanceName,
+                    sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+                };
+                const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
+                jobs.push({
+                    id: randomUUID(),
+                    account_id: accountId,
+                    credentials_id: credentialsId,
+                    region,
+                    name: `Assess SQL Server instance ${host.hostName}\\${sqlInstance.sqlInstanceName}`,
+                    description: `Assess SQL Server instance ${host.hostName}\\${sqlInstance.sqlInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJobString}`,
+                    status: JOBSTATUS.COMPLETED,
+                    resource_name: `${host.hostName}\\${sqlInstance.sqlInstanceName}`,
+                    parent_job_id: parentJobId,
+                    type: JOBTYPE.ASSESSMENT,
+                    start_time: new Date(Date.now()),
+                    end_time: new Date(Date.now()),
+                    initiator: 'SYSTEM'
+                });
+            });
+        }
+    );
 
     return jobs;
 }
@@ -1669,7 +1675,7 @@ function optimizeStorageJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             type: JOBTYPE.OPTIMIZATION,
-            start_time: new Date(Date.now()),
+            start_time: new Date(Date.now() - 12000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         },
@@ -1684,8 +1690,8 @@ function optimizeStorageJobData(
             resource_name: resourceName,
             parent_job_id: parentJobId,
             type: JOBTYPE.SANDBOX,
-            start_time: new Date(Date.now()),
-            end_time: new Date(Date.now()),
+            start_time: new Date(Date.now() - 12000),
+            end_time: new Date(Date.now() - 8000),
             initiator: 'SYSTEM'
         },
         {
@@ -1734,7 +1740,7 @@ function optimizeOperatingSystemJobData(
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             type: JOBTYPE.OPTIMIZATION,
-            start_time: new Date(Date.now()),
+            start_time: new Date(Date.now() - 18000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         },
@@ -1749,8 +1755,8 @@ function optimizeOperatingSystemJobData(
             resource_name: resourceName,
             parent_job_id: parentJobId,
             type: JOBTYPE.OPTIMIZATION,
-            start_time: new Date(Date.now()),
-            end_time: new Date(Date.now()),
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now() - 14000),
             initiator: 'SYSTEM'
         },
         {
@@ -1764,8 +1770,8 @@ function optimizeOperatingSystemJobData(
             resource_name: resourceName,
             parent_job_id: parentJobId,
             type: JOBTYPE.OPTIMIZATION,
-            start_time: new Date(Date.now() - 6000),
-            end_time: new Date(Date.now()),
+            start_time: new Date(Date.now() - 14000),
+            end_time: new Date(Date.now() - 8000),
             initiator: 'SYSTEM'
         },
         {
@@ -1779,8 +1785,8 @@ function optimizeOperatingSystemJobData(
             resource_name: resourceName,
             parent_job_id: parentJobId,
             type: JOBTYPE.OPTIMIZATION,
-            start_time: new Date(Date.now() - 6000),
-            end_time: new Date(Date.now()),
+            start_time: new Date(Date.now() - 8000),
+            end_time: new Date(Date.now() - 4000),
             initiator: 'SYSTEM'
         },
         {
@@ -1794,7 +1800,7 @@ function optimizeOperatingSystemJobData(
             resource_name: resourceName,
             parent_job_id: parentJobId,
             type: JOBTYPE.OPTIMIZATION,
-            start_time: new Date(Date.now() - 6000),
+            start_time: new Date(Date.now() - 4000),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
         }

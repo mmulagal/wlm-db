@@ -900,34 +900,34 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
 
 const ASSESMENT_CONFIG_DATA = {
     os: {
-        'mpio-enabled': true,
-        'mpio-iscsi-count': '5',
+        'mpio-enabled': false,
+        'mpio-iscsi-count': '50',
         'ntfs-allocation-details': [
-            { DriveLetter: 'S', AllocationUnitSize: 65536 },
-            { DriveLetter: 'T', AllocationUnitSize: 65536 },
-            { DriveLetter: 'L', AllocationUnitSize: 65536 }
+            { DriveLetter: 'S', AllocationUnitSize: 6553 },
+            { DriveLetter: 'T', AllocationUnitSize: 6553 },
+            { DriveLetter: 'L', AllocationUnitSize: 6553 }
         ],
-        'ntfs-allocation-unit-size': 65536,
+        'ntfs-allocation-unit-size': 6553,
         'mpio-load-balance-policy': 'LB'
     },
     luns: [
         {
             name: '/vol/wlmdb_sqldata_1728552629461/sqldata',
-            'os-type': 'windows_2008',
-            'space-reservation-enabled': true,
-            'space-allocation-allocated': true
+            'os-type': 'windows',
+            'space-reservation-enabled': false,
+            'space-allocation-allocated': false
         },
         {
             name: '/vol/wlmdb_sqltemp_1728552629461/tempdb',
-            'os-type': 'windows_2008',
-            'space-reservation-enabled': true,
-            'space-allocation-allocated': true
+            'os-type': 'windows',
+            'space-reservation-enabled': false,
+            'space-allocation-allocated': false
         },
         {
             name: '/vol/wlmdb_sqldata_1728574994/sqldata',
-            'os-type': 'windows_2008',
-            'space-reservation-enabled': true,
-            'space-allocation-allocated': true
+            'os-type': 'windows',
+            'space-reservation-enabled': false,
+            'space-allocation-allocated': false
         }
     ],
     layout: {
@@ -936,7 +936,7 @@ const ASSESMENT_CONFIG_DATA = {
         'default-data-files-location': 'separate-drive'
     },
     sizing: {
-        'performance-tier': true,
+        'performance-tier': false,
         'data-log-drive-details': [
             {
                 databaseName: 'msdb',
@@ -946,8 +946,8 @@ const ASSESMENT_CONFIG_DATA = {
                 dataAccessPath: 'S:\\mssql',
                 logDriveLetter: 'S:',
                 dataDriveLetter: 'S:',
-                logDriveTotalSizeMB: 307182,
-                dataDriveTotalSizeMB: 307182
+                logDriveTotalSizeMB: 307,
+                dataDriveTotalSizeMB: 3071820
             },
             {
                 lunUuid: 'ce0cca99-e9fd-42af-9daa-50039625d44d',
@@ -963,8 +963,8 @@ const ASSESMENT_CONFIG_DATA = {
                 ontapVolumeName: 'wlmdb_sqllog_1731988070',
                 ontapVolumeUuid: '1c3c25e9-a629-11ef-8dba-75539f3dc73f',
                 diskSerialNumber: 'lWB4c$XRevTA',
-                logDriveTotalSizeMB: 9731,
-                dataDriveTotalSizeMB: 42942
+                logDriveTotalSizeMB: 97,
+                dataDriveTotalSizeMB: 429420
             },
             {
                 lunUuid: '74897647-0db1-4e4c-934a-8faa6cae7087',
@@ -980,8 +980,8 @@ const ASSESMENT_CONFIG_DATA = {
                 ontapVolumeName: 'wlmdb_sqllog_1731987160',
                 ontapVolumeUuid: 'f3c8df60-a626-11ef-8dba-75539f3dc73f',
                 diskSerialNumber: 'lWB4c$XRevT9',
-                logDriveTotalSizeMB: 10722,
-                dataDriveTotalSizeMB: 10722
+                logDriveTotalSizeMB: 107,
+                dataDriveTotalSizeMB: 1072200
             }
         ],
         'data-tempdb-drive-details': {
@@ -993,47 +993,47 @@ const ASSESMENT_CONFIG_DATA = {
             tempdbDrivePath: 'T:\\mssql\\data\\tempdb.mdf',
             diskSerialNumber: 'lWB4c$XRevT9',
             tempdbDriveLetter: 'T:',
-            dataDriveTotalSizeMB: 9731,
+            dataDriveTotalSizeMB: 9731000,
             defaultDataDriveLetter: 'S:',
-            tempdbDriveTotalSizeMB: 42942
+            tempdbDriveTotalSizeMB: 42
         }
     },
     volumes: [
         {
             name: 'wlmdb_sqldata_1728552629461',
-            autosize: 'on',
-            'autosize-mode': 'grow',
+            autosize: 'off',
+            'autosize-mode': 'off',
             'thin-provision': false,
             'tiering-policy': 'auto',
-            'space-guarantee': 'none',
-            'fractional-reserve': 0,
+            'space-guarantee': 'volume',
+            'fractional-reserve': 10,
             'snapshot-autodelete': false,
-            'snapshot-copy-reserve': 5,
-            'tiering-min-cooling-days': 7
+            'snapshot-copy-reserve': 15,
+            'tiering-min-cooling-days': 17
         },
         {
             name: 'wlmdb_sqltemp_1728552629461',
-            autosize: 'on',
-            'autosize-mode': 'grow',
+            autosize: 'off',
+            'autosize-mode': 'off',
             'thin-provision': false,
             'tiering-policy': 'auto',
-            'space-guarantee': 'none',
-            'fractional-reserve': 0,
+            'space-guarantee': 'volume',
+            'fractional-reserve': 10,
             'snapshot-autodelete': false,
-            'snapshot-copy-reserve': 5,
-            'tiering-min-cooling-days': 7
+            'snapshot-copy-reserve': 15,
+            'tiering-min-cooling-days': 17
         },
         {
             name: 'wlmdb_sqldata_1728574994',
-            autosize: 'on',
-            'autosize-mode': 'grow',
+            autosize: 'off',
+            'autosize-mode': 'off',
             'thin-provision': true,
             'tiering-policy': 'auto',
-            'space-guarantee': 'none',
-            'fractional-reserve': 0,
+            'space-guarantee': 'volume',
+            'fractional-reserve': 10,
             'snapshot-autodelete': false,
-            'snapshot-copy-reserve': 5,
-            'tiering-min-cooling-days': 7
+            'snapshot-copy-reserve': 15,
+            'tiering-min-cooling-days': 17
         }
     ]
 };

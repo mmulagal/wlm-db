@@ -123,63 +123,61 @@ async function createDemoResourcesPerRegion(
         const instances = [
             {
                 resourceId: prodOneResourceId,
-                name: 'SQLServer-Prod-01',
+                hostName: 'SQLServer-Prod-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
-                sqlInstances: ['SQLServer-Prod-01PROD-MarketingCampaigns', 'SQLServer-Prod-01PROD-SupplierManagement']
+                sqlInstances: [
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-MarketingCampaigns' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-SupplierManagement' }
+                ]
             },
             {
                 resourceId: devOneResourceId,
-                name: 'SQLServer-Dev-01',
+                hostName: 'SQLServer-Dev-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
-                    'SQLServer-Dev-01DEV-FinancialAccounts',
-                    'SQLServer-Dev-01DEV-EmployeeDirectory',
-                    'SQLServer-Dev-01DEV-InventoryControl',
-                    'SQLServer-Dev-01PROD-SupplierManagement'
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-FinancialAccounts' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-EmployeeDirectory' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-InventoryControl' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01PROD-SupplierManagement' }
                 ]
             },
             {
                 resourceId: devFourResourceId,
-                name: 'SQLServer-Dev-04',
+                hostName: 'SQLServer-Dev-04',
                 protocol: STORAGE_PROTOCOLS.SMB,
-                sqlInstances: ['SQLServer-Dev-04DEV-SalesAnalytics', 'SQLServer-Dev-04DEV-ProjectManagement']
+                sqlInstances: [
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-SalesAnalytics' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-ProjectManagement' }
+                ]
             }
         ];
 
-        instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
-            await createDemoResources(accountId, region, credentialsId, awsAccountId, name, protocol, resourceId);
+        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances }) => {
+            await createDemoResources(accountId, region, credentialsId, awsAccountId, hostName, protocol, resourceId);
             const instanceNames: string[] = [];
             let instanceIds: string = '';
-            sqlInstances.forEach(async instanceName => {
-                const instanceId = await createDatabaseInstances(
+            for (const sqlInstance of sqlInstances) {
+                const { sqlInstanceId, sqlInstanceName } = sqlInstance;
+                await createDatabaseInstances(
                     accountId,
                     resourceId,
-                    instanceName,
+                    sqlInstanceName,
+                    sqlInstanceId,
                     credentialsId,
                     region,
                     `fs-${randomize('0', 8)}`,
                     protocol,
                     {}
                 );
-                const newInstanceName = instanceName.replace(name, '');
+                const newInstanceName = sqlInstanceName.replace(hostName, '');
                 instanceNames.push(newInstanceName);
-                instanceIds += `${instanceId},`;
-            });
-            instanceNames.push(DEFAULT_INSTANCE_NAME);
-            const assessmentJobMockData = await createAssessmentJobMockData(
-                accountId,
-                name,
-                instanceNames,
-                credentialsId,
-                region,
-                instanceIds,
-                resourceId
-            );
-            await createJobs(accountId, assessmentJobMockData);
+                instanceNames.push(DEFAULT_INSTANCE_NAME);
+                instanceIds += `${sqlInstanceId},`;
+            }
 
             const optimizeStorageJobMockdata = await createOptimizeJobMockData(
                 accountId,
-                name,
+                hostName,
                 instanceNames[0],
                 credentialsId,
                 region,
@@ -190,7 +188,7 @@ async function createDemoResourcesPerRegion(
 
             const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
                 accountId,
-                name,
+                hostName,
                 instanceNames[0],
                 credentialsId,
                 region,
@@ -199,6 +197,8 @@ async function createDemoResourcesPerRegion(
             );
             await createJobs(accountId, operatingSystemOptimizeJobMockData);
         });
+        const assessmentJobMockData = await createAssessmentJobMockData(accountId, instances, credentialsId, region);
+        await createJobs(accountId, assessmentJobMockData);
     }
     return 'Demo Data created';
 }
@@ -273,13 +273,13 @@ async function createDatabaseInstances(
     accountId: string,
     resourceId: string,
     databaseInstanceName: string,
+    databaseInstanceId: string,
     credentialsId: string,
     region: string,
     fsxId: string,
     storageProtocol: string,
     databaseMetadata: any
 ) {
-    const databaseInstanceId = randomUUID();
     const instanceRecord = {
         resourceId,
         credentialsId,
