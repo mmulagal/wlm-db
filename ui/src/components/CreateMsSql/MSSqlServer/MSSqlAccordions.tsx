@@ -211,7 +211,7 @@ const MSSqlAccordions = () => {
                     </Typography>
                 </>
                 {selectedConfig === SELECT_CONFIG.EASY_CREATE && <PreviewDefault />}
-                <EstimatedCost />
+                <EstimatedCost wizardType={WIZARD_TYPE.MSSQL} />
             </AccordionController>
         </div>
     );

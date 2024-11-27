@@ -150,7 +150,7 @@ function PostgressLayout() {
                         </Typography>
                     </>
 
-                    <EstimatedCost />
+                    <EstimatedCost wizardType={WIZARD_TYPE.PGSQL} />
                     <div style={{ marginBottom: '40px' }} />
                 </AccordionController>
             </div>

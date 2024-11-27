@@ -56,7 +56,7 @@ type Res = {
     };
 };
 
-const EstimatedCost = () => {
+const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
     const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState(false);
     const [data, setData] = useState<Res>();
@@ -413,7 +413,8 @@ const EstimatedCost = () => {
                                                         0
                                                 ) > 1024
                                                     ? SizePopover(
-                                                          data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size
+                                                          data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size,
+                                                          wizardType
                                                       )
                                                     : GENERAL.MIN_FSX_CAPACITY_MESSAGE}
                                             </TooltipInfo>
