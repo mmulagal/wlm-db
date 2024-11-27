@@ -1710,9 +1710,11 @@ async function handleComputeRemediation(
 
     let jobStatus;
     let errorMessage = '';
+    let subJobErrorMessage;
 
+    let anySubJobFailed = false;
     try {
-        const [{ id: resourceId, metadata }] = resourceDetails;
+        const [{ id: resourceId, resource_name: resourceName, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -1721,6 +1723,7 @@ async function handleComputeRemediation(
             node2InstanceId
         );
 
+        let activeNodeInstanceName = resourceName;
         if (activeNodeInstanceId) {
             const instanceIdsList = [activeNodeInstanceId];
             if (node2InstanceId) {
@@ -1756,31 +1759,83 @@ async function handleComputeRemediation(
                         instanceIdsList.push(...clusterNodeInstanceIds);
 
                         // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
-
+                        const preReqJobId = await handleOptimizeJobCreation(
+                            accountId,
+                            credentialsId,
+                            region,
+                            instanceName,
+                            JOBTYPE.OPTIMIZATION,
+                            'Pre-requisites check for compute optimization in SQL nodes in the cluster',
+                            `Pre-requisites check for compute optimization in SQL nodes ${instanceIdsList?.join(
+                                ','
+                            )}  in the cluster`,
+                            jobId
+                        );
                         try {
-                            // TODO: temporarily proceeding with the instance type change even if the pre-requisites fail; need to revisit this later
                             await instanceTypeChangePreReqs(credentialsId, region, accountId, clusterNodeInstanceIds);
+                            await updateJobDetails(accountId, preReqJobId, {
+                                status: JOBSTATUS.COMPLETED,
+                                endTime: Date.now()
+                            });
                         } catch (error) {
-                            logger.warn('Pre-requisites failed for instance type change', error);
+                            subJobErrorMessage = `Failed to meet pre-requisites for compute optimization in SQL nodes, ${error}`;
+                            await updateJobDetails(accountId, preReqJobId, {
+                                status: JOBSTATUS.FAILED,
+                                endTime: Date.now(),
+                                error: subJobErrorMessage
+                            });
+                            anySubJobFailed = true;
+                            throw error;
                         }
 
                         const nonPrimaryNodeInstanceIds = clusterNodeInstanceIds.filter(
                             nodeId => nodeId !== activeNodeInstanceId
                         );
-                        // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
-                        for (const nodeId of nonPrimaryNodeInstanceIds) {
-                            await updateNodeInstanceType(credentialsId, region, nodeId, instanceType);
-                        }
-                        logger.info('Instance type updated for all secondary nodes in the cluster');
 
-                        // pick one of the nodes in the cluster to transfer primary node ownership
+                        const changeInstanceTypeJobId = await handleOptimizeJobCreation(
+                            accountId,
+                            credentialsId,
+                            region,
+                            instanceName,
+                            JOBTYPE.OPTIMIZATION,
+                            'Modify instance type for secondary nodes in the cluster',
+                            `Modify instance types of SQL nodes ${nonPrimaryNodeInstanceIds.join(
+                                ','
+                            )} to ${instanceType} in the cluster. Instances would be stopped, modified and started.`,
+                            jobId
+                        );
+
+                        try {
+                            // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
+                            for (const nodeId of nonPrimaryNodeInstanceIds) {
+                                await updateNodeInstanceType(credentialsId, region, nodeId, instanceType);
+                            }
+                            logger.info('Instance type updated for all secondary nodes in the cluster');
+
+                            await updateJobDetails(accountId, changeInstanceTypeJobId, {
+                                status: JOBSTATUS.COMPLETED,
+                                endTime: Date.now()
+                            });
+                        } catch (error) {
+                            subJobErrorMessage = `Failed to update instance type for secondary nodes in the cluster, ${error}`;
+                            await updateJobDetails(accountId, changeInstanceTypeJobId, {
+                                status: JOBSTATUS.FAILED,
+                                endTime: Date.now(),
+                                error: subJobErrorMessage
+                            });
+                            anySubJobFailed = true;
+                            throw error;
+                        }
                         const clusteNodeInstanceNames = compact(
                             clusterNodeDetails.map(
                                 ({ ec2InstanceId, ec2InstanceName }) =>
                                     ec2InstanceId !== activeNodeInstanceId && ec2InstanceName
                             )
                         );
-
+                        activeNodeInstanceName =
+                            clusterNodeDetails.find(({ ec2InstanceId }) => ec2InstanceId === activeNodeInstanceId)
+                                ?.ec2InstanceName ?? activeNodeInstanceName;
+                        // pick one of the nodes in the cluster to transfer primary node ownership
                         let targetNodeName;
                         for (const nodeName of clusteNodeInstanceNames) {
                             const resp = await callSsmExecution(
@@ -1795,40 +1850,139 @@ async function handleComputeRemediation(
                                 break;
                             }
                         }
-                        // move all cluster groups to the selected node
-                        if (targetNodeName) {
-                            const nodesTransferred = await moveClusterGroupOwnership(
-                                credentialsId,
-                                region,
-                                targetNodeName,
-                                activeNodeInstanceId
-                            );
-                            logger.info('Primary node ownership transferred to', { targetNodeName, nodesTransferred });
-                        } else {
-                            throw createError(500, 'Failed to find a node to transfer primary node ownership');
+                        const transferOwnershipJobId = await handleOptimizeJobCreation(
+                            accountId,
+                            credentialsId,
+                            region,
+                            instanceName,
+                            JOBTYPE.OPTIMIZATION,
+                            'Transfer cluster node ownership from primary to another node in the cluster',
+                            `Transfer cluster node ownership from ${activeNodeInstanceName} to ${targetNodeName} in the cluster. Cluster node ownership would be transferred to an updated healthy node in the cluster.`,
+                            jobId
+                        );
+                        try {
+                            // move all cluster groups to the selected node
+                            if (targetNodeName) {
+                                const nodesTransferred = await moveClusterGroupOwnership(
+                                    credentialsId,
+                                    region,
+                                    targetNodeName,
+                                    activeNodeInstanceId
+                                );
+                                logger.info('Primary node ownership transferred to', {
+                                    targetNodeName,
+                                    nodesTransferred
+                                });
+                            } else {
+                                throw createError(500, 'Failed to find a node to transfer primary node ownership');
+                            }
+                            await updateJobDetails(accountId, transferOwnershipJobId, {
+                                status: JOBSTATUS.COMPLETED,
+                                endTime: Date.now()
+                            });
+                        } catch (error) {
+                            subJobErrorMessage = `Failed to transfer sql node ownership in the cluster, ${error}`;
+                            await updateJobDetails(accountId, changeInstanceTypeJobId, {
+                                status: JOBSTATUS.FAILED,
+                                endTime: Date.now(),
+                                error: subJobErrorMessage
+                            });
+                            anySubJobFailed = true;
+                            throw error;
                         }
                     }
                 }
             } else {
                 // single node cluster/standalone
-                try {
-                    // TODO: temporarily proceeding with the instance type change even if the pre-requisites fail; need to revisit this later
-                    await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
-                } catch (error) {
-                    logger.warn('Pre-requisites failed for instance type change', error);
-                }
-            }
-
-            await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
-            // move all cluster groups to the primary node
-            if (node2InstanceId) {
-                const ownershipTransferStatus = await moveClusterGroupOwnership(
+                const preReqJobId = await handleOptimizeJobCreation(
+                    accountId,
                     credentialsId,
                     region,
                     instanceName,
-                    activeNodeInstanceId
+                    JOBTYPE.OPTIMIZATION,
+                    'Pre-requisites check for compute optimization in SQL node',
+                    'Pre-requisites check for compute optimization in SQL node',
+                    jobId
                 );
-                logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
+                try {
+                    await instanceTypeChangePreReqs(credentialsId, region, accountId, instanceIdsList);
+                    await updateJobDetails(accountId, preReqJobId, {
+                        status: JOBSTATUS.COMPLETED,
+                        endTime: Date.now()
+                    });
+                } catch (error) {
+                    subJobErrorMessage = `Failed to meet pre-requisites for compute optimization in primary node, ${error}`;
+                    await updateJobDetails(accountId, preReqJobId, {
+                        status: JOBSTATUS.FAILED,
+                        endTime: Date.now(),
+                        error: subJobErrorMessage
+                    });
+                    anySubJobFailed = true;
+                    throw error;
+                }
+            }
+
+            const updateInstanceTypeJobId = await handleOptimizeJobCreation(
+                accountId,
+                credentialsId,
+                region,
+                instanceName,
+                JOBTYPE.OPTIMIZATION,
+                'Modify instance type for primary node in the cluster',
+                `Modifying instance type of SQL node ${activeNodeInstanceId} to ${instanceType}. Instance would be stopped, modified and started.`,
+                jobId
+            );
+            try {
+                await updateNodeInstanceType(credentialsId, region, activeNodeInstanceId, instanceType); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
+                await updateJobDetails(accountId, updateInstanceTypeJobId, {
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now()
+                });
+            } catch (error) {
+                subJobErrorMessage = `Failed to update instance type for primary node in the cluster, ${error}`;
+                await updateJobDetails(accountId, updateInstanceTypeJobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: subJobErrorMessage
+                });
+                anySubJobFailed = true;
+                throw error;
+            }
+
+            // move all cluster groups to the primary node
+            if (node2InstanceId) {
+                const nodeTransferJobId = await handleOptimizeJobCreation(
+                    accountId,
+                    credentialsId,
+                    region,
+                    instanceName,
+                    JOBTYPE.OPTIMIZATION,
+                    'Transfer node ownership back to primary node in the cluster',
+                    'Transfer node ownership back to primary node in the cluster',
+                    jobId
+                );
+                try {
+                    const ownershipTransferStatus = await moveClusterGroupOwnership(
+                        credentialsId,
+                        region,
+                        instanceName,
+                        activeNodeInstanceId
+                    );
+                    logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
+                    await updateJobDetails(accountId, nodeTransferJobId, {
+                        status: JOBSTATUS.COMPLETED,
+                        endTime: Date.now()
+                    });
+                } catch (error) {
+                    subJobErrorMessage = `Failed to transfer node ownership back to primary node in the cluster, ${error}`;
+                    await updateJobDetails(accountId, nodeTransferJobId, {
+                        status: JOBSTATUS.FAILED,
+                        endTime: Date.now(),
+                        error: subJobErrorMessage
+                    });
+                    anySubJobFailed = true;
+                    throw error;
+                }
             }
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemoFlow) {
@@ -1850,8 +2004,9 @@ async function handleComputeRemediation(
 
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     } finally {
+        const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {
-            status: jobStatus || JOBSTATUS.COMPLETED,
+            status: parentJobStatus,
             endTime: Date.now(),
             error: errorMessage
         });
