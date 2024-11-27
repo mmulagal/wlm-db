@@ -916,7 +916,7 @@ async function processCloudFormationMessages() {
                                         : JOBSTATUS.FAILED;
 
                                     const { databaseType } = data as JSONObject;
-                                    const dbEngineType = databaseType === 'PostgreSQL' ? 'PGSQL' : 'SQL';
+                                    const dbEngineType = databaseType === 'PostgreSQL server' ? 'PGSQL' : 'SQL';
                                     const masterJobName = `${databaseType} deployment with stack ${stackName}`;
                                     const masterJob = await getMatchingMasterJob(
                                         accountId,
