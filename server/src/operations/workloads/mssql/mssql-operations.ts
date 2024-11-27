@@ -1229,13 +1229,14 @@ async function getActiveSqlNodeAndInstanceDetails(
                         : false;
                 });
                 if (instanceDetails) {
-                    const matchingInstance = instanceDetails.find((instance: InstanceDetails) =>
-                        isDemoFlow
-                            ? instance.instanceName.includes(databaseInstanceName) &&
-                              instance.instanceState === SQL_SERVICE_STATE.RUNNING
-                            : instance.instanceName === databaseInstanceName &&
-                              instance.instanceState === SQL_SERVICE_STATE.RUNNING
+                    const matchingInstance = instanceDetails.find(
+                        (instance: InstanceDetails) =>
+                            (isDemoFlow
+                                ? instance.instanceName.includes(databaseInstanceName)
+                                : instance.instanceName === databaseInstanceName) &&
+                            instance.instanceState === SQL_SERVICE_STATE.RUNNING
                     );
+
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
                     }

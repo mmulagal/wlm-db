@@ -116,9 +116,7 @@ async function getDriveInfoFromNodes(
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
-    const activeNodeDriveInfoCommand = isDemoFlow
-        ? [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType)]
-        : [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType, instanceName)];
+    const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType, instanceName)];
     const standbyNodeDriveListCommand = [GET_STANDBY_NODE_DRIVE_LIST];
 
     const existingDriveActiveNodePromise = callSsmExecution(
@@ -274,12 +272,12 @@ async function getDriveInfoFromSSM(
     if (!activeNodeInstance && instanceDetail && instancesDetails) {
         const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
-        const isInstanceRunning = instancesDetails.some(instance =>
-            isDemoFlow
-                ? instance.instanceName.includes(instanceDetail.database_instance_name) &&
-                  instance.instanceState === SQL_SERVICE_STATE.RUNNING
-                : instance.instanceName === instanceDetail.database_instance_name &&
-                  instance.instanceState === SQL_SERVICE_STATE.RUNNING
+        const isInstanceRunning = instancesDetails.some(
+            instance =>
+                (isDemoFlow
+                    ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                    : instance.instanceName === instanceDetail.database_instance_name) &&
+                instance.instanceState === SQL_SERVICE_STATE.RUNNING
         );
 
         if (!isInstanceRunning) {
@@ -644,12 +642,12 @@ async function invokeSSMForDatabaseDeployment(
             isDefaultInstance = isDefault ? 'true' : 'false';
             instanceNameForScript = selectedInstanceName;
 
-            const runningInstance = instancesDetails.find(instance =>
-                isDemoFlow
-                    ? instance.instanceName.includes(instanceDetail.database_instance_name) &&
-                      instance.instanceState === SQL_SERVICE_STATE.RUNNING
-                    : instance.instanceName === instanceDetail.database_instance_name &&
-                      instance.instanceState === SQL_SERVICE_STATE.RUNNING
+            const runningInstance = instancesDetails.find(
+                instance =>
+                    (isDemoFlow
+                        ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                        : instance.instanceName === instanceDetail.database_instance_name) &&
+                    instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
             if (isEmpty(runningInstance) && selectedInstanceName) {
@@ -1750,12 +1748,12 @@ async function getCollationDetails(
         if (instanceDetail && instancesDetails) {
             const { database_instance_name: selectedInstanceName, is_default: isDefault } = instanceDetail;
 
-            const runningInstance = instancesDetails.find(instance =>
-                isDemoFlow
-                    ? instance.instanceName.includes(instanceDetail.database_instance_name) &&
-                      instance.instanceState === SQL_SERVICE_STATE.RUNNING
-                    : instance.instanceName === instanceDetail.database_instance_name &&
-                      instance.instanceState === SQL_SERVICE_STATE.RUNNING
+            const runningInstance = instancesDetails.find(
+                instance =>
+                    (isDemoFlow
+                        ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                        : instance.instanceName === instanceDetail.database_instance_name) &&
+                    instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
             if (isEmpty(runningInstance) && selectedInstanceName) {
