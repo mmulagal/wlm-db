@@ -285,7 +285,9 @@ async function scheduledAssessment() {
 
         logger.info('Debug queue');
         const allJobsCount = await driftAssessmentQueue.getJobCounts();
-        logger.info(JSON.stringify(allJobsCount));
+        logger.info('allJobsCount', JSON.stringify(allJobsCount));
+        const repeatableJobs = await driftAssessmentQueue.getJobSchedulers();
+        logger.info('repeatableJobs', JSON.stringify(repeatableJobs));
 
         driftAssessmentQueue.add(
             'driftAssessment',
