@@ -14,13 +14,16 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import { DBType, POSTGRE_USERNAME, SQL_USERNAME } from '../../../../utils/consts';
+import { DBType, POSTGRE_USERNAME, SQL_USERNAME, WIZARD_TYPE } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
-const DatabaseCredentials = () => {
+type DatabaseCredentialsProps = {
+    wizardType?: string;
+};
+
+const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
     const userName = useAppSelector(state => state.mssqlForm.dbCredentials.name);
     const password = useAppSelector(state => state.mssqlForm.dbCredentials.password);
-    const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
 
     const passwordRef = useRef(null);
 
@@ -28,10 +31,10 @@ const DatabaseCredentials = () => {
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
-    const [credName, setCredName] = useState(databaseType === DBType.MSSQL ? SQL_USERNAME : POSTGRE_USERNAME);
+    const [credName, setCredName] = useState(wizardType === WIZARD_TYPE.MSSQL ? SQL_USERNAME : POSTGRE_USERNAME);
 
     useEffect(() => {
-        if (databaseType === DBType.MSSQL) {
+        if (wizardType === WIZARD_TYPE.MSSQL) {
             dispatch(setDBCredentialsName(SQL_USERNAME));
         } else {
             dispatch(setDBCredentialsName(POSTGRE_USERNAME));
@@ -102,7 +105,7 @@ const DatabaseCredentials = () => {
                 <AccordionCardContent>
                     <Typography>
                         <Typography variant="Regular_14" className={styles.subtext}>
-                            {databaseType === DBType.MSSQL
+                            {wizardType === WIZARD_TYPE.MSSQL
                                 ? GENERAL.DATABASE_CREDENTIAL_TEXT
                                 : GENERAL.DATABASE_CREDENTIAL_TEXT_PGSQL}
                         </Typography>
@@ -110,7 +113,7 @@ const DatabaseCredentials = () => {
                             <TextField
                                 label={GENERAL.USER_NAME}
                                 info={
-                                    databaseType === DBType.POSTGRESQL ? (
+                                    wizardType === WIZARD_TYPE.PGSQL ? (
                                         ''
                                     ) : (
                                         <div className={styles.userNameTooltip}>
@@ -135,7 +138,7 @@ const DatabaseCredentials = () => {
                                 }}
                                 value={credName}
                                 className={styles.textField}
-                                isDisabled={databaseType === DBType.POSTGRESQL}
+                                isDisabled={wizardType === WIZARD_TYPE.PGSQL}
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}

@@ -831,5 +831,6 @@ export {
     getTimeDifferenceInMinutes,
     filterActions,
     getRegionDetails,
-    calculateFsxStorageCapacityForHeadroomOptimization
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    getSubJobDescriptions
 };

@@ -145,7 +145,7 @@ const MSSqlAccordions = () => {
                     </>
                 )}
 
-                <DatabaseCredentials />
+                <DatabaseCredentials wizardType={WIZARD_TYPE.MSSQL} />
                 {/* Ends here */}
 
                 <div className={styles['header-buttons']}>
@@ -190,7 +190,7 @@ const MSSqlAccordions = () => {
                         <Encryption />
                         <Tags />
                         <SimpleNotificationService />
-                        <CloudWatch />
+                        <CloudWatch wizardType={WIZARD_TYPE.MSSQL} />
                         <ResourceRollBack />
                     </>
                 )}

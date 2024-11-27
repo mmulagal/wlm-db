@@ -98,7 +98,7 @@ function PostgressLayout() {
                         <PostgreOperatingSystem />
                         <PostgreVersion />
                         <PostgreServerName />
-                        <DatabaseCredentials />
+                        <DatabaseCredentials wizardType={WIZARD_TYPE.PGSQL} />
                     </>
 
                     <div className={styles['header-buttons']}>
@@ -134,7 +134,7 @@ function PostgressLayout() {
                         <Encryption />
                         <Tags />
                         <SimpleNotificationService />
-                        <CloudWatch />
+                        <CloudWatch wizardType={WIZARD_TYPE.PGSQL} />
                         <ResourceRollBack />
                     </>
 
