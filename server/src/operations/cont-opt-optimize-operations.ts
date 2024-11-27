@@ -927,7 +927,7 @@ async function resizeVolumeAndLunSize(
     errorMessage: string,
     jobStatus: string
 ) {
-    logger.info('Resing volume and LUN size ', {
+    logger.info('Resizing volume and LUN size ', {
         driveType,
         existingVolumeDetails,
         requiredVolumeSizeBytes,
@@ -948,6 +948,7 @@ async function resizeVolumeAndLunSize(
         existingVolumeDetails?.OntapConfiguration?.SizeInBytes &&
         existingVolumeDetails.OntapConfiguration.SizeInBytes < requiredVolumeSizeBytes
     ) {
+        requiredVolumeSizeBytes = Math.round(requiredVolumeSizeBytes); // rounding off to nearest integer
         await updateVolumeSizeAndWaitForUpdate(
             credentialsId,
             region,
@@ -1053,7 +1054,7 @@ async function tempDbDriveOptimization(
                 volumeIds: [tempDbFsxVolumeId]
             } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, fileSystemId, [ontapVolumeUuid]);
 
-            const [existingVolumeDetails] = await getFsxVolumeDetails(credentialsId, region, accountId, [
+            const [existingVolumeDetails] = await getFsxVolumeDetails(credentialsId, region, fileSystemId, [
                 tempDbFsxVolumeId
             ]);
 
