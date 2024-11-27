@@ -17,9 +17,10 @@ const CloudWatch = ({ wizardType }: CloudWatchProps) => {
 
     const toggle = useAppSelector(state => state.mssqlForm.cloudWatch);
     const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
+    const { isDemoMode } = useAppSelector(state => state.auth);
     //Set the Header text here
     const setHeader = () => {
-        if (wizardType === WIZARD_TYPE.PGSQL) {
+        if (wizardType === WIZARD_TYPE.PGSQL && !isDemoMode) {
             return <Typography variant="Regular_14">{'Disabled'}</Typography>;
         }
         return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
@@ -40,10 +41,10 @@ const CloudWatch = ({ wizardType }: CloudWatchProps) => {
                 <AccordionCardContent>
                     <Typography>
                         <ToggleSelector
-                            value={wizardType === WIZARD_TYPE.PGSQL ? false : toggle}
+                            value={wizardType === WIZARD_TYPE.PGSQL && !isDemoMode ? false : toggle}
                             className=""
                             onChange={handleChange}
-                            isDisabled={wizardType === WIZARD_TYPE.PGSQL ? true : false}
+                            isDisabled={wizardType === WIZARD_TYPE.PGSQL && !isDemoMode ? true : false}
                         >
                             {GENERAL.CLOUD_WATCH_MONITORING}
                         </ToggleSelector>
