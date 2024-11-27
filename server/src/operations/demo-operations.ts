@@ -582,26 +582,14 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
 
 async function createAssessmentJobMockData(
     accountId: string,
-    resourceName: string,
-    instanceNames: string[],
+    instanceDetails: any,
     credentialsId: string,
-    region: string,
-    InstanceIds: string,
-    resourceId: string
+    region: string
 ) {
-    logger.debug('Generate mock data for job table', accountId, resourceName, credentialsId, region);
+    logger.debug('Generate mock data for job table', accountId, credentialsId, region);
     accountId = checkAccount(accountId);
     const parentJobId = randomUUID();
-    return assessmentJobData(
-        accountId,
-        resourceName,
-        instanceNames,
-        credentialsId,
-        region,
-        parentJobId,
-        InstanceIds,
-        resourceId
-    );
+    return assessmentJobData(accountId, instanceDetails, credentialsId, region, parentJobId);
 }
 
 async function createOptimizeJobMockData(

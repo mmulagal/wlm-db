@@ -913,19 +913,19 @@ const ASSESMENT_CONFIG_DATA = {
     luns: [
         {
             name: '/vol/wlmdb_sqldata_1728552629461/sqldata',
-            'os-type': 'dummy_os',
+            'os-type': 'windows',
             'space-reservation-enabled': false,
             'space-allocation-allocated': false
         },
         {
             name: '/vol/wlmdb_sqltemp_1728552629461/tempdb',
-            'os-type': 'dummy_os',
+            'os-type': 'windows',
             'space-reservation-enabled': false,
             'space-allocation-allocated': false
         },
         {
             name: '/vol/wlmdb_sqldata_1728574994/sqldata',
-            'os-type': 'dummy_os',
+            'os-type': 'windows',
             'space-reservation-enabled': false,
             'space-allocation-allocated': false
         }
@@ -1002,10 +1002,10 @@ const ASSESMENT_CONFIG_DATA = {
         {
             name: 'wlmdb_sqldata_1728552629461',
             autosize: 'off',
-            'autosize-mode': 'not-grow',
+            'autosize-mode': 'off',
             'thin-provision': false,
             'tiering-policy': 'auto',
-            'space-guarantee': 'one',
+            'space-guarantee': 'volume',
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
@@ -1014,10 +1014,10 @@ const ASSESMENT_CONFIG_DATA = {
         {
             name: 'wlmdb_sqltemp_1728552629461',
             autosize: 'off',
-            'autosize-mode': 'grow',
+            'autosize-mode': 'off',
             'thin-provision': false,
             'tiering-policy': 'auto',
-            'space-guarantee': 'one',
+            'space-guarantee': 'volume',
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
@@ -1026,10 +1026,10 @@ const ASSESMENT_CONFIG_DATA = {
         {
             name: 'wlmdb_sqldata_1728574994',
             autosize: 'off',
-            'autosize-mode': 'grow',
+            'autosize-mode': 'off',
             'thin-provision': true,
             'tiering-policy': 'auto',
-            'space-guarantee': 'one',
+            'space-guarantee': 'volume',
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,

@@ -1052,13 +1052,13 @@ async function fetchDriftAssessment(
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
-            const storgaeConfigsOptimized =
+            const storageConfigsOptimized =
                 (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
             const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
             const sizingConfigsOptimized =
                 (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
-            if (storgaeConfigsOptimized.length > 0) {
+            if (storageConfigsOptimized.length > 0) {
                 const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
                     configArray.map(config => {
                         if (optimizedConfigs.includes(config.name)) {
@@ -1070,12 +1070,12 @@ async function fetchDriftAssessment(
 
                 storageAssessmentResponse.configuration.volumes = optimizeConfig(
                     storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
-                    storgaeConfigsOptimized
+                    storageConfigsOptimized
                 );
 
                 storageAssessmentResponse.configuration.luns = optimizeConfig(
                     storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
-                    storgaeConfigsOptimized
+                    storageConfigsOptimized
                 );
             }
             if (osConfigsOptimized.length > 0) {
