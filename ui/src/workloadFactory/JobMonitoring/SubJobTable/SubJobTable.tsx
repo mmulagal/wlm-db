@@ -61,10 +61,11 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         const jsonObject = JSON.parse(jsonString);
 
         // Extract the required properties
-        const resourceId = jsonObject.resourceId;
-        const databaseInstanceId = jsonObject.databaseInstanceId; // Assuming you want the first ID in the array
-        const databaseInstanceName = jsonObject.databaseInstanceName;
-        const sqlServerDeploymentType = jsonObject.sqlServerDeploymentType;
+        const resourceId = jsonObject?.resourceId;
+        const databaseInstanceId = jsonObject?.databaseInstanceId; // Assuming you want the first ID in the array
+        const databaseInstanceName = jsonObject?.databaseInstanceName;
+        const sqlServerDeploymentType = jsonObject?.sqlServerDeploymentType;
+        const hostName = jsonObject?.hostName;
 
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
@@ -77,13 +78,8 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         }
 
         dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
-        if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
-            const fullString = rowData?.resourceName;
-            const serverName = fullString.split('\\')[0];
-            dispatch(setGwHostname(serverName));
-        } else {
-            dispatch(setGwHostname(subJobsData?.resourceName));
-        }
+
+        dispatch(setGwHostname(hostName));
 
         dispatch(setGwResourceId(resourceId));
         dispatch(setGwDatabaseInstance(databaseInstanceId));
