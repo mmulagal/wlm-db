@@ -1568,16 +1568,18 @@ async function optimizeOperatingSystemSettings(
                     description: `Validate MPIO iSCSCI sessions ${serverNameWithHostName}`,
                     startTime: Date.now(),
                     type: JOBTYPE.OPTIMIZATION,
-                    status: JOBSTATUS.IN_PROGRESS,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 4000,
                     resourceName: serverNameWithHostName,
                     parentJobId
                 });
                 await registerJob(accountId, credentialsId, region, {
                     name: `Optimize MPIO iSCSCI sessions for ${serverNameWithHostName}`,
                     description: `Optimize MPIO iSCSCI sessions for ${serverNameWithHostName}`,
-                    startTime: Date.now(),
+                    startTime: Date.now() + 4000,
                     type: JOBTYPE.OPTIMIZATION,
-                    status: JOBSTATUS.IN_PROGRESS,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 8000,
                     resourceName: serverNameWithHostName,
                     parentJobId
                 });
@@ -1587,13 +1589,15 @@ async function optimizeOperatingSystemSettings(
                     name: jobName,
                     description: jobDescription,
                     resourceName: serverNameWithHostName,
-                    startTime: Date.now(),
-                    status: JOBSTATUS.IN_PROGRESS,
+                    startTime: Date.now() + 8000,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 12000,
                     type: JOBTYPE.ASSESSMENT,
                     parentJobId
                 });
 
                 await updateJobDetails(accountId, parentJobId, {
+                    endTime: Date.now() + 12000,
                     status: JOBSTATUS.COMPLETED
                 });
             }
