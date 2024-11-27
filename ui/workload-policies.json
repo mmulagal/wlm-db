@@ -121,7 +121,8 @@
                     "compute-optimizer:GetEffectiveRecommendationPreferences",
                     "compute-optimizer:GetEC2InstanceRecommendations",
                     "autoscaling:DescribeAutoScalingGroups",
-                    "autoscaling:DescribeAutoScalingInstances"
+                    "autoscaling:DescribeAutoScalingInstances",
+                    "fsx:UpdateVolume"
                 ],
                 "Resource": "*"
             },
