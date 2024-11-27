@@ -98,7 +98,7 @@ function PostgressLayout() {
                         <PostgreOperatingSystem />
                         <PostgreVersion />
                         <PostgreServerName />
-                        <DatabaseCredentials />
+                        <DatabaseCredentials wizardType={WIZARD_TYPE.PGSQL} />
                     </>
 
                     <div className={styles['header-buttons']}>
