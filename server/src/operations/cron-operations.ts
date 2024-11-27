@@ -284,8 +284,10 @@ async function scheduledAssessment() {
         });
 
         logger.info('Debug queue');
-        const allJobsCount = await driftAssessmentQueue.getJobCounts();
-        logger.info(JSON.stringify(allJobsCount));
+        let allJobsCount = await driftAssessmentQueue.getJobCounts();
+        logger.info('before allJobsCount', JSON.stringify(allJobsCount));
+        let repeatableJobs = await driftAssessmentQueue.getJobSchedulers();
+        logger.info('before repeatableJobs', JSON.stringify(repeatableJobs));
 
         driftAssessmentQueue.add(
             'driftAssessment',
@@ -297,6 +299,12 @@ async function scheduledAssessment() {
                 jobId: 'driftAssessment'
             }
         );
+
+        logger.info('Debug queue');
+        allJobsCount = await driftAssessmentQueue.getJobCounts();
+        logger.info('after allJobsCount', JSON.stringify(allJobsCount));
+        repeatableJobs = await driftAssessmentQueue.getJobSchedulers();
+        logger.info('after repeatableJobs', JSON.stringify(repeatableJobs));
 
         logger.info(`Drift assessment job added to queue with interval ${config.get('redis.cron-job-interval')}.`);
 
