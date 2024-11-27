@@ -48,7 +48,8 @@ enum OptimizeStorageConfigs {
 }
 
 enum OptimizeOperatingSystemParams {
-    MPIO_POLICY = 'mpio-load-balance-policy'
+    MPIO_POLICY = 'mpio-load-balance-policy',
+    MPIO_SESSIONS = 'mpio-iscsi-count'
 }
 
 enum OPTIMIZE_SIZING_CONFIGS {
