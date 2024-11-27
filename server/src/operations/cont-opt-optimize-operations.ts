@@ -208,7 +208,7 @@ async function triggerAssessmentAfterOptimization(
             ? JOBSTATUS.FAILED
             : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
             ? JOBSTATUS.COMPLETED
-            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)
             ? JOBSTATUS.WARNING
             : JOBSTATUS.IN_PROGRESS;
         if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
