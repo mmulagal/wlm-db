@@ -641,6 +641,10 @@ async function getPgSqlCfTemplate(
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 fsxConfiguration.fsxPassword
             ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
+        } else if (e.ParameterKey === SQL_SA_PASSWORD) {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                sqlConfiguration.serviceAccountPassword
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
