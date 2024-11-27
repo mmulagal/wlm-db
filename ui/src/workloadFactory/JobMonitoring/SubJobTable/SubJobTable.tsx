@@ -77,7 +77,14 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         }
 
         dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
-        dispatch(setGwHostname(subJobsData?.resourceName));
+        if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
+            const fullString = rowData?.resourceName;
+            const serverName = fullString.split('\\')[0];
+            dispatch(setGwHostname(serverName));
+        } else {
+            dispatch(setGwHostname(subJobsData?.resourceName));
+        }
+
         dispatch(setGwResourceId(resourceId));
         dispatch(setGwDatabaseInstance(databaseInstanceId));
         dispatch(setGwDatabaseInstanceName(databaseInstanceName));
