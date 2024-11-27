@@ -113,7 +113,9 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
         },
         {
             name: 'SQLServiceAccountPassword',
-            description: `Password for the ${dbEngineType} Server Service Account.`,
+            description: `Password for the ${dbEngineType} Server Service Account ${
+                dbEngineType === DatabaseTypes.PG_SQL ? '(postgres)' : ''
+            }.`,
             type: 'String',
             minLength: 8,
             noEcho: true
