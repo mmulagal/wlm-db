@@ -1051,7 +1051,7 @@ async function tempDbDriveOptimization(
             // get the volume ID from the drive details, make a get call to check if the volume size is less than requiredTempDbVolumeSizeBytes and update the volume size
             const {
                 volumeIds: [tempDbFsxVolumeId]
-            } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, accountId, [ontapVolumeUuid]);
+            } = await getFsxnVolIdsFromOntapVolIds(credentialsId, region, fileSystemId, [ontapVolumeUuid]);
 
             const [existingVolumeDetails] = await getFsxVolumeDetails(credentialsId, region, accountId, [
                 tempDbFsxVolumeId
