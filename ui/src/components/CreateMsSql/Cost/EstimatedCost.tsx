@@ -14,7 +14,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
-import { FORM_OPTIONS, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { DBType, FORM_OPTIONS, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
 import { formatNumberWithCustomComma, isFsxnNew, updateSizeInGib } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
@@ -83,6 +83,7 @@ const EstimatedCost = () => {
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedLicenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
+    const { selectedDatabaseType } = useAppSelector(state => state.postgreForm);
 
     const pricingPayload = useAppSelector(state => state.msSqlAction.pricingPayload);
 
@@ -100,7 +101,7 @@ const EstimatedCost = () => {
     };
 
     const computeObj = (updatedStr: string) => {
-        if (selectedLicenseType === 'Use custom AMI') {
+        if (selectedLicenseType === 'Use custom AMI' || selectedDatabaseType === DBType.POSTGRESQL) {
             return {
                 regionCode: updatedStr || '',
                 instanceType: instanceTypeName || '',
@@ -204,6 +205,14 @@ const EstimatedCost = () => {
                 };
             }
 
+            if (selectedDatabaseType === DBType.POSTGRESQL) {
+                payload = {
+                    ...payload,
+                    osType: 'linux',
+                    databaseType: 'PGSQL'
+                };
+            }
+
             const comparedPayloadValues = _.isEqual(payload, pricingPayload);
 
             if (!comparedPayloadValues) {
@@ -252,6 +261,13 @@ const EstimatedCost = () => {
         selectedLicenseId,
         selectedCustomAMI
     ]);
+
+    useEffect(() => {
+        // Clear the pricing payload on unmount
+        return () => {
+            dispatch(setPricingPayload(null));
+        };
+    }, []);
 
     //To open accordion if default account is present
     // useEffect(() => {

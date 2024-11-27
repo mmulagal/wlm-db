@@ -92,7 +92,7 @@ const JobDetailsResponse = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Array(JobObject))
+    subJobs: Type.Optional(Type.Array(Type.Composite([CredentialsIdRegionParams, JobObject])))
 });
 
 const DeleteJobResponse = Type.Object({

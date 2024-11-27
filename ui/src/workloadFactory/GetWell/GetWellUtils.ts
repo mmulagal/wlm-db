@@ -366,13 +366,37 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
         } else if (index === 2) {
             categoryVal = 'compute';
         }
+
+        // user-database-layout is newly added and to check status for User data files (.mdf) placement we need to check status of user-database-layout also along with default-data-files-location
+        let userDataStatus: string = '';
+        let userDataSeverity: string = '';
+        category?.map((item: PerConfigInterface) => {
+            if (item?.name === 'user-database-layout') {
+                userDataStatus = item?.status || '';
+                userDataSeverity = item?.severity || '';
+            }
+        });
         category?.map((item: PerConfigInterface) => {
             let itemName = item?.name || '';
             let status = item?.status || '';
+            let severity = item?.severity || '';
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
             }
+
+            if (itemName === 'default-data-files-location' && userDataStatus === 'not-optimized') {
+                if (status === 'optimized') {
+                    severity = userDataSeverity;
+                } else if (status === 'not-optimized') {
+                    if (userDataSeverity === 'critical') {
+                        severity = 'critical';
+                    }
+                }
+                status = 'not-optimized';
+            }
+
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
             cardsData = {
                 ...cardsData,
                 [itemName]: {
@@ -388,13 +412,15 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     },
                     block_four: {
                         ...(cardDataDefault?.[itemName]?.block_four || {}),
-                        value: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+                        value: GETWELL_VALUES?.[severity] || severity
                     },
                     tags: item?.tags,
                     id: item?.name,
                     category: categoryVal,
                     recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null,
-                    isMissingPermissions: index === 2 ? computeMissingPermissions : null
+                    isMissingPermissions: index === 2 ? computeMissingPermissions : null,
+                    missingPermissions: item?.missingPermissions,
+                    recommendedSizeInGib: item?.recommendedSizeInGib
                 }
             };
         });

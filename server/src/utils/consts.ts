@@ -6,10 +6,6 @@ import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { MissingPermission } from './common-types';
 
-type SubJobDescriptions = {
-    [key: string]: string;
-};
-
 // General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
@@ -201,8 +197,8 @@ const SECRETS: Record<string, string | undefined> = {
     AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
     AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY,
-    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY
+    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
@@ -1146,8 +1142,6 @@ const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
 
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
-const DATABASE_TYPE = 'Microsoft SQL Server';
-
 // SQL software types
 const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
@@ -1199,60 +1193,6 @@ const OPERATE = 'operate';
 const VIEW = 'view';
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
-const subJobDescriptions: SubJobDescriptions = {
-    SQLStandaloneStack: 'Deploying an SQL Server standalone instance with recommended best practices',
-    SQLServerStack: 'Deploying an SQL Server FCI with recommended best practices',
-    NewFSxStack: 'Deploying new FSx for ONTAP file system for SQL Server workload',
-    ExistingFSxStack:
-        'Deploying a storage virtual machine for the SQL Server workload on the FSx for ONTAP file system',
-    'ValidationStack1-standalone': 'Subnet Validation for deployment',
-    'ValidationStack1-fci': 'Primary subnet validation for SQL Server FCI deployment',
-    ValidationStack2: 'Standby subnet validation for SQL Server FCI deployment',
-    'SqlNode(AWS::EC2::Instance)': 'Configuring SQL Server standalone on an EC2 instance',
-    'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
-    'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for SQL Server workloads',
-    'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)':
-        'Attaching an instance profile to EC2 instances for SQL Server nodes',
-    'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
-    'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
-    'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
-        'Creating a volume to host witness disk for Windows Cluster',
-    'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
-    'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
-    'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
-        'Creating a dedicated storage virtual machine (SVM) for the database workload',
-    'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
-    'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
-    'ValidationNode1(AWS::EC2::Instance)':
-        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
-    'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
-    'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
-    'ValidationInstanceProfile(AWS::IAM::InstanceProfile)': 'Attaching an instance profile to the validation instance',
-    'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps',
-    'SqlFSxInstanceMAD1(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on primary node',
-    'SqlFSxInstanceMAD2(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on standby node',
-    'NetworkInterface2(AWS::EC2::NetworkInterface)':
-        'Creating network interfaces for the EC2 instance in standby subnet',
-    'NetworkInterface1(AWS::EC2::NetworkInterface)':
-        'Creating network interfaces for the EC2 instance in primary subnet',
-    'ValidationNode2(AWS::EC2::Instance)':
-        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
-    'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
-    'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps',
-    VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
-    'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
-    'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
-    'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
-    'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
-    'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
-    'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
-    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
-    'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
-    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
-    'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
-};
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = {
     DEPLOY: 'deployment',
@@ -1352,6 +1292,7 @@ const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
 const PGSQL_VERSION = 'pgsql-version';
+const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
 
 const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -1374,6 +1315,7 @@ const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     sqlServerName: 'SqlServerName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlVersion: 'SqlVersion',
 
     workloadInstanceType: 'WorkloadInstanceType',
@@ -1397,10 +1339,10 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
         name: TEMPLATE_TYPES.PGSQLSTANDALONE,
         location: './resources/pgsql/templates/standalone-deployment.yaml'
     },
-    // {
-    //     name: TEMPLATE_TYPES.ENDPOINT,
-    //     location: './resources/pgsql/templates/vpc-endpoints.yaml'
-    // },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/pgsql/templates/vpc-endpoints.yaml'
+    },
     {
         name: TEMPLATE_TYPES.NEWFSX,
         location: './resources/pgsql/templates/fsx-new.yaml'
@@ -1435,7 +1377,6 @@ const PGSQL_TEMPLATES_ASSETS = [
         name: 'FSXNewTemplate',
         url: 'pgsql/templates/fsx-new.yaml'
     },
-
     {
         name: 'FSXExistingTemplate',
         url: 'pgsql/templates/fsx-existing.yaml'
@@ -1443,6 +1384,10 @@ const PGSQL_TEMPLATES_ASSETS = [
     {
         name: 'ValidationTemplate',
         url: 'pgsql/templates/vpc-validation.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'pgsql/templates/vpc-endpoints.yaml'
     },
     {
         name: 'SQLStandaloneTemplate',
@@ -1458,11 +1403,13 @@ const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
 const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
     s3: TEMPLATE_S3_ENDPOINT,
     cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
     sqs: TEMPLATE_SQS_ENDPOINT,
     logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
     fsx: TEMPLATE_FSX_ENDPOINT,
     ec2: TEMPLATE_EC2_ENDPOINT,
-    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
+    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -1482,9 +1429,7 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'compute-optimizer:GetEffectiveRecommendationPreferences',
     'compute-optimizer:GetEC2InstanceRecommendations',
     'autoscaling:DescribeAutoScalingGroups',
-    'autoscaling:DescribeAutoScalingInstances',
-    'ec2:DescribeAddresses',
-    'ec2:ModifyInstanceAttribute'
+    'autoscaling:DescribeAutoScalingInstances'
 ];
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
 const DEMO_DEFAULT_REGION = 'us-east-1';
@@ -1673,7 +1618,6 @@ export {
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
-    DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
     REQUEST_IN_PROGRESS_TYPE,
     CONFIG_NOT_FOUND,
@@ -1710,7 +1654,6 @@ export {
     OPERATE,
     VIEW,
     JOBS_DEFAULT_TIME_RANGE,
-    subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
     AWS_PRICING_TYPE,
     RESOURCE_SOURCE,
@@ -1802,6 +1745,7 @@ export {
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     INITIALIZER,
     MSSQL,
+    AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
     DEMO_DEFAULT_REGION
 };

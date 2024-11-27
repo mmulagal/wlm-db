@@ -17,12 +17,13 @@ interface Metadata {
     sandboxCreated?: boolean;
     updatedManually?: boolean;
     storageProtocol?: string;
+    isComputeOptimized?: boolean;
 }
 interface databaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
-    configsOptimized?: Array<any>;
+    configsOptimized?: any;
 }
 
 interface CreateDbMetrics {
@@ -291,12 +292,13 @@ interface DriftAssessmentJob {
     resourceId: string;
     managedInstanceIds: string[];
 }
-
-interface OptimizeStorageParams {
+interface OntapRequestParams {
     fsxId: string;
     region: string;
     apiEndpoint: string;
     apiQueryFilter: string;
+}
+interface OptimizeStorageParams extends OntapRequestParams {
     apiBody: string;
 }
 
@@ -337,6 +339,7 @@ interface OptimizeMpioPolicyParams {
     changeClusterOwnership?: boolean;
     activeNodeCurrentPolicy?: string;
     standbyNodeCurrentPolicy?: string;
+    instanceMetadata: any;
 }
 
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
@@ -366,6 +369,7 @@ export {
     TempDbDriveDetails,
     StorageAssessment,
     DriftAssessmentJob,
+    OntapRequestParams,
     OptimizeStorageParams,
     VolumeSpaceRecord,
     OptimizeMpioPolicyParams,

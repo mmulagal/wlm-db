@@ -265,7 +265,8 @@ async function createOrUpdateChildJobs(
     checkEventsOrder: boolean = false,
     stackSqlDeploymentType: string,
     stackName?: string,
-    resourceStatus?: string
+    resourceStatus?: string,
+    dbEngineType?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
     /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
@@ -311,7 +312,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!),
+                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!, dbEngineType),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -406,7 +407,12 @@ async function processCloudFormationMessages() {
                                         Metrics: trackMetrics
                                     } = resourceProperties;
 
-                                    const trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+                                    let trackMetricsJson = {};
+                                    try {
+                                        trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+                                    } catch {
+                                        logger.error('Failed to convert metrics to object', trackMetrics);
+                                    }
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
                                     try {
@@ -915,6 +921,7 @@ async function processCloudFormationMessages() {
                                         : JOBSTATUS.FAILED;
 
                                     const { databaseType } = data as JSONObject;
+                                    const dbEngineType = databaseType === 'PostgreSQL server' ? 'PGSQL' : 'SQL';
                                     const masterJobName = `${databaseType} deployment with stack ${stackName}`;
                                     const masterJob = await getMatchingMasterJob(
                                         accountId,
@@ -944,7 +951,8 @@ async function processCloudFormationMessages() {
                                             false,
                                             stackSqlDeploymentType!,
                                             stackName,
-                                            resourceStatus
+                                            resourceStatus,
+                                            dbEngineType
                                         );
                                     }
                                     /**
@@ -1148,7 +1156,8 @@ async function processCloudFormationMessages() {
                                             true,
                                             stackSqlDeploymentType!,
                                             stackName,
-                                            resourceStatus
+                                            resourceStatus,
+                                            dbEngineType
                                         );
                                     }
                                 }

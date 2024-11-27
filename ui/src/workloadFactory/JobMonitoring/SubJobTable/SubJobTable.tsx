@@ -8,7 +8,7 @@ import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { CREATE_RESOURCE, JOB_MONITORING_STATUS, WLF_TABS } from '../../../utils/consts';
+import { CREATE_RESOURCE, JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WLF_TABS } from '../../../utils/consts';
 import {
     expandTableRow,
     formatDateWithTime,
@@ -51,7 +51,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         return <TaskTable taskList={rowData?.subJobs || []} />;
     }, []);
 
-    const navigateToContinuosOptimization = (message: string) => {
+    const navigateToContinuosOptimization = (message: string, rowData: any) => {
         const splitMessage = message.split(';');
 
         // Extract the JSON part of the split message
@@ -61,17 +61,26 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         const jsonObject = JSON.parse(jsonString);
 
         // Extract the required properties
-        const resourceId = jsonObject.resourceId;
-        const databaseInstanceId = jsonObject.databaseInstanceId; // Assuming you want the first ID in the array
-        const databaseInstanceName = jsonObject.databaseInstanceName;
-        const sqlServerDeploymentType = jsonObject.sqlServerDeploymentType;
+        const resourceId = jsonObject?.resourceId;
+        const databaseInstanceId = jsonObject?.databaseInstanceId; // Assuming you want the first ID in the array
+        const databaseInstanceName = jsonObject?.databaseInstanceName;
+        const sqlServerDeploymentType = jsonObject?.sqlServerDeploymentType;
+        const hostName = jsonObject?.hostName;
 
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setCredIdFromJM(subJobsData?.credentialsId));
-        dispatch(setRegionFromJM(subJobsData?.region?.code));
+        if (subJobsData?.type === JOB_MONITORING_TYPE.ASSESSMENT) {
+            dispatch(setCredIdFromJM(rowData?.credentialsId));
+            dispatch(setRegionFromJM(rowData?.region?.code));
+        } else {
+            dispatch(setCredIdFromJM(subJobsData?.credentialsId));
+            dispatch(setRegionFromJM(subJobsData?.region?.code));
+        }
+
         dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
-        dispatch(setGwHostname(subJobsData?.resourceName));
+
+        dispatch(setGwHostname(hostName));
+
         dispatch(setGwResourceId(resourceId));
         dispatch(setGwDatabaseInstance(databaseInstanceId));
         dispatch(setGwDatabaseInstanceName(databaseInstanceName));
@@ -117,7 +126,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '676px',
             isSticky: true,
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 if (cellData.includes('databaseInstanceId') && cellData.includes('resourceId')) {
                     const splitMessage = cellData.split(';');
 
@@ -135,7 +144,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                 <Button
                                     variant="link"
                                     onClick={() => {
-                                        navigateToContinuosOptimization(cellData);
+                                        navigateToContinuosOptimization(cellData, rowData);
                                     }}
                                 >
                                     instance optimization dashboard

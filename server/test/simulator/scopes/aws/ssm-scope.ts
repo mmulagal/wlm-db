@@ -667,6 +667,11 @@ ssmMock
         return moveClusterGroupsRegex.test(params.Parameters.commands[0]);
     })
     .resolves(listSendCommandCommandResponse.moveClusterGroupsCommand)
+    .on(SendCommandCommand, params => {
+        const getLunDetailsRegex = /#Get ONTAP LUN details Script/;
+        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getLunDetailsCommand)
     .on(SendCommandCommand, { Parameters: validateMpio })
     .resolves(listSendCommandCommandResponse.validateMpioCommand)
     .on(SendCommandCommand, { Parameters: setMpioPolicy })
@@ -837,7 +842,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand'
     })
-    .resolves(getCommandInvocationResponse.setMpioPolicyCommandResponse);
+    .resolves(getCommandInvocationResponse.setMpioPolicyCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getLunDetailsResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

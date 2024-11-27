@@ -5,7 +5,13 @@ import Promise from 'bluebird';
 import { CpuVendorArchitecture } from '@aws-sdk/client-compute-optimizer';
 import moment from 'moment';
 import getLogger from '../utils/logger';
-import { convertToBytes, getEc2Arn, isDemo, sqlResponseParsing } from '../utils/utils';
+import {
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    convertToBytes,
+    getEc2Arn,
+    isDemo,
+    sqlResponseParsing
+} from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
@@ -16,6 +22,7 @@ import {
     databaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     LogDriveDetails,
+    Metadata,
     StorageAssessment,
     TempDbDriveDetails,
     WorkloadInstance
@@ -23,7 +30,7 @@ import {
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listAllManagedInstances, listDatabaseInstances } from '../lib/database/db';
+import { listAllManagedInstances, listDatabaseInstances, listResources } from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
 import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
@@ -46,6 +53,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../lib/database/database-instance-config';
 import { listJobs } from '../lib/database/job';
+import getMissingPermissionsList from './aws/iam-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -105,8 +113,12 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     });
     key = 'log-drive-size';
     status =
-        !isEmpty(overProvisionedDrives) || !isEmpty(underProvisionedDrives)
+        !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
             ? AssessmentStatus.NOT_OPTIMIZED
+            : !isEmpty(overProvisionedDrives) && isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.OVER_PROVISIONED
+            : isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.UNDER_PROVISIONED
             : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
             ? AssessmentStatus.NOT_APPLICABLE
             : AssessmentStatus.OPTIMIZED;
@@ -122,29 +134,12 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     const ignoredDrives: SizingViolationResponseType[] = [];
 
     let tempdbPercent = 0;
-    const {
-        dataDriveTotalSizeMB,
-        tempdbDriveTotalSizeMB,
-        defaultDataDriveLetter,
-        tempdbDriveLetter,
-        lunUuid,
-        svmName,
-        ontapVolumeName,
-        ontapVolumeUuid
-    } = value;
+    const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
+        value;
     if (defaultDataDriveLetter === tempdbDriveLetter) {
         status = AssessmentStatus.NOT_APPLICABLE;
 
-        ignoredDrives.push({
-            dataDriveTotalSizeMB,
-            tempdbDriveTotalSizeMB,
-            dataAccessPath: defaultDataDriveLetter,
-            tempdbAccessPath: tempdbDriveLetter,
-            lunUuid,
-            svmName,
-            ontapVolumeName,
-            ontapVolumeUuid
-        });
+        ignoredDrives.push(value);
     } else {
         tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         status =
@@ -154,31 +149,22 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
                 ? AssessmentStatus.UNDER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
         if (status === AssessmentStatus.OVER_PROVISIONED) {
-            overProvisionedDrives.push({
-                dataDriveTotalSizeMB,
-                tempdbDriveTotalSizeMB,
-                dataAccessPath: defaultDataDriveLetter,
-                tempdbAccessPath: tempdbDriveLetter,
-                lunUuid,
-                svmName,
-                ontapVolumeName,
-                ontapVolumeUuid
-            });
+            overProvisionedDrives.push(value);
         } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
-            underProvisionedDrives.push({
-                dataDriveTotalSizeMB,
-                tempdbDriveTotalSizeMB,
-                dataAccessPath: defaultDataDriveLetter,
-                tempdbAccessPath: tempdbDriveLetter,
-                lunUuid,
-                svmName,
-                ontapVolumeName,
-                ontapVolumeUuid
-            });
+            underProvisionedDrives.push(value);
         }
     }
     key = 'tempdb-drive-size';
-    return { status, key, tempdbPercent, dataDriveTotalSizeMB, ontapVolumeUuid };
+    return {
+        status,
+        key,
+        tempdbPercent,
+        dataDriveTotalSizeMB,
+        ontapVolumeUuid,
+        underProvisionedDrives,
+        overProvisionedDrives,
+        ignoredDrives
+    };
 }
 
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
@@ -202,7 +188,30 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
               ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
             ? AssessmentStatus.OVER_PROVISIONED
             : AssessmentStatus.OPTIMIZED;
-    return { status, headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
+
+    // Check for 'fsx:UpdateFileSystem' permissions
+    const missingPermissions = [];
+    let newFsxStorageCapactiyGiB = 0;
+    if (status !== AssessmentStatus.OPTIMIZED) {
+        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, [
+            'fsx:UpdateFileSystem'
+        ]);
+        if (implicitlyDenied.length > 0 || explicitlyDenied.length > 0) {
+            missingPermissions.push('fsx:UpdateFileSystem');
+        }
+        newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+            totalVolumeSizeInBytes,
+            ssdStorageCapacityInBytes
+        );
+    }
+    return {
+        status,
+        headroomPercent,
+        ssdStorageCapacityInBytes,
+        totalVolumeSizeInBytes,
+        missingPermissions,
+        newFsxStorageCapactiyGiB
+    };
 }
 
 async function calculateStorageDrift(
@@ -468,7 +477,8 @@ async function calculateStorageDrift(
                     ));
                 }
                 if (key === 'data-tempdb-drive-details') {
-                    ({ status, key } = getTempDbVolumeDrift(value, status, key));
+                    ({ status, key, overProvisionedDrives, underProvisionedDrives, ignoredDrives } =
+                        getTempDbVolumeDrift(value, status, key));
                 }
 
                 driftAssessmentData.sizing.push({
@@ -490,7 +500,11 @@ async function calculateStorageDrift(
     } else {
         try {
             const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-            const { status } = await getHeadroomDrift(credentialsId, region, filesystemId);
+            const { status, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
+                credentialsId,
+                region,
+                filesystemId
+            );
 
             driftAssessmentData.sizing.push({
                 name: 'headroom',
@@ -498,7 +512,9 @@ async function calculateStorageDrift(
                 status,
                 severity: goldenData!.severity,
                 recommendation: goldenData!.recommendation,
-                tags: goldenData!.tags
+                tags: goldenData!.tags,
+                missingPermissions,
+                recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0
             });
         } catch (error: any) {
             logger.error(
@@ -557,6 +573,8 @@ async function calculateComputeDrift(
                         ? underProvisionedRecommendationMessage
                         : overProvisionedRecommendationMessage;
                 recommendationMessage += ` ${genericRecommendationMessage}`;
+            } else {
+                recommendationMessage = 'Your current instance is optimized for your workload.';
             }
 
             objectsInViolation = findingReasonCodes?.map(code => translateFindingReasonCode(code));
@@ -773,7 +791,7 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
             .filter((value, index, self) => self.indexOf(value) === index);
         allManagedResources.forEach(async resource => {
             const resourceName = resource.split('\\')[0]!;
-            const jobString = `Assessing SQL Server host ${resourceName} compute right sizing`;
+            const jobString = `Assess SQL Server host ${resourceName} compute right sizing`;
             await registerJob(accountId, '', '', {
                 name: jobString,
                 description: jobString,
@@ -881,8 +899,8 @@ async function triggerAssessment(
         return;
     }
 
-    const jobName = `Assessing SQL Server instance ${resourceWithInstanceName}`;
-    const jobDescription = `Assessing SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+    const jobName = `Assess SQL Server instance ${resourceWithInstanceName}`;
+    const jobDescription = `Assess SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         name: jobName,
         description: jobDescription,
@@ -959,7 +977,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 const errorMessage = `No managed instances found for account ${accountId}.`;
                 logger.error(errorMessage);
             } else {
-                const jobDescription = `Assess online SQL Server instances from ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
                     description: jobDescription,
@@ -1034,25 +1052,60 @@ async function fetchDriftAssessment(
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+            const storgaeConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+            const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
+            const sizingConfigsOptimized =
+                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
-            logger.info('Instance metadata:', instanceMetadata);
-            const configsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized || [];
-            storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
-                volume => {
-                    const vol = volume as ParameterDriftResponseType;
-                    if (configsOptimized.includes(vol.name)) {
-                        vol.status = AssessmentStatus.OPTIMIZED;
-                        vol.objectsInViolation = [];
+            if (storgaeConfigsOptimized.length > 0) {
+                storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
+                    volume => {
+                        const vol = volume as ParameterDriftResponseType;
+                        if (storgaeConfigsOptimized.includes(vol.name)) {
+                            vol.status = AssessmentStatus.OPTIMIZED;
+                            vol.objectsInViolation = [];
+                        }
+                        return vol;
                     }
-                    return vol;
-                }
-            );
+                );
+            }
+            if (osConfigsOptimized.length > 0) {
+                storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(
+                    osConfig => {
+                        const os = osConfig as ParameterDriftResponseType;
+                        if (osConfigsOptimized.includes(os.name)) {
+                            os.status = AssessmentStatus.OPTIMIZED;
+                        }
+                        return os;
+                    }
+                );
+            }
+            if (sizingConfigsOptimized.length > 0) {
+                storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
+                    const sizing = sizingConfig as ParameterDriftResponseType;
+                    if (sizingConfigsOptimized.includes(sizing.name)) {
+                        sizing.status = AssessmentStatus.OPTIMIZED;
+                    }
+                    return sizing;
+                });
+            }
         }
+
         driftAssessmentData.storage = storageAssessmentResponse;
     }
 
     if (!isEmpty(computeAssessmentResponse)) {
         driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
+        if (isDemoFlow) {
+            const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId)) || [];
+            const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
+            if (computeConfigsOptimized) {
+                computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+                computeAssessmentResponse.recommendation = 'Your current instance is optimized for your workload.';
+                driftAssessmentData.compute = computeAssessmentResponse as ComputeDriftResponseType;
+            }
+        }
     }
     return driftAssessmentData;
 }
@@ -1110,11 +1163,18 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         database_instance_name: instanceName
     } = managedInstance;
     try {
+        const instanceDetailsForJob = JSON.stringify({
+            hostName: resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            databaseInstanceName: instanceName,
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+        });
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobString = `SQL Server instance ${savedInstanceName} is being scanned for best practice misalignments.`;
+        const jobDescription = `Assess SQL Server instance ${savedInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobString,
-            description: jobString,
+            name: `Assess SQL Server instance ${savedInstanceName}`,
+            description: jobDescription,
             resourceName: savedInstanceName!,
             initiator: initiatedBy.toLocaleUpperCase(),
             startTime: Date.now(),

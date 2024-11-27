@@ -75,6 +75,7 @@ const Home = () => {
                         <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
                         <Route path={`/databases/mssql-deploy-wizard`} element={<MainComponent />} />
                         <Route path={`postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
+                        <Route path={`/databases/postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                         <Route
                             path={`add-working-environment/database-services/:storage/discover`}
                             element={<DiscoverPage />}

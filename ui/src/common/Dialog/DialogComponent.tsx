@@ -27,6 +27,7 @@ type DialogProps = {
     customClass?: string;
     primaryButtonDisabled?: boolean;
     hidePrimaryButton?: boolean;
+    primaryButtonTooltip?: string;
 };
 
 const DialogComponent = ({
@@ -39,7 +40,8 @@ const DialogComponent = ({
     dialogFrom,
     customClass,
     primaryButtonDisabled = false,
-    hidePrimaryButton = false
+    hidePrimaryButton = false,
+    primaryButtonTooltip = ''
 }: DialogProps) => {
     const { closeDialog } = useDialog();
 
@@ -130,6 +132,7 @@ const DialogComponent = ({
                         isDisabled={disabledCheck() || refreshSandboxDisabled}
                         isLoading={primaryButtonLoad}
                         onClick={primaryButtonClick}
+                        title={primaryButtonTooltip}
                     >
                         {primaryButton}
                     </Button>

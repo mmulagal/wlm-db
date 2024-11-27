@@ -67,6 +67,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
+        if (cardData?.id === 'log-drive-size' || cardData?.id === 'tempdb-drive-size') {
+            return (
+                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED
+            );
+        }
         return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
     }, [cardData]);
 
@@ -313,7 +319,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
-                content={<DialogContent type={type} recommendationOptions={cardData?.recommendationOptions} />}
+                content={
+                    <DialogContent
+                        type={type}
+                        recommendationOptions={cardData?.recommendationOptions}
+                        missingPermissions={cardData?.missingPermissions}
+                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                    />
+                }
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -323,7 +336,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     closeDialog();
                 }}
                 customClass={styles.colorSet}
-                hidePrimaryButton={type === 'User data files (.mdf) placement'}
+                hidePrimaryButton={
+                    type === 'User data files (.mdf) placement' ||
+                    (type === 'File system headroom' &&
+                        cardData?.missingPermissions &&
+                        cardData?.missingPermissions.length > 0)
+                }
+                primaryButtonDisabled={cardData?.id === 'compute-rightsizing'}
+                primaryButtonTooltip={GENERAL.COMING_SOON}
             />
         );
     };
@@ -418,7 +438,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <div
                         className={styles.buttonSection}
                         style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
-                        id={'assessment-optimization'}
+                        id={`${cardData?.id}-optimize`}
                     >
                         <DsButton
                             variant="secondary"

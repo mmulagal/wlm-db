@@ -8,7 +8,8 @@ import {
     SQL_ENT,
     SQL_WEB,
     CUSTOM,
-    EBS_ROOT_VOLUME
+    EBS_ROOT_VOLUME,
+    DatabaseTypes
 } from '../../utils/consts';
 
 const PricingServiceRequest = Type.Object({
@@ -77,7 +78,9 @@ const PricingServiceRequest = Type.Object({
                 })
             )
         })
-    )
+    ),
+    osType: Type.Optional(Type.String({ enum: ['windows', 'linux'] })),
+    databaseType: Type.Optional(Type.String({ enum: [DatabaseTypes.MS_SQL_SERVER, DatabaseTypes.PG_SQL] }))
 });
 
 const FsxnCostBreakdown = Type.Object({

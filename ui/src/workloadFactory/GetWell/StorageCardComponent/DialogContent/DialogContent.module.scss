@@ -46,22 +46,17 @@
                     }
 
                     .copy {
-                        width: 100px;
-                        display: flex;
-                        justify-content: flex-end;
-                        height: 20px;
-                        .copy-popover {
-                            width: 140px;
-                            font-size: 13px;
-                            line-height: 20px;
-                            text-align: center;
-                            padding: 2px 2px;
-                        }
+                        position: absolute;
+                        right: 16px;
+                        top: 16px;
 
                         svg {
                             cursor: pointer;
                             &:hover {
                                 fill: var(--icon-primary);
+                            }
+                            path {
+                                fill: var(--icon-secondary);
                             }
                         }
                     }

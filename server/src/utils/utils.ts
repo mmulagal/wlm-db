@@ -25,7 +25,6 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    subJobDescriptions,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
     HttpErrorCodes,
@@ -51,6 +50,10 @@ const logger = getLogger();
 
 const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
 const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
+
+type SubJobDescriptions = {
+    [key: string]: string;
+};
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -94,7 +97,7 @@ function generateDeploymentParams(
         FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
         FSxStorageCapacity
-    } = calculateFsxnStorageCapacity(fsxDataLunSize, sqlDeploymentType);
+    } = calculateFsxnStorageCapacity(fsxDataLunSize, sqlDeploymentType, databaseType);
 
     // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB). This is because when the 130TiB is given as a data lun size, total storage capacity of is going beyond 196608 which is 197695.
     const fsxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
@@ -127,6 +130,7 @@ function generateDeploymentParams(
         sqlDeploymentType === 'fci'
             ? [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`]
             : [`sqlnode-${randomDigits}`];
+    const netbiosPgsql = [`pgsqlnode-${randomDigits}`];
 
     let params = {
         UniqueID: suffix,
@@ -137,17 +141,19 @@ function generateDeploymentParams(
         FSxDataVolumeSize,
         FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
         FSxLogVolumeSize, // 25% of FSxDataVolumeSize
-        FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
-        FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
         FSxSvmName: `${prefix}_svm_${suffix}`,
-        ...(databaseType === DatabaseTypes.MS_SQL_SERVER && { SQLigroupname: `${prefix}_sqligroup_${suffix}` }),
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
-        ...(databaseType === DatabaseTypes.MS_SQL_SERVER && { NodeNetBIOSNames: netbios }),
         FSxStorageCapacity: fsxStorageCapacity,
-        FSxDataLunSize: FSxDataLunSizeInMib
+        FSxDataLunSize: FSxDataLunSizeInMib,
+        NodeNetBIOSNames: databaseType === DatabaseTypes.PG_SQL ? netbiosPgsql : netbios,
+        ...(databaseType === DatabaseTypes.MS_SQL_SERVER && {
+            SQLigroupname: `${prefix}_sqligroup_${suffix}`,
+            FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
+            FSxTempDbVolumeSize // 10% of FSxDataVolumeSize
+        })
     };
 
-    if (sqlDeploymentType === 'fci') {
+    if (sqlDeploymentType === 'fci' && databaseType === DatabaseTypes.MS_SQL_SERVER) {
         params = {
             ...params,
             ...{
@@ -217,17 +223,24 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
     };
 }
 
-function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string) {
-    logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize, sqlDeploymentMode });
+function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string, databaseType?: string) {
+    logger.info('Calculate FSX Netapp Storage capacity from the database size', {
+        fsxDataLunSize,
+        sqlDeploymentMode,
+        databaseType
+    });
 
     const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
     // All these in MiB
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    let FSxTempDbVolumeSize = 0;
+    if (databaseType !== DatabaseTypes.PG_SQL) {
+        FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    }
     let FSxQuorumVolumeSize = 0;
-    if (sqlDeploymentMode !== STANDALONE) {
+    if (sqlDeploymentMode !== STANDALONE && databaseType !== DatabaseTypes.PG_SQL) {
         FSxQuorumVolumeSize = 12000; // 12GB
     }
 
@@ -472,10 +485,11 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
 }
 
 // Return job decription for corresponding Job name
-function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
-    logger.info('Return job decription for job name:', jobName);
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string, dbEngineType: string = 'SQL') {
+    logger.info('Return job decription for job name:', { jobName, stackSqlDeploymentType, dbEngineType });
     // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
     // Diffrentiating between the deployment type to provide appropriate description.
+    const subJobDescriptions = getSubJobDescriptions(dbEngineType);
     if (jobName.includes('ValidationStack1')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
@@ -503,9 +517,11 @@ function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: 
 function convertMetricsIntoJson(input: Array<string>) {
     const metrics: { [key: string]: string } = {};
 
-    for (const metric of input) {
-        const [key, value] = metric.split(':');
-        metrics[key] = value;
+    if (input) {
+        for (const metric of input) {
+            const [key, value] = metric?.split(':') || [];
+            metrics[key] = value;
+        }
     }
     return metrics;
 }
@@ -698,6 +714,79 @@ function getRegionDetails(region: string): RegionDetailsType {
     };
 }
 
+function calculateFsxStorageCapacityForHeadroomOptimization(
+    totalVolumeSizeInBytes: number,
+    ssdStorageCapacityInBytes: number
+): number {
+    let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
+    const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
+    // increase newFsxStorageCapacity so that increment is at least 10%
+    newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
+
+    const newFsxStorageCapacityGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
+    return newFsxStorageCapacityGiB;
+}
+
+function getSubJobDescriptions(dbEngineType: string) {
+    logger.info('Get sub job descriptions', { dbEngineType });
+
+    const subJobDescriptions: SubJobDescriptions = {
+        SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
+        NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
+        ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
+        'ValidationStack1-standalone': 'Subnet Validation for deployment',
+        'ValidationStack1-fci': `Primary subnet validation for ${dbEngineType} Server FCI deployment`,
+        ValidationStack2: `Standby subnet validation for ${dbEngineType} Server FCI deployment`,
+        'SqlNode(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server standalone on an EC2 instance`,
+        'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
+        'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': `Creating a security group for ${dbEngineType} Server workloads`,
+        'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)': `Attaching an instance profile to EC2 instances for ${dbEngineType} Server nodes`,
+        'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
+        'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
+        'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host witness disk for Windows Cluster',
+        'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
+        'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
+        'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+            'Creating a dedicated storage virtual machine (SVM) for the database workload',
+        'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
+        'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
+        'ValidationNode1(AWS::EC2::Instance)':
+            'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+        'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+        'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
+        'ValidationInstanceProfile(AWS::IAM::InstanceProfile)':
+            'Attaching an instance profile to the validation instance',
+        'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+            'Signaling wait condition to resume next steps',
+        'SqlFSxInstanceMAD1(AWS::EC2::Instance)': `Configuring Windows Cluster and ${dbEngineType} FCI instance on primary node`,
+        'SqlFSxInstanceMAD2(AWS::EC2::Instance)': `Configuring Windows Cluster and ${dbEngineType} FCI instance on standby node`,
+        'NetworkInterface2(AWS::EC2::NetworkInterface)':
+            'Creating network interfaces for the EC2 instance in standby subnet',
+        'NetworkInterface1(AWS::EC2::NetworkInterface)':
+            'Creating network interfaces for the EC2 instance in primary subnet',
+        'ValidationNode2(AWS::EC2::Instance)':
+            'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+        'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+        'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+            'Signaling wait condition to resume next steps',
+        VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+        'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
+        'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
+        'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
+        'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
+        'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
+        'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
+        'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
+        'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
+        'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
+        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
+    };
+
+    return subJobDescriptions;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -741,5 +830,7 @@ export {
     getRedisDetails,
     getTimeDifferenceInMinutes,
     filterActions,
-    getRegionDetails
+    getRegionDetails,
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    getSubJobDescriptions
 };
