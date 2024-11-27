@@ -1519,7 +1519,8 @@ async function deployPgSql(
             sqlConfiguration,
             topicArn,
             false,
-            metrics
+            metrics,
+            tags
         );
     } catch (err: any) {
         // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
@@ -1588,8 +1589,8 @@ async function deployCfTemplateForPgSql(
     sqlConfiguration: PgSqlConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
-    metrics: string
-    // tags?: Array<{ key: string; value: string }>
+    metrics: string,
+    tags?: Array<{ key: string; value: string }>
 ): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(networkConfiguration, STANDALONE);
 
@@ -1635,8 +1636,7 @@ async function deployCfTemplateForPgSql(
         region,
         DatabaseTypes.PG_SQL,
         stackName,
-        // tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        [],
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
         customMasterTemplatePath,
         templateParamsInCfFormat
     );
