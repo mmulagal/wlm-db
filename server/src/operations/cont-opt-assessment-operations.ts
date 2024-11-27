@@ -1059,15 +1059,23 @@ async function fetchDriftAssessment(
                 (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
             if (storgaeConfigsOptimized.length > 0) {
-                storageAssessmentResponse.configuration.volumes = storageAssessmentResponse.configuration.volumes.map(
-                    volume => {
-                        const vol = volume as ParameterDriftResponseType;
-                        if (storgaeConfigsOptimized.includes(vol.name)) {
-                            vol.status = AssessmentStatus.OPTIMIZED;
-                            vol.objectsInViolation = [];
+                const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
+                    configArray.map(config => {
+                        if (optimizedConfigs.includes(config.name)) {
+                            config.status = AssessmentStatus.OPTIMIZED;
+                            config.objectsInViolation = [];
                         }
-                        return vol;
-                    }
+                        return config;
+                    });
+
+                storageAssessmentResponse.configuration.volumes = optimizeConfig(
+                    storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
+                    storgaeConfigsOptimized
+                );
+
+                storageAssessmentResponse.configuration.luns = optimizeConfig(
+                    storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
+                    storgaeConfigsOptimized
                 );
             }
             if (osConfigsOptimized.length > 0) {
