@@ -147,12 +147,11 @@ async function createDemoResourcesPerRegion(
         ];
 
         instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
-            const instanceId = randomUUID();
-
             await createDemoResources(accountId, region, credentialsId, awsAccountId, name, protocol, resourceId);
             const instanceNames: string[] = [];
+            let instanceIds: string = '';
             sqlInstances.forEach(async instanceName => {
-                await createDatabaseInstances(
+                const instanceId = await createDatabaseInstances(
                     accountId,
                     resourceId,
                     instanceName,
@@ -160,11 +159,11 @@ async function createDemoResourcesPerRegion(
                     region,
                     `fs-${randomize('0', 8)}`,
                     protocol,
-                    {},
-                    instanceId
+                    {}
                 );
                 const newInstanceName = instanceName.replace(name, '');
                 instanceNames.push(newInstanceName);
+                instanceIds += `${instanceId},`;
             });
             instanceNames.push(DEFAULT_INSTANCE_NAME);
             const assessmentJobMockData = await createAssessmentJobMockData(
@@ -173,7 +172,7 @@ async function createDemoResourcesPerRegion(
                 instanceNames,
                 credentialsId,
                 region,
-                instanceId,
+                instanceIds,
                 resourceId
             );
             await createJobs(accountId, assessmentJobMockData);
@@ -184,7 +183,7 @@ async function createDemoResourcesPerRegion(
                 instanceNames[0],
                 credentialsId,
                 region,
-                instanceId,
+                instanceIds.split(',')[0],
                 resourceId
             );
             await createJobs(accountId, optimizeStorageJobMockdata);
@@ -195,7 +194,7 @@ async function createDemoResourcesPerRegion(
                 instanceNames[0],
                 credentialsId,
                 region,
-                instanceId,
+                instanceIds.split(',')[0],
                 resourceId
             );
             await createJobs(accountId, operatingSystemOptimizeJobMockData);
@@ -278,10 +277,9 @@ async function createDatabaseInstances(
     region: string,
     fsxId: string,
     storageProtocol: string,
-    databaseMetadata: any,
-    instanceId: string
+    databaseMetadata: any
 ) {
-    const databaseInstanceId = instanceId;
+    const databaseInstanceId = randomUUID();
     const instanceRecord = {
         resourceId,
         credentialsId,
@@ -314,6 +312,8 @@ async function createDatabaseInstances(
     };
 
     await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
+
+    return databaseInstanceId;
 }
 
 export { creadteDemoDBData, returnInventorydata, createConfigurations, createDemoResourcesPerRegion };
