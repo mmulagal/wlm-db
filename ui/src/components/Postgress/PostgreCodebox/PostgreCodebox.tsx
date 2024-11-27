@@ -199,12 +199,13 @@ const PostgreCodebox = () => {
             return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             const baseUrl = getBaseUrl();
+            const rightPanelResponse = createPgsqlPayload({ mssqlForm: mssqlFormData, postgreForm: pgsqlFormData });
             const restApiPayload = PGSQL_CURL_REQ_TEMPLATE(
                 baseUrl,
                 selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
                 selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
                 CRED_PLACEHOLDERS.TOKEN,
-                JSON.stringify(rightPanelMaskedResponse, null, 2),
+                JSON.stringify(rightPanelResponse, null, 2),
                 isWorkloadFactory
             );
             return restApiPayload;
