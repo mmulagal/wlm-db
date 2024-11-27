@@ -710,6 +710,8 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxSvmId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxSvmId"
+        ONTAPSecurityGroupID:
+          Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
         FSxDataLunSize:

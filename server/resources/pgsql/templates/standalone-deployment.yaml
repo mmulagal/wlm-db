@@ -88,6 +88,9 @@ Parameters:
     Description: Password for the SQL service account.
     Type: String
     NoEcho: true
+  ONTAPSecurityGroupID:
+    Description: ID of the FSx for ONTAP security group.
+    Type: String
 
 Resources:
   LaunchWizardSqlFSxProfile:
@@ -96,7 +99,22 @@ Resources:
       Roles:
         - !Ref Ec2RoleName
       Path: /
-
+  NetworkInterface:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SecondaryPrivateIpAddressCount: 2
+      SubnetId: !Ref 'PrivateSubnetID'
+      GroupSet: !Split
+        - ','
+        - !Join
+          - ','
+          - - !Ref 'WorkloadSecurityGroup'
+            - !Ref 'ONTAPSecurityGroupID'
+      Tags:
+          - Key: Name
+            Value: !Ref 'SqlFSxServerNetBIOSName'
+          - Key: SQLServerName
+            Value: !Ref 'SqlServerName'
   SqlNode:
     Type: AWS::EC2::Instance
     CreationPolicy:
@@ -128,9 +146,9 @@ Resources:
             VolumeSize: !Ref EBSVolumeSize
             VolumeType: gp3
       KeyName: !Ref KeyPairName
-      SubnetId: !Ref PrivateSubnetID
-      SecurityGroupIds: 
-        - !Ref WorkloadSecurityGroup
+      NetworkInterfaces:
+        - NetworkInterfaceId: !Ref 'NetworkInterface'
+          DeviceIndex: 0
       UserData:
         'Fn::Base64':
           !Sub |
