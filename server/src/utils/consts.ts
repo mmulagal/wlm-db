@@ -1430,6 +1430,7 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'compute-optimizer:GetEC2InstanceRecommendations',
     'autoscaling:DescribeAutoScalingGroups',
     'autoscaling:DescribeAutoScalingInstances',
+    'fsx:UpdateFileSystem',
     'fsx:UpdateVolume'
 ];
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);

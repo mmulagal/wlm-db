@@ -86,8 +86,10 @@
                     "ec2:ModifyVpcAttribute",
                     "ec2messages:*",
                     "fsx:CreateFileSystem",
+                    "fsx:UpdateFileSystem",
                     "fsx:CreateStorageVirtualMachine",
                     "fsx:CreateVolume",
+                    "fsx:UpdateVolume",
                     "fsx:Describe*",
                     "fsx:List*",
                     "kms:CreateGrant",
@@ -121,8 +123,7 @@
                     "compute-optimizer:GetEffectiveRecommendationPreferences",
                     "compute-optimizer:GetEC2InstanceRecommendations",
                     "autoscaling:DescribeAutoScalingGroups",
-                    "autoscaling:DescribeAutoScalingInstances",
-                    "fsx:UpdateVolume"
+                    "autoscaling:DescribeAutoScalingInstances"
                 ],
                 "Resource": "*"
             },
