@@ -734,9 +734,5 @@ export const GETWELL_CONFIG: any = {
 export const GW_CONFIG_OPTIMIZE_NA = [
     'User data files (.mdf) placement',
     'Log files (.ldf) placement',
-    'TempDB placement',
-    'OS type',
-    'Storage tier',
-    'NTFS allocation unit size',
-    'Operating system patch'
+    'TempDB placement'
 ];

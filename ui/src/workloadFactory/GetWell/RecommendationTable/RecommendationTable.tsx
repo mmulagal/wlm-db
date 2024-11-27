@@ -40,6 +40,16 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
+    const isDialogPrimaryBtnDisabled = (rowData: any) => {
+        return (
+            rowData?.name === 'OS type' ||
+            rowData?.name === 'NTFS allocation unit size' ||
+            rowData?.name === 'Operating system patch' ||
+            rowData?.id === 'mpio-iscsi-count' ||
+            rowData?.id === 'mpio-enabled'
+        );
+    };
+
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
         // Only 1 config can be passed at a time
@@ -132,9 +142,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                     closeDialog();
                 }}
                 customClass={styles.colorSet}
-                hidePrimaryButton={GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name)}
-                primaryButtonDisabled={rowData?.id === 'mpio-iscsi-count'}
-                primaryButtonTooltip={GENERAL.COMING_SOON}
+                primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
+                primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
             />
         );
     };

@@ -53,6 +53,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const { setDialog, closeDialog } = useDialog();
 
+    const isDialogPrimaryBtnDisabled = useMemo(() => {
+        const id = cardData?.id;
+        return id === 'compute-rightsizing' || id === 'performance-tier';
+    }, [cardData]);
+
     const disableOptimizeButton = useMemo(() => {
         if (cardData?.id === 'headroom') {
             return (
@@ -337,13 +342,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={styles.colorSet}
                 hidePrimaryButton={
-                    type === 'User data files (.mdf) placement' ||
-                    (type === 'File system headroom' &&
-                        cardData?.missingPermissions &&
-                        cardData?.missingPermissions.length > 0)
+                    type === 'File system headroom' &&
+                    cardData?.missingPermissions &&
+                    cardData?.missingPermissions.length > 0
                 }
-                primaryButtonDisabled={cardData?.id === 'compute-rightsizing'}
-                primaryButtonTooltip={GENERAL.COMING_SOON}
+                primaryButtonDisabled={isDialogPrimaryBtnDisabled}
+                primaryButtonTooltip={isDialogPrimaryBtnDisabled ? GENERAL.COMING_SOON : ''}
             />
         );
     };
