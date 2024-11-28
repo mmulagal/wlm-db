@@ -1,0 +1,14 @@
+.managedByCategory {
+    background-color: var(--content-background);
+    width: 928px;
+    height: 621px;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+}

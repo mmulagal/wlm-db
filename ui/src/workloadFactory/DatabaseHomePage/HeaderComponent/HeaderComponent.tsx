@@ -84,6 +84,7 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
+import Dashboard from '../../Dashboard/Dashboard';
 
 type Tab = {
     tab: string;
@@ -729,7 +730,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            <DatabaseHomePage />
+                            {/* <DatabaseHomePage /> */}
+                            <Dashboard />
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (

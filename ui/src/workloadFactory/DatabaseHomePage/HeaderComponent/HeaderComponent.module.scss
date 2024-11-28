@@ -247,13 +247,14 @@
                 display: flex;
                 padding: 40px 0;
                 justify-content: center;
-                width: 67vw;
+                // width: 67vw;
             }
 
             .contentArea {
                 display: flex;
                 justify-content: space-between;
                 width: 86%;
+                max-width: 1607px;
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
