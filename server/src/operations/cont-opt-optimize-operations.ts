@@ -1608,6 +1608,10 @@ async function optimizeOperatingSystemSettings(
                     'OS',
                     (instanceMetadata as unknown as Metadata) || {}
                 );
+            } else {
+                const errorMessage = `Optimize for ${configurationName} is currently not supported.`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
             }
             break;
         }
@@ -1666,6 +1670,10 @@ async function optimizeOperatingSystemSettings(
                     'OS',
                     (instanceMetadata as unknown as Metadata) || {}
                 );
+            } else {
+                const errorMessage = `Optimize for ${configurationName} is currently not supported.`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
             }
             break;
         }
