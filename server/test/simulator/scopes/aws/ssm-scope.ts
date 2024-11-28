@@ -261,10 +261,6 @@ const getDefaultDriveLetters = {
     commands: [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)]
 };
 
-const getActiveNodeDriveDetailsStandalone = {
-    commands: [GET_ACTIVE_NODE_DRIVE_INFO('Standalone')]
-};
-
 const getActiveNodeDriveDetailsFCI = {
     commands: [GET_ACTIVE_NODE_DRIVE_INFO('FCI')]
 };
@@ -577,8 +573,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
-    .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetailsStandalone })
-    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetailsFCI })
     .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, { Parameters: getStandbyNodeDriveList })
@@ -675,7 +669,12 @@ ssmMock
     .on(SendCommandCommand, { Parameters: validateMpio })
     .resolves(listSendCommandCommandResponse.validateMpioCommand)
     .on(SendCommandCommand, { Parameters: setMpioPolicy })
-    .resolves(listSendCommandCommandResponse.setMpioPolicyCommand);
+    .resolves(listSendCommandCommandResponse.setMpioPolicyCommand)
+    .on(SendCommandCommand, params => {
+        const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
+        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails);
 
 ssmMock
     .on(GetCommandInvocationCommand)

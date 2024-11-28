@@ -6,6 +6,7 @@ import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
 import { compressResponse, ontapRestRequest } from './common-templates';
 
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
+#Get ACTIVE NODE DRIVE INFO
 Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
     $Errors = ''

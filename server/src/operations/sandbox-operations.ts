@@ -3233,13 +3233,17 @@ async function runSandboxPreValidations(
 
     const srcInstance = srcStatus.instancesDetails?.find(
         instance =>
-            instance.instanceName === srcInstanceDetail.database_instance_name &&
+            (isDemoFlow
+                ? instance.instanceName.includes(srcInstanceDetail.database_instance_name)
+                : instance.instanceName === srcInstanceDetail.database_instance_name) &&
             instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 
     const destInstance = destStatus.instancesDetails?.find(
         instance =>
-            instance.instanceName === destInstanceDetail.database_instance_name &&
+            (isDemoFlow
+                ? instance.instanceName.includes(destInstanceDetail.database_instance_name)
+                : instance.instanceName === destInstanceDetail.database_instance_name) &&
             instance.instanceState === SQL_SERVICE_STATE.RUNNING
     );
 

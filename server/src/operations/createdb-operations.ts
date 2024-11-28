@@ -274,7 +274,9 @@ async function getDriveInfoFromSSM(
 
         const isInstanceRunning = instancesDetails.some(
             instance =>
-                instance.instanceName === instanceDetail.database_instance_name &&
+                (isDemoFlow
+                    ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                    : instance.instanceName === instanceDetail.database_instance_name) &&
                 instance.instanceState === SQL_SERVICE_STATE.RUNNING
         );
 
@@ -642,7 +644,9 @@ async function invokeSSMForDatabaseDeployment(
 
             const runningInstance = instancesDetails.find(
                 instance =>
-                    instance.instanceName === instanceDetail.database_instance_name &&
+                    (isDemoFlow
+                        ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                        : instance.instanceName === instanceDetail.database_instance_name) &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
@@ -1746,7 +1750,9 @@ async function getCollationDetails(
 
             const runningInstance = instancesDetails.find(
                 instance =>
-                    instance.instanceName === instanceDetail.database_instance_name &&
+                    (isDemoFlow
+                        ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                        : instance.instanceName === instanceDetail.database_instance_name) &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 

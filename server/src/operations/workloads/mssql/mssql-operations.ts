@@ -1231,9 +1231,12 @@ async function getActiveSqlNodeAndInstanceDetails(
                 if (instanceDetails) {
                     const matchingInstance = instanceDetails.find(
                         (instance: InstanceDetails) =>
-                            instance.instanceName === databaseInstanceName &&
+                            (isDemoFlow
+                                ? instance.instanceName.includes(databaseInstanceName)
+                                : instance.instanceName === databaseInstanceName) &&
                             instance.instanceState === SQL_SERVICE_STATE.RUNNING
                     );
+
                     if (matchingInstance) {
                         return { nodeId, matchingInstance };
                     }
