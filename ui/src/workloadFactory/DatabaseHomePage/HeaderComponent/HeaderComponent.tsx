@@ -689,7 +689,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                                         }
                                                                     });
                                                                 }
-                                                            }
+                                                            },
+                                                            className: 'mssql-deployment-button'
                                                         },
                                                         {
                                                             id: '2',
@@ -716,7 +717,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                                         }
                                                                     });
                                                                 }
-                                                            }
+                                                            },
+                                                            className: 'pgsql-deployment-button'
                                                         }
                                                     ]
                                                 }}
