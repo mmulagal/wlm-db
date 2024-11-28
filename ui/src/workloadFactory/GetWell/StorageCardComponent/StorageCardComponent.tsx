@@ -31,6 +31,7 @@ import store from '../../../store/store';
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
         useAppSelector(state => state.getWellOptimize);
@@ -56,8 +57,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const isDialogPrimaryBtnDisabled = useMemo(() => {
         const id = cardData?.id;
-        return id === 'compute-rightsizing' || id === 'performance-tier';
-    }, [cardData]);
+        return (!isDemoMode && id === 'compute-rightsizing') || id === 'performance-tier';
+    }, [cardData, isDemoMode]);
 
     const disableOptimizeButton = useMemo(() => {
         if (cardData?.id === 'headroom') {

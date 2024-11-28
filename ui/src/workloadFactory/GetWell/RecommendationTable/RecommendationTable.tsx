@@ -33,6 +33,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const { isDemoMode } = useAppSelector(state => state.auth);
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -46,8 +47,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             rowData?.name === 'OS type' ||
             rowData?.name === 'NTFS allocation unit size' ||
             rowData?.name === 'Operating system patch' ||
-            rowData?.id === 'mpio-iscsi-count' ||
-            rowData?.id === 'mpio-enabled'
+            (!isDemoMode && rowData?.id === 'mpio-iscsi-count') ||
+            (!isDemoMode && rowData?.id === 'mpio-enabled')
         );
     };
 
