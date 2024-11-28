@@ -379,14 +379,14 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
 ) => {
     if (isWorkloadFactory) {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
     } else {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
@@ -405,14 +405,14 @@ export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
 ) => {
     if (isWorkloadFactory) {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/sandboxes' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --data-raw '${payload}'
         `;
     } else {
         return `
-        curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/sandboxes' \\
         --header 'Authorization: Bearer ${token}' \\
         --header 'Content-Type: application/json' \\
         --header 'x-netapp-referer: BlueXP' \\
