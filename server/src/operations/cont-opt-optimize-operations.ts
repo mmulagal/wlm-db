@@ -215,7 +215,9 @@ async function triggerAssessmentAfterOptimization(
         if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
             break;
         }
-        await sleep(30000);
+        if (!isDemoFlow) {
+            await sleep(30000);
+        }
     }
 
     await updateJobDetails(accountId, parentJobId, {

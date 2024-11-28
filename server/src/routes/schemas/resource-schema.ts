@@ -48,8 +48,8 @@ const CreateDemoDataSchema = {
     tags: [RouteTags.RESOURCE],
     params: CredentialsIdParams,
     hide: process.env.NODE_ENV === 'production',
-    summary: 'Create Demo derfault resources',
-    description: 'Create Demo derfault resources for the given region',
+    summary: 'Create Demo default resources',
+    description: 'Create Demo default resources for the given region',
     response: {
         200: Type.String()
     }
