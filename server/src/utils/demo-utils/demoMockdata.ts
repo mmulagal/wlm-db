@@ -1990,7 +1990,7 @@ function optimizeStorageJobData(
             name: `Optimize storage for ${resourceName}\\${instanceName}.`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
-            type: JOBTYPE.ASSESSMENT,
+            type: JOBTYPE.OPTIMIZATION,
             start_time: new Date(Date.now()),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
