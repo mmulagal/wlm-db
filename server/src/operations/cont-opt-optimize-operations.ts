@@ -50,7 +50,8 @@ import {
     AssessmentCategories,
     AssessmentStatus,
     OPTIMIZE_SIZING_CONFIGS,
-    AssessmentTriggeredBy
+    AssessmentTriggeredBy,
+    OptimizeOperatingSystemParams
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -1514,39 +1515,173 @@ async function optimizeOperatingSystemSettings(
         standbyNodeName = await getResourceNameFromTags(Reservations?.[1].Instances?.[0].Tags);
     }
 
-    try {
-        optimizeMpio({
-            accountId,
-            region,
-            credentialsId,
-            parentJobId,
-            serverNameWithHostName,
-            sqlDeploymentType,
-            activeNodeInstanceId,
-            databaseHostId,
-            fsxId,
-            instanceId,
-            instanceName,
-            databaseType,
-            databaseInstanceId,
-            sqlAuthEnabled,
-            awsAccountId: resourceDetail.cloud_provider_account_id!,
-            standbyNodeInstanceId,
-            activeNodeName,
-            standbyNodeName,
-            instanceMetadata
-        });
-    } catch (error) {
-        const errorMessage = `Error while optimizing operating system settings ${error}`;
-        logger.error(errorMessage);
-        await updateJobDetails(accountId, parentJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
-        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+    switch (configurationName) {
+        case OptimizeOperatingSystemParams.MPIO_POLICY: {
+            try {
+                optimizeMpio({
+                    accountId,
+                    region,
+                    credentialsId,
+                    parentJobId,
+                    serverNameWithHostName,
+                    sqlDeploymentType,
+                    activeNodeInstanceId,
+                    databaseHostId,
+                    fsxId,
+                    instanceId,
+                    instanceName,
+                    databaseType,
+                    databaseInstanceId,
+                    sqlAuthEnabled,
+                    awsAccountId: resourceDetail.cloud_provider_account_id!,
+                    standbyNodeInstanceId,
+                    activeNodeName,
+                    standbyNodeName,
+                    instanceMetadata
+                });
+            } catch (error) {
+                const errorMessage = `Error while optimizing operating system settings ${error}`;
+                logger.error(errorMessage);
+                await updateJobDetails(accountId, parentJobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now(),
+                    error: errorMessage
+                });
+                updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
 
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+            break;
+        }
+        case OptimizeOperatingSystemParams.MPIO_SESSIONS: {
+            if (isDemoFlow) {
+                const instanceDetailsForJob = JSON.stringify({
+                    hostName: sqlServerName,
+                    resourceId: databaseHostId,
+                    databaseInstanceId,
+                    databaseInstanceName: instanceName,
+                    sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+                });
+
+                await registerJob(accountId, credentialsId, region, {
+                    name: `Validate MPIO iSCSCI sessions ${serverNameWithHostName}`,
+                    description: `Validate MPIO iSCSCI sessions ${serverNameWithHostName}`,
+                    startTime: Date.now(),
+                    type: JOBTYPE.OPTIMIZATION,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 4000,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
+                await registerJob(accountId, credentialsId, region, {
+                    name: `Optimize MPIO iSCSCI sessions for ${serverNameWithHostName}`,
+                    description: `Optimize MPIO iSCSCI sessions for ${serverNameWithHostName}`,
+                    startTime: Date.now() + 4000,
+                    type: JOBTYPE.OPTIMIZATION,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 8000,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
+                const jobName = `Assess SQL Server instance ${serverNameWithHostName}`;
+                const jobDescription = `Assess SQL Server instance ${serverNameWithHostName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+                await registerJob(accountId, credentialsId, region, {
+                    name: jobName,
+                    description: jobDescription,
+                    resourceName: serverNameWithHostName,
+                    startTime: Date.now() + 8000,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 10000,
+                    type: JOBTYPE.ASSESSMENT,
+                    parentJobId
+                });
+
+                await updateJobDetails(accountId, parentJobId, {
+                    endTime: Date.now() + 11000,
+                    status: JOBSTATUS.COMPLETED
+                });
+
+                await updateOptimizedConfigNameInInstanceTable(
+                    accountId,
+                    instanceId,
+                    [OptimizeOperatingSystemParams.MPIO_SESSIONS],
+                    'OS',
+                    (instanceMetadata as unknown as Metadata) || {}
+                );
+            } else {
+                const errorMessage = `Optimize for ${configurationName} is currently not supported.`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+            }
+            break;
+        }
+        case OptimizeOperatingSystemParams.MPIO_ENABLE: {
+            if (isDemoFlow) {
+                const instanceDetailsForJob = JSON.stringify({
+                    hostName: sqlServerName,
+                    resourceId: databaseHostId,
+                    databaseInstanceId,
+                    databaseInstanceName: instanceName,
+                    sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+                });
+
+                await registerJob(accountId, credentialsId, region, {
+                    name: `Configure MPIO ${serverNameWithHostName}`,
+                    description: `Configure MPIO ${serverNameWithHostName}`,
+                    startTime: Date.now(),
+                    type: JOBTYPE.OPTIMIZATION,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 4000,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
+                await registerJob(accountId, credentialsId, region, {
+                    name: `Configure MPIO iSCSCI sessions ${serverNameWithHostName}`,
+                    description: `Configure MPIO iSCSCI sessions for ${serverNameWithHostName}`,
+                    startTime: Date.now() + 4000,
+                    type: JOBTYPE.OPTIMIZATION,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 7000,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
+                const jobName = `Assess SQL Server instance ${serverNameWithHostName}`;
+                const jobDescription = `Assess SQL Server instance ${serverNameWithHostName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+                await registerJob(accountId, credentialsId, region, {
+                    name: jobName,
+                    description: jobDescription,
+                    resourceName: serverNameWithHostName,
+                    startTime: Date.now() + 8000,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 9000,
+                    type: JOBTYPE.ASSESSMENT,
+                    parentJobId
+                });
+
+                await updateJobDetails(accountId, parentJobId, {
+                    endTime: Date.now() + 11000,
+                    status: JOBSTATUS.COMPLETED
+                });
+
+                await updateOptimizedConfigNameInInstanceTable(
+                    accountId,
+                    instanceId,
+                    [OptimizeOperatingSystemParams.MPIO_ENABLE],
+                    'OS',
+                    (instanceMetadata as unknown as Metadata) || {}
+                );
+            } else {
+                const errorMessage = `Optimize for ${configurationName} is currently not supported.`;
+                logger.error(errorMessage);
+                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+            }
+            break;
+        }
+        default: {
+            const errorMessage = `Invalid configuration name ${configurationName}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
     }
 
     return { jobId: parentJobId };
