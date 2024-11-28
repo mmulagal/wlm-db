@@ -1591,15 +1591,81 @@ async function optimizeOperatingSystemSettings(
                     resourceName: serverNameWithHostName,
                     startTime: Date.now() + 8000,
                     status: JOBSTATUS.COMPLETED,
-                    endTime: Date.now() + 12000,
+                    endTime: Date.now() + 10000,
                     type: JOBTYPE.ASSESSMENT,
                     parentJobId
                 });
 
                 await updateJobDetails(accountId, parentJobId, {
-                    endTime: Date.now() + 12000,
+                    endTime: Date.now() + 11000,
                     status: JOBSTATUS.COMPLETED
                 });
+
+                await updateOptimizedConfigNameInInstanceTable(
+                    accountId,
+                    instanceId,
+                    [OptimizeOperatingSystemParams.MPIO_SESSIONS],
+                    'OS',
+                    (instanceMetadata as unknown as Metadata) || {}
+                );
+            }
+            break;
+        }
+        case OptimizeOperatingSystemParams.MPIO_ENABLE: {
+            if (isDemoFlow) {
+                const instanceDetailsForJob = JSON.stringify({
+                    hostName: sqlServerName,
+                    resourceId: databaseHostId,
+                    databaseInstanceId,
+                    databaseInstanceName: instanceName,
+                    sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+                });
+
+                await registerJob(accountId, credentialsId, region, {
+                    name: `Configure MPIO ${serverNameWithHostName}`,
+                    description: `Configure MPIO ${serverNameWithHostName}`,
+                    startTime: Date.now(),
+                    type: JOBTYPE.OPTIMIZATION,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 4000,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
+                await registerJob(accountId, credentialsId, region, {
+                    name: `Configure MPIO iSCSCI sessions ${serverNameWithHostName}`,
+                    description: `Configure MPIO iSCSCI sessions for ${serverNameWithHostName}`,
+                    startTime: Date.now() + 4000,
+                    type: JOBTYPE.OPTIMIZATION,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 7000,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
+                const jobName = `Assess SQL Server instance ${serverNameWithHostName}`;
+                const jobDescription = `Assess SQL Server instance ${serverNameWithHostName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+                await registerJob(accountId, credentialsId, region, {
+                    name: jobName,
+                    description: jobDescription,
+                    resourceName: serverNameWithHostName,
+                    startTime: Date.now() + 8000,
+                    status: JOBSTATUS.COMPLETED,
+                    endTime: Date.now() + 9000,
+                    type: JOBTYPE.ASSESSMENT,
+                    parentJobId
+                });
+
+                await updateJobDetails(accountId, parentJobId, {
+                    endTime: Date.now() + 11000,
+                    status: JOBSTATUS.COMPLETED
+                });
+
+                await updateOptimizedConfigNameInInstanceTable(
+                    accountId,
+                    instanceId,
+                    [OptimizeOperatingSystemParams.MPIO_ENABLE],
+                    'OS',
+                    (instanceMetadata as unknown as Metadata) || {}
+                );
             }
             break;
         }
