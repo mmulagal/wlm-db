@@ -24,6 +24,7 @@ const JobMonitoringApi = () => {
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
+    const [lastToken, setLastToken] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
 
@@ -40,6 +41,8 @@ const JobMonitoringApi = () => {
                 setTime({ startTime: fromTime, endTime: toTime });
                 setSkipApiCall(false);
                 setSkipJobListApiCall(false);
+                setJobsCursor(null);
+                setLastToken(null);
             }
         }, 0);
     }, [fromTime, refreshTime]);
@@ -76,10 +79,11 @@ const JobMonitoringApi = () => {
             let mergedList = [...oldList, ...newList];
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
-            if (!jmJobsList?.nextToken) {
+            if (!jmJobsList?.nextToken || (jmJobsList?.nextToken && jmJobsList?.nextToken === lastToken)) {
                 dispatch(setJobsListLoading(false));
                 setSkipJobListApiCall(true);
             }
+            setLastToken(jmJobsList?.nextToken || '');
         } else {
             dispatch(setJobsListLoading(true));
         }

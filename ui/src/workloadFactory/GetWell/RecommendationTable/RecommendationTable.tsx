@@ -32,6 +32,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
 
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -103,8 +104,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         );
 
         apiCall({
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload: payload
