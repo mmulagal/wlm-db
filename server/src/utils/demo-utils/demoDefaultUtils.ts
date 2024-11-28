@@ -11,7 +11,7 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
-import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
+import { saveFciConfigurationData, savePGSQLConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -86,6 +86,16 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
         configName
     );
     saveConfig(accountId, 'SYSTEM', configName, standaloneData);
+
+    configName = 'PostgreSQL Single Instance deployment';
+    const standalonePostgresData = savePGSQLConfigurationData(
+        'us-east-1',
+        awsAccountId,
+        credentialsId,
+        'standaloneDB',
+        configName
+    );
+    saveConfig(accountId, 'SYSTEM', configName, standalonePostgresData, 'pgsql');
 }
 
 async function createDemoResourcesPerRegion(
