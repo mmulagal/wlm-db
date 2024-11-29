@@ -26,7 +26,7 @@ const ConnectToCiCdContent = ({ baseUrl, credID, region, databaseHostId, sandbox
     return (
         <div className={styles.codeBox}>
             <div style={{ width: 'max-content' }}>
-                {`curl --location --request PATCH ${baseUrl}/credentials/`}
+                {`curl --location --request PATCH ${baseUrl}/mssql/credentials/`}
                 <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
                 <span>{`/regions/`}</span>
                 <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>
