@@ -200,7 +200,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                                     label = 'Completed with warnings jobs';
                                 } else {
                                     label = 'Failed jobs';
-                                };
+                                }
 
                                 if (context.parsed.y !== null) {
                                     label = `${context.label} | ${context.parsed.y} ${label}`;
