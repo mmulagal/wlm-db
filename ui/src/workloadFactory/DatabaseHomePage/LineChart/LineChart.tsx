@@ -56,7 +56,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
         gradientFill.addColorStop(1, endColor);
 
         var gradientStroke2 = ctx.createLinearGradient(0, 50, 0, 400);
-        gradientStroke2.addColorStop(0, '#DA1E21');
+        gradientStroke2.addColorStop(0, '#FE5502');
         gradientStroke2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
 
         let gradientFill2;
@@ -67,7 +67,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
             gradientFill2 = ctx.createLinearGradient(0, 0, 0, 165);
         }
 
-        gradientFill2.addColorStop(0, '#DA1E21');
+        gradientFill2.addColorStop(0, '#FE5502');
         gradientFill2.addColorStop(1, 'rgba(255, 0, 0, 0.00)');
 
         const constructLabel = () => {
@@ -90,14 +90,20 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
             return timelineData?.failed;
         };
 
+        const constructDataWarning = () => {
+            return timelineData?.warning;
+        };
+
         const setMaxGraceValue = () => {
             if (
                 timelineData?.completed &&
                 timelineData?.completed.length &&
                 timelineData?.failed &&
-                timelineData?.failed.length
+                timelineData?.failed.length &&
+                timelineData?.warning &&
+                timelineData?.warning.length
             ) {
-                const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
+                const combinedArr = [...timelineData?.completed, ...timelineData?.failed, ...timelineData?.warning];
                 const maxVal = Math.max(...combinedArr);
                 switch (true) {
                     case maxVal === 1:
@@ -138,8 +144,23 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         // pointHoverRadius: 10,
                         // pointHoverBorderWidth: 1,
                         pointRadius: 4,
-                        fill: true,
-                        backgroundColor: 'rgba(104, 198, 179, 0.10)',
+                        fill: false,
+                        // backgroundColor: 'rgba(104, 198, 179, 0.10)',
+                        borderWidth: 3
+                    },
+                    {
+                        label: 'Completed with warnings',
+                        data: constructDataWarning(),
+                        borderColor: '#FDC300',
+
+                        pointBackgroundColor: '#FDC300',
+                        pointHoverBackgroundColor: '#FDC300',
+                        pointHoverBorderColor: '#FDC300',
+                        pointBorderWidth: 1,
+                        pointBorderColor: 'white',
+                        pointRadius: 4,
+                        fill: false,
+                        // backgroundColor: gradientFill2,
                         borderWidth: 3
                     },
                     {
@@ -153,8 +174,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         pointBorderWidth: 1,
                         pointBorderColor: 'white',
                         pointRadius: 4,
-                        fill: true,
-                        backgroundColor: gradientFill2,
+                        fill: false,
+                        // backgroundColor: gradientFill2,
                         borderWidth: 3
                     }
                 ]
@@ -172,8 +193,14 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                let label =
-                                    context.dataset.label === 'Success' ? 'Completed jobs' : 'Failed jobs';
+                                let label = '';
+                                if (context.dataset.label === 'Success') {
+                                    label = 'Completed jobs';
+                                } else if (context.dataset.label === 'Completed with warnings') {
+                                    label = 'Completed with warnings jobs';
+                                } else {
+                                    label = 'Failed jobs';
+                                }
 
                                 if (context.parsed.y !== null) {
                                     label = `${context.label} | ${context.parsed.y} ${label}`;

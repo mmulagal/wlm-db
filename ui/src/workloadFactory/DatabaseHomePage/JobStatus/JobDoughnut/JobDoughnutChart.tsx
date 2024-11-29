@@ -7,8 +7,7 @@ import styles from './JobDoughnutchart.module.scss';
 
 Chart.register(...registerables);
 
-const JobDoughnutChart = ({jobsSummaryData, jobsSummaryLoading}: any) => {
-
+const JobDoughnutChart = ({ jobsSummaryData, jobsSummaryLoading }: any) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -28,9 +27,10 @@ const JobDoughnutChart = ({jobsSummaryData, jobsSummaryLoading}: any) => {
                     data: [
                         jobsSummaryData?.completedPercent,
                         jobsSummaryData?.inProgressPercent,
-                        jobsSummaryData?.failedPercent
+                        jobsSummaryData?.failedPercent,
+                        jobsSummaryData?.warning
                     ],
-                    backgroundColor: ['#68C6B3', '#0BAFFC', '#FE5502']
+                    backgroundColor: ['#68C6B3', '#5E8DCD', '#FE5502', '#FDC300']
                 }
             ]
             //   labels: label,

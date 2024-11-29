@@ -291,7 +291,7 @@ const JobMonitoringTable = () => {
             accessor: 'id',
             className: styles.firstCol,
             isSortable: true,
-            width: '286px',
+            width: '220px',
             isSticky: true,
             renderCell: (cellData: any) => {
                 return (
@@ -305,7 +305,7 @@ const JobMonitoringTable = () => {
             id: '2',
             Header: 'Type',
             accessor: 'type',
-            width: '160px',
+            width: '140px',
             filterOptions: [
                 { value: JOB_MONITORING_TYPE.DEPLOYMENT, label: GENERAL.JM_TYPE_DEPLOYMENT },
                 { value: JOB_MONITORING_TYPE.CREATE_RESOURCE, label: GENERAL.JM_TYPE_CREATE_RESOURCE },
@@ -322,7 +322,7 @@ const JobMonitoringTable = () => {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '160px',
+            width: '248px',
             filterOptions: [
                 { value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING },
                 { value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED },
@@ -398,7 +398,7 @@ const JobMonitoringTable = () => {
             Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
-            width: '200px',
+            width: '196px',
             renderCell: (cellData: any) => {
                 const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
                 return (

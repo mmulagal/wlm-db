@@ -911,6 +911,8 @@ async function logDriveOptimization(
                                 errorMessage,
                                 jobStatus
                             ));
+                        } else if (isDemoFlow) {
+                            logger.error('Cannot find matching FSx volume or LUN for the log drive');
                         } else {
                             throw createError(400, 'Cannot find matching FSx volume or LUN for the log drive');
                         }
