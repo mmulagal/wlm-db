@@ -23,17 +23,21 @@ import {
     JobSummaryByTimeRecordType,
     JobSummaryResponseType,
     ListJobsQueryType,
-    UpdateJobRecordType
+    UpdateJobRecordType,
+    JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
+import { getRegionDetails, isDemo } from '../../utils/utils';
+import { RegionDetailsType } from '../../routes/types/generic.types';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 interface Job extends JobRecordType {
     id: string;
     accountId: string;
     credentialsId: string;
-    region: string;
+    region: RegionDetailsType;
 }
 interface JobWithSubJobs extends Job {
     subJobs?: Job[];
@@ -73,11 +77,12 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
         parent_job_id: parentJobId,
         subJobs
     } = job;
+
     return {
         id,
         accountId,
         credentialsId,
-        region,
+        ...{ region: getRegionDetails(region) },
         type,
         status,
         resourceName,
@@ -115,7 +120,12 @@ function formatJobDbSchema(accountId: string, credentialsId: string, region: str
     };
 }
 
-async function registerJobs(accountId: string, credentialsId: string, region: string, jobs: JobRecordType[] | []) {
+async function registerJobs(
+    accountId: string,
+    credentialsId: string | undefined = '',
+    region: string | undefined = '',
+    jobs: JobRecordType[] | []
+) {
     logger.info('Registering jobs', { accountId, credentialsId, region, jobs: jobs?.length });
     logger.debug('Bulk creating jobs', jobs);
     if (isEmpty(jobs)) {
@@ -134,9 +144,11 @@ async function registerJob(accountId: string, credentialsId: string, region: str
     return formatJob(jobToCreate);
 }
 
-async function getJobs(accountId: string, credentialsId: string, region: string, filterParams: ListJobsQueryType = {}) {
-    logger.info(' Get jobs', { accountId, credentialsId, region, filterParams });
+async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) {
+    logger.info(' Get jobs', { accountId, filterParams });
     const {
+        credentialsId,
+        region,
         parentJobId,
         sort,
         sortOrder,
@@ -145,7 +157,7 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
         status,
         startTime,
         endTime,
-        limit = 50,
+        limit = isDemoFlow ? undefined : 50,
         nextToken,
         includeSubJobs = false,
         resourceName
@@ -188,7 +200,7 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
     if (includeSubJobs) {
         await Promise.all(
             (records || []).map(async (record: JobWithSubJobsDbSchema) => {
-                const allLevelSubJobs = await getSubJobs(accountId, credentialsId, region, record.id);
+                const allLevelSubJobs = await getSubJobs(accountId, record.id, credentialsId, region);
                 record.subJobs = allLevelSubJobs;
             })
         );
@@ -199,80 +211,71 @@ async function getJobs(accountId: string, credentialsId: string, region: string,
     return {
         count: items?.length,
         items,
-        nextToken: totalParentJobIdCount > limit && records.length >= limit ? items[items.length - 1].id : undefined
+        nextToken:
+            !isDemoFlow && totalParentJobIdCount > (limit || 50) && records.length >= (limit || 50)
+                ? items[items.length - 1].id
+                : undefined
     };
 }
 
-async function getJobDetails(accountId: string, credentialsId: string, region: string, jobId: string) {
+async function getJobDetails(accountId: string, jobId: string, credentialsId?: string, region?: string) {
     logger.info(' Get job details', { accountId, credentialsId, region, jobId });
 
-    const record = await listUniqueJob(accountId, credentialsId, region, jobId);
-    const [job] = trimAccountIdForDemo([record]);
-    job.subJobs = [];
+    try {
+        const record = await listUniqueJob(accountId, credentialsId, region, jobId);
+        const [job] = trimAccountIdForDemo([record]);
+        job.subJobs = [];
 
-    const formattedJob = formatJob(job);
-    const subJobsDbSchema = await getSubJobs(accountId, credentialsId, region, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
-    let subJobs = trimAccountIdForDemo(subJobsDbSchema);
-    subJobs = isEmpty(subJobs) ? [] : subJobs.map(formatJob);
+        const formattedJob = formatJob(job);
+        const subJobsDbSchema = await getSubJobs(accountId, jobId, credentialsId, region); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
+        let subJobs = trimAccountIdForDemo(subJobsDbSchema);
+        subJobs = isEmpty(subJobs) ? [] : subJobs.map(formatJob);
 
-    const response = {
-        ...formattedJob,
-        subJobs
-    };
+        const response = {
+            ...formattedJob,
+            subJobs
+        };
 
-    return response;
+        return response;
+    } catch (error) {
+        logger.error('Error while getting job details', error);
+        throw createError(404, `Job with ID ${jobId} not found in ${accountId}`);
+    }
 }
 
-async function getSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
+async function getSubJobs(accountId: string, jobId: string, credentialsId?: string, region?: string) {
     logger.info('Get subjobs', { accountId, credentialsId, region, jobId });
 
     const subJobs = await listJobs(accountId, credentialsId, region, jobId);
     await Promise.all(
         (subJobs || []).map(async (subJob: JobWithSubJobsDbSchema) => {
             const { id } = subJob;
-            subJob.subJobs = await getSubJobs(accountId, credentialsId, region, id);
+            subJob.subJobs = await getSubJobs(accountId, id, credentialsId, region);
         })
     );
     return subJobs;
 }
 
-async function updateJobDetails(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    jobId: string,
-    params: UpdateJobRecordType
-) {
+async function updateJobDetails(accountId: string, jobId: string, params: UpdateJobRecordType) {
     const { description, status, endTime, error } = params;
     logger.info(' Modifying job details', {
         accountId,
-        credentialsId,
-        region,
         jobId,
         description,
         status,
         endTime,
         error
     });
-    const response = await updateJob(
-        accountId,
-        credentialsId,
-        region,
-        jobId,
-        description,
-        status as JOBSTATUS,
-        endTime,
-        error
-    );
+    const response = await updateJob(accountId, jobId, description, status as JOBSTATUS, endTime, error);
     if (response) {
         return formatJob(response);
     }
     throw createError(`Failed to modify job with ID ${jobId} in ${accountId}. Please ensure the Job ID is correct.`);
 }
 
-async function deleteJobsWithAllSubJobs(accountId: string, credentialsId: string, region: string, jobId: string) {
-    logger.info(' Deleting jobs with all its subjobs', { accountId, credentialsId, region, jobId });
-    const level2Jobs = await getSubJobs(accountId, credentialsId, region, jobId);
+async function deleteJobsWithAllSubJobs(accountId: string, jobId: string) {
+    logger.info(' Deleting jobs with all its subjobs', { accountId, jobId });
+    const level2Jobs = await getSubJobs(accountId, jobId);
     let jobIdsToDelete = [jobId];
     if (level2Jobs.length > 0) {
         level2Jobs.forEach((level2Job: JobWithSubJobsDbSchema) => {
@@ -286,14 +289,10 @@ async function deleteJobsWithAllSubJobs(accountId: string, credentialsId: string
     return deleteJobs(accountId, jobIdsToDelete);
 }
 
-async function getJobSummary(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    startTime: number | undefined,
-    endTime: number | undefined
-): Promise<JobSummaryResponseType> {
-    logger.info('Getting job summary', { accountId, credentialsId, region, startTime, endTime });
+async function getJobSummary(accountId: string, filters: JobSummaryQueryType): Promise<JobSummaryResponseType> {
+    logger.info('Getting job summary', { accountId, ...filters });
+
+    let { credentialsId = undefined, region = undefined, startTime, endTime } = filters;
 
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
@@ -325,13 +324,11 @@ async function getJobSummary(
 
 async function getJobSummaryByTime(
     accountId: string,
-    credentialsId: string,
-    region: string,
-    startTime: number | undefined,
-    endTime: number | undefined
+    query: JobSummaryQueryType
 ): Promise<JobSummaryByTimeRecordType[]> {
-    logger.info('Getting job summary by time', { accountId, credentialsId, region, startTime, endTime });
+    logger.info('Getting job summary by time', { accountId, ...query });
 
+    let { credentialsId = undefined, region = undefined, startTime = undefined, endTime = undefined } = query;
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
     }
@@ -365,7 +362,7 @@ async function updateLongRunningJobs() {
         await Promise.all(
             runningJobs.map(async runningJob => {
                 logger.info('Marking job as failed ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
+                updateJobDetails(runningJob.account_id, runningJob.id, {
                     status: JOBSTATUS.FAILED,
                     endTime: new Date().valueOf(),
                     error: 'Stack creation failed. Check cloud formation for failure reason.'
@@ -384,7 +381,7 @@ async function updateLongRunningResourcePrepareJobs() {
         await Promise.all(
             runningJobs.map(async runningJob => {
                 logger.info('Marking resource prepare job as failed: ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.credentials_id, runningJob.region, runningJob.id, {
+                updateJobDetails(runningJob.account_id, runningJob.id, {
                     status: JOBSTATUS.FAILED,
                     endTime: new Date().valueOf(),
                     error: 'Resource preparation failed due to timeout.'

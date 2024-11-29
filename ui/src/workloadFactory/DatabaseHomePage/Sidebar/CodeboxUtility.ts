@@ -18,8 +18,15 @@ export const setMaskedPassword = (data: MssqlRequestBody) => {
 };
 
 export const addEscapeInCli = (data: TemplateRes) => {
+     if (!data || typeof data.cliCommand !== 'string') {
+        return data;
+    }
+
+    // Escape double quotes and backslashes
     // escape character is being removed so adding that again in cli command
-    const result = { ...data, cliCommand: data?.cliCommand ? data.cliCommand.replace(/"/g, '\\"') : '' };
+    const escapedCliCommand = data.cliCommand.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+    const result = { ...data, cliCommand: escapedCliCommand };
     return result;
 };
 

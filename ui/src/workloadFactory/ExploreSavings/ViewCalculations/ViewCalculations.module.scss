@@ -25,6 +25,12 @@
         .headingArea {
             display: flex;
             justify-content: space-between;
+
+            .topHeading {
+                width: 752px;
+                gap: 8px;
+                display: grid;
+            }
         }
 
         .calcSection {

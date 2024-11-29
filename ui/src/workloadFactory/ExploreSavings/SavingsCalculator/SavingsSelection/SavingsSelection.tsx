@@ -16,10 +16,11 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-import { FINDINGS, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { FINDINGS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
 import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
+import { checkIfByolFieldRequired } from '../savingsUtil';
 
 const SavingsSelection = ({ printState }: any) => {
     const dispatch = useDispatch();
@@ -33,10 +34,12 @@ const SavingsSelection = ({ printState }: any) => {
         storageSavingsLoading,
         recommendedTargetInstance,
         monthlyBYOLCost,
-        selectedHostDetails
+        selectedHostDetails,
+        savingsCalculatorFrom,
+        snapshotLoading
     } = useAppSelector(state => state.exploreSavings);
 
-    const [isSqlLicense, setIsSqlLicense] = useState<boolean>(true);
+    const [isByolField, setIsByolField] = useState<boolean>(false);
     const [noOfClonedCopies, setNoOfClonedCopies] = useState<any>(numberOfClonedCopies);
     const [monthlyChangeRateNo, setMonthlyChangeRateNo] = useState<any>(monthlyChangeRate);
     const [instanceTypeData, setInstanceTypeData] = useState<any>({
@@ -44,6 +47,12 @@ const SavingsSelection = ({ printState }: any) => {
         options: [],
         existingInstanceType: ''
     });
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+            setMonthlyChangeRateNo(3);
+        }
+    }, [savingsCalculatorFrom]);
 
     // Debounce variable
     const [clonedText, setClonedText] = useSearchDebounce(1000);
@@ -54,7 +63,7 @@ const SavingsSelection = ({ printState }: any) => {
     const { setDialog, closeDialog } = useDialog();
 
     useEffect(() => {
-        setIsSqlLicense(selectedHostDetails?.sqlLicenseIncluded);
+        setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField, savingsCalculatorFrom));
     }, [selectedHostDetails]);
 
     //Use effect for machine description
@@ -117,7 +126,8 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
 
     useEffect(() => {
-        if (!selectedSnapshotFrequency) {
+        if (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+            // For FSxW default value is Daily.
             dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
         }
     }, [generateSnapshotFrequency]);
@@ -180,7 +190,7 @@ const SavingsSelection = ({ printState }: any) => {
     }, [instanceTypeData.options]);
 
     useEffect(() => {
-        if (!selectedCloneRefresh) {
+        if (!selectedCloneRefresh && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
             dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
         }
     }, [generateCloneRefresh]);
@@ -201,7 +211,7 @@ const SavingsSelection = ({ printState }: any) => {
         setDialog(
             <DialogComponent
                 header={GENERAL.LEARN_HOW_DIALOG.TITLE}
-                content={<LearnHowDialog />}
+                content={<LearnHowDialog type={'tco'} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => closeDialog()}
             />
@@ -217,9 +227,7 @@ const SavingsSelection = ({ printState }: any) => {
                     label={GENERAL.ES_SNAPSHOT_FREQUENCY}
                     isDisabled={loading}
                     isClearable={false}
-                    defaultValue={
-                        selectedSnapshotFrequency ? selectedSnapshotFrequency : [generateSnapshotFrequency[2]]
-                    }
+                    value={selectedSnapshotFrequency}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setSelectedSnapshotFrequency(selectedOptions));
                     }}
@@ -228,46 +236,73 @@ const SavingsSelection = ({ printState }: any) => {
                         selectedSnapshotFrequency?.label === GENERAL.ES_NO_SNAPSHOT_STORAGE &&
                         GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
                     }
+                    isLoading={snapshotLoading}
                     isSearchable={generateSnapshotFrequency.length > 5}
                     options={generateSnapshotFrequency}
                     className={`${styles.widthSet} savings-calculator-input-fields`}
                 />
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ? (
+                    printState ? (
+                        <div className={styles.mockInput}>
+                            <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                {GENERAL.NUMBER_OF_CLONED_COPIES}
+                            </DsTypography>
+                            <div className={styles.inputField}>{noOfClonedCopies}</div>
+                        </div>
+                    ) : (
+                        <TextField
+                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                            isDisabled={loading}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setNoOfClonedCopies(numVal);
+                            }}
+                            value={noOfClonedCopies}
+                            className={`${styles.widthSet} savings-calculator-input-fields`}
+                            error={errorForClonedCopiesCount()}
+                        />
+                    )
+                ) : (
+                    ''
+                )}
             </div>
 
             <div className={styles.secondRow}>
-                {printState && (
-                    <div className={styles.mockInput}>
-                        <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                            {GENERAL.NUMBER_OF_CLONED_COPIES}
-                        </DsTypography>
-                        <div className={styles.inputField}>{noOfClonedCopies}</div>
-                    </div>
-                )}
-                {!printState && (
-                    <TextField
-                        label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                    (printState ? (
+                        <div className={styles.mockInput}>
+                            <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                {GENERAL.NUMBER_OF_CLONED_COPIES}
+                            </DsTypography>
+                            <div className={styles.inputField}>{noOfClonedCopies}</div>
+                        </div>
+                    ) : (
+                        <TextField
+                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                            isDisabled={loading}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setNoOfClonedCopies(numVal);
+                            }}
+                            value={noOfClonedCopies}
+                            className={`${styles.widthSet} savings-calculator-input-fields`}
+                            error={errorForClonedCopiesCount()}
+                        />
+                    ))}
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                    <SelectField
+                        label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
+                        isClearable={false}
                         isDisabled={loading}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setNoOfClonedCopies(numVal);
+                        defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedCloneRefresh(selectedOptions));
                         }}
-                        value={noOfClonedCopies}
+                        isSearchable={generateCloneRefresh.length > 5}
+                        options={generateCloneRefresh}
                         className={`${styles.widthSet} savings-calculator-input-fields`}
-                        error={errorForClonedCopiesCount()}
                     />
                 )}
-                <SelectField
-                    label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
-                    isClearable={false}
-                    isDisabled={loading}
-                    defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
-                    onChange={(selectedOptions: any): void => {
-                        dispatch(setSelectedCloneRefresh(selectedOptions));
-                    }}
-                    isSearchable={generateCloneRefresh.length > 5}
-                    options={generateCloneRefresh}
-                    className={`${styles.widthSet} savings-calculator-input-fields`}
-                />
             </div>
 
             <div className={`${styles.secondRow} ${styles.infoCenter}`}>
@@ -303,7 +338,7 @@ const SavingsSelection = ({ printState }: any) => {
                 </div>
             </div>
             <div className={styles.secondRow}>
-                {!isSqlLicense && (
+                {isByolField && (
                     <TextField
                         label={GENERAL.BYOL_TEXT}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -315,60 +350,62 @@ const SavingsSelection = ({ printState }: any) => {
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
                 )}
-                <div className={styles.instanceTypeContainer}>
-                    <SelectField
-                        label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
-                        info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
-                        isClearable={false}
-                        isDisabled={
-                            instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
-                        }
-                        variant="two-lines"
-                        isLoading={storageSavingsLoading}
-                        value={generateOptionType(
-                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                            generateLabel2ForInstanceType(
-                                instanceTypeData?.options,
+                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                    <div className={styles.instanceTypeContainer}>
+                        <SelectField
+                            label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
+                            info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
+                            isClearable={false}
+                            isDisabled={
+                                instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
+                            }
+                            variant="two-lines"
+                            isLoading={storageSavingsLoading}
+                            value={generateOptionType(
                                 recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                storageSavingsResponse?.compute?.existing
-                            ),
-                            false,
-                            ''
-                        )}
-                        onChange={(selectedOptions: any): void => {
-                            const selectedVal = selectedOptions.value;
-                            dispatch(
-                                setRecommendedTargetInstance(
-                                    selectedVal === instanceTypeData?.existingInstanceType ? '' : selectedVal
-                                )
-                            );
-                        }}
-                        isSearchable={generateRecommendedInstanceTypes?.length > 5}
-                        options={generateRecommendedInstanceTypes}
-                        className={`${styles.widthSet} savings-calculator-input-fields`}
-                    />
-                    {(instanceTypeData?.missingPermissions ||
-                        (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
-                        <div className={styles.errorContainer}>
-                            <InfoIcon />
-                            <DsTypography variant="Regular_13">
-                                {instanceTypeData?.missingPermissions
-                                    ? GENERAL.MISSING_PERMISSIONS_NOTICE
-                                    : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
-                            </DsTypography>
-                            {instanceTypeData?.missingPermissions ? (
-                                <Button variant="text" onClick={handleLearnHowClick}>
-                                    {GENERAL.LEARN_HOW}
-                                </Button>
-                            ) : (
-                                <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
-                                </DsTooltipInfo>
+                                recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                generateLabel2ForInstanceType(
+                                    instanceTypeData?.options,
+                                    recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                    storageSavingsResponse?.compute?.existing
+                                ),
+                                false,
+                                ''
                             )}
-                        </div>
-                    )}
-                </div>
+                            onChange={(selectedOptions: any): void => {
+                                const selectedVal = selectedOptions.value;
+                                dispatch(
+                                    setRecommendedTargetInstance(
+                                        selectedVal === instanceTypeData?.existingInstanceType ? '' : selectedVal
+                                    )
+                                );
+                            }}
+                            isSearchable={generateRecommendedInstanceTypes?.length > 5}
+                            options={generateRecommendedInstanceTypes}
+                            className={`${styles.widthSet} savings-calculator-input-fields`}
+                        />
+                        {(instanceTypeData?.missingPermissions ||
+                            (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
+                            <div className={styles.errorContainer}>
+                                <InfoIcon />
+                                <DsTypography variant="Regular_13">
+                                    {instanceTypeData?.missingPermissions
+                                        ? GENERAL.MISSING_PERMISSIONS_NOTICE
+                                        : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
+                                </DsTypography>
+                                {instanceTypeData?.missingPermissions ? (
+                                    <Button variant="text" onClick={handleLearnHowClick}>
+                                        {GENERAL.LEARN_HOW}
+                                    </Button>
+                                ) : (
+                                    <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                        {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
+                                    </DsTooltipInfo>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

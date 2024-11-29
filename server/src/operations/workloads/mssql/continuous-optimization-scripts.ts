@@ -1,0 +1,712 @@
+import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
+import { ontapRestRequest } from './common-templates';
+import {
+    DEFAULT_DATA_DRIVE_SIZE,
+    INSTANCE_DATA_DRIVES_QUERY,
+    INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
+    INSTANCE_DEFAULT_LOG_DRIVES_QUERY,
+    INSTANCE_LOG_DB_DRIVE_SIZES,
+    INSTANCE_LOG_DRIVES_QUERY,
+    INSTANCE_TEMPDB_DRIVES_QUERY,
+    INSTANCE_USER_DB_DRIVE_SIZES,
+    TEMPDB_DRIVE_SIZE
+} from './queries';
+import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+
+const GET_ONTAP_LUN_DETAILS = (params: OntapRequestParams) => `
+#Get ONTAP LUN details Script
+$WarningPreference = 'SilentlyContinue';
+$FSxID = '${params.fsxId}'
+$FSxRegion = '${params.region}'
+$apiEndpoint = '${params.apiEndpoint}'
+${ontapRestRequest}
+$ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
+$ontapResponse | ConvertTo-Json
+`;
+
+const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
+    $WarningPreference = 'SilentlyContinue';
+    $sqlInstance = "${instanceRecord.name}"
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
+    $PSToolkitRequiredVersion = '9.15.1.2407'
+    $responseObject = @{}
+    $responseObject['data'] = @()
+    $responseObject['log'] = @()
+    $responseObject['tempDb'] = @()
+    # Build sql instance service name
+    $instanceServiceName = "$env:COMPUTERNAME"
+    if ($sqlInstance -ne 'MSSQLSERVER') {
+        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
+    }
+    
+    try {
+        $sqlquery = @"
+            SET NOCOUNT ON;
+            SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
+            vs.total_bytes / 1048576 AS driveTotalSizeMB FROM sys.master_files AS mf
+            join sys.databases db
+            on db.database_id = mf.database_id
+            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+            where db.database_id > 4
+            FOR JSON PATH;
+"@
+
+        $sqlqueryForTempdb = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT mf.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
+                vs.total_bytes / 1048576 AS driveTotalSizeMB FROM tempdb.sys.database_files AS mf
+                CROSS APPLY sys.dm_os_volume_stats(2, mf.[file_id]) AS vs
+                where mf.name = 'tempdev'
+                FOR JSON PATH;
+"@
+        Function Get-SerialNumberOfWinVolumes {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string[]]$sqlresponse
+            )
+            $responseObject = [ordered]@{}
+            $responseObject['data'] = @()
+            $responseObject['log'] = @()
+             $responseObject['tempDb'] = @()
+            $winvolumes = $sqlresponse | ConvertFrom-Json
+            foreach ($winvolume in $winvolumes) {
+                # check in winvolume volume id is null or empty string
+                if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
+                    
+                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                    if ($vol.bustype -eq 'iscsi') {
+                        $object = @{
+                        "name" = $winvolume.name
+                        "fileName" = $winvolume.filename
+                        "lunSerialNumber" = $vol.serialnumber
+                        "sizeInMb" = $winvolume.sizeInMb
+                        "diskNumber" = $vol.number
+                    }
+                    $type = 'data'
+                    if ($winvolume.name -Contains "tempdev") {
+                        $type = 'tempDb'
+                    }
+                    elseif ($winvolume.type -eq 1) {
+                        $type = 'log'
+                    }
+                    $responseObject[$type] += $object
+                    }
+                    }
+                }
+            return $responseObject
+        }
+    
+        ${ontapRestRequest}
+        Function Get-LunFromSerialNumber($responseObject) {
+            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
+    
+            $QueryFilter = ''
+            foreach ($vol in $responseObject.data) {
+                $QueryFilter += $vol.lunSerialNumber + '|'
+            }
+            foreach ($vol in $responseObject.log) {
+                $QueryFilter += $vol.lunSerialNumber + '|'
+            }
+            foreach ($vol in $responseObject.tempDb) {
+                $QueryFilter += $vol.lunSerialNumber + '|'
+            }
+            $QueryFilter = $QueryFilter.TrimEnd('|')
+            $Params = @{
+                "ApiEndPoint" = "/storage/luns"
+            }
+    
+            if ($QueryFilter -ne '') {
+                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
+                $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
+            }
+    
+            $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.*"}
+    
+            $Response = Invoke-ONTAPRequest @Params
+    
+            $LunRecords = $Response.records
+    
+            if ($LunRecords.count -gt 0) {
+                $LunRecords | ForEach-Object {
+                    $lunrecord = $_
+                    foreach ($dataVol in $responseObject.data) {
+                        if ($dataVol.lunSerialNumber -ceq $lunrecord.serial_number) {
+                            $dataVol.Add("lunPath", $lunrecord.name)
+                            $dataVol.Add("lunUuid", $lunrecord.uuid)
+                            $dataVol.Add("ontapVolumeName", $lunrecord.location.volume.name)
+                            $dataVol.Add("ontapVolumeUuid", $lunrecord.location.volume.uuid)
+                            $dataVol.Add("svmName", $lunrecord.svm.name)
+                        }
+                    }
+                    foreach ($logVol in $responseObject.log) {
+                        if ($logVol.lunSerialNumber -ceq $lunrecord.serial_number) {
+                            $logVol.Add("lunPath", $lunrecord.name)
+                            $logVol.Add("lunUuid", $lunrecord.uuid)
+                            $logVol.Add("ontapVolumeName", $lunrecord.location.volume.name)
+                            $logVol.Add("ontapVolumeUuid", $lunrecord.location.volume.uuid)
+                            $logVol.Add("svmName", $lunrecord.svm.name)
+                        }
+                    }
+                    foreach ($tempdbVol in $responseObject.tempDb) {
+                        if ($tempdbVol.lunSerialNumber -ceq $lunrecord.serial_number) {
+                            $tempdbVol.Add("lunPath", $lunrecord.name)
+                            $tempdbVol.Add("lunUuid", $lunrecord.uuid)
+                            $tempdbVol.Add("ontapVolumeName", $lunrecord.location.volume.name)
+                            $tempdbVol.Add("ontapVolumeUuid", $lunrecord.location.volume.uuid)
+                            $tempdbVol.Add("svmName", $lunrecord.svm.name)
+                        }
+                    }
+                }
+            } else {
+                 throw "Unable to fetch lun details for the serial numbers."
+            }
+            return $responseObject
+        }
+    
+        $sqlCredential = @{'useSqlAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceRecord.name)}
+        }
+        ${slqcmdExecutionTemplate}
+        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
+        $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
+        $combinedResponse = (($queryResponse | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
+
+        if([string]::IsNullOrEmpty($combinedResponse)) {
+            throw "No user databases found."
+        }
+        $responseObject = Get-SerialNumberOfWinVolumes $combinedResponse
+        $responseObject = Get-LunFromSerialNumber $responseObject
+       
+    } catch {
+        if ($responseObject -eq $null) {
+            $responseObject = @{}
+        }
+        $responseObject['error'] = $_.Exception.Message
+    } 
+`;
+
+const INSTANCE_NETAPP_DRIVES = `
+    Function Get-MappedDrives {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string[]]$drives
+        )
+
+        $disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
+        $results = New-Object System.Collections.ArrayList
+
+        foreach ($disk in $disks) {
+            $partitions = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($disk.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+            foreach ($partition in $partitions) {
+                $logicalDisks = Get-WmiObject -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($partition.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+                    foreach ($logicalDisk in $logicalDisks) {
+                        if(($drives -contains $logicalDisk.DeviceID) -and ($disk.Model -like '*NETAPP*')) {
+                            $results += $logicalDisk.DeviceID
+                        }
+                    }
+                }
+            }
+        return $results
+    }
+`;
+
+const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boolean) =>
+    `
+    $sqlInstance = "${instance}"
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlCredential = @{'useSqlAuth' = $False}
+
+    # Build sql instance service name
+    $instanceServiceName = "$env:COMPUTERNAME"
+    if ($sqlInstance -ne 'MSSQLSERVER') {
+        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
+    }
+
+    ${slqcmdExecutionTemplate}
+    
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instance)}
+    }
+    
+    ${INSTANCE_NETAPP_DRIVES}
+    
+    $instanceDefaultDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName" 
+
+    $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceDrivesList = @()
+    $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
+    $netappDataDrives = Get-MappedDrives  $instanceDrivesList
+
+    $instanceDefaultLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+
+    $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceDrivesList = @()
+    $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
+    $netappLogDrives = Get-MappedDrives  $instanceDrivesList
+
+    $instanceAllDataDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_USER_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceAllLogDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    
+    foreach ($dataDrive in $instanceAllDataDrivesSizes) {
+        if($netappDataDrives -contains $dataDrive.dataDriveLetter) {
+            $logDrive = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq $dataDrive.databaseName }
+            if (($logDrive) -and ($netappLogDrives -contains $logDrive.logDriveLetter)) {
+                $dataAccessPath = ($dataDrive.dataDrivePath.Split("\\") | Select-Object -First 2) -join "\\"
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPath
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
+                $logAccessPath = ($logDrive.logDrivePath.Split("\\") | Select-Object -First 2) -join "\\"
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logAccessPath
+                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
+                }
+            } 
+        }
+    
+    $instanceTempdbDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_TEMPDB_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
+    $defaultDataDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_DATA_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $defaultTempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    foreach ($drive in $defaultTempDBDriveSize) {
+        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveSize.dataDriveLetter 
+        $drive | Add-Member -MemberType NoteProperty -Name "dataDriveTotalSizeMB" -Value $defaultDataDriveSize.dataDriveTotalSizeMB
+    }
+
+    $defaultDataDrive = 'shared-drive'
+    if(($instanceDefaultDataDrivedetails -notcontains $instanceDefaultLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultDataDrivedetails )) {
+    $defaultDataDrive = 'separate-drive'
+    }
+    
+    $defaultLogDrive = 'shared-drive'
+    if(($instanceDefaultDataDrivedetails -notcontains $instanceDefaultLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultLogDrivedetails )) {
+    $defaultLogDrive = 'separate-drive'
+    }
+    
+    $tempdbDrive = 'shared-drive'
+    if(($instanceTempdbDrivedetails -notcontains $instanceDefaultDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultLogDrivedetails)) {
+    $tempdbDrive = 'separate-drive'
+    }
+
+`;
+
+const TEST_ISCSI_SESSIONS = `
+
+function Test-IscsiSessions {
+    # Retrieve all active iSCSI sessions
+    $iscsiSessions = Get-IscsiSession
+    if (-not $iscsiSessions) {
+        return 0
+    }
+    
+    $highestSessionCount = 0
+
+    # Initialize a hashtable to track details for each target
+    $detailsByTargetAndInitiator = @{}
+    
+    # Collect info for each initiator found
+    foreach ($session in $iscsiSessions) {
+        $targetAddress = $session.TargetNodeAddress
+        $initiatorAddress = $session.InitiatorNodeAddress
+        $identifier = $session.TargetSideIdentifier
+        $key = "$initiatorAddress -> $targetAddress"
+
+        # Initialize tracking structures for each unique initiator-target pair
+        if (-not $detailsByTargetAndInitiator.ContainsKey($key)) {
+            $detailsByTargetAndInitiator[$key] = @{
+                TotalSessions = 0
+                ActiveSessions = 0
+                NonActiveSessions = 0
+                TargetPortalAddressCounts = @{}
+                HighestSessionCountOnANode = 0;
+            }
+        }
+
+        # Update session counts
+        $detailsByTargetAndInitiator[$key].TotalSessions += 1
+        if ($session.IsConnected) {
+            $detailsByTargetAndInitiator[$key].ActiveSessions += 1
+            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+            $targetPortalAddressCounts = $detailsByTargetAndInitiator[$key].TargetPortalAddressCounts
+            if ($targetPortalAddressCounts.ContainsKey($targetPortalAddress)) {
+                $targetPortalAddressCounts[$targetPortalAddress]++
+            } else {
+                $targetPortalAddressCounts[$targetPortalAddress] = 1
+            }
+        } else {
+            $detailsByTargetAndInitiator[$key].NonActiveSessions += 1
+        }
+    }
+
+    # Display the results for each initiator-target pair
+    foreach ($key in $detailsByTargetAndInitiator.Keys) {
+        $details = $detailsByTargetAndInitiator[$key]
+        $nodeCount = $details.TargetPortalAddressCounts.Count
+        $pair = $key -split ' -> '
+        $initiatorAddress = $pair[0]
+        $targetAddress = $pair[1]
+        $activeSessions = $details.ActiveSessions
+        $totalSessions = $details.TotalSessions
+        $highestSessionCountOnANode = $details.TargetPortalAddressCounts.Values | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum
+        if ($activeSessions -ne 0) {
+            if ($highestSessionCountOnANode -gt $highestSessionCount) {
+                $highestSessionCount = $highestSessionCountOnANode
+            }
+        }
+        
+    }
+    return $highestSessionCount
+
+}
+
+`;
+
+const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
+    `
+    $DriftAssessmentData = @{}
+    $DriftAssessmentData['errors'] = @{}
+    $sqlInstance = "${instanceRecord.name}"
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
+    $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
+  
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
+    $sqlCredential = @{'useSqlAuth' = $False}
+
+    # Build sql instance service name
+    $instanceServiceName = "$env:COMPUTERNAME"
+    if ($sqlInstance -ne 'MSSQLSERVER') {
+        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
+    }
+
+    $DriftAssessmentData['filesystemId'] = $FSxID
+    
+    ${ontapRestRequest}
+
+
+    $APIEndpoint = '/storage/volumes'
+    $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
+    $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
+    
+    
+    # Volume details
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $Volumes = $Response.records
+
+        $VolumeList = @()
+        # loop through each volume and get data
+        $SvmNames = @()
+        foreach ($perVolumeData in $Volumes) {
+            # Using PSCustomObject
+            $perVolRow = [PSCustomObject]@{
+                name = $perVolumeData.name
+                'thin-provision' = $perVolumeData.guarantee.honored
+                'space-guarantee' = $perVolumeData.guarantee.type
+                'autosize-mode' = $perVolumeData.autosize.mode
+                'fractional-reserve' = $perVolumeData.space.fractional_reserve
+                'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
+                'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
+                'tiering-policy' = $perVolumeData.tiering.policy
+                'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
+            }
+            if($perVolumeData.autosize.mode -ne 'off') {
+                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
+            }
+            else {
+                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
+            }
+            $VolumeList += $($perVolRow)
+            $SvmNames += $perVolumeData.svm.name
+        }
+        $DriftAssessmentData['volumes'] = @($($VolumeList))
+    } catch {$DriftAssessmentData['errors']['volumes'] = $_.Exception.Message}
+    
+    # Volume footprint details
+    $SvmNamesWithDelimiter = $SvmNames -join '|'
+    $APIEndpoint = '/private/cli/volume/show-footprint'
+    $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
+    $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
+
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
+        $Volumes = $Response.records
+
+        $isPerformanceTier100Percent = $true
+        # loop through each volume and get data
+        foreach ($perVolumeData in $Volumes) {
+        if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
+                $isPerformanceTier100Percent = $false
+                break
+        }
+        }
+    } catch {$DriftAssessmentData['errors']['volumes-footprint'] = $_.Exception.Message}
+    
+   
+    # Lun details
+    $APIEndpoint = '/storage/luns'
+    $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
+    $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
+    
+    try{
+        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $Luns = $Response.records
+    
+        $LunsList = @()
+
+        # loop through luns and get per lun data
+        foreach ($perLunData in $Luns) {
+            # Using PSCustomObject
+            $perLunRow = [PSCustomObject]@{
+                name = $($perLunData.name)
+                'os-type' = $($perLunData.os_type)
+                'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
+                'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
+            }
+            $LunsList += $($perLunRow)
+        }
+        $DriftAssessmentData['luns'] = @($($LunsList))
+    } catch {$DriftAssessmentData['errors']['luns'] = $_.Exception.Message}
+    
+
+    # gather storage layout data
+    try{
+        ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
+
+        ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
+        
+        foreach ($drive in $instanceAllDataDrivesSizes) {
+            $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
+            if ($logVolumeLunDetails) {
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetails.ontapVolumeUuid 
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetails.ontapVolumeName
+                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetails.lunUuid
+                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetails.svmName
+                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetails.diskNumber
+                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetails.lunSerialNumber
+                }
+                
+            }
+        
+        foreach ($drive in $defaultTempDBDriveSize) {
+            $tempdbVolumeLunDetails = $responseObject.tempDb
+            if ($tempdbVolumeLunDetails) {
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $tempdbVolumeLunDetails.ontapVolumeUuid 
+                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $tempdbVolumeLunDetails.ontapVolumeName
+                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $tempdbVolumeLunDetails.lunUuid
+                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $tempdbVolumeLunDetails.svmName
+                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $tempdbVolumeLunDetails.diskNumber
+                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $tempdbVolumeLunDetails.lunSerialNumber
+                }
+                
+            }
+        
+        $DriftAssessmentData['layout'] = @{
+                                        'default-data-files-location' = $defaultDataDrive;
+                                        'default-log-files-location' = $defaultLogDrive;
+                                        'tempdb-files-location' = $tempdbDrive;
+                                        'user-database-layout' = $($responseObject);}
+        
+        $DriftAssessmentData['sizing'] = @{
+                                        'performance-tier' = $isPerformanceTier100Percent;
+                                        'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);}
+    } catch { 
+        $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
+        $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
+    }
+    
+    # gather OS configuration data 
+     $DriftAssessmentData['os'] = @{}
+    try{
+        $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
+        $MpioStatus = $false
+        if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
+            $MpioStatus = $true
+        }
+        $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
+        
+        # Fetch load balancing policy for all NetApp disks
+        $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number 
+        $MpioLBDetails = mpclaim -s -d
+        $LoadBalancingPolicy = 'RR'
+        foreach ($disk in $AllNetappDisks){
+            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
+            if(-Not ($MpioLBDetails -Match $matchString) ) {
+                $LoadBalancingPolicy = 'Other'
+                break
+            }
+        }
+        $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
+        } catch {$DriftAssessmentData['errors']['mpio-policy'] = $_.Exception.Message}
+
+    ${TEST_ISCSI_SESSIONS}
+    
+    try{
+        $SessionCount = Test-IscsiSessions
+        $DriftAssessmentData['os']['mpio-iscsi-count'] = "$SessionCount"
+        } catch {$DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message}
+    
+    try{
+        $AllDrives = $($filteredDataDrives; $filteredLogDrives)
+        $AllDrives = $AllDrives | select -Unique
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
+        $ntfsUnitSize = 65536
+        $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
+        $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)
+        $DriftAssessmentData['os']['ntfs-allocation-unit-size'] = $($ntfsUnitSize)
+    } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
+
+    $response = $DriftAssessmentData | ConvertTo-Json -Depth 5
+
+    if([string]::IsNullOrEmpty($response)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    
+    ${compressResponse}
+    return (Deflate-String $response)
+`;
+
+const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
+    #Storage Optimization Script
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $apiEndpoint = '${params.apiEndpoint}'
+    $apiQueryFilter = '${params.apiQueryFilter}'
+    $apiBody = '${params.apiBody}'
+
+    ${ontapRestRequest}
+
+    $newBody = $apiBody | ConvertFrom-Json
+
+    $body =   $newBody | ConvertTo-Json
+
+    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+
+    $ontapResponse | ConvertTo-Json
+    
+`;
+
+const RESCAN_EXTEND_LUN = (diskSerialNumber: string) => `
+#Rescan and extend the LUN
+Function Rescan-ExtendLUN {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$DiskSerialNumber
+    )
+    
+    try {
+        # Rescan and extend the LUN
+        $null = (echo "RESCAN" | diskpart)
+        $disk = Get-Disk | Where-Object { $_.SerialNumber -eq "$DiskSerialNumber" }
+            
+        if ($null -eq $disk) {
+            throw "No disk found with SerialNumber $DiskSerialNumber"
+        }
+        
+        $diskNumber = $disk.Number
+        $partition = Get-Partition -DiskNumber $diskNumber | Where-Object Type -eq 'Basic'
+        $size = ($partition | Get-PartitionSupportedSize).SizeMax
+        $partitionNumber = $partition.PartitionNumber
+        Resize-Partition -DiskNumber $diskNumber -PartitionNumber $partitionNumber -Size $size
+        $result = @{ status = 'success' }
+    } catch {
+        # Handle any errors that occur
+        $result = @{ status = 'failed'; error = $_.Exception.Message }
+    } finally {
+        # Convert the result to JSON
+        $result | ConvertTo-Json -Compress
+    }
+}
+$jsonResult = Rescan-ExtendLUN -DiskSerialNumber '${diskSerialNumber}'
+Write-Output $jsonResult
+`;
+
+const CHECK_NODE_STATUS = (nodeName: string) => `
+    #Check Node Status
+    Function Check-NodeStatus {
+        param (
+            [Parameter(Mandatory = $true)]
+            [string]$NodeName
+        )
+        
+        try {
+            # Get the specific cluster node
+            $node = Get-ClusterNode -Name $NodeName
+            
+            # Check if the node is "Up" and Test-Connection succeeds
+            if ($node.State -eq "Up" -and (Test-Connection -ComputerName $NodeName -Count 1 -Quiet)) {
+                $result = @{ status = 'success' }
+            } else {
+                $result = @{ status = 'failed' }
+            }
+        } catch {
+            # Handle any errors that occur
+            $result = @{ status = 'failed'; error = $_.Exception.Message }
+        } finally {
+            # Convert the result to JSON
+            $result | ConvertTo-Json -Compress
+        }
+    }
+    $jsonResult = Check-NodeStatus -NodeName "${nodeName}"
+    Write-Output $jsonResult
+`;
+
+const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
+#Move Cluster Groups
+Function Move-AllClusterGroups {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$TargetNodeName
+    )
+    
+    $result = @()
+    
+    try {
+        # Get all cluster groups
+        $clusterGroups = Get-ClusterGroup
+        
+        # Iterate over each cluster group
+        $clusterGroups | ForEach-Object {
+            if ($_.Name -match "SQL Server") {
+                $clusterGroupName = $_.Name
+                $groupResult = @{
+                    groupName = $clusterGroupName
+                    status = 'success'
+                    error = $null
+                }
+                try {
+                    # Move the cluster group to the target node
+                    Move-ClusterGroup -Name $clusterGroupName -Node $TargetNodeName > $null
+                    $groupResult.status = 'success'
+                } catch {
+                    # Update status and error in case of failure
+                    $groupResult.status = 'failed'
+                    $groupResult.error = $_.Exception.Message
+                }
+                # Add group result to result array
+                $result += $groupResult
+            }
+        }
+    } catch {
+        # Handle any errors that occur
+        $result = @(@{ status = 'failed'; error = $_.Exception.Message })
+    } finally {
+        # Convert the result to JSON and output
+        $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Output $jsonResult
+    }
+}
+$jsonResult = Move-AllClusterGroups -TargetNodeName "${nodeName}"
+Write-Output $jsonResult
+`;
+
+export {
+    STORAGE_CONFIGURATION_ASSESSMENT,
+    GET_ONTAP_LUN_DETAILS,
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    CHECK_NODE_STATUS,
+    RESCAN_EXTEND_LUN,
+    MOVE_ALL_CLUSTER_GROUPS
+};

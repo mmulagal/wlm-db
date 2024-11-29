@@ -1,5 +1,5 @@
 import { RadioButton, Spinner } from '@netapp/design-system';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './LoadConfig.module.scss';
 import { useDeleteConfigMutation, useGetConfigListQuery } from '../../../utils/apiService';
@@ -9,8 +9,9 @@ import { ReactComponent as DeleteIcon } from '../../../assets/delete-icon.svg';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatDateWithTime } from '../../../utils/utilityFunctions';
 import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
+import { WIZARD_TYPE } from '../../../utils/consts';
 
-const LoadConfig = () => {
+const LoadConfig = ({ formType = WIZARD_TYPE.MSSQL }: any) => {
     const dispatch = useDispatch();
     const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -23,12 +24,18 @@ const LoadConfig = () => {
 
     const [selectedConfig, setSelectedConfig] = useState('');
 
+    const filteredConfigdata = useMemo(() => {
+        return configData?.filter((item: any) => item?.databaseType === formType);
+    }, [configData]);
+
     useEffect(() => {
-        if (configData && configData.length > 0) {
-            setSelectedConfig(configData[0]?.name + configData[0]?.user + configData[0]?.creationTime);
-            dispatch(setLoadConfig(configData[0]?.id));
+        if (filteredConfigdata && filteredConfigdata.length > 0) {
+            setSelectedConfig(
+                filteredConfigdata[0]?.name + filteredConfigdata[0]?.user + filteredConfigdata[0]?.creationTime
+            );
+            dispatch(setLoadConfig(filteredConfigdata[0]?.id));
         }
-    }, [configData, dispatch]);
+    }, [filteredConfigdata, dispatch]);
 
     const handleChange = (item: any) => {
         setSelectedConfig(item?.name + item?.user + item?.creationTime);
@@ -45,7 +52,7 @@ const LoadConfig = () => {
     };
 
     const deleteConfig = (index: any) => {
-        deleteConfigApi({ configId: configData[index]?.id }).then((data: any) => {
+        deleteConfigApi({ configId: filteredConfigdata[index]?.id }).then((data: any) => {
             if (!data?.error) {
                 configListRefetch();
             }
@@ -68,7 +75,7 @@ const LoadConfig = () => {
             <div className={styles.content}>{GENERAL.LOAD_CONFIG_CONTENT}</div>
             <div className={styles.radioContainer}>
                 {!configLoading &&
-                    configData?.map((item: any, index: any) => (
+                    filteredConfigdata?.map((item: any, index: any) => (
                         <div
                             className={index === 0 ? `${styles.item} ${styles.firstItem}` : `${styles.item}`}
                             key={index}

@@ -1,19 +1,18 @@
 import { useDispatch } from 'react-redux';
 import { ReactComponent as Download } from '@netapp/icons/ic_download.svg';
 import { ReactComponent as Calculate } from '../../../../assets/ic_calculate.svg';
-import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { WLF_TABS } from '../../../../utils/consts';
 import styles from './ExportPDF.module.scss';
-import { DsTypography, Popover } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
+import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const ExportPDF = ({ printDocument, disableState }: any) => {
-    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading, viewCalculationsResponse } =
+        useAppSelector(state => state.exploreSavings);
 
     const dispatch = useDispatch();
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -37,7 +36,9 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
         <div className={styles.exportPdf}>
             <div
                 className={
-                    loading || disableState ? `${styles.insideContainer} ${styles.disabled}` : styles.insideContainer
+                    loading || disableState || !viewCalculationsResponse
+                        ? `${styles.insideContainer} ${styles.disabled}`
+                        : styles.insideContainer
                 }
             >
                 <div>
@@ -47,7 +48,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                     variant="Semibold_14"
                     className={styles.text}
                     style={{ width: '80px' }}
-                    onClick={() => (loading || disableState ? () => {} : handleExport())}
+                    onClick={() => (loading || disableState || !viewCalculationsResponse ? () => {} : handleExport())}
                     id="es-export-pdf"
                 >
                     {GENERAL.EXPORT_PDF}
@@ -58,7 +59,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                 <>
                     <div
                         className={
-                            viewLoading || disableState
+                            viewLoading || disableState || !viewCalculationsResponse
                                 ? `${styles.insideContainer} ${styles.disabled}`
                                 : styles.insideContainer
                         }
@@ -71,7 +72,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                             className={styles.text}
                             style={{ width: '147px' }}
                             onClick={() =>
-                                viewLoading || disableState
+                                viewLoading || disableState || !viewCalculationsResponse
                                     ? () => {}
                                     : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                             }
@@ -86,7 +87,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                 <>
                     <div
                         className={
-                            viewLoading || disableState
+                            viewLoading || disableState || !viewCalculationsResponse
                                 ? `${styles.insideContainer} ${styles.disabled}`
                                 : styles.insideContainer
                         }
@@ -99,7 +100,7 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                             className={styles.text}
                             style={{ width: '147px' }}
                             onClick={() =>
-                                viewLoading || disableState
+                                viewLoading || disableState || !viewCalculationsResponse
                                     ? () => {}
                                     : dispatch(setSelectedHeaderTab(WLF_TABS.VIEW_THE_CALCULATIONS))
                             }

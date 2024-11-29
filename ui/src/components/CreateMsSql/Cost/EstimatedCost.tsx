@@ -14,11 +14,13 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
-import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { DBType, FORM_OPTIONS, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
-import { isFsxnNew } from '../../../utils/utilityFunctions';
+import { formatNumberWithCustomComma, isFsxnNew, updateSizeInGib } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
 import { useDispatch } from 'react-redux';
+import { setPricingPayload } from '../../../store/mssql/msSqlActionSlice';
+const _ = require('lodash');
 
 type Res = {
     data: {
@@ -40,10 +42,21 @@ type Res = {
             ];
         };
         total: '';
+        ebsStorage: {
+            ebsStorageCost: '';
+            ebsBreakdownByVolumeType: [
+                {
+                    id: '';
+                    volumeType: '';
+                    cost: '';
+                    size: '';
+                }
+            ];
+        };
     };
 };
 
-const EstimatedCost = () => {
+const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
     const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState(false);
     const [data, setData] = useState<Res>();
@@ -64,11 +77,15 @@ const EstimatedCost = () => {
     const iopsValueType = useAppSelector(state => state.mssqlForm.provisionedIOPS?.provisionedType);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
+    const { selectedLicenseId, selectedCustomAMI } = useAppSelector(state => state.mssqlForm.license);
 
     const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedLicenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
+    const { selectedDatabaseType } = useAppSelector(state => state.postgreForm);
+
+    const pricingPayload = useAppSelector(state => state.msSqlAction.pricingPayload);
 
     const fsxVolThroughput = () => {
         const value = (throughputValue || '').split(' ');
@@ -84,7 +101,7 @@ const EstimatedCost = () => {
     };
 
     const computeObj = (updatedStr: string) => {
-        if (selectedLicenseType === 'Use custom AMI') {
+        if (selectedLicenseType === 'Use custom AMI' || selectedDatabaseType === DBType.POSTGRESQL) {
             return {
                 regionCode: updatedStr || '',
                 instanceType: instanceTypeName || '',
@@ -95,7 +112,7 @@ const EstimatedCost = () => {
         return {
             regionCode: updatedStr || '',
             instanceType: instanceTypeName || '',
-            sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || '',
+            sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent',
             sqlDeploymentMode: deploymentModel?.value
         };
     };
@@ -105,11 +122,12 @@ const EstimatedCost = () => {
         if (
             diskSize &&
             diskSizeUnit &&
-            ((diskSizeUnit === 'TiB' && Number(diskSize) <= 130 && Number(diskSize) >= 1) ||
-                (diskSizeUnit === 'GiB' && Number(diskSize) <= 133120 && Number(diskSize) >= 120))
+            ((diskSizeUnit === 'TiB' && Number(diskSize) <= 86 && Number(diskSize) >= 1) ||
+                (diskSizeUnit === 'GiB' && Number(diskSize) <= 88064 && Number(diskSize) >= 120))
         ) {
             validDisk = true;
         }
+
         if (
             selectedCredId &&
             regionValue &&
@@ -155,32 +173,77 @@ const EstimatedCost = () => {
                     }
                 };
             }
-            setIsLoading(true);
-            dispatch(setEstimatedCostLoading(true));
-            getEstimationCost({ payload: payload })
-                .then((data: any) => {
-                    setTimeout(() => {
+
+            let ebsVolumeSize = 0;
+            if (selectedLicenseType === FORM_OPTIONS.LICENSE_AMI) {
+                ebsVolumeSize = selectedLicenseId?.data?.ebsVolumeSize || 0;
+            } else if (selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI) {
+                ebsVolumeSize = selectedCustomAMI?.data?.ebsVolumeSize || 0;
+            }
+
+            if (ebsVolumeSize > 100) {
+                payload = {
+                    ...payload,
+                    ebsStorage: {
+                        regionCode: updatedStr || '',
+                        ebsResourceInfo:
+                            deploymentModel?.label === GENERAL.SINGLE_INSTANCE
+                                ? [
+                                      {
+                                          size: ebsVolumeSize
+                                      }
+                                  ]
+                                : [
+                                      {
+                                          size: ebsVolumeSize
+                                      },
+                                      {
+                                          size: ebsVolumeSize
+                                      }
+                                  ]
+                    }
+                };
+            }
+
+            if (selectedDatabaseType === DBType.POSTGRESQL) {
+                payload = {
+                    ...payload,
+                    osType: 'linux',
+                    databaseType: 'PGSQL'
+                };
+            }
+
+            const comparedPayloadValues = _.isEqual(payload, pricingPayload);
+
+            if (!comparedPayloadValues) {
+                setIsLoading(true);
+                dispatch(setEstimatedCostLoading(true));
+                dispatch(setPricingPayload(payload));
+                getEstimationCost({ payload: payload })
+                    .then((data: any) => {
+                        setTimeout(() => {
+                            setIsLoading(false);
+                            setFetchResult(true);
+                            if (data.error) {
+                                setIsDisabled(true);
+                                dispatch(setEstimatedCostData(null));
+                            } else {
+                                let formattedData = updateSizeInGib(data);
+                                setData(formattedData);
+                                setIsDisabled(false);
+                                dispatch(setEstimatedCostData(formattedData));
+                            }
+                            dispatch(setEstimatedCostLoading(false));
+                        }, 2000);
+                    })
+                    .catch((error: any) => {
                         setIsLoading(false);
-                        setFetchResult(true);
-                        if (data.error) {
-                            setIsDisabled(true);
-                            dispatch(setEstimatedCostData(null));
-                        } else {
-                            setData(data);
-                            setIsDisabled(false);
-                            dispatch(setEstimatedCostData(data));
-                        }
+                        setFetchResult(false);
+                        setIsDisabled(true);
                         dispatch(setEstimatedCostLoading(false));
-                    }, 2000);
-                })
-                .catch((error: any) => {
-                    setIsLoading(false);
-                    setFetchResult(false);
-                    setIsDisabled(true);
-                    dispatch(setEstimatedCostLoading(false));
-                    dispatch(setEstimatedCostData(null));
-                    console.log('Error while fetching data - ', error);
-                });
+                        dispatch(setEstimatedCostData(null));
+                    });
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -194,8 +257,17 @@ const EstimatedCost = () => {
         iopsValue,
         deploymentModel,
         selectedFsxnType,
-        selectedLicenseType
+        selectedLicenseType,
+        selectedLicenseId,
+        selectedCustomAMI
     ]);
+
+    useEffect(() => {
+        // Clear the pricing payload on unmount
+        return () => {
+            dispatch(setPricingPayload(null));
+        };
+    }, []);
 
     //To open accordion if default account is present
     // useEffect(() => {
@@ -240,8 +312,8 @@ const EstimatedCost = () => {
             return (
                 <Typography variant="Regular_14">
                     {isFsxnNew(selectedFsxnType)
-                        ? `$${Number(data?.data?.total).toFixed(2)}` || ''
-                        : `$${Number(data?.data?.compute).toFixed(2)}` || ''}
+                        ? `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
+                        : `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''}
                 </Typography>
             );
         }
@@ -253,6 +325,21 @@ const EstimatedCost = () => {
         } else {
             return isDisabled || !regionValue || !selectedZone1 || !selectedZone2;
         }
+    };
+
+    const calculateTotalForExistingFsx = (data: Res | undefined) => {
+        let total = 0;
+        total += Number(data?.data?.compute || 0);
+        total += Number(data?.data?.ebsStorage?.ebsStorageCost || 0);
+        return total.toFixed(2);
+    };
+
+    const totalEbsSize = (data: Res) => {
+        let total = 0;
+        data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.forEach((element: any) => {
+            total += Number(element?.size || 0);
+        });
+        return total;
     };
 
     return (
@@ -299,7 +386,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        `$${Number(data?.data?.compute).toFixed(2)}` || ''
+                                        `$${formatNumberWithCustomComma(Number(data?.data?.compute).toFixed(2))}` || ''
                                     )}
                                 </Typography>
                             </div>
@@ -315,7 +402,9 @@ const EstimatedCost = () => {
                                     <div className={styles.sizeRow}>
                                         <Typography variant="Regular_14">
                                             {GENERAL.SIZE}:
-                                            {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total + ' GiB'}
+                                            {' ' +
+                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total +
+                                                ' GiB'}
                                         </Typography>
                                         {data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size?.total && (
                                             <TooltipInfo className={styles.tooltipClass}>
@@ -324,7 +413,8 @@ const EstimatedCost = () => {
                                                         0
                                                 ) > 1024
                                                     ? SizePopover(
-                                                          data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size
+                                                          data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size,
+                                                          wizardType
                                                       )
                                                     : GENERAL.MIN_FSX_CAPACITY_MESSAGE}
                                             </TooltipInfo>
@@ -343,9 +433,11 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(
-                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost
-                                            ).toFixed(2)}` || ''
+                                            `$${formatNumberWithCustomComma(
+                                                Number(
+                                                    data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.capacityCost
+                                                ).toFixed(2)
+                                            )}` || ''
                                         )}
                                     </Typography>
 
@@ -360,9 +452,49 @@ const EstimatedCost = () => {
                                             </div>
                                         ) : (
                                             //@ts-ignore
-                                            `$${Number(
-                                                data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost
-                                            ).toFixed(2)}` || ''
+                                            `$${formatNumberWithCustomComma(
+                                                Number(
+                                                    data?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.operationalCost
+                                                ).toFixed(2)
+                                            )}` || ''
+                                        )}
+                                    </Typography>
+                                </div>
+                            </div>
+                        )}
+
+                        {data?.data?.ebsStorage && (
+                            <div className={styles.storageContainer}>
+                                <Typography variant="Semibold_14" className={styles.compute}>
+                                    {!isFsxnNew(selectedFsxnType) ? GENERAL.STORAGE : ' '}
+                                </Typography>
+                                <div className={styles.secondRow}>
+                                    <Typography variant="Regular_14">
+                                        {GENERAL.TYPE}: {GENERAL.ELASTIC_BLOCK_STORE}
+                                    </Typography>
+                                    <div className={styles.sizeRow}>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.SIZE}:{' ' + totalEbsSize(data) + ' GiB'}
+                                        </Typography>
+                                    </div>
+                                    <div className={styles.sizeRow}>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.VOLUME_TYPE}:
+                                            {' ' + data?.data?.ebsStorage?.ebsBreakdownByVolumeType?.[0]?.volumeType}
+                                        </Typography>
+                                    </div>
+                                </div>
+                                <div className={styles.thirdRow}>
+                                    <Typography variant="Regular_14" className={styles.costValue}>
+                                        {isLoading ? (
+                                            <div className={styles.loadingPlacement}>
+                                                <LoadingComponent />
+                                            </div>
+                                        ) : (
+                                            //@ts-ignore
+                                            `$${formatNumberWithCustomComma(
+                                                Number(data?.data?.ebsStorage?.ebsStorageCost).toFixed(2)
+                                            )}` || ''
                                         )}
                                     </Typography>
                                 </div>
@@ -421,15 +553,17 @@ const EstimatedCost = () => {
                                     </div>
                                 ) : //@ts-ignore
                                 isFsxnNew(selectedFsxnType) ? (
-                                    `$${Number(data?.data?.total).toFixed(2)}` || ''
+                                    `$${formatNumberWithCustomComma(Number(data?.data?.total).toFixed(2))}` || ''
                                 ) : (
-                                    `$${Number(data?.data?.compute).toFixed(2)}` || ''
+                                    `$${formatNumberWithCustomComma(calculateTotalForExistingFsx(data))}` || ''
                                 )}
                             </Typography>
                         </div>
 
                         <div id="estimated-cost" className={styles.note}>
-                            <ActionRequiredIcon />
+                            <div>
+                                <ActionRequiredIcon />
+                            </div>
                             <Typography variant="Regular_14">{GENERAL.EC_NOTE}</Typography>
                         </div>
                     </div>

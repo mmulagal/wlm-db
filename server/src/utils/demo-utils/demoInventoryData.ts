@@ -474,46 +474,61 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-l2k4j6h8g0f3d5s',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceId: 'i-0ab2e12971d543c14',
+                ec2InstanceType: 'm5.2xlarge',
+                ec2InstanceName: 'app-server-19',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
-                ec2InstanceName: 'app-server-11',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
                 sqlServerInstances: [
                     {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2019,
+                        sqlServerVersion: '16.0.4015.1',
+                        sqlServerName: 'SQLServer-UAT-03',
+                        sqlServerNodes: ['sql-node1', 'sql-node2'],
+                        nodeIps: ['10.0.2.224', '10.0.18.80'],
+                        sqlServerDeploymentType: 'FCI',
                         sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5h',
-                        isDefaultInstance: false,
                         sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
+                        sqlServerProductYear: 2022,
+                        sqlServerEngineEdition: 3,
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5h',
+                        isDefaultInstance: true,
                         windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-UAT-01',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        sqlServerAuthentication: false,
                         storage: [
                             {
                                 type: 'FSXW',
-                                id: fsxId
+                                id: 'fs-0948f9c267a5b9300',
+                                protocol: 'SMB',
+                                fileSystemStorageType: 'SSD'
                             }
                         ],
                         deploymentTypes: [
                             {
                                 type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
+                                zones: ['availability-zone-2', 'availability-zone-3']
+                            }
+                        ],
+                        databaseCount: 4,
+                        windowsClusterName: 'fsxwcluster03',
+                        windowsClusterNodes: [
+                            {
+                                Node: 'sql-node1',
+                                Address: '10.0.2.224'
+                            },
+                            {
+                                Node: 'sql-node2',
+                                Address: '10.0.18.80'
                             }
                         ]
                     }
-                ]
+                ],
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                }
             },
             {
                 ec2InstanceId: 'i-9m8n7b6v5c4x3z',
@@ -883,4 +898,144 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
     };
 }
 
-export { inventoryDemoData };
+const ASSESMENT_CONFIG_DATA = {
+    os: {
+        'mpio-enabled': false,
+        'mpio-iscsi-count': '50',
+        'ntfs-allocation-details': [
+            { DriveLetter: 'S', AllocationUnitSize: 6553 },
+            { DriveLetter: 'T', AllocationUnitSize: 6553 },
+            { DriveLetter: 'L', AllocationUnitSize: 6553 }
+        ],
+        'ntfs-allocation-unit-size': 6553,
+        'mpio-load-balance-policy': 'LB'
+    },
+    luns: [
+        {
+            name: '/vol/wlmdb_sqldata_1728552629461/sqldata',
+            'os-type': 'windows',
+            'space-reservation-enabled': false,
+            'space-allocation-allocated': false
+        },
+        {
+            name: '/vol/wlmdb_sqltemp_1728552629461/tempdb',
+            'os-type': 'windows',
+            'space-reservation-enabled': false,
+            'space-allocation-allocated': false
+        },
+        {
+            name: '/vol/wlmdb_sqldata_1728574994/sqldata',
+            'os-type': 'windows',
+            'space-reservation-enabled': false,
+            'space-allocation-allocated': false
+        }
+    ],
+    layout: {
+        'tempdb-files-location': 'separate-drive',
+        'default-log-files-location': 'separate-drive',
+        'default-data-files-location': 'separate-drive'
+    },
+    sizing: {
+        'performance-tier': false,
+        'data-log-drive-details': [
+            {
+                databaseName: 'msdb',
+                logDrivePath: 'S:\\mssql\\system\\MSSQL15.MSSQLSERVER\\MSSQL\\DATA\\MSDBLog.ldf',
+                dataDrivePath: 'S:\\mssql\\system\\MSSQL15.MSSQLSERVER\\MSSQL\\DATA\\MSDBData.mdf',
+                logAccessPath: 'S:\\mssql',
+                dataAccessPath: 'S:\\mssql',
+                logDriveLetter: 'S:',
+                dataDriveLetter: 'S:',
+                logDriveTotalSizeMB: 307,
+                dataDriveTotalSizeMB: 3071820
+            },
+            {
+                lunUuid: 'ce0cca99-e9fd-42af-9daa-50039625d44d',
+                svmName: 'wlmdb_sqlsvm_1731915150431',
+                diskNumber: 8,
+                databaseName: 'Nachos',
+                logDrivePath: 'G:\\MSSQL\\log\\Nachos_log.ldf',
+                dataDrivePath: 'F:\\MSSQL\\data\\Nachos_data.mdf',
+                logAccessPath: 'G:\\MSSQL',
+                dataAccessPath: 'F:\\MSSQL',
+                logDriveLetter: 'G:',
+                dataDriveLetter: 'F:',
+                ontapVolumeName: 'wlmdb_sqllog_1731988070',
+                ontapVolumeUuid: '1c3c25e9-a629-11ef-8dba-75539f3dc73f',
+                diskSerialNumber: 'lWB4c$XRevTA',
+                logDriveTotalSizeMB: 97,
+                dataDriveTotalSizeMB: 429420
+            },
+            {
+                lunUuid: '74897647-0db1-4e4c-934a-8faa6cae7087',
+                svmName: 'wlmdb_sqlsvm_1731915150431',
+                diskNumber: 6,
+                databaseName: 'Primordial',
+                logDrivePath: 'E:\\MSSQL\\log\\Primordial_log.ldf',
+                dataDrivePath: 'D:\\MSSQL\\data\\Primordial_data.mdf',
+                logAccessPath: 'E:\\MSSQL',
+                dataAccessPath: 'D:\\MSSQL',
+                logDriveLetter: 'E:',
+                dataDriveLetter: 'D:',
+                ontapVolumeName: 'wlmdb_sqllog_1731987160',
+                ontapVolumeUuid: 'f3c8df60-a626-11ef-8dba-75539f3dc73f',
+                diskSerialNumber: 'lWB4c$XRevT9',
+                logDriveTotalSizeMB: 107,
+                dataDriveTotalSizeMB: 1072200
+            }
+        ],
+        'data-tempdb-drive-details': {
+            lunUuid: 'ab3fd3b5-b2e2-4c97-b026-52ba19accc41',
+            svmName: 'wlmdb_sqlsvm_1731915150431',
+            diskNumber: 6,
+            ontapVolumeName: 'wlmdb_sqltemp_1731915150431',
+            ontapVolumeUuid: 'c4585626-a581-11ef-8dba-75539f3dc73f',
+            tempdbDrivePath: 'T:\\mssql\\data\\tempdb.mdf',
+            diskSerialNumber: 'lWB4c$XRevT9',
+            tempdbDriveLetter: 'T:',
+            dataDriveTotalSizeMB: 9731000,
+            defaultDataDriveLetter: 'S:',
+            tempdbDriveTotalSizeMB: 42
+        }
+    },
+    volumes: [
+        {
+            name: 'wlmdb_sqldata_1728552629461',
+            autosize: 'off',
+            'autosize-mode': 'off',
+            'thin-provision': false,
+            'tiering-policy': 'auto',
+            'space-guarantee': 'volume',
+            'fractional-reserve': 10,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 15,
+            'tiering-min-cooling-days': 17
+        },
+        {
+            name: 'wlmdb_sqltemp_1728552629461',
+            autosize: 'off',
+            'autosize-mode': 'off',
+            'thin-provision': false,
+            'tiering-policy': 'auto',
+            'space-guarantee': 'volume',
+            'fractional-reserve': 10,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 15,
+            'tiering-min-cooling-days': 17
+        },
+        {
+            name: 'wlmdb_sqldata_1728574994',
+            autosize: 'off',
+            'autosize-mode': 'off',
+            'thin-provision': true,
+            'tiering-policy': 'auto',
+            'space-guarantee': 'volume',
+            'fractional-reserve': 10,
+            'snapshot-autodelete': false,
+            'snapshot-copy-reserve': 15,
+            'tiering-min-cooling-days': 17
+        }
+    ]
+};
+
+export { inventoryDemoData, ASSESMENT_CONFIG_DATA };

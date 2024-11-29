@@ -1,0 +1,272 @@
+.getWell {
+    width: 100%;
+    padding-bottom: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .header {
+        width: 87.3%;
+        max-width: 1608px;
+        margin-top: 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .header-top-section {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+
+            .optimizeHeader {
+                position: relative;
+                left: 45%;
+            }
+
+            .refreshIcon {
+                cursor: pointer;
+                svg {
+                    --icon-primary-color: var(--button-secondary);
+                    width: 20px;
+                    height: 20px;
+                    margin-top: 5px;
+                }
+            }
+
+            .refreshIconDisable {
+                svg {
+                    --icon-primary-color: var(--text-disabled);
+                    width: 20px;
+                    height: 20px;
+                    margin-top: 5px;
+                }
+            }
+        }
+
+        .reportSubHeading {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 40px;
+
+            .title {
+                width: max-content;
+                white-space: nowrap;
+            }
+
+            .separator {
+                border-right: 1px solid var(--text-disabled);
+                height: 24px;
+            }
+        }
+    }
+
+    .getWellSecondLevel {
+        width: 87.3%;
+        margin-top: 24px;
+        justify-content: center;
+
+        display: flex;
+        gap: 24px;
+    }
+
+    .sectionDownload {
+        width: 87.3%;
+        margin-top: 26px;
+    }
+
+    .sectionTwo {
+        width: 87.3%;
+        margin-top: 26px;
+        max-width: 1608px;
+
+        [class*='accordionHeader'] {
+            height: 56px !important;
+        }
+
+        .downloadSectionHeader {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .downloadSection {
+                display: flex;
+                justify-content: space-between;
+                cursor: pointer;
+            }
+
+            .downloadSectionDisable {
+                display: flex;
+                justify-content: space-between;
+                svg {
+                    path {
+                        fill: var(--text-disabled);
+                    }
+                }
+            }
+
+            .buttonStyle {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+        }
+
+        .filterComponent {
+            margin-bottom: 40px;
+
+            [class*='accordionHeader'] {
+                height: 72px !important;
+            }
+
+            .filterHeaderStyle {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+
+                .dark-theme-union {
+                    svg {
+                        path {
+                            fill: #fff;
+                        }
+                    }
+                }
+            }
+
+            .filterHeader {
+                display: flex;
+                gap: 24px;
+
+                .items {
+                    display: flex;
+                    gap: 8px;
+                }
+            }
+
+            .mainSection {
+                display: flex;
+                flex-direction: column;
+                gap: 42px;
+                .dropdownList {
+                    display: flex;
+                    gap: 52px;
+                    flex-wrap: wrap;
+                    .dropDown {
+                        width: 264px;
+
+                        [class*='dsTextFieldFrame'] {
+                            max-width: 264px !important;
+                            width: 264px;
+                        }
+
+                        .not-optimized-tooltip {
+                            display: flex;
+                            gap: 96px;
+                        }
+                    }
+
+                    .optimized-drop-down {
+                        [class*='selectItem'] {
+                            padding: 12px 20px 12px 24px;
+                        }
+
+                        [class*='tooltipInfoBaloon'] {
+                            max-width: 500px;
+                            width: 500px;
+                        }
+                    }
+                }
+
+                .filtersOption {
+                    display: flex;
+                    margin-bottom: 30px;
+
+                    .tagsContainer {
+                        display: flex;
+                        flex-wrap: wrap;
+                        width: calc(100% - 100px);
+                        gap: 24px;
+                    }
+                }
+
+                .filterTag {
+                    display: flex;
+                    align-items: center;
+                    white-space: nowrap;
+                    gap: 24px;
+                    height: 26px;
+                    width: fit-content;
+                    padding: 2px 11px;
+                    background-color: var(--tag-3-bg);
+                    color: var(--text-button-primary-hover);
+                    border-radius: 24px;
+                    border: 1px solid var(--tag-3-text, #1e4a93);
+
+                    .closeButton {
+                        cursor: pointer;
+                        position: relative;
+                        top: 2px;
+                    }
+                }
+            }
+        }
+
+        .sectionClass {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .accordionGroups {
+            display: flex;
+            gap: 24px;
+            flex-direction: column;
+
+            [class*='isExpanded'] {
+                overflow-y: hidden !important;
+            }
+        }
+    }
+
+    .combineComponent {
+        display: flex;
+        flex-direction: column;
+
+        .missingPermissionText {
+            display: flex;
+            align-items: center;
+
+            [class*='dsButtonContainer'] {
+                pointer-events: auto !important; /* Ensure the button remains clickable */
+            }
+        }
+
+        .tagPlacement {
+            display: flex;
+            gap: 16px;
+        }
+
+        .headerAction {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+
+            .dark-theme-light {
+                svg {
+                    path {
+                        fill: var(--cyan-60);
+                    }
+                }
+            }
+        }
+    }
+
+    [class*='isExpanded'] {
+        max-height: 2500px !important;
+        overflow: hidden;
+    }
+}

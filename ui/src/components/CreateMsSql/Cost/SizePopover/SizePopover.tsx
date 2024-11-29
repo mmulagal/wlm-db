@@ -2,8 +2,9 @@ import { Typography } from '@netapp/design-system';
 import styles from './SizePopover.module.scss';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
+import { WIZARD_TYPE } from '../../../../utils/consts';
 
-const SizePopover = (data: any) => {
+const SizePopover = (data: any, wizardType: string) => {
     return (
         <div className={styles.sizeContainer}>
             <div className={styles.middleContainer}>
@@ -24,14 +25,16 @@ const SizePopover = (data: any) => {
                 </Typography>
             </div>
 
-            <div className={styles.middleContainer}>
-                <Typography variant="Semibold_13" className={styles.middle}>
-                    {GENERAL.TEMPDB_SIZE}
-                </Typography>
-                <Typography variant="Regular_13" className={styles.middle}>
-                    {`${formatFractionalNumber(data?.tempdb || 0, 2)} GiB`}
-                </Typography>
-            </div>
+            {wizardType === WIZARD_TYPE.MSSQL && (
+                <div className={styles.middleContainer}>
+                    <Typography variant="Semibold_13" className={styles.middle}>
+                        {GENERAL.TEMPDB_SIZE}
+                    </Typography>
+                    <Typography variant="Regular_13" className={styles.middle}>
+                        {`${formatFractionalNumber(data?.tempdb || 0, 2)} GiB`}
+                    </Typography>
+                </div>
+            )}
 
             <div className={styles.middleContainer}>
                 <Typography variant="Semibold_13" className={styles.middle}>

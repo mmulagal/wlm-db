@@ -1,6 +1,7 @@
 // instances input instances = ['"computername\\instanceName"', '"DEFAULT_MSSQL_INSTANCE_NAME"']; "DEFAULT_MSSQL_INSTANCE_NAME" represents the default instance
 
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../utils/consts';
+import { ontapJobStatusTemplate, ontapRestRequest } from './common-templates';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 // ('source', 'initialCreationDate', 'tag') are the extended properties saved during creation of sandbox
@@ -108,118 +109,6 @@ const checkDatabaseExists = (dbCloneName: string, instanceName: string = DEFAULT
     $responseObject.add('dbCloneNameExists', $False)
 `;
 
-// Template for ONTAP REST request
-// Assumes that the following variables are defined in the script:
-//  - $FSxID: FSx ID
-//  - $FSxRegion: FSx region
-const ontapRestRequest = (skipCertificateCheck = false) => `
-        Add-Type @"
-            using System.Net;
-            using System.Security.Cryptography.X509Certificates;
-            public class TrustAllCertsPolicy : ICertificatePolicy {
-                public bool CheckValidationResult(
-                ServicePoint srvPoint, X509Certificate certificate,
-                WebRequest request, int certificateProblem) {
-                    return true;
-                }
-            }
-"@
-        [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxPasswordSecureString = ConvertTo-SecureString $FSxPassword -AsPlainText -Force
-        $FSxCredentials = New-Object System.Management.Automation.PSCredential($FSxUserName, $FSxPasswordSecureString)
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-
-        $isprivatesubnet = $False
-        $connection = ${
-            skipCertificateCheck
-                ? '$False'
-                : 'Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet'
-        }
-        if ($connection -eq $False) {
-            $isprivatesubnet = $True
-            $regionCertificate = ''
-        } else {
-            $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-            Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $Env:Temp\\FSxCertificate.pem
-            $Certificate = Import-Certificate -FilePath $Env:Temp\\FSxCertificate.pem -CertStoreLocation Cert:\\LocalMachine\\Root
-            $regionCertificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        }
-
-        Function Invoke-ONTAPRequest {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string]$ApiEndpoint,
-
-                [Parameter(Mandatory = $false)]
-                [string]$ApiQueryFilter = '',
-
-                [Parameter(Mandatory = $false)]
-                [string]$ApiQueryFields = '',
-
-                [Parameter(Mandatory = $false)]
-                [string]$method = 'GET',
-
-                [Parameter(Mandatory = $false)]
-                [string]$body
-            )
-
-            Write-Information "Invoke ONTAP rest request $APIEndpoint $APIQueryFilter $ApiQueryFields $method $body"
-
-            $QuestionSymbol = ''
-            if ($ApiQueryFields -ne '' -or $ApiQueryFilter -ne '') {
-                $QuestionSymbol = '?';
-            }
-
-            $Ampersand = ''
-            if ($ApiQueryFields -ne '' -and $ApiQueryFilter -ne '') {
-                $Ampersand = '&';
-            }
-
-            $Params = @{
-                "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + $QuestionSymbol + $ApiQueryFilter + $Ampersand + $ApiQueryFields
-                "Method"  = $method
-                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                "ContentType" = "application/json"
-            }
-
-            if (-not ([string]::IsNullOrEmpty($body))) {
-                $Params.Add("Body", $body)
-            }
-
-            if ($isprivatesubnet -eq $False -and $regionCertificate -ne $null) {
-                return Invoke-RestMethod @Params -Certificate $regionCertificate
-            } else {
-                return Invoke-RestMethod @Params
-            }
-        }
-`;
-
-const ontapJobStatusTemplate = `
-        Function Get-OntapJobStatus {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string]$jobId,
-                [Parameter(Mandatory = $false)]
-                [string]$timeInterval = 1000
-            )
-
-            $ApiEndpoint = "/cluster/jobs/$jobId"
-            $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint
-            while($response.state -ne 'success' -and $response.state -ne 'failure') {
-                start-sleep -Milliseconds $timeInterval
-                $response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint
-            }
-
-            return $response
-        }
-`;
-
 const getVolumeIdFromPath = `
         Function Get-VolumeIdFromPath {
             param(
@@ -260,7 +149,7 @@ const getDbMappedOntapVolumes = (
     $executableInstanceName = "${executableInstanceName}"
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
-
+    $PSToolkitRequiredVersion = '9.15.1.2407'
     Start-Transcript -Path "C:\\cfn\\log\\map_ontap_volumes_for_$dbname.log.txt" -Append | Out-Null
 
     $responseObject = @{}
@@ -318,7 +207,7 @@ const getDbMappedOntapVolumes = (
             return $responseObject
         }
     
-        ${ontapRestRequest(true)}
+        ${ontapRestRequest}
 
         Function Get-LunFromSerialNumber($responseObject) {
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
@@ -350,7 +239,6 @@ const getDbMappedOntapVolumes = (
             $LunRecords = $Response.records
     
             if ($LunRecords.count -gt 0) {
-                $responseObject['svm'] = $LunRecords[0].svm.name
                 $LunRecords | ForEach-Object {
                     $lunrecord = $_
                     foreach ($dataVol in $responseObject.data) {
@@ -358,6 +246,7 @@ const getDbMappedOntapVolumes = (
                             $dataVol.Add("lunPath", $lunrecord.name)
                             $dataVol.Add("volumeName", $lunrecord.location.volume.name)
                             $dataVol.Add("volumeUuid", $lunrecord.location.volume.uuid)
+                            $dataVol.Add("svm", $lunrecord.svm.name)
                         }
                     }
 
@@ -366,6 +255,7 @@ const getDbMappedOntapVolumes = (
                             $logVol.Add("lunPath", $lunrecord.name)
                             $logVol.Add("volumeName", $lunrecord.location.volume.name)
                             $logVol.Add("volumeUuid", $lunrecord.location.volume.uuid)
+                            $logVol.Add("svm", $lunrecord.svm.name)
                         }
                     }
                 }
@@ -411,6 +301,7 @@ const getDbMappedOntapVolumes = (
                                 $_.Add('parentVolume', $volrecord.clone.parent_volume.name)
                                 $_.Add('parentVolumeUuid', $volrecord.clone.parent_volume.uuid)
                                 $_.Add('parentSnapshot', $volrecord.clone.parent_snapshot.name)
+                                $_.Add('splitEstimate', $volrecord.clone.split_estimate)
                             }
                         }
                     }
@@ -465,7 +356,6 @@ const getDbMappedOntapVolumes = (
 const createVolumeClone = (
     fsxid: string,
     fsxregion: string,
-    sourceSvm: string,
     dataVolumes: string,
     logVolumes: string,
     tags: Array<string>,
@@ -473,9 +363,9 @@ const createVolumeClone = (
     sandboxName: string,
     logPrefix?: string
 ) => `
+    #Requires -Module AWS.Tools.FSX,netapp.ontap
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
-    $sourceSvm = '${sourceSvm}'
     $targetSvm = '${targetSvm}'
     $dataVolumes = '${dataVolumes}' | convertFrom-json
     $logVolumes = '${logVolumes}' | convertFrom-json
@@ -493,7 +383,7 @@ const createVolumeClone = (
         $epoch = (Get-Date -Date ((Get-Date).DateTime) -UFormat %s)
         $defaultSnapshot = 'netapp_wf_clone_' + $epoch
     
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
 
         Function Get-IgroupName {
             $nodeiqn = (Get-InitiatorPort).NodeAddress
@@ -545,8 +435,6 @@ const createVolumeClone = (
         }
 
         Function New-VolumeClone {
-            $parentsvm = $sourceSvm
-
 
             $cloneVolCreated = @()
             $volSnapshotCreated = @()
@@ -560,12 +448,13 @@ const createVolumeClone = (
                 if ([string]::IsNullOrEmpty($snapshot)) {
                     # Create snapshot
 
-                    foreach ($volName in $volume.volumes) {
+                    foreach ($vol in $volume.volumes) {
+                        $volName = $vol.volumeName
                         if ($volSnapshotCreated -notcontains $volName) {
                             $volSnapshotCreated += $volName
                             $job = New-Snapshot -volumeName $volName
                             if ($job.state -ne 'success') {
-                                throw "Could not create snapshot for $($volume.name). Ontap error: $($job.error.message)"
+                                throw "Could not create snapshot for $($volName). Ontap error: $($job.error.message)"
                             }  
                         }
                     }
@@ -575,7 +464,9 @@ const createVolumeClone = (
                 start-sleep 1
                 $ApiEndpoint = "/storage/volumes"
 
-                foreach ($volName in $volume.volumes) {
+                foreach ($vol in $volume.volumes) {
+                    $volName = $vol.volumeName
+                    $svm = $vol.svm
                     if ($cloneVolCreated -notcontains $volName) {
                         $cloneVolCreated += $volName
 
@@ -588,7 +479,7 @@ const createVolumeClone = (
                                     "name" = $volName
                                 }
                                 "parent_svm" = @{
-                                    "name" = $parentsvm
+                                    "name" = $svm
                                 }
                                 "parent_snapshot" = @{
                                     "name" = $snapshot
@@ -599,7 +490,7 @@ const createVolumeClone = (
                         $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -body $body -method "POST"
                         $job = Get-OntapJobStatus -jobId $ontapResponse.job.uuid
                         if ($job.state -ne 'success') {
-                            throw "Could not create clone for $($volume.name). Ontap error: $($job.error.message)"
+                            throw "Could not create clone for $($volName). Ontap error: $($job.error.message)"
                         }
                     }
                 }
@@ -613,7 +504,8 @@ const createVolumeClone = (
             $volumeProcessed = @()
             $ApiQueryFilter = 'location.volume.name='
             @($dataVolumes, $logVolumes) | ForEach-Object {
-                foreach ($volName in $_.volumes) {
+                foreach ($vol in $_.volumes) {
+                    $volName = $vol.volumeName
                     if ($volumeProcessed -notcontains $volName) {
                         $ApiQueryFilter += [System.Web.HttpUtility]::UrlEncode($volName) + '_clone_' + $epoch + '|'
                         $volumeProcessed += $volName
@@ -643,13 +535,15 @@ const createVolumeClone = (
                     "lunPath" = $_.name
                 }
 
-                foreach ($volName in $dataVolumes.volumes) {
+                foreach ($vol in $dataVolumes.volumes) {
+                    $volName = $vol.volumeName
                     if ($_.location.volume.name -match $volName) {
                         $responseObject['data'] += $volume
                     }
                 }
 
-                foreach ($volName in $logVolumes.volumes) {
+                foreach ($vol in $logVolumes.volumes) {
+                    $volName = $vol.volumeName
                     if ($_.location.volume.name -match $volName) {
                         $responseObject['log'] += $volume
                     }
@@ -674,47 +568,49 @@ const createVolumeClone = (
 
         Function Set-LUNSignature {
             # Set the LUN signature only if the source and target SVMs are the same
-            if ($sourceSvm -eq $targetSvm) {
-                if (-not (Get-Module -ListAvailable -Name NetApp.ONTAP)) {
-                    Write-Information "$logPrefix NetApp.ONTAP Module does not exist, installing it now"
-
-                    Install-Module -Name NetApp.ONTAP -Force -AllowClobber
-                }
-
-                $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
-
-                $CloneDataLuns = @()
-                foreach ($vol in $responseObject['data']) {
-                    $CloneDataLuns += $vol.lunPath
-                }
-
-                $CloneLogLuns = @()
-                foreach ($vol in $responseObject['log']) {
-                    $CloneLogLuns += $vol.lunPath
-                }
-
-                # $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
-                # $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
+            $svmProcessed = @()
+            @($dataVolumes, $logVolumes) | ForEach-Object {
+                foreach ($vol in $_.volumes) {
+                    $sourceSvm = $vol.svm
                 
-                $ClonedLuns = $CloneDataLuns + $CloneLogLuns
+                    if ($svmProcessed -notcontains $sourceSvm) {
+                        $null = Connect-NcController -Credential $FSxCredentials -Name $FSxHostName
 
-                $lunPathProcessed = @()
-
-                $message
-                $ClonedLuns | ForEach-Object {
-                    $lunPath = $_
-
-                    if ($lunPathProcessed -notcontains $lunPath) {
-                        $lunPathProcessed += $lunPath
-
-                        $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
-                        if (-not $?) {
-                            $message += "Could not change LUN signature for $lunClonePath."
+                        $CloneDataLuns = @()
+                        foreach ($vol in $responseObject['data']) {
+                            $CloneDataLuns += $vol.lunPath
                         }
-                    }
-                }
 
-                return $message
+                        $CloneLogLuns = @()
+                        foreach ($vol in $responseObject['log']) {
+                            $CloneLogLuns += $vol.lunPath
+                        }
+
+                        # $CloneDataLuns = $responseObject['data'] | ForEach-Object { $_.lunPath }
+                        # $CloneLogLuns = $responseObject['log'] | ForEach-Object { $_.lunPath }
+                        
+                        $ClonedLuns = $CloneDataLuns + $CloneLogLuns
+
+                        $lunPathProcessed = @()
+
+                        $message
+                        $ClonedLuns | ForEach-Object {
+                            $lunPath = $_
+
+                            if ($lunPathProcessed -notcontains $lunPath) {
+                                $lunPathProcessed += $lunPath
+
+                                $null = Set-NcLunSignature -Path $lunPath -Vserver $targetSvm -Confirm:$False
+                                if (-not $?) {
+                                    $message += "Could not change LUN signature for $lunClonePath."
+                                }
+                            }
+                        }
+
+                        return $message
+                    }
+                    $svmProcessed += $sourceSvm
+                }
             }
         }
 
@@ -874,6 +770,8 @@ const createClonedDb = (
             .join('\n')}
 
         # Rename the actual files to the new name
+
+        $newFiles = @()
         ${[...dataFileList, ...logFileList]
             .map(file => {
                 // replace mdf, ndf, ldf with epoch.mdf etc
@@ -882,11 +780,26 @@ const createClonedDb = (
                 Rename-Item -Path "${file}" -NewName "${newFileName}"`;
             })
             .join('\n')}
+
+        
+        # Update ACL for the new files
+
+        $sqlService = (Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (${instanceName})'})
+
+        if ($sqlService -ne $null) {
+            $newFiles | ForEach-Object {
+                $Acl = Get-Acl $_
+                $Ar = New-Object System.Security.AccessControl.FileSystemAccessRule($sqlService.StartName, "FullControl", "Allow")
+                $Acl.SetAccessRule($Ar)
+                Set-Acl $_ $Acl
+            }
+        }
         
         Call-SqlCmd -SqlCredential $sqlCredential -Query "ALTER DATABASE $dbname SET ONLINE" -InstanceName "${executableInstanceName}"
     } catch {
         Write-Error "$logPrefix $($_.Exception.Message)"
     }
+    Stop-Transcript | Out-Null
 `;
 
 const addExtendedProperties = (
@@ -990,7 +903,7 @@ const cleanUpOntapResources = (
                 }
                 $windowsVolumeIds = $filePaths | ForEach-Object {
                     Get-VolumeIdFromPath -absolutePath $_
-                }
+                } | Sort-Object -Unique
 
                 Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
                 if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
@@ -1031,7 +944,7 @@ const cleanUpOntapResources = (
             throw $_.Exception.Message
         }
 
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
         ${ontapJobStatusTemplate}
 
         $volumeIds | ForEach-Object {
@@ -1111,44 +1024,17 @@ const getStorageSavingsFromOntap = (fsxId: string, fsxRegion: string, clonedBy: 
         $FSxRegion = '${fsxRegion}'
         $clonedByTagVal = '${clonedBy}'
 
-
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-        
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
-     
-        Function Invoke-ONTAPGetRequest {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string]$ApiEndpoint
-            )
-
-            $Params = @{
-                "URI"     = 'https://' + $FSxHostName + $ApiEndpoint
-                "Method"  = "GET"
-                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                "ContentType" = "application/json"
-            }
-     
-            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-        }
+        ${ontapRestRequest}
 
         $nextToken = $null
         
         Do {
             if ($null -eq $nextToken) {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint "/api/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
+                $resp = Invoke-ONTAPRequest -ApiEndpoint "/storage/volumes?tiering.object_tags=cloned_by=$clonedByTagVal&fields=space.used_by_afs,space.physical_used,clone.*"
             } else {
-                $resp = Invoke-ONTAPGetRequest -ApiEndpoint $nextToken
+                $nextToken = $nextToken -replace '/api', ''
+                Write-Information "Next Token: $nextToken"
+                $resp = Invoke-ONTAPRequest -ApiEndpoint $nextToken
             }
 
             $cloneVolumes = $resp.records
@@ -1239,7 +1125,7 @@ const detachDbAndRemoveAccessPath = (
         $resourceType = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
         $windowsVolumeIds = $filePaths | ForEach-Object {
             Get-VolumeIdFromPath -absolutePath $_
-        }
+        } | Sort-Object -Unique
         write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
 
         try {
@@ -1321,291 +1207,21 @@ const detachDbAndRemoveAccessPath = (
 
 const addAccessPathAndAttachDb = (
     dbName: string,
-    datafiles: string,
-    logfiles: string,
+    fileArr: string,
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = '',
     sqlAuthEnabled: boolean
 ) => `
+    $WarningPreference = 'SilentlyContinue';
     $dbname = '${dbName}'
-    $datafiles = '${datafiles}' | ConvertFrom-Json
-    $logfiles = '${logfiles}' | ConvertFrom-Json
-    $executableinstance = "${executableInstance}"
-    $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 
-    Start-Transcript -Path "C:\\cfn\\log\\add_accesspath_attachdb_$dbname.log.txt" -Append | Out-Null
+    Start-Transcript -Path "C:\\cfn\\log\\attachdb_$dbname.log.txt" -Append | Out-Null
 
-    $responseObject = @{}
     try {
-        Function Get-VirtualMountPoint {
-            param (
-                [string]$path
-            )
 
-            $splits = $path.Split('\\')
-            return $splits[0] + '\\' + $splits[1] + '\\'
-        }
-
-        $dataMountPoints = @()
-        $dataSerials = @()
-        $dataPaths = @()
-
-        $datafiles | ForEach-Object {
-            $dataMountPoints += Get-VirtualMountPoint -path $_.path
-            $dataSerials += $_.serial
-            $dataPaths += $_.path
-        }
-        
-        $logMountPoints = @()
-        $logSerials = @()
-        $logPaths = @()
-
-        $logfiles | ForEach-Object {
-            $logMountPoints += Get-VirtualMountPoint -path $_.path
-            $logSerials += $_.serial
-            $logPaths += $_.path
-        }
-
-        Write-Information "$logPrefix Mount Points: $dataMountPoints $logMountPoints"
-        Write-Information "$logPrefix Serial Numbers: $dataSerials $logSerials"
-
-        if ($dbname.Length -gt 25) {
-            $dbname = $dbname.Substring(0, 25)
-        }
-        $datalabel = $dbname + '-Data'
-        $loglabel = $dbname + '-Log'
-
-        $disklist = Get-disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $dataSerials.Contains($_.SerialNumber) -or $logSerials.Contains($_.SerialNumber) }
-        write-Information "$logPrefix Disk List: $disklist"
-
-        $disklist | ForEach-Object {
-            $disk = $_
-            $disknumber = $disk.Number
-            $null= (echo "select disk $disknumber" "attributes disk clear readonly" | diskpart)
-            if ($disk.IsReadOnly -ne $False) {
-                Set-Disk -Number $disk.Number -IsReadOnly $False -ErrorAction SilentlyContinue
-                Start-Sleep 2
-            }
-            
-            if ($disk.IsOffline -ne $False) {
-                Set-Disk -Number $disk.Number -IsOffline $False -ErrorAction SilentlyContinue
-                Start-Sleep 2
-            }
-            
-            if ($disk.PartitionStyle -eq 'RAW') {
-                Set-Disk -Number $disk.Number -PartitionStyle GPT -ErrorAction SilentlyContinue
-                Start-Sleep 2
-            }
-        }
-
-        # If access path does not exist, only then add the access path
-        $datadisks = ($disklist | Where-Object { $dataSerials.Contains($_.SerialNumber) })
-        $logdisks = ($disklist | Where-Object { $logSerials.Contains($_.SerialNumber) })
-
-        $datadisknumbers = @()
-        $dataPartitions = @()
-
-        $logdisknumbers = @()
-        $logPartitions = @()
-
-        $datadisks | ForEach-Object {
-            $datadisknumber = $_.Number
-            
-            $dataPartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
-
-            $null = $dataPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-
-            Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel
-
-            $datadisknumbers += $datadisknumber
-            $dataPartitions += $dataPartition
-        }
-
-        $logdisks | ForEach-Object {
-            $logdisknumber += $_.Number
-
-            $logPartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
-
-            $null = $logPartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-
-            Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
-
-            $logdisknumbers += $logdisknumber
-            $logPartitions += $logPartition
-        }
-
-        try {
-            $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
-
-            if ($clusterServiceStatus -eq 'Running') {
-                # Add new disks to Cluster Storage
-                #In some cases onlining disk and setting Filesystem label fails and volume returns empty in PS cmdlet. Fail check with diskpart
-
-                foreach ($datadisk in $datadisks) {
-                    if ($datadisk.IsOffline -ne $False) {
-                        $null= (echo "select disk $datadisk.Number" "select partition 2" "select volume" "online vol" | diskpart)
-                        Start-Sleep 20 
-                    }
-                }
-
-                foreach ($logdisk in $logdisks) {
-                    if ($logdisk.IsOffline -ne $False) {
-                        $null= (echo "select disk $logdisk.Number" "select partition 2" "select volume" "online vol" | diskpart)
-                        Start-Sleep 20 
-                    }
-                }
-
-                $clusterdatadisks = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
-                $clusterlogdisks = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
-
-                if ([string]::IsNullOrEmpty($clusterdatadisks)) {
-                    $availabledatadisks = Get-Disk | Where-Object { $datadisknumbers.Contains($_.Number) }
-                    $clusterdatadisks = ($availabledatadisks | Add-ClusterDisk -ErrorAction stop)
-                }
-
-                if ([string]::IsNullOrEmpty($clusterlogdisks)) {
-                    $availablelogdisks = Get-Disk | Where-Object { $logdisknumbers.Contains($_.Number) }
-                    $clusterlogdisks = ($availablelogdisks | Add-ClusterDisk -ErrorAction stop)
-                }
-                write-information "$logPrefix ClusterDataDisks: $clusterdatadisks ClusterLogDisks: $clusterlogdisks"
-
-                try {
-                    $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($instanceName)")
-                    $SQLGroup = $SQLRoleGroup[0]
-
-                    foreach ($clusterdatadisk in $clusterdatadisks) {
-                        if ($clusterdatadisk.OwnerGroup -ne $SQLGroup) {
-                            $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
-                        }
-
-                        $ClusterResourceName = ${
-                            instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'
-                        }
-
-                        $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
-
-                        (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
-
-                    }
-
-                    foreach ($clusterlogdisk in $clusterlogdisks) {
-                        if ($clusterlogdisk.OwnerGroup -ne $SQLGroup) {
-                            $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
-                        }
-
-                        $ClusterResourceName = ${
-                            instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'
-                        }
-
-                        $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
-
-                        (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
-                    }
-                }
-                catch {
-                    $responseObject['error'] = $_.Exception.Message
-                    $responseObject['message'] = "Failed to add disks to SQL Server Role dependency in cluster"
-                    return ($responseObject | ConvertTo-Json -Depth 5)
-                    exit 1
-                }
-            }
-        }
-        catch {
-            $responseObject['error'] = $_.Exception.Message
-            $responseObject['message'] = 'Failed to add disks to cluster storage'
-            return ($responseObject | ConvertTo-Json -Depth 5)
-            exit 1
-        }
-        Write-Information "$logPrefix Partition accesspaths: $($datapartition.AccessPaths) $($logpartition.AccessPaths)"
-
-        $dataMountPoints | Sort-Object -Unique | ForEach-Object {
-            $dataMountPoint = $_
-            foreach ($datapartition in $dataPartitions) { 
-                if ($datapartition.AccessPaths -notcontains $dataMountPoint) {
-                    $null = (New-Item -ItemType Directory -Path $dataMountPoint -Force)
-                    $null = Add-PartitionAccessPath -DiskNumber $datapartition.DiskNumber -PartitionNumber ($datapartition).PartitionNumber -AccessPath $dataMountPoint -ErrorAction stop
-                    $null = (Get-Partition -DiskNumber $datapartition.DiskNumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
-                }
-            }
-        }
-
-        $logMountPoints | Sort-Object -Unique | ForEach-Object {
-            $logMountPoint = $_
-            foreach ($logpartition in $logPartitions) {
-                if ($logpartition.AccessPaths -notcontains $logMountPoint) {
-                    $null = (New-Item -ItemType Directory -Path $logMountPoint -Force)
-                    $null = Add-PartitionAccessPath -DiskNumber $logpartition.DiskNumber -PartitionNumber ($logpartition).PartitionNumber -AccessPath $logMountPoint -ErrorAction stop
-                    $null = (Get-Partition -DiskNumber $logpartition.DiskNumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
-                }
-            }
-        }
-
-        try {
-            Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $datadisknumbers.Contains($_.DiskNumber) -or $logdisknumbers.Contains($_.DiskNumber) } | ForEach-Object {
-                $partition = $_
-                $partition.AccessPaths | ForEach-Object {
-                    $accessPath = $_
-                    Write-Information "$LogPrefix AccessPath: $accessPath"
-                    if ($accessPath) {
-                        $matched = $accessPath -match '^[A-Z]:\\\\$'
-                        Write-Information "$LogPrefix Matched: $matched"
-                        if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
-                            $accessDrive = $matches[0]
-                            $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
-                        }
-                    }
-                }
-            }
-
-            $dataMountPoints | Sort-Object -Unique | ForEach-Object {
-                Get-ChildItem -Path $_ -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
-            }
-
-            $logMountPoints | Sort-Object -Unique | ForEach-Object {
-                Get-ChildItem -Path $_ -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
-            }
-        } catch {
-            $errorMsg = "Failed to remove stale junction paths"
-            Write-Information "$LogPrefix $errorMsg"
-            throw $errorMsg
-        }
-
-        try {
-            $DataFilePath = $dataPaths
-            $LogFilePath = $logPaths
-
-            $responseObject['dataPath'] = @()
-            $responseObject['logPath'] = @()
-
-            ($datafiles + $logfiles) | ForEach-Object {
-                $path = $_.path
-                $fileLeaf = Split-Path -Path $path -Leaf
-
-                $mountPoint = Get-VirtualMountPoint -path $path
-
-                $newFilePath = (Get-ChildItem -Path $mountPoint -Recurse -Filter $DataFileLeaf).FullName
-
-                if (Test-Path $newFilePath) {
-                    $pathType = 'logPath'
-                    if ($path.Contains('\\data\\')) {
-                        $pathType = 'dataPath'
-                    }
-
-                    $responseObject[$pathType] = $newFilePath
-                    Write-Information "$LogPrefix NewFilePaths: $newDataFilePath $newLogFilePath"
-                } else {
-                    throw 
-                }
-            }
-        } catch {
-            $errorMsg = "Failed to validate newpaths $newDataFilePath $newLogFilePath"
-            Write-Information "$LogPrefix $errorMsg"
-            throw $errorMsg
-        }
-        
         ${slqcmdExecutionTemplate}
         $sqlCredential = @{'useSqlAuth' = $False}
         if($sqlAuthEnabled) {
@@ -1615,14 +1231,12 @@ const addAccessPathAndAttachDb = (
         $attachQuery = @"
             IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '$dbname')
             BEGIN
-                CREATE DATABASE $dbname
-                ${[...JSON.parse(datafiles), ...JSON.parse(logfiles)]
-                    .map(file => (file ? `(FILENAME = '${file}')` : ''))
-                    .join()}
+                CREATE DATABASE $dbname ON
+                ${[...JSON.parse(fileArr)].map(file => (file ? `(FILENAME = '${file}')` : '')).join()}
                 FOR ATTACH
             END;
 "@
-        
+
         $attachresponse = $null
         $attachresponse = Call-SqlCmd -SqlCredential $sqlCredential -Query "$attachQuery" -InstanceName "${executableInstance}"
         if ($attachresponse -ne $null) {
@@ -1631,12 +1245,10 @@ const addAccessPathAndAttachDb = (
             throw $errorMessage
         }
     } catch {
-        Write-Information "$logPrefix $($_.Exception.Message)"
-        $responseObject['error'] = $_.Exception.Message
-        return $responseObject | ConvertTo-Json -Depth 5
+        Write-Error "$logPrefix $($_.Exception.Message)"
     }
 
-    return $responseObject | ConvertTo-Json -Depth 5
+    Stop-Transcript | Out-Null
 `;
 
 const splitFlexCloneVolumes = (
@@ -1658,7 +1270,7 @@ const splitFlexCloneVolumes = (
     $responseObject = @{}
 
     try {
-        ${ontapRestRequest()}
+        ${ontapRestRequest}
         ${ontapJobStatusTemplate}
 
         Function Invoke-VolumeSplit {
@@ -1853,7 +1465,7 @@ const getSnapshotsToClone = (
     $responseObject = @{}
 
     try {
-        ${ontapRestRequest(true)}
+        ${ontapRestRequest}
 
         Function Get-VolumeSnapshots {
             write-Information "$logPrefix Getting volume snapshots"
@@ -1908,11 +1520,18 @@ const getSnapshotsToClone = (
         return $responseObject | ConvertTo-Json -Depth 5
     }
 
-    $responseObject | ConvertTo-Json -Depth 5
+    $response = $responseObject | ConvertTo-Json -Depth 5
+    if([string]::IsNullOrEmpty($response)) {
+        Write-Information "Failed to compress the response because the response is either null or empty. $response"
+        return $response
+    }
+    ${compressResponse}
+    return (Deflate-String $response)
 `;
 
 const getConnectionInfo = (instanceName: string, sqlAuthEnabled: boolean) => `
 
+$ProgressPreference = "SilentlyContinue"
 $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
 $sqlCredential = @{'useSqlAuth' = $False}
 
@@ -1937,11 +1556,8 @@ $responseObject | ConvertTo-Json -Depth 5
 
 const invokeVirtualMountScript = (
     dbName: string,
-    dataFilePath: string,
-    logFilePath: string,
-    dataSerial: string,
-    logSerial: string,
-    dbInstanceName: string,
+    fileLunMap: string,
+    instanceName: string = DEFAULT_INSTANCE_NAME,
     isDefaultInstance: boolean,
     logPrefix: string = ''
 ) => `
@@ -1949,24 +1565,21 @@ const invokeVirtualMountScript = (
 $ErrorActionPreference = "Stop"
 
 $DBName = '${dbName}'
-$DataFilePath = '${dataFilePath}' | ConvertFrom-Json
-$LogFilePath = '${logFilePath}' | ConvertFrom-Json
-$DataSerial = '${dataSerial}' | ConvertFrom-Json
-$LogSerial = '${logSerial}' | ConvertFrom-Json
-$DbInstanceName = '${dbInstanceName}'
+$FileLunArr = '${fileLunMap}' | ConvertFrom-Json
+$InstanceName = '${instanceName}'
 $IsDefaultInstance = [System.Convert]::ToBoolean('${isDefaultInstance}')
 $LogPrefix = '${logPrefix}'
 
 $null = (Start-Transcript -Path "C:\\cfn\\log\\invoke_virtualmount_$DBName.log.txt" -Append)
 
-Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
+Write-Information "FileLunArr: $($FileLunArr | ConvertTo-Json -Depth 5)"
 
 try {
     $responseObject = [ordered]@{}
 
-    if ($DataFilePath.Count -eq 0 -or $LogFilePath.Count -eq 0 -or $DataSerial.Count -eq 0) {
-        Write-Information "$LogPrefix DataFilePath: $DataFilePath LogFilePath: $LogFilePath DataSerial: $DataSerial LogSerial: $LogSerial"
-        throw "DataFilePath or LogFilePath or DataSerial is null"
+    if ($FileLunArr.Count -eq 0) {
+        Write-Information "$LogPrefix FileLunArr: $FileLunArr"
+        throw "FileLunArr is empty"
     }
 
     $null = (echo "RESCAN" | diskpart )
@@ -1975,29 +1588,27 @@ try {
     if ($DBName.Length -gt 25) {
         $DBName = $DBName.Substring(0, 25)
     }
-    $datalabel = $DBName + '-Data'
-    $loglabel = $DBName + '-Log'
-
-    $DataDriveLetter = $DataFilePath[0].Substring(0, 1)
-    $LogDriveLetter = $LogFilePath[0].Substring(0, 1)
-    $datafolder = $DataDriveLetter + ':\\' + $datalabel
-    $logfolder = $LogDriveLetter + ':\\' + $loglabel
 
     $retry = 0
+    $lunProcessed = @()
     do {
         $disklist = @()
-        ($DataSerial + $LogSerial) | ForEach-Object {
-            $serial = $_
-            $disklist += (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $serial })
+        ($FileLunArr) | ForEach-Object {
+            $serial = $_.lun
+
+            if (!$lunProcessed.Contains($serial)) {
+                $disklist += (Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE' -and $_.SerialNumber -ceq $serial })
+            }
+            $lunProcessed += $serial
         }
-        $diskcount = $disklist.Number.Count
+
         if ($retry -gt 0) {
             Start-Sleep 20
         }
         $retry++
-    } until (($retry -eq 4) -Or ($diskcount -ge $2))
+    } until (($retry -eq 4) -Or ($disklist.Count -ge $1))
 
-    Write-Information "$LogPrefix Disklist: $disklist"
+    Write-Information "$LogPrefix Disk list count: $($disklist.Count)"
 
     #Adding Silently Continue for Set-Disk as warning caused output to have the string an API considered failure despite success
     #If warning is indeed serious the next step to initialize will fail and that will be caught
@@ -2033,38 +1644,34 @@ try {
         Stop-Service -Name ShellHWDetection
     }
 
-    $null = (New-Item -ItemType Directory -Path $datafolder -Force)
-    $null = (New-Item -ItemType Directory -Path $logfolder -Force)
+    $lunProcessed = @()
+    $FileLunArr | ForEach-Object {
+        if (!$lunProcessed.Contains($_.lun)) {
+            $null = (New-Item -ItemType Directory -Path $_.folderPath -Force)
+        }
+        $lunProcessed += $_.lun
+    }
+    $disksInfo = @()
+    $disklist | ForEach-Object {
+        $disk = $_
+        $diskpartition = Get-Partition -DiskNumber $disk.Number | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
+        $null = $diskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-    $datadisks = ($disklist | Where-Object { $DataSerial.Contains($_.SerialNumber) })
-    $logdisks = ($disklist | Where-Object { $LogSerial.Contains($_.SerialNumber ) })
+        $fileLunData = ($FileLunArr | Where-Object { $_.lun -eq $disk.SerialNumber })[0]
 
-    $datadisknumbers = @()
-    $dataPartitions = @()
-    $logdisknumbers = @()
-    $logPartitions = @()
-    $datadisks | ForEach-Object {
-        $datadisknumber = $_.Number
-        $datadiskpartition = Get-Partition -DiskNumber $datadisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
-        $null = $datadiskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-
-        Get-Partition -DiskNumber $datadisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $datalabel    
-        $datadisknumbers += $datadisknumber
-        $dataPartitions += $datadiskpartition
+        Get-Partition -DiskNumber $disk.Number | Get-Volume | Set-Volume -NewFileSystemLabel $fileLunData.label
+        
+        $disksInfo += @{
+            'Number' = $disk.Number
+            'SerialNumber' = $disk.SerialNumber
+            'partition' = $diskpartition
+            'label' = $fileLunData.label
+            'folderPath' = $fileLunData.folderPath
+            'fileName' = $fileLunData.fileName
+        }
     }
 
-    $logdisks | ForEach-Object {
-        $logdisknumber = $_.Number
-        $logdiskpartition = Get-Partition -DiskNumber $logdisknumber | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
-        $null = $logdiskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
-
-        Get-Partition -DiskNumber $logdisknumber | Get-Volume | Set-Volume -NewFileSystemLabel $loglabel
-        $logdisknumbers += $logdisknumber
-        $logPartitions += $logdiskpartition
-    }
-
-    Write-Information "$LogPrefix DataFolder: $datafolder $logfolder"
-
+    Write-Information "$LogPrefix Disk Info count: $($disksInfo.Count)"
 }
 catch {
     Write-Information "$LogPrefix Error: $($_.Exception)"
@@ -2086,43 +1693,45 @@ try {
         # Add new disks to Cluster Storage
         #In some cases onlining disk and setting Filesystem label fails and volume returns empty in PS cmdlet. Fail check with diskpart
 
-        foreach ($datadisk in $datadisks) {
-            if ($datadisk.IsOffline -ne $False) {
-                $null= (echo "select disk $($datadisk.Number)" "select partition 2" "select volume" "online vol" | diskpart)
-                Start-Sleep 20 
-            }    
-        }
-        
-        foreach ($logdisk in $logdisks) {
-            if ($logdisk.IsOffline -ne $False) {
-                $null= (echo "select disk $($logdisk.Number)" "select partition 2" "select volume" "online vol" | diskpart)
-                Start-Sleep 20 
+        foreach ($diskInfo in $disksInfo) {
+            if ($diskInfo.IsOffline -ne $False) {
+                $null= (echo "select disk $($diskInfo.Number)" "select partition 2" "select volume" "online vol" | diskpart)
+                Start-Sleep 5
             }
         }
 
-        $clusterdatadisks = Get-ClusterResource -Name $datalabel -ErrorAction SilentlyContinue
-        $clusterlogdisks = Get-ClusterResource -Name $loglabel -ErrorAction SilentlyContinue
-
-        if ([string]::IsNullOrEmpty($clusterdatadisks)) {
-            $availabledatadisks = Get-Disk | Where-Object { $datadisknumbers.Contains($_.Number) }
-            $clusterdatadisks = ($availabledatadisks | Add-ClusterDisk -ErrorAction stop)
+        $clusterdisks = @()
+        $disksInfo | ForEach-Object {
+            $disk = $_
+            $clusterdisk = Get-ClusterResource -Name $disk.label -ErrorAction SilentlyContinue
+            if (![string]::IsNullOrEmpty($clusterdisk)) {
+                $clusterdisks += @{ 'SerialNumber' = $disk.SerialNumber; 'disk' = $clusterdisk }
+            }
         }
 
-        if ([string]::IsNullOrEmpty($clusterlogdisks)) {
-            $availablelogdisks = Get-Disk | Where-Object { $logdisknumbers.Contains($_.Number) }
-            $clusterlogdisks = ($availablelogdisks | Add-ClusterDisk -ErrorAction stop)
+        if ($clusterdisks.Count -eq 0) {
+            $diskNumbers = @()
+            $disksInfo | Foreach-object { $diskNumbers += $_.Number }
+            $availabledisks = Get-Disk | Where-Object { $diskNumbers.Contains($_.Number) }
+
+            $availabledisks | ForEach-Object {
+                $availabledisk = $_
+                $clusterdisk = ($availabledisk | Add-ClusterDisk -ErrorAction stop)
+                $clusterdisks += @{ 'SerialNumber' = $availabledisk.SerialNumber; 'disk' = $clusterdisk }
+            }
         }
 
-        Write-Debug "$LogPrefix ClusterDataDisks: $clusterdatadisks ClusterLogDisks: $clusterlogdisks"
+        Write-Information "$LogPrefix Cluster disks count: $($clusterdisks.Count)"
 
         try {
-            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($DbInstanceName)")
+            $SQLRoleGroup = (Get-ClusterGroup).Name -eq ("SQL Server ($InstanceName)")
             $SQLGroup = $SQLRoleGroup[0]
             
-            foreach ($clusterdatadisk in $clusterdatadisks) {
-                
-                if ($clusterdatadisk.OwnerGroup -ne $SQLGroup) {
-                    $null = (Move-ClusterResource -Name $($clusterdatadisk.Name) -Group $SQLGroup)
+            foreach ($clDiskInfo in $clusterdisks) {
+                $clusterdisk = $clDiskInfo.disk
+
+                if ($clusterdisk.OwnerGroup -ne $SQLGroup) {
+                    $null = (Move-ClusterResource -Name $($clusterdisk.Name) -Group $SQLGroup)
                 }
 
                 #     #Add dependency on new disks in SQL Server Resource
@@ -2130,32 +1739,15 @@ try {
                     $ClusterResourceName = "SQL Server"
                 }
                 else {
-                    $ClusterResourceName = "SQL Server ($DbInstanceName)"
+                    $ClusterResourceName = "SQL Server ($InstanceName)"
                 }
 
-                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdatadisk.Name))
+                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterdisk.Name))
 
                 #     #Rename new cluster disks to user friendly name
-                (Get-ClusterResource -Name $($clusterdatadisk.Name)).name = $datalabel
-            }
 
-            foreach ($clusterlogdisk in $clusterlogdisks) {
-                if ($clusterlogdisk.OwnerGroup -ne $SQLGroup) {
-                    $null = (Move-ClusterResource -Name $($clusterlogdisk.Name) -Group $SQLGroup)
-                }
-
-                #     #Add dependency on new disks in SQL Server Resource
-                if ($IsDefaultInstance -eq $True){
-                    $ClusterResourceName = "SQL Server"
-                }
-                else {
-                    $ClusterResourceName = "SQL Server ($DbInstanceName)"
-                }
-
-                $null = (Add-ClusterResourceDependency -Resource $ClusterResourceName -Provider $($clusterlogdisk.Name))
-
-                #     #Rename new cluster disks to user friendly name
-                (Get-ClusterResource -Name $($clusterlogdisk.Name)).name = $loglabel
+                $label = ($FileLunArr | Where-Object { $_.lun -eq $clDiskInfo.SerialNumber } | Select-Object -ExpandProperty label)[0]
+                (Get-ClusterResource -Name $($clusterdisk.Name)).name = $label
             }
         }
         catch {
@@ -2175,67 +1767,62 @@ catch {
 
 try {
     Start-Sleep 5
-    foreach ($dataPartition in $dataPartitions) {
-        if ($dataPartition.AccessPaths -notcontains $datafolder + '\\') {
-            $null = Add-PartitionAccessPath -DiskNumber $dataPartition.DiskNumber -PartitionNumber ($dataPartition).PartitionNumber -AccessPath $datafolder -ErrorAction stop
-            $null = (Get-Partition -DiskNumber $dataPartition.DiskNumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
-        }
-    }
 
-    foreach ($logPartition in $logPartitions) {
-        if ($logPartition.AccessPaths -notcontains $logfolder + '\\') {
-            $null = Add-PartitionAccessPath -DiskNumber $logPartition.DiskNumber -PartitionNumber ($logPartition).PartitionNumber -AccessPath $logfolder -ErrorAction stop
-            $null = (Get-Partition -DiskNumber $logPartition.DiskNumber |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
+
+    foreach ($diskInfo in $disksInfo) {
+        if ($diskInfo.partition.AccessPaths -notcontains $diskInfo.folderPath + '\\') {
+            $null = Add-PartitionAccessPath -DiskNumber $diskInfo.Number -PartitionNumber ($diskInfo.partition).PartitionNumber -AccessPath $diskInfo.folderPath -ErrorAction stop
+            $null = (Get-Partition -DiskNumber $diskInfo.Number |  Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Set-Partition -NoDefaultDriveLetter $true)
         }
     }
-}catch {
+} catch {
         $responseObject['error'] = $_.Exception.Message
         $responseObject['message'] = 'Failed to add access path to disks'
         return ($responseObject | ConvertTo-Json -Depth 5)
         exit 1
-
-    }
+}
 
 try {
-    Get-Partition | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' } | Where-Object { $datadisknumbers.Contains($_.DiskNumber) -or $logdisknumbers.Contains($_.DiskNumber) } | ForEach-Object {
-        $partition = $_
+    $disksInfo | ForEach-Object {
+        $disk = $_
+        $partition = $disk.partition
         $partition.AccessPaths | ForEach-Object {
             $accessPath = $_
+
             Write-Information "$LogPrefix AccessPath: $accessPath"
+
+            $DriveLetter = $disk.folderPath.Substring(0, 2)
+
             if ($accessPath) {
                 $matched = $accessPath -match '^[A-Z]:\\\\$'
+                
                 Write-Information "$LogPrefix Matched: $matched"
-                if ($matched -eq $True -and $accessPath -notcontains $DataDriveLetter -and $accessPath -notcontains $logDriveLetter) {
+                
+                if ($matched -eq $True -and $accessPath -notcontains $DriveLetter) {
                     $accessDrive = $matches[0]
                     $null = ($partition | Remove-PartitionAccessPath -AccessPath $accessDrive)
                 }
             }
         }
-    }
 
-    Get-ChildItem -Path $datafolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
-    Get-ChildItem -Path $logfolder -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+        Get-ChildItem -Path $disk.folderPath -Recurse | where { $_.LinkType -eq 'Junction' } | Remove-Item -Force -Recurse
+    }
 } catch {
     Write-Information "$LogPrefix Failed to remove stale junction paths"
 }
 
 try {
     $responseObject['files'] = @()
-    ($DataFilePath + $LogFilePath) | ForEach-Object {
-        $path = $_
-        $fileLeaf = Split-Path -Path $path -Leaf
-       
-        if ($path.ToLower().Contains('\\data\\')) {
-            $newFilePath = (Get-ChildItem -Path $datafolder -Recurse -Filter $fileLeaf).FullName
-        } else {
-            $newFilePath = (Get-ChildItem -Path $logfolder -Recurse -Filter $fileLeaf).FullName
-        }
+    $FileLunArr | ForEach-Object {
+        $fileLeaf = $_.fileName
+        
+        $newFilePath = (Get-ChildItem -Path $_.folderPath -Recurse -Filter $fileLeaf).FullName
+
         if (Test-Path $newFilePath) {
             $responseObject['files'] += $newFilePath
         } else {
             throw
         }
-        
     }
 
     Write-Information "$LogPrefix NewFilePaths: $($responseObject['dataPath']) $($responseObject['logPath'])"
@@ -2243,8 +1830,8 @@ try {
     $responseObject['error'] = "Failed to validate newpaths $($responseObject['dataPath']) $($responseObject['logPath'])"
 }
 
-
 $responseObject | ConvertTo-Json -Depth 5
+Stop-Transcript | Out-Null
 `;
 
 export {
@@ -2266,5 +1853,6 @@ export {
     getSnapshotsToClone,
     getConnectionInfo,
     invokeVirtualMountScript,
-    getVolumeIdFromPath
+    getVolumeIdFromPath,
+    ontapRestRequest
 };

@@ -64,6 +64,7 @@ export interface ExploreSavingsSliceEntities {
     manualTCOVolumeTypes: any;
     volumeFilledStatus: boolean;
     recommendedTargetInstance: string;
+    snapshotLoading: boolean;
 }
 
 export interface StorageSavingsInterface {
@@ -240,6 +241,7 @@ export interface ViewCalculationsInterface {
         monthlyCostForStorageCapacity?: number | string;
         totalDefaultProvisionedIops?: number | string;
         additionalUserProvisionedIops?: number | string;
+        sumOfDefaultAndAdditionalProvisionedIops?: number | string;
         billedIops?: number | string;
         totalMonthlyCostForProvisionedSsdIops?: number | string;
         fsxwIopsPrice?: number | string;

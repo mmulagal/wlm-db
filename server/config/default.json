@@ -70,6 +70,9 @@
         }
     },
     "db": {
+        "managed-instance":{
+            "update-recommendation-preference": "1d"
+        },
         "tco": {
             "update-recommendation-preference": "1d"
         },
@@ -78,6 +81,13 @@
                 "interval": "24h",
                 "older-than": "90d"
             }
+        },
+        "assessment": {
+            "interval":"24h"
         }
+    },
+    "redis": {
+        "endpoint": "127.0.0.1:6379",
+        "cron-job-interval": "24h"
     }
 }

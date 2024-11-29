@@ -1,5 +1,6 @@
 import { Typography } from '@netapp/design-system';
 import styles from './CardComponentConfig.module.scss';
+import { ReactComponent as ComingSoon } from '../../assets/comingSoon2.svg';
 
 type CC = {
     idToAdd: string;
@@ -9,6 +10,7 @@ type CC = {
     heading: string;
     content: string;
     tickIcon: any;
+    isDisabled?: boolean;
 };
 
 const CardComponentConfig = ({
@@ -18,7 +20,8 @@ const CardComponentConfig = ({
     handleClick,
     heading,
     content,
-    tickIcon
+    tickIcon,
+    isDisabled = false
 }: CC) => {
     return (
         <div className={styles.cardComponent} style={{ width: '50%' }}>
@@ -27,14 +30,31 @@ const CardComponentConfig = ({
                 className={
                     selectedConfigCondition ? `${styles['easy-create']} ${styles['add-border']}` : styles['easy-create']
                 }
-                onClick={handleClick}
+                onClick={isDisabled ? () => {} : handleClick}
             >
                 <div className={styles.level}>
                     <div>{icon}</div>
 
                     <div className={styles['easy-create-content']}>
-                        <div className={styles['easy-create-heading']}>{heading}</div>
-                        <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
+                        <div className={styles.headingContent}>
+                            <div
+                                className={styles['easy-create-heading']}
+                                style={{ color: isDisabled ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                            >
+                                {heading}
+                            </div>
+                            {isDisabled && (
+                                <div className={styles.tagClass}>
+                                    <ComingSoon />
+                                </div>
+                            )}
+                        </div>
+
+                        <Typography
+                            variant="Regular_13"
+                            style={{ color: isDisabled ? 'var(--text-disabled)' : 'var(--text-primary)' }}
+                            className={styles['easy-create-content-text']}
+                        >
                             {content}
                         </Typography>
                     </div>

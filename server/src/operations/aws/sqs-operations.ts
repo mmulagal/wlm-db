@@ -23,7 +23,8 @@ import {
     CF_STACK_RESOURCE_TYPE,
     RESOURCE_SOURCE,
     STORAGE_PROTOCOLS,
-    DatabaseTypes
+    DatabaseTypes,
+    AuditStatus
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -43,8 +44,7 @@ import {
     listEvents,
     updateDeployment,
     upsertDeployment,
-    upsertDatabaseInstance,
-    DatabaseInstanceRecord
+    upsertDatabaseInstance
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getAllInstanceDetails, getMsSqlResourceId, getMssqlInstanceGuid } from '../workloads/mssql/mssql-operations';
@@ -57,6 +57,8 @@ import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
+import { getPgSqlInstanceId } from '../workloads/pgsql/pgsql-operations';
+import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 const logger = getLogger();
 
@@ -134,6 +136,7 @@ async function handleResourceAssociation(
     credentialsId: string,
     resourceId: string,
     resourceName: string,
+    resourceType: string,
     fsxId?: string,
     fsxName?: string
 ) {
@@ -142,6 +145,7 @@ async function handleResourceAssociation(
         credentialsId,
         resourceId,
         resourceName,
+        resourceType,
         fsxId,
         fsxName
     });
@@ -151,7 +155,7 @@ async function handleResourceAssociation(
             {
                 id: resourceId,
                 name: resourceName,
-                type: RESOURCESTYPE.MSSQL as string
+                type: resourceType
             }
         ];
         if (fsxId && fsxName) {
@@ -233,11 +237,18 @@ async function modifyMasterJobStatus(
     }
 
     logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
-    const response = await updateJobDetails(accountId, credentialsId, region, masterJob.id, {
+    const response = await updateJobDetails(accountId, masterJob.id, {
         status: jobStatus,
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
         error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined
     });
+
+    if (jobStatus === JOBSTATUS.FAILED) {
+        updateLongRunningAuditGroup(AuditStatus.FAILED, [...new Set(combinedErrors)].join(','));
+    } else if (jobStatus === JOBSTATUS.COMPLETED) {
+        updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    }
+
     logger.debug('Update job response:', response);
 }
 
@@ -254,7 +265,8 @@ async function createOrUpdateChildJobs(
     checkEventsOrder: boolean = false,
     stackSqlDeploymentType: string,
     stackName?: string,
-    resourceStatus?: string
+    resourceStatus?: string,
+    dbEngineType?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
     /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
@@ -300,7 +312,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!),
+                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!, dbEngineType),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -331,7 +343,7 @@ async function createOrUpdateChildJobs(
                 childJobName: childJob.name,
                 jobStatus
             });
-            const response = await updateJobDetails(accountId, credentialsId, region, childJob.id, {
+            const response = await updateJobDetails(accountId, childJob.id, {
                 status: jobStatus,
                 error: jobStatus === JOBSTATUS.FAILED ? [...new Set(combinedErrors)].join(',') : undefined,
                 endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
@@ -360,7 +372,7 @@ async function processCloudFormationMessages() {
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (!isEmpty(sqsMessages)) {
-                logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
+                logger.debug(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages });
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
@@ -395,7 +407,12 @@ async function processCloudFormationMessages() {
                                         Metrics: trackMetrics
                                     } = resourceProperties;
 
-                                    const trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+                                    let trackMetricsJson = {};
+                                    try {
+                                        trackMetricsJson = convertMetricsIntoJson(trackMetrics);
+                                    } catch {
+                                        logger.error('Failed to convert metrics to object', trackMetrics);
+                                    }
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
                                     try {
@@ -492,16 +509,10 @@ async function processCloudFormationMessages() {
                                                         masterJob.id,
                                                         masterJobName
                                                     );
-                                                    const response = await updateJobDetails(
-                                                        accountId,
-                                                        credentialsId,
-                                                        region,
-                                                        masterJob.id,
-                                                        {
-                                                            status: JOBSTATUS.COMPLETED,
-                                                            endTime: new Date(messageTimestamp).valueOf()
-                                                        }
-                                                    );
+                                                    const response = await updateJobDetails(accountId, masterJob.id, {
+                                                        status: JOBSTATUS.COMPLETED,
+                                                        endTime: new Date(messageTimestamp).valueOf()
+                                                    });
                                                     logger.debug('Update master job response:', response);
 
                                                     const {
@@ -560,6 +571,11 @@ async function processCloudFormationMessages() {
                                                         node2InstanceId
                                                     );
 
+                                                    const resourceType =
+                                                        trackdatabaseType === 'Microsoft SQL server'
+                                                            ? RESOURCESTYPE.MSSQL
+                                                            : RESOURCESTYPE.PGSQL;
+
                                                     await createResource(accountId, {
                                                         resourceId,
                                                         credentialsId,
@@ -567,7 +583,7 @@ async function processCloudFormationMessages() {
                                                         resourceName,
                                                         cloudProviderAccountId,
                                                         cloudProviderName: CloudProviders.AWS,
-                                                        resourceType: RESOURCESTYPE.MSSQL,
+                                                        resourceType,
                                                         coRelationId: fsxId,
                                                         region,
                                                         metadata: {
@@ -576,11 +592,18 @@ async function processCloudFormationMessages() {
                                                             node2InstanceId,
                                                             sqlDeploymentType,
                                                             stackname,
-                                                            activeDirectoryName,
-                                                            activeDirectoryAddress,
+                                                            ...(resourceType === RESOURCESTYPE.MSSQL && {
+                                                                activeDirectoryName
+                                                            }),
+                                                            ...(resourceType === RESOURCESTYPE.MSSQL && {
+                                                                activeDirectoryAddress
+                                                            }),
                                                             fsxSvmId,
                                                             source: RESOURCE_SOURCE.DEPLOY,
-                                                            storageProtocol: STORAGE_PROTOCOLS.ISCSI
+                                                            storageProtocol:
+                                                                resourceType === RESOURCESTYPE.MSSQL
+                                                                    ? STORAGE_PROTOCOLS.ISCSI
+                                                                    : STORAGE_PROTOCOLS.NFS
                                                         }
                                                     });
 
@@ -589,6 +612,7 @@ async function processCloudFormationMessages() {
                                                         credentialsId,
                                                         resourceId,
                                                         resourceName,
+                                                        resourceType,
                                                         fsxId,
                                                         fsxName
                                                     );
@@ -597,12 +621,15 @@ async function processCloudFormationMessages() {
                                                         nodeIds.push(node2InstanceId);
                                                     }
                                                     try {
-                                                        const deployedInstances = await getAllInstanceDetails(
-                                                            credentialsId,
-                                                            region,
-                                                            nodeIds,
-                                                            accountId
-                                                        );
+                                                        const deployedInstances =
+                                                            resourceType === RESOURCESTYPE.MSSQL
+                                                                ? await getAllInstanceDetails(
+                                                                      credentialsId,
+                                                                      region,
+                                                                      nodeIds,
+                                                                      accountId
+                                                                  )
+                                                                : [{ instanceName: 'DEFAULT' }];
 
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
@@ -611,36 +638,60 @@ async function processCloudFormationMessages() {
 
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
-                                                                const isDefaultInstance = !instanceName.includes('$');
-                                                                const modifiedInstanceName = instanceName.includes('$')
-                                                                    ? instanceName.replace(/^.+\$/, '')
-                                                                    : instanceName;
-
-                                                                const sqlInstanceGuid = await getMssqlInstanceGuid(
-                                                                    accountId,
-                                                                    credentialsId,
-                                                                    region,
-                                                                    getDatabaseInstanceName(
-                                                                        instanceName,
-                                                                        isDefaultInstance
-                                                                    ),
-                                                                    nodeIds
-                                                                );
-
-                                                                const instanceDetails: DatabaseInstanceRecord = {
+                                                                const instanceDetails: any = {
                                                                     credentialsId,
                                                                     resourceId,
                                                                     region,
-                                                                    databaseInstanceId: sqlInstanceGuid,
-                                                                    databaseInstanceName: modifiedInstanceName,
                                                                     fsxnIds: fsxId,
-                                                                    isDefault: isDefaultInstance,
                                                                     source: RESOURCE_SOURCE.DEPLOY,
                                                                     fsxSvmId: { [fsxId]: fsxSvmId },
                                                                     sqlDeploymentType,
-                                                                    databaseType: DatabaseTypes.MS_SQL_SERVER,
-                                                                    storageProtocol: STORAGE_PROTOCOLS.ISCSI
+                                                                    databaseType:
+                                                                        resourceType === RESOURCESTYPE.MSSQL
+                                                                            ? DatabaseTypes.MS_SQL_SERVER
+                                                                            : DatabaseTypes.PG_SQL,
+                                                                    storageProtocol:
+                                                                        resourceType === RESOURCESTYPE.MSSQL
+                                                                            ? STORAGE_PROTOCOLS.ISCSI
+                                                                            : STORAGE_PROTOCOLS.NFS
                                                                 };
+
+                                                                if (resourceType === RESOURCESTYPE.MSSQL) {
+                                                                    const isDefaultInstance =
+                                                                        !instanceName.includes('$');
+                                                                    const modifiedInstanceName = instanceName.includes(
+                                                                        '$'
+                                                                    )
+                                                                        ? instanceName.replace(/^.+\$/, '')
+                                                                        : instanceName;
+
+                                                                    const sqlInstanceGuid = await getMssqlInstanceGuid(
+                                                                        accountId,
+                                                                        credentialsId,
+                                                                        region,
+                                                                        getDatabaseInstanceName(
+                                                                            instanceName,
+                                                                            isDefaultInstance
+                                                                        ),
+                                                                        nodeIds
+                                                                    );
+
+                                                                    instanceDetails.databaseInstanceId =
+                                                                        sqlInstanceGuid;
+                                                                    instanceDetails.databaseInstanceName =
+                                                                        modifiedInstanceName;
+                                                                    instanceDetails.isDefault = isDefaultInstance;
+                                                                } else if (resourceType === RESOURCESTYPE.PGSQL) {
+                                                                    instanceDetails.databaseInstanceId =
+                                                                        await getPgSqlInstanceId(
+                                                                            accountId,
+                                                                            credentialsId,
+                                                                            region,
+                                                                            instanceName,
+                                                                            nodeIds
+                                                                        );
+                                                                    instanceDetails.databaseInstanceName = instanceName;
+                                                                }
 
                                                                 await upsertDatabaseInstance(
                                                                     accountId,
@@ -870,6 +921,7 @@ async function processCloudFormationMessages() {
                                         : JOBSTATUS.FAILED;
 
                                     const { databaseType } = data as JSONObject;
+                                    const dbEngineType = databaseType === 'PostgreSQL server' ? 'PGSQL' : 'SQL';
                                     const masterJobName = `${databaseType} deployment with stack ${stackName}`;
                                     const masterJob = await getMatchingMasterJob(
                                         accountId,
@@ -899,7 +951,8 @@ async function processCloudFormationMessages() {
                                             false,
                                             stackSqlDeploymentType!,
                                             stackName,
-                                            resourceStatus
+                                            resourceStatus,
+                                            dbEngineType
                                         );
                                     }
                                     /**
@@ -1103,7 +1156,8 @@ async function processCloudFormationMessages() {
                                             true,
                                             stackSqlDeploymentType!,
                                             stackName,
-                                            resourceStatus
+                                            resourceStatus,
+                                            dbEngineType
                                         );
                                     }
                                 }

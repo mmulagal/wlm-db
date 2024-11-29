@@ -4,7 +4,6 @@ import Home from './Home';
 import { BlueXPListeners, ThemeProvider, postBlueXPMessage } from '@netapp/design-system';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
-import FullStoryComp from './common/FullStoryComp';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
 import { useEffect, useRef } from 'react';
 
@@ -30,7 +29,6 @@ function App() {
     return (
         <>
             <ThemeProvider isIframe={true} theme={isDarkTheme ? 'dark' : 'light'}>
-                <FullStoryComp />
                 {loading && (
                     <div className="App">
                         <ComponentLoader style={{ margin: '0 auto' }} />

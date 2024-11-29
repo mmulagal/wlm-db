@@ -10,7 +10,8 @@
         "platform": "windows",
         "platformDetails": "Windows with SQL Server Enterprise",
         "state": "available",
-        "hypervisor": "xen"
+        "hypervisor": "xen",
+        "ebsVolumeSize": 150
       },
       {
         "name": "Windows_Server-2022-English-Full-SQL_2017_Standard-2023.05.10",
@@ -22,7 +23,8 @@
         "platform": "windows",
         "platformDetails": "Windows with SQL Server Standard",
         "state": "available",
-        "hypervisor": "xen"
+        "hypervisor": "xen",
+        "ebsVolumeSize": 50
       },
       {
         "name": "Windows_Server-2016-English-Full-SQL_2019_Standard-2023.04.12",
@@ -34,7 +36,8 @@
         "platform": "windows",
         "platformDetails": "Windows with SQL Server Standard",
         "state": "available",
-        "hypervisor": "xen"
+        "hypervisor": "xen",
+        "ebsVolumeSize": 50
       },
       {
         "name": "Windows_Server-2019-English-Full-SQL_2022_Enterprise-2023.07.12",
@@ -46,7 +49,8 @@
         "platform": "windows",
         "platformDetails": "Windows with SQL Server Enterprise",
         "state": "available",
-        "hypervisor": "xen"
+        "hypervisor": "xen",
+        "ebsVolumeSize": 50
       },
       {
         "name": "Windows_Server-2016-English-Full-SQL_2017_Standard-2023.07.12",
@@ -58,7 +62,8 @@
         "platform": "windows",
         "platformDetails": "Windows with SQL Server Standard",
         "state": "available",
-        "hypervisor": "xen"
+        "hypervisor": "xen",
+        "ebsVolumeSize": 50
       }
     ]
 }

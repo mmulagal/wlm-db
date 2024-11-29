@@ -9,18 +9,27 @@ import {
     getVpcSecurityGroups,
     getVpcEndpoints,
     getServicesWithNoEndpoint,
-    getValidationNodeInstanceType,
     enableVpcDnsAttributes,
     isEbsAwsBackupEnabled,
-    getInstanceDetailsByPrivateIp
+    getInstanceDetailsByPrivateIp,
+    getInstanceTypesFromInstanceRequirementsForManagedInstances,
+    getInstanceTypesFromInstanceRequirements,
+    waitForInstanceToBeStopped,
+    instanceTypeChangePreReqs
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/aws/cloud-watch-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
+import {
+    DEFAULT_AWS_CREDENTIALS_ID,
+    DEFAULT_AWS_CREDENTIALS_TYPE,
+    ACCOUNT_ID,
+    TEST_STOPPED_EC2_INSTANCE_ID
+} from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -93,14 +102,6 @@ describe('EC2 Operations', () => {
         expect(response).toBeDefined();
     });
 
-    it('Get validation node instance tyoe', async () => {
-        const response = await getValidationNodeInstanceType(credentialsId, DEFAULT_AWS_REGION, [
-            'availability-zone-1',
-            'availability-zone-2'
-        ]);
-        expect(response).toEqual('t3.micro');
-    });
-
     it('Modify vpc dns attributes', async () => {
         const response = await enableVpcDnsAttributes(credentialsId, DEFAULT_AWS_REGION, 'vpc-123445');
         expect(response).toBeDefined();
@@ -117,5 +118,42 @@ describe('EC2 Operations', () => {
             '10.0.28.145'
         ]);
         expect(response.ec2InstanceId).toBeDefined();
+    });
+
+    it('Get instance types from instance requirements for managed instances', async () => {
+        const response = await getInstanceTypesFromInstanceRequirementsForManagedInstances(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            'i-12345'
+        );
+        expect(response).toBeDefined();
+    });
+
+    it('Get instance types from instance requirements for managed instances', async () => {
+        const response = await getInstanceTypesFromInstanceRequirements(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            ['i-12345'],
+            ['vol-1234s'],
+            'AOAG'
+        );
+        expect(response).toBeDefined();
+    });
+
+    it('Wait for instance to be stopped', async () => {
+        const response = await waitForInstanceToBeStopped(
+            credentialsId,
+            DEFAULT_AWS_REGION,
+            TEST_STOPPED_EC2_INSTANCE_ID
+        );
+        expect(response).toBeTruthy();
+    });
+
+    it('Instance type change pre-reqs', async () => {
+        try {
+            await instanceTypeChangePreReqs(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, ['i-12345']);
+        } catch (error) {
+            expect(error).toBeUndefined();
+        }
     });
 });

@@ -13,7 +13,8 @@ import {
     camelizeKeys,
     fsxStorageCapacityBreakdown,
     convertGiBToBytes,
-    calculateFsxnStorageCapacity
+    calculateFsxnStorageCapacity,
+    getRegionDetails
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -108,11 +109,19 @@ describe(' Secrets Manager string', () => {
 
     it('calculateFsxnStorageCapacity storage capacity breakdown', () => {
         const response = calculateFsxnStorageCapacity(2048, 'fci');
+        // Assert that FSxBufferVolumeSize is 35% of FSxStorageCapacity
+        expect(Math.ceil(response.FSxBufferVolumeSize / 1024)).toEqual(Math.ceil(response.FSxStorageCapacity * 0.35));
         expect(response).toBeDefined();
     });
 
     it('FSx storage capacity breakdown Standalone', () => {
         const response = fsxStorageCapacityBreakdown(convertGiBToBytes(3664), 'standalone');
         expect(response.fsxQuorumVolumeSize).toEqual(0);
+    });
+
+    it('should return region name for region key', () => {
+        expect(getRegionDetails('42').name).toBeDefined();
+        expect(getRegionDetails('42').name).toBe('');
+        expect(getRegionDetails('eu-west-1')).toEqual({ name: 'Europe (Ireland)', code: 'eu-west-1' });
     });
 });

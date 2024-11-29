@@ -1,18 +1,34 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
-import { AWS_REGIONS, DatabaseTypes, RESOURCE_SOURCE, STORAGE_PROTOCOLS, USER_TOKEN } from '../consts';
+import {
+    DatabaseTypes,
+    DEFAULT_INSTANCE_NAME,
+    DEMO_AWS_ACCOUNT_ID,
+    DEMO_DEFAULT_REGION,
+    RESOURCE_SOURCE,
+    STORAGE_PROTOCOLS,
+    USER_TOKEN
+} from '../consts';
 import getLogger from '../logger';
-import { saveFciConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
-import { createDeploymentMockDataInDB, createFileSystemForDemo } from '../../operations/demo-operations';
+import { saveFciConfigurationData, savePGSQLConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
+import {
+    createAssessmentJobMockData,
+    createDeploymentMockDataInDB,
+    createFileSystemForDemo,
+    createOperatingSystemOptimizeJobMockData,
+    createOptimizeJobMockData
+} from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
 import { saveConfig } from '../../operations/database/database-operations';
 import { getAsyncLocalStorageResource } from '../async-local-storage';
-import { listJobs } from '../../lib/database/job';
-import { inventoryDemoData } from './demoInventoryData';
+import { createJobs, listJobs } from '../../lib/database/job';
+import { ASSESMENT_CONFIG_DATA, inventoryDemoData } from './demoInventoryData';
 import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations';
 import { instanceDemoData } from './instancesResponse';
+import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import { AssessmentCategories } from '../continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -70,6 +86,16 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
         configName
     );
     saveConfig(accountId, 'SYSTEM', configName, standaloneData);
+
+    configName = 'PostgreSQL Single Instance deployment';
+    const standalonePostgresData = savePGSQLConfigurationData(
+        'us-east-1',
+        awsAccountId,
+        credentialsId,
+        'standaloneDB',
+        configName
+    );
+    saveConfig(accountId, 'SYSTEM', configName, standalonePostgresData, 'pgsql');
 }
 
 async function createDemoResourcesPerRegion(
@@ -107,46 +133,84 @@ async function createDemoResourcesPerRegion(
         const instances = [
             {
                 resourceId: prodOneResourceId,
-                name: 'SQLServer-Prod-01',
+                hostName: 'SQLServer-Prod-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
-                sqlInstances: ['SQLServer-Prod-01PROD-MarketingCampaigns', 'SQLServer-Prod-01PROD-SupplierManagement']
+                sqlInstances: [
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-MarketingCampaigns' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-SupplierManagement' }
+                ]
             },
             {
                 resourceId: devOneResourceId,
-                name: 'SQLServer-Dev-01',
+                hostName: 'SQLServer-Dev-01',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
-                    'SQLServer-Dev-01DEV-FinancialAccounts',
-                    'SQLServer-Dev-01DEV-EmployeeDirectory',
-                    'SQLServer-Dev-01DEV-InventoryControl',
-                    'SQLServer-Prod-01PROD-SupplierManagement'
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-FinancialAccounts' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-EmployeeDirectory' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-InventoryControl' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01PROD-SupplierManagement' }
                 ]
             },
             {
                 resourceId: devFourResourceId,
-                name: 'SQLServer-Dev-04',
+                hostName: 'SQLServer-Dev-04',
                 protocol: STORAGE_PROTOCOLS.SMB,
-                sqlInstances: ['SQLServer-Dev-04DEV-SalesAnalytics', 'SQLServer-Dev-04DEV-ProjectManagement']
+                sqlInstances: [
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-SalesAnalytics' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-ProjectManagement' }
+                ]
             }
         ];
 
-        instances.forEach(async ({ resourceId, name, protocol, sqlInstances }) => {
-            await createDemoResources(accountId, region, credentialsId, awsAccountId, name, protocol, resourceId);
-
-            sqlInstances.forEach(instanceName => {
-                createDatabaseInstances(
+        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances }) => {
+            await createDemoResources(accountId, region, credentialsId, awsAccountId, hostName, protocol, resourceId);
+            const instanceNames: string[] = [];
+            let instanceIds: string = '';
+            for (const sqlInstance of sqlInstances) {
+                const { sqlInstanceId, sqlInstanceName } = sqlInstance;
+                await createDatabaseInstances(
                     accountId,
                     resourceId,
-                    instanceName,
+                    sqlInstanceName,
+                    sqlInstanceId,
                     credentialsId,
                     region,
                     `fs-${randomize('0', 8)}`,
                     protocol,
                     {}
                 );
-            });
+                const newInstanceName = sqlInstanceName.replace(hostName, '');
+                instanceNames.push(newInstanceName);
+                instanceNames.push(DEFAULT_INSTANCE_NAME);
+                instanceIds += `${sqlInstanceId},`;
+            }
+
+            const optimizeStorageJobMockdata = await createOptimizeJobMockData(
+                accountId,
+                hostName,
+                instanceNames[0],
+                credentialsId,
+                region,
+                instanceIds.split(',')[0],
+                resourceId
+            );
+            await createJobs(accountId, optimizeStorageJobMockdata);
+
+            const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
+                accountId,
+                hostName,
+                instanceNames[0],
+                credentialsId,
+                region,
+                instanceIds.split(',')[0],
+                resourceId
+            );
+            await createJobs(accountId, operatingSystemOptimizeJobMockData);
         });
+        const assessmentJobMockData = await createAssessmentJobMockData(accountId, instances, credentialsId, region);
+        await createJobs(accountId, assessmentJobMockData);
     }
+    return 'Demo Data created';
 }
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {
@@ -156,14 +220,14 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         (item: { name: string }) => item.name === 'DemoDefaultCredential'
     );
     let credentialsId: string;
-    const awsAccountId = randomize('0', 12);
+
     if (matchingCredentials) {
         logger.info('DemoDefaultCredential credential exists', matchingCredentials.credentialsId);
         credentialsId = matchingCredentials.credentialsId;
     } else {
         logger.info('Creating DemoDefaultCredential credentials');
         const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
-        const arn = `arn:aws:iam::${awsAccountId}:role/demo_role`;
+        const arn = `arn:aws:iam::${DEMO_AWS_ACCOUNT_ID}:role/demo_role`;
         const externalId = randomUUID();
         const credentialsName = 'DemoDefaultCredential';
         // create a new  credentials and get the credentials ID
@@ -182,13 +246,10 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
-        createConfigurations(accountId, awsAccountId, credentialsId);
+        createConfigurations(accountId, DEMO_AWS_ACCOUNT_ID, credentialsId);
     }
 
-    const regionCodes = Array.from(AWS_REGIONS.keys());
-    for (const regionCode of regionCodes) {
-        createDemoResourcesPerRegion(accountId, credentialsId, regionCode, awsAccountId);
-    }
+    createDemoResourcesPerRegion(accountId, credentialsId, DEMO_DEFAULT_REGION, DEMO_AWS_ACCOUNT_ID);
 }
 
 async function returnInventorydata(instances?: string[]) {
@@ -222,6 +283,7 @@ async function createDatabaseInstances(
     accountId: string,
     resourceId: string,
     databaseInstanceName: string,
+    databaseInstanceId: string,
     credentialsId: string,
     region: string,
     fsxId: string,
@@ -232,7 +294,7 @@ async function createDatabaseInstances(
         resourceId,
         credentialsId,
         region,
-        databaseInstanceId: randomUUID(),
+        databaseInstanceId,
         databaseInstanceName,
         fsxnIds: fsxId,
         isDefault: false,
@@ -247,6 +309,21 @@ async function createDatabaseInstances(
     };
 
     await upsertDatabaseInstance(accountId, instanceRecord);
+
+    const instanceConfigDataRecord = {
+        account_id: accountId,
+        credentials_id: credentialsId,
+        region,
+        resource_id: resourceId,
+        database_instance_id: databaseInstanceId,
+        creation_time: new Date(Date.now()),
+        config_data_type: AssessmentCategories.STORAGE,
+        config_data: ASSESMENT_CONFIG_DATA
+    };
+
+    await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
+
+    return databaseInstanceId;
 }
 
-export { creadteDemoDBData, returnInventorydata, createConfigurations };
+export { creadteDemoDBData, returnInventorydata, createConfigurations, createDemoResourcesPerRegion };

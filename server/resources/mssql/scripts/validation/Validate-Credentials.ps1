@@ -22,7 +22,10 @@ param(
     [string]$ResourceID,
 
     [Parameter(Mandatory = $true)]
-    [string]$WaitHandler   
+    [string]$WaitHandler,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform
 )
     
 $Failed = $false
@@ -50,6 +53,9 @@ try {
             $Failed = $true
             $FailureReason = '"{0}"' -f "Unable to fetch secret, check secret name $DomainAdminSecretName and access to Secrets Manager"
             Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
+            if ($IsTerraform) {
+                throw $FailureReason
+            }
             Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
             Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
             exit(1)
@@ -68,6 +74,9 @@ try {
             $Failed = $true
             $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
             Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
+            if ($IsTerraform) {
+                throw $FailureReason
+            }
             Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
             Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
             exit(1)
@@ -125,6 +134,9 @@ try {
 catch {
     $FailureReason = '"{0}"' -f "Failed to join domain with provided Active Directory credentials. Exception: $_" 
     Write-Output @{ status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     exit(1)
@@ -136,7 +148,10 @@ if ($Failed -ne $true) {
 }
 else {
     $FailureReason = '"{0}"' -f "Incorrect credentials for $($FailedUsers -join ', ')" 
-    Write-Output @{ status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress       
+    Write-Output @{ status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }       
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     exit(1)
 }

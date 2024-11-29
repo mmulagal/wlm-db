@@ -76,14 +76,6 @@
         "clones": 7448,
         "total": 18377.6
     },
-    "fsxw": {
-        "capacity": 2550,
-        "iops": 4888,
-        "throughput": 0,
-        "snapshots": 3481.6,
-        "clones": 7448,
-        "total": 18377.6
-    },
     "fsx": {
         "capacity": 2560,
         "iops": 315.52,

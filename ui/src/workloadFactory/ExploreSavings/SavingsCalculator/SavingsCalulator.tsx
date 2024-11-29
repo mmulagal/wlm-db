@@ -1,9 +1,8 @@
 import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
-import { DsTypography } from '@netapp/design-system';
+import { BlueXPListeners, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -31,20 +30,18 @@ import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
 import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
-import { useGetManualStorageSavingsMutation, useGetManualViewCalculationsMutation } from '../../../utils/apiService';
 
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
+import WindowFileServer from './WindowFileServer/WindowFileServer';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
-const SavingsCalculator = () => {
+const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     // const [disableState, setDisableState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
-
-    const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
-    const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
 
     const {
         savingsCalculatorFrom,
@@ -59,13 +56,19 @@ const SavingsCalculator = () => {
         disableState
     } = useAppSelector(state => state.exploreSavings);
 
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
-        dispatch(
-            setViewCalculationsResponse(
-                formatViewCalcData(viewCalculationsApiResponse || {}, selectedDeploymentModel, monthlyChangeRate)
-            )
-        );
+        if (viewCalculationsApiResponse) {
+            dispatch(
+                setViewCalculationsResponse(
+                    formatViewCalcData(viewCalculationsApiResponse, selectedDeploymentModel, monthlyChangeRate)
+                )
+            );
+        } else {
+            dispatch(setViewCalculationsResponse(null));
+        }
     }, [recommendedTargetInstance]);
 
     useEffect(() => {
@@ -96,30 +99,53 @@ const SavingsCalculator = () => {
             });
         }, 10);
     };
+
+    const setManualBreadcrumbTitle = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            return 'Custom configuration for EBS';
+        } else {
+            return 'Custom configuration for FSx for Windows';
+        }
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
                 <div className={styles.savingsCalculator} id="export-pdf">
-                    <div className={styles.breadCrumb}>
-                        <BreadCrumbs
-                            items={[
-                                {
-                                    title: GENERAL.ES_SAVINGS,
-                                    onClick: () => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
-                                        dispatch(addExploreSavingsInitialData(null));
+                    {statusCheck ? (
+                        <div className={styles.breadCrumb}>
+                            <BreadCrumbs
+                                items={[
+                                    {
+                                        title: GENERAL.ES_SAVINGS,
+                                        onClick: () => {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
+                                            dispatch(addExploreSavingsInitialData(null));
+                                            postBlueXPMessage({
+                                                type: BlueXPListeners.navigate,
+                                                payload: {
+                                                    pathname: `${
+                                                        isWorkloadFactory
+                                                            ? './explore-savings'
+                                                            : '../../fsxdb/explore-savings'
+                                                    }`,
+                                                    replace: true
+                                                }
+                                            });
+                                        }
+                                    },
+                                    {
+                                        title:
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                                ? setManualBreadcrumbTitle()
+                                                : selectedServerName
                                     }
-                                },
-                                {
-                                    title:
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                            ? 'Explore savings manually'
-                                            : selectedServerName
-                                }
-                            ]}
-                        />
-                    </div>
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        <div style={{ marginBottom: '40px' }}></div>
+                    )}
 
                     <div className={styles.savingsHeading}>
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
@@ -135,13 +161,15 @@ const SavingsCalculator = () => {
                                     : styles.firstContainer
                             }
                         >
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO && (
+                            {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                 <>
                                     <SavingsHeader />
                                     <SavingsSelection printState={printState} />
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
-                                    <SelectedVolumeSummary />
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <SelectedVolumeSummary />}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && <WindowFileServer />}
                                 </>
                             )}
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (

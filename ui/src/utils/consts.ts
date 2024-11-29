@@ -6,6 +6,11 @@ export const AUTH_STATUS = {
     AUTH_STATUS_PROGRESS: 'AUTH_PROGRESS'
 };
 
+export const WIZARD_TYPE = {
+    PGSQL: 'pgsql',
+    MSSQL: 'mssql'
+};
+
 //Environments names should be aligned with .env files
 export const PRODUCTION = 'PRODUCTION';
 export const STAGING = 'STAGING';
@@ -27,6 +32,7 @@ export const FSXADMIN = 'fsxadmin';
 // Default database name
 export const SQL_DATABASE = 'sqldatabase';
 export const SQL_USERNAME = 'sqlsa';
+export const POSTGRE_USERNAME = 'postgres';
 
 // Active Directory scenario type
 export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
@@ -42,7 +48,7 @@ export const DEFAULT_MASTER_KEY = 'aws/fsx';
 export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
 // Add credentials link
-export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
+export const CREDENTIAL_STAGE_LINK = 'https://staging.console.bluexp.netapp.com/credentials/wlf';
 export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
 
 // Add WF credentials link
@@ -111,6 +117,11 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh'
 };
 
+export const DBType = {
+    POSTGRESQL: 'PostgreSQL',
+    MSSQL: 'Microsoft SQL Server'
+};
+
 export const API_NAME = {
     REGION: 'region',
     VPC: 'vpc',
@@ -128,7 +139,9 @@ export const API_NAME = {
 
 export const FSX_DEPLOYMENT_MODE = {
     SINGLE_AZ_1: 'SINGLE_AZ_1',
-    MULTI_AZ_1: 'MULTI_AZ_1'
+    MULTI_AZ_1: 'MULTI_AZ_1',
+    SINGLE_AZ_2: 'SINGLE_AZ_2',
+    MULTI_AZ_2: 'MULTI_AZ_2'
 };
 
 export const SQL_DEPLOYMENT_MODE = {
@@ -143,7 +156,7 @@ export const API_ERRORS = {
     POWERSHELL_7: 'PowerShell 7 is required for managing the resource'
 };
 
-export const WLF_TO_PROTECT_NAVIGATE = '../add-working-environment/database-services/mssql/postgress';
+export const WLF_TO_PROTECT_NAVIGATE = '../postgreSQL-deploy-wizard';
 
 export const STATUS_CONST = {
     UP: 'Up',
@@ -160,7 +173,8 @@ export const STATUS_CONST = {
 export const JOB_MONITORING_STATUS = {
     FAILED: 'FAILED',
     IN_PROGRESS: 'IN_PROGRESS',
-    COMPLETED: 'COMPLETED'
+    COMPLETED: 'COMPLETED',
+    WARNING: 'WARNING'
 };
 
 export const JOB_MONITORING_TYPE = {
@@ -168,7 +182,9 @@ export const JOB_MONITORING_TYPE = {
     CREATE_RESOURCE: 'CREATE_RESOURCE',
     CREATE_DATABASE: 'CREATE_DATABASE',
     PREPARE_RESOURCE: 'PREPARE_RESOURCE',
-    SANDBOX: 'SANDBOX'
+    SANDBOX: 'SANDBOX',
+    ASSESSMENT: 'ASSESSMENT',
+    OPTIMIZE: 'OPTIMIZATION'
 };
 
 export const FSXN_STORAGE_PROTOCOLS = {
@@ -178,7 +194,7 @@ export const FSXN_STORAGE_PROTOCOLS = {
 
 export const MAX_SAVED_CONFIG = 100;
 
-export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
+export const WLF_TO_FORM_NAVIGATE = '../mssql-deploy-wizard';
 
 export const FORM_TO_WLF_NAVIGATE = '../databases';
 export const FORM_TO_WLF_NAVIGATE_BLUEXP = '../fsxdb';
@@ -195,13 +211,52 @@ export const CURL_REQ_TEMPLATE = (
     credentialId: string,
     region: string,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
+
+export const PGSQL_CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,
+    token: string,
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/pgsql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/pgsql/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 
 export const CRED_PLACEHOLDERS = {
     ACCOUNT_ID: '<AccountId>',
@@ -280,7 +335,9 @@ export const UI_IDS = {
     WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
     DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
     WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
-    DBP_CODEBOX_CF: 'dbp-codebox-cf'
+    DBP_CODEBOX_CF: 'dbp-codebox-cf',
+    WIZARD_CODEBOX_TF: 'wizard-codebox-tf',
+    DBP_CODEBOX_TF: 'dbp-codebox-tf'
 };
 
 export const WLF_TABS = {
@@ -298,7 +355,8 @@ export const WLF_TABS = {
     MANAGED_HOSTS: 'Managed hosts',
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     UNDETECTED_HOSTS: 'Undetected hosts',
-    REDIRECT_COMPONENT: 'Redirect Component'
+    REDIRECT_COMPONENT: 'Redirect Component',
+    OPTIMIZE: 'Optimize'
 };
 
 export const DRIVE_LETTER_TYPE = {
@@ -316,27 +374,52 @@ export const CREATE_DB_CURL_REQ_TEMPLATE = (
     region: string,
     databaseHostId: any,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 
 export const CREATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
     region: string,
     token: string,
-    payload: any
-) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/sandboxes' \\
---header 'Authorization: Bearer ${token}' \\
---header 'Content-Type: application/json' \\
---data-raw '${payload}'
-`;
-
+    payload: any,
+    isWorkloadFactory: boolean | any
+) => {
+    if (isWorkloadFactory) {
+        return `
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --data-raw '${payload}'
+        `;
+    } else {
+        return `
+        curl --location --request POST '${baseUrl}/mssql/credentials/${credentialId}/regions/${region}/sandboxes' \\
+        --header 'Authorization: Bearer ${token}' \\
+        --header 'Content-Type: application/json' \\
+        --header 'x-netapp-referer: BlueXP' \\
+        --data-raw '${payload}'
+        `;
+    }
+};
 export const UPDATE_SANDBOX_CURL_REQ_TEMPLATE = (
     baseUrl: string,
     credentialId: string,
@@ -491,6 +574,8 @@ export const OS_VERSIONS_LIST = [
 
 export const SANDBOX_ACTIONS_POLLING_INTERVAL = 5000;
 
+export const OPTIMIZE_POLLING_INTERVAL = 5000;
+
 export const MAX_IOPS_VALUE = 160000;
 
 export const INVENTORY_STATUS = {
@@ -545,7 +630,7 @@ export const PROTECTION_TEXT_STATUS = {
     NO: 'No'
 };
 
-export const PREPARE_API_ENDPOINT = '/mssql/prepare';
+export const PREPARE_API_ENDPOINT = '/prepare';
 
 export const FSX_AZ_TYPE = {
     SINGLE: 'single',
@@ -554,7 +639,8 @@ export const FSX_AZ_TYPE = {
 
 export const SAVINGS_CALC_MODE = {
     MANUAL_EBS: 'Manual_EBS',
-    AUTO: 'Auto',
+    AUTO_EBS: 'Auto_EBS',
+    AUTO_FSXW: 'Auto_FSXW',
     MANUAL_FSXW: 'Manual_FSXW'
 };
 
@@ -582,3 +668,71 @@ export const BXP_MESSAGES = {
     SERVICE_LOCATION_CHANGE: 'SERVICE:LOCATION-CHANGE',
     SERVICE_ON_READY: 'SERVICE:ON-READY'
 };
+
+export const EBS_PROTECTED_OPTIONS = {
+    PROTECTED: 'Protected',
+    UNPROTECTED: 'Unprotected',
+    UNKNOWN: 'Unknown'
+};
+
+export const GETWELL_STATUS = {
+    OPTIMIZED: 'Optimized',
+    NOT_OPTIMIZED: 'Not optimized',
+    UNDER_PROVISIONED: 'Under-provisioned',
+    OVER_PROVISIONED: 'Over-provisioned',
+    OPTIMIZING: 'Optimizing',
+    NOT_APPLICABLE: 'N/A',
+    ANALYZING: 'Analyzing'
+};
+
+export const GETWELL_VALUES: any = {
+    optimized: 'Optimized',
+    optimizing: 'Optimizing',
+    'not-applicable': 'N/A',
+    'not-optimized': 'Not optimized',
+    analyzing: 'Analyzing',
+    'under-provisioned': 'Under-provisioned',
+    'over-provisioned': 'Over-provisioned',
+    separate_drive: 'Separate drive',
+    'separate-drive': 'Separate drive',
+    'same-drive': 'Same drive',
+    same_drive: 'Same drive',
+    critical: 'Critical',
+    warning: 'Warning',
+    none: 'None'
+};
+
+export const GETWELL_CONFIG: any = {
+    'thin-provision': 'Thin provisioning',
+    autosize: 'Autosize',
+    'autosize-mode': 'Autosize-mode',
+    'fractional-reserve': 'Fractional reserve',
+    'snapshot-copy-reserve': 'Snapshot copy reserve',
+    'snapshot-autodelete': 'Snapshot autodelete',
+    'space-mgmt-try-first': 'Space management',
+    'tiering-policy': 'Tiering policy',
+    'tiering-min-cooling-days': 'Tiering minimum cooling days',
+    'os-type': 'OS type',
+    'space-reservation-enabled': 'Space reservation',
+    'space-allocation-allocated': 'Space allocation',
+    'mpio-iscsi-count': 'Multipath I/O Sessions',
+    'mpio-enabled': 'Multipath I/O Status',
+    'mpio-load-balance-policy': 'Multipath I/O Policy',
+    'ntfs-allocation-size': 'NTFS allocation unit size',
+    'ntfs-allocation-unit-size': 'NTFS allocation unit size',
+    'log-drive-size': 'transaction_log_drive_size',
+    'performance-tier': 'storage_tier',
+    'tempdb-drive-size': 'tempdb_drive_size',
+    headroom: 'file_system_headroom',
+    'tempdb-files-location': 'tempdb_files',
+    'default-log-files-location': 'transaction_log_files',
+    'default-data-files-location': 'user_data_files',
+    'compute-rightsizing': 'compute_rightsizing',
+    'operating-system-patch': 'operating_system_patch'
+};
+
+export const GW_CONFIG_OPTIMIZE_NA = [
+    'User data files (.mdf) placement',
+    'Log files (.ldf) placement',
+    'TempDB placement'
+];

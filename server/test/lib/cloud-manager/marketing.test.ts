@@ -13,7 +13,11 @@ import {
     getMarketingApiRequestBody,
     getMarketingApiManualModeRequestBody
 } from '../../../src/operations/cloud-manager/marketing-operations';
-import { ManualModeEbsComparisonResponse, ManualModeMarketingRequestBody } from '../../../src/utils/marketing-types';
+import {
+    AutomaticModeMarketingRequestBody,
+    ManualModeEbsComparisonResponse,
+    ManualModeMarketingRequestBody
+} from '../../../src/utils/marketing-types';
 
 describe('Marketing lib', () => {
     it('Getting storage savings', async () => {
@@ -30,7 +34,7 @@ describe('Marketing lib', () => {
                     monthlyChangeRatePercentage: 30
                 },
                 'AOAG'
-            )
+            ) as AutomaticModeMarketingRequestBody
         );
         expect(response.ebs).toBeDefined();
         expect(response.fsx).toBeDefined();
@@ -61,6 +65,28 @@ describe('Marketing lib', () => {
         expect(response.fsx).toBeDefined();
         expect(response.multi.fsx_calculation).toBeDefined();
     });
+
+    it('Getting FsxW storage savings Automatic', async () => {
+        const response = await getStorageSavings(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            getMarketingApiRequestBody(
+                [],
+                {
+                    snapshotFrequency: 'daily',
+                    clonedCopiesCount: 1,
+                    cloneRefreshFrequency: 'daily',
+                    monthlyChangeRatePercentage: 30
+                },
+                'FCI',
+                ['fs-0f32f6c69fb7e40ac']
+            ) as AutomaticModeMarketingRequestBody
+        );
+        expect(response.fsxw).toBeDefined();
+        expect(response.single?.fsx_calculation).toBeDefined();
+    });
+
     it('Getting storage instances', async () => {
         const response = await getInstanceListFromStorage(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION);
         expect(response.ec2Instances).toBeDefined();

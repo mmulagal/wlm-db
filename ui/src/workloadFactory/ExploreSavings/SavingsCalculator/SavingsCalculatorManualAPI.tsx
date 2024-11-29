@@ -104,7 +104,12 @@ const SavingsCalculatorManualApi = () => {
         try {
             const result = await getManualStorageSavingsApi({
                 regionId: selectedManualRegion?.data?.regionCode,
-                payload: payload
+                payload: payload,
+                type:
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                        ? 'ebs'
+                        : 'fsxw'
             });
             dispatch(setStorageSavingsLoading(false));
             dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
@@ -118,7 +123,12 @@ const SavingsCalculatorManualApi = () => {
         try {
             const result = await getManualViewCalculationsApi({
                 regionId: selectedManualRegion?.data?.regionCode,
-                payload: payload
+                payload: payload,
+                type:
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                        ? 'ebs'
+                        : 'fsxw'
             });
             dispatch(setViewCalculationsApiResponse(result?.data));
             dispatch(

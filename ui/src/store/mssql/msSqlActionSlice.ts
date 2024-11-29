@@ -9,6 +9,7 @@ const initialState: any = {
     activeDirectorySelected: true,
     fsxNNameSelected: true,
     dbNameSelected: true,
+    pgDbNameSelected: true,
     licenseIdSelected: true,
     isLoading: false, // To load page while create or save form or estimate cost
     isLoadConfig: false, // To show loading in load config
@@ -36,7 +37,8 @@ const initialState: any = {
     // Detect Host check - Inventory
     isDetectHostLoading: false, // If Detect host is loading on registerResourceCredentials API call
     isDetectHostError: '', // registerResourceCredentials API throws error
-    databaseHostEntryPoint: ''
+    databaseHostEntryPoint: '',
+    pricingPayload: null
 };
 
 const msSqlActionSlice = createSlice({
@@ -66,6 +68,9 @@ const msSqlActionSlice = createSlice({
         },
         setDBNameValue(state, action: PayloadAction<any>) {
             state.dbNameSelected = action.payload;
+        },
+        setPgDBNameValue(state, action: PayloadAction<any>) {
+            state.pgDbNameSelected = action.payload;
         },
         setIsLoading(state, action: PayloadAction<any>) {
             state.isLoading = action.payload;
@@ -142,6 +147,9 @@ const msSqlActionSlice = createSlice({
         },
         setIsDetectHostError(state, action: PayloadAction<any>) {
             state.isDetectHostError = action.payload;
+        },
+        setPricingPayload(state, action: PayloadAction<any>) {
+            state.pricingPayload = action.payload;
         }
     }
 });
@@ -156,6 +164,7 @@ export const {
     setActiveDirectoryValue,
     setFSXNNameValue,
     setDBNameValue,
+    setPgDBNameValue,
     setIsLoading,
     setLicenseIdValue,
     setIsLoadConfig,
@@ -178,6 +187,7 @@ export const {
     setDbCreateDataSizeValid,
     setDbCreateLogSizeValid,
     setIsDetectHostLoading,
-    setIsDetectHostError
+    setIsDetectHostError,
+    setPricingPayload
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;

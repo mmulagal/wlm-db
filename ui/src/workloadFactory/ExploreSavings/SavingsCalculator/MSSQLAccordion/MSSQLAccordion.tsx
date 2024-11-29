@@ -4,15 +4,15 @@ import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRe
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
-import { FROM_DIALOG, SAVINGS_CALC_MODE, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
+import { FROM_DIALOG, MAX_SAVED_CONFIG, SAVINGS_CALC_MODE, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useDispatch } from 'react-redux';
-import { useSaveConfigDataMutation } from '../../../../utils/apiService';
+import { useGetConfigListQuery, useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
@@ -52,9 +52,20 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
     const [storageType, setStorageType] = useState('');
+    //To get configDatalist
+    const [configData, setConfigData] = useState<any>([]);
+
+    const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+        setConfigData(configDataList || []);
+    }, [configDataList]);
+
+    useEffect(() => {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
             setStorageType(GENERAL.FSX_FOR_WINDOWS);
         } else {
             setStorageType(GENERAL.EBS);
@@ -63,7 +74,10 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
     useEffect(() => {
         let selectedRegion = '';
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
             selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
         } else {
             selectedRegion = selectedManualRegion?.data?.regionName + ' | ' + selectedManualRegion?.data?.regionCode;
@@ -127,7 +141,16 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 content={<SaveConfigSavings description={GENERAL.ES_SAVE_CONFIG_DESC} />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => ExploreSaveConfiguration(dispatch, saveConfigData, closeDialog, msSqlInstance, fsxData)}
+                callback={() =>
+                    ExploreSaveConfiguration(
+                        dispatch,
+                        saveConfigData,
+                        closeDialog,
+                        msSqlInstance,
+                        fsxData,
+                        configRefetch
+                    )
+                }
                 closeCallback={() => {
                     dispatch(setSaveConfigName(''));
                 }}
@@ -161,7 +184,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     selectedHostDetails?.loading ||
                     disableState ||
                     viewCalculationsLoading ||
-                    isMutliFsx
+                    isMutliFsx ||
+                    !storageSavingsResponse
                 }
                 disabledReason={isMutliFsx ? GENERAL.ES_MULTI_FSX_DISABLE_MSG : ''}
                 isExpanded={printState}
@@ -182,19 +206,36 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     ) : (
                         !printState && (
                             <div id="es-save-config">
-                                <DsButton
-                                    type="text"
-                                    isDisabled={
-                                        storageSavingsLoading ||
-                                        selectedHostDetails?.loading ||
-                                        viewCalculationsLoading ||
-                                        isMutliFsx ||
-                                        disableState
-                                    }
-                                    onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
-                                >
-                                    {GENERAL.ES_SAVE_CONFIG}
-                                </DsButton>
+                                {configData?.length >= MAX_SAVED_CONFIG ? (
+                                    <Popover
+                                        popoverClass={styles['popover']}
+                                        children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
+                                        trigger="hover"
+                                        container={
+                                            <div id="es-save-config">
+                                                <DsButton type="text" isDisabled={true}>
+                                                    {GENERAL.ES_SAVE_CONFIG}
+                                                </DsButton>
+                                            </div>
+                                        }
+                                    />
+                                ) : (
+                                    <DsButton
+                                        type="text"
+                                        isDisabled={
+                                            storageSavingsLoading ||
+                                            selectedHostDetails?.loading ||
+                                            viewCalculationsLoading ||
+                                            isMutliFsx ||
+                                            disableState ||
+                                            !storageSavingsResponse ||
+                                            configLoading
+                                        }
+                                        onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
+                                    >
+                                        {GENERAL.ES_SAVE_CONFIG}
+                                    </DsButton>
+                                )}
                             </div>
                         )
                     ),
@@ -208,7 +249,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                     storageSavingsLoading ||
                                     selectedHostDetails?.loading ||
                                     viewCalculationsLoading ||
-                                    disableState
+                                    disableState ||
+                                    !storageSavingsResponse
                                 }
                                 onClick={() => handleCreateClick()}
                             >

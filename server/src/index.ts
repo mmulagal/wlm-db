@@ -46,6 +46,8 @@ import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
 import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
+import continuousOptimizationRoutes from './routes/continuous-optimization';
+
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -62,13 +64,18 @@ import {
     purgeOlderJobs,
     failLongRunningDeploymentJobs,
     failLongRunningResourcePrepareJobs,
-    updateInstanceRecommendationPreferences
+    updateTcoInstanceRecommendationPreferences,
+    scheduledAssessment,
+    updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
+import { REDIS_URL } from './utils/continous-optimization-consts';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+logger.info(`Redis URL ${REDIS_URL}.`);
 
 const { verifyToken, authorizeJwt } = jwtOperation;
 
@@ -100,7 +107,9 @@ interface Headers {
 }
 
 await initiateSecrets();
+logger.info('Secrets initiated');
 
+logger.info('Initializing app');
 const app = fastify({
     trustProxy: true,
     genReqId: () => `WLM-DB-${randomize('Aa0', 8)}`,
@@ -208,6 +217,7 @@ const app = fastify({
             discoverRoutes(instance);
             resourceRoutes(instance);
             storageSavingsRoutes(instance);
+            continuousOptimizationRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }
@@ -257,7 +267,14 @@ const app = fastify({
                             params: request.params,
                             reqBody: request.body,
                             principal: request.headers.principal,
-                            referer: request.headers.referer
+                            referer: request.headers.referer,
+                            headers: JSON.stringify(
+                                request.headers
+                                    ? Object.fromEntries(
+                                          Object.entries(request.headers).filter(([key]) => key.startsWith('x-netapp'))
+                                      )
+                                    : {}
+                            )
                         });
                     }
                     // Added for testing purpose when we want to clear the ssm cache
@@ -306,7 +323,14 @@ const app = fastify({
                 replyBody,
                 reqBody: body,
                 principal: request.headers.principal,
-                referer: request.headers.referer
+                referer: request.headers.referer,
+                headers: JSON.stringify(
+                    request.headers
+                        ? Object.fromEntries(
+                              Object.entries(request.headers).filter(([key]) => key.startsWith('x-netapp'))
+                          )
+                        : {}
+                )
             });
         }
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
@@ -324,7 +348,7 @@ const app = fastify({
         }
         return payload;
     });
-
+logger.info('App initiated');
 // Blocking for simulator
 if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && isActiveInstance()) {
     try {
@@ -335,6 +359,7 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && i
     }
 }
 
+logger.info('Initializing database');
 try {
     initializeDatabase();
     if (isActiveInstance()) {
@@ -343,18 +368,23 @@ try {
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
-
+logger.info('Database initialized');
 // Initialize cron jobs
+
+logger.info('Initializing cron jobs');
 try {
     if (isActiveInstance()) {
         purgeOlderJobs();
         failLongRunningDeploymentJobs();
         failLongRunningResourcePrepareJobs();
-        updateInstanceRecommendationPreferences();
+        updateTcoInstanceRecommendationPreferences();
+        updateManagedInstanceRecommendationPreferences();
+        scheduledAssessment();
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);
 }
+logger.info('Cron jobs initialized');
 
 app.listen({ port, host }, err => {
     if (err) {

@@ -5,14 +5,12 @@ import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { renderAllocatedCapacity, renderCellData } from '../../../Inventory/InventoryUtils';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
@@ -26,6 +24,7 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setRadioValueDetect,
+    setSelectedHeaderTab,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -49,6 +48,8 @@ import { updateResourceId } from '../../../../store/authSlice';
 import {
     detectFieldsValidation,
     getProtectionText,
+    renderAllocatedCapacity,
+    renderCellData,
     saveFsxInCredRegisteredObj,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
@@ -56,6 +57,14 @@ import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
 import useResize from '../../../../common/hooks/useResize';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwDatabaseStorageType,
+    setGwHostname,
+    setGwResourceId,
+    setLandingFrom
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const ManagedHostSubTable = ({
     handleManageInstances
@@ -192,6 +201,21 @@ const ManagedHostSubTable = ({
         dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
+    const optimizeAction = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
+        );
+        dispatch(setGwHostname(hostname));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setGwResourceId(targettedHost?.resourceId));
+        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+        dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
+    };
+
     const resetDialogValues = () => {
         // reset all detect host dialog fields if dialog is closed.
         dispatch(setIsDetectHostError(''));
@@ -207,14 +231,14 @@ const ManagedHostSubTable = ({
         const detectHostRadio = state.inventoryV2.detectHostRadio;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
             handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
-            const manageStartMsg = (
-                <div className={styles.notification}>
-                    {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
-                    <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
-                    {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
-                </div>
-            );
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
+            // const manageStartMsg = (
+            //     <div className={styles.notification}>
+            //         {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
+            //         <span className={styles.bold}>{rowData?.databaseInstanceName}</span>
+            //         {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
+            //     </div>
+            // );
+            // dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {
             const updatedInventoryTableData = updateInstanceStatus('detect', hostData, rowData);
@@ -243,13 +267,13 @@ const ManagedHostSubTable = ({
         } else {
             dispatch(setValuesForForm(false));
             dispatch(setIsDetectHostLoading(true));
-            const sqlServerInstance = rowData?.sqlServerInstance || '';
+            const sqlServerInstance = rowData?.sqlServerInstance || rowData?.databaseInstanceName || '';
             try {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
                     instanceId: hostData?.ec2InstanceId,
-                    payload: createDetectHostPayload(sqlServerInstance, fsxId)
+                    payload: createDetectHostPayload(sqlServerInstance, fsxId, rowData)
                 });
                 if (result && !result?.error) {
                     if (result?.data?.sqlServerError || result?.data?.fsxnError) {
@@ -363,6 +387,12 @@ const ManagedHostSubTable = ({
                     });
                 } else {
                     menu.push(
+                        {
+                            id: 'optimize',
+                            displayName: 'Optimize',
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
                         {
                             id: 'viewInstance',
                             displayName: 'View instance',
@@ -480,6 +510,12 @@ const ManagedHostSubTable = ({
                                     } else if (toggleType === 'selectedOption') {
                                         menuOpenedRowDetail.current = null;
                                         setOpenedRow(null);
+
+                                        if (menuId === 'optimize') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            optimizeAction(rowData);
+                                        }
 
                                         if (menuId === 'manage') {
                                             handleManageInstances(hostData, [rowData?.databaseInstanceName], false);

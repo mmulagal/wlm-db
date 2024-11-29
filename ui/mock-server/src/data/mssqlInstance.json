@@ -1,0 +1,110 @@
+{
+    "databaseInstanceId": "7df2c4ed-0a7b-4ceb-b250-daa3ea8ef23c",
+    "databaseInstanceName": "MSSQLSERVER",
+    "status": "Up",
+    "databaseCount": 8,
+    "databaseServer": {
+        "operatingSystem": "Windows Server 2019",
+        "serverEdition": "SQL Server Standard Edition",
+        "serverVersion": "Microsoft SQL Server 2019",
+        "activeNode": "SQLNODE1-65579",
+        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
+        "activeConnections": 8,
+        "creationDate": "1731043090000",
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "clusterName": "FciClusterName"
+    },
+    "nodeTopology": {
+        "awsAccount": "971010719125",
+        "region": "US East (N. Virginia)",
+        "vpcId": "vpc-84b3ade6",
+        "vpcName": "VPC-1",
+        "vpcCidr": "172.30.0.0/20",
+        "keyPairName": "test_key",
+        "ec2Details": [
+            {
+                "id": "i-OB3UOOK6MSZTF5RDC",
+                "ebsVolumeId": "vol-03a71f23f5a2f64f1",
+                "name": "sqlnode-66127",
+                "nodeStatus": "running",
+                "instanceType": "m6in.16xlarge",
+                "availabilityZone": "availability-zone-4",
+                "subnetId": "subnet-adda86fb"
+            },
+            {
+                "id": "i-F5KCWDQNVGC7U74TK",
+                "ebsVolumeId": "vol-03a70f23f5a2f64f1",
+                "name": "sqlnode-75402",
+                "nodeStatus": "running",
+                "instanceType": "c5a.16xlarge",
+                "availabilityZone": "availability-zone-3",
+                "subnetId": "subnet-adda86eb"
+            }
+        ],
+        "activeDirectoryDetails": {
+            "name": "wlm.com",
+            "address": "33.88.6.139, 148.56.215.111"
+        }
+    },
+    "databaseInstanceTopology": {
+        "serverType": "MSSQL",
+        "serverInstallationMode": "FCI",
+        "fileSystemType": "FSx for ONTAP",
+        "fileSystemId": "fs-37449530",
+        "fileSystemName": "DBSFSX",
+        "fileSystemDeploymentMode": "MULTI_AZ_1",
+        "fileSystemStatus": "AVAILABLE",
+        "fileSystemStorageCapacity": 35840,
+        "fileSystemThroughputCapacity": 512,
+        "fileSystemStorageType": "SSD"
+    },
+    "performance": {
+        "assessment": "Excellent ( <=1 ms )",
+        "rwMetrics": {
+            "latency": {
+                "read": 20,
+                "write": 25,
+                "serverIo": 25
+            },
+            "iops": {
+                "read": 10000,
+                "write": 12000
+            },
+            "throughput": {
+                "read": 300,
+                "write": 100
+            }
+        }
+    },
+    "storage": {
+        "fsxn": {
+            "size": 38482906972160,
+            "used": 29686813949952,
+            "spaceSavings": 9895604649984,
+            "spaceSavingsPercentage": 33.33333333333333,
+            "protocol": ["iSCSI"]
+        }
+    },
+    "resourceUtilization": {
+        "cpu": {
+            "percentUsed": "25",
+            "used": "8589934592",
+            "total": "9895604649984",
+            "remaining": "8589934592"
+        },
+        "memory": {
+            "percentUsed": "50",
+            "used": "8589934592",
+            "total": "17179869184",
+            "remaining": "8589934592"
+        },
+        "disk": {
+            "percentUsed": "25",
+            "used": "2473901162496",
+            "total": "9895604649984",
+            "remaining": "7421703487488",
+            "error": ""
+        }
+    },
+    "sqlServerDeploymentType": "FCI"
+}

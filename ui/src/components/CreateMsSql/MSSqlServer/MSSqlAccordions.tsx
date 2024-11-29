@@ -34,6 +34,7 @@ import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import ResourceRollBack from '../InfrastructureSettings/ResourceRollBack/ResourceRollBack';
 import SqlServerCollation from '../ApplicationSettings/Collation/SqlServerCollation';
 import SnapshotPolicy from '../InfrastructureSettings/SnapshotPolicy/SnapshotPolicy';
+import { WIZARD_TYPE } from '../../../utils/consts';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -122,7 +123,7 @@ const MSSqlAccordions = () => {
                 {/* <MssqlApis /> */}
                 <AwsAccount />
                 <RegionVpc />
-                <AvailabilityZone />
+                <AvailabilityZone wizardType={WIZARD_TYPE.MSSQL} />
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SecurityGroup />}
 
                 <Typography
@@ -144,7 +145,7 @@ const MSSqlAccordions = () => {
                     </>
                 )}
 
-                <DatabaseCredentials />
+                <DatabaseCredentials wizardType={WIZARD_TYPE.MSSQL} />
                 {/* Ends here */}
 
                 <div className={styles['header-buttons']}>
@@ -189,7 +190,7 @@ const MSSqlAccordions = () => {
                         <Encryption />
                         <Tags />
                         <SimpleNotificationService />
-                        <CloudWatch />
+                        <CloudWatch wizardType={WIZARD_TYPE.MSSQL} />
                         <ResourceRollBack />
                     </>
                 )}
@@ -210,7 +211,7 @@ const MSSqlAccordions = () => {
                     </Typography>
                 </>
                 {selectedConfig === SELECT_CONFIG.EASY_CREATE && <PreviewDefault />}
-                <EstimatedCost />
+                <EstimatedCost wizardType={WIZARD_TYPE.MSSQL} />
             </AccordionController>
         </div>
     );

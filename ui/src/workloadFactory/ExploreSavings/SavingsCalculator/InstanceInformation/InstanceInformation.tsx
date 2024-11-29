@@ -5,12 +5,12 @@ import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { FINDINGS } from '../../../../utils/consts';
+import { FINDINGS, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
-    const { storageSavingsResponse, storageSavingsLoading }: any = useAppSelector(state => state.exploreSavings);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
+    const { savingsCalculatorFrom, storageSavingsResponse, storageSavingsLoading, snapshotLoading }: any =
+        useAppSelector(state => state.exploreSavings);
 
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -28,74 +28,44 @@ const InstanceInformation = () => {
 
         setNoOfInstances(selectedHostDetails?.totalInstance || 0);
 
-        if (isInventoryV2) {
-            let instanceTypelist = [];
-            if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
-                instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
-            } else {
-                instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
-            }
-            let serverEdition: any = [];
-            selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
-                if (
-                    perRow?.databaseServer?.serverEdition &&
-                    !serverEdition.includes(perRow?.databaseServer?.serverEdition)
-                ) {
-                    serverEdition.push(perRow?.databaseServer?.serverEdition);
-                }
-            });
-            let data: any = [
-                {
-                    details: 'Instance type',
-                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
-                    id: '1',
-                    findings: findingsComputeData
-                },
-                {
-                    details: 'SQL Edition',
-                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
-                    id: '2',
-                    findings: findingsLicenseData
-                },
-                {
-                    details: 'Deployment model',
-                    value: selectedHostDetails?.serverAllInstallationMode
-                        ? selectedHostDetails?.serverAllInstallationMode.join(', ')
-                        : selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                    id: '3',
-                    findings: findingsDbModel
-                }
-            ];
-            setTableData(data);
+        let instanceTypelist = [];
+        if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+            instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
         } else {
-            let instanceTypelist = [];
-            if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
-                instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
-            } else {
-                instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
-            }
-            let data: any = [
-                {
-                    details: 'Instance type',
-                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
-                    id: '1',
-                    findings: findingsComputeData
-                },
-                {
-                    details: 'SQL Edition',
-                    value: selectedHostDetails?.databaseServer?.serverEdition || GENERAL.NOT_AVAILABLE,
-                    id: '2',
-                    findings: findingsLicenseData
-                },
-                {
-                    details: 'Deployment model',
-                    value: selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                    id: '3',
-                    findings: findingsDbModel
-                }
-            ];
-            setTableData(data);
+            instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
         }
+        let serverEdition: any = [];
+        selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+            if (
+                perRow?.databaseServer?.serverEdition &&
+                !serverEdition.includes(perRow?.databaseServer?.serverEdition)
+            ) {
+                serverEdition.push(perRow?.databaseServer?.serverEdition);
+            }
+        });
+        let data: any = [
+            {
+                details: 'Instance type',
+                value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
+                id: '1',
+                findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
+            },
+            {
+                details: 'SQL Edition',
+                value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
+                id: '2',
+                findings: findingsLicenseData
+            },
+            {
+                details: 'Deployment model',
+                value: selectedHostDetails?.serverAllInstallationMode
+                    ? selectedHostDetails?.serverAllInstallationMode.join(', ')
+                    : selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                id: '3',
+                findings: findingsDbModel
+            }
+        ];
+        setTableData(data);
     }, [selectedHostDetails, storageSavingsResponse]);
 
     const InstanceColDefs: ColumnProps[] = [
@@ -139,13 +109,14 @@ const InstanceInformation = () => {
             id: '3',
             width: '192px',
             renderCell: (cellData: any, rowData: any) => {
-                return !storageSavingsLoading ? (
+                return !storageSavingsLoading && !snapshotLoading ? (
                     <>
-                        {rowData.details === 'Instance type' && (
-                            <div className={styles.instanceTypeTooltip}>
-                                <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
-                            </div>
-                        )}
+                        {rowData.details === 'Instance type' &&
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                                <div className={styles.instanceTypeTooltip}>
+                                    <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
+                                </div>
+                            )}
                         {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
                             <div className={styles.tooltips}>
                                 {rowData.details === 'SQL Edition' && (
@@ -171,6 +142,11 @@ const InstanceInformation = () => {
                             rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) && (
                             <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                         )}
+
+                        {rowData.details === 'Instance type' &&
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
+                                <DsTypography variant="Regular_14">-</DsTypography>
+                            )}
                     </>
                 ) : (
                     <DsFlashingDotsLoader />

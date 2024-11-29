@@ -19,7 +19,10 @@ param (
     [string]$Stackname,
 
     [Parameter(Mandatory=$true)]
-    [string]$Parentstackname 
+    [string]$Parentstackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform 
   
 )
 
@@ -118,20 +121,32 @@ try {
 
 }
     catch [NodeException] {
-    Write-Output "Cluster does not contain both nodes or not in healthy state"
+    $FailureReason = "Cluster does not contain both nodes or not in healthy state"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
 }
 
     catch [ResourceException] {
-    Write-Output "Cluster does not have all the required resources(disk and networking) created."
+    $FailureReason = "Cluster does not have all the required resources(disk and networking) created."
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
 
     catch [SQLFCIException] {
-    Write-Output "SQL FCI configuration failed. SQL server related roles not created or not online"
+    $FailureReason = "SQL FCI configuration failed. SQL server related roles not created or not online"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
@@ -140,7 +155,11 @@ try {
 
 
 catch {
-    Write-Output "SQL FCI validation failed"
+    $FailureReason = "SQL FCI validation failed"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 } 

@@ -23,39 +23,32 @@ const JobMonitoringApi = () => {
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
+    const [lastToken, setLastToken] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
 
     const [skipJobListApiCall, setSkipJobListApiCall] = useState(true);
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
-    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     useEffect(() => {
         setSkipApiCall(true);
         setSkipJobListApiCall(true);
-        if (headerSelectedCred && headerSelectedRegion) {
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
-        }
         setTimeout(() => {
-            if (timeInterval && fromTime && toTime && headerSelectedCred && headerSelectedRegion) {
+            if (timeInterval && fromTime && toTime) {
                 dispatch(setJobsListLoading(false));
                 dispatch(setJobsList([]));
                 setTime({ startTime: fromTime, endTime: toTime });
                 setSkipApiCall(false);
                 setSkipJobListApiCall(false);
+                setJobsCursor(null);
+                setLastToken(null);
             }
         }, 0);
-    }, [fromTime, refreshTime, headerSelectedCred, headerSelectedRegion]);
+    }, [fromTime, refreshTime]);
 
     const { data: jmJobsList, isFetching: jmJobsListLoading } = useGetJobsListQuery(
         {
-            credentialId: credId,
-            region: regionId,
             nextToken: jobsCursor,
             startTime: time?.startTime,
             endTime: time?.endTime
@@ -65,8 +58,6 @@ const JobMonitoringApi = () => {
 
     const { data: jmJobsSummary, isFetching: jmJobsSummaryLoading } = useGetJobsSummaryDataQuery(
         {
-            credentialId: credId,
-            region: regionId,
             startTime: time?.startTime,
             endTime: time?.endTime
         },
@@ -75,8 +66,6 @@ const JobMonitoringApi = () => {
 
     const { data: jobsSummaryTimeline, isFetching: jobsSummaryTimelineLoading } = useGetJobsSummaryTimelineDataQuery(
         {
-            credentialId: credId,
-            region: regionId,
             startTime: time?.startTime,
             endTime: time?.endTime
         },
@@ -90,10 +79,11 @@ const JobMonitoringApi = () => {
             let mergedList = [...oldList, ...newList];
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
-            if (!jmJobsList?.nextToken) {
+            if (!jmJobsList?.nextToken || (jmJobsList?.nextToken && jmJobsList?.nextToken === lastToken)) {
                 dispatch(setJobsListLoading(false));
                 setSkipJobListApiCall(true);
             }
+            setLastToken(jmJobsList?.nextToken || '');
         } else {
             dispatch(setJobsListLoading(true));
         }

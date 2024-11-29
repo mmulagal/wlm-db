@@ -1,4 +1,5 @@
 import { JsonValue } from '@prisma/client/runtime/library';
+import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 
 interface Metadata {
     node1InstanceId: string;
@@ -16,11 +17,13 @@ interface Metadata {
     sandboxCreated?: boolean;
     updatedManually?: boolean;
     storageProtocol?: string;
+    isComputeOptimized?: boolean;
 }
 interface databaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
+    configsOptimized?: any;
 }
 
 interface CreateDbMetrics {
@@ -187,6 +190,8 @@ interface DatabaseInstance {
     databaseType?: string;
     storage_type?: string;
     sqlAuthEnabled?: boolean;
+    isManaged?: boolean;
+    resource: ResourceDetails;
 }
 
 interface InstanceDetails {
@@ -194,6 +199,151 @@ interface InstanceDetails {
     instanceState: string;
     isDefault?: boolean;
     sqlAuthEnabled?: boolean;
+}
+
+interface WorkloadInstance {
+    id: string;
+    name: string;
+    type: string;
+    region: string;
+    sqlAuthEnabled: boolean;
+    fsxFileSystem: string;
+    activeNodeInstanceid: string;
+    mappedVolumeNames?: string[];
+    mappedVolumesUuids?: string[];
+    mappedLunNames?: string[];
+    mappedLunUuids?: string[];
+    cloudProviderAccountId: string;
+    resourceName: string;
+}
+interface LogDriveDetails {
+    lunUuid: string;
+    svmName: string;
+    databaseName: string;
+    logDrivePath: string;
+    dataDrivePath: string;
+    logAccessPath: string;
+    dataAccessPath: string;
+    logDriveLetter: string;
+    dataDriveLetter: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+    logDriveTotalSizeMB: number;
+    dataDriveTotalSizeMB: number;
+}
+
+interface TempDbDriveDetails {
+    lunUuid: string;
+    svmName: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+    tempdbDrivePath: string;
+    tempdbDriveLetter: string;
+    dataDriveTotalSizeMB: number;
+    defaultDataDriveLetter: string;
+    tempdbDriveTotalSizeMB: number;
+}
+interface Sizing {
+    'performance-tier': boolean;
+    'data-log-drive-details': LogDriveDetails[];
+    'data-tempdb-drive-details': TempDbDriveDetails;
+}
+
+interface UserDatabaseLayout {
+    name: string;
+    lunPath: string;
+    lunUuid: string;
+    svmName: string;
+    fileName: string;
+    sizeInMb: number;
+    lunSerialNumber: string;
+    ontapVolumeName: string;
+    ontapVolumeUuid: string;
+}
+interface StorageLayout {
+    'user-database-layout:': { log: [UserDatabaseLayout]; data: [UserDatabaseLayout] };
+    'tempdb-files-location': string;
+    'default-log-files-location': string;
+    'default-data-files-location': string;
+}
+interface StorageAssessment {
+    filesystemId: string;
+    volumes: Array<{ Key?: string; Value?: string }>;
+    luns: Array<{ Key?: string; Value?: string }>;
+    os: Array<{ Key?: string; Value?: string }>;
+    layout: JSON;
+    sizing: Sizing;
+    errors: {
+        volumes: string;
+        luns: string;
+        'volumes-footprint': string;
+        layout: string;
+        sizing: string;
+        'mpio-policy': string;
+        'iscsi-sessions': string;
+        'ntfs-allocation': string;
+    };
+}
+
+interface DriftAssessmentJob {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    resourceId: string;
+    managedInstanceIds: string[];
+}
+interface OntapRequestParams {
+    fsxId: string;
+    region: string;
+    apiEndpoint: string;
+    apiQueryFilter: string;
+}
+interface OptimizeStorageParams extends OntapRequestParams {
+    apiBody: string;
+}
+
+type VolumeSpaceRecord = {
+    uuid: string;
+    name: string;
+    efficiency: {
+        space_savings: {
+            total: number;
+            total_percent: number;
+        };
+    };
+    space: {
+        size: number;
+        used: number;
+    };
+};
+
+interface OptimizeMpioPolicyParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    fsxId: string;
+    instanceId: string;
+    instanceName: string;
+    databaseType: string;
+    sqlAuthEnabled: boolean;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    sqlDeploymentType?: string;
+    activeNodeInstanceId?: string;
+    activeNodeName?: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeName?: string;
+    awsAccountId: string;
+    changeClusterOwnership?: boolean;
+    activeNodeCurrentPolicy?: string;
+    standbyNodeCurrentPolicy?: string;
+    instanceMetadata: any;
+}
+
+interface DatabaseInstancesIncludingResource extends DatabaseInstances {
+    resource: Resource;
 }
 
 export {
@@ -213,5 +363,16 @@ export {
     databaseInstanceMetadata,
     Sandbox,
     DatabaseInstance,
-    InstanceDetails
+    InstanceDetails,
+    WorkloadInstance,
+    LogDriveDetails,
+    TempDbDriveDetails,
+    StorageAssessment,
+    DriftAssessmentJob,
+    OntapRequestParams,
+    OptimizeStorageParams,
+    VolumeSpaceRecord,
+    OptimizeMpioPolicyParams,
+    StorageLayout,
+    DatabaseInstancesIncludingResource
 };

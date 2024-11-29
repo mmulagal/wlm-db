@@ -1,0 +1,151 @@
+.storageCardComponent {
+    height: 88px;
+    box-shadow: 2px 2px 6px var(--grey-15);
+    background-color: var(--content-background);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+
+    .commonSection {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 56px;
+        width: 224px;
+        border-right: 1px solid var(--border);
+
+        .statusTopSection {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+
+            .svgSection {
+                position: relative;
+                left: -4px;
+            }
+        }
+    }
+
+    .firstSection {
+        width: 248px;
+    }
+
+    .thirdSection {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 64px;
+        width: 224px;
+        border-right: 1px solid var(--border);
+    }
+
+    .tooltipContainer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        .tooltip {
+            max-width: 296px;
+        }
+
+        .tooltip:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    .warningMsg {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--warning);
+    }
+
+    .tooltipTable {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        align-self: stretch;
+    }
+
+    .tooltipLevel {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 284px;
+        padding: 8px 0px;
+
+        .tooltipSeparator {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin-bottom: 6px;
+
+            .firstPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .secondPart {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 120px;
+            }
+        }
+    }
+
+    // .fourthSection {
+    //     display: flex;
+    //     flex-direction: column;
+    //     height: 93px;
+    //     width: 330px;
+    //     position: relative;
+    //     top: 5px;
+    // }
+
+    .fourthSection {
+        width: 330px;
+    }
+
+    .separator {
+        height: 56px;
+        border-right: 1px solid var(--border);
+        margin-left: -24px;
+    }
+
+    .buttonSection {
+        width: 170px;
+        display: flex;
+        justify-content: end;
+        [class*='dsButtons'] {
+            height: 32px !important;
+            min-width: 140px !important;
+        }
+
+        .disabled {
+            background-color: var(--grey-15);
+            color: var(--text-primary);
+        }
+    }
+}
+
+.colorSet {
+    div {
+        color: var(--text-primary);
+    }
+}

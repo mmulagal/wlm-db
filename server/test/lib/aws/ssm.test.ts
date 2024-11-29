@@ -4,7 +4,7 @@ import { PutParameterCommandInput } from '@aws-sdk/client-ssm';
 import {
     sendSSMCommand,
     getCommandInvocation,
-    describeFSxOntapRegions,
+    getParametersByPath,
     getConnectionStatus,
     putParameter,
     getParameter
@@ -21,6 +21,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import putParameterResponse from '../../simulator/responses/aws/ssm-put-parameter.json';
 import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
+import { AL2023_AMI_NAME } from '../../../src/utils/consts';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -40,8 +41,14 @@ describe('sendSSMCommand', () => {
     });
 
     it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
-        const response = await describeFSxOntapRegions(DEFAULT_AWS_CREDENTIALS_TYPE);
+        const response = await getParametersByPath(DEFAULT_AWS_CREDENTIALS_TYPE);
         expect(response).toEqual(fsxOntapRegions.Parameters);
+    });
+
+    it('List of AWS AL2023 AMIs', async () => {
+        const response = await getParametersByPath(DEFAULT_AWS_CREDENTIALS_TYPE);
+        const isAMIPresent = response?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
+        expect(isAMIPresent).toBeTruthy();
     });
 
     it('SSM connection status', async () => {

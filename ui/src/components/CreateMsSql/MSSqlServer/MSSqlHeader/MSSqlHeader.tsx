@@ -1,4 +1,4 @@
-import { Button, Header, useDialog, Popover } from '@netapp/design-system';
+import { Button, Header, useDialog, Popover, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
@@ -10,7 +10,7 @@ import {
     useGetConfigListQuery
 } from '../../../../utils/apiService';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
-import { FROM_DIALOG, MAX_SAVED_CONFIG } from '../../../../utils/consts';
+import { FROM_DIALOG, MAX_SAVED_CONFIG, WIZARD_TYPE } from '../../../../utils/consts';
 import {
     LoadConfiguration,
     resetChecksAfterLoad,
@@ -44,7 +44,11 @@ const MSSqlHeader = () => {
     const { refetch: configListRefetch } = useGetConfigListQuery({});
 
     useEffect(() => {
-        if (configData && configData.length > 0) {
+        if (
+            configData &&
+            configData.length > 0 &&
+            configData.some((item: any) => item?.databaseType !== WIZARD_TYPE.PGSQL)
+        ) {
             setIsConfig(true);
         } else {
             setIsConfig(false);
@@ -101,9 +105,20 @@ const MSSqlHeader = () => {
                         if (databaseHostEntryPoint === 'inventory') {
                             navigate('databases/inventory');
                         } else if (databaseHostEntryPoint === 'database') {
-                            navigate('/databases');
+                            if (isWorkloadFactory) {
+                                navigate('/databases');
+                            } else {
+                                navigate('../../fsxdb');
+                            }
                         } else {
-                            navigateToCanvas('/');
+                            if (isWorkloadFactory) {
+                                navigateToCanvas('/');
+                            } else {
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                                });
+                            }
                         }
                     }
                 }}
@@ -117,9 +132,20 @@ const MSSqlHeader = () => {
         if (databaseHostEntryPoint === 'inventory') {
             navigate('databases/inventory');
         } else if (databaseHostEntryPoint === 'database') {
-            navigate('/databases');
+            if (isWorkloadFactory) {
+                navigate('/databases');
+            } else {
+                navigate('../../fsxdb');
+            }
         } else {
-            navigateToCanvas('/');
+            if (isWorkloadFactory) {
+                navigateToCanvas('/');
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                });
+            }
         }
     };
 

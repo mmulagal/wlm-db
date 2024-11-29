@@ -22,7 +22,10 @@
         [string]$ResourceID,
 
         [Parameter(Mandatory=$true)]
-        [string]$WaitHandler 
+        [string]$WaitHandler,
+    
+        [Parameter(Mandatory = $false)]
+        [boolean]$IsTerraform
 )
 
 Start-Transcript -Path C:\cfn\log\Validate-Ami.ps1.txt -Append
@@ -44,6 +47,9 @@ $ValidWindowsVersion = $WindowsVersion -match 'Microsoft Windows Server 201[6-9]
 If($ValidWindowsVersion -ne $true) {
     $FailureReason = "Supported Windows versions are Microsoft Windows Server 2016 and above. Ami windows version: $WindowsVersion"
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
@@ -65,6 +71,9 @@ $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
 If($ValidSqlVersion -ne $true) {
     $FailureReason = "Supported SQL server versions are Microsoft SQL Server 2016 and above. Check if SQL server is installed and is of supported version."
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
@@ -77,6 +86,9 @@ $DomainName = (Get-WmiObject Win32_ComputerSystem).Domain
 if(($Hostname.ToLower() -ne $DomainNetBIOSName.ToLower() ) -and ($DomainName.ToLower() -ne $DomainDNSName.ToLower()) -and ($DomainDNSName.ToLower().Split('.')[0] -ne $DomainName.ToLower())) {
     $FailureReason = "Image was created to be part of domain $DomainName. Domain specified in deployment is $DomainDNSName."
     Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
@@ -91,7 +103,7 @@ If( $SQLDeploymentMode -eq 'fci'){
     else {
         $SQLMediaPath = 'C:\cfn\Installer\SQLServerSetup\setup.exe'
         If (Test-Path -path "C:\SQL*") {
-            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
+            $SQLInstallerPaths = (Get-ChildItem "C:\SQL*\*" -Recurse | where {$_.name -eq "setup.exe"} ).fullname
             If($SQLInstallerPaths -is 'string')
             {
                 $SQLMediaPathAvailable = $True
@@ -104,6 +116,9 @@ If( $SQLDeploymentMode -eq 'fci'){
     if ( $SQLMediaPathAvailable -eq $False) {
         $FailureReason = "Unable to locate SQL installer media path."
         Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+        if ($IsTerraform) {
+            throw $FailureReason
+        }
         Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
         exit(1)

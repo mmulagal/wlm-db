@@ -16,7 +16,7 @@ model deployment {
   deployment_id             String            @db.VarChar(255)
   parent_deployment_id      String?           @db.VarChar(255)
   deployment_name           String            @db.VarChar(255)
-  account_id                String            @db.VarChar(30)
+  account_id                String            @db.VarChar(64)
   cloud_provider_account_id String?           @db.VarChar(80)
   cloud_provider_name       String?           @db.VarChar(30)
   region                    String            @db.VarChar(30)
@@ -37,7 +37,7 @@ model deployment {
 model event {
   id                  String            @id @default(uuid())
   event_id            String            @db.VarChar(255)
-  account_id          String            @db.VarChar(30)
+  account_id          String            @db.VarChar(64)
   deployment_id       String            @db.VarChar(255)
   deployment_name     String            @db.VarChar(255)
   event_status        DEPLOYMENT_STATUS
@@ -55,7 +55,7 @@ model event {
 
 model resource {
   id                        String  @id @default(uuid())
-  account_id                String  @db.VarChar(30)
+  account_id                String  @db.VarChar(64)
   credentials_id            String  @db.VarChar(80) @default("")
   storage_type              STORAGE_TYPE  @default(FSXN)
   resource_id               String  @db.VarChar(255)
@@ -67,6 +67,7 @@ model resource {
   region                    String? @db.VarChar(30)
   metadata                  Json?   @default("{}")
   database_instances        database_instances[]
+  database_instance_config_data database_instance_config_data[]
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
   @@index([resource_id], map: "k_wlmdb_resource_resource_id")
@@ -76,12 +77,13 @@ model resource {
 
 model config {
   id            String   @id @default(uuid())
-  account_id    String   @db.VarChar(30)
+  account_id    String   @db.VarChar(64)
   name          String   @db.VarChar(255)
   user          String   @db.VarChar(255)
   creation_time DateTime @db.DateTime(3)
   data          Json?    @default("{}")
   modified_time DateTime? @updatedAt @db.DateTime(3)
+  database_type DATABASE_TYPE @default(mssql)
 
   @@index([account_id], map: "k_wlmdb_config_account_id")
   @@unique([account_id, name, user], name: "uk_wlmdb_config_account_id_name_user", map: "uk_wlmdb_config_account_id_name_user")
@@ -90,14 +92,14 @@ model config {
 
 model job {
   id                        String    @id @default(uuid())@db.VarChar(40)
-  account_id                String    @db.VarChar(30)
+  account_id                String    @db.VarChar(64)
   credentials_id            String    @db.VarChar(80)
   region                    String    @db.VarChar(30)
   type                      JOBTYPE
   status                    JOBSTATUS
   resource_name             String    @db.VarChar(255)
   name                      String    @db.VarChar(255)
-  description               String?   @db.VarChar(255)
+  description               String?   @db.VarChar(2048)
   error                     String?   @db.Text
   start_time                DateTime  @db.DateTime(3)
   end_time                  DateTime? @db.DateTime(3)
@@ -114,7 +116,7 @@ model job {
 
 model database_instances {
   id                                String            @id @default(uuid())
-  account_id                        String            @db.VarChar(30)
+  account_id                        String            @db.VarChar(64)
   credentials_id                    String            @db.VarChar(80)
   region                            String            @db.VarChar(30)
   resource_id                       String            @db.VarChar(255)
@@ -132,6 +134,7 @@ model database_instances {
   storage_protocol                  String?           @db.VarChar(30)
   fsx_svm_id                        Json     
   metadata                          Json?             @default("{}")
+  database_instance_config_data                  database_instance_config_data[]
 
   resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
 
@@ -145,7 +148,7 @@ model database_instances {
 model tracked_ec2 {
   id                        String   @id @default(uuid()) @db.VarChar(40)
   instance_id               String   @db.VarChar(30)
-  account_id                String   @db.VarChar(30)
+  account_id                String   @db.VarChar(64)
   credentials_id            String   @db.VarChar(80)
   region                    String   @db.VarChar(30)
   feature                   String   @db.VarChar(255)
@@ -157,10 +160,31 @@ model tracked_ec2 {
   @@index([account_id], name: "k_wlmdb_tracked_ec2_account_id")
 }
 
+model database_instance_config_data{
+  id                        String   @id @default(uuid()) @db.VarChar(40)
+  account_id                String   @db.VarChar(64)
+  credentials_id            String   @db.VarChar(80)
+  region                    String   @db.VarChar(30)
+  resource_id               String   @db.VarChar(255)
+  database_instance_id      String   @db.VarChar(36)
+  creation_time                 DateTime @default(now())
+  last_updated              DateTime @default(now())
+  config_data                 Json?    @default("{}")
+  config_data_type            String   @db.VarChar(255)@default("CONFIG")
+  database_instances database_instances @relation(fields: [account_id, credentials_id, resource_id, database_instance_id], references: [account_id, credentials_id, resource_id, database_instance_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instances_unique_criteria")
+  resource resource @relation(fields: [account_id, credentials_id, region, resource_id], references: [account_id, credentials_id, region, resource_id], onDelete: Cascade, onUpdate: Cascade, map: "k_wlmdb_database_instance_config_data_resource_unique_criteria")
+
+  @@unique([account_id, credentials_id, region, database_instance_id, creation_time, config_data_type], name: "uk_wlmdb_database_instance_config_data", map: "uk_wlmdb_database_instance_config_data")
+  @@index([account_id], name: "k_wlmdb_database_instance_config_data_account_id")
+  @@index([credentials_id], map: "k_wlmdb_database_instance_config_data_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_database_instance_config_data_resource_id")
+}
+
 enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED
   FAILED
+  WARNING
 }
 
 enum JOBTYPE {
@@ -168,6 +192,8 @@ enum JOBTYPE {
   CREATE_RESOURCE
   PREPARE_RESOURCE
   SANDBOX
+  ASSESSMENT
+  OPTIMIZATION
 }
 
 enum DEPLOYMENT_STATUS {
@@ -210,4 +236,9 @@ enum SOURCE {
 enum DATABASE_DEPLOYMENT_TYPE {
   Standalone
   FCI
-} 
+}
+
+enum DATABASE_TYPE {
+  mssql
+  pgsql
+}

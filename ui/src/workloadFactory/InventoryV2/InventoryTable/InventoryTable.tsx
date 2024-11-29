@@ -1,13 +1,4 @@
-import {
-    Button,
-    DsFlashingDotsLoader,
-    Popover,
-    Table,
-    TableTopBar,
-    Typography,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { Button, Popover, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -28,28 +19,27 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useDispatch } from 'react-redux';
 
 import { collapseAllRows, expandTableRow, formatSizeTwoPrecision } from '../../../utils/utilityFunctions';
-
-import { setManagedHostColState } from '../../../store/workloadFactory/inventorySlice';
-
-import {
-    installModuleNotification,
-    renderAllocatedCapacity,
-    renderCellData,
-    renderEstimatedCost,
-    renderInstanceListText,
-    renderVpcText
-} from '../../Inventory/InventoryUtils';
 import ManagedHostSubTable from './ManagedHostSubTable/ManagedHostSubTable';
 import ManagedHostDialog from './ManagedHostDialog/ManagedHostDialog';
 import OfflineComponent from './OfflineComponent/OfflineComponent';
 import { onClickESHost } from '../../ExploreSavings/ExploreSavingsUtils';
 
 import {
+    addInstanceIdToGetPerf,
+    checkForAnyAOAG,
+    checkForAnySSD,
+    checkForMixedStorageType,
     getPartnerNodeEc2InstanceId,
     handleManageNotification,
     handleManageTriggerNotification,
+    renderVpcText,
     sortInventoryTableData,
-    updateInstanceStatus
+    updateInstanceStatus,
+    renderInstanceListText,
+    installModuleNotification,
+    renderCellData,
+    renderEstimatedCost,
+    renderAllocatedCapacity
 } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
@@ -58,7 +48,7 @@ import {
     setInProgressInstances,
     setInventoryExpandedRowHostData,
     setInventoryTableData,
-    setUnManagedPerfInstanceIdsList
+    setManagedHostColState
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
@@ -67,7 +57,6 @@ const InventoryTable = () => {
 
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [tableData, setTableData] = useState<any>([]);
 
     const { setDialog, closeDialog } = useDialog();
@@ -79,9 +68,9 @@ const InventoryTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
-    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
-    const isRefreshed = useAppSelector(state => state.inventory.isRefreshed);
+    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const { isDemoMode } = useAppSelector(state => state.auth);
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const [loading, setLoading] = useState(false);
 
@@ -312,30 +301,11 @@ const InventoryTable = () => {
         );
     };
 
-    const addInstanceIdToGetPerf = (rowData: any) => {
-        // First check if this is already opened or closed. If this data is already available or not.
-        if (!unManagedPerfInstanceIdsList.includes(rowData?.ec2InstanceId)) {
-            // If this has unmanaged rows or not ?
-            let unmanagedRows = rowData?.sqlServerInstances?.filter(
-                (per: any) => per?.statusColText === INVENTORY_STATUS.UNMANAGED
-            );
-            if (unmanagedRows && unmanagedRows?.length > 0 && rowData?.ec2InstanceId) {
-                let instanceList = [];
-                instanceList.push(rowData?.ec2InstanceId);
-                const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
-                if (partnerData && partnerData?.length > 0) {
-                    instanceList.push(partnerData?.[0]?.id);
-                }
-                dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
-            }
-            // This has to be called even if any row is becoming unmanaged row or managed row
-        }
-    };
-
     const lastColJSX = (
         rowData: any,
         checkForAllManaged: boolean,
         checkForAllUnDetectInstance: boolean,
+        checkForAllUnDetectOrManageInstance: boolean,
         checkForAllUnManagedInstance: boolean,
         checkForAllFsxnManagedInstance: boolean,
         checkForAllStorageType: boolean
@@ -377,6 +347,19 @@ const InventoryTable = () => {
             );
         }
 
+        //Check for all un-detect or managedinstances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
+            return (
+                <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
+                    <div className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
         //Check for all Explore Savings undetected rows
         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
             return (
@@ -395,14 +378,41 @@ const InventoryTable = () => {
             );
         }
 
-        //Check for all Explore Savings FSXW rows
+        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
         if (
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            checkForAllUnManagedInstance &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS
+            !checkForAllUnDetectInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            checkForAnyAOAG(rowData)
         ) {
             return (
-                <TooltipComponent title={GENERAL.ES_FSXW_NOT_SUPPORTED} placement="bottom" width="320px" height="50px">
+                <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            !checkForAnySSD(rowData)
+        ) {
+            return (
+                <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
+                    <div id="inventory-table-option" className={styles.detectManageDisable}>
+                        <Typography variant="Regular_14" className={styles.textStyle}>
+                            {rowData?.action}
+                        </Typography>
+                    </div>
+                </TooltipComponent>
+            );
+        }
+
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
+            return (
+                <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
                     <div id="inventory-table-option" className={styles.detectManageDisable}>
                         <Typography variant="Regular_14" className={styles.textStyle}>
                             {rowData?.action}
@@ -468,7 +478,7 @@ const InventoryTable = () => {
                     }
                     onClick={() => {
                         if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                            onClickESHost(dispatch, rowData);
+                            onClickESHost(dispatch, rowData, isWorkloadFactory);
                         } else {
                             handleDialog(rowData);
                         }
@@ -514,6 +524,11 @@ const InventoryTable = () => {
                 const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
                 );
+                const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+                    (item: any) =>
+                        item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                        item?.statusColText === INVENTORY_STATUS.MANAGED
+                );
                 const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
                     (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
                 );
@@ -532,6 +547,7 @@ const InventoryTable = () => {
                     rowData,
                     checkForAllManaged,
                     checkForAllUnDetectInstance,
+                    checkForAllUnDetectOrManageInstance,
                     checkForAllUnManagedInstance,
                     checkForAllFsxnManagedInstance,
                     checkForAllStorageType
@@ -557,7 +573,7 @@ const InventoryTable = () => {
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                    addInstanceIdToGetPerf(rowData);
+                                    addInstanceIdToGetPerf(rowData, dispatch);
                                 }}
                             />
                         </div>
@@ -593,7 +609,9 @@ const InventoryTable = () => {
                     <div>
                         {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
                             <>
-                                <Typography variant="Semibold_14">{cellData + ' instances'}</Typography>
+                                <Typography variant="Semibold_14">
+                                    {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
+                                </Typography>
                                 <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
                             </>
                         ) : (

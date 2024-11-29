@@ -8,14 +8,15 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/cloud-manager/fsx-core-scope';
 
-import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { DEFAULT_AWS_REGION, DEFAULT_INSTANCE_NAME } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
     isFsxnAwsBackupEnabled,
     getMappedOntapVolumes,
     tagFsxResource,
-    isFsxwAwsBackupEnabled
+    isFsxwAwsBackupEnabled,
+    updateVolumeSizeAndWaitForUpdate
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
@@ -41,7 +42,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            fsxResponse.volumeMap.volumeUuids,
+            fsxResponse.volumeMap.volumeRecords.map(v => v.uuid),
             fsxResponse.volumeMap.volumeDBMap,
             `i-${faker.string.alpha(17)}`
         );
@@ -53,7 +54,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            fsxResponse.volumeMap.volumeUuids,
+            fsxResponse.volumeMap.volumeRecords,
             fsxResponse.volumeMap.volumeDBMap
         );
         expect(response.master).toBeTruthy();
@@ -66,9 +67,9 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID,
             false,
             undefined,
-            'MSSQLSERVER'
+            [DEFAULT_INSTANCE_NAME]
         );
-        expect(response).toEqual(fsxResponse.volumeMap);
+        expect(response?.[DEFAULT_INSTANCE_NAME]).toEqual(fsxResponse.volumeMap);
     });
 
     it('Tag Ec2 instance', async () => {
@@ -86,5 +87,20 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID
         );
         expect(response).toEqual(true);
+    });
+
+    it('Update FSx volume and wait for update', async () => {
+        try {
+            await updateVolumeSizeAndWaitForUpdate(
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                ACCOUNT_ID,
+                FSX_FILESYSTEM_ID,
+                'fsvol-0b1b3b3b3b3b3b3b3',
+                1048576
+            );
+        } catch (error) {
+            expect(error).toBeUndefined();
+        }
     });
 });

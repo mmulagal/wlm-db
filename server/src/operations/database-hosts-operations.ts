@@ -1,7 +1,13 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import randomize from 'randomatic';
 import numeral from 'numeral';
-import { DescribeInstancesCommandOutput, DescribeVolumesResult, DescribeVpcsCommandInput } from '@aws-sdk/client-ec2';
+import {
+    DescribeInstancesCommandOutput,
+    DescribeVolumesResult,
+    DescribeVpcsCommandInput,
+    DeviceType,
+    Volume
+} from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
@@ -11,8 +17,6 @@ import {
     UsageCostResponseType,
     DatabasesListResponseType,
     StoragePerStorageTypeResponseType,
-    DatabaseHostSummaryPerStorageTypeResponseType,
-    DatabaseHostSummaryPerStorageTypeListResponseType,
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostInstanceSummaryResponseType
 } from '../routes/types/database-hosts.types';
@@ -26,7 +30,6 @@ import {
     HttpErrorCodes,
     RESOURCESTYPE,
     ServerState,
-    SERVER_TYPE_MAPPING,
     STANDALONE,
     FCI,
     AWS_REGIONS,
@@ -36,7 +39,6 @@ import {
     MSSQL_SYSTEM_DATABASES,
     PRICING,
     WLMDB_COST_ALLOCATION_TAG,
-    API_PAGE_SIZE,
     SqlServerDeploymentModel,
     FileSystemTypes,
     CUSTOM,
@@ -48,7 +50,9 @@ import {
     OFFLINE,
     SQL_SERVICE_STATE,
     UNKNOWN,
-    WIN_SQL_EC2_USAGE_OPERATION
+    WIN_SQL_EC2_USAGE_OPERATION,
+    DEFAULT_INSTANCE_NAME,
+    EBS_ROOT_VOLUME
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -67,7 +71,8 @@ import {
     getOntapVolumesSnapshotCount,
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled,
-    getMappedOntapVolumes
+    getMappedOntapVolumes,
+    getStorageDataFromOntap
 } from './aws/fsx-operations';
 import {
     DatabaseInstance,
@@ -76,26 +81,31 @@ import {
     ResourceDetails,
     databaseInstanceMetadata
 } from '../utils/common-types';
-import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
+import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import { convertToBytes, getDatabaseInstanceName, getResourceNameFromTags, isDemo } from '../utils/utils';
+import {
+    getDatabaseInstanceName,
+    getOriginalDatabaseInstanceName,
+    getResourceNameFromTags,
+    isDemo
+} from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 
 const logger = getLogger();
 
-const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
-    0: 'serverDetails',
-    1: 'topology',
-    2: 'performance',
-    3: 'storage',
-    4: 'protection',
-    5: 'billing/pricing',
-    6: 'resourceUtilization'
-};
+// const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
+//     0: 'serverDetails',
+//     1: 'topology',
+//     2: 'performance',
+//     3: 'storage',
+//     4: 'protection',
+//     5: 'billing/pricing',
+//     6: 'resourceUtilization'
+// };
 
 const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
@@ -110,32 +120,20 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     4: 'protection',
     5: 'resourceUtilization',
     6: 'databasesCount',
-    7: 'nodeTopology'
+    7: 'nodeTopology',
+    8: 'storageSavingsFromOntap'
 };
 
 interface MappedOnTapVolumeResponse {
-    volumeUuids: string[];
+    volumeRecords: Record<string, string | number>[];
     volumeDBMap: any;
+    lunNames: string[];
 }
-
-// type VolumeSpaceRecord = {
-//     uuid: string;
-//     name: string;
-//     efficiency: {
-//         space_savings: {
-//             total: number;
-//             total_percent: number;
-//         };
-//     };
-//     space: {
-//         size: number;
-//         used: number;
-//     };
-// };
 
 type EstimationEc2Type = {
     resourceType: string;
     sqlSoftwareType: string;
+    [key: string]: string | number;
 };
 
 type EstimationFSxType = {
@@ -151,8 +149,8 @@ type EstimationFSxType = {
 type EstimationEbsType = {
     id: string;
     size: number;
-    throughput: number;
-    iops: number;
+    throughput?: number;
+    iops?: number;
     volumeType: string;
 }[];
 
@@ -162,215 +160,216 @@ interface BackupType {
 
 const isDemoFlow = isDemo();
 
-async function getTopology(
-    accountId: string,
-    region: string,
-    resourceId: string,
-    resourceData: ResourceDetails,
-    activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string,
-    shouldQueryFullTopology: boolean = false
-): Promise<TopologyResponseType> {
-    logger.info('Fetching topology data', {
-        accountId,
-        region,
-        resourceId,
-        resourceData,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    });
+// getTopology function is unused. Keeping here for reference.
+// async function getTopology(
+//     accountId: string,
+//     region: string,
+//     resourceId: string,
+//     resourceData: ResourceDetails,
+//     activeNodeInstanceId: string,
+//     standbyNodeInstanceId?: string,
+//     shouldQueryFullTopology: boolean = false
+// ): Promise<TopologyResponseType> {
+//     logger.info('Fetching topology data', {
+//         accountId,
+//         region,
+//         resourceId,
+//         resourceData,
+//         activeNodeInstanceId,
+//         standbyNodeInstanceId
+//     });
 
-    if (isEmpty(resourceData)) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `No data found for resource ${resourceId} in account ${accountId}.`
-        );
-    }
+//     if (isEmpty(resourceData)) {
+//         throw createError(
+//             HttpErrorCodes.NOT_FOUND,
+//             `No data found for resource ${resourceId} in account ${accountId}.`
+//         );
+//     }
 
-    const {
-        resource_type: resourceType,
-        co_relation_id: fileSystemId,
-        credentials_id: credentialsId,
-        cloud_provider_account_id: awsAccountId,
-        storage_type: storageType,
-        metadata
-    } = resourceData;
-    const { node1InstanceId, node2InstanceId, activeDirectoryName, activeDirectoryAddress, sqlDeploymentType } =
-        metadata as unknown as Metadata;
+//     const {
+//         resource_type: resourceType,
+//         co_relation_id: fileSystemId,
+//         credentials_id: credentialsId,
+//         cloud_provider_account_id: awsAccountId,
+//         storage_type: storageType,
+//         metadata
+//     } = resourceData;
+//     const { node1InstanceId, node2InstanceId, activeDirectoryName, activeDirectoryAddress, sqlDeploymentType } =
+//         metadata as unknown as Metadata;
 
-    let topologyData: TopologyResponseType = {
-        awsAccount: awsAccountId || '',
-        region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
-        serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
-        serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
-        fileSystemId: fileSystemId!,
-        fileSystemType:
-            storageType !== undefined
-                ? storageType === STORAGE_TYPE.FSXN
-                    ? FileSystemTypes.FSXONTAP
-                    : storageType
-                : '',
-        vpcId: undefined,
-        ec2Details: []
-    };
+//     let topologyData: TopologyResponseType = {
+//         awsAccount: awsAccountId || '',
+//         region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
+//         serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
+//         serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
+//         fileSystemId: fileSystemId!,
+//         fileSystemType:
+//             storageType !== undefined
+//                 ? storageType === STORAGE_TYPE.FSXN
+//                     ? FileSystemTypes.FSXONTAP
+//                     : storageType
+//                 : '',
+//         vpcId: undefined,
+//         ec2Details: []
+//     };
 
-    if (node1InstanceId && shouldQueryFullTopology) {
-        let vpcId;
-        let fileSystemStatus;
-        let fileSystemName;
-        let fileSystemDeploymentMode;
-        let fileSystemStorageCapacity;
-        let fileSystemThroughputCapacity;
-        let subnetIds: Array<string> | undefined;
-        let availabilityZones: Array<string> | undefined;
-        let vpcCidr: string | undefined;
-        let fileSystemTags;
-        try {
-            if (fileSystemId) {
-                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
-                const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
-                ({
-                    VpcId: vpcId,
-                    Tags: fileSystemTags,
-                    OntapConfiguration: {
-                        DeploymentType: fileSystemDeploymentMode = undefined,
-                        ThroughputCapacity: fileSystemThroughputCapacity = undefined
-                    } = {},
-                    Lifecycle: fileSystemStatus,
-                    StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds
-                } = fileSystem);
+//     if (node1InstanceId && shouldQueryFullTopology) {
+//         let vpcId;
+//         let fileSystemStatus;
+//         let fileSystemName;
+//         let fileSystemDeploymentMode;
+//         let fileSystemStorageCapacity;
+//         let fileSystemThroughputCapacity;
+//         let subnetIds: Array<string> | undefined;
+//         let availabilityZones: Array<string> | undefined;
+//         let vpcCidr: string | undefined;
+//         let fileSystemTags;
+//         try {
+//             if (fileSystemId) {
+//                 const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+//                 const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
+//                 ({
+//                     VpcId: vpcId,
+//                     Tags: fileSystemTags,
+//                     OntapConfiguration: {
+//                         DeploymentType: fileSystemDeploymentMode = undefined,
+//                         ThroughputCapacity: fileSystemThroughputCapacity = undefined
+//                     } = {},
+//                     Lifecycle: fileSystemStatus,
+//                     StorageCapacity: fileSystemStorageCapacity,
+//                     SubnetIds: subnetIds
+//                 } = fileSystem);
 
-                fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
+//                 fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
 
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-                const vpcParams: DescribeVpcsCommandInput = {
-                    VpcIds: [vpcId!]
-                };
+//                 const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
+//                     SubnetIds: subnetIds
+//                 });
+//                 availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
+//                 const vpcParams: DescribeVpcsCommandInput = {
+//                     VpcIds: [vpcId!]
+//                 };
 
-                const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
-                vpcCidr = vpc?.CidrBlock;
-                logger.info('availabilityZones', availabilityZones);
-            } else {
-                logger.error(`FSX ID not found for resource ${resourceId}`);
-            }
-        } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`);
-        }
+//                 const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
+//                 vpcCidr = vpc?.CidrBlock;
+//                 logger.info('availabilityZones', availabilityZones);
+//             } else {
+//                 logger.error(`FSX ID not found for resource ${resourceId}`);
+//             }
+//         } catch (error) {
+//             logger.error(`Error while fetching details for fsx. Error: ${error}`);
+//         }
 
-        const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
+//         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
 
-        // Todo: These details can be saved in database as part of metadata and AWS calls can be made incase of not found
-        let ec2InstanceDetails;
-        let keyPairName;
-        let activeInstanceType;
-        let activeAvailabilityZone;
-        let activeSubnetId;
-        let activeVolumeId;
-        let standbyInstanceType;
-        let standbyAvailabilityZone;
-        let standbySubnetId;
-        let standbyVolumeId;
-        let activeNodeInstanceName;
-        let standbyNodeInstanceName;
+//         // Todo: These details can be saved in database as part of metadata and AWS calls can be made incase of not found
+//         let ec2InstanceDetails;
+//         let keyPairName;
+//         let activeInstanceType;
+//         let activeAvailabilityZone;
+//         let activeSubnetId;
+//         let activeVolumeId;
+//         let standbyInstanceType;
+//         let standbyAvailabilityZone;
+//         let standbySubnetId;
+//         let standbyVolumeId;
+//         let activeNodeInstanceName;
+//         let standbyNodeInstanceName;
 
-        if (!isEmpty(activeNodeInstanceId)) {
-            // fetch instance details only if there is atleast one active node
-            try {
-                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
-                const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
-                const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
-                const [activeNode, standbyNode] =
-                    node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
-                if (!isEmpty(activeNode)) {
-                    keyPairName = activeNode.KeyName;
-                    activeInstanceType = activeNode.InstanceType;
-                    activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
-                    activeSubnetId = activeNode.SubnetId;
-                    activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                    activeNodeInstanceName = isDemo()
-                        ? `sqlnode-${randomize('0', 5)}`
-                        : getResourceNameFromTags(activeNode.Tags);
+//         if (!isEmpty(activeNodeInstanceId)) {
+//             // fetch instance details only if there is atleast one active node
+//             try {
+//                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+//                 const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
+//                 const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
+//                 const [activeNode, standbyNode] =
+//                     node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
+//                 if (!isEmpty(activeNode)) {
+//                     keyPairName = activeNode.KeyName;
+//                     activeInstanceType = activeNode.InstanceType;
+//                     activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
+//                     activeSubnetId = activeNode.SubnetId;
+//                     activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+//                     activeNodeInstanceName = isDemo()
+//                         ? `sqlnode-${randomize('0', 5)}`
+//                         : getResourceNameFromTags(activeNode.Tags);
 
-                    if (!isEmpty(standbyNode)) {
-                        standbyInstanceType = standbyNode.InstanceType;
-                        standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
-                        standbySubnetId = standbyNode.SubnetId;
-                        const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
-                        ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                        standbyNodeInstanceName = isDemo()
-                            ? `sqlnode-${randomize('0', 5)}`
-                            : getResourceNameFromTags(standbyNode.Tags);
-                    }
-                }
-            } catch (error) {
-                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
-            }
-        }
-        const activeDirectoryDetails = {
-            name: activeDirectoryName || '',
-            address: activeDirectoryAddress || ''
-        };
-        let vpcName;
-        if (vpcId) {
-            const { Vpcs: [firstVpc = {}] = [] } = await describeVpc(credentialsId, region, {
-                VpcIds: [vpcId]
-            });
-            vpcName = getResourceNameFromTags(firstVpc?.Tags);
-        }
-        // Fetch topology data
-        topologyData = {
-            awsAccount: awsAccountId || '',
-            region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
-            serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
-            serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
-            fileSystemType:
-                storageType !== undefined
-                    ? storageType === STORAGE_TYPE.FSXN
-                        ? FileSystemTypes.FSXONTAP
-                        : storageType
-                    : '',
-            fileSystemId: fileSystemId!,
-            ...(fileSystemName && { fileSystemName }),
-            ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
-            ...(fileSystemStatus && { fileSystemStatus }),
-            ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
-            ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(vpcId && { vpcId }),
-            ...(vpcName && { vpcName }),
-            ...(availabilityZones && { availabilityZones }),
-            ...(vpcCidr && { vpcCidr }),
-            ...(keyPairName && { keyPairName }),
-            ...(activeNodeInstanceId && {
-                ec2Details: [
-                    {
-                        id: activeNodeInstanceId!,
-                        name: activeNodeInstanceName,
-                        ebsVolumeId: activeVolumeId || '',
-                        ...(activeInstanceType && { instanceType: activeInstanceType }),
-                        ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
-                        ...(activeSubnetId && { subnetId: activeSubnetId })
-                    }
-                ]
-            }),
-            ...(activeDirectoryDetails && { activeDirectoryDetails })
-        };
-        if (activeNodeInstanceId && standbyNodeInstanceId) {
-            topologyData.ec2Details?.push({
-                id: standbyNodeInstanceId!,
-                name: standbyNodeInstanceName,
-                ebsVolumeId: standbyVolumeId || '',
-                ...(standbyInstanceType && { instanceType: standbyInstanceType }),
-                ...(standbyAvailabilityZone && { availabilityZone: standbyAvailabilityZone }),
-                ...(standbySubnetId && { subnetId: standbySubnetId })
-            });
-        }
-    }
-    return topologyData;
-}
+//                     if (!isEmpty(standbyNode)) {
+//                         standbyInstanceType = standbyNode.InstanceType;
+//                         standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
+//                         standbySubnetId = standbyNode.SubnetId;
+//                         const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
+//                         ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
+//                         standbyNodeInstanceName = isDemo()
+//                             ? `sqlnode-${randomize('0', 5)}`
+//                             : getResourceNameFromTags(standbyNode.Tags);
+//                     }
+//                 }
+//             } catch (error) {
+//                 logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
+//             }
+//         }
+//         const activeDirectoryDetails = {
+//             name: activeDirectoryName || '',
+//             address: activeDirectoryAddress || ''
+//         };
+//         let vpcName;
+//         if (vpcId) {
+//             const { Vpcs: [firstVpc = {}] = [] } = await describeVpc(credentialsId, region, {
+//                 VpcIds: [vpcId]
+//             });
+//             vpcName = getResourceNameFromTags(firstVpc?.Tags);
+//         }
+//         // Fetch topology data
+//         topologyData = {
+//             awsAccount: awsAccountId || '',
+//             region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
+//             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
+//             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
+//             fileSystemType:
+//                 storageType !== undefined
+//                     ? storageType === STORAGE_TYPE.FSXN
+//                         ? FileSystemTypes.FSXONTAP
+//                         : storageType
+//                     : '',
+//             fileSystemId: fileSystemId!,
+//             ...(fileSystemName && { fileSystemName }),
+//             ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
+//             ...(fileSystemStatus && { fileSystemStatus }),
+//             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
+//             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
+//             ...(vpcId && { vpcId }),
+//             ...(vpcName && { vpcName }),
+//             ...(availabilityZones && { availabilityZones }),
+//             ...(vpcCidr && { vpcCidr }),
+//             ...(keyPairName && { keyPairName }),
+//             ...(activeNodeInstanceId && {
+//                 ec2Details: [
+//                     {
+//                         id: activeNodeInstanceId!,
+//                         name: activeNodeInstanceName,
+//                         ebsVolumeId: activeVolumeId || '',
+//                         ...(activeInstanceType && { instanceType: activeInstanceType }),
+//                         ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
+//                         ...(activeSubnetId && { subnetId: activeSubnetId })
+//                     }
+//                 ]
+//             }),
+//             ...(activeDirectoryDetails && { activeDirectoryDetails })
+//         };
+//         if (activeNodeInstanceId && standbyNodeInstanceId) {
+//             topologyData.ec2Details?.push({
+//                 id: standbyNodeInstanceId!,
+//                 name: standbyNodeInstanceName,
+//                 ebsVolumeId: standbyVolumeId || '',
+//                 ...(standbyInstanceType && { instanceType: standbyInstanceType }),
+//                 ...(standbyAvailabilityZone && { availabilityZone: standbyAvailabilityZone }),
+//                 ...(standbySubnetId && { subnetId: standbySubnetId })
+//             });
+//         }
+//     }
+//     return topologyData;
+// }
 
 async function getStorageData(
     resourceDetail?: ResourceDetails,
@@ -415,7 +414,7 @@ async function getStorageData(
         ebsVolumeIds = ebsVolumeIds || [];
 
         const response = {} as StoragePerStorageTypeResponseType;
-        if (fsxnId && region && credentialsId) {
+        if (fsxnId && region && credentialsId && !(databaseInstanceDetails?.isManaged && !isDemoFlow)) {
             ({ totalSize, totalUsed, totalSpaceSavings, totalSpaceSavingsPercentage } =
                 await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fsxnId));
             response.fsxn = {
@@ -515,12 +514,11 @@ async function getProtectionStatus(
     activeNodeInstanceId: string,
     instanceName: string | undefined,
     resourceDetail?: ResourceDetails,
-    databaseInstanceDetails?: DatabaseInstance,
-    version?: string,
     databaseInstances?: DatabaseInstance[],
+    version?: string,
     isSqlAuth: boolean = false
 ): Promise<ProtectionPerStorageTypeResponseType | ProtectionPerStorageTypeResponseType[] | undefined> {
-    logger.info('Get protection status', { resourceDetail });
+    logger.info('Get protection status', { resourceDetail, instanceName });
 
     let region;
     let fsxnId;
@@ -529,12 +527,6 @@ async function getProtectionStatus(
     let ebsVolumeIds;
     let id;
 
-    let isSingleInstance = false;
-    if (instanceName && isEmpty(databaseInstances)) {
-        isSingleInstance = true;
-    }
-
-    databaseInstances = databaseInstances || [databaseInstanceDetails!];
     if (version === VERSION_2_0 && databaseInstances) {
         [{ database_instance_id: id, fsxn_ids: fsxnId, region, credentials_id: credentialsId, fsxwId, ebsVolumeIds }] =
             databaseInstances;
@@ -552,14 +544,7 @@ async function getProtectionStatus(
     const instanceNames = databaseInstances?.map(instance => instance.database_instance_name) || [];
     try {
         const [nativeSqlProtection, protectionResponse, fsxwBackup, ebsBackup] = await Promise.all([
-            getNativeSQLProtection(
-                credentialsId,
-                region,
-                activeNodeInstanceId,
-                instanceName,
-                isSingleInstance ? undefined : instanceNames,
-                isSqlAuth
-            ),
+            getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceNames, isSqlAuth),
             fsxnId
                 ? getProtectionDetails(
                       credentialsId,
@@ -567,8 +552,7 @@ async function getProtectionStatus(
                       fsxnId,
                       true,
                       activeNodeInstanceId,
-                      instanceName,
-                      isSingleInstance ? undefined : instanceNames,
+                      instanceNames,
                       isSqlAuth
                   )
                 : Promise.resolve(),
@@ -579,36 +563,23 @@ async function getProtectionStatus(
         const awsBackup = protectionResponse ? protectionResponse.awsBackup : {};
         const ontapBackup = protectionResponse ? protectionResponse.ontapBackup : {};
 
-        if (!isSingleInstance) {
-            const commonResult = {
-                isAwsBackupEnabled: {
-                    fsxn: isDemoFlow ? true : checkAllTrue(awsBackup),
-                    fsxw: Boolean(fsxwBackup),
-                    ebs: Boolean(ebsBackup)
-                },
-                isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup)
-            };
-
-            return instanceNames.map(iName => {
-                const nativeBackupCount = nativeSqlProtection?.[iName]?.backupCount;
-                return {
-                    isSqlNativeEnabled: Boolean(nativeBackupCount),
-                    protectedDatabases: Number.isNaN(Number(nativeBackupCount)) ? 0 : Number(nativeBackupCount),
-                    ...commonResult
-                };
-            });
-        }
-
-        return {
-            isSqlNativeEnabled: Boolean(nativeSqlProtection),
+        const commonResult = {
             isAwsBackupEnabled: {
                 fsxn: isDemoFlow ? true : checkAllTrue(awsBackup),
                 fsxw: Boolean(fsxwBackup),
                 ebs: Boolean(ebsBackup)
             },
-            isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup),
-            protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
+            isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkAllTrue(ontapBackup)
         };
+
+        return instanceNames.map(iName => {
+            const nativeBackupCount = nativeSqlProtection?.[iName]?.backupCount;
+            return {
+                isSqlNativeEnabled: Boolean(nativeBackupCount),
+                protectedDatabases: Number.isNaN(Number(nativeBackupCount)) ? 0 : Number(nativeBackupCount),
+                ...commonResult
+            };
+        });
     } catch (error) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -657,13 +628,15 @@ async function getBilling(resourceDetail: ResourceDetails) {
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         // Need to validate before proceeding for billing
         await validationForCostExplorer(resourceDetail);
-        const billingResponse: UsageCostResponseType = await calculateBilling(
-            credentialsId,
-            region!,
-            fileSystemId!,
+        const resourceGroupsById = new Map<string, string[]>();
+        resourceGroupsById.set(resourceDetail.resource_id, [
             node1InstanceId,
-            node2InstanceId
-        );
+            ...(node2InstanceId ? [node2InstanceId] : []),
+            ...(fileSystemId ? (Array.isArray(fileSystemId) ? fileSystemId : [fileSystemId]) : [])
+        ]);
+
+        const billsByResourceIds = await getBillByResourceIds(credentialsId, region!, resourceGroupsById);
+        const billingResponse: UsageCostResponseType = billsByResourceIds.get(resourceDetail.resource_id);
 
         return {
             compute: billingResponse?.compute,
@@ -682,7 +655,8 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
     logger.info('Validating prerequiste for Cost explorer for billing of resources');
 
     // 1.  We need to check if wlmdb-cost-resource cost allocation tag is activated at account level or not
-    const tagsResponse = await getCostAllocationTags(resourceDetail);
+    const { credentials_id: credentialsId, region } = resourceDetail;
+    const tagsResponse = await getCostAllocationTags(credentialsId, region!);
     if (!tagsResponse?.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
         throw new Error(
             `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated at account level`
@@ -742,8 +716,18 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
 
         const ec2ResourceInfo = ec2Info as EstimationEc2Type;
         const fsxnResourceInfo = fsxnInfo as EstimationFSxType;
-        const ebsResourceInfo = ebsInfo as EstimationEbsType;
+        let ebsResourceInfo = ebsInfo as EstimationEbsType;
         const fsxwResourceInfo = fsxwInfo as EstimationFSxType;
+
+        if (ec2ResourceInfo.rootVolumeId) {
+            const rootVolume = {
+                id: ec2ResourceInfo.rootVolumeId as string,
+                size: ec2ResourceInfo.size as number,
+                volumeType: ec2ResourceInfo.volumeType as string
+            };
+
+            ebsResourceInfo = isEmpty(ebsResourceInfo) ? [rootVolume] : [...ebsResourceInfo, rootVolume];
+        }
 
         const pricingRequest: PricingServiceRequestType = {
             compute: {
@@ -782,21 +766,23 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails, activeNod
             pricingRequest.ebsStorage,
             pricingRequest.fsxwStorage
         );
+
+        const ebsBreakdownByVolumeType = pricingResponse.ebsStorage?.ebsBreakdownByVolumeType.filter(
+            e => !e.id?.includes(EBS_ROOT_VOLUME)
+        );
+
         return {
             compute: pricingResponse?.compute || 0,
             storage: {
                 fsxn: pricingResponse?.fsxnStorage?.fsxStorageCost,
                 fsxw: pricingResponse?.fsxwStorage?.fsxwStorageCost,
                 ebs: pricingResponse.ebsStorage?.ebsStorageCost,
-                ebsBreakdownByVolumeType: pricingResponse.ebsStorage?.ebsBreakdownByVolumeType,
+                ebsBreakdownByVolumeType: isEmpty(ebsBreakdownByVolumeType) ? undefined : ebsBreakdownByVolumeType,
                 fsxnBreakDownById: pricingResponse?.fsxnStorage?.fsxnCostBreakdownById.map(id => ({
                     ...id,
-                    size: convertToBytes(id.size!.total, 'GiB')
+                    size: id.size!.total
                 })),
-                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById.map(id => ({
-                    ...id,
-                    size: convertToBytes(id.size!, 'GiB')
-                }))
+                fsxwBreakDownById: pricingResponse?.fsxwStorage?.fsxwCostBreakdownById
             },
             connectivity: pricingResponse?.vpc || 0,
             others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
@@ -819,12 +805,23 @@ async function getEc2ResourceInfo(
         InstanceIds: [activeNodeInstanceId]
     });
     logger.info('Estimation info for EC2:', ec2Info);
-    const {
-        Reservations: [
-            { Instances: [{ InstanceType: resourceType = undefined, ImageId: imageId = undefined } = {}] = [] } = {}
-        ] = []
-    } = ec2Info;
-    const amiInfo = await getAmis(credentialsId, region, { ImageIds: [imageId!] });
+    const { Reservations: [{ Instances: [instance] = [] } = {}] = [] } = ec2Info;
+    let getRootVolumePromise = Promise.resolve({});
+    if (instance.RootDeviceType === DeviceType.ebs) {
+        const rootEbsVolume = instance.BlockDeviceMappings?.find(
+            ({ DeviceName }) => DeviceName === instance.RootDeviceName
+        );
+        if (rootEbsVolume) {
+            const rootVolumeId = rootEbsVolume.Ebs?.VolumeId;
+            if (rootVolumeId) {
+                getRootVolumePromise = describeVolumes(credentialsId, region, { VolumeIds: [rootVolumeId] });
+            }
+        }
+    }
+    const [amiInfo, volumes] = await Promise.all([
+        getAmis(credentialsId, region, { ImageIds: [instance.ImageId!] }),
+        getRootVolumePromise
+    ]);
     logger.debug('Estimation info for AMI:', amiInfo);
 
     const { Images: [{ PlatformDetails: sqlPlatform = '' } = {}] = [] } = amiInfo;
@@ -845,9 +842,15 @@ async function getEc2ResourceInfo(
             sqlSoftwareType = CUSTOM;
     }
 
+    const [rootVolume] = (volumes as { Volumes: Volume[] }).Volumes || [];
     return {
-        resourceType: resourceType!,
-        sqlSoftwareType
+        resourceType: instance.InstanceType!,
+        sqlSoftwareType,
+        ...(rootVolume && {
+            rootVolumeId: `${EBS_ROOT_VOLUME}1`,
+            size: rootVolume.Size!,
+            volumeType: rootVolume.VolumeType!
+        })
     };
 }
 
@@ -867,7 +870,9 @@ async function getFsxResourceInfo(
             const storageCapacity = StorageCapacity || 0;
             const throughput = OntapConfiguration?.ThroughputCapacity || WindowsConfiguration?.ThroughputCapacity;
             const iops =
-                OntapConfiguration?.DiskIopsConfiguration?.Iops || WindowsConfiguration?.DiskIopsConfiguration?.Iops;
+                OntapConfiguration?.DiskIopsConfiguration?.Iops ||
+                WindowsConfiguration?.DiskIopsConfiguration?.Iops ||
+                0;
             const deploymentOption = OntapConfiguration?.DeploymentType || WindowsConfiguration?.DeploymentType;
 
             return {
@@ -927,311 +932,318 @@ async function getEbsResourceInfo(
     }));
 }
 
-async function getDatabaseHostsSummary(
-    accountId: string,
-    fields?: string,
-    nextToken?: string,
-    awsRegion?: string,
-    customerCredentialsId?: string,
-    vpcId?: string,
-    fsxId?: string
-): Promise<DatabaseHostSummaryPerStorageTypeListResponseType> {
-    logger.info(
-        'Fetching all database hosts deployed in account ',
-        accountId,
-        fields,
-        nextToken,
-        awsRegion,
-        customerCredentialsId,
-        vpcId,
-        fsxId
-    );
+// getDatabaseHostsSummary getDatabaseHostSummary & getDatabases are all unused. Kept here for reference, can be removed later.
 
-    const resourceDetails = await listResources(
-        accountId,
-        undefined,
-        customerCredentialsId,
-        awsRegion,
-        RESOURCESTYPE.MSSQL,
-        fsxId,
-        undefined,
-        API_PAGE_SIZE,
-        nextToken
-    );
+// async function getDatabaseHostsSummary(
+//     accountId: string,
+//     fields?: string,
+//     nextToken?: string,
+//     awsRegion?: string,
+//     customerCredentialsId?: string,
+//     vpcId?: string,
+//     fsxId?: string
+// ): Promise<DatabaseHostSummaryPerStorageTypeListResponseType> {
+//     logger.info(
+//         'Fetching all database hosts deployed in account ',
+//         accountId,
+//         fields,
+//         nextToken,
+//         awsRegion,
+//         customerCredentialsId,
+//         vpcId,
+//         fsxId
+//     );
 
-    if (isEmpty(resourceDetails)) {
-        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
-        return { count: 0, items: [], nextToken: '' };
-    }
+//     const resourceDetails = await listResources(
+//         accountId,
+//         undefined,
+//         customerCredentialsId,
+//         awsRegion,
+//         RESOURCESTYPE.MSSQL,
+//         fsxId,
+//         undefined,
+//         API_PAGE_SIZE,
+//         nextToken
+//     );
 
-    const databaseHosts: DatabaseHostSummaryPerStorageTypeResponseType[] = [];
-    try {
-        await Promise.all(
-            resourceDetails.map(async resourceDetail => {
-                const { resource_id: resourceId } = resourceDetail;
+//     if (isEmpty(resourceDetails)) {
+//         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+//         return { count: 0, items: [], nextToken: '' };
+//     }
 
-                const databaseHostDetails = await getDatabaseHostSummary(accountId, resourceId, fields, resourceDetail);
-                if (!vpcId || vpcId === databaseHostDetails?.topology?.vpcId) {
-                    databaseHosts.push(databaseHostDetails);
-                }
-            })
-        );
-    } catch (error) {
-        logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching database hosts details ${accountId}, ${error}`
-        );
-    }
+//     const databaseHosts: DatabaseHostSummaryPerStorageTypeResponseType[] = [];
+//     try {
+//         await Promise.all(
+//             resourceDetails.map(async resourceDetail => {
+//                 const { resource_id: resourceId } = resourceDetail;
 
-    logger.debug('Database hosts details', databaseHosts);
+//                 const databaseHostDetails = await getDatabaseHostSummary(accountId, resourceId, fields, resourceDetail);
+//                 if (!vpcId || vpcId === databaseHostDetails?.topology?.vpcId) {
+//                     databaseHosts.push(databaseHostDetails);
+//                 }
+//             })
+//         );
+//     } catch (error) {
+//         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
+//         throw createError(
+//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
+//             `Error while fetching database hosts details ${accountId}, ${error}`
+//         );
+//     }
 
-    return {
-        count: databaseHosts.length,
-        items: databaseHosts,
-        nextToken:
-            resourceDetails?.length === API_PAGE_SIZE ? resourceDetails[resourceDetails.length - 1].id : undefined
-    };
-}
+//     logger.debug('Database hosts details', databaseHosts);
 
-async function getDatabaseHostSummary(
-    accountId: string,
-    databaseHostId: string,
-    fields?: string,
-    resourceDetail?: ResourceDetails,
-    isManagedResource: boolean = true
-): Promise<DatabaseHostSummaryPerStorageTypeResponseType> {
-    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
+//     return {
+//         count: databaseHosts.length,
+//         items: databaseHosts,
+//         nextToken:
+//             resourceDetails?.length === API_PAGE_SIZE ? resourceDetails[resourceDetails.length - 1].id : undefined
+//     };
+// }
 
-    if (isEmpty(resourceDetail)) {
-        [resourceDetail] = await listResources(accountId, databaseHostId);
-    }
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
+// async function getDatabaseHostSummary(
+//     accountId: string,
+//     databaseHostId: string,
+//     fields?: string,
+//     resourceDetail?: ResourceDetails,
+//     isManagedResource: boolean = true
+// ): Promise<DatabaseHostSummaryPerStorageTypeResponseType> {
+//     logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
 
-    const databaseHostDetails: DatabaseHostSummaryPerStorageTypeResponseType = {
-        id: '',
-        name: '',
-        status: '',
-        databaseCount: 0
-    };
+//     if (isEmpty(resourceDetail)) {
+//         [resourceDetail] = await listResources(accountId, databaseHostId);
+//     }
+//     if (isEmpty(resourceDetail)) {
+//         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+//         logger.error(errorMessage);
+//         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+//     }
 
-    let fieldsValues: Array<string> = [];
+//     const databaseHostDetails: DatabaseHostSummaryPerStorageTypeResponseType = {
+//         id: '',
+//         name: '',
+//         status: '',
+//         databaseCount: 0
+//     };
 
-    if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    }
+//     let fieldsValues: Array<string> = [];
 
-    const shouldQueryServerDetails = fieldsValues?.includes(
-        DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
-    );
-    const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
-    const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
-    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
-    const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
-    const getResourceutilization = fieldsValues?.includes(
-        DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
-    );
-    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+//     if (fields) {
+//         // remove the empty spaces in the string & split the fields by comma separated array values
+//         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+//     }
 
-    const {
-        resource_id: resourceId,
-        resource_name: resourceName,
-        region,
-        credentials_id: credentialsId,
-        metadata
-    } = resourceDetail;
-    try {
-        const { node1InstanceId, node2InstanceId, creationDate, userDatabase = [] } = metadata as unknown as Metadata;
-        // Check SSM Connection status
-        const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
-            credentialsId,
-            region!,
-            node1InstanceId,
-            node2InstanceId,
-            resourceId
-        );
-        let serverDetails: any;
-        let topologyData: any;
-        let performanceData: any;
-        let storageData: any;
-        let usageEstimationData: any;
-        let resourceUtilizationData: any;
-        let protectionData: any;
-        const errormessages: { [index: string]: string } = {};
-        if (credentialsId && region) {
-            [
-                serverDetails,
-                topologyData,
-                performanceData,
-                storageData,
-                protectionData,
-                usageEstimationData,
-                resourceUtilizationData
-            ] = await Promise.all(
-                [
-                    ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
-                        ? [getServerDetails(credentialsId, region, activeNodeInstanceId, instanceName)]
-                        : [Promise.resolve()]), // Fetch server metadata
-                    ...[
-                        getTopology(
-                            accountId,
-                            region,
-                            resourceId,
-                            resourceDetail,
-                            activeNodeInstanceId!,
-                            standbyNodeInstanceId,
-                            shouldQueryTopology
-                        )
-                    ],
-                    ...(isSSMConnected && getPerformance && activeNodeInstanceId
-                        ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, instanceName)]
-                        : [Promise.resolve()]), // Fetch io latency data
-                    ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                    ...(isSSMConnected && getProtection && activeNodeInstanceId
-                        ? [getProtectionStatus(activeNodeInstanceId, instanceName, resourceDetail)]
-                        : [Promise.resolve()]), // Fetch protection status
-                    ...(getUsageEstimation
-                        ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
-                        : [Promise.resolve()]), // Fetch pricing estimate data
-                    ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-                        ? [getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId, instanceName)]
-                        : [Promise.resolve()])
-                ].map((p, index) =>
-                    p.catch(error => {
-                        if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
-                            errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
-                        }
-                        logger.error(`Error while fetching data: ${error}.`);
-                    })
-                )
-            );
-            if (isDemo() && shouldQueryServerDetails && shouldQueryTopology) {
-                serverDetails.dbCount = serverDetails?.dbCount || 0;
-                serverDetails.dbCount += userDatabase.length;
-                if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
-                    delete serverDetails?.clusterName;
-                    serverDetails.activeNode = resourceName || '';
-                    serverDetails.nodeNames = [resourceName || ''];
-                } else {
-                    serverDetails.clusterName = resourceName || '';
-                }
-            }
-            databaseHostDetails.status = isSSMConnected ? ServerState.UP : ServerState.DOWN;
-            if (shouldQueryServerDetails && serverDetails) {
-                databaseHostDetails.databaseCount = serverDetails?.dbCount || 0;
-                databaseHostDetails.databaseServer = serverDetails;
-                serverDetails.creationDate = creationDate || '';
-                // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
-            }
-            databaseHostDetails.id = resourceId;
-            databaseHostDetails.name = resourceName || '';
-            databaseHostDetails.topology = topologyData!;
-            databaseHostDetails.performance = getPerformance
-                ? { assessment: performanceData?.assessment, rwMetrics: performanceData! }
-                : {};
-            databaseHostDetails.storage = storageData!;
-            databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-            databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
-            databaseHostDetails.sqlServerDeploymentType = resourceDetail?.sqlServerDeploymentType || '';
-            if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
-                databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
-            }
-            if (getResourceutilization && resourceUtilizationData) {
-                databaseHostDetails.resourceUtilization = {
-                    cpu: resourceUtilizationData.cpuUtilization! || {},
-                    memory: resourceUtilizationData.memoryUtilization! || {},
-                    disk: resourceUtilizationData.diskUtilization! || {}
-                };
-            }
-            if (getProtection && protectionData) {
-                databaseHostDetails.protection = protectionData;
-            }
-            if (!isEmpty(errormessages)) {
-                databaseHostDetails.errors = errormessages;
-            }
-        }
-    } catch (error) {
-        logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching database hosts details ${accountId}, ${error}`
-        );
-    }
+//     const shouldQueryServerDetails = fieldsValues?.includes(
+//         DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
+//     );
+//     const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
+//     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
+//     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
+//     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
+//     const getResourceutilization = fieldsValues?.includes(
+//         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
+//     );
+//     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
-    logger.debug('Database host details', databaseHostDetails);
+//     const {
+//         resource_id: resourceId,
+//         resource_name: resourceName,
+//         region,
+//         credentials_id: credentialsId,
+//         metadata
+//     } = resourceDetail;
+//     try {
+//         const { node1InstanceId, node2InstanceId, creationDate, userDatabase = [] } = metadata as unknown as Metadata;
+//         // Check SSM Connection status
+//         const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
+//             credentialsId,
+//             region!,
+//             node1InstanceId,
+//             node2InstanceId,
+//             resourceId
+//         );
+//         let serverDetails: any;
+//         let topologyData: any;
+//         let performanceData: any;
+//         let storageData: any;
+//         let usageEstimationData: any;
+//         let resourceUtilizationData: any;
+//         let protectionData: any;
+//         const errormessages: { [index: string]: string } = {};
+//         const serverInstanceName = getOriginalDatabaseInstanceName(instanceName) || DEFAULT_INSTANCE_NAME;
+//         if (credentialsId && region) {
+//             [
+//                 serverDetails,
+//                 topologyData,
+//                 performanceData,
+//                 storageData,
+//                 protectionData,
+//                 usageEstimationData,
+//                 resourceUtilizationData
+//             ] = await Promise.all(
+//                 [
+//                     ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
+//                         ? [getServerDetails(credentialsId, region, activeNodeInstanceId, [serverInstanceName])]
+//                         : [Promise.resolve()]), // Fetch server metadata
+//                     ...[
+//                         getTopology(
+//                             accountId,
+//                             region,
+//                             resourceId,
+//                             resourceDetail,
+//                             activeNodeInstanceId!,
+//                             standbyNodeInstanceId,
+//                             shouldQueryTopology
+//                         )
+//                     ],
+//                     ...(isSSMConnected && getPerformance && activeNodeInstanceId
+//                         ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, [serverInstanceName])]
+//                         : [Promise.resolve()]), // Fetch io latency data
+//                     ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+//                     ...(isSSMConnected && getProtection && activeNodeInstanceId
+//                         ? [getProtectionStatus(activeNodeInstanceId, instanceName, resourceDetail)]
+//                         : [Promise.resolve()]), // Fetch protection status
+//                     ...(getUsageEstimation
+//                         ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
+//                         : [Promise.resolve()]), // Fetch pricing estimate data
+//                     ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
+//                         ? [
+//                               getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId, [
+//                                   serverInstanceName
+//                               ])
+//                           ]
+//                         : [Promise.resolve()])
+//                 ].map((p, index) =>
+//                     p.catch(error => {
+//                         if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
+//                             errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
+//                         }
+//                         logger.error(`Error while fetching data: ${error}.`);
+//                     })
+//                 )
+//             );
+//             if (isDemo() && shouldQueryServerDetails && shouldQueryTopology) {
+//                 serverDetails.dbCount = serverDetails?.dbCount || 0;
+//                 serverDetails.dbCount += userDatabase.length;
+//                 if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+//                     delete serverDetails?.clusterName;
+//                     serverDetails.activeNode = resourceName || '';
+//                     serverDetails.nodeNames = [resourceName || ''];
+//                 } else {
+//                     serverDetails.clusterName = resourceName || '';
+//                 }
+//             }
+//             databaseHostDetails.status = isSSMConnected ? ServerState.UP : ServerState.DOWN;
+//             if (shouldQueryServerDetails && serverDetails) {
+//                 databaseHostDetails.databaseCount = serverDetails?.dbCount || 0;
+//                 databaseHostDetails.databaseServer = serverDetails;
+//                 serverDetails.creationDate = creationDate || '';
+//                 // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
+//             }
+//             databaseHostDetails.id = resourceId;
+//             databaseHostDetails.name = resourceName || '';
+//             databaseHostDetails.topology = topologyData!;
+//             databaseHostDetails.performance = getPerformance
+//                 ? { assessment: performanceData?.assessment, rwMetrics: performanceData! }
+//                 : {};
+//             databaseHostDetails.storage = storageData!;
+//             databaseHostDetails.estimatedUsageCost = usageEstimationData!;
+//             databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
+//             databaseHostDetails.sqlServerDeploymentType = resourceDetail?.sqlServerDeploymentType || '';
+//             if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
+//                 databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
+//             }
+//             if (getResourceutilization && resourceUtilizationData) {
+//                 databaseHostDetails.resourceUtilization = {
+//                     cpu: resourceUtilizationData.cpuUtilization! || {},
+//                     memory: resourceUtilizationData.memoryUtilization! || {},
+//                     disk: resourceUtilizationData.diskUtilization! || {}
+//                 };
+//             }
+//             if (getProtection && protectionData) {
+//                 databaseHostDetails.protection = protectionData;
+//             }
+//             if (!isEmpty(errormessages)) {
+//                 databaseHostDetails.errors = errormessages;
+//             }
+//         }
+//     } catch (error) {
+//         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
+//         throw createError(
+//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
+//             `Error while fetching database hosts details ${accountId}, ${error}`
+//         );
+//     }
 
-    return databaseHostDetails;
-}
+//     logger.debug('Database host details', databaseHostDetails);
 
-async function getDatabases(
-    accountId: string,
-    databaseHostId: string,
-    fields?: string
-): Promise<DatabasesListResponseType> {
-    logger.info('Getting database list', accountId, databaseHostId, fields);
+//     return databaseHostDetails;
+// }
 
-    const [resourceDetail] = await listResources(accountId, databaseHostId);
+// async function getDatabases(
+//     accountId: string,
+//     databaseHostId: string,
+//     fields?: string
+// ): Promise<DatabasesListResponseType> {
+//     logger.info('Getting database list', accountId, databaseHostId, fields);
 
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-    }
+//     const [resourceDetail] = await listResources(accountId, databaseHostId);
 
-    const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-    const { node1InstanceId, node2InstanceId, userDatabase = [] } = metadata as unknown as Metadata;
-    if (!region) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for ${databaseHostId}`);
-    }
+//     if (isEmpty(resourceDetail)) {
+//         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+//         logger.error(errorMessage);
+//         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+//     }
 
-    if (!fileSystemId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for ${databaseHostId}`);
-    }
+//     const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
+//     const { node1InstanceId, node2InstanceId, userDatabase = [] } = metadata as unknown as Metadata;
+//     if (!region) {
+//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for ${databaseHostId}`);
+//     }
 
-    let fieldsValues: Array<string> = [];
+//     if (!fileSystemId) {
+//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for ${databaseHostId}`);
+//     }
 
-    if (fields) {
-        // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    }
+//     let fieldsValues: Array<string> = [];
 
-    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+//     if (fields) {
+//         // remove the empty spaces in the string & split the fields by comma separated array values
+//         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+//     }
 
-    // Check SSM Connection status
-    const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-        credentialsId,
-        region,
-        node1InstanceId,
-        node2InstanceId
-    );
+//     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
-    if (!isSSMConnected) {
-        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
-    }
-    try {
-        return await getDatabaseDetails(
-            accountId,
-            region,
-            credentialsId,
-            databaseHostId,
-            fileSystemId,
-            getProtection,
-            userDatabase,
-            activeNodeInstanceId,
-            instanceName
-        );
-    } catch (error) {
-        const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
-    }
-}
+//     // Check SSM Connection status
+//     const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+//         credentialsId,
+//         region,
+//         node1InstanceId,
+//         node2InstanceId
+//     );
+
+//     if (!isSSMConnected) {
+//         const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
+//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+//     }
+//     try {
+//         return await getDatabaseDetails(
+//             accountId,
+//             region,
+//             credentialsId,
+//             databaseHostId,
+//             fileSystemId,
+//             getProtection,
+//             userDatabase,
+//             activeNodeInstanceId,
+//             instanceName
+//         );
+//     } catch (error) {
+//         const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
+//         logger.error(errorMessage);
+//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+//     }
+// }
 
 async function getNodeTopology(
     accountId: string,
@@ -1474,7 +1486,7 @@ async function getDatabaseInstanceTopology(
         accountId,
         credentialsId,
         activeNodeInstanceId,
-        databaseInstances.instance_name
+        databaseInstances.database_instance_name
     );
 
     const {
@@ -1482,13 +1494,14 @@ async function getDatabaseInstanceTopology(
         storage_type: storageType,
         database_instance_id: databaseInstanceDetails,
         database_deployment_type: databaseDeploymentType,
-        database_type: databaseType
+        database_type: databaseType,
+        fsxwId
     } = databaseInstances;
 
     let topologyData = {
         serverType: databaseType,
         serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
-        fileSystemId: fileSystemId!,
+        fileSystemId: fileSystemId! || fsxwId,
         fileSystemType:
             storageType !== undefined
                 ? storageType === STORAGE_TYPE.FSXN
@@ -1507,19 +1520,22 @@ async function getDatabaseInstanceTopology(
         let subnetIds;
         let availabilityZones: Array<string> | undefined;
         let fileSystemTags;
+        let fileSystemStorageType;
         try {
-            if (fileSystemId) {
-                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+            if (fileSystemId || fsxwId) {
+                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId || fsxwId] });
                 const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
                 ({
                     Tags: fileSystemTags,
+                    WindowsConfiguration: { DeploymentType: fileSystemDeploymentMode = undefined } = {},
                     OntapConfiguration: {
                         DeploymentType: fileSystemDeploymentMode = undefined,
                         ThroughputCapacity: fileSystemThroughputCapacity = undefined
                     } = {},
                     Lifecycle: fileSystemStatus,
                     StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds
+                    SubnetIds: subnetIds,
+                    StorageType: fileSystemStorageType
                 } = fileSystem);
 
                 fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
@@ -1544,248 +1560,11 @@ async function getDatabaseInstanceTopology(
             ...(fileSystemStatus && { fileSystemStatus }),
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(availabilityZones && { availabilityZone: availabilityZones })
+            ...(availabilityZones && { availabilityZone: availabilityZones }),
+            ...(fileSystemStorageType && { fileSystemStorageType })
         };
     }
     return topologyData;
-}
-
-async function getDatabaseInstanceSummary(
-    accountId: string,
-    credentialsId: string,
-    activeNodeInstanceId: string,
-    region: string,
-    databaseInstances: DatabaseInstance,
-    fields?: string,
-    resourceDetails?: ResourceDetails,
-    standbyNodeInstanceId?: string
-    /*
-    resource detail is used to fetch node Topology for host its optional in instance summary
-    as its returned at host level for database-hosts api(inventory) and
-    at instance level for database-instances api (resource page)
-    */
-) {
-    logger.info(
-        'Fetching summary of database instance',
-        accountId,
-        credentialsId,
-        activeNodeInstanceId,
-        region,
-        databaseInstances,
-        fields,
-        resourceDetails,
-        standbyNodeInstanceId
-    );
-
-    const {
-        database_instance_id: databaseInstanceId,
-        database_instance_name: savedDatabaseInstanceName,
-        is_default: isdefaultInstance,
-        metadata,
-        created_time: creationDate,
-        database_deployment_type: databaseDeploymentType,
-        sqlAuthEnabled
-    } = databaseInstances;
-
-    const { userDatabase = [] } = metadata as unknown as Metadata;
-
-    const databaseInstanceName = getDatabaseInstanceName(savedDatabaseInstanceName, isdefaultInstance);
-
-    let fieldsValues: Array<string> = [];
-
-    if (fields) {
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    }
-
-    const shouldQueryServerDetails = fieldsValues?.includes(
-        DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
-    );
-    const shouldQueryDatabaseTopology = fieldsValues?.includes(
-        DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLocaleLowerCase()
-    );
-    const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
-    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
-    const getResourceutilization = fieldsValues?.includes(
-        DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
-    );
-    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
-    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
-    const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLocaleLowerCase());
-
-    const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
-        databaseInstanceId,
-        databaseInstanceName: savedDatabaseInstanceName,
-        status: '',
-        databaseCount: 0
-    };
-
-    let serverDetails: any;
-    let databaseInstancetopologyData: any;
-    let performanceData: any;
-    let storageData: any;
-    let resourceUtilizationData: any;
-    let protectionData: any;
-    let databasesCount: any;
-    let nodeTopologyData: any;
-    const errormessages: { [index: string]: string } = {};
-
-    try {
-        [
-            serverDetails,
-            databaseInstancetopologyData,
-            performanceData,
-            storageData,
-            protectionData,
-            resourceUtilizationData,
-            databasesCount,
-            nodeTopologyData
-        ] = await Promise.all(
-            [
-                ...(shouldQueryServerDetails
-                    ? [
-                          getServerDetails(
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              databaseInstanceName,
-                              undefined,
-                              sqlAuthEnabled
-                          )
-                      ]
-                    : [Promise.resolve()]), // Fetch server metadata
-                ...(shouldQueryDatabaseTopology
-                    ? [
-                          getDatabaseInstanceTopology(
-                              accountId,
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              databaseInstances
-                          )
-                      ]
-                    : [Promise.resolve()]),
-                ...(getPerformance
-                    ? [
-                          getPerformanceMetrics(
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              databaseInstanceName,
-                              undefined,
-                              sqlAuthEnabled
-                          )
-                      ]
-                    : [Promise.resolve()]), // Fetch io latency data
-                ...(getStorageSavings
-                    ? [getStorageData(undefined, databaseInstances, VERSION_2_0)]
-                    : [Promise.resolve()]), // Fetch storage savings data
-                ...(getProtection
-                    ? [
-                          getProtectionStatus(
-                              activeNodeInstanceId,
-                              databaseInstanceName,
-                              undefined,
-                              databaseInstances,
-                              VERSION_2_0,
-                              undefined,
-                              sqlAuthEnabled
-                          )
-                      ]
-                    : [Promise.resolve()]), // Fetch protection status
-                ...(getResourceutilization
-                    ? [
-                          getAllResourceUtilisationDetails(
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              databaseInstanceName,
-                              undefined,
-                              sqlAuthEnabled
-                          )
-                      ]
-                    : [Promise.resolve()]),
-                ...(getDbCount
-                    ? [
-                          getDatabasesCount(
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              databaseInstanceName,
-                              undefined,
-                              sqlAuthEnabled
-                          )
-                      ]
-                    : [Promise.resolve()]),
-                ...(shouldQueryNodeTopology && resourceDetails
-                    ? [
-                          getNodeTopology(
-                              accountId,
-                              region,
-                              databaseInstanceId,
-                              resourceDetails,
-                              activeNodeInstanceId,
-                              standbyNodeInstanceId
-                          )
-                      ]
-                    : [Promise.resolve()])
-            ].map((p, index) =>
-                p.catch(error => {
-                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
-                    }
-                    logger.error(`Error while fetching data: ${error}.`);
-                })
-            )
-        );
-    } catch (error) {
-        logger.error(
-            `Error while fetching database instance summary ${accountId}, ${databaseInstanceId},  ${savedDatabaseInstanceName}, ${error}`
-        );
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching database instance summary ${accountId},${databaseInstanceId}, ${savedDatabaseInstanceName} ${error}`
-        );
-    }
-
-    databaseInstanceDetails.status = ServerState.UP;
-    if (shouldQueryServerDetails && serverDetails) {
-        serverDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
-        databaseInstanceDetails.databaseServer = serverDetails;
-    }
-
-    if (isDemo() && databasesCount && getDbCount) {
-        databasesCount.totalCount += userDatabase.length;
-    }
-
-    if (getDbCount && databasesCount?.totalCount) {
-        databaseInstanceDetails.databaseCount = databasesCount?.totalCount || 0;
-    }
-
-    if (shouldQueryNodeTopology && nodeTopologyData) {
-        databaseInstanceDetails.nodeTopology = nodeTopologyData;
-    }
-
-    databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData;
-    databaseInstanceDetails.performance = getPerformance
-        ? { assessment: performanceData?.assessment, rwMetrics: performanceData! }
-        : {};
-    databaseInstanceDetails.storage = storageData!;
-    databaseInstanceDetails.sqlServerDeploymentType = databaseDeploymentType || '';
-
-    if (getResourceutilization && resourceUtilizationData) {
-        databaseInstanceDetails.resourceUtilization = {
-            cpu: resourceUtilizationData.cpuUtilization! || {},
-            memory: resourceUtilizationData.memoryUtilization! || {},
-            disk: resourceUtilizationData.diskUtilization! || {}
-        };
-    }
-    if (getProtection && protectionData) {
-        databaseInstanceDetails.protection = protectionData;
-    }
-    if (!isEmpty(errormessages)) {
-        databaseInstanceDetails.errors = errormessages;
-    }
-    return databaseInstanceDetails;
 }
 
 async function getDatabaseInstancesDetails(
@@ -1823,10 +1602,10 @@ async function getDatabaseInstancesDetails(
             return {
                 instanceName,
                 instanceState: updatedInstanceState,
-                isManaged,
                 isDefault,
                 databaseInstanceId,
-                sqlAuthEnabled
+                sqlAuthEnabled,
+                ...(managedInstancesName.length > 0 && { isManaged })
             };
         }),
         ...managedInstancesName.filter(({ instanceName }) => !existingInstanceNames.has(instanceName))
@@ -1888,7 +1667,8 @@ async function getDatabaseHostSummaryV2(
     // Update the database instances detail to include storage type as FSXN
     instancesManaged = instancesManaged.map(instance => ({
         ...instance,
-        storage_type: STORAGE_TYPE.FSXN
+        storage_type: STORAGE_TYPE.FSXN,
+        isManaged: true
     }));
     const errormessages: { [index: string]: string } = {};
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -2057,7 +1837,11 @@ async function getDatabaseHostSummaryV2(
                             instanceType: 'm5.xlarge'
                         }));
                         nodeTopology.ec2Details = modifiedEc2Details;
-                    } else if (resourceDetail?.resource_name === 'app-server-14' && instanceResults?.length) {
+                    } else if (
+                        (resourceDetail?.resource_name === 'app-server-14' ||
+                            resourceDetail?.resource_name === 'app-server-19') &&
+                        instanceResults?.length
+                    ) {
                         instanceResults = instanceResults.map((item: any) => ({
                             ...item,
                             databaseServer: {
@@ -2116,12 +1900,12 @@ async function getDatabaseHostInstanceSummary(
 
     const [resourceDetails] = await listResources(accountId, databaseHostId, credentialsId, region);
 
-    const databaseInstanceSummary = await getDatabaseInstanceSummary(
+    const [databaseInstanceSummary] = await getDatabaseInstancesSummary(
         accountId,
         credentialsId,
         activeNodeInstanceId,
         region,
-        newDatabaseInstanceDetails,
+        [newDatabaseInstanceDetails],
         fields,
         resourceDetails,
         standbyNodeInstanceId
@@ -2192,7 +1976,6 @@ async function getProtectionDetails(
     fileSystemId: string,
     isSystemDatabase: boolean = false,
     activeNodeInstanceId?: string,
-    instanceName?: string,
     instanceNames?: string[],
     isSqlAuthEnabled = false
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
@@ -2200,61 +1983,33 @@ async function getProtectionDetails(
         credentialsId,
         region,
         fileSystemId,
-        activeNodeInstanceId,
-        instanceName
+        activeNodeInstanceId
     });
 
     // Getting the map between database name and associated volume uuid
-    let isSingleInstance = false;
-    if (instanceName && isEmpty(instanceNames)) {
-        isSingleInstance = true;
-    }
+    const instanceVolumeMapping = ((await getMappedOntapVolumes(
+        credentialsId,
+        region,
+        fileSystemId,
+        isSystemDatabase,
+        activeNodeInstanceId,
+        instanceNames,
+        isSqlAuthEnabled
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
 
-    let volumeUuids;
-    let volumeDBMap;
-
-    if (isSingleInstance) {
-        ({ volumeUuids, volumeDBMap } = await getMappedOntapVolumes(
-            credentialsId,
-            region,
-            fileSystemId,
-            isSystemDatabase,
-            activeNodeInstanceId,
-            instanceName,
-            undefined,
-            isSqlAuthEnabled
-        ));
-    } else {
-        const instanceVolumeMapping = ((await getMappedOntapVolumes(
-            credentialsId,
-            region,
-            fileSystemId,
-            isSystemDatabase,
-            activeNodeInstanceId,
-            instanceName,
-            instanceNames,
-            isSqlAuthEnabled
-        )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {} }];
-        volumeUuids =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeUuids)
-                .flat() || [];
-        volumeDBMap =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeDBMap)
-                .flat() || {};
-    }
+    const volumeRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeRecords)
+            .flat() || [];
+    const volumeDBMap =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeDBMap)
+            .flat() || {};
+    const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
 
     const [awsBackup = {}, ontapBackup = {}] = await Promise.all([
         isFsxnAwsBackupEnabled(credentialsId, region, fileSystemId, volumeUuids, volumeDBMap, activeNodeInstanceId),
-        getOntapVolumesSnapshotCount(
-            credentialsId,
-            region,
-            fileSystemId,
-            volumeUuids,
-            volumeDBMap,
-            activeNodeInstanceId
-        )
+        getOntapVolumesSnapshotCount(credentialsId, region, fileSystemId, volumeRecords, volumeDBMap)
     ]);
 
     return { awsBackup, ontapBackup };
@@ -2279,11 +2034,12 @@ async function getInstanceDetails(
     // Update the database instance details to include storage type as FSXN
     const databaseInstanceDetails = {
         ...instanceDetails,
-        storage_type: STORAGE_TYPE.FSXN
+        storage_type: STORAGE_TYPE.FSXN,
+        isManaged: true
     };
 
     if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
-        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails} for ${accountId} is found.`;
+        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails?.id} for ${accountId} is found.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
@@ -2309,7 +2065,13 @@ async function getInstanceDetails(
         sqlAuthEnabled
     } as unknown as DatabaseInstance;
 
-    return { activeNodeInstanceId, newDatabaseInstanceDetails, standbyNodeInstanceId };
+    return {
+        activeNodeInstanceId,
+        newDatabaseInstanceDetails,
+        standbyNodeInstanceId,
+        cloudProviderAccountId: resourceDetails?.cloud_provider_account_id,
+        resourceName: resourceDetails?.resource_name
+    };
 }
 
 async function getDatabaseDetails(
@@ -2336,19 +2098,28 @@ async function getDatabaseDetails(
         sqlAuthEnabled
     });
 
+    const serverInstanceName = getOriginalDatabaseInstanceName(instanceName) || DEFAULT_INSTANCE_NAME;
     try {
         const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
             await Promise.all(
                 [
-                    getDataBasesSummary(databaseHostId, activeNodeInstanceId!, instanceName, sqlAuthEnabled),
+                    getDataBasesSummary(
+                        databaseHostId,
+                        activeNodeInstanceId!,
+                        instanceName,
+                        sqlAuthEnabled,
+                        accountId,
+                        credentialsId
+                    ),
                     ...(activeNodeInstanceId && getProtection
                         ? [
                               getNativeSQLBackedupDatabases(
                                   databaseHostId,
                                   activeNodeInstanceId,
-                                  instanceName,
-                                  undefined,
-                                  sqlAuthEnabled
+                                  [serverInstanceName],
+                                  sqlAuthEnabled,
+                                  accountId,
+                                  credentialsId
                               )
                           ]
                         : [Promise.resolve()]), // Fetch native sql protection status
@@ -2360,8 +2131,7 @@ async function getDatabaseDetails(
                                   fileSystemId,
                                   false,
                                   activeNodeInstanceId,
-                                  instanceName,
-                                  undefined,
+                                  [serverInstanceName],
                                   sqlAuthEnabled
                               )
                           ]
@@ -2383,7 +2153,7 @@ async function getDatabaseDetails(
                 name: database.databaseName,
                 size: database.databaseSize,
                 status: database.databaseStatus,
-                collation: database.collationName,
+                collation: database.collationName ?? '',
                 type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
                     ? MSSQL_DATABASE_TYPES.SYSTEM
                     : MSSQL_DATABASE_TYPES.USER,
@@ -2394,8 +2164,8 @@ async function getDatabaseDetails(
                         },
                         isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkKey(ontapBackup, database.databaseName),
                         isSqlNativeEnabled: Boolean(
-                            backedupDatabases &&
-                                backedupDatabases?.find(
+                            backedupDatabases?.[serverInstanceName] &&
+                                backedupDatabases[serverInstanceName]?.find(
                                     (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
                                 )
                         )
@@ -2445,7 +2215,8 @@ async function getDatabaseInstancesSummary(
     region: string,
     databaseInstances: DatabaseInstance[],
     fields?: string,
-    resourceDetails?: ResourceDetails
+    resourceDetails?: ResourceDetails,
+    standbyNodeInstanceId?: string
     /*
     resource detail is used to fetch node Topology for host its optional in instance summary
     as its returned at host level for database-hosts api(inventory) and
@@ -2460,7 +2231,8 @@ async function getDatabaseInstancesSummary(
         region,
         databaseInstances,
         fields,
-        resourceDetails
+        resourceDetails,
+        standbyNodeInstanceId
     );
 
     let fieldsValues: Array<string> = [];
@@ -2492,6 +2264,7 @@ async function getDatabaseInstancesSummary(
     let protectionData: any;
     let databasesCount: any;
     let nodeTopologyData: any;
+    let ontapStorageSavings: any;
     const errormessages: { [index: string]: string } = {};
 
     const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
@@ -2502,6 +2275,7 @@ async function getDatabaseInstancesSummary(
             ? isSqlAuthEnabled
             : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
+    const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged && !isDemoFlow);
 
     try {
         [
@@ -2512,20 +2286,12 @@ async function getDatabaseInstancesSummary(
             protectionData,
             resourceUtilizationData,
             databasesCount,
-            nodeTopologyData
+            nodeTopologyData,
+            ontapStorageSavings
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
-                    ? [
-                          getServerDetails(
-                              credentialsId,
-                              region,
-                              activeNodeInstanceId,
-                              undefined,
-                              instanceNames,
-                              isSqlAuthEnabled
-                          )
-                      ]
+                    ? [getServerDetails(credentialsId, region, activeNodeInstanceId, instanceNames, isSqlAuthEnabled)]
                     : [Promise.resolve()]), // Fetch server metadata
                 ...(shouldQueryDatabaseTopology
                     ? [
@@ -2548,7 +2314,6 @@ async function getDatabaseInstancesSummary(
                               credentialsId,
                               region,
                               activeNodeInstanceId,
-                              undefined,
                               instanceNames,
                               isSqlAuthEnabled
                           )
@@ -2567,9 +2332,8 @@ async function getDatabaseInstancesSummary(
                               activeNodeInstanceId,
                               undefined,
                               undefined,
-                              undefined,
-                              VERSION_2_0,
                               databaseInstances,
+                              VERSION_2_0,
                               isSqlAuthEnabled
                           )
                       ]
@@ -2580,26 +2344,28 @@ async function getDatabaseInstancesSummary(
                               credentialsId,
                               region,
                               activeNodeInstanceId,
-                              undefined,
                               instanceNames,
                               isSqlAuthEnabled
                           )
                       ]
                     : [Promise.resolve()]),
                 ...(getDbCount
+                    ? [getDatabasesCount(credentialsId, region, activeNodeInstanceId, instanceNames, isSqlAuthEnabled)]
+                    : [Promise.resolve()]),
+                ...(shouldQueryNodeTopology && resourceDetails
                     ? [
-                          getDatabasesCount(
-                              credentialsId,
+                          getNodeTopology(
+                              accountId,
                               region,
+                              '',
+                              resourceDetails,
                               activeNodeInstanceId,
-                              undefined,
-                              instanceNames,
-                              isSqlAuthEnabled
+                              standbyNodeInstanceId
                           )
                       ]
                     : [Promise.resolve()]),
-                ...(shouldQueryNodeTopology && resourceDetails
-                    ? [getNodeTopology(accountId, region, '', resourceDetails, activeNodeInstanceId)]
+                ...(getStorageSavings && shouldGetStorageSavingsFromOntap
+                    ? [getStorageDataFromOntap(activeNodeInstanceId, databaseInstances, isSqlAuthEnabled)]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -2640,6 +2406,10 @@ async function getDatabaseInstancesSummary(
         databaseInstanceDetails.status = ServerState.UP;
         const instanceServerDetails = serverDetails?.[instanceName];
         if (shouldQueryServerDetails && instanceServerDetails) {
+            if (isDemoFlow && databaseInstancetopologyData[index].serverInstallationMode === 'Standalone') {
+                instanceServerDetails.nodeNames = [instanceServerDetails.nodeNames[0]];
+                delete instanceServerDetails.clusterName;
+            }
             instanceServerDetails.creationDate = creationDate ? Date.parse(creationDate.toString()) : '';
             databaseInstanceDetails.databaseServer = instanceServerDetails;
         }
@@ -2679,17 +2449,22 @@ async function getDatabaseInstancesSummary(
         if (!isEmpty(errormessages)) {
             databaseInstanceDetails.errors = errormessages;
         }
+
+        if (databaseInstanceDetails.storage && ontapStorageSavings?.[instanceName]) {
+            databaseInstanceDetails.storage.fsxn = {
+                ...ontapStorageSavings[instanceName],
+                protocol: databaseInstance.storage_protocol ? databaseInstance.storage_protocol.split(',') : []
+            };
+        }
         return databaseInstanceDetails;
     });
 }
 
 export {
-    getDatabaseHostsSummary,
-    getDatabaseHostSummary,
-    getDatabases,
     getDatabaseHostsSummaryV2,
     getDatabaseHostSummaryV2,
     getDatabaseHostInstanceSummary,
     getDatabasesV2,
-    getInstanceDetails
+    getInstanceDetails,
+    MappedOnTapVolumeResponse
 };

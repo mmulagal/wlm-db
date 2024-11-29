@@ -5,6 +5,7 @@ import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
 import { attempt, compact, isEmpty } from 'lodash-es';
+import ms from 'ms';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -12,7 +13,9 @@ import {
     describeFSxBackups,
     listResourceTags,
     createTag,
-    describeFSx
+    describeFSx,
+    describeVolumes,
+    updateFsxVolumeSize
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -25,12 +28,13 @@ import {
     HttpErrorCodes
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { ResourceDetails } from '../../utils/common-types';
+import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { getFsxArn, getOriginalDatabaseInstanceName } from '../../utils/utils';
+import { convertToBytes, getFsxArn, isDemo, sleep } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
-import { getMappedOntapVolumesScript, restGetUtilForOntap } from '../workloads/mssql/ssm-script-utils';
+import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
+import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 
 const logger = getLogger();
 
@@ -256,7 +260,9 @@ async function getFsxnVolIdsFromOntapVolIds(
 
     const volumeIds: string[] = [];
     const uuidVolumeIdMap: Record<string, string> = {};
-
+    if (isDemo()) {
+        return demoGetFsxnVolIdsFromOntapVolIds(credentialsId, region, fsxId, volumeUuids);
+    }
     volumes.forEach(volume => {
         const { OntapConfiguration: { UUID = '' } = {}, VolumeId = '' } = volume;
         if (volumeUuids.includes(UUID)) {
@@ -360,72 +366,47 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    volumeUuids: string[],
-    volumeDBMap: any,
-    activeNodeInstanceId?: string
+    volumeRecords: Record<string, string | number>[],
+    volumeDBMap: any
 ) {
     logger.info('Fetching ontap snapshots count ', {
         credentialsId,
         region,
         fileSystemId,
         volumeDBMap,
-        volumeUuids
+        volumeRecords
     });
 
     try {
-        if (!isEmpty(volumeUuids)) {
-            const apiEndpoint = '/storage/volumes';
-            let apiFilter = `uuid=${volumeUuids?.join()}`;
-            const apiQuery = 'fields=snapshot_count';
-            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-                fileSystemId = 'test-fsx2345';
-                region = 'test-region';
-                apiFilter = 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44';
-            }
+        if (!isEmpty(volumeRecords)) {
+            // Update the volumeDBMap to mark the volumes that have local snapshots protected.
+            // Iterate through the volumeDBMap and check if the corresponding volume in the volumesMap has a snapshot count greater than 0.
+            // If so, set the localSnapshotsProtected property of the volumeDetail to true.
+            const volumesMap = volumeRecords?.reduce((map: Record<string, number>, volume) => {
+                map[volume.uuid] = (volume?.snapshot_count as number) || 0;
+                return map;
+            }, {});
 
-            const command = restGetUtilForOntap(fileSystemId, region, apiEndpoint, apiFilter, apiQuery);
+            const volumeDBMapWithProtectionFlag = volumeDBMap?.reduce(
+                (
+                    acc: any,
+                    volumeDetail: {
+                        ontapVolumeuuid: string;
+                        localSnapshotsProtected: boolean;
+                        databaseName: string;
+                    }
+                ) => {
+                    if (volumesMap[volumeDetail.ontapVolumeuuid] > 0) {
+                        acc[volumeDetail.databaseName] = true;
+                    } else {
+                        acc[volumeDetail.databaseName] = false;
+                    }
+                    return acc;
+                },
+                {}
+            );
 
-            const response = await callSsmExecution(credentialsId, region, [command], activeNodeInstanceId!);
-
-            const cleanResponse = response?.replaceAll('\r\n', '');
-            let parsedResponse = attempt(JSON.parse, cleanResponse);
-
-            logger.debug({ parsedResponse });
-            parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
-
-            if (parsedResponse && !isEmpty(parsedResponse.records)) {
-                // Update the volumeDBMap to mark the volumes that have local snapshots protected.
-                // Iterate through the volumeDBMap and check if the corresponding volume in the volumesMap has a snapshot count greater than 0.
-                // If so, set the localSnapshotsProtected property of the volumeDetail to true.
-                const volumesMap = parsedResponse.records?.reduce(
-                    (map: Record<string, number>, volume: { uuid: string; snapshot_count: number }) => {
-                        map[volume.uuid] = volume.snapshot_count;
-                        return map;
-                    },
-                    {}
-                );
-
-                const volumeDBMapWithProtectionFlag = volumeDBMap?.reduce(
-                    (
-                        acc: any,
-                        volumeDetail: {
-                            ontapVolumeuuid: string;
-                            localSnapshotsProtected: boolean;
-                            databaseName: string;
-                        }
-                    ) => {
-                        if (volumesMap[volumeDetail.ontapVolumeuuid] > 0) {
-                            acc[volumeDetail.databaseName] = true;
-                        } else {
-                            acc[volumeDetail.databaseName] = false;
-                        }
-                        return acc;
-                    },
-                    {}
-                );
-
-                return volumeDBMapWithProtectionFlag;
-            }
+            return volumeDBMapWithProtectionFlag;
         }
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap snapshots', { err });
@@ -438,9 +419,10 @@ async function getMappedOntapVolumes(
     fileSystemId: string,
     isSystemDatabase: boolean,
     activeNodeInstanceId?: string,
-    instanceName?: string,
     instanceNames?: string[],
-    isSqlAuthEnabled = false
+    isSqlAuthEnabled = false,
+    includeLogVolumes = false,
+    accountId?: string
 ) {
     logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
         credentialsId,
@@ -448,8 +430,9 @@ async function getMappedOntapVolumes(
         fileSystemId,
         activeNodeInstanceId,
         isSystemDatabase,
-        instanceName,
-        isSqlAuthEnabled
+        isSqlAuthEnabled,
+        includeLogVolumes,
+        accountId
     });
 
     try {
@@ -460,24 +443,17 @@ async function getMappedOntapVolumes(
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
-        let sqlInstanceName;
-        let isSingleInstance = false;
-        if (instanceName && isEmpty(instanceNames)) {
-            sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
-            instanceNames = [sqlInstanceName!];
-            isSingleInstance = true;
-        }
-
         const command = getMappedOntapVolumesScript(
             fileSystemId,
             region,
-            instanceName,
             psIsSystemDatabase,
             instanceNames,
-            isSqlAuthEnabled
+            isSqlAuthEnabled,
+            '',
+            includeLogVolumes
         );
 
-        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!);
+        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!, accountId);
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -491,19 +467,23 @@ async function getMappedOntapVolumes(
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
-                const { volumeDBMap, volumes } = parsedResponse?.[iName] ?? {};
+                const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
                 if (volumes && !isEmpty(volumes?.records)) {
-                    const volumeUuids = volumes.records.map(({ uuid }: { uuid: string }) => uuid);
-                    instancesResponse[iName] = { volumeUuids, volumeDBMap };
+                    const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
+                        name: record.name,
+                        uuid: record.uuid,
+                        snapshot_count: record.snapshot_count
+                    }));
+                    instancesResponse[iName] = { volumeRecords, volumeDBMap, lunNames };
                 } else {
-                    instancesResponse[iName] = { volumeUuids: [], volumeDBMap: {} };
+                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: {}, lunNames: [] };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
             }
         });
 
-        return isSingleInstance ? instancesResponse[sqlInstanceName!] : instancesResponse;
+        return instancesResponse;
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap mapped volumes', { err });
     }
@@ -569,6 +549,158 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 }
 
+async function getFsxStorageDetails(credentialsId: string, region: string, fileSystemId: string) {
+    logger.info('Getting FSx storage details', { credentialsId, region, fileSystemId });
+    const [fsxSSDCapacity, { Volumes: fsxVolumes }] = await Promise.all([
+        getFsxStorageCapacity(credentialsId, region, fileSystemId),
+        describeFSxVolumes(credentialsId, region, fileSystemId)
+    ]);
+
+    const { storage } = fsxSSDCapacity ?? {};
+    const ssdStorageCapacityInBytes = storage ? convertToBytes(storage, 'GiB') || 0 : 0;
+
+    const totalVolumeSizeInBytes = fsxVolumes?.reduce((total, curr) => {
+        const amount = curr.OntapConfiguration?.SizeInBytes || 0;
+        return total + amount;
+    }, 0);
+
+    return { fsxSSDCapacity, ssdStorageCapacityInBytes, totalVolumeSizeInBytes };
+}
+
+async function getStorageDataFromOntap(
+    activeNodeInstanceId: string,
+    instanceDetails: DatabaseInstance[],
+    isSqlAuthEnabled: boolean
+) {
+    logger.info('Getting storage data from Ontap:', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
+
+    try {
+        const managedInstances = instanceDetails.filter(
+            ({ isManaged, fsxn_ids: fsxnIds }) => isManaged && fsxnIds?.length
+        );
+        const [{ credentials_id: credentialsId, region, fsxn_ids: fsxnId }] = managedInstances;
+
+        const instanceNames = managedInstances.map(({ database_instance_name: instanceName }) => instanceName);
+        const command = getMappedOntapVolumesScript(
+            fsxnId,
+            region,
+            '$false',
+            instanceNames,
+            isSqlAuthEnabled,
+            'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'
+        );
+        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId);
+
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        let parsedResponse = attempt(JSON.parse, cleanResponse);
+
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+        logger.debug({ parsedResponse });
+
+        const instancesResponse: { [key: string]: any } = {};
+        instanceNames?.forEach((iName: string) => {
+            if (
+                parsedResponse?.[iName] &&
+                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
+            ) {
+                const { volumes } = parsedResponse?.[iName] ?? {};
+                if (volumes && !isEmpty(volumes?.records)) {
+                    const storageSavings = volumes.records.reduce(
+                        (savings: Record<string, number>, { space, efficiency }: VolumeSpaceRecord) => ({
+                            size: savings.size + space.size,
+                            used: savings.used + space.used,
+                            spaceSavings: savings.spaceSavings + efficiency.space_savings.total
+                        }),
+                        {
+                            size: 0,
+                            used: 0,
+                            spaceSavings: 0
+                        } as Record<string, number>
+                    );
+                    // storageSavings.spaceSavingsPercent = (storageSavings.spaceSavings / storageSavings.used) * 100;
+                    instancesResponse[iName] = { ...storageSavings };
+                } else {
+                    instancesResponse[iName] = { size: 0, used: 0, spaceSavings: 0 };
+                }
+            } else {
+                logger.error(
+                    'Failed to get storage savings from ONTAP for the instance:',
+                    iName,
+                    parsedResponse?.[iName]
+                );
+            }
+        });
+
+        return instancesResponse;
+    } catch (error) {
+        logger.error('Failed executing SSM script to get storage data from ONTAP', { error });
+    }
+}
+
+async function getFsxVolumeDetails(credentialsId: string, region: string, fsxId: string, fsxVolumeIds: string[]) {
+    logger.info('Get FSx volume details', { credentialsId, region, fsxId, fsxVolumeIds });
+
+    const params = {
+        FileSystemId: fsxId,
+        VolumeIds: fsxVolumeIds
+    };
+
+    const { Volumes: fsxVolumes } = await describeVolumes(credentialsId, region, params);
+    if (!fsxVolumes) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get FSx volume details');
+    }
+    return fsxVolumes;
+}
+
+async function updateVolumeSizeAndWaitForUpdate(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    fsxId: string,
+    fsxVolumeId: string,
+    fsxVolumeSizeBytes: number
+) {
+    logger.info('Update FSx volume size and waiting for it to update', {
+        credentialsId,
+        region,
+        accountId,
+        fsxId,
+        fsxVolumeId,
+        fsxVolumeSizeBytes
+    });
+
+    await updateFsxVolumeSize(credentialsId, region, accountId, fsxVolumeId, fsxVolumeSizeBytes);
+
+    let currentVolumeSizeBytes;
+    const maxRetries = 10;
+    const intervalSeconds = '10s';
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const [volumeDetails] = await getFsxVolumeDetails(credentialsId, region, fsxId, [fsxVolumeId]);
+            currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
+            logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
+
+            if (currentVolumeSizeBytes === fsxVolumeSizeBytes || isDemo()) {
+                logger.info(`Volume ${fsxVolumeId} has reached the desired size: ${fsxVolumeSizeBytes} bytes`);
+                return;
+            }
+
+            retries += 1;
+            logger.info(`Waiting for ${intervalSeconds} before checking again...`);
+            await sleep(ms(intervalSeconds));
+        } catch (error) {
+            logger.error('Error while polling volume size:', error);
+            retries += 1;
+            await sleep(ms(intervalSeconds));
+        }
+    }
+
+    const errMsg = `Volume ${fsxVolumeId} did not get resized to the desired size: ${fsxVolumeSizeBytes} bytes`;
+    logger.error(errMsg);
+    throw createError(errMsg);
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -579,5 +711,11 @@ export {
     tagFsxResource,
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity,
-    getFSXFileSystemListForDemo
+    getFSXFileSystemListForDemo,
+    getFSXDetails,
+    getStorageDataFromOntap,
+    getFsxStorageDetails,
+    getFsxVolumeDetails,
+    getFsxnVolIdsFromOntapVolIds,
+    updateVolumeSizeAndWaitForUpdate
 };

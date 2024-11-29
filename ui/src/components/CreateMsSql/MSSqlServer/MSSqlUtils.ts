@@ -6,7 +6,6 @@ import {
     setProvisionedIOPSValue,
     setProvisionedType,
     setSelectedExistingSecurityGroup,
-    setSelectedKeyPair,
     setSelectedLicenseId,
     setSelectedLicenseType,
     setSelectedSecurityGroup,
@@ -20,15 +19,6 @@ import { formatSize, generateOptionType, isFsxnExisting } from '../../../utils/u
 export const selectDefaultSecurityGroup = (dispatch: any) => {
     dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
     dispatch(setSelectedExistingSecurityGroup(''));
-};
-
-export const selectDefaultKeyPair = (keyPairData: any, dispatch: any) => {
-    if (keyPairData && keyPairData?.keyPairs?.length > 0) {
-        const keyPaitFirst = keyPairData?.keyPairs[0];
-        const keyPairName = keyPaitFirst?.name || '';
-        const optionKP = generateOptionType(keyPairName, keyPairName, '', false, '', keyPaitFirst);
-        dispatch(setSelectedKeyPair(optionKP));
-    }
 };
 
 export const selectDefaultInstanceType = (instanceTypeData: any, dispatch: any) => {
@@ -68,7 +58,8 @@ export const selectDefaultLicense = (amiData: any, dispatch: any) => {
         const data = {
             architecture: firstAmi?.architecture,
             amiVal: firstAmi?.imageId,
-            amiName: firstAmi?.name
+            amiName: firstAmi?.name,
+            ebsVolumeSize: firstAmi?.ebsVolumeSize
         };
         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
         dispatch(setSelectedLicenseType(FORM_OPTIONS.LICENSE_AMI));

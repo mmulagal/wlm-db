@@ -20,6 +20,7 @@ import {
     sortListOfDict
 } from '../../../../../utils/utilityFunctions';
 import { getDefaultDriveLetters } from '../../../SandboxUtility';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 
 const Mount = () => {
     const { selectedMount, dataDriveMountPoint, logDriveMountPoint, getDbMountPoints, getDriveInfo, source, target } =
@@ -139,6 +140,10 @@ const Mount = () => {
             >
                 <AccordionCardContent>
                     <DsTypography>
+                        <div className={styles.noticeText}>
+                            <InfoIcon />
+                            <DsTypography variant="Regular_14">{GENERAL.MOUNT_NOTICE}</DsTypography>
+                        </div>
                         <div className={styles.radios}>
                             <DsRadioButton
                                 isSelected={selectedMount === GENERAL.AUTO_ASSIGN_MOUNT_POINT}

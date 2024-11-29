@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+import sinon from 'sinon';
 import { faker } from '@faker-js/faker';
 import { cloneDeep, sample } from 'lodash-es';
 import {
@@ -21,7 +22,12 @@ import {
     DescribeSnapshotsCommand,
     ImageState,
     PlatformValues,
-    GetInstanceTypesFromInstanceRequirementsCommand
+    GetInstanceTypesFromInstanceRequirementsCommand,
+    StopInstancesCommand,
+    StartInstancesCommand,
+    DescribeInstanceStatusCommand,
+    ModifyInstanceAttributeCommand,
+    DescribeAddressesCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -42,6 +48,8 @@ import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attribut
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 import instanceTypesFromRequirements from '../../responses/aws/ec2-instance-types-from-requirements.json';
 import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
+import { waitForInstanceOkWrapper } from '../../../../src/lib/aws/ec2';
+import { TEST_STOPPED_EC2_INSTANCE_ID } from '../../../utils/consts';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -164,6 +172,7 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             instancesQueryPrivateIps = filtered?.Values;
         }
     }
+
     if (instanceFilters && instancesQueryPrivateIps) {
         const reservations = [];
         const { items } = inventoryDemoData('fsx', 'ebsTest'); // private-ip-address filter is only added to get partner node details of instances using ebs; revisit when the filter is used for other purposes
@@ -190,6 +199,12 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
         });
 
         return { Reservations: reservations };
+    }
+
+    if (command.InstanceIds[0] === TEST_STOPPED_EC2_INSTANCE_ID) {
+        const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
+        dummyResevation.Instances[0].State.Name = 'stopped';
+        return { Reservations: [dummyResevation] };
     }
     return describeInstanceResponse;
 });
@@ -234,3 +249,129 @@ ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesComm
 ec2Mock.on(DescribeSnapshotsCommand).resolves(describeSnapshotsResponse);
 
 ec2Mock.on(GetInstanceTypesFromInstanceRequirementsCommand).resolves(instanceTypesFromRequirements);
+
+ec2Mock.on(StopInstancesCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '6a5c3d60-1b68-400e-b986-4ef080ea9800',
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    StoppingInstances: [
+        {
+            CurrentState: { Code: 80, Name: 'stopped' },
+            InstanceId: 'i-03325779d5dfa1649',
+            PreviousState: { Code: 16, Name: 'running' }
+        }
+    ]
+});
+ec2Mock.on(StartInstancesCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '9accf85a-96be-4d54-b745-4760e443205e',
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    StartingInstances: [
+        {
+            CurrentState: { Code: 0, Name: 'pending' },
+            InstanceId: 'i-03325779d5dfa1649',
+            PreviousState: { Code: 80, Name: 'stopped' }
+        }
+    ]
+});
+ec2Mock.on(DescribeInstanceStatusCommand).resolves({
+    state: 'SUCCESS',
+    reason: {
+        $metadata: {
+            httpStatusCode: 200,
+            requestId: 'e5ed0529-a129-4435-8e2c-25c92f2fa6df',
+            attempts: 1,
+            totalRetryDelay: 0
+        },
+        InstanceStatuses: [
+            {
+                AvailabilityZone: 'ap-southeast-1b',
+                InstanceId: 'i-03325779d5dfa1649',
+                InstanceState: { Code: 16, Name: 'running' },
+                InstanceStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' },
+                SystemStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' }
+            }
+        ]
+    }
+});
+ec2Mock.on(ModifyInstanceAttributeCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '1c670b4e-f0f9-41a6-aca7-a00c855b1a2d',
+        attempts: 1,
+        totalRetryDelay: 0
+    }
+});
+
+ec2Mock.on(DescribeInstanceStatusCommand).resolves({
+    InstanceStatuses: [
+        {
+            InstanceId: 'instanceId',
+            InstanceState: { Name: 'running' },
+            InstanceStatus: { Status: 'ok' },
+            SystemStatus: { Status: 'ok' }
+        }
+    ]
+});
+
+ec2Mock.on(DescribeAddressesCommand).resolves({
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: '7fd613e9-2724-4c25-a4f9-47811ca1b0a2',
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    Addresses: [
+        {
+            PublicIp: '18.140.87.228',
+            AllocationId: 'eipalloc-096a63803291b1516',
+            AssociationId: 'eipassoc-037f20b4fe123d0c1',
+            Domain: 'vpc',
+            NetworkInterfaceId: 'eni-06640ea3618cb7bf1',
+            NetworkInterfaceOwnerId: '464262061435',
+            PrivateIpAddress: '172.31.48.9',
+            PublicIpv4Pool: 'amazon',
+            NetworkBorderGroup: 'ap-southeast-1'
+        }
+    ]
+});
+
+/* Sample error response
+ec2Mock.on(DescribeAddressesCommand).resolves({'$metadata': {
+    httpStatusCode: 400,
+    requestId: 'e390cac9-59cb-4fdc-822d-12a1f0dd0741',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  Code: 'InvalidAddress.NotFound'
+})
+*/
+
+sinon.stub(waitForInstanceOkWrapper, 'waitForInstanceOk').resolves({
+    state: 'SUCCESS',
+    reason: {
+        $metadata: {
+            httpStatusCode: 200,
+            requestId: '08202b6c-9ce2-438a-ba09-dd31b539a046',
+            attempts: 1,
+            totalRetryDelay: 0
+        },
+        InstanceStatuses: [
+            {
+                AvailabilityZone: 'ap-southeast-1b',
+                InstanceId: 'i-03325779d5dfa1649',
+                InstanceState: { Code: 16, Name: 'running' },
+                InstanceStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' },
+                SystemStatus: { Details: [{ Name: 'reachability', Status: 'passed' }], Status: 'ok' }
+            }
+        ]
+    }
+});

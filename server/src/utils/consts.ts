@@ -1,13 +1,10 @@
+import randomize from 'randomatic';
 import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { MissingPermission } from './common-types';
-
-type SubJobDescriptions = {
-    [key: string]: string;
-};
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -64,13 +61,6 @@ enum HEADERS {
 
 const API_PATH_HEALTH: string = '/health';
 
-// TODO: These variables are not used anywhere. Remove them later.
-// const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
-//     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
-//     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-//     ? config.get<string>('urls.local-connector')
-//     : config.get<string>('urls.cloud-manager');
-
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
@@ -82,8 +72,9 @@ const AUDIT_EXCLUDE_LIST = [
     '/storage-savings',
     '/manual-storage-savings',
     '/calculations',
-    '/v1/mssql/credentials',
-    '/sandboxes-meta-update'
+    '/sandboxes-meta-update',
+    '/resource-credentials',
+    '/create-demo-resource'
 ];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
@@ -112,7 +103,8 @@ const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
 const WLMDB_RESOURCE_CLASS = 'WLMDB';
 enum DatabaseTypes {
-    MS_SQL_SERVER = 'MSSQL'
+    MS_SQL_SERVER = 'MSSQL',
+    PG_SQL = 'PGSQL'
 }
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
@@ -156,7 +148,8 @@ enum RouteTags {
     SYSTEM = 'System',
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
-    SANDBOX = 'Sandbox'
+    SANDBOX = 'Sandbox',
+    ASSESSMENT = 'Continuous Optimization'
 }
 
 enum HttpErrorCodes {
@@ -202,17 +195,11 @@ const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE
     : config.get<string>('jwt.audience.tenancy');
 
 const SECRETS: Record<string, string | undefined> = {
-    CLIENT_ID: process.env.CLIENT_ID
-        ? process.env.CLIENT_ID
-        : config.has('service-token.client_id')
-        ? config.get('service-token.client_id')
-        : undefined,
-    CLIENT_SECRET: process.env.CLIENT_SECRET
-        ? process.env.CLIENT_SECRET
-        : config.has('service-token.client_secret')
-        ? config.get('service-token.client_secret')
-        : undefined,
-    DATABASE_URL: process.env.DATABASE_URL
+    AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
+    AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+    SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
@@ -222,7 +209,8 @@ const SECRETS_MANAGER_KEYS: Record<string, string> = {
     SIGNURL_ACCESS_KEY: 'SIGNURL_ACCESS_KEY',
     SIGNURL_SECRET_KEY: 'SIGNURL_SECRET_KEY',
     AUTH_CLIENT_ID: 'AUTH-CLIENT-ID',
-    AUTH_CLIENT_SECRET: 'AUTH-CLIENT-SECRET'
+    AUTH_CLIENT_SECRET: 'AUTH-CLIENT-SECRET',
+    REDIS_PASSWORD: 'REDIS_KEY'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
@@ -304,7 +292,8 @@ enum AWSQueryFields {
 
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
-    FSX = 'FSX'
+    FSX = 'FSX',
+    PGSQL = 'PGSQL'
 }
 
 const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
@@ -312,7 +301,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 enum FileSystemTypes {
     EBS = 'EBS',
     FSXONTAP = 'FSx for ONTAP',
-    FSXWINDOWS = 'FSx for Windows'
+    FSXWINDOWS = 'FSx for Windows',
+    FSXW = 'FSXW'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -544,6 +534,8 @@ const AWS_REGIONS = new Map<string, string>([
 ]);
 
 const WLMDB = 'wlmdb';
+const INITIALIZER = 'initializer';
+const MSSQL = 'mssql';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
@@ -554,6 +546,7 @@ const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
+const PGSQL_MASTER_TEMPLATE_PATH = 'pgsql/templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
@@ -792,6 +785,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'OpenSSL',
         url: `${WLMDB}/OpenSSL-Win64.zip`
+    },
+    {
+        name: 'ScriptSqlSetup',
+        url: `${WLMDB}/scripts/Sql-Setup.ps1`
     }
 ];
 
@@ -839,7 +836,9 @@ enum TEMPLATE_TYPES {
     SQLSTANDALONE = 'sqlstandalone',
     ENDPOINT = 'endpoint',
     NEWFSX = 'newfsx',
-    EXISTINGFSX = 'existingfsx'
+    EXISTINGFSX = 'existingfsx',
+    PGSQLSTACK = 'pgsqlstack',
+    PGSQLSTANDALONE = 'pgsqlstandalone'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -872,6 +871,150 @@ const SQL_TEMPLATES_DISTRIBUTION = [
 const MASTER_TEMPLATE_DISTRIBUTION = {
     name: TEMPLATE_TYPES.MASTER,
     location: './resources/mssql/templates/wlm-master.yaml'
+};
+
+const TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/terraform/modules/validation-node/Validation-Instance-initializer.ps1'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/terraform/modules/ec2/Sql-Instance-initializer.ps1'
+    }
+];
+
+const TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS = [
+    {
+        name: 'ValidationInitializerTemplate',
+        url: 'terraform/validation/Validation-Instance-initializer.ps1'
+    },
+    {
+        name: 'SQLStandaloneInitializerTemplate',
+        url: 'terraform/standalone/Sql-Instance-initializer.ps1'
+    },
+    {
+        name: 'SQLFCIInitializerTemplate',
+        url: 'terraform/FCI/Sql-Instance-initializer.ps1'
+    }
+];
+
+const TERRAFORM_ROOT_MODULE_DISTRIBUTION = {
+    name: 'main',
+    location: './resources/mssql/templates/main.tf'
+};
+
+const TERRAFORM_FOLDER_PATH = './resources/mssql/terraform';
+
+const TF_VARS_CONFIG = {
+    EC2: 'ec2',
+    FSX: 'fsx',
+    AD: 'ad',
+    SQLServer: 'sqlServer',
+    General: 'general',
+    Endpoint: 'endpoint',
+    VPC: 'vpc'
+};
+
+const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: {
+    [key: string]: { name: string; type: string; configType: string };
+} = {
+    AccountId: { name: 'account_id', type: 'string', configType: TF_VARS_CONFIG.General },
+    ADScenarioType: { name: 'ad_scenario_type', type: 'string', configType: TF_VARS_CONFIG.AD },
+    CfDeployRoleName: { name: 'tf_deploy_role_name', type: 'string', configType: TF_VARS_CONFIG.General },
+    CloudProviderAccountId: { name: 'cloud_provider_account_id', type: 'string', configType: TF_VARS_CONFIG.General },
+    CloudwatchLogsEndpointExists: {
+        name: 'cloudwatch_logs_endpoint_exists',
+        type: 'boolean',
+        configType: TF_VARS_CONFIG.Endpoint
+    },
+    DeploymentMode: { name: 'deployment_mode', type: 'string', configType: TF_VARS_CONFIG.General },
+    DNSIpAddresses: { name: 'dns_ip_addresses', type: 'string', configType: TF_VARS_CONFIG.AD },
+    DomainAdminPassword: { name: 'domain_admin_password', type: 'string', configType: TF_VARS_CONFIG.AD },
+    DomainAdminUser: { name: 'domain_admin_user', type: 'string', configType: TF_VARS_CONFIG.AD },
+    DomainDNSName: { name: 'domain_dns_name', type: 'string', configType: TF_VARS_CONFIG.AD },
+    DomainMemberSGID: { name: 'domain_member_sg_id', type: 'string', configType: TF_VARS_CONFIG.AD },
+    Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean', configType: TF_VARS_CONFIG.Endpoint },
+    Ec2MessagesEndpointExists: {
+        name: 'ec2_messages_endpoint_exists',
+        type: 'boolean',
+        configType: TF_VARS_CONFIG.Endpoint
+    },
+    EnableCloudWatchLogFeature: {
+        name: 'enable_cloud_watch_log_feature',
+        type: 'boolean',
+        configType: TF_VARS_CONFIG.General
+    },
+    FileSystemEncryptionKeyId: { name: 'fsx_encryption_key', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxAdminPassword: { name: 'fsx_admin_password', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxAdminUsername: { name: 'fsx_admin_username', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxDataLunSize: { name: 'fsx_data_lun_size', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FSxDataVolumeName: { name: 'fsx_data_volume_name', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxDataVolumeSize: { name: 'fsx_data_volume_size', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FSxDiskIops: { name: 'fsx_disk_iops', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FsxEndpointExists: { name: 'fsx_endpoint_exists', type: 'boolean', configType: TF_VARS_CONFIG.Endpoint },
+    FSxFileSystemId: { name: 'fsx_file_system_id', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxFileSystemName: { name: 'fsx_file_system_name', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxLogVolumeName: { name: 'fsx_log_volume_name', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxLogVolumeSize: { name: 'fsx_log_volume_size', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FSxQuorumVolumeName: { name: 'fsx_quorum_volume_name', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxQuorumVolumeSize: { name: 'fsx_quorum_volume_size', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FSxStorageCapacity: { name: 'fsx_storage_capacity', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FSxSvmName: { name: 'fsx_svm_name', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxTempDbVolumeName: { name: 'fsx_temp_db_volume_name', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxTempDbVolumeSize: { name: 'fsx_temp_db_volume_size', type: 'number', configType: TF_VARS_CONFIG.FSX },
+    FsxVolumeSnapshotPolicy: { name: 'fsx_volume_snapshot_policy', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    FSxVolumeThroughputCapacity: {
+        name: 'fsx_volume_throughput_capacity',
+        type: 'number',
+        configType: TF_VARS_CONFIG.FSX
+    },
+    IsCustomAmi: { name: 'is_custom_ami', type: 'boolean', configType: TF_VARS_CONFIG.EC2 },
+    KeyPairName: { name: 'key_pair_name', type: 'string', configType: TF_VARS_CONFIG.EC2 },
+    MSSQLMediaBucketName: { name: 'mssql_media_bucket_name', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    MSSQLMediaPathKey: { name: 'mssql_media_path_key', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    NodeNetBIOSNames: { name: 'node_net_bios_names', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    ONTAPSecurityGroupID: { name: 'ontap_security_group_id', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    PrivateSubnet1Cidrblock: { name: 'private_subnet1_cidrblock', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    PrivateSubnet1ID: { name: 'private_subnet1_id', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    PrivateSubnet2Cidrblock: { name: 'private_subnet2_cidrblock', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    PrivateSubnet2ID: { name: 'private_subnet2_id', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    role_credentials_id: { name: 'role_credentials_id', type: 'string', configType: TF_VARS_CONFIG.General },
+    RouteTable1Id: { name: 'route_table1_id', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    RouteTable2Id: { name: 'route_table2_id', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    S3EndpointExists: { name: 's3_endpoint_exists', type: 'boolean', configType: TF_VARS_CONFIG.Endpoint },
+    S3EndpointRouteTables: { name: 's3_endpoint_route_tables', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    SQLAMIID: { name: 'sql_ami_id', type: 'string', configType: TF_VARS_CONFIG.EC2 },
+    SqlCollation: { name: 'sql_collation', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    SQLigroupname: { name: 'sql_igroup_name', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    SqlServerName: { name: 'sql_server_name', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    SQLServiceAccountName: { name: 'sql_service_account_name', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    SQLServiceAccountPassword: {
+        name: 'sql_service_account_password',
+        type: 'string',
+        configType: TF_VARS_CONFIG.SQLServer
+    },
+    SQLSvmName: { name: 'sql_svm_name', type: 'string', configType: TF_VARS_CONFIG.SQLServer },
+    SsmEndpointExists: { name: 'ssm_endpoint_exists', type: 'boolean', configType: TF_VARS_CONFIG.Endpoint },
+    SSMMessagesEndpointExists: {
+        name: 'ssm_messages_endpoint_exists',
+        type: 'boolean',
+        configType: TF_VARS_CONFIG.Endpoint
+    },
+    UniqueID: { name: 'unique_id', type: 'string', configType: TF_VARS_CONFIG.General },
+    ValidationAmi: { name: 'validation_ami', type: 'string', configType: TF_VARS_CONFIG.EC2 },
+    ValidationNodeInstanceType: {
+        name: 'validation_node_instance_type',
+        type: 'string',
+        configType: TF_VARS_CONFIG.EC2
+    },
+    VPCCIDR: { name: 'vpc_cidr', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    VPCID: { name: 'vpc_id', type: 'string', configType: TF_VARS_CONFIG.VPC },
+    WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string', configType: TF_VARS_CONFIG.General },
+    WorkloadInstanceType: { name: 'workload_instance_type', type: 'string', configType: TF_VARS_CONFIG.EC2 },
+    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number', configType: TF_VARS_CONFIG.EC2 },
+    SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string', configType: TF_VARS_CONFIG.General }
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -945,6 +1088,7 @@ const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
 const AWS_PRICING_TYPE = 'AWS_PRICING';
 const AWS_FSX_TYPE = 'AWS_FSX';
 const AWS_SSM_PARAMETER = 'AWS_SSM_PARAMETER';
+const AWS_CE_TYPE = 'AWS_CE';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -999,8 +1143,6 @@ const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
 
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
-const DATABASE_TYPE = 'Microsoft SQL Server';
-
 // SQL software types
 const SQL_STD = 'SQL std';
 const SQL_ENT = 'SQL ent';
@@ -1052,60 +1194,6 @@ const OPERATE = 'operate';
 const VIEW = 'view';
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
-const subJobDescriptions: SubJobDescriptions = {
-    SQLStandaloneStack: 'Deploying an SQL Server standalone instance with recommended best practices',
-    SQLServerStack: 'Deploying an SQL Server FCI with recommended best practices',
-    NewFSxStack: 'Deploying new FSx for ONTAP file system for SQL Server workload',
-    ExistingFSxStack:
-        'Deploying a storage virtual machine for the SQL Server workload on the FSx for ONTAP file system',
-    'ValidationStack1-standalone': 'Subnet Validation for deployment',
-    'ValidationStack1-fci': 'Primary subnet validation for SQL Server FCI deployment',
-    ValidationStack2: 'Standby subnet validation for SQL Server FCI deployment',
-    'SqlNode(AWS::EC2::Instance)': 'Configuring SQL Server standalone on an EC2 instance',
-    'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
-    'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for SQL Server workloads',
-    'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)':
-        'Attaching an instance profile to EC2 instances for SQL Server nodes',
-    'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
-    'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
-    'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
-        'Creating a volume to host witness disk for Windows Cluster',
-    'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
-    'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
-    'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
-        'Creating a dedicated storage virtual machine (SVM) for the database workload',
-    'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
-    'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
-    'ValidationNode1(AWS::EC2::Instance)':
-        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
-    'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
-    'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
-    'ValidationInstanceProfile(AWS::IAM::InstanceProfile)': 'Attaching an instance profile to the validation instance',
-    'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps',
-    'SqlFSxInstanceMAD1(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on primary node',
-    'SqlFSxInstanceMAD2(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on standby node',
-    'NetworkInterface2(AWS::EC2::NetworkInterface)':
-        'Creating network interfaces for the EC2 instance in standby subnet',
-    'NetworkInterface1(AWS::EC2::NetworkInterface)':
-        'Creating network interfaces for the EC2 instance in primary subnet',
-    'ValidationNode2(AWS::EC2::Instance)':
-        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
-    'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
-    'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
-        'Signaling wait condition to resume next steps',
-    VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
-    'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
-    'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
-    'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
-    'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
-    'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
-    'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
-    'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
-    'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
-    'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
-    'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
-};
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 const RESOURCE_SOURCE = {
     DEPLOY: 'deployment',
@@ -1119,10 +1207,7 @@ const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
 
-const VALIDATION_NODE_INSTANCETYPE = {
-    T2MICRO: 't2.micro',
-    T3MICRO: 't3.micro'
-};
+const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
 const ONLINE = 'ONLINE';
 const OFFLINE = 'OFFLINE';
@@ -1142,8 +1227,10 @@ const FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL = '5h';
 const FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL = '1h';
 const DBCREATE_RELATIVE_PATH = `${WLMDB}/scripts/dbcreate.zip`;
 const PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/aws_ssm.zip`;
+const PREPARE_PSMODULES_RELATIVE_PATH = `${WLMDB}/Installer/dependent-packages.zip`;
 const DEFAULT_INSTANCE_NAME = 'MSSQLSERVER';
 const DEFAULT_MSSQL_INSTANCE_NAME = '$env:computername';
+const MAX_DATA_LUN_SIZE_IN_GIB = 86049.3;
 
 const PERMISSION_DENIAL_POSSIBLE_REASONS = {
     MISSING: 'permission statement is missing',
@@ -1154,7 +1241,7 @@ const PERMISSION_DENIAL_POSSIBLE_REASONS = {
 
 const NO_SANDBOX_CREATED = 'No sandboxes created for the instance';
 
-const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI' };
+const STORAGE_PROTOCOLS = { SMB: 'SMB', ISCSI: 'iSCSI', NFS: 'NFS' };
 
 const AMI_OWNERS = { AMAZON: 'amazon' };
 
@@ -1201,9 +1288,154 @@ const DEMO_STANADLONE_SQL_SERVER_ID = 'f4b7c5d3-e1f6-4g2a-9c4l';
 const DEMO_STANADLONE_INSTANCE_ID = 'i-c5x3z1a7s9d2f3g';
 
 const TCO_FEATURE = 'TCO';
+const CONTINUOUS_ASSESSMENT_FEATURE = 'CONTINUOUS_ASSESSMENT';
+
 const CURRENT_SCRIPT_VERSION = '1.0.0';
 
+const PGSQL_VERSION = 'pgsql-version';
+const AL2023_AMI_NAME = '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64';
+
+const PG_TEMPLATE_CONFIG_MAPPING: Record<string, string> = {
+    vpcId: 'VPCID',
+    vpcCidr: 'VPCCIDR',
+    vpcName: 'VPCName',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id',
+
+    fsxDeploymentMode: 'DeploymentMode',
+    fsxFileSystemId: 'FSxFileSystemId',
+    fsxPassword: 'FSxAdminPassword',
+    fsxVolThroughput: 'FSxVolumeThroughputCapacity',
+    fsxIOPS: 'FSxDiskIops',
+    ontapSgGroupId: 'ONTAPSecurityGroupID',
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    snapshotPolicy: 'FsxVolumeSnapshotPolicy',
+
+    sqlDeploymentMode: 'SQLDeploymentMode',
+    sqlAmiId: 'SQLAMIID',
+    sqlServerName: 'SqlServerName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
+    sqlVersion: 'SqlVersion',
+
+    workloadInstanceType: 'WorkloadInstanceType',
+    keyPairName: 'KeyPairName',
+
+    topicArn: 'NotificationARN',
+    enableCloudWatch: 'EnableCloudWatchLogFeature',
+    metrics: 'Metrics'
+};
+
+const PGSQL_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/pgsql/templates/vpc-validation.yaml'
+    },
+    // {
+    //     name: TEMPLATE_TYPES.SQLSTACK,
+    //     location: './resources/pgsql/templates/sql-windows-fci-config_nosignal.yaml'
+    // },
+    {
+        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
+        location: './resources/pgsql/templates/standalone-deployment.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.ENDPOINT,
+        location: './resources/pgsql/templates/vpc-endpoints.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.NEWFSX,
+        location: './resources/pgsql/templates/fsx-new.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.EXISTINGFSX,
+        location: './resources/pgsql/templates/fsx-existing.yaml'
+    }
+];
+
+const PGSQL_RESOURCE_ASSETS = [
+    {
+        name: 'ScriptValidation',
+        url: `${WLMDB}/pgsql/scripts/validation.zip`
+    },
+    {
+        name: 'ScriptVerifySignature',
+        url: `${WLMDB}/pgsql/scripts/verify-signature.sh`
+    },
+    {
+        name: 'ScriptUnzipArchive',
+        url: `${WLMDB}/pgsql/scripts/unzip-archive.sh`
+    },
+    {
+        name: 'ArtifactsSignatures',
+        url: `${WLMDB}/pgsql/signig_files.zip`
+    }
+];
+
+const PGSQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'pgsql/templates/fsx-new.yaml'
+    },
+    {
+        name: 'FSXExistingTemplate',
+        url: 'pgsql/templates/fsx-existing.yaml'
+    },
+    {
+        name: 'ValidationTemplate',
+        url: 'pgsql/templates/vpc-validation.yaml'
+    },
+    {
+        name: 'VpcEndpointTemplate',
+        url: 'pgsql/templates/vpc-endpoints.yaml'
+    },
+    {
+        name: 'SQLStandaloneTemplate',
+        url: 'pgsql/templates/standalone-deployment.yaml'
+    }
+];
+
+const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
+    name: TEMPLATE_TYPES.MASTER,
+    location: './resources/pgsql/templates/wlm-master.yaml'
+};
+
+const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
+    s3: TEMPLATE_S3_ENDPOINT,
+    cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
+    ssm: TEMPLATE_SSM_ENDPOINT,
+    sqs: TEMPLATE_SQS_ENDPOINT,
+    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
+    fsx: TEMPLATE_FSX_ENDPOINT,
+    ec2: TEMPLATE_EC2_ENDPOINT,
+    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
+    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
+};
+
+const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id'
+};
 const TIMELINE_SERVICE_NAME = 'WF-Databases';
+
+const EBS_ROOT_VOLUME = 'ROOT_VOLUME';
+
+const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
+    'compute-optimizer:GetEnrollmentStatus',
+    'compute-optimizer:PutRecommendationPreferences',
+    'compute-optimizer:GetEffectiveRecommendationPreferences',
+    'compute-optimizer:GetEC2InstanceRecommendations',
+    'autoscaling:DescribeAutoScalingGroups',
+    'autoscaling:DescribeAutoScalingInstances',
+    'fsx:UpdateFileSystem',
+    'fsx:UpdateVolume'
+];
+const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
+const DEMO_DEFAULT_REGION = 'us-east-1';
 
 export {
     WLMDB,
@@ -1389,7 +1621,6 @@ export {
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
-    DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
     REQUEST_IN_PROGRESS_TYPE,
     CONFIG_NOT_FOUND,
@@ -1426,7 +1657,6 @@ export {
     OPERATE,
     VIEW,
     JOBS_DEFAULT_TIME_RANGE,
-    subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
     AWS_PRICING_TYPE,
     RESOURCE_SOURCE,
@@ -1490,9 +1720,35 @@ export {
     WIN_SQL_EC2_USAGE_OPERATION,
     DEMO_STANADLONE_INSTANCE_ID,
     DEMO_STANADLONE_SQL_SERVER_ID,
-    TCO_FEATURE,
     CURRENT_SCRIPT_VERSION,
+    PGSQL_VERSION,
+    PG_TEMPLATE_CONFIG_MAPPING,
+    PGSQL_TEMPLATES_DISTRIBUTION,
+    PGSQL_RESOURCE_ASSETS,
+    PGSQL_TEMPLATES_ASSETS,
+    PGSQL_MASTER_TEMPLATE_DISTRIBUTION,
+    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
+    PG_TEMPLATE_OPTIONAL_PARAMETERS,
+    TCO_FEATURE,
+    CONTINUOUS_ASSESSMENT_FEATURE,
     AWS_SSM_PARAMETER,
     TIMELINE_SERVICE_NAME,
-    AuditStatus
+    AuditStatus,
+    PREPARE_PSMODULES_RELATIVE_PATH,
+    EBS_ROOT_VOLUME,
+    TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION,
+    TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS,
+    CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING,
+    TERRAFORM_FOLDER_PATH,
+    TERRAFORM_ROOT_MODULE_DISTRIBUTION,
+    AWS_CE_TYPE,
+    PGSQL_MASTER_TEMPLATE_PATH,
+    MAX_DATA_LUN_SIZE_IN_GIB,
+    TF_VARS_CONFIG,
+    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
+    INITIALIZER,
+    MSSQL,
+    AL2023_AMI_NAME,
+    DEMO_AWS_ACCOUNT_ID,
+    DEMO_DEFAULT_REGION
 };

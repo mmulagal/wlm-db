@@ -46,7 +46,34 @@ const SQLConfiguration = Type.Object({
     sqlServerName: Type.String(),
     sqlAmiName: Type.String(),
     sqlCollation: Type.String(),
-    isCustomAmi: Type.Optional(Type.Boolean({ default: false }))
+    isCustomAmi: Type.Optional(Type.Boolean({ default: false })),
+    sqlVersion: Type.Optional(Type.String({ enum: ['postgresql15', 'postgresql16'] }))
+});
+
+const PgSqlConfiguration = Type.Pick(SQLConfiguration, [
+    'sqlDeploymentMode',
+    'sqlServerName',
+    'sqlVersion',
+    'serviceAccountPassword'
+]);
+
+const PgSqlCloudFormationTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: PgSqlConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
 });
 
 const CloudFormationTemplateHeader = Type.Object({
@@ -83,6 +110,26 @@ const CloudFormationTemplateRequestBody = Type.Omit(CloudFormationStaticTemplate
     'region'
 ]);
 
+// PgSql Cloud formation template, yaml and cli creation
+const PgSqlCloudFormationStaticTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
 const MissingPermission = Type.Object({
     service: Type.String(),
     action: Type.String(),
@@ -99,6 +146,8 @@ const CloudFormationDeploymentResponse = Type.Object({
     cloudFormationStackId: Type.Optional(Type.String()),
     missingPermissions: Type.Optional(MissingPermissions)
 });
+
+const PgSqlCloudFormationDeploymentResponse = Type.Any();
 
 const CloudFormationStaticTemplateResponse = Type.Object({
     url: Type.String(),
@@ -124,31 +173,6 @@ const DeploymentStatusObjectParams = Type.Object({
     stackName: Type.String({ minLength: 1 })
 });
 
-const DeploymentSummaryQueryString = Type.Object({
-    statuses: Type.Optional(Type.String()),
-    nextToken: Type.Optional(Type.String())
-});
-
-const DeploymentJobsSummaryResponse = Type.Object({
-    id: Type.String(),
-    deploymentId: Type.String(),
-    deploymentName: Type.String(),
-    name: Type.Optional(Type.String()),
-    status: Type.String(),
-    metadata: Type.Object({
-        region: Type.Optional(Type.String()),
-        serverType: Type.Optional(Type.String()),
-        serverInstallationMode: Type.Optional(Type.String()),
-        fileSystemType: Type.Optional(Type.String())
-    })
-});
-
-const DeploymentSummaryListResponse = Type.Object({
-    count: Type.Number(),
-    items: Type.Array(DeploymentJobsSummaryResponse),
-    nextToken: Type.Optional(Type.String())
-});
-
 const FSxAvailableRegion = Type.Object({
     regionCode: Type.String(),
     regionName: Type.String()
@@ -172,6 +196,31 @@ const CollationListQueryString = Type.Object({
     version: Type.Number()
 });
 
+const TerraformSetupRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    adConfiguration: ADConfiguration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
+const TerraformSetupResponse = Type.Object({
+    url: Type.String(),
+    template: Type.String()
+});
+
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
 const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
@@ -185,6 +234,8 @@ type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
+type PgSqlConfigurationType = Static<typeof PgSqlConfiguration> & { sqlAmiId?: string };
+type TerraformSetupResponseType = Static<typeof TerraformSetupResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -205,11 +256,17 @@ export {
     CloudFormationStaticTemplateResponseType,
     CloudFormationStaticTemplateRequestBody,
     CloudFormationDeploymentResponse,
-    DeploymentSummaryQueryString,
-    DeploymentSummaryListResponse,
     CloudFormationTemplateHeader,
     MissingPermission,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
-    CollationListQueryString
+    CollationListQueryString,
+    PgSqlCloudFormationTemplateRequestBody,
+    PgSqlCloudFormationDeploymentResponse,
+    PgSqlConfiguration,
+    PgSqlConfigurationType,
+    TerraformSetupResponse,
+    TerraformSetupResponseType,
+    TerraformSetupRequestBody,
+    PgSqlCloudFormationStaticTemplateRequestBody
 };

@@ -13,7 +13,11 @@ import {
     describeEndpoints,
     describeInstanceTypeOfferings,
     modifyVpcAttributes,
-    describeVolumes
+    describeVolumes,
+    stopInstance,
+    startInstance,
+    modifyInstanceType,
+    waitForInstanceOk
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -169,5 +173,29 @@ describe('EC2 Lib', () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         const response = await describeVolumes(credentialsId, DEFAULT_AWS_REGION, { VolumeIds: ['test-volume-id'] });
         expect(response?.Volumes?.[0]?.VolumeId).toEqual('test-volume-id');
+    });
+
+    it('Stop instance', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await stopInstance(credentialsId, 'ap-southeast-1', 'i-03325779d5dfa1649');
+        expect(response.StoppingInstances).toBeDefined();
+    });
+
+    it('Start instance', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await startInstance(credentialsId, 'ap-southeast-1', 'i-03325779d5dfa1649');
+        expect(response.StartingInstances).toBeDefined();
+    });
+
+    it('Modify instance type', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await modifyInstanceType(credentialsId, 'ap-southeast-1', 'i-03325779d5dfa1649', 't2.micro');
+        expect(response).toBeDefined();
+    });
+
+    it('Wait for instance to be in ok state', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await waitForInstanceOk(credentialsId, 'ap-southeast-1', 'i-03325779d5dfa1649');
+        expect(response).toBeDefined();
     });
 });

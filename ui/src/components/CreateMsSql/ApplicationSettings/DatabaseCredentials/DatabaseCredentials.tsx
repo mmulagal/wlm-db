@@ -14,10 +14,14 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
-import { SQL_USERNAME } from '../../../../utils/consts';
+import { DBType, POSTGRE_USERNAME, SQL_USERNAME, WIZARD_TYPE } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
-const DatabaseCredentials = () => {
+type DatabaseCredentialsProps = {
+    wizardType?: string;
+};
+
+const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
     const userName = useAppSelector(state => state.mssqlForm.dbCredentials.name);
     const password = useAppSelector(state => state.mssqlForm.dbCredentials.password);
 
@@ -27,7 +31,15 @@ const DatabaseCredentials = () => {
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
-    const [credName, setCredName] = useState(SQL_USERNAME);
+    const [credName, setCredName] = useState(wizardType === WIZARD_TYPE.MSSQL ? SQL_USERNAME : POSTGRE_USERNAME);
+
+    useEffect(() => {
+        if (wizardType === WIZARD_TYPE.MSSQL) {
+            dispatch(setDBCredentialsName(SQL_USERNAME));
+        } else {
+            dispatch(setDBCredentialsName(POSTGRE_USERNAME));
+        }
+    }, []);
 
     useEffect(() => {
         setCredName(userName);
@@ -93,24 +105,30 @@ const DatabaseCredentials = () => {
                 <AccordionCardContent>
                     <Typography>
                         <Typography variant="Regular_14" className={styles.subtext}>
-                            {GENERAL.DATABASE_CREDENTIAL_TEXT}
+                            {wizardType === WIZARD_TYPE.MSSQL
+                                ? GENERAL.DATABASE_CREDENTIAL_TEXT
+                                : GENERAL.DATABASE_CREDENTIAL_TEXT_PGSQL}
                         </Typography>
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
                                 info={
-                                    <div className={styles.userNameTooltip}>
-                                        <div className={styles.list}>
-                                            <div className={styles.listItem}>
-                                                <Bullet />
-                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
-                                            </div>
-                                            <div className={styles.listItem}>
-                                                <Bullet />
-                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                                    wizardType === WIZARD_TYPE.PGSQL ? (
+                                        ''
+                                    ) : (
+                                        <div className={styles.userNameTooltip}>
+                                            <div className={styles.list}>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                                                </div>
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+                                                    <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )
                                 }
                                 error={useDelayedError(isValidUserName(credName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,16 +138,12 @@ const DatabaseCredentials = () => {
                                 }}
                                 value={credName}
                                 className={styles.textField}
+                                isDisabled={wizardType === WIZARD_TYPE.PGSQL}
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
                                 ref={passwordRef}
-                                error={
-                                    !isDBPasswordFilled
-                                        ? GENERAL.ACTION_REQUIRED
-                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
-                                          '' || dbPassVal(password)
-                                }
+                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : dbPassVal(password)}
                                 info={tooltipText()}
                                 //@ts-ignore
                                 isErrorPrefixHidden

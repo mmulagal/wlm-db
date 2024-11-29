@@ -20,6 +20,7 @@
                 "OntapVolumeType": "RW",
                 "SecurityStyle": "UNIX",
                 "SizeInMegabytes": 1048576,
+                "SizeInBytes": 1048576,
                 "SnapshotPolicy": "default",
                 "StorageEfficiencyEnabled": false,
                 "StorageVirtualMachineId": "svm-03985e26ffd55441d",

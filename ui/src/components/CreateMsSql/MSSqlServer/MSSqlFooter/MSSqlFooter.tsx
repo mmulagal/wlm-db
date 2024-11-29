@@ -1,14 +1,7 @@
-import { Button, useDialog, Typography } from '@netapp/design-system';
+import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import {
-    FORM_TO_WLF_NAVIGATE,
-    WLF_TABS,
-    PRODUCTION,
-    TIMELINE_PROD_LINK,
-    TIMELINE_STAGE_LINK,
-    FORM_TO_WLF_NAVIGATE_BLUEXP
-} from '../../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE, WLF_TABS, FORM_TO_WLF_NAVIGATE_BLUEXP } from '../../../../utils/consts';
 import {
     setDeployRedirectToCfLink,
     setIsLoading,
@@ -21,7 +14,7 @@ import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventorySlice';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
@@ -111,9 +104,20 @@ const MSSqlFooter = () => {
         if (databaseHostEntryPoint === 'inventory') {
             navigate('databases/inventory');
         } else if (databaseHostEntryPoint === 'database') {
-            navigate('/databases');
+            if (isWorkloadFactoryStatus) {
+                navigate('/databases');
+            } else {
+                navigate('../../fsxdb');
+            }
         } else {
-            navigateToCanvas('/');
+            if (isWorkloadFactoryStatus) {
+                navigateToCanvas('/');
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                });
+            }
         }
     };
 

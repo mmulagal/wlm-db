@@ -2,12 +2,10 @@ import { useEffect, useState } from 'react';
 
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
-import DatabaseHost from './DatabaseHost/DatabaseHost';
 import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
-import TopBarButton from './TopBarButton/TopBarButton';
 import { useAppSelector } from '../../store/storeHooks';
 import DashboardSummary from './DashboardSummary/DashboardSummary';
 import DashboardRibbon from './DashboardRibbon/DashboardRibbon';
@@ -18,7 +16,7 @@ const DatabaseHomePage = () => {
 
     const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
-    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventory.getDatabaseHosts);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const databaseHostsLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
     const fullHostDataLoadingV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const [loading, setLoading] = useState(false);

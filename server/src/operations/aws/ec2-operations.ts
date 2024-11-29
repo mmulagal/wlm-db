@@ -12,9 +12,11 @@ import {
     DescribeSnapshotsCommandInput,
     _InstanceType,
     ImageState,
-    PlatformValues
+    PlatformValues,
+    CpuManufacturer
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
+import ms from 'ms';
 import {
     AMI_OWNERS,
     AWSQueryFields,
@@ -22,7 +24,6 @@ import {
     ENDPOINTS_DEPLOYMENT,
     HttpErrorCodes,
     SqlServerDeploymentModel,
-    VALIDATION_NODE_INSTANCETYPE,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
 import {
@@ -38,15 +39,15 @@ import {
     describeTags,
     describeEndpoints,
     modifyVpcAttributes,
-    describeInstanceTypeOfferings,
     describeSnapshots,
     describeInstance,
     describeInstanceType,
-    getInstanceTypesFromInstanceRequirementsCommand
+    getInstanceTypesFromInstanceRequirementsCommand,
+    describeAddresses
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { filterSqlAmis, getResourceNameFromTags, isDemo } from '../../utils/utils';
+import { filterSqlAmis, getResourceNameFromTags, isDemo, sleep } from '../../utils/utils';
 import { getEbsVolumeUtilization, getInstanceUtilization } from './cloud-watch-operations';
 import {
     ResourceDetails,
@@ -58,6 +59,7 @@ import {
     NodeDetails
 } from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
+import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
 
 const logger = getLogger();
 
@@ -315,28 +317,31 @@ async function getAmiList(
             return { amis: [] };
         }
     } else {
-        const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
+        const amiFilter =
+            osType === 'windows'
+                ? { Name: 'name', Values: filterSqlAmis(osVersion, databaseVersion, databaseEdition) }
+                : { Name: 'description', Values: ['Amazon Linux 2023*'] };
 
+        logger.info('AMI filter:', amiFilter);
         amis = await getAmis(credentialsId, region, {
-            Filters: [
-                { Name: 'name', Values: amiNames },
-                { Name: 'owner-alias', Values: [AMI_OWNERS.AMAZON] }
-            ],
-            Owners: [
-                '801119661308', // for regular regions
-                '185158320714', // for il-central-1
-                '536790793924', // for eu-central-2
-                '688423173695', // for eu-south-2
-                '878052572473', // for me-central-1
-                '159365745649', // for ap-south-2
-                '903064639964', // ap-southeast-3
-                '311529897437', //  ap-southeast-4
-                '442396546477', // af-south-1
-                '777534740333', // ap-east-1
-                '460214486919', // eu-south-1
-                '162367869970', // me-south-1
-                '194652444849' // ca-west-1
-            ]
+            Filters: [amiFilter, { Name: 'owner-alias', Values: [AMI_OWNERS.AMAZON] }],
+            ...(osType === 'windows' && {
+                Owners: [
+                    '801119661308', // for regular regions
+                    '185158320714', // for il-central-1
+                    '536790793924', // for eu-central-2
+                    '688423173695', // for eu-south-2
+                    '878052572473', // for me-central-1
+                    '159365745649', // for ap-south-2
+                    '903064639964', // ap-southeast-3
+                    '311529897437', //  ap-southeast-4
+                    '442396546477', // af-south-1
+                    '777534740333', // ap-east-1
+                    '460214486919', // eu-south-1
+                    '162367869970', // me-south-1
+                    '194652444849' // ca-west-1
+                ]
+            })
         });
 
         if (!amis?.Images || isEmpty(amis?.Images)) {
@@ -427,7 +432,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
             { Name: 'platform', Values: ['windows'] },
             { Name: 'is-public', Values: ['true'] },
             { Name: 'owner-alias', Values: ['amazon'] },
-            { Name: 'name', Values: ['Windows_Server-*-English-Full-Base*'] }
+            { Name: 'name', Values: ['Windows_Server-2022-English-Full-Base*'] }
         ]
     });
     const [filteredInstances] =
@@ -569,34 +574,19 @@ async function getServicesWithNoEndpoint(
 async function enableVpcDnsAttributes(credentialsId: string, region: string, vpcId: string) {
     logger.info('Enable vpc dns attributes', credentialsId, region, vpcId);
 
-    // <p>You cannot modify the DNS resolution and DNS hostnames attributes in the same request. Use separate requests for each attribute.</p>
-    const [dnsHostnameResponse, dnsSupportResponse] = await Promise.all([
-        modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsSupport: { Value: true } }),
-        modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsHostnames: { Value: true } })
-    ]);
+    try {
+        // <p>You cannot modify the DNS resolution and DNS hostnames attributes in the same request. Use separate requests for each attribute.</p>
+        const [dnsHostnameResponse, dnsSupportResponse] = await Promise.all([
+            modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsSupport: { Value: true } }),
+            modifyVpcAttributes(credentialsId, region, { VpcId: vpcId, EnableDnsHostnames: { Value: true } })
+        ]);
 
-    logger.debug('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse);
+        logger.debug('Enable vpc dns attributes response ', dnsHostnameResponse, dnsSupportResponse);
 
-    return [dnsHostnameResponse, dnsSupportResponse];
-}
-
-async function getValidationNodeInstanceType(credentialsId: string, region: string, availabilityZones: string[]) {
-    logger.info('Get instance type offerings ', credentialsId, region, availabilityZones);
-
-    const response = await describeInstanceTypeOfferings(credentialsId, region, {
-        LocationType: 'availability-zone',
-        Filters: [{ Name: 'instance-type', Values: ['t2.micro', 't3.micro'] }]
-    });
-
-    const t2microSupportedZones = response.InstanceTypeOfferings?.filter(e =>
-        e.InstanceType?.includes(VALIDATION_NODE_INSTANCETYPE.T2MICRO)
-    ).map(e => e.Location as string);
-
-    const instanceType = availabilityZones.every(a => t2microSupportedZones?.includes(a))
-        ? VALIDATION_NODE_INSTANCETYPE.T2MICRO
-        : VALIDATION_NODE_INSTANCETYPE.T3MICRO;
-
-    return instanceType;
+        return [dnsHostnameResponse, dnsSupportResponse];
+    } catch (err: any) {
+        logger.error('Error while setting "EnableDnsSupport" and "EnableDnsHostnames" to true for vpc', vpcId, err);
+    }
 }
 
 async function isEbsAwsBackupEnabled(credentialsId: string, region: string, ebsVolumeIds: string[]) {
@@ -682,6 +672,48 @@ async function determineBiggerInstance(region: string, instanceTypes: _InstanceT
     return biggerInstanceType;
 }
 
+async function getInstanceTypesFromInstanceRequirementsForManagedInstances(
+    credentialsId: string,
+    region: string,
+    instanceId: string
+) {
+    logger.info('Getting instance types from instance requirements for managed instance', {
+        credentialsId,
+        region,
+        instanceId
+    });
+
+    const { Reservations = [] } = await describeInstance(credentialsId, region, {
+        InstanceIds: [instanceId]
+    });
+
+    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+    const [{ Architecture, VirtualizationType }] = instances;
+    if (Architecture && VirtualizationType) {
+        const params = {
+            ArchitectureTypes: [Architecture],
+            VirtualizationTypes: [VirtualizationType],
+            InstanceRequirements: {
+                AllowedInstanceTypes: ['m*', 'c*', 'r*'], // limit to specific instance types: 'm*', 'c*', 'r*' families.
+                CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances
+                VCpuCount: { Min: 2 },
+                MemoryMiB: { Min: 1024 }
+            }
+        };
+
+        const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+            credentialsId,
+            region,
+            params
+        );
+
+        const requiredInstanceTypes = compact(
+            instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
+        );
+
+        return requiredInstanceTypes;
+    }
+}
 async function getInstanceTypesFromInstanceRequirements(
     credentialsId: string,
     region: string,
@@ -752,17 +784,40 @@ async function getInstanceTypesFromInstanceRequirements(
                 ArchitectureTypes: [Architecture],
                 VirtualizationTypes: [VirtualizationType],
                 InstanceRequirements: {
+                    CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances; That's a recommendation we've got from the Microsoft specialists in AWS. It is better that across the board we will filter it. Product Management thinks that in general OLTP workloads are associated with Intel processors because of hyper threading technology or something like that.
                     AllowedInstanceTypes: ['m*', 'c*', 'r*'],
                     VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
                     MemoryMiB: { Min: MemoryInfo?.SizeInMiB }, // As per req, Memory should be the same.
                     NetworkBandwidthGbps: { Min: requiredNetworkBandwidth } // As per req, New Instance's network throughput >= Old Instance's network throughput; in AOAG future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
                 }
             };
-            const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+            let { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
                 credentialsId,
                 region,
                 params
             );
+            if (isEmpty(instanceTypes)) {
+                /* As the CPU reduces, memory required also reduces. Network configuration remains the same for a wide range of cpu-memory configurations.
+                FOR EXAMPLE:(https://aws.amazon.com/ec2/instance-types/)
+                    Instance size	vCPU	Memory (GiB)	Instance storage (GB)	Network bandwidth (Gbps)	Amazon EBS bandwidth (Gbps)
+                    m8g.medium         1              4                 EBS-only                  Up to 12.5                       Up to 10
+
+                    m8g.large          2              8                 EBS-only                  Up to 12.5                       Up to 10
+
+                    m8g.xlarge         4             16                 EBS-only                  Up to 12.5                       Up to 10
+                The network bandwidth is the same for all the instance types. So, if the instance type is not found for the given requirements, we can compromise on the memory requirement and retry.
+                */
+
+                logger.warn(
+                    'No instance types found for the given requirements, so compromising on the memory requirement and retrying'
+                );
+                params.InstanceRequirements.MemoryMiB = { Min: 1024 }; // changing the min memory requirement to 1GB as MemoryMiB is a required field in SDK request
+                ({ InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+                    credentialsId,
+                    region,
+                    params
+                ));
+            }
             const requiredInstanceTypes = compact(
                 instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
             );
@@ -805,6 +860,110 @@ async function getInstanceDetailsByPrivateIp(credentialsId: string, region: stri
     return instanceDetails;
 }
 
+async function waitForInstanceToBeStopped(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Waiting for instance to be stopped', { credentialsId, region, instanceId });
+
+    const maxRetries = 10;
+    const delay = '30s'; // 30 seconds wait ; total wait maxRetries * delay = 300s
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const { Reservations: [{ Instances: [{ State: { Name: instanceState = '' } = {} }] = [] } = {}] = [] } =
+            await describeInstance(credentialsId, region, { InstanceIds: [instanceId] });
+
+        if (!instanceState) {
+            throw new Error('Instance state not found');
+        }
+
+        if (instanceState === 'stopped') {
+            return true;
+        }
+        if (instanceState === 'stopping') {
+            await sleep(ms(delay));
+        }
+    }
+
+    throw new Error(`Instance ${instanceId} in ${region} did not stop within the expected time`);
+}
+
+async function instanceTypeChangePreReqs(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    instanceIds: string[]
+) {
+    logger.info('Checking instance type change prerequisites', { credentialsId, region, accountId, instanceIds });
+
+    try {
+        const { Reservations = [] } = await describeInstance(credentialsId, region, {
+            InstanceIds: instanceIds
+        });
+
+        const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+
+        // elastic IP check
+        try {
+            const publicIpAddresses = compact(instances.map(({ PublicIpAddress }) => PublicIpAddress)) || [];
+            if (!isEmpty(publicIpAddresses)) {
+                return await describeAddresses(credentialsId, region, {
+                    PublicIps: publicIpAddresses
+                });
+            }
+        } catch (error: any) {
+            logger.error('Error while checking elastic IP address', error);
+            if (error?.Code && error.Code === 'InvalidAddress.NotFound') {
+                throw createError(
+                    500,
+                    'Elastic IP address not found. On instance type change, Amazon EC2 releases the address and give your instance a new public IPv4 address'
+                );
+            }
+            throw error;
+        }
+
+        // spot instance check
+        const instanceLifecycles = compact(instances.map(({ InstanceLifecycle }) => InstanceLifecycle)) || [];
+        if (!isEmpty(instanceLifecycles)) {
+            instanceLifecycles.some(lifecycle => {
+                if (lifecycle === 'spot') {
+                    throw createError(500, 'Instance type of a Spot Instance cannot be changed');
+                }
+                return false;
+            });
+        }
+
+        // more than 26 volumes to be attached to an instance
+        const blockDeviceMappings = compact(instances.map(({ BlockDeviceMappings }) => BlockDeviceMappings)) || [];
+        blockDeviceMappings.some(blockDeviceMapping => {
+            if (blockDeviceMapping.length > 26) {
+                throw createError(
+                    500,
+                    'The instance type change operation cannot be performed because the instance has more than 26 volumes attached'
+                );
+            }
+            return false;
+        });
+
+        // autoscaling group check
+        const { AutoScalingInstances: autoScalingInstances } = await describeAutoscalingInstances(
+            credentialsId,
+            region,
+            accountId,
+            {
+                InstanceIds: instanceIds
+            }
+        );
+
+        if (autoScalingInstances?.length) {
+            throw createError(
+                500,
+                'Instances are part of an auto-scaling group. The Amazon EC2 Auto Scaling service marks the stopped instance as unhealthy, and might terminate it and launch a replacement instance'
+            );
+        }
+    } catch (error: any) {
+        logger.error('Error while checking instance type change prerequisites', error);
+        throw error;
+    }
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -819,10 +978,12 @@ export {
     getVpcSecurityGroups,
     getServicesWithNoEndpoint,
     enableVpcDnsAttributes,
-    getValidationNodeInstanceType,
     isEbsAwsBackupEnabled,
+    getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,
-    determineSmallerInstance
+    determineSmallerInstance,
+    waitForInstanceToBeStopped,
+    instanceTypeChangePreReqs
 };

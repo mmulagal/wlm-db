@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccordionCard, AccordionCardContent, Table, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './StorageCapacity.module.scss';
@@ -12,8 +12,13 @@ import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssq
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import StorageCapacityTable from './StorageCapacityTable/StorageCapacityTable';
+import { WIZARD_TYPE } from '../../../../utils/consts';
 
-const StorageCapacity = () => {
+type storageCapacityTypes = {
+    wizardType?: string;
+};
+
+const StorageCapacity = ({ wizardType = 'mssql' }: storageCapacityTypes) => {
     const dispatch = useDispatch();
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
@@ -64,7 +69,7 @@ const StorageCapacity = () => {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const re = /^[0-9.\b]+$/;
+        const re = /^[0-9]*\.?[0-9]*$/;
 
         // if value is not blank, then test the regex
 
@@ -84,8 +89,10 @@ const StorageCapacity = () => {
 
     const checkError = () => {
         if (
-            (selectedUnit?.label === 'TiB' && (Number(inputText) > 130 || Number(inputText) < 1)) ||
-            (selectedUnit?.label === 'GiB' && (Number(inputText) > 133120 || Number(inputText) < 120))
+            (selectedUnit?.label === 'TiB' && (Number(inputText) > 86 || Number(inputText) < 1)) ||
+            (selectedUnit?.label === 'GiB' && (Number(inputText) > 88064 || Number(inputText) < 120)) ||
+            Number.isNaN(Number(inputText)) ||
+            !/^\d+(\.\d+)?$/.test(inputText)
         ) {
             return GENERAL.ERROR_CAPACITY;
         }
@@ -94,7 +101,7 @@ const StorageCapacity = () => {
     const tooltipMessage = () => {
         return (
             <Typography variant="Regular_13" className={styles.infoMsg}>
-                {GENERAL.CAPACITY_TOOLTIP}
+                {wizardType === WIZARD_TYPE.PGSQL ? GENERAL.CAPACITY_PGSQL_TOOLTIP : GENERAL.CAPACITY_TOOLTIP}
             </Typography>
         );
     };
@@ -132,7 +139,7 @@ const StorageCapacity = () => {
                                 className={styles.selectField}
                             />
                         </div>
-                        {<StorageCapacityTable />}
+                        {<StorageCapacityTable wizardType={wizardType} />}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

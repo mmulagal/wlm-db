@@ -5,20 +5,11 @@ import {
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregateHostsCountData,
-    addDatabaseHostsList,
     addJobsSummary,
     addJobsSummaryLoading
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { useLazyGetJobsSummaryQuery } from '../../utils/apiService';
-import {
-    getAggrCost,
-    getAggrProtection,
-    getAggrStorageSavings,
-    getHostStatusCount,
-    jobStatusPercent,
-    mergeDatabaseHostsData,
-    resetDBHomePageState
-} from '../../utils/utilityFunctions';
+import { jobStatusPercent, resetDBHomePageState } from '../../utils/utilityFunctions';
 import {
     getManageAggrCost,
     getManagedAggrProtection,
@@ -28,10 +19,7 @@ import {
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
-
-    const databaseHostsDataV1 = useAppSelector(state => state.inventory.getDatabaseHosts.databaseHostsData);
     const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
     const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
@@ -45,8 +33,6 @@ const DatabaseHomeApis = () => {
         const startTime = endTime - 30 * (3600 * 1000 * 24);
         try {
             const result: any = await getJobsSummaryApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
                 startTime: startTime,
                 endTime: endTime
             });
@@ -86,32 +72,9 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedCred, headerSelectedRegion, refreshTime]);
 
-    // To have database hosts data in dashboard - V1
-    useEffect(() => {
-        if (isInventoryV2) {
-            return;
-        }
-        const mergedData = mergeDatabaseHostsData(databaseHostsDataV1);
-        dispatch(addDatabaseHostsList(mergedData));
-
-        const hostStatusCount = getHostStatusCount(mergedData);
-        dispatch(addAggregateHostsCountData(hostStatusCount));
-
-        const aggrProtection = getAggrProtection(mergedData);
-        dispatch(addAggregatedProtectionDbCount(aggrProtection));
-
-        const aggrStorage = getAggrStorageSavings(mergedData, sandboxSavings);
-        dispatch(addAggregatedStorageSavings(aggrStorage));
-
-        const aggrCost = getAggrCost(mergedData);
-        dispatch(addAggregatedCosts(aggrCost));
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseHostsDataV1, sandboxSavings]);
-
     // To have database hosts data in dashboard - V2
     useEffect(() => {
-        if (!isInventoryV2 || !databaseHostsDataV2) {
+        if (!databaseHostsDataV2) {
             return;
         }
 
@@ -129,7 +92,7 @@ const DatabaseHomeApis = () => {
 
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
-        if (!isInventoryV2 || !databaseHostsDataV2) {
+        if (!databaseHostsDataV2) {
             return;
         }
         const hostStatusCount = getManagedHostCount(databaseHostsDataV2, dispatch);

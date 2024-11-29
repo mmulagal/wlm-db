@@ -192,7 +192,7 @@ export const getDefaultDriveLetters = (
             defaultLogDriveLetter = validDrive?.driveLetter;
         }
     }
-    return { dataDrive: defaultDataDriveLetter, logDrive: defaultLogDriveLetter };
+    return { dataDrive: defaultDataDriveLetter, logDrive: defaultLogDriveLetter || defaultDataDriveLetter };
 };
 
 export const getAggregatedSplitEstimate = (volumes: any) => {

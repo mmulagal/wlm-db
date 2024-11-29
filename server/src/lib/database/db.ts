@@ -1,4 +1,11 @@
-import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL, STORAGE_TYPE, SOURCE, DATABASE_DEPLOYMENT_TYPE } from '@prisma/client';
+import {
+    DEPLOYMENT_STATUS,
+    DEPLOYMENT_MODEL,
+    STORAGE_TYPE,
+    SOURCE,
+    DATABASE_DEPLOYMENT_TYPE,
+    DATABASE_TYPE
+} from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -54,6 +61,7 @@ interface Config {
     creationTime?: number;
     name: string;
     data?: object;
+    databaseType?: string;
 }
 
 interface DatabaseInstanceRecord {
@@ -293,7 +301,7 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 }
 
 async function listResources(
-    accountId: string,
+    accountId?: string,
     resourceId?: string,
     credentialsId?: string,
     region?: string,
@@ -313,11 +321,14 @@ async function listResources(
         pageSize,
         nextToken
     });
-    accountId = checkAccount(accountId);
+
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
 
     return prisma.client.resource.findMany({
         where: {
-            account_id: accountId,
+            ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType }),
             ...(region && { region }),
@@ -426,7 +437,8 @@ async function listConfig(accountId: string, id?: string) {
             account_id: true,
             data: !isEmpty(id),
             name: true,
-            modified_time: true
+            modified_time: true,
+            database_type: true
         },
         take: 100
     });
@@ -434,7 +446,7 @@ async function listConfig(accountId: string, id?: string) {
 
 async function createConfig(accountId: string, params: Config) {
     logger.info('Creating config', { accountId, params });
-    const { user, creationTime, data, name } = params;
+    const { user, creationTime, data, name, databaseType } = params;
     accountId = checkAccount(accountId);
 
     return prisma.client.config.create({
@@ -443,7 +455,8 @@ async function createConfig(accountId: string, params: Config) {
             user: user!,
             name,
             creation_time: new Date(creationTime!),
-            data
+            data,
+            database_type: databaseType! as DATABASE_TYPE
         }
     });
 }
@@ -646,11 +659,23 @@ async function updateDatabaseInstanceMetadata(
     });
 }
 
+async function listAllManagedInstances(accountId?: string) {
+    return prisma.client.database_instances.findMany({
+        where: {
+            ...(accountId && { account_id: accountId })
+        },
+        orderBy: {
+            id: 'asc'
+        },
+        include: {
+            resource: true
+        }
+    });
+}
 async function listDatabaseInstances(accountId: string, record: any) {
-    logger.info('List database instances for given account/credentialsId', accountId);
+    logger.info('List database instances for given account and record', { accountId, record });
 
     const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId } = record;
-
     accountId = checkAccount(accountId);
 
     return prisma.client.database_instances.findMany({
@@ -664,6 +689,9 @@ async function listDatabaseInstances(accountId: string, record: any) {
         },
         orderBy: {
             id: 'asc'
+        },
+        include: {
+            resource: true
         }
     });
 }
@@ -806,5 +834,6 @@ export {
     createTrackedEc2Records,
     listTrackedEc2,
     removeTrackedEc2Record,
-    updateTrackedEc2Record
+    updateTrackedEc2Record,
+    listAllManagedInstances
 };

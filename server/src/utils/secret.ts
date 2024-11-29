@@ -1,6 +1,7 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { SECRETS_MANAGER_KEYS, SECRETS } from './consts';
 import getLogger from './logger';
+import { isDemo } from './utils';
 
 const logger = getLogger();
 
@@ -18,9 +19,6 @@ async function readSecretFromSecretManager(name: string) {
                 VersionStage: 'AWSCURRENT' // VersionStage defaults to AWSCURRENT if unspecified
             })
         );
-
-        logger.debug('Fetched secret values from secret manager');
-
         const secrets = JSON.parse(response.SecretString || '{}');
         return secrets[name];
     } catch (error) {
@@ -43,4 +41,7 @@ export default async function initiateSecrets() {
             }
         })
     );
+    if (isDemo()) {
+        logger.info('Secrets initiated in demo:', SECRETS);
+    }
 }

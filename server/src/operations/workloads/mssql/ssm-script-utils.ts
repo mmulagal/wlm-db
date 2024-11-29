@@ -2,33 +2,11 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../uti
 
 /* eslint-disable no-useless-escape */
 
-import { SCRIPT_VERSON_FILE } from './const';
+import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
+import { compressResponse, ontapRestRequest } from './common-templates';
 
-const compressResponse = `
-    Function Deflate-String([string]$stringToCompress) {
-
-        if ([string]::IsNullOrEmpty($stringToCompress)) {
-            Write-Information "The string to compress is either null or empty."
-            return $null
-        }
-
-        $encoder = New-Object System.Text.UTF8Encoding
-        $memoryStream = New-Object System.IO.MemoryStream
-        $deflateStream = New-Object System.IO.Compression.DeflateStream($memoryStream, [System.IO.Compression.CompressionMode]::Compress)
-
-        $buffer = $encoder.GetBytes($stringToCompress)
-        $deflateStream.Write($buffer, 0, $buffer.Length)
-        $memoryStream.Position = 0
-        $deflateStream.Dispose()
-
-        $bytes = $memoryStream.ToArray()
-        $encodedString = [Convert]::ToBase64String($bytes)
-
-        return $encodedString
-    }
-`;
-
-const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string) => ` 
+const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
+#Get ACTIVE NODE DRIVE INFO
 Function GetSMBMappedDrivesWithPath() {
     $DriveLetterPath = @{}
     $Errors = ''
@@ -65,8 +43,28 @@ Function GetSMBMappedDrivesWithPath() {
     return $DriveLetterPath.Keys 
   }
 
-$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $deploymentType  = '${deploymentType}'
+$instanceName = '${instanceName}'
+
+$sqlDrives = New-Object System.Collections.ArrayList
+
+if ($deploymentType -eq 'FCI') {
+    $sqlResource = ${instanceName === DEFAULT_INSTANCE_NAME ? '"SQL Server"' : '"SQL Server ($instanceName)"'}
+    $sqlgroup = Get-ClusterResource | Where-Object Name -eq "$sqlResource"
+    $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
+    $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
+
+    foreach ($resource in $resourcegroup) {
+        $sqldisks = $resource.GetRelated("MSCluster_Disk")
+        foreach ($disk in $sqldisks) {
+            $diskpart = $disk.GetRelated("MSCluster_DiskPartition")
+            $diskdrive = $diskpart.path
+            $sqlDrives.Add($diskdrive) | Out-Null
+        }
+    }
+}
+
+$disks = Get-WmiObject -Query "SELECT DeviceID, Model FROM Win32_DiskDrive"
 $results = New-Object System.Collections.ArrayList
 
 foreach ($disk in $disks) {
@@ -82,9 +80,8 @@ foreach ($disk in $disks) {
                 FileSystem = $logicalDisk.FreeSpace
             }
 
-            if ($deploymentType -eq 'FCI') {
-                $clusterResource = Get-WmiObject -Namespace "root\\MSCluster" -Class "MSCluster_Resource" | Where-Object { $_.Name -eq $logicalDisk.VolumeName }
-                $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value $clusterResource.OwnerGroup
+            if ($deploymentType -eq 'FCI' -and $sqlDrives -contains $logicalDisk.DeviceID) {
+                $logicalDiskObject = $logicalDiskObject | Add-Member -MemberType NoteProperty -Name "Owner" -Value "SQL Server ($instanceName)" -PassThru
             }
 
             [void]$results.Add($logicalDiskObject)
@@ -346,17 +343,19 @@ const validateSQLInstanceConnectivity = (
     sqlinstancename: string = DEFAULT_MSSQL_INSTANCE_NAME
 ) => ` 
         $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
+        $ProgressPreference = 'SilentlyContinue'
 
-        $CommonmodulePath = (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
-        if($CommonmodulePath -is [System.Array]) {
-            $CommonmodulePath = $CommonmodulePath[0]
+        $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+        if ($connection -ne $True) {
+            # Set the registry key to disable certificate revocation check in case of private subnet
+            Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
         }
         $ssmmodulePath = (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
         if($ssmmodulePath -is [System.Array]) {
             $ssmmodulePath = $ssmmodulePath[0]
         }
         
-        Import-Module -Name $CommonmodulePath, $ssmmodulePath
+        Import-Module -Name $ssmmodulePath
 
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -424,47 +423,29 @@ const validateSQLInstanceConnectivity = (
 `;
 
 const validateOntapConnectivity = (fsxid: string, fsxregion: string) => `
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
 
-    $CommonmodulePath =  (Get-Module -Name 'AWS.Tools.Common' -ListAvailable).Path
-    if($CommonmodulePath -is [System.Array]) {
-        $CommonmodulePath = $CommonmodulePath[0]
+    $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+    if ($connection -ne $True) {
+        # Set the registry key to disable certificate revocation check in case of private subnet
+        Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
     }
     $ssmmodulePath =  (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
     if($ssmmodulePath -is [System.Array]) {
         $ssmmodulePath = $ssmmodulePath[0]
     }
 
-    Import-Module -Name $CommonmodulePath, $ssmmodulePath
+    Import-Module -Name $ssmmodulePath
 
     try {
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
-
-        $Params = @{
-            "URI"         = 'https://management.' + $FSxID + '.fsx.' + $FSxRegion + '.amazonaws.com/api/cluster?fields=version'
-            "Method"      = "GET"
-            "Headers"     = @{"Authorization" = 'Basic ' + $FSxCredentialsInBase64 }
-            "ContentType" = "application/json"
-        }
-
-        $ontapresult = Invoke-RestMethod @Params -Certificate $regionCertificateificate
+        ${ontapRestRequest}
+        $ontapresult = Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
 
         $responseObject.add('ontapconnectivity', $True)
     } catch {
@@ -494,28 +475,26 @@ const installPowerShellModule = (module: string) => `
 const getMappedOntapVolumesScript = (
     fsxid: string,
     fsxregion: string,
-    instanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
     isSystemDatabase: string = '$false',
     instances: string[] = [],
-    sqlAuthEnabled: boolean = false
+    sqlAuthEnabled: boolean = false,
+    fields: string = '',
+    includeLogVolumes: boolean = false
 ) => `
     $WarningPreference = 'SilentlyContinue';
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
 
+    $includeLogVolumes = [System.Convert]::ToBoolean('${includeLogVolumes}')
     try {
         #Requires -Module AWS.Tools.SimpleSystemsManagement
 
         $FSxID = '${fsxid}'
         $FSxRegion = '${fsxregion}'
-        $instances = '${JSON.stringify(
-            instances?.length
-                ? instances
-                : instanceName === DEFAULT_MSSQL_INSTANCE_NAME
-                ? [DEFAULT_INSTANCE_NAME]
-                : [instanceName?.split('\\')?.[1]]
-        )}' | ConvertFrom-Json
+        $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
+        $additionalFields = '${fields}'
 
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
@@ -532,19 +511,7 @@ const getMappedOntapVolumesScript = (
             }
         }
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True -ErrorAction Stop).Value | Out-String | ConvertFrom-Json  
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
+        ${ontapRestRequest}
 
         $instanceRespones = @{}
         $sqlInstances | ForEach-Object {
@@ -592,6 +559,17 @@ const getMappedOntapVolumesScript = (
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
                         FOR JSON PATH;
 "@
+
+                    if($includeLogVolumes) {
+                        $sqlquery = @"
+                            SET NOCOUNT ON;
+                            SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                            WHERE vs.volume_mount_point != 'C:\\'
+                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                            FOR JSON PATH;
+"@
+                    }
                     # Get the windows volumes of the databases with the mdf file volume name
                     $sqlqueryfordatabaseandvolumelist = @"
                         SET NOCOUNT ON;
@@ -608,6 +586,23 @@ const getMappedOntapVolumesScript = (
                             AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
                         FOR JSON PATH;
 "@
+
+                if($includeLogVolumes) {
+                        $sqlqueryfordatabaseandvolumelist = @"
+                        SET NOCOUNT ON;
+                        SELECT DISTINCT 
+                            DB_NAME(mf.database_id) AS DatabaseName,
+                            vs.logical_volume_name as VolumeName,
+                            vs.volume_id as VolumeId
+                        FROM 
+                            sys.master_files AS mf
+                        CROSS APPLY 
+                            sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+                        WHERE 
+                            vs.volume_mount_point != 'C:\\'
+                        FOR JSON PATH;
+"@
+                    }
                 }
 
                 if ($sqlCredential.useSqlAuth -eq $True) {
@@ -688,25 +683,6 @@ const getMappedOntapVolumesScript = (
                     }
                 }
 
-                Function Invoke-ONTAPGetRequest {
-                    param(
-                        [Parameter(Mandatory = $false)]
-                        [string]$ApiEndpoint,
-
-                        [Parameter(Mandatory = $false)]
-                        [string]$ApiQueryFilter
-                    )
-
-                    $Params = @{
-                        "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter
-                        "Method"  = "GET"
-                        "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                        "ContentType" = "application/json"
-                    }
-
-                    return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-                }
-
                 Function Get-LunFromSerialNumber($SerialNumbers, $VolumeSerialMapping) {
                     Write-Debug "Get ONTAP lun name from serial numbers for: $VolumeSerialMapping"
 
@@ -727,7 +703,7 @@ const getMappedOntapVolumesScript = (
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
                     
-                        $Response = Invoke-ONTAPGetRequest @Params
+                        $Response = Invoke-ONTAPRequest @Params
 
                         $LunRecords = $Response.records
 
@@ -767,10 +743,10 @@ const getMappedOntapVolumesScript = (
                     }
 
                     if ($QueryFilter -ne '') {
-                        $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count"}
+                        $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count,$additionalFields"}
                     
 
-                        $Response = Invoke-ONTAPGetRequest @Params
+                        $Response = Invoke-ONTAPRequest @Params
 
                         $VolumeNameMapping = @{}
                         foreach ($record in $Response.records) {
@@ -817,7 +793,7 @@ const getMappedOntapVolumesScript = (
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=volume"}
                     
                     
-                        $cifsShares = Invoke-ONTAPGetRequest @Params
+                        $cifsShares = Invoke-ONTAPRequest @Params
                         $cifsRecords = $cifsShares.records
 
                         foreach ($record in $cifsRecords) {
@@ -945,13 +921,14 @@ const getMappedOntapVolumesScript = (
                 $responseObject = @{}
                 $responseObject.add('volumes', $processedRecords)
                 $responseObject.add('volumeDBMap', $volumeDBMap)
+                $responseObject.add('lunNames', $lunResult.LunNames)
                 $instanceRespones[$serverInstanceName] = $responseObject
             } catch {
                 Write-Information "An error occurred while processing the records: $_.Exception.Message"
                 $instanceRespones[$serverInstanceName] = "error: $_"
             }
         }
-        $response = $instanceRespones | ConvertTo-Json -Depth 5
+        $response = $instanceRespones | ConvertTo-Json -Depth 10
 
         if([string]::IsNullOrEmpty($response)) {
             throw "Failed to compress the response because the response is either null or empty. $response"
@@ -971,6 +948,7 @@ const restGetUtilForOntap = (
     apiQueryFields: string
 ) => `
     $WarningPreference = 'SilentlyContinue';
+    $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
         $responseObject = @{}
     }
@@ -984,47 +962,9 @@ const restGetUtilForOntap = (
         $APIQueryFilter = '${apiQueryFilter}'
         $ApiQueryFields = '${apiQueryFields}'
 
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
-        
-        $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
-        $tempfileObject = New-TemporaryFile
-        $tempfile = $tempfileObject.FullName
-        Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempfile
-        $Certificate = Import-Certificate -FilePath $tempfile -CertStoreLocation Cert:\\LocalMachine\\Root
-        $regionCertificateificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
-        Remove-Item -Path $tempfile -Force -ErrorAction SilentlyContinue
+        ${ontapRestRequest}
      
-        Function Invoke-ONTAPGetRequest {
-            param(
-                [Parameter(Mandatory = $false)]
-                [string]$ApiEndpoint,
-     
-                [Parameter(Mandatory = $false)]
-                [string]$ApiQueryFilter,
-     
-                [Parameter(Mandatory = $false)]
-                [string]$ApiQueryFields
-            )
-     
-            $Ampersand = ''
-            if ($ApiQueryFields -ne '' -and $ApiQueryFilter -ne '') {
-                $Ampersand = '&';
-            }
-            $Params = @{
-                "URI"     = 'https://' + $FSxHostName + '/api' + $ApiEndpoint + '?' + $ApiQueryFilter + $Ampersand + $ApiQueryFields
-                "Method"  = "GET"
-                "Headers" =@{"Authorization" = "Basic $FSxCredentialsInBase64"}
-                "ContentType" = "application/json"
-            }
-     
-            return Invoke-RestMethod @Params -Certificate $regionCertificateificate
-        }
-     
-        $responseObject = Invoke-ONTAPGetRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
+        $responseObject = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
     } catch {
         $responseObject = @{
             error = $_.Exception.Message
@@ -1042,6 +982,7 @@ const restGetUtilForOntap = (
 const INSTANCE_DETAILS = 'Get-WmiObject win32_service | Where-Object {$_.DisplayName -like "sql server (*)"} | Select-Object @{Name=\'instanceName\'; Expression={$_.Name}}, @{Name=\'instanceState\'; Expression={$_.State}} | ConvertTo-Json';
 
 const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
+    $ProgressPreference = 'SilentlyContinue'
     $s3SignedUrl = '${s3SignedURL}'
     $moduleNames = ${modules}
 
@@ -1099,6 +1040,7 @@ const copyPowerShellModule = (s3SignedURL: string, modules: string) => `
 
 const readSsmParameter = (instance: string) =>
     `
+        $ProgressPreference = 'SilentlyContinue'
         $sqlCredential = @{}
         $serverInstanceName = "${instance}"
 
@@ -1110,6 +1052,11 @@ const readSsmParameter = (instance: string) =>
         if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
             try {
             $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+            $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+            if ($connection -eq $False) {
+                # Set the registry key to disable certificate revocation check in case of private subnet
+                Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+            }
             $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
             } catch {
                 $sqlCredentials = $null
@@ -1238,6 +1185,7 @@ const validateSQLInstanceCredentials = `
 `;
 
 const getSqlCredentials = (sqlAuthEnabled: boolean) => `
+    $ProgressPreference = 'SilentlyContinue'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlCredentials = $null
     if ($sqlAuthEnabled) {
@@ -1250,6 +1198,11 @@ const getSqlCredentials = (sqlAuthEnabled: boolean) => `
         if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
             try {
                 $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+                $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
+                if ($connection -eq $False) {
+                    # Set the registry key to disable certificate revocation check in case of private subnet
+                    Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
+                }
                 $sqlCredentials = ((Get-SSMParameter -WithDecryption 1 -Name /netapp/wlmdb/$ec2InstanceId).Value | ConvertFrom-Json)
             } catch {
                 $sqlCredentials = $null

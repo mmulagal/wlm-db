@@ -26,6 +26,7 @@
     .setRow {
         display: flex;
         flex-direction: row;
+        width: 600px;
     }
 
     .setRowWithSeperator {
@@ -44,7 +45,7 @@
     }
 
     .icon {
-        margin-left: 100px;
+        justify-self: end;
     }
 
     .loading {

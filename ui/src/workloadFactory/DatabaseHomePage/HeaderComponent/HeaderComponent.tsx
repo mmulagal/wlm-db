@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
-import { BlueXPListeners, Button, Popover, SelectField, Typography, postBlueXPMessage } from '@netapp/design-system';
+import {
+    BlueXPListeners,
+    DsBlueXpMenu,
+    DsButton,
+    DsTypography,
+    Popover,
+    SelectField,
+    Typography,
+    postBlueXPMessage
+} from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
@@ -11,19 +20,16 @@ import {
     checkValueSavedForRegion,
     generateOptionType,
     getCurrentDateTime,
+    handleURL,
     regionsSort,
-    resetDBHomePageState
+    resetDBHomePageState,
+    setTabValue
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
-import { ReactComponent as ExternalLink } from '../../../assets/ic_external_link.svg';
-import { ReactComponent as RSS } from '../../../assets/ic_rss.svg';
-import { ReactComponent as Menu } from '../../../assets/ic_menu.svg';
-import Inventory from '../../Inventory/Inventory';
+import { ReactComponent as Close } from '../../../assets/ic_close.svg';
 import { useDispatch } from 'react-redux';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
-import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
@@ -34,7 +40,7 @@ import {
 import {
     inventoryApi,
     inventoryApiV2,
-    workloadFactoryResourceApi,
+    useCreateDemoResourcesMutation,
     workloadFactoryResourceApiV2
 } from '../../../utils/apiService';
 import {
@@ -45,10 +51,15 @@ import {
     setToTime
 } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { SAVINGS_CALC_MODE, WLF_TABS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../utils/consts';
+import {
+    DBType,
+    SAVINGS_CALC_MODE,
+    WLF_TABS,
+    WLF_TO_FORM_NAVIGATE,
+    WLF_TO_PROTECT_NAVIGATE
+} from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
-import InventoryApis from '../../Inventory/InventoryApis';
 import DatabaseHomeApis from '../DatabaseHomeApis';
 import JobMonitoringApi from '../../JobMonitoring/JobMonitoringApi';
 import ExploreSavings from '../../ExploreSavings/ExploreSavings';
@@ -69,7 +80,10 @@ import { updateRefreshBlocked } from '../../../store/authSlice';
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
 import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
 import { useNavigate } from 'react-router-dom';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import { navigateToCanvas } from '../../../utils/appConfig';
+import GetWell from '../../GetWell/GetWell';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 
 type Tab = {
     tab: string;
@@ -79,7 +93,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
-    const [menuOpenedRow, setOpenedRow] = useState<null | boolean>(null);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -93,17 +106,13 @@ const HeaderComponent = ({ tab }: Tab) => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-    const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
-    const isInventoryV2 = useAppSelector(state => state.auth.isInventoryV2);
-    const toShowPostgress = localStorage.getItem('postgress');
+
+    const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
     HeaderComponentApi();
-    if (isInventoryV2) {
-        InventoryApisV2();
-    } else {
-        InventoryApis();
-    }
+    InventoryApisV2();
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
@@ -111,16 +120,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     SandboxApis();
 
     useEffect(() => {
-        let tabValue = '';
-        if (tab === WLF_TABS.INVENTORY) {
-            tabValue = WLF_TABS.INVENTORY;
-        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_EBS) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS_EBS;
-        } else if (tab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            tabValue = WLF_TABS.EXPLORE_SAVINGS_FsxW;
-        } else {
-            tabValue = selectedHeaderTab;
-        }
+        let tabValue = setTabValue(tab, selectedHeaderTab);
+
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
     }, [tab]);
@@ -131,9 +132,31 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else if (statusData && !statusData?.isActive) {
             if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=ebs&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 } else {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=fsxw&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=fsxw&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 }
@@ -141,7 +164,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                 if (!isWorkloadFactory) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
-                        payload: { pathname: './fsxdb/marketing', replace: true }
+                        payload: { pathname: '../fsxdb/marketing', replace: true }
                     });
                 } else {
                     postBlueXPMessage({
@@ -192,17 +215,45 @@ const HeaderComponent = ({ tab }: Tab) => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedRegion) {
+            const defaultOption: any = options[0];
             if (localStorage.getItem('selectedRegion')) {
                 //@ts-ignore
                 const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
 
                 if (checkValueSavedForRegion(options, regionValue)) {
-                    dispatch(setHeaderSelectedRegion(regionValue));
+                    if (isDemoMode) {
+                        createDemoResourcesApi({
+                            credentialsId: headerSelectedCred?.data?.credentialsId,
+                            regionId: regionValue?.data?.regionCode
+                        }).then(() => {
+                            dispatch(setHeaderSelectedRegion(regionValue));
+                        });
+                    } else {
+                        dispatch(setHeaderSelectedRegion(regionValue));
+                    }
                 } else {
-                    dispatch(setHeaderSelectedRegion(options[0]));
+                    if (isDemoMode) {
+                        createDemoResourcesApi({
+                            credentialsId: headerSelectedCred?.data?.credentialsId,
+                            regionId: defaultOption?.data?.regionCode
+                        }).then(() => {
+                            dispatch(setHeaderSelectedRegion(defaultOption));
+                        });
+                    } else {
+                        dispatch(setHeaderSelectedRegion(defaultOption));
+                    }
                 }
             } else {
-                dispatch(setHeaderSelectedRegion(options[0]));
+                if (isDemoMode) {
+                    createDemoResourcesApi({
+                        credentialsId: headerSelectedCred?.data?.credentialsId,
+                        regionId: defaultOption?.data?.regionCode
+                    }).then(() => {
+                        dispatch(setHeaderSelectedRegion(defaultOption));
+                    });
+                } else {
+                    dispatch(setHeaderSelectedRegion(defaultOption));
+                }
             }
         }
         return options;
@@ -223,6 +274,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
+        handleURL(value, isWorkloadFactory);
     };
 
     useEffect(() => {
@@ -244,12 +296,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
         } else if (selectedHeaderTab === WLF_TABS.OVERVIEW) {
-            if (isInventoryV2) {
-                dispatch(workloadFactoryResourceApiV2.util.resetApiState());
-                dispatch(setIsResourceRefresh(true));
-            } else {
-                dispatch(workloadFactoryResourceApi.util.resetApiState());
-            }
+            dispatch(workloadFactoryResourceApiV2.util.resetApiState());
+            dispatch(setIsResourceRefresh(true));
         } else if (selectedHeaderTab === WLF_TABS.JOB_MONITORING) {
             dispatch(setJobsList([]));
             dispatch(setSubJobsData([]));
@@ -314,12 +362,24 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isClearable={false}
                         value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
                         onChange={(selectedOptions: any): void => {
-                            if (localStorage.getItem('selectedRegion')) {
-                                localStorage.removeItem('selectedRegion');
+                            function updateRegion() {
+                                if (localStorage.getItem('selectedRegion')) {
+                                    localStorage.removeItem('selectedRegion');
+                                }
+                                localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
+                                dispatch(updateRefreshBlocked(false));
+                                dispatch(setHeaderSelectedRegion(selectedOptions));
                             }
-                            localStorage.setItem('selectedRegion', JSON.stringify(selectedOptions));
-                            dispatch(updateRefreshBlocked(false));
-                            dispatch(setHeaderSelectedRegion(selectedOptions));
+                            if (isDemoMode) {
+                                createDemoResourcesApi({
+                                    credentialsId: headerSelectedCred?.data?.credentialsId,
+                                    regionId: selectedOptions?.data?.regionCode
+                                }).then(() => {
+                                    updateRegion();
+                                });
+                            } else {
+                                updateRegion();
+                            }
                         }}
                         placeholder="Select a Region"
                         isSearchable={generateRegionsData.length > 5}
@@ -344,41 +404,6 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else {
             return false;
         }
-    };
-
-    const menuItems = () => {
-        return [
-            {
-                id: 'links',
-                displayName: 'Links'
-            },
-            {
-                id: 'workLoadFactoryCredentials',
-                displayName: 'Workload Factory credentials'
-            },
-            {
-                id: 'apiHub',
-                displayName: 'API Hub',
-                tagAdded: true,
-                tag: <ExternalLink />
-            },
-            {
-                id: 'monitoringGitHubRepository',
-                displayName: 'Monitoring GitHub repository',
-                tagAdded: true,
-                tag: <ExternalLink />
-            },
-            {
-                id: 'subscribeToRss',
-                displayName: 'Subscribe to RSS',
-                tagAdded: true,
-                tag: <RSS />
-            },
-            {
-                id: 'feedback',
-                displayName: 'Feedback'
-            }
-        ];
     };
 
     //Job monitoring select drop down
@@ -416,6 +441,17 @@ const HeaderComponent = ({ tab }: Tab) => {
         dispatch(setTimeInterval(days));
     };
 
+    const handleExploreSavingCloseNavigation = () => {
+        if (isWorkloadFactory) {
+            navigateToCanvas('/');
+        } else {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: { pathname: '../fsxhome', replace: true }
+            });
+        }
+    };
+
     return statusLoading && !isDemoMode ? (
         <div className={styles.loader}>
             <ComponentLoader style={{ margin: '0 auto' }} />
@@ -423,220 +459,194 @@ const HeaderComponent = ({ tab }: Tab) => {
     ) : (
         checkConditionForHeaderComponent() && (
             <div className={styles.headerComponent}>
-                <div className={styles.firstSection}>
-                    <div className={styles.withWorkLoad}>
-                        <div className={styles.firstRow}>
-                            {!isWorkloadFactory && (
-                                <>
-                                    <BlueXPDatabase />
-                                    <Typography
-                                        variant="Regular_24"
-                                        className={styles.heading}
-                                        style={{ color: 'var(--text-button-primary)' }}
-                                    >
-                                        {GENERAL.DATABASES}
-                                    </Typography>
-                                </>
-                            )}
-                            {isWorkloadFactory && (
-                                <Typography variant="Regular_24" className={styles.heading}>
-                                    {GENERAL.DATABASES}
-                                </Typography>
-                            )}
-                        </div>
-
-                        <div className={styles.secondRow}>
-                            <div className={styles.overviewTabs}>
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.DASHBOARD
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart1
-                                                      : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart1
-                                                      : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.DASHBOARD);
-                                    }}
-                                    id="dashboard"
-                                >
-                                    {GENERAL.TAB_DASHBOARD}
-                                </Typography>
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.INVENTORY ||
-                                        selectedHeaderTab === WLF_TABS.OVERVIEW
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart2
-                                                      : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart2
-                                                      : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.INVENTORY);
-                                    }}
-                                    id="inventory"
-                                >
-                                    {GENERAL.TAB_INVENTORY}
-                                </Typography>
-
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.SANDBOXES
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart4
-                                                      : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart4
-                                                      : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.SANDBOXES);
-                                    }}
-                                    id="sandboxes"
-                                >
-                                    Sandboxes
-                                </Typography>
-
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                        selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                                        selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart5
-                                                      : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart5
-                                                      : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.EXPLORE_SAVINGS);
-                                    }}
-                                    id="explore-savings"
-                                >
-                                    Explore savings
-                                </Typography>
-
-                                <Typography
-                                    variant="Regular_14"
-                                    className={
-                                        selectedHeaderTab === WLF_TABS.JOB_MONITORING
-                                            ? `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart3
-                                                      : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                              } ${styles.active}`
-                                            : `${
-                                                  isWorkloadFactory
-                                                      ? styles.headerPart3
-                                                      : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
-                                              }`
-                                    }
-                                    onClick={() => {
-                                        handleClick(WLF_TABS.JOB_MONITORING);
-                                    }}
-                                    id="job-monitoring"
-                                >
-                                    {GENERAL.TAB_JOB_MONITORING}
-                                </Typography>
-                            </div>
+                {!statusChk &&
+                (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) ? (
+                    <div className={styles.exploreSavingHeader}>
+                        <DsTypography variant="Regular_20">Explore savings</DsTypography>
+                        <div onClick={handleExploreSavingCloseNavigation} className={styles.closeIcon}>
+                            <Close />
                         </div>
                     </div>
+                ) : (
+                    <div className={styles.firstSection}>
+                        <div className={styles.withWorkLoad}>
+                            <div className={styles.firstRow}>
+                                {!isWorkloadFactory && (
+                                    <>
+                                        <BlueXPDatabase />
+                                        <Typography
+                                            variant="Regular_20"
+                                            className={styles.heading}
+                                            style={{
+                                                color: 'var(--text-button-primary)',
+                                                position: 'relative',
+                                                top: '5px'
+                                            }}
+                                        >
+                                            {GENERAL.DATABASES}
+                                        </Typography>
+                                    </>
+                                )}
+                                {isWorkloadFactory && (
+                                    <Typography variant="Regular_24" className={styles.heading}>
+                                        {GENERAL.DATABASES}
+                                    </Typography>
+                                )}
+                            </div>
 
-                    {!isWorkloadFactory && (
-                        <div className={styles.thirdRow}>
-                            <Menu />
-                            <div className={styles.menuPopOverHide}>
-                                <MenuPopover
-                                    isMenuOpen={menuOpenedRow === true}
-                                    menuItems={menuItems()}
-                                    toggleMenu={(toggleType: string, menuId: string) => {
-                                        if (toggleType === 'close') {
-                                            setOpenedRow(null);
-                                        } else if (toggleType === 'open') {
-                                            setOpenedRow(true);
-                                        } else if (toggleType === 'selectedOption') {
-                                            setOpenedRow(null);
-
-                                            switch (menuId) {
-                                                case 'links':
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './fsxhome/links', replace: true }
-                                                    });
-
-                                                    break;
-                                                case 'workLoadFactoryCredentials':
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './fsxhome/credentials', replace: true }
-                                                    });
-
-                                                    break;
-                                                case 'apiHub':
-                                                    let url = apiDOCURL();
-                                                    //@ts-ignore
-                                                    window.open(url, '_blank').focus();
-                                                    break;
-
-                                                    break;
-                                                case 'monitoringGitHubRepository':
-                                                    //@ts-ignore
-                                                    window
-                                                        .open(
-                                                            'https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Monitoring',
-                                                            '_blank'
-                                                        )
-                                                        .focus();
-                                                    break;
-                                                case 'subscribeToRss':
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './links', replace: true }
-                                                    });
-
-                                                    break;
-                                                case 'feedback':
-                                                    postBlueXPMessage({
-                                                        type: BlueXPListeners.navigate,
-                                                        payload: { pathname: './fsxhome/feedback', replace: true }
-                                                    });
-
-                                                    break;
-                                            }
+                            <div className={styles.secondRow}>
+                                <div className={styles.overviewTabs}>
+                                    <Typography
+                                        variant="Regular_14"
+                                        className={
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD
+                                                ? `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart1
+                                                          : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
+                                                : `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart1
+                                                          : `${styles.headerPart1} ${styles.blueXPHeaderClass}`
+                                                  }`
                                         }
-                                    }}
-                                    CustomMenu={undefined}
-                                    disabledText={undefined}
-                                />
+                                        onClick={() => {
+                                            handleClick(WLF_TABS.DASHBOARD);
+                                        }}
+                                        id="dashboard"
+                                    >
+                                        {GENERAL.TAB_DASHBOARD}
+                                    </Typography>
+                                    <Typography
+                                        variant="Regular_14"
+                                        className={
+                                            selectedHeaderTab === WLF_TABS.INVENTORY ||
+                                            selectedHeaderTab === WLF_TABS.OVERVIEW ||
+                                            selectedHeaderTab === WLF_TABS.OPTIMIZE
+                                                ? `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart2
+                                                          : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
+                                                : `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart2
+                                                          : `${styles.headerPart2} ${styles.blueXPHeaderClass}`
+                                                  }`
+                                        }
+                                        onClick={() => {
+                                            handleClick(WLF_TABS.INVENTORY);
+                                        }}
+                                        id="inventory"
+                                    >
+                                        {GENERAL.TAB_INVENTORY}
+                                    </Typography>
+
+                                    <Typography
+                                        variant="Regular_14"
+                                        className={
+                                            selectedHeaderTab === WLF_TABS.SANDBOXES
+                                                ? `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart4
+                                                          : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
+                                                : `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart4
+                                                          : `${styles.headerPart4} ${styles.blueXPHeaderClass}`
+                                                  }`
+                                        }
+                                        onClick={() => {
+                                            handleClick(WLF_TABS.SANDBOXES);
+                                        }}
+                                        id="sandboxes"
+                                    >
+                                        Sandboxes
+                                    </Typography>
+
+                                    <Typography
+                                        variant="Regular_14"
+                                        className={
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                            selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                                ? `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart5
+                                                          : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
+                                                : `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart5
+                                                          : `${styles.headerPart5} ${styles.blueXPHeaderClass}`
+                                                  }`
+                                        }
+                                        onClick={() => {
+                                            handleClick(WLF_TABS.EXPLORE_SAVINGS);
+                                        }}
+                                        id="explore-savings"
+                                    >
+                                        Explore savings
+                                    </Typography>
+
+                                    <Typography
+                                        variant="Regular_14"
+                                        className={
+                                            selectedHeaderTab === WLF_TABS.JOB_MONITORING
+                                                ? `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart3
+                                                          : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                                  } ${
+                                                      isWorkloadFactory
+                                                          ? styles.active
+                                                          : `${styles.active} ${styles.activeBlueXPActive}`
+                                                  }`
+                                                : `${
+                                                      isWorkloadFactory
+                                                          ? styles.headerPart3
+                                                          : `${styles.headerPart3} ${styles.blueXPHeaderClass}`
+                                                  }`
+                                        }
+                                        onClick={() => {
+                                            handleClick(WLF_TABS.JOB_MONITORING);
+                                        }}
+                                        id="job-monitoring"
+                                    >
+                                        {GENERAL.TAB_JOB_MONITORING}
+                                    </Typography>
+                                </div>
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        {!isWorkloadFactory && (
+                            <div className={styles.thirdRow}>
+                                <DsBlueXpMenu className="hamburgerMenu" domain={process.env.REACT_APP_WF_DOMAIN!} />
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className={styles.extraSpace} />
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
@@ -645,28 +655,75 @@ const HeaderComponent = ({ tab }: Tab) => {
                                 <div className={styles.contentArea}>
                                     {selectComponents()}
                                     <div className={styles.content}>
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => {
-                                                dispatch(setDatabaseHostEntryPoint('database'));
-                                                navigate(WLF_TO_FORM_NAVIGATE);
-                                            }}
-                                            id={'deploy-button'}
-                                        >
-                                            <div className={styles.buttonStyle}>{GENERAL.DEPLOY_NEW_DATABASE}</div>
-                                        </Button>
-
-                                        {toShowPostgress && (
-                                            <Button
-                                                variant="primary"
-                                                onClick={() => {
-                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                        <>
+                                            <DsButton
+                                                children="Deploy database host"
+                                                variant="Default"
+                                                dropDown={{
+                                                    trigger: 'click',
+                                                    autoPosition: true,
+                                                    items: [
+                                                        {
+                                                            id: '1',
+                                                            label: 'Microsoft SQL Server',
+                                                            onClick: () => {
+                                                                dispatch(setDatabaseHostEntryPoint('database'));
+                                                                dispatch(setSelectedDatabaseType(DBType.MSSQL));
+                                                                // navigate(WLF_TO_FORM_NAVIGATE);
+                                                                if (isWorkloadFactory) {
+                                                                    navigate(WLF_TO_FORM_NAVIGATE);
+                                                                    postBlueXPMessage({
+                                                                        type: BlueXPListeners.navigate,
+                                                                        payload: {
+                                                                            pathname: './mssql-deploy-wizard',
+                                                                            replace: true
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    navigate('../../fsxdb/mssql-deploy-wizard');
+                                                                    postBlueXPMessage({
+                                                                        type: BlueXPListeners.navigate,
+                                                                        payload: {
+                                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                                            replace: true
+                                                                        }
+                                                                    });
+                                                                }
+                                                            },
+                                                            className: 'mssql-deployment-button'
+                                                        },
+                                                        {
+                                                            id: '2',
+                                                            label: 'PostgreSQL Server',
+                                                            onClick: () => {
+                                                                dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
+                                                                if (isWorkloadFactory) {
+                                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                                    postBlueXPMessage({
+                                                                        type: BlueXPListeners.navigate,
+                                                                        payload: {
+                                                                            pathname: './postgreSQL-deploy-wizard',
+                                                                            replace: true
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                                    postBlueXPMessage({
+                                                                        type: BlueXPListeners.navigate,
+                                                                        payload: {
+                                                                            pathname:
+                                                                                '../../fsxdb/postgreSQL-deploy-wizard',
+                                                                            replace: true
+                                                                        }
+                                                                    });
+                                                                }
+                                                            },
+                                                            className: 'pgsql-deployment-button'
+                                                        }
+                                                    ]
                                                 }}
-                                                id={'deploy-button'}
-                                            >
-                                                <div className={styles.buttonStyle}>{'Deploy Postgress'}</div>
-                                            </Button>
-                                        )}
+                                            />
+                                        </>
 
                                         {refreshComponent()}
                                     </div>
@@ -675,8 +732,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <DatabaseHomePage />
                         </div>
                     )}
-                    {selectedHeaderTab === WLF_TABS.INVENTORY && !isInventoryV2 && <Inventory />}
-                    {selectedHeaderTab === WLF_TABS.INVENTORY && isInventoryV2 && (
+                    {selectedHeaderTab === WLF_TABS.INVENTORY && (
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
@@ -691,7 +747,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    {selectComponents()}
+                                    <div></div>
                                     <div className={styles.content}>
                                         <div className={styles.selectContainer}>
                                             <SelectField
@@ -719,10 +775,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                             />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.OVERVIEW && isInventoryV2 && (
+                    {selectedHeaderTab === WLF_TABS.OVERVIEW && (
                         <DatabaseHostOverviewV2 refreshTime={refreshTime} refreshPage={refreshPage} />
                     )}
-                    {selectedHeaderTab === WLF_TABS.OVERVIEW && !isInventoryV2 && <DatabaseHostOverview />}
+
+                    {/* For optimize tab */}
+
+                    {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
+
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>
                             <div className={styles.sandboxSection}>
@@ -747,9 +807,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <ExploreSavings />
                         </>
                     )}
-                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator />}
-                    {/* {selectedHeaderTab === WLF_TABS.REDIRECT_COMPONENT && <RedirectComponent />} */}
-                    {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && <ViewCalculations />}
+                    {selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR && <SavingsCalculator statusCheck={statusChk} />}
+
+                    {selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS && (
+                        <ViewCalculations statusCheck={statusChk} />
+                    )}
                 </div>
             </div>
         )

@@ -8,6 +8,7 @@ const logger = getLogger();
 
 interface KMS {
     id?: string;
+    arn?: string;
     name?: string;
     origin?: string;
     state?: string;
@@ -38,7 +39,7 @@ async function getKmsKeyDetails(
         await Promise.all(
             kmsKeysList.map(async key => {
                 try {
-                    const { KeyId: id } = key;
+                    const { KeyId: id, KeyArn: arn } = key;
                     const {
                         Origin: origin,
                         KeyState: state,
@@ -59,6 +60,7 @@ async function getKmsKeyDetails(
                     ) {
                         keyData.push({
                             id,
+                            arn,
                             name: aliasName,
                             origin,
                             expirationDate,
@@ -79,7 +81,6 @@ async function getKmsKeyDetails(
 
 async function encryptString(textToEncrypt: string) {
     logger.info('Encrypt a string');
-    logger.debug({ textToEncrypt });
 
     const plaintext = Buffer.from(textToEncrypt);
     const encryptParams = { KeyId: KMS_KEY_ALIAS, Plaintext: plaintext };

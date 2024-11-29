@@ -16,7 +16,10 @@ param(
     [string]$ResourceID,
 
     [Parameter(Mandatory=$true)]
-    [string]$WaitHandler 
+    [string]$WaitHandler,
+
+    [Parameter(Mandatory=$false)]
+    [boolean]$IsTerraform
 )
 
 #get Instance ID
@@ -35,6 +38,7 @@ function enableTLS12 {
     }
 }
 
+$ProgressPreference = "SilentlyContinue"
 $failed = $false
 $failedServices = @()
 enableTLS12
@@ -49,26 +53,32 @@ foreach ($property in $serviceURlMapJson.PSObject.Properties) {
     $serviceURLHashTable[$property.Name] = $property.Value
 }
 
-foreach ($service in $serviceURLHashTable.keys) {
+# Skip CloudFormation endpoint connection checks if running in Terraform
+if (-not $IsTerraform) {
+    foreach ($service in $serviceURLHashTable.keys) {
 
-    try{
-        $out = (Invoke-WebRequest "https://cloudformation.$region.amazonaws.com" -UseBasicParsing).StatusCode
+        try{
+            $out = (Invoke-WebRequest "https://cloudformation.$region.amazonaws.com" -UseBasicParsing).StatusCode
 
-        if (($out -ge 200 -and $out -lt 299) -or ($out -ge 500 -and $out-lt 600)) {
-            # Was able to connect to service, continue testing
-        } else {
+            if (($out -ge 200 -and $out -lt 299) -or ($out -ge 500 -and $out-lt 600)) {
+                # Was able to connect to service, continue testing
+            } else {
+                $failedServices += $service
+                $failed = $true
+            }
+        } catch {
             $failedServices += $service
             $failed = $true
         }
-    } catch {
-        $failedServices += $service
-        $failed = $true
     }
 }
 
 if ($failed -eq $true) {
     $FailureReason = "Failed to connect to AWS Cloud Formation endpoint. Check if the security group allows HTTPS(443) tcp port and subnet is associated with the endpoint."
     Write-Output @{status= "Failed"; reason= $FailureReason} | ConvertTo-Json -Compress
+    if($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
 

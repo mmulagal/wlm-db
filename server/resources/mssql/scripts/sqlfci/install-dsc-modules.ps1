@@ -4,10 +4,14 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$Stackname,
+
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform
 )
 
 Start-Transcript -Path C:\cfn\log\InstallDscModules.ps1.txt -Append
+$ProgressPreference = "SilentlyContinue"
 
 #get Instance ID
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
@@ -125,7 +129,11 @@ while($installPSModulesTries -le 2) {
     }
 
 if($modulesInstalled -eq $False) {
-    Write-Output "Failed to install DSC modules after a couple of attempts. PowerShell Galllery unavailable could happen due to Microsoft updating site certificate. Please retry after sometime"
+    $FailureReason = "Failed to install DSC modules after a couple of attempts. PowerShell Gallery unavailable could happen due to Microsoft updating site certificate. Please retry after sometime"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId    
     $_ | Write-AWSLaunchWizardException
 }

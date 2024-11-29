@@ -16,7 +16,10 @@ import {
     ListTagsForResourceCommandInput,
     DescribeVolumesCommandInput,
     DescribeStorageVirtualMachinesCommandInput,
-    DescribeBackupsCommandInput
+    DescribeBackupsCommandInput,
+    UpdateVolumeCommand,
+    UpdateFileSystemCommand,
+    DescribeVolumesCommand
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -159,6 +162,59 @@ async function createTag(credentialsId: string, region: string, accountId: strin
     }
 }
 
+async function updateFsxVolumeSize(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    fsxVolumeId: string,
+    fsxVolumeSizeBytes: number
+) {
+    logger.info('Updating FSX volume', { credentialsId, region, fsxVolumeId });
+
+    const client = await getFSxClient(credentialsId, region, accountId);
+    const response = await client.send(
+        new UpdateVolumeCommand({
+            VolumeId: fsxVolumeId,
+            OntapConfiguration: {
+                SizeInBytes: fsxVolumeSizeBytes
+            }
+        })
+    );
+    logger.debug('FSX volume updated successfully:', response);
+}
+
+async function updateFsxCapacity(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    fsxFsId: string,
+    newFsxStorageCapactiyGiB: number
+) {
+    logger.info('Updating FSX capacity', { credentialsId, region, fsxFsId });
+    try {
+        const client = await getFSxClient(credentialsId, region, accountId);
+        const response = await client.send(
+            new UpdateFileSystemCommand({
+                FileSystemId: fsxFsId,
+                StorageCapacity: newFsxStorageCapactiyGiB
+            })
+        );
+        logger.debug('FSX file system capacity updated successfully:', response);
+    } catch (err) {
+        logger.error('Error updating file system capacity:', err);
+    }
+}
+
+async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {
+    logger.info('Describe FSx volumes:', { credentialsId, region, params });
+
+    const client = await getFSxClient(credentialsId, region);
+    const response = await client.send(new DescribeVolumesCommand(params));
+
+    logger.debug('Decribe FSx volumes response:', response);
+
+    return response;
+}
 export {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -166,5 +222,8 @@ export {
     describeFSxBackups,
     describeFSx,
     listResourceTags,
-    createTag
+    createTag,
+    updateFsxVolumeSize,
+    updateFsxCapacity,
+    describeVolumes
 };

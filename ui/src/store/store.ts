@@ -10,16 +10,17 @@ import {
     jobMonitoringApi,
     policiesApi,
     resourceApi,
-    workloadFactoryResourceApi,
     inventoryApi,
     sandboxApi,
     exploreSavingsApi,
     inventoryApiV2,
-    workloadFactoryResourceApiV2
+    workloadFactoryResourceApiV2,
+    getWellApi
 } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
+import postgreFormSlice from './postgre/postgreFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
@@ -28,13 +29,13 @@ import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
-import inventorySlice from './workloadFactory/inventorySlice';
 import inventoryV2Slice from './workloadFactory/inventoryV2Slice';
 import headersSlice from './workloadFactory/headersSlice';
 import createNewUserSlice from './workloadFactory/createNewDBSlice';
 import sandboxSlice from './workloadFactory/sandboxSlice';
 import exploreSavingsSlice from './workloadFactory/exploreSavingsSlice';
 import createSandboxSlice from './workloadFactory/createSandboxSlice';
+import getWellOptimizeSlice from './workloadFactory/getWellOptimizeSlice';
 // import postgressSlice from './mssql/postgressSlice';
 
 const rootReducer = combineReducers({
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     [resourceApi.reducerPath]: resourceApi.reducer,
     [mssqlSlice.name]: mssqlSlice.reducer,
     [mssqlFormSlice.name]: mssqlFormSlice.reducer,
+    [postgreFormSlice.name]: postgreFormSlice.reducer,
     [msSqlActionSlice.name]: msSqlActionSlice.reducer,
     [resourceSlice.name]: resourceSlice.reducer,
     [configApi.reducerPath]: configApi.reducer,
@@ -52,12 +54,10 @@ const rootReducer = combineReducers({
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
-    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
     [workloadFactoryResourceApiV2.reducerPath]: workloadFactoryResourceApiV2.reducer,
     [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
     [jobMonitoringSlice.name]: jobMonitoringSlice.reducer,
     [inventoryV2Slice.name]: inventoryV2Slice.reducer,
-    [inventorySlice.name]: inventorySlice.reducer,
     [headersApi.reducerPath]: headersApi.reducer,
     [headersSlice.name]: headersSlice.reducer,
     [createNewUserSlice.name]: createNewUserSlice.reducer,
@@ -69,7 +69,9 @@ const rootReducer = combineReducers({
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
     [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
-    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer
+    [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer,
+    [getWellApi.reducerPath]: getWellApi.reducer,
+    [getWellOptimizeSlice.name]: getWellOptimizeSlice.reducer
     // [postgressSlice.name]: postgressSlice.reducer
 });
 
@@ -129,7 +131,6 @@ const store = configureStore({
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
-            .concat(workloadFactoryResourceApi.middleware)
             .concat(workloadFactoryResourceApiV2.middleware)
             .concat(jobMonitoringApi.middleware)
             .concat(headersApi.middleware)
@@ -139,6 +140,7 @@ const store = configureStore({
             .concat(inventoryApiV2.middleware)
             .concat(sandboxApi.middleware)
             .concat(exploreSavingsApi.middleware)
+            .concat(getWellApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

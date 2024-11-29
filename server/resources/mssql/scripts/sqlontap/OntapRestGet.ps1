@@ -37,6 +37,7 @@ $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path 
 $SsmParameter = Invoke-WithRetry -Command { (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json }
 $FSxUserName = $SsmParameter.fsx.username
 $FSxPassword = $SsmParameter.fsx.password
+$ProgressPreference = "SilentlyContinue"
 
 $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("$(${FSxUserName}):$(${FSxPassword})"))
 

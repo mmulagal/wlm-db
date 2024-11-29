@@ -12,6 +12,7 @@ import isBase64 from 'is-base64';
 import { inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import { getAsyncLocalStorageResource } from './async-local-storage';
+import { RegionDetailsType } from '../routes/types/generic.types';
 
 import {
     SQL_AMI_NAMES,
@@ -24,7 +25,6 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    subJobDescriptions,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
     HttpErrorCodes,
@@ -33,17 +33,28 @@ import {
     FSX_STORAGE_MIN_CAPACITY_IN_GIB,
     HOURS_IN_MONTH,
     DEFAULT_MSSQL_INSTANCE_NAME,
-    DEFAULT_INSTANCE_NAME
+    DEFAULT_INSTANCE_NAME,
+    SECRETS,
+    DatabaseTypes,
+    MAX_DATA_LUN_SIZE_IN_GIB,
+    PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
+    AWS_REGIONS,
+    RESOURCESTYPE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
+import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 
 const logger = getLogger();
 
 const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
 const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
+
+type SubJobDescriptions = {
+    [key: string]: string;
+};
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -55,14 +66,16 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
 }
 
 function generateDeploymentParams(
-    FSxDataLunSize: number,
+    databaseType: string,
+    fsxDataLunSize: number,
     isExistingFSx: boolean,
     sqlDeploymentType: string = 'fci',
     fsxVolThroughput: number,
     fsxIOPS: number
 ) {
     logger.info('Generate deployment params', {
-        FSxDataLunSize,
+        databaseType,
+        fsxDataLunSize,
         isExistingFSx,
         sqlDeploymentType,
         fsxVolThroughput,
@@ -73,6 +86,11 @@ function generateDeploymentParams(
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
 
+    if (fsxDataLunSize > MAX_DATA_LUN_SIZE_IN_GIB) {
+        // With 35% headroom and 15% for log and temp volumes, we can't go beyond 86TiB, given the max fsxn storage capacity is 192TiB
+        throw createError(412, `FSx Data LUN Size should be less than or equal to ${MAX_DATA_LUN_SIZE_IN_GIB} GiB`);
+    }
+
     const {
         FSxDataLunSizeInMib,
         FSxDataVolumeSize,
@@ -80,7 +98,7 @@ function generateDeploymentParams(
         FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
         FSxStorageCapacity
-    } = calculateFsxnStorageCapacity(FSxDataLunSize, sqlDeploymentType);
+    } = calculateFsxnStorageCapacity(fsxDataLunSize, sqlDeploymentType, databaseType);
 
     // If the FSX total storage crosses 192Tib Means keeping it to 192TiB (196608GiB). This is because when the 130TiB is given as a data lun size, total storage capacity of is going beyond 196608 which is 197695.
     const fsxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
@@ -97,7 +115,8 @@ function generateDeploymentParams(
     if (fsxIOPS !== 3 && fsxVolThroughput !== FSX_VOL_THROUGHPUT && !isExistingFSx) {
         // accepted iops values
         const acceptedIOPS = fsxStorageCapacity * 3;
-        if (fsxIOPS < acceptedIOPS) {
+        // Adding a buffer of 100 bytes to handle rounding off mismatch
+        if (fsxIOPS < acceptedIOPS - 100) {
             throw createError(412, `Provisioned SSD IOPS should be at least ${acceptedIOPS}`);
         }
         if (fsxIOPS < 3072 || fsxIOPS > 80000) {
@@ -105,11 +124,14 @@ function generateDeploymentParams(
         }
     }
 
-    const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
+    const stacknameSubstring = `${databaseType === DatabaseTypes.MS_SQL_SERVER ? '' : 'Pg'}${
+        sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME
+    }`;
     const netbios =
         sqlDeploymentType === 'fci'
             ? [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`]
             : [`sqlnode-${randomDigits}`];
+    const netbiosPgsql = [`pgsqlnode-${randomDigits}`];
 
     let params = {
         UniqueID: suffix,
@@ -120,16 +142,19 @@ function generateDeploymentParams(
         FSxDataVolumeSize,
         FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
         FSxLogVolumeSize, // 25% of FSxDataVolumeSize
-        FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
-        FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
         FSxSvmName: `${prefix}_svm_${suffix}`,
-        SQLigroupname: `${prefix}_sqligroup_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
-        NodeNetBIOSNames: netbios,
         FSxStorageCapacity: fsxStorageCapacity,
-        FSxDataLunSize: FSxDataLunSizeInMib
+        FSxDataLunSize: FSxDataLunSizeInMib,
+        NodeNetBIOSNames: databaseType === DatabaseTypes.PG_SQL ? netbiosPgsql : netbios,
+        ...(databaseType === DatabaseTypes.MS_SQL_SERVER && {
+            SQLigroupname: `${prefix}_sqligroup_${suffix}`,
+            FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
+            FSxTempDbVolumeSize // 10% of FSxDataVolumeSize
+        })
     };
-    if (sqlDeploymentType === 'fci') {
+
+    if (sqlDeploymentType === 'fci' && databaseType === DatabaseTypes.MS_SQL_SERVER) {
         params = {
             ...params,
             ...{
@@ -151,6 +176,7 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
 
     logger.info('FSx Storage Capacity', { fsxStorageCapacity });
     /*
+        -- This is for previous calculation --
         fsxCapacity = fsxDataVolumeSize + fsxLogVolumeSize + fsxTempDbVolumeSize + fsxQuorumVolumeSize
         fsxBuffer = 20% of fsxCapacity
         fsxStorageCapacity = fsxCapacity + fsxBuffer = fsxCapacity + 20% of fsxCapacity = 1.2 * fsxCapacity
@@ -158,10 +184,10 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
         fsxBuffer = (0.2) * fsxStorageCapacity/1.2
     */
 
-    let fsxBufferVolumeSize = Math.ceil((0.2 * fsxStorageCapacity) / 1.2);
-    if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
-        fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
-    }
+    const fsxBufferVolumeSize = Math.ceil(fsxStorageCapacity * 0.35); // 35% of FSxStorageCapacity
+    // if (fsxStorageCapacity + fsxBufferVolumeSize >= convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB)) {
+    //     fsxBufferVolumeSize = Math.ceil(convertGiBToBytes(MAX_FSX_STORAGE_IN_GIB) - fsxStorageCapacity);
+    // }
     /*
 
     FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize + FsxBufferVolumeSize
@@ -198,41 +224,50 @@ function fsxStorageCapacityBreakdown(fsxStorageCapacity: number, sqlDeploymentMo
     };
 }
 
-function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string) {
-    logger.info('Calculate FSX Netapp Storage capacity from the database size', { fsxDataLunSize, sqlDeploymentMode });
+function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode: string, databaseType?: string) {
+    logger.info('Calculate FSX Netapp Storage capacity from the database size', {
+        fsxDataLunSize,
+        sqlDeploymentMode,
+        databaseType
+    });
 
     const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
     // All these in MiB
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    let FSxTempDbVolumeSize = 0;
+    if (databaseType !== DatabaseTypes.PG_SQL) {
+        FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    }
     let FSxQuorumVolumeSize = 0;
-    if (sqlDeploymentMode !== STANDALONE) {
+    if (sqlDeploymentMode !== STANDALONE && databaseType !== DatabaseTypes.PG_SQL) {
         FSxQuorumVolumeSize = 12000; // 12GB
     }
 
+    const totalVolumesSize = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
+    // Total FSx Storage Capacity with 35% headroom
+    let FSxStorageCapacity = Math.ceil(totalVolumesSize / 0.65);
+    const FSxBufferVolumeSize = FSxStorageCapacity - totalVolumesSize;
     // StorageCapacity in GiB
-    let FSxStorageCapacity = Math.ceil(
-        (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
-    );
+    FSxStorageCapacity = Math.ceil(FSxStorageCapacity / 1024);
 
     // 20 percent of FSxStorageCapacity
-    let FSxBufferVolumeSize = 0;
+    // let FSxBufferVolumeSize = 0;
     // FSxBufferVolumeSize in GiB initially later converted to MiB
     // If the total fsx storage capacity goes beyond 192TiB Means, we will keep the buffer as 0
     // Otherwise we will calculate the 20 percent of FSxStorageCapacity as the buffer, Even then if that buffer plus fsx storage capacity goes beyond total limit of 192TiB, then we keep the difference
     // between FSxStorageCapacity and Max FSX Storage limit as buffer
-    if (FSxStorageCapacity < MAX_FSX_STORAGE_IN_GIB) {
-        FSxBufferVolumeSize = Math.ceil(0.2 * FSxStorageCapacity);
-        if (FSxStorageCapacity + FSxBufferVolumeSize >= MAX_FSX_STORAGE_IN_GIB) {
-            FSxBufferVolumeSize = Math.ceil((MAX_FSX_STORAGE_IN_GIB - FSxStorageCapacity) * 1024);
-            FSxStorageCapacity += FSxBufferVolumeSize / 1024;
-        } else {
-            FSxBufferVolumeSize = Math.ceil(FSxBufferVolumeSize * 1024);
-            FSxStorageCapacity += FSxBufferVolumeSize / 1024;
-        }
-    }
+    // if (FSxStorageCapacity < MAX_FSX_STORAGE_IN_GIB) {
+    //     FSxBufferVolumeSize = Math.ceil(0.2 * FSxStorageCapacity);
+    //     if (FSxStorageCapacity + FSxBufferVolumeSize >= MAX_FSX_STORAGE_IN_GIB) {
+    //         FSxBufferVolumeSize = Math.ceil((MAX_FSX_STORAGE_IN_GIB - FSxStorageCapacity) * 1024);
+    //         FSxStorageCapacity += FSxBufferVolumeSize / 1024;
+    //     } else {
+    //         FSxBufferVolumeSize = Math.ceil(FSxBufferVolumeSize * 1024);
+    //         FSxStorageCapacity += FSxBufferVolumeSize / 1024;
+    //     }
+    // }
 
     FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
     FSxStorageCapacity = Math.min(FSxStorageCapacity, MAX_FSX_STORAGE_IN_GIB);
@@ -325,6 +360,7 @@ function getEc2Arn(awsAccountId: string, region: string, instanceId: string) {
 }
 
 function getQueueUrl(accountId: string, queueName: string) {
+    logger.debug({ accountId, queueName });
     return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
 }
 
@@ -450,10 +486,11 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
 }
 
 // Return job decription for corresponding Job name
-function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
-    logger.info('Return job decription for job name:', jobName);
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string, dbEngineType: string = 'SQL') {
+    logger.info('Return job decription for job name:', { jobName, stackSqlDeploymentType, dbEngineType });
     // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
     // Diffrentiating between the deployment type to provide appropriate description.
+    const subJobDescriptions = getSubJobDescriptions(dbEngineType);
     if (jobName.includes('ValidationStack1')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
@@ -481,9 +518,11 @@ function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: 
 function convertMetricsIntoJson(input: Array<string>) {
     const metrics: { [key: string]: string } = {};
 
-    for (const metric of input) {
-        const [key, value] = metric.split(':');
-        metrics[key] = value;
+    if (input) {
+        for (const metric of input) {
+            const [key, value] = metric?.split(':') || [];
+            metrics[key] = value;
+        }
     }
     return metrics;
 }
@@ -633,6 +672,129 @@ async function decompressSSMResponse(response: string) {
     }
 }
 
+const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 'Retry failed') => {
+    try {
+        const resp = await fn();
+        return resp;
+    } catch (err) {
+        logger.error('Retry failed with error', err);
+        if (retries <= 0) {
+            return Promise.reject(finalErr);
+        }
+
+        await sleep(interval);
+
+        return retryWithDelay(fn, retries - 1, interval, finalErr);
+    }
+};
+
+function getRedisDetails() {
+    logger.info('in getRedisDetails');
+    const url = SECRETS.REDIS_PASSWORD ? `${REDIS_SCHEMA}://${SECRETS.REDIS_PASSWORD}@${REDIS_URL}` : REDIS_URL;
+    return { url };
+}
+
+function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {
+    // Calculate the time difference in minutes
+    logger.debug('Calculate time difference in minutes', { startTime, endTime });
+    const timeDifferenceInMilliseconds = Math.abs(endTime - startTime);
+    return Math.floor(timeDifferenceInMilliseconds / (1000 * 60));
+}
+
+function filterActions(actions: string | string[]) {
+    if (Array.isArray(actions)) {
+        return actions.filter(action => !PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT.includes(action));
+    }
+    return PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT.includes(actions) ? [] : [actions];
+}
+
+function getRegionDetails(region: string): RegionDetailsType {
+    return {
+        name: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region) : '',
+        code: region
+    };
+}
+
+function calculateFsxStorageCapacityForHeadroomOptimization(
+    totalVolumeSizeInBytes: number,
+    ssdStorageCapacityInBytes: number
+): number {
+    let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
+    const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
+    // increase newFsxStorageCapacity so that increment is at least 10%
+    newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
+
+    const newFsxStorageCapacityGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
+    return newFsxStorageCapacityGiB;
+}
+
+function getSubJobDescriptions(dbEngineType: string) {
+    logger.info('Get sub job descriptions', { dbEngineType });
+
+    const subJobDescriptions: SubJobDescriptions = {
+        SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
+        NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
+        ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
+        'ValidationStack1-standalone': 'Subnet Validation for deployment',
+        'ValidationStack1-fci': `Primary subnet validation for ${dbEngineType} Server FCI deployment`,
+        ValidationStack2: `Standby subnet validation for ${dbEngineType} Server FCI deployment`,
+        'SqlNode(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server standalone on an EC2 instance`,
+        'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
+        'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': `Creating a security group for ${dbEngineType} Server workloads`,
+        'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)': `Attaching an instance profile to EC2 instances for ${dbEngineType} Server nodes`,
+        'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
+        'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
+        'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host witness disk for Windows Cluster',
+        'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
+        'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
+        'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+            'Creating a dedicated storage virtual machine (SVM) for the database workload',
+        'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
+        'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
+        'ValidationNode1(AWS::EC2::Instance)':
+            'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+        'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+        'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
+        'ValidationInstanceProfile(AWS::IAM::InstanceProfile)':
+            'Attaching an instance profile to the validation instance',
+        'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+            'Signaling wait condition to resume next steps',
+        'SqlFSxInstanceMAD1(AWS::EC2::Instance)': `Configuring Windows Cluster and ${dbEngineType} FCI instance on primary node`,
+        'SqlFSxInstanceMAD2(AWS::EC2::Instance)': `Configuring Windows Cluster and ${dbEngineType} FCI instance on standby node`,
+        'NetworkInterface2(AWS::EC2::NetworkInterface)':
+            'Creating network interfaces for the EC2 instance in standby subnet',
+        'NetworkInterface1(AWS::EC2::NetworkInterface)':
+            'Creating network interfaces for the EC2 instance in primary subnet',
+        'ValidationNode2(AWS::EC2::Instance)':
+            'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+        'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+        'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+            'Signaling wait condition to resume next steps',
+        VpcEndpointStack: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
+        'HttpsSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating security group to allow HTTPs access',
+        'S3Endpoint(AWS::EC2::VPCEndpoint)': 'Creating S3 gateway endpoint',
+        'CloudformationEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudFormation endpoint',
+        'Ec2MessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2Messages endpoint',
+        'SqsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SQS endpoint',
+        'SsmEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSM endpoint',
+        'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
+        'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
+        'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
+        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
+    };
+
+    if (dbEngineType === RESOURCESTYPE.PGSQL) {
+        subJobDescriptions['ValidationNode1(AWS::EC2::Instance)'] =
+            'Validating outbound connection to deployment resources in Amazon S3';
+        subJobDescriptions['ValidationNode2(AWS::EC2::Instance)'] =
+            'Validating outbound connection to deployment resources in Amazon S3';
+    }
+
+    return subJobDescriptions;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -671,5 +833,12 @@ export {
     getDatabaseInstanceName,
     isDemo,
     getOriginalDatabaseInstanceName,
-    decompressSSMResponse
+    decompressSSMResponse,
+    retryWithDelay,
+    getRedisDetails,
+    getTimeDifferenceInMinutes,
+    filterActions,
+    getRegionDetails,
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    getSubJobDescriptions
 };

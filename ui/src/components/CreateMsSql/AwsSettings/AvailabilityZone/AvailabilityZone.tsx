@@ -16,10 +16,14 @@ import {
     setSelectedSubnetNode2
 } from '../../../../store/mssql/mssqlFormSlice';
 import { Subnets } from '../../../../utils/types/mssqlTypes';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { WIZARD_TYPE } from '../../../../utils/consts';
 
-const AvailabilityZone = () => {
+type AvailabilityZoneProps = {
+    wizardType?: string;
+};
+
+const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
     const dispatch = useDispatch();
 
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
@@ -256,18 +260,6 @@ const AvailabilityZone = () => {
         }
     };
 
-    useEffect(() => {
-        if (!isDemoMode && routeTable1 && routeTable2 && routeTable1 === routeTable2) {
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: GENERAL.SAME_ROUTE_SUBNET_ERROR
-                })
-            );
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [routeTable1, routeTable2]);
-
     return (
         <div className={styles['availability-zone']}>
             <AccordionCard
@@ -284,7 +276,11 @@ const AvailabilityZone = () => {
                         </Typography>
 
                         <div className={styles.firstContainer}>
-                            <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_1}</Typography>
+                            <Typography variant="Regular_14">
+                                {wizardType === WIZARD_TYPE.MSSQL
+                                    ? GENERAL.CLUSTER_CONFIG_NODE_1
+                                    : GENERAL.CLUSTER_CONFIG_PGSQL}
+                            </Typography>
                             <SelectField
                                 label={GENERAL.AZ_Zone}
                                 ref={az1Ref}

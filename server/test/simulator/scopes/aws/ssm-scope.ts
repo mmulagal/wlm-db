@@ -48,10 +48,10 @@ import {
     ENTERPRISE_CHECK_QUERY,
     DATABASES_COUNT_V2,
     NATIVE_SQL_BACKUPS,
-    DATABASES
+    DATABASES,
+    GET_SANDBOXES
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
-    GET_SANDBOX_DETAILS,
     createVolumeClone,
     getDbMappedOntapVolumes,
     createClonedDb,
@@ -68,6 +68,12 @@ import {
     invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/drift-assessment-scripts';
+import {
+    CHECK_MPIO_POLICY,
+    REMEDIATE_MPIO_POLICY
+} from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
+import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -210,7 +216,7 @@ const getOntapSnapshotCountParams = {
 };
 
 const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION)]
+    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION, '$false', [DEFAULT_INSTANCE_NAME])]
 };
 
 const getStorageParams = {
@@ -253,10 +259,6 @@ const getHostAndSqlServerInfo = {
 
 const getDefaultDriveLetters = {
     commands: [GET_DEFAULT_DRIVES(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, true)]
-};
-
-const getActiveNodeDriveDetailsStandalone = {
-    commands: [GET_ACTIVE_NODE_DRIVE_INFO('Standalone')]
 };
 
 const getActiveNodeDriveDetailsFCI = {
@@ -319,7 +321,7 @@ const getOntapSandboxVolumeSavingsParams = {
 };
 
 const getSandboxDetails = {
-    commands: [GET_SANDBOX_DETAILS('$env:computername')]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES, false)]
 };
 
 const instanceDetails = {
@@ -334,9 +336,8 @@ const cloneVolumeCommand = {
         createVolumeClone(
             'test-fsx',
             'us-east-1',
-            'wlmdb_sqlsvm_1714090636810',
-            JSON.stringify({ name: 'wlmdb_sqldata_1714098400' }),
-            JSON.stringify({ name: 'wlmdb_sqllog_1714098400' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
+            JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
             ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
             'target-svm',
             'testdb'
@@ -348,10 +349,18 @@ const invokeVirtualMountCommand = {
     commands: [
         invokeVirtualMountScript(
             'test-clone',
-            'D:\\MSSQL\\data\\testdb_data.mdf',
-            'E:\\MSSQL\\log\\testdb_log.ldf',
-            'lWB44?VEq9vf',
-            'lWB44?VEq9ve',
+            JSON.stringify([
+                {
+                    filePath: 'D:\\MSSQL\\data\\testdb_data.mdf',
+                    folderName: 'D:\\MSSQL\\data',
+                    lun: 'lWB44?VEq9vf'
+                },
+                {
+                    filePath: 'E:\\MSSQL\\log\\testdb_log.ldf',
+                    folderName: 'E:\\MSSQL\\log',
+                    lun: 'lWB44?VEq9ve'
+                }
+            ]),
             'MSSQLSERVER',
             true,
             'Sandbox'
@@ -489,6 +498,18 @@ const dbSummary = {
     commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
 };
 
+const validateMpio = {
+    commands: [CHECK_MPIO_POLICY]
+};
+
+const setMpioPolicy = {
+    commands: [REMEDIATE_MPIO_POLICY]
+};
+
+const optimizeRegex = /#Storage Optimization Script/;
+const rescanExtendRegex = /#Rescan and extend the LUN/;
+const moveClusterGroupsRegex = /#Move Cluster Groups/;
+const checkNodeStatusRegex = /#Check Node Status/;
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -552,8 +573,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getServerEdition)
     .on(SendCommandCommand, { Parameters: getHostAndSqlServerInfo })
     .resolves(listSendCommandCommandResponse.getHostAndSqlServerInfoResponse)
-    .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetailsStandalone })
-    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, { Parameters: getActiveNodeDriveDetailsFCI })
     .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, { Parameters: getStandbyNodeDriveList })
@@ -623,7 +642,39 @@ ssmMock
     .on(SendCommandCommand, { Parameters: checkScriptUpdate })
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
-    .resolves(listSendCommandCommandResponse.dbSummaryCommand);
+    .resolves(listSendCommandCommandResponse.dbSummaryCommand)
+    .on(SendCommandCommand, params => {
+        const newOptimizeRegex = optimizeRegex;
+        const newOptimizeParams = params.Parameters.commands[0];
+        return newOptimizeParams && newOptimizeRegex.test(newOptimizeParams);
+    })
+    .resolves(listSendCommandCommandResponse.optimizeStorageCommand)
+    .on(SendCommandCommand, params => {
+        return rescanExtendRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.rescanAndExtendLogLunCommand)
+    .on(SendCommandCommand, params => {
+        return checkNodeStatusRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.checkNodeStatusCommand)
+    .on(SendCommandCommand, params => {
+        return moveClusterGroupsRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.moveClusterGroupsCommand)
+    .on(SendCommandCommand, params => {
+        const getLunDetailsRegex = /#Get ONTAP LUN details Script/;
+        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getLunDetailsCommand)
+    .on(SendCommandCommand, { Parameters: validateMpio })
+    .resolves(listSendCommandCommandResponse.validateMpioCommand)
+    .on(SendCommandCommand, { Parameters: setMpioPolicy })
+    .resolves(listSendCommandCommandResponse.setMpioPolicyCommand)
+    .on(SendCommandCommand, params => {
+        const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
+        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -765,7 +816,36 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryCommand'
     })
-    .resolves(getCommandInvocationResponse.dbSummaryResponse);
+    .resolves(getCommandInvocationResponse.dbSummaryResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand'
+    })
+    .resolves(getCommandInvocationResponse.optimizeStorageResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-rescanAndExtendLogLunCommand'
+    })
+    .resolves(getCommandInvocationResponse.rescanAndExtendLogLunResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkNodeStatusCommand'
+    })
+    .resolves(getCommandInvocationResponse.checkNodeStatusResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-moveClusterGroupsCommand'
+    })
+    .resolves(getCommandInvocationResponse.moveClusterGroupsResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand'
+    })
+    .resolvesOnce(getCommandInvocationResponse.validateMpioNotRRCommandResponse)
+    .resolves(getCommandInvocationResponse.validateMpioCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand'
+    })
+    .resolves(getCommandInvocationResponse.setMpioPolicyCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getLunDetailsResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

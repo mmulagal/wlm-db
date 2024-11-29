@@ -5,6 +5,7 @@ import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { ReactComponent as DownloadIcon } from '../../../assets/ic_download.svg';
 
 import SubJobTable from '../SubJobTable/SubJobTable';
@@ -49,15 +50,11 @@ const JobMonitoringTable = () => {
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
     const [skipApiCall, setSkipApiCall] = useState(true);
-    const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
-    const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
 
     // Filter options to use while downloading
     const [typeFilter, setTypeFilter] = useState<string | null>(null);
@@ -68,13 +65,6 @@ const JobMonitoringTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
-
-    useEffect(() => {
-        if (headerSelectedCred && headerSelectedRegion) {
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
-        }
-    }, [headerSelectedCred, headerSelectedRegion]);
 
     const menuItems = (row: any) => {
         return [
@@ -128,8 +118,6 @@ const JobMonitoringTable = () => {
             dispatch(setSubJobsDataLoading(false));
         } else {
             subTaskListApi({
-                credentialId: credId,
-                region: regionId,
                 id: jobId
             })
                 .then(data => {
@@ -154,8 +142,6 @@ const JobMonitoringTable = () => {
         isError: jmJobsListError
     } = useGetFullJobsListQuery(
         {
-            credentialId: credId,
-            region: regionId,
             nextToken: jobsCursor,
             startTime: time?.startTime,
             endTime: time?.endTime,
@@ -221,7 +207,7 @@ const JobMonitoringTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '8',
+            id: '10',
             Header: '',
             accessor: 'name',
             renderCell: (cellData: any, rowData: any) => {
@@ -278,6 +264,7 @@ const JobMonitoringTable = () => {
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
+
                         <div
                             className={
                                 isIntegrityCheckJob ? `${styles.arrow} ${styles['arrow-disabled']}` : styles.arrow
@@ -304,7 +291,7 @@ const JobMonitoringTable = () => {
             accessor: 'id',
             className: styles.firstCol,
             isSortable: true,
-            width: '286px',
+            width: '220px',
             isSticky: true,
             renderCell: (cellData: any) => {
                 return (
@@ -318,12 +305,14 @@ const JobMonitoringTable = () => {
             id: '2',
             Header: 'Type',
             accessor: 'type',
-            width: '160px',
+            width: '140px',
             filterOptions: [
                 { value: JOB_MONITORING_TYPE.DEPLOYMENT, label: GENERAL.JM_TYPE_DEPLOYMENT },
                 { value: JOB_MONITORING_TYPE.CREATE_RESOURCE, label: GENERAL.JM_TYPE_CREATE_RESOURCE },
                 { value: JOB_MONITORING_TYPE.PREPARE_RESOURCE, label: GENERAL.JM_TYPE_PREPARE_RESOURCE },
-                { value: JOB_MONITORING_TYPE.SANDBOX, label: GENERAL.JM_TYPE_SANDBOX }
+                { value: JOB_MONITORING_TYPE.SANDBOX, label: GENERAL.JM_TYPE_SANDBOX },
+                { value: JOB_MONITORING_TYPE.ASSESSMENT, label: GENERAL.JM_TYPE_ASSESSMENT },
+                { value: JOB_MONITORING_TYPE.OPTIMIZE, label: GENERAL.JM_TYPE_OPTIMIZE }
             ],
             renderCell: (cellData: any) => {
                 return jobMonitoringTypeMapping(cellData);
@@ -333,11 +322,12 @@ const JobMonitoringTable = () => {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '160px',
+            width: '248px',
             filterOptions: [
                 { value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING },
                 { value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED },
-                { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED }
+                { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED },
+                { value: JOB_MONITORING_STATUS.WARNING, label: GENERAL.JM_WARNING }
             ],
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -359,6 +349,7 @@ const JobMonitoringTable = () => {
                                 />
                             )}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
+                            {cellData === JOB_MONITORING_STATUS.WARNING && <Warning />}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>
                     </div>
@@ -407,7 +398,7 @@ const JobMonitoringTable = () => {
             Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
-            width: '200px',
+            width: '196px',
             renderCell: (cellData: any) => {
                 const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
                 return (
@@ -417,6 +408,7 @@ const JobMonitoringTable = () => {
                 );
             }
         },
+
         lastColDetails()
     ];
 

@@ -1,0 +1,89 @@
+.totalOptimizationScore {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 470px;
+    width: 32.31%;
+    max-width: 520px;
+    background-color: var(--content-background);
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .mainSection {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 56px;
+        .chartSection {
+            padding: 50px 40px 0 40px;
+        }
+
+        .tileSection {
+            display: flex;
+            gap: 24px;
+
+            .separator {
+                border-right: 1px solid var(--border);
+                height: 48px;
+            }
+
+            .tile {
+                display: flex;
+                flex-direction: column;
+
+                .bottomRow {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+            }
+        }
+
+        .smallTileSection {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 82.18%;
+
+            .horizontalSeparator {
+                border-top: 1px solid var(--border);
+                width: 100%;
+            }
+
+            .smallTile {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+
+                .separator {
+                    border-right: 1px solid var(--border);
+                    height: 18px;
+                }
+
+                .bottomRow {
+                    width: 140px;
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1770px) {
+    .totalOptimizationScore {
+        .mainSection {
+            gap: 32px;
+
+            .chartSection {
+                padding: 40px 40px 0 40px;
+            }
+        }
+    }
+}

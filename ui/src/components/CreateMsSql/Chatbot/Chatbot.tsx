@@ -25,7 +25,6 @@ import {
     setSuggestionBubbles
 } from '../../../store/chatbot/chatbotSlice';
 import {
-    initialMssqlState,
     setCloudWatch,
     setDBCredentialsName,
     setDBCredentialsPassword,
@@ -35,7 +34,6 @@ import {
     setFsxNPassword,
     setFsxNType,
     setInstanceType,
-    setMssqlForm,
     setSelectedADDomainAddress,
     setSelectedADDomainName,
     setSelectedADPassword,
@@ -64,12 +62,10 @@ import {
     CHATBOT_WELCOME_CARDS,
     FORM_TO_WLF_NAVIGATE,
     WLF_TABS,
-    PRODUCTION,
     SQL_DEPLOYMENT_MODE,
-    TIMELINE_PROD_LINK,
-    TIMELINE_STAGE_LINK,
     USER_MANAGED_AD,
-    FORM_OPTIONS
+    FORM_OPTIONS,
+    FORM_TO_WLF_NAVIGATE_BLUEXP
 } from '../../../utils/consts';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
@@ -77,11 +73,10 @@ import { setDeployRedirectToCfLink, setIsLoading, setPermissionData } from '../.
 import { Button } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useNavigate } from 'react-router-dom';
-import { navigateToCanvas } from '../../../utils/appConfig';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 import store from '../../../store/store';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 const _ = require('lodash');
 
 type optionsType = {
@@ -237,63 +232,37 @@ const Chatbot = () => {
             stackName = stackName.split('/')[1];
         }
         let message;
-        if (isWorkloadFactoryStatus) {
-            message = (
-                <>
-                    {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {
-                        <>
-                            <Button
-                                Component="button"
-                                variant="text"
-                                onClick={() => {
-                                    clearTimeout(notificationMsg);
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+        message = (
+            <>
+                {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
+                {
+                    <>
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                clearTimeout(notificationMsg);
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                if (isWorkloadFactoryStatus) {
                                     navigate('../databases');
-                                    dispatch(clearNotifications());
-                                }}
-                            >
-                                {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
-                            </Button>
-                        </>
-                    }
-                    {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
-                </>
-            );
-        } else {
-            const timelineUrl =
-                process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
-            message = (
-                <>
-                    {GENERAL.CREATE_INFO_MESSAGE[0]}
-                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName : ''}
-                    {stackName && stackUrl && (
-                        <>
-                            {GENERAL.CREATE_INFO_MESSAGE[1]}
-                            <Button
-                                Component="button"
-                                variant="link"
-                                onClick={() => window.open(stackUrl, '_blank', 'noopener')}
-                            >
-                                {stackName}
-                            </Button>
-                        </>
-                    )}
-                    {GENERAL.CREATE_INFO_MESSAGE[2]}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
-                    >
-                        {GENERAL.CREATE_INFO_MESSAGE[3]}
-                    </Button>
-                    {GENERAL.CREATE_INFO_MESSAGE[4]}
-                </>
-            );
-        }
+                                } else {
+                                    navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+                                }
+
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
+                        </Button>
+                    </>
+                }
+                {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
+            </>
+        );
+
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
         }, 3000);
     };
 
@@ -585,7 +554,8 @@ const Chatbot = () => {
                         const data = {
                             architecture: selectedLicense?.architecture,
                             amiVal: selectedLicense?.imageId,
-                            amiName: selectedLicense?.name
+                            amiName: selectedLicense?.name,
+                            ebsVolumeSize: selectedLicense?.ebsVolumeSize
                         };
                         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
                         dispatch(setSelectedLicenseId(value ? option : null));

@@ -99,6 +99,9 @@
         &.failed {
             background-color: var(--error);
         }
+        &.warning {
+            background-color: var(--warning);
+        }
         &.running,
         &.in_progress {
             background-color: var(--cyan-60);
@@ -126,6 +129,7 @@
     .statusCol {
         display: flex;
         gap: 16px;
+        align-items: center;
         .statusIcon {
             width: 20px;
             height: 20px;

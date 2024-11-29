@@ -1,11 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, SearchInput, Popover, FlashingDotsLoader, Button, useDialog } from '@netapp/design-system';
+import {
+    Typography,
+    SearchInput,
+    Popover,
+    FlashingDotsLoader,
+    Button,
+    useDialog,
+    DsTooltipInfo
+} from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';
@@ -19,6 +26,7 @@ import {
     formatDateWithTime,
     generateOptionType,
     getCredDetails,
+    handleDownloadTerraform,
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
@@ -26,6 +34,7 @@ import {
     getBaseUrl,
     useGetConfigListQuery,
     useGetTemplatesMutation,
+    useGetTerraformSetupMutation,
     useLazyGetConfigDataQuery
 } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
@@ -46,7 +55,8 @@ import {
     CODEBOX_REST_RES,
     AWS_CLI_HIGHLIGHT_STRINGS,
     UI_IDS,
-    DEPLOY_ENDPOINT
+    DEPLOY_ENDPOINT,
+    WIZARD_TYPE
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
@@ -58,6 +68,8 @@ import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import TerraformColor from '../../../components/CreateMsSql/Terraform/TerraformColor';
+import { downloadTerraformZip } from '../../../components/CreateMsSql/MockTerraformZip/MockTerraformZip';
 
 type ConfigType = {
     id?: string;
@@ -94,6 +106,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<any>([]);
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
+    // For terraform response
+    const [terraformSetupResponse, setTerraformSetupResponse] = useState<any>({});
+    const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
+
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
     const [disableCopy, setDisableCopy] = useState(true);
@@ -106,6 +122,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
+    const [loadTerraformData] = useGetTerraformSetupMutation();
+
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     useEffect(() => {
         if (dropDownValue === 'CloudFormation') {
@@ -126,6 +145,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
                 }
             ]);
+        } else if (dropDownValue === GENERAL.TERRAFORM) {
+            setMenuItems([
+                {
+                    id: 'loadWizardOption',
+                    displayName: CODE_VIEWER.SIDEBAR_LOAD_WIZARD
+                },
+                {
+                    id: 'downloadTerraFormZip',
+                    displayName: CODE_VIEWER.DOWNLOAD_ZIP,
+                    disabled: !getTerraformSetupResponseById(openKey) || isTerraformDataLoading ? true : false
+                }
+            ]);
         } else {
             setMenuItems([
                 {
@@ -136,13 +167,20 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isRightPanelTemplateLoading, rightPanelTemplateResponse, dropDownValue]);
+    }, [
+        isRightPanelTemplateLoading,
+        rightPanelTemplateResponse,
+        isTerraformDataLoading,
+        terraformSetupResponse,
+        dropDownValue
+    ]);
 
     const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
 
     useEffect(() => {
-        setConfigData(configDataList);
-        setDataToCheck(configDataList);
+        const mssqlConfigs = configDataList?.filter((item: any) => item.databaseType !== WIZARD_TYPE.PGSQL) || [];
+        setConfigData(mssqlConfigs);
+        setDataToCheck(mssqlConfigs);
     }, [configDataList]);
 
     useEffect(() => {
@@ -219,6 +257,36 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    // This will call terraform setup API to get Terraform response for current payload.
+    const getTerraformSetupResponse = (payload: any, credDetails: any, id: any, changeObjectForm: any) => {
+        const data = getTerraformSetupResponseById(id);
+        if (data) {
+            setIsTerraformDataLoading(false);
+        } else {
+            if (credDetails?.credId) {
+                payload.credentialsId = credDetails?.credId;
+            }
+            if (credDetails?.region) {
+                payload.region = credDetails?.region;
+            }
+            if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
+                payload.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
+            }
+            loadTerraformData({ payload }).then((data: any) => {
+                if (data?.data) {
+                    setTerraformSetupResponse({ ...terraformSetupResponse, [id]: data?.data });
+                    setIsTerraformDataLoading(false);
+                    dispatch(setIsLoading(false));
+                } else {
+                    setTerraformSetupResponse(null);
+                    setIsTerraformDataLoading(false);
+                    dispatch(setIsLoading(false));
+                }
+            });
+        }
+        setIsTerraformDataLoading(true);
+    };
+
     // To save Rest API response
     const storeRightPanelRestResponse = (
         id: string,
@@ -276,6 +344,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    // To get terraform response
+    const getTerraformSetupResponseById = (id: string | undefined) => {
+        if (id) {
+            const result = terraformSetupResponse?.[id];
+            return result;
+        }
+    };
+
     const loadRestApi = (actualData: any, id: string, save: boolean) => {
         const baseUrl = getBaseUrl();
         // To get accountid, credid and region from saved config
@@ -290,6 +366,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (id === openKey) {
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, credDetails, id);
+            getTerraformSetupResponse(resBody, credDetails, id, changeObjectForm);
         }
         if (save) {
             const res = JSON.stringify(resBody, null, 2);
@@ -309,7 +386,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                         credDetails.region || CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
-                        res
+                        res,
+                        isWorkloadFactory
                     )}
                 />
             );
@@ -331,7 +409,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                         credDetails.region || CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
-                        res1
+                        res1,
+                        isWorkloadFactory
                     )}
                 />
             );
@@ -369,12 +448,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         CRED_PLACEHOLDERS.CRED_ID,
                         CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
-                        res
+                        res,
+                        isWorkloadFactory
                     )}
                 />
             );
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, {}, id);
+            getTerraformSetupResponse(resBody, {}, id, changeObjectForm);
             setCredDetailsData({});
             storeRightPanelRestResponse(id, actualData[0].data, highlightedString, highlightedString, resBody);
         } else {
@@ -420,23 +501,25 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     }, [searchInput]);
 
     useEffect(() => {
-        if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
-            const recList = recommendedData.filter((item: any) => item.id === openKey);
-            setOpenedItem(recList[0]);
-            getRestResponse(openKey);
-        } else if (openKey && configData && configData.length) {
-            const updatedConfigData = configData.filter((item: any) => item.id === openKey);
-            setOpenedItem(updatedConfigData[0]);
-            getRestResponse(updatedConfigData[0].id);
-        } else if (!openKey && recommendedData && recommendedData.length) {
-            setOpenedItem(recommendedData[0]);
-            getRestResponse(recommendedData[0].id || '');
-        } else if (!openKey && configData && configData.length) {
-            setOpenedItem(configData[0]);
-            getRestResponse(configData[0].id);
+        if (isOpen) {
+            if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
+                const recList = recommendedData.filter((item: any) => item.id === openKey);
+                setOpenedItem(recList[0]);
+                getRestResponse(openKey);
+            } else if (openKey && configData && configData.length) {
+                const updatedConfigData = configData.filter((item: any) => item.id === openKey);
+                setOpenedItem(updatedConfigData[0]);
+                getRestResponse(updatedConfigData[0].id);
+            } else if (!openKey && recommendedData && recommendedData.length) {
+                setOpenedItem(recommendedData[0]);
+                getRestResponse(recommendedData[0].id || '');
+            } else if (!openKey && configData && configData.length) {
+                setOpenedItem(configData[0]);
+                getRestResponse(configData[0].id);
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [configData, openKey]);
+    }, [configData, openKey, isOpen]);
 
     const handleToggle = (key: any, id: any) => {
         if (openKey !== id) {
@@ -458,23 +541,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         onClose();
     };
 
-    const terraformUI = () => {
-        return (
-            <div className={styles.terraformContainer}>
-                <div>{GENERAL.TERRAFORM}</div>
-                <div>
-                    <ComingSoon />
-                </div>
-            </div>
-        );
-    };
-
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, GENERAL.TERRAFORM];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3 ? true : false, '');
+            const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
@@ -531,6 +603,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}
                 </Typography>
+            );
+        }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return isTerraformDataLoading ? (
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_TERRAFORM} />
+            ) : (
+                <TerraformColor data={getTerraformSetupResponseById(openKey)} />
             );
         }
     };
@@ -602,13 +681,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //Handle Search
     const handleSearch = (val: string) => {
+        const mssqlConfigs = configDataList?.filter((item: any) => item.databaseType !== WIZARD_TYPE.PGSQL) || [];
         if (val.length) {
-            const newVal = configDataList.filter((text: any) => {
-                return text?.name.includes(val);
+            const newVal = mssqlConfigs.filter((text: any) => {
+                return text?.name.includes(val) && text.databaseType !== WIZARD_TYPE.PGSQL;
             });
             setDataToCheck(newVal);
         } else {
-            setDataToCheck(configDataList);
+            setDataToCheck(mssqlConfigs);
         }
     };
 
@@ -650,6 +730,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             return UI_IDS.DBP_CODEBOX_AWS_CLI;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             return UI_IDS.DBP_CODEBOX_REST_API;
+        } else if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return UI_IDS.DBP_CODEBOX_TF;
         }
     };
 
@@ -889,6 +971,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
                                         {dropDownValue}
                                     </Typography>
+                                    {dropDownValue === CODE_VIEWER.TERRAFORM && (
+                                        <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                            {GENERAL.TERRAFORM_CODEBOX_TOOLTIP}
+                                        </DsTooltipInfo>
+                                    )}
                                 </div>
 
                                 {/* <SearchInput onChange={e => setSearchInput(e)} /> */}
@@ -960,6 +1047,34 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         );
                                                     } else if (menuId === 'viewAwsCloudFormation') {
                                                         handleViewInAwsCloudFormation();
+                                                    } else if (menuId === 'downloadZip') {
+                                                        if (isDemoMode) {
+                                                            if (openKey) {
+                                                                const data = rightPanelData[openKey];
+                                                                downloadTerraformZip(data?.dbDeploymentModel?.value);
+                                                            }
+                                                        } else if (openKey) {
+                                                            handleDownloadTerraform(
+                                                                terraformSetupResponse[openKey]?.url
+                                                            );
+                                                        }
+                                                        dispatch(clearNotifications());
+                                                        const ele = (
+                                                            <div>
+                                                                <div style={{ fontWeight: 400 }}>
+                                                                    {GENERAL.TERRAFORM_DOWNLOAD}
+                                                                </div>
+                                                                <div style={{ fontWeight: 400 }}>
+                                                                    {GENERAL.TERRAFORM_NOTICE}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                        dispatch(
+                                                            addNotification({
+                                                                notificationType: NOTIFICATION_TYPES.INFO,
+                                                                message: ele
+                                                            })
+                                                        );
                                                     }
                                                 }
                                             }}

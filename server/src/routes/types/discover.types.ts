@@ -105,7 +105,10 @@ const SqlServerInstanceInfo = Type.Object({
                 svmId: Type.Optional(
                     Type.String({ description: 'ID of Storage Virtual Machine, if underlying storage is FSx ONTAP' })
                 ),
-                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' }))
+                protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
+                fileSystemStorageType: Type.Optional(
+                    Type.String({ description: 'File system storage type, SSD or HDD' })
+                )
             })
         )
     ),
@@ -178,9 +181,9 @@ const MultiInstanceManageResponseBody = Type.Object({
     )
 });
 
-const ManageMsSqlResponseBody = Type.Object({
-    resourceId: Type.String({ description: 'ID of the managed resource' })
-});
+// const ManageMsSqlResponseBody = Type.Object({
+//     resourceId: Type.String({ description: 'ID of the managed resource' })
+// });
 
 const PrepareResourceResponseBody = {
     jobId: Type.String({ description: 'Resource preparation job ID' })
@@ -198,7 +201,10 @@ const DiscoverCredentials = Type.Object({
 });
 
 const DiscoverCredentialsRequestBody = Type.Object({
-    credentials: Type.Array(DiscoverCredentials)
+    credentials: Type.Array(DiscoverCredentials),
+    clusterNodesIpAddress: Type.Optional(
+        Type.Array(Type.String({ description: 'Private ips of nodes in a clustered deployment' }))
+    )
 });
 
 const DiscoverCredentialsResponse = Type.Object({
@@ -240,7 +246,6 @@ const MsSqlInstancesRequestQuery = Type.Object({
 export {
     DiscoverMsSqlQuery,
     DiscoverMsSqlResponseBody,
-    ManageMsSqlResponseBody,
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
     DiscoverResponseInfoType,

@@ -2,6 +2,10 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import { CredentialsIdParams } from './generic.types';
 import { FINDING } from '../../utils/consts';
 
+const InternalUpdateInstRecQueryString = Type.Object({
+    fields: Type.Optional(Type.String())
+});
+
 const StorageSavingsRequestParams = Type.Composite([
     CredentialsIdParams,
     Type.Object({
@@ -409,12 +413,18 @@ const StorageSavingsCalculationsMetricsResponse = Type.Object({
     recommendedLicenseCalculation: LicenseCalculationObject,
     existingComputeCalculation: ComputeCalculationObject,
     existingLicenseCalculation: LicenseCalculationObject,
-    // TODO: Uncomment below 3 lines after fixing the issue with the Type.Mapped and remove the next 3 lines
-    // ebsCalculation: Type.Array(Type.Mapped(Type.Union([Type.Optional(Type.Literal('gp2')),Type.Literal('gp3'),Type.Optional(Type.Literal('io1')),Type.Optional(Type.Literal('io2'))]), () =>
-    //     ebsCostCalculation
-    // )),
-    // ebsCloneCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsCloneCalculation)),
-    // ebsSnapshotCalculation: Type.Array(Type.Mapped(Type.Union([Type.String()]), () => ebsSnapshotCalculation)),
+    ebsCalculation: Type.Optional(EBSCostCalculationResp),
+    ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
+    ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
+    single: Type.Optional(FsxCalculationResp),
+    multi: Type.Optional(FsxCalculationResp),
+    fsxwCalculation: Type.Optional(FsxwCalculationResp),
+    fsxwSnapshotCalculation: Type.Optional(FsxwSnapshotCalculationResp),
+    fsxwCloneCalculation: Type.Optional(FsxwCloneCalculationResp)
+});
+
+const StorageSavingsCalculationsMetrics = Type.Object({
+    ebs: Type.Optional(StorageMetrics),
     ebsCalculation: Type.Optional(EBSCostCalculationResp),
     ebsCloneCalculation: Type.Optional(EBSCloneCostCalculationResp),
     ebsSnapshotCalculation: Type.Optional(EBSSnapshotCalculationResp),
@@ -477,6 +487,7 @@ const ComputeLicenseCost = Type.Object({
 type ComputeLicenseCostType = Static<typeof ComputeLicenseCost>;
 
 type StorageSavingsMetricsCalculationsResponseType = Static<typeof StorageSavingsCalculationsMetricsResponse>;
+type StorageSavingsCalculationsMetricsType = Static<typeof StorageSavingsCalculationsMetrics>;
 
 type ComputeDetailsType = Static<typeof ComputeDetails>;
 type LicenseDetailsType = Static<typeof LicenseDetails>;
@@ -491,6 +502,7 @@ type EBSCloneCostCalculationRespType = Static<typeof EBSCloneCostCalculationResp
 type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 
 export {
+    InternalUpdateInstRecQueryString,
     EbsCostCalculationType,
     EbsCloneCalculationType,
     EbsSnapshotCalculationType,
@@ -514,5 +526,6 @@ export {
     FsxCalculationRespType,
     EBSCostCalculationRespType,
     EBSCloneCostCalculationRespType,
-    EBSSnapshotCalculationRespType
+    EBSSnapshotCalculationRespType,
+    StorageSavingsCalculationsMetricsType
 };

@@ -20,7 +20,10 @@ param(
     [string]$ResourceID,
 
     [Parameter(Mandatory = $true)]
-    [string]$WaitHandler 
+    [string]$WaitHandler,
+    
+    [Parameter(Mandatory = $false)]
+    [boolean]$IsTerraform
 )
 
 Start-Transcript -Path C:\cfn\log\Validate-FsxConnectivity.ps1.txt -Append
@@ -48,6 +51,7 @@ if (${PerformFSxCheck} -ne 'true' ) {
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
+$ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 try {
     $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
@@ -61,6 +65,9 @@ catch {
     $Failed = $true
     $FailureReason = '"{0}"' -f "Unable to fetch SSM parameter, /netapp/wlmdb/$Parentstackname and access to SSM parameter store"
     Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)
@@ -101,6 +108,9 @@ catch {
     $Failed = $true
     $FailureReason = '"{0}"' -f "Unable to reach storage. 1. Check storage credentials are valid 2. Check if routing table allows connection from the subnet 3. Check if storage security group allows HTTPS(443) and iSCSI(3260) tcp ports.   Exception: $_"
     Write-Output @{status = "Failed"; reason = $FailureReason } | ConvertTo-Json -Compress
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
     exit(1)

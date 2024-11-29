@@ -45,8 +45,8 @@ async function countParentJobs(accountId: string) {
 
 async function listJobs(
     accountId: string,
-    credentialsId: string,
-    region: string,
+    credentialsId: string | undefined = undefined,
+    region: string | undefined = undefined,
     parentJobId: string | null = null,
     sort: string = 'start_time',
     sortOrder: string = 'desc',
@@ -86,8 +86,8 @@ async function listJobs(
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
-            credentials_id: credentialsId,
-            region,
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
             parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),
@@ -121,15 +121,20 @@ async function listJobs(
     });
 }
 
-async function listUniqueJob(accountId: string, credentialsId: string, region: string, jobId: string) {
+async function listUniqueJob(
+    accountId: string,
+    credentialsId: string | undefined,
+    region: string | undefined,
+    jobId: string
+) {
     logger.info('List unique job', { accountId, credentialsId, region, jobId });
     accountId = checkAccount(accountId);
 
     return prisma.client.job.findUniqueOrThrow({
         where: {
             id: jobId,
-            credentials_id: credentialsId,
-            region
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region })
         }
     });
 }
@@ -155,15 +160,13 @@ async function createJob(accountId: string, job: readOnlyJob) {
 
 async function updateJob(
     accountId: string,
-    credentialsId: string,
-    region: string,
     jobId: string,
     description?: string,
     status?: JOBSTATUS,
     endTime?: number,
     error?: string
 ) {
-    logger.info('Updating a job', { accountId, credentialsId, region, jobId, description, status, endTime, error });
+    logger.info('Updating a job', { accountId, jobId, description, status, endTime, error });
 
     accountId = checkAccount(accountId);
 
@@ -173,9 +176,7 @@ async function updateJob(
 
     return prisma.client.job.update({
         where: {
-            id: jobId,
-            credentials_id: credentialsId,
-            region
+            id: jobId
         },
         data: {
             ...(description && { description }),
@@ -227,8 +228,8 @@ async function deleteOlderJobs(olderDate: number) {
 
 async function getJobCountByStatus(
     accountId: string,
-    credentialsId: string,
-    region: string,
+    credentialsId: string | undefined,
+    region: string | undefined,
     startTime: number,
     endTime: number
 ) {
@@ -239,8 +240,8 @@ async function getJobCountByStatus(
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
-            credentials_id: credentialsId,
-            region,
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
             parent_job_id: null,
             start_time: {
                 gte: new Date(startTime),
@@ -256,8 +257,8 @@ async function getJobCountByStatus(
 
 async function groupJobsByTimeAndStatus(
     accountId: string,
-    credentialsId: string,
-    region: string,
+    credentialsId: string | undefined,
+    region: string | undefined,
     startTime: number,
     endTime: number
 ) {
@@ -268,8 +269,8 @@ async function groupJobsByTimeAndStatus(
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
-            credentials_id: credentialsId,
-            region,
+            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(region && { region }),
             parent_job_id: null,
             end_time: {
                 not: null

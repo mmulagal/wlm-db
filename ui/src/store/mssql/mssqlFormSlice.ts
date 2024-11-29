@@ -44,7 +44,7 @@ export const initialMssqlState: any = {
     sqlServerCollation: {},
     dbName: '',
     dbCredentials: {
-        name: SQL_USERNAME,
+        name: '',
         password: ''
     },
     keyPair: {

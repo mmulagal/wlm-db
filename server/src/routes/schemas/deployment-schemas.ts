@@ -8,12 +8,14 @@ import {
     DeploymentStatusObjectParams,
     CloudFormationStaticTemplateRequestBody,
     CloudFormationStaticTemplateResponse,
-    DeploymentSummaryQueryString,
-    DeploymentSummaryListResponse,
     CloudFormationTemplateHeader,
     FsxAvailableRegionsForThroughputListResponse,
     CollationListResponse,
-    CollationListQueryString
+    CollationListQueryString,
+    PgSqlCloudFormationTemplateRequestBody,
+    PgSqlCloudFormationDeploymentResponse,
+    TerraformSetupRequestBody,
+    TerraformSetupResponse
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -36,14 +38,16 @@ const CloudFormationTemplateSchema = {
     }
 };
 
-const DeploymentSummaryListSchema = {
+// PGSQL CloudFormation template
+const PgSqlCloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
-    summary: 'Get deployment jobs summary',
-    description: 'API to get deployment jobs summary for given deployment status types',
-    querystring: DeploymentSummaryQueryString,
+    summary: 'Create PgSQL CloudFormation template',
+    headers: CloudFormationTemplateHeader,
+    description: 'Create CloudFormation template in URL, YAML and CLI format for PgSql deployment',
+    body: PgSqlCloudFormationTemplateRequestBody,
     response: {
-        200: DeploymentSummaryListResponse
+        200: CloudFormationStaticTemplateResponse
     }
 };
 
@@ -51,11 +55,22 @@ const DeploymentSummaryListSchema = {
 const DeployTemplateSchema = {
     ...baseRequest,
     headers: CloudFormationTemplateHeader,
-    summary: 'Deploy CloudFormation template',
-    description: 'Deploy CloudFormation template to provision SQL FCI',
+    summary: 'Deploy CloudFormation template for ms sql',
+    description: 'Deploy CloudFormation template to provision MS SQL',
     body: CloudFormationTemplateRequestBody,
     response: {
         202: CloudFormationDeploymentResponse
+    }
+};
+
+const PgSqlDeployTemplateSchema = {
+    ...baseRequest,
+    headers: CloudFormationTemplateHeader,
+    summary: 'Deploy CloudFormation template for pgsql',
+    description: 'Deploy CloudFormation template to provision PGSQL',
+    body: PgSqlCloudFormationTemplateRequestBody,
+    response: {
+        200: PgSqlCloudFormationDeploymentResponse
     }
 };
 
@@ -81,7 +96,7 @@ const DeploymentStatusSchema = {
 };
 
 const FsxAvailableRegionsForThroughputSchema = {
-    tags: [RouteTags.DEPLOYMENT],
+    tags: [RouteTags.AWS],
     params: AccountIdParams,
     summary: 'Get list of fsx available regions for 4 GBps of throughput capacity',
     description: 'API to get region list to provision FSX 4 GBps of throughput capacity',
@@ -101,12 +116,26 @@ const CollationListSchema = {
     }
 };
 
+const TerraformSetupSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Create Terraform Setup',
+    headers: CloudFormationTemplateHeader,
+    description: 'Create Terraform Setup in URL for user deployment',
+    body: TerraformSetupRequestBody,
+    response: {
+        200: TerraformSetupResponse
+    }
+};
+
 export {
     DeployTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
     CloudFormationTemplateSchema,
-    DeploymentSummaryListSchema,
     FsxAvailableRegionsForThroughputSchema,
-    CollationListSchema
+    CollationListSchema,
+    PgSqlDeployTemplateSchema,
+    TerraformSetupSchema,
+    PgSqlCloudFormationTemplateSchema
 };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ReactComponent as SendButton } from '../../../../assets/send-button.svg';
 import Message from '../Message/Message';
 
@@ -7,7 +7,7 @@ import ChatBotResponseLoader from '../ChatBotResponseLoader/ChatBotResponseLoade
 import WelcomePage from '../WelcomePage/WelcomePage';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setIsWizardTouched, setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
+import { setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
 import Bubbles from '../Bubbles/Bubbles';
 import {
     ADV_CREATE_SUGGESTION_BUBBLES,

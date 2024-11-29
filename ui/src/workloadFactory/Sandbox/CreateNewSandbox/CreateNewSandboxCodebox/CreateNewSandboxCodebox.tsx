@@ -1,7 +1,7 @@
 import { DsTypography, Popover } from '@netapp/design-system';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import CodeBoxHeading from '../../../../common/CodeBoxHeading/CodeBoxHeading';
 import { ReactComponent as Copy } from '../../../../assets/copyBlackBackground.svg';
 import styles from './CreateNewSandboxCodebox.module.scss';
@@ -19,6 +19,7 @@ const CreateNewSandboxCodebox = () => {
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
     const createSandboxState = useAppSelector(state => state.createSandbox);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     // To copy response based on dropdown selection
     const copyResponseData = () => {
@@ -29,7 +30,8 @@ const CreateNewSandboxCodebox = () => {
             selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
             selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
             CRED_PLACEHOLDERS.TOKEN,
-            JSON.stringify(payload, null, 2)
+            JSON.stringify(payload, null, 2),
+            isWorkloadFactory
         );
         return restApiPayload;
     };

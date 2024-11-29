@@ -2,7 +2,7 @@ import { DsTypography, Popover } from '@netapp/design-system';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { useEffect, useMemo, useState } from 'react';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './CreateNewUserCodeBox.module.scss';
@@ -21,6 +21,7 @@ const CreateNewUserCodeBox = () => {
     const resourceId = useAppSelector(state => state.auth.resourceId);
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
     const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const createNewUser = useAppSelector(state => state.createNewUser);
 
@@ -61,7 +62,8 @@ const CreateNewUserCodeBox = () => {
                 selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
                 resourceId || CRED_PLACEHOLDERS.DATABASE_HOST_ID,
                 CRED_PLACEHOLDERS.TOKEN,
-                JSON.stringify(payload, null, 2)
+                JSON.stringify(payload, null, 2),
+                isWorkloadFactory
             );
             return restApiPayload;
         } else {

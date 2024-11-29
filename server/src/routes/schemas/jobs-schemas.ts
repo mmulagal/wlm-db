@@ -1,7 +1,8 @@
 import { RouteTags } from '../../utils/consts';
-import { CredentialsIdParams } from '../types/generic.types';
+import { CredentialsIdParams, AccountIdParams, CredentialsIdRegionQueryParams } from '../types/generic.types';
 import {
     JobsParams,
+    JobsParamsWriter,
     ListJobsQueryString,
     ListJobsResponse,
     DeleteJobResponse,
@@ -17,6 +18,12 @@ import {
 
 // Base Request for Deployment Routes
 const baseRequest = {
+    tags: [RouteTags.JOB_MONITORING],
+    params: AccountIdParams
+};
+
+// Base Request for POST/PATCH methods
+const baseRequestWriter = {
     tags: [RouteTags.JOB_MONITORING],
     params: CredentialsIdParams
 };
@@ -36,6 +43,7 @@ const ListJobsSchema = {
 const JobDetailsSchema = {
     tags: [RouteTags.JOB_MONITORING],
     params: JobsParams,
+    querystring: CredentialsIdRegionQueryParams,
     summary: 'Get job details with child jobs',
     description: 'API to list all jobs in a tenancy account with its immediate level child jobs',
     response: {
@@ -67,7 +75,7 @@ const JobSummaryByTimeSchema = {
 const DeleteJobSchema = {
     tags: [RouteTags.JOB_MONITORING],
     hide: process.env.NODE_ENV === 'production',
-    params: JobsParams,
+    params: JobsParamsWriter,
     summary: 'Delete a job with all its child jobs',
     description: 'API to delete a job and all its subjobs',
     response: {
@@ -79,7 +87,7 @@ const DeleteJobSchema = {
 const UpdateJobSchema = {
     tags: [RouteTags.JOB_MONITORING],
     hide: process.env.NODE_ENV === 'production',
-    params: JobsParams,
+    params: JobsParamsWriter,
     summary: 'Update a job',
     description: 'API to update job details',
     body: UpdateJobRequestBody,
@@ -90,8 +98,9 @@ const UpdateJobSchema = {
 
 // Create jobs
 const CreateJobSchema = {
-    ...baseRequest,
+    ...baseRequestWriter,
     hide: process.env.NODE_ENV === 'production',
+    params: AccountIdParams,
     summary: 'Create jobs',
     description: 'API to create jobs',
     body: CreateJobRequestBody,

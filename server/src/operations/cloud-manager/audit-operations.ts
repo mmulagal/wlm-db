@@ -111,7 +111,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
             status: AUDIT_PENDING_STATUS,
             requestId: request.id,
             serviceName: TIMELINE_SERVICE_NAME,
-            referrer: url as string,
+            referrer: url && url.length < 180 ? (url as string) : (url?.substring(0, 180) as string), // Here audit service has a limit of 191 characters for referrer
             version: VERSION,
             requestData: secureActionParameters,
             principalId: getSubjectFromBearerToken() as string
@@ -220,7 +220,7 @@ async function updateLongRunningAuditGroup(
     const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
 
     if (auditGroup) {
-        logger.info('Updating long running audit group:', auditGroup);
+        logger.info('Updating existing long running audit group:', auditGroup);
         auditGroup.status = status || auditGroup.status;
         auditGroup.resourceId = resourceId || auditGroup.resourceId;
         auditGroup.responseData = responseData ? JSON.stringify(responseData) : auditGroup.responseData;

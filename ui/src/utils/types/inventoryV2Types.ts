@@ -1,4 +1,6 @@
 export interface InventorySliceData {
+    defaultFilterOptions: {} | any;
+    optimizeFilterTags: [] | any;
     inventoryTableData: { [key: string]: InventoryTableData } | null;
     inventoryChartData: InventoryChartData | null;
     isManagedHostListLoading: boolean;
@@ -29,6 +31,9 @@ export interface InventorySliceData {
     removeSecNodeDiscoveredList: Array<string>;
     unManagedPerfInstanceIdsList: Array<string>;
     managedHostInstanceLoading: boolean;
+    selectedHeaderTab: string;
+    managedHostInitialColumns: any;
+    isRefreshed: boolean;
 }
 
 export interface InventoryTableData {
@@ -394,6 +399,7 @@ export interface DiscoveredStorageObj {
     id?: string | undefined;
     svmId?: string;
     protocol?: string;
+    fileSystemStorageType?: string;
 }
 
 export interface StatusObjInterface {

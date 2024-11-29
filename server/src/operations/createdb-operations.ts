@@ -116,7 +116,7 @@ async function getDriveInfoFromNodes(
         activeNodeInstanceId,
         standbyNodeInstanceId
     });
-    const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType)];
+    const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType, instanceName)];
     const standbyNodeDriveListCommand = [GET_STANDBY_NODE_DRIVE_LIST];
 
     const existingDriveActiveNodePromise = callSsmExecution(
@@ -171,7 +171,7 @@ async function getDriveInfoFromNodes(
                         isNetappDrive: item.Manufacturer?.includes('NETAPP') ?? false,
                         ...(sqlDeploymentType === 'FCI' &&
                             !isDemoFlow && {
-                                isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})` ?? false
+                                isClusteredWithSelectedInstance: item.Owner === `SQL Server (${instanceName})`
                             }),
                         ...(sqlDeploymentType === 'FCI' &&
                             isDemoFlow && {
@@ -274,7 +274,9 @@ async function getDriveInfoFromSSM(
 
         const isInstanceRunning = instancesDetails.some(
             instance =>
-                instance.instanceName === instanceDetail.database_instance_name &&
+                (isDemoFlow
+                    ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                    : instance.instanceName === instanceDetail.database_instance_name) &&
                 instance.instanceState === SQL_SERVICE_STATE.RUNNING
         );
 
@@ -480,16 +482,19 @@ async function deployDatabase(
             isClustered = sqlDeploymentType === 'FCI' ? 'true' : 'false';
             ({ fsxSvmId } = metadata as unknown as Metadata);
         }
+        const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
 
         // check whether any jobs on the same resource running
         const filterParams = {
             status: JOBSTATUS.IN_PROGRESS,
-            resourceName: sqlServerName as string,
-            typeFilter: JOBTYPE.CREATE_RESOURCE
+            resourceName: serverNameWithHostName as string,
+            typeFilter: JOBTYPE.CREATE_RESOURCE,
+            credentialsId,
+            region
         };
         const {
             items: [job]
-        } = await getJobs(accountId, credentialsId, region, filterParams);
+        } = await getJobs(accountId, filterParams);
 
         if (job) {
             // Calculate the time difference in minutes
@@ -504,7 +509,6 @@ async function deployDatabase(
             }
         }
 
-        const serverNameWithHostName = instanceName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
         updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
         // create the parent job for database deployment
@@ -640,7 +644,9 @@ async function invokeSSMForDatabaseDeployment(
 
             const runningInstance = instancesDetails.find(
                 instance =>
-                    instance.instanceName === instanceDetail.database_instance_name &&
+                    (isDemoFlow
+                        ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                        : instance.instanceName === instanceDetail.database_instance_name) &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 
@@ -719,7 +725,7 @@ async function invokeSSMForDatabaseDeployment(
                 { name: instanceNameForScript, executableName: sqlInstanceName, sqlAuthEnabled: isSqlAuthEnabled },
                 serverNameWithHostName
             );
-            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            await updateJobDetails(accountId, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: Date.now(),
                 error: undefined
@@ -845,7 +851,7 @@ async function invokeSSMForDatabaseDeployment(
                 fsxLogVolumeName
             );
 
-            await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+            await updateJobDetails(accountId, parentJobId, {
                 status: JOBSTATUS.COMPLETED,
                 endTime: Date.now(),
                 error: undefined
@@ -911,7 +917,7 @@ async function invokeSSMForDatabaseDeployment(
             );
         }
         updateLongRunningAuditGroup(AuditStatus.FAILED, err?.message, serverNameWithHostName);
-        await updateJobDetails(accountId, credentialsId, region, parentJobId, {
+        await updateJobDetails(accountId, parentJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: err?.message
@@ -1031,7 +1037,7 @@ async function createDatabase(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job update
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1137,7 +1143,7 @@ async function configureLuns(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1261,7 +1267,7 @@ async function newDBInitialization(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg, { data: err.data });
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1369,7 +1375,7 @@ async function cleanUpDatabaseDeployment(
         status = JOBSTATUS.FAILED;
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1562,7 +1568,7 @@ async function validateParams(
         throw createError(error.statusCode || 412, `${errorMsg} ${errMsg}`);
     } finally {
         // child job failed
-        await updateJobDetails(accountId, credentialsId, region, childJobId, {
+        await updateJobDetails(accountId, childJobId, {
             status,
             endTime: Date.now(),
             ...(errMsg && { error: errMsg })
@@ -1744,7 +1750,9 @@ async function getCollationDetails(
 
             const runningInstance = instancesDetails.find(
                 instance =>
-                    instance.instanceName === instanceDetail.database_instance_name &&
+                    (isDemoFlow
+                        ? instance.instanceName.includes(instanceDetail.database_instance_name)
+                        : instance.instanceName === instanceDetail.database_instance_name) &&
                     instance.instanceState === SQL_SERVICE_STATE.RUNNING
             );
 

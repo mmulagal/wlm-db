@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { setSNSARN, setSNSState } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { DBType } from '../../../../utils/consts';
 
 const SimpleNotificationService = () => {
     const dispatch = useDispatch();
@@ -18,6 +19,7 @@ const SimpleNotificationService = () => {
     const selectedState = useAppSelector(state => state.mssqlForm.simpleNotification.snsState);
     const selectedARNValue = useAppSelector(state => state.mssqlForm.simpleNotification.snsARN);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const databaseType = useAppSelector(state => state.postgreForm.selectedDatabaseType);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     //Set the Header text here
@@ -74,7 +76,7 @@ const SimpleNotificationService = () => {
                             {GENERAL.SNS}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
-                            {GENERAL.SNS_TEXT}
+                            {databaseType === DBType.MSSQL ?  GENERAL.SNS_TEXT : GENERAL.SNS_TEXT_PGSQL}
                         </Typography>
 
                         <div className={styles.selectField}>

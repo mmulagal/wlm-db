@@ -86,8 +86,10 @@
                     "ec2:ModifyVpcAttribute",
                     "ec2messages:*",
                     "fsx:CreateFileSystem",
+                    "fsx:UpdateFileSystem",
                     "fsx:CreateStorageVirtualMachine",
                     "fsx:CreateVolume",
+                    "fsx:UpdateVolume",
                     "fsx:Describe*",
                     "fsx:List*",
                     "kms:CreateGrant",
@@ -115,7 +117,13 @@
                     "ssm:UpdateAssociationStatus",
                     "ssm:UpdateInstanceAssociationStatus",
                     "ssm:UpdateInstanceInformation",
-                    "ssmmessages:*"
+                    "ssmmessages:*",
+                    "compute-optimizer:GetEnrollmentStatus",
+                    "compute-optimizer:PutRecommendationPreferences",
+                    "compute-optimizer:GetEffectiveRecommendationPreferences",
+                    "compute-optimizer:GetEC2InstanceRecommendations",
+                    "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:DescribeAutoScalingInstances"
                 ],
                 "Resource": "*"
             },
@@ -207,6 +215,7 @@
                     "ec2:DescribeInstanceTypeOfferings",
                     "ec2:DescribeSnapshots",
                     "ec2:DescribeVolumes",
+                    "ec2:DescribeAddresses",
                     "kms:ListAliases",
                     "kms:ListKeys",
                     "kms:DescribeKey",

@@ -4,8 +4,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import {
     setSelectedVolumeType,
-    setVolumeFilledStatus,
-    setVolumeTypeOperation
+    setVolumeFilledStatus
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import ManualTCOInputComponent from './ManualTCOInputComponent';
 import { useEffect, useState } from 'react';

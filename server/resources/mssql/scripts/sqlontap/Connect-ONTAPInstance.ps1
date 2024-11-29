@@ -10,7 +10,10 @@ param(
     [string]$ResourceID,   
 
     [Parameter(Mandatory = $true)]
-    [string]$Stackname    
+    [string]$Stackname,
+    
+    [Parameter(Mandatory=$false)]
+    [boolean]$IsTerraform    
 )
 Start-Transcript -Path C:\cfn\log\connectontapinstance.ps1.txt -Append
 
@@ -18,7 +21,7 @@ Start-Transcript -Path C:\cfn\log\connectontapinstance.ps1.txt -Append
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token } -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
-
+$ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 try {
     $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
@@ -47,7 +50,11 @@ try {
     Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
 }
 catch {
-    Write-Output "Error connecting to Iscsi targets"
+    $FailureReason = "Error connecting to Iscsi targets"
+    Write-Output $FailureReason
+    if ($IsTerraform) {
+        throw $FailureReason
+    }
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
