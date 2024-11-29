@@ -1143,12 +1143,14 @@ export const groupByTime = (days: number, data: any, baseList: Array<number>, da
                 if (newTimeInterval in dayGrouping) {
                     dayGrouping[newTimeInterval] = {
                         completed: dayGrouping[newTimeInterval]?.completed + (perObj?.completed || 0),
-                        failed: dayGrouping[newTimeInterval]?.failed + (perObj?.failed || 0)
+                        failed: dayGrouping[newTimeInterval]?.failed + (perObj?.failed || 0),
+                        warning: dayGrouping[newTimeInterval]?.warning + (perObj?.warning || 0)
                     };
                 } else {
                     dayGrouping[newTimeInterval] = {
                         completed: perObj?.completed || 0,
-                        failed: perObj?.failed || 0
+                        failed: perObj?.failed || 0,
+                        warning: perObj?.warning || 0
                     };
                 }
             }
@@ -1160,12 +1162,14 @@ export const groupByTime = (days: number, data: any, baseList: Array<number>, da
                 if (perObj?.timeInterval in dayGrouping) {
                     dayGrouping[perObj?.timeInterval] = {
                         completed: dayGrouping[perObj?.timeInterval]?.completed + (perObj?.completed || 0),
-                        failed: dayGrouping[perObj?.timeInterval]?.failed + (perObj?.failed || 0)
+                        failed: dayGrouping[perObj?.timeInterval]?.failed + (perObj?.failed || 0),
+                        warning: dayGrouping[perObj?.timeInterval]?.warning + (perObj?.warning || 0)
                     };
                 } else {
                     dayGrouping[perObj?.timeInterval] = {
                         completed: perObj?.completed || 0,
-                        failed: perObj?.failed || 0
+                        failed: perObj?.failed || 0,
+                        warning: perObj?.warning || 0
                     };
                 }
             }
@@ -1175,7 +1179,7 @@ export const groupByTime = (days: number, data: any, baseList: Array<number>, da
 };
 
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
-    const groupedData: any = { time: [], completed: [], failed: [] };
+    const groupedData: any = { time: [], completed: [], failed: [], warning: [] };
     if (!data || data?.length === 0) {
         return groupedData;
     }
@@ -1221,6 +1225,7 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
         groupedData['time'].push(day);
         groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
         groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
+        groupedData['warning'].push(day in dayGrouping ? dayGrouping[day]?.warning : 0);
     });
 
     return groupedData;
