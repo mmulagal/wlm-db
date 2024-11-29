@@ -966,9 +966,9 @@ export const openCredentialTab = () => {
     const isWorkloadFactoryStatus = state.auth.isWorkloadFactory;
     let url;
     if (isWorkloadFactoryStatus) {
-        url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+        url = import.meta.env.VITE_APP_CREDENTIAL_WF_LINK;
     } else {
-        url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+        url = import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
     }
     window.open(url, '_blank', 'noopener');
 };

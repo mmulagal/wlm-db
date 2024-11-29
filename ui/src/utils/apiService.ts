@@ -48,7 +48,7 @@ const prepareHeaders = (
 export const getBaseUrl = () => {
     const state = store.getState();
     const accountId = state?.auth?.accountId;
-    const apiHost = process.env.REACT_APP_CM_URL;
+    const apiHost = import.meta.env.VITE_APP_CM_URL;
     return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
 };
 
@@ -60,8 +60,8 @@ const rawBaseQuery = fetchBaseQuery({
 export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { auth } = api.getState() as RootState;
     const { accountId } = auth;
-    const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
-    const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
+    const isDevMode = import.meta.env.VITE_APP_USE_CM_FORWARDER !== 'true';
+    const apiHost = isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
     return `${apiHost}/accounts/${accountId}/wlmdb`;
 };
 
@@ -515,7 +515,8 @@ export const headersApi = createApi({
 export const policiesApi = createApi({
     reducerPath: 'policiesApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
+        baseUrl:
+            import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
     }),
     endpoints: builder => {
         return {
