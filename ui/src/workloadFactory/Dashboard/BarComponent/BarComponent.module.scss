@@ -1,0 +1,45 @@
+.barComponent {
+    .rightSection {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 440px;
+
+        .topSection {
+            display: flex;
+            justify-content: space-between;
+            height: 32px;
+
+            .textWithLoading {
+                display: flex;
+
+                align-items: center;
+            }
+
+            .optimizeText {
+                display: flex;
+                gap: 6px;
+            }
+        }
+        .getWellBar {
+            width: 100%;
+
+            [class*='ProgressBar_Suc-progressbar'] {
+                background-color: var(--border) !important ;
+            }
+        }
+
+        .bottomTextSection {
+            display: flex;
+            gap: 8px;
+        }
+    }
+}
+
+@media screen and (max-width: 1700px) {
+    .barComponent {
+        .rightSection {
+            width: 344px;
+        }
+    }
+}
