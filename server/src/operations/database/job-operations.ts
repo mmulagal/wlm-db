@@ -27,10 +27,11 @@ import {
     JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
-import { getRegionDetails } from '../../utils/utils';
+import { getRegionDetails, isDemo } from '../../utils/utils';
 import { RegionDetailsType } from '../../routes/types/generic.types';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 interface Job extends JobRecordType {
     id: string;
@@ -156,7 +157,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         status,
         startTime,
         endTime,
-        limit = 50,
+        limit = isDemoFlow ? undefined : 50,
         nextToken,
         includeSubJobs = false,
         resourceName
@@ -210,7 +211,10 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     return {
         count: items?.length,
         items,
-        nextToken: totalParentJobIdCount > limit && records.length >= limit ? items[items.length - 1].id : undefined
+        nextToken:
+            !isDemoFlow && totalParentJobIdCount > (limit || 50) && records.length >= (limit || 50)
+                ? items[items.length - 1].id
+                : undefined
     };
 }
 
