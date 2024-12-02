@@ -39,3 +39,15 @@
         }
     }
 }
+
+@media screen and (max-width: 1700px) {
+    .dashboard {
+        .fourthLevelContainer {
+            .barContainer {
+                .commonContainer {
+                    width: 650px;
+                }
+            }
+        }
+    }
+}

@@ -467,11 +467,11 @@
     height: 100vh;
 }
 
-@media screen and (min-width: 1429px) and (max-width: 1818px) {
+@media screen and (min-width: 1429px) and (max-width: 1700px) {
     .headerComponent {
         .dashboardSection {
             .contentArea {
-                width: 81.4% !important;
+                width: 1318px !important;
             }
         }
     }
@@ -481,7 +481,7 @@
     .headerComponent {
         .dashboardSection {
             .contentArea {
-                width: 744px !important;
+                // width: 744px !important;
             }
         }
     }
