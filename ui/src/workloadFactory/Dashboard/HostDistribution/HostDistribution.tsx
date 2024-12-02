@@ -24,6 +24,7 @@ const HostDistribution = () => {
                     data1={65}
                     data2={35}
                     centerText={'Total hosts'}
+                    centerValue="100"
                 />
 
                 <div className={styles.valueArea}>

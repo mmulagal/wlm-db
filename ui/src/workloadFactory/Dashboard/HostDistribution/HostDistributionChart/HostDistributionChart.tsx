@@ -12,9 +12,10 @@ type ChartType = {
     data1: any;
     data2: any;
     centerText: string;
+    centerValue?: string;
 };
 
-const HostDistributionChart = ({ color1, color2, data1, data2, centerText }: ChartType) => {
+const HostDistributionChart = ({ color1, color2, data1, data2, centerText, centerValue }: ChartType) => {
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -57,7 +58,7 @@ const HostDistributionChart = ({ color1, color2, data1, data2, centerText }: Cha
         <div className={styles.inventoryChart} id="chart-item">
             <div className={styles['center-text']}>
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    {100}
+                    {centerValue}
                 </Typography>
                 <Typography variant="Regular_14">{centerText}</Typography>
                 {/* {discoverHostLoading && (

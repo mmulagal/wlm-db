@@ -11,4 +11,77 @@
         border-bottom: 1px solid var(--border);
         justify-content: space-between;
     }
+
+    .mainSection {
+        padding: 40px;
+        display: flex;
+        gap: 56px;
+
+        .contentSection {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+
+            .firstBlock {
+                display: flex;
+                flex-direction: column;
+            }
+
+            [class*='SquareComponent_valueText'] {
+                font-size: 24px !important;
+                line-height: 30px !important;
+            }
+            [class*='SquareComponent_square'] {
+                width: 8px;
+                height: 8px;
+            }
+        }
+    }
+
+    .smallMainSection {
+        padding: 40px 80px 40px 40px;
+        display: flex;
+        justify-content: space-between;
+        .secondPartSmallRes {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            .headSectionSmall {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .heading {
+                margin-bottom: 16px;
+            }
+
+            .firstBlockSection {
+                width: 360px;
+                height: 56px;
+                border-top: 1px solid var(--border);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                .bottomRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .square {
+                        width: 12px;
+                        height: 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1700px) {
+    .managedInstance {
+        width: 760px;
+    }
 }
