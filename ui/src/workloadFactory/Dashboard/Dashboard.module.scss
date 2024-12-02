@@ -46,6 +46,10 @@
             .barContainer {
                 .commonContainer {
                     width: 650px;
+
+                    [class*='progressBar'] {
+                        width: 100% !important;
+                    }
                 }
             }
         }
