@@ -9,12 +9,23 @@ type BarComponentType = {
     bottomText?: string;
     beforeOutOf?: string | number;
     afterOutOf?: string | number;
+    width?: string;
+    progressBarHeight?: string;
 };
 
-const BarComponent = ({ color, headingText, percentage, bottomText, beforeOutOf, afterOutOf }: BarComponentType) => {
+const BarComponent = ({
+    color,
+    headingText,
+    percentage,
+    bottomText,
+    beforeOutOf,
+    afterOutOf,
+    width,
+    progressBarHeight
+}: BarComponentType) => {
     return (
         <div className={styles.barComponent}>
-            <div className={styles.rightSection}>
+            <div className={styles.rightSection} style={{ width: width }}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
                         <DsTypography variant="Semibold_14">{headingText}</DsTypography>

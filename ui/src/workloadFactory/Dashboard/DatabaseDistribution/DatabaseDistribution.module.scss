@@ -15,6 +15,30 @@
     .mainSection {
         padding: 40px;
 
+        .tile {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            margin-bottom: 36px;
+
+            .leftSection {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+            }
+
+            .valueSection {
+                display: flex;
+                flex-direction: column;
+
+                .loadingSection {
+                    display: flex;
+                    align-items: center;
+                    height: 36px;
+                }
+            }
+        }
+
         .barContainer {
             margin-top: 20px;
             display: flex;
@@ -27,5 +51,15 @@
 @media screen and (max-width: 1700px) {
     .databaseDistribution {
         width: 426px;
+
+        .mainSection {
+            .tile {
+                gap: 15px !important;
+            }
+
+            [class*='BarComponent_rightSection'] {
+                width: 344px !important;
+            }
+        }
     }
 }
