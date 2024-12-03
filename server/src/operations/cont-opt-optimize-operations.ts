@@ -141,7 +141,7 @@ async function handleOptimizeJobCreation(
         if (timeDifferenceInMinutes <= 5) {
             throw createError(
                 412,
-                `Optimization is not available now since another optimization is in progress with job ID ${job.id}.`
+                `The following optimization is running: Job ID:  ${job.id}. Wait until it completes.`
             );
         }
     }
@@ -600,7 +600,7 @@ async function modifySizingAttributes(
         } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
         if (!activeNodeInstanceId) {
-            errorMessage = `Unable to retrieve the active node instance ID from the MS SQL configuration. Drive size optimization for the database instance ${databaseInstanceId} cannot be performed.`;
+            errorMessage = `Cannot retrieve active node ID from the Microsoft SQL configuration. Drive size optimization for database instance  ${databaseInstanceId} isn't possible.`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
@@ -759,7 +759,7 @@ async function headroomOptimization(
                 return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
             }
             errorMessage =
-                'Headroom configuration has been changed since we last assessed. It aligns with best practice recommendations now, no action required';
+                'Headroom configuration changed since the last assessment and meets best practices. No action required.';
             jobStatus = JOBSTATUS.WARNING;
         }
         errorMessage = 'Headroom is more than 35%, no action required';
@@ -982,7 +982,9 @@ async function resizeVolumeAndLunSize(
         );
         logger.info(`${driveType} volume size increased to ${requiredVolumeSizeBytes} bytes.`);
     } else {
-        logger.info(`${driveType} volume size changed since we last assessed, no action required`);
+        logger.info(
+            `${driveType} drives were reconfigured since the last assessment and meet best practices. No action required.`
+        );
     }
 
     const ssmCommand = GET_ONTAP_LUN_DETAILS({
@@ -1017,7 +1019,7 @@ async function resizeVolumeAndLunSize(
         existingVolumeDetails.OntapConfiguration.SizeInBytes >= requiredLunSizeBytes &&
         existingLogLunSizeBytes >= requiredLunSizeBytes
     ) {
-        errorMessage = `${driveType} drives configuration changed since we last assessed, no action required for those`;
+        errorMessage = `${driveType} drives size changed since the last assessment and meets best practices. No action required.`;
         jobStatus = JOBSTATUS.WARNING;
     }
     return { errorMessage, jobStatus };
@@ -1626,10 +1628,8 @@ async function handleComputeRemediation(
                             region,
                             instanceName,
                             JOBTYPE.OPTIMIZATION,
-                            'Pre-requisites check for compute optimization in SQL nodes in the cluster',
-                            `Pre-requisites check for compute optimization in SQL nodes ${instanceIdsList?.join(
-                                ','
-                            )}  in the cluster`,
+                            'Prerequisite check for compute optimization of secondary nodes.',
+                            'Prerequisite check for compute optimization of secondary nodes.',
                             jobId
                         );
                         try {
@@ -1660,9 +1660,9 @@ async function handleComputeRemediation(
                             instanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Modify instance type for secondary nodes in the cluster',
-                            `Modify instance types of SQL nodes ${nonPrimaryNodeInstanceIds.join(
+                            `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
                                 ','
-                            )} to ${instanceType} in the cluster. Instances would be stopped, modified and started.`,
+                            )} to ${instanceType}. To modify, instance will be stopped, modified and restarted.`,
                             jobId
                         );
 
@@ -1718,7 +1718,7 @@ async function handleComputeRemediation(
                             instanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Transfer cluster node ownership from primary to another node in the cluster',
-                            `Transfer cluster node ownership from ${activeNodeInstanceName} to ${targetNodeName} in the cluster. Cluster node ownership would be transferred to an updated healthy node in the cluster.`,
+                            `Transfer cluster node ownership from ${activeNodeInstanceName} to ${targetNodeName} in the cluster. Cluster node ownership transfers to a healthy node in the cluster.`,
                             jobId
                         );
                         try {
@@ -1761,8 +1761,8 @@ async function handleComputeRemediation(
                     region,
                     instanceName,
                     JOBTYPE.OPTIMIZATION,
-                    'Pre-requisites check for compute optimization in SQL node',
-                    'Pre-requisites check for compute optimization in SQL node',
+                    'Prerequisite check for compute optimization in SQL node',
+                    'Prerequisite check for compute optimization of SQL node.',
                     jobId
                 );
                 try {
@@ -1790,7 +1790,7 @@ async function handleComputeRemediation(
                 instanceName,
                 JOBTYPE.OPTIMIZATION,
                 'Modify instance type for primary node in the cluster',
-                `Modifying instance type of SQL node ${activeNodeInstanceId} to ${instanceType}. Instance would be stopped, modified and started.`,
+                `Modify instance type of SQL node ${activeNodeInstanceId} to ${instanceType}.To modify, instance will be stopped,modified and restarted.`,
                 jobId
             );
             try {
