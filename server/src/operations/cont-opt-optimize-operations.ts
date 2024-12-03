@@ -361,7 +361,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
             const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}`;
-            logger.info(optimizeMessage);
+
             if (objectsOptimized !== objectsToOptimize.length) {
                 if (objectsOptimized === 0) {
                     const optimizeErrorMessage = `Failed to optimize  ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
@@ -709,11 +709,14 @@ async function modifySizingAttributes(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        await updateJobDetails(accountId, parentJobId, {
-            status: jobStatus || JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
+        // Update parent job status only if assessment is skipped which is true when actual optimization fails
+        if (jobStatus === JOBSTATUS.FAILED) {
+            await updateJobDetails(accountId, parentJobId, {
+                status: jobStatus,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
     }
 }
 
@@ -1415,20 +1418,17 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             instanceToAssess
         );
     } catch (error) {
-        const errorMessage = `Error while optimizing mpio configuration ${jobError}`;
+        jobError = `Error while optimizing mpio configuration ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-    } finally {
-        const errorMessage = `Error while optimizing mpio configuration ${jobError}`;
-        logger.error(errorMessage);
         await updateJobDetails(accountId, parentJobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
         });
+    } finally {
         updateLongRunningAuditGroup(
             jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
-            errorMessage
+            JOBSTATUS.COMPLETED ? '' : jobError
         );
     }
 }
