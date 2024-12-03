@@ -6,7 +6,11 @@ import Tag from '../../../../common/Tag/Tag';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 
-const TagComponent = () => {
+type TagComponentProps = {
+    tagHeight: string;
+};
+
+const TagComponent = ({ tagHeight }: TagComponentProps) => {
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const [tagData, setTagData] = useState<any>([]);
 
@@ -42,7 +46,7 @@ const TagComponent = () => {
         }
     }, [selectedConfig]);
     return (
-        <div className={styles.tagComponent}>
+        <div className={styles.tagComponent} style={{ height: tagHeight }}>
             <div className={styles.topSection}>
                 <Tagmage />
                 <DsTypography variant="Semibold_14" style={{ position: 'relative', top: '-2px' }}>

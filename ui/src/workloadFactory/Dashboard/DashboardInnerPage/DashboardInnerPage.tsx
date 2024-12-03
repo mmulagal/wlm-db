@@ -9,15 +9,25 @@ import { DsTypography } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
+import { cardDataDefault } from '../../GetWell/GetWellUtils';
+import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    const [valueCardData, setValueCardData] = useState({
+    const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
         optimizedInstances: '',
         notOptimizedInstances: '',
-        severity: ''
+        severity: '',
+        cardHeight: '',
+        tagHeight: '',
+        data: {
+            title: '',
+            description: '',
+            values: []
+        },
+        cardName: ''
     });
 
     useEffect(() => {
@@ -27,15 +37,29 @@ const DashboardInnerPage = () => {
                     optimizationScore: '55%',
                     optimizedInstances: '55',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.storage_tier?.recommendation?.description
+                    }
                 });
+
                 break;
             case 'File system headroom':
                 setValueCardData({
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '144px',
+                    tagHeight: '241px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.file_system_headroom?.recommendation?.description,
+                        values: cardDataDefault?.file_system_headroom?.recommendation?.values
+                    }
                 });
                 break;
             case 'Log drive size':
@@ -43,7 +67,14 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '168px',
+                    tagHeight: '265px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,
+                        values: cardDataDefault?.transaction_log_drive_size?.recommendation?.values
+                    }
                 });
                 break;
 
@@ -52,7 +83,14 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '192px',
+                    tagHeight: '289px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.tempdb_drive_size?.recommendation?.description,
+                        values: cardDataDefault?.tempdb_drive_size?.recommendation?.values
+                    }
                 });
                 break;
             case 'User data files (.mdf)':
@@ -60,7 +98,13 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.user_data_files?.recommendation?.description
+                    }
                 });
                 break;
             case 'Log files (.ldf)':
@@ -68,7 +112,13 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.transaction_log_files?.recommendation?.description
+                    }
                 });
                 break;
             case 'TempDB placement':
@@ -76,7 +126,13 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '160px',
+                    tagHeight: '257px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.tempdb_files?.recommendation?.description
+                    }
                 });
                 break;
 
@@ -85,7 +141,13 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '112px',
+                    tagHeight: '209px',
+                    data: {
+                        title: 'Recommendations',
+                        description: 'View recommendation per configuration in the expand collapse view'
+                    }
                 });
                 break;
 
@@ -94,7 +156,13 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '112px',
+                    tagHeight: '209px',
+                    data: {
+                        title: 'Recommendations',
+                        description: 'View recommendation per configuration in the expand collapse view'
+                    }
                 });
                 break;
             case 'Compute rightsizing':
@@ -102,7 +170,14 @@ const DashboardInnerPage = () => {
                     optimizationScore: '65%',
                     optimizedInstances: '75',
                     notOptimizedInstances: '65',
-                    severity: 'Critical'
+                    severity: 'Critical',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.compute_rightsizing?.recommendation?.description
+                    },
+                    cardName: 'compute_right_sizing'
                 });
                 break;
         }
@@ -139,9 +214,17 @@ const DashboardInnerPage = () => {
                             notOptimizedInstances={valueCardData.notOptimizedInstances}
                             severity={valueCardData.severity}
                         />
+
+                        <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
+                            <RecommendationText
+                                data={valueCardData?.data}
+                                from={'dashboard'}
+                                cardName={valueCardData?.cardName}
+                            />
+                        </div>
                     </div>
                     <div className={styles.rightSection}>
-                        <TagComponent />
+                        <TagComponent tagHeight={valueCardData.tagHeight} />
                     </div>
                 </div>
             </div>

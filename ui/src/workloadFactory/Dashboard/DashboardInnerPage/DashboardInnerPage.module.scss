@@ -15,6 +15,17 @@
             display: flex;
             justify-content: center;
             margin-top: 24px;
+
+            .leftSection {
+                display: flex;
+                gap: 1px;
+                flex-direction: column;
+
+                .recommendation {
+                    background-color: var(--content-background);
+                    width: 926px;
+                }
+            }
         }
     }
 }
