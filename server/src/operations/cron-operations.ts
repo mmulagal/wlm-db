@@ -289,14 +289,18 @@ async function scheduledAssessment() {
         let repeatableJobs = await driftAssessmentQueue.getJobSchedulers();
         logger.info('before repeatableJobs', JSON.stringify(repeatableJobs));
 
-        driftAssessmentQueue.add(
-            'driftAssessment',
-            {},
+        const contOpt = 'CONTINUOUS_OPTIMIZATION_DRIFT_ASSESSMENT';
+        driftAssessmentQueue.upsertJobScheduler(
+            contOpt,
             {
-                repeat: { every: Number(ms(config.get('redis.cron-job-interval'))) }, // 24 hours in milliseconds
-                removeOnComplete: true,
-                removeOnFail: true,
-                jobId: 'driftAssessment'
+                every: Number(ms(config.get('redis.cron-job-interval'))) // 24 hours in milliseconds
+            },
+            {
+                name: contOpt,
+                opts: {
+                    removeOnComplete: true,
+                    removeOnFail: true
+                }
             }
         );
 
