@@ -131,7 +131,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="User data files (.mdf) "
+                        headingText="User data files (.mdf)"
                         percentage={55}
                         beforeOutOf={65}
                         afterOutOf={120}
