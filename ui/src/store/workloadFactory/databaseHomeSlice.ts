@@ -45,13 +45,17 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         connectivityCostPercent: 0,
         otherCostPercent: 0,
         requireBillingPerm: false
-    }
+    },
+    selectedConfig: ''
 };
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setSelectedConfig: (state, action: PayloadAction<any>) => {
+            state.selectedConfig = action.payload;
+        },
         selectedTabSelection: (state, action: PayloadAction<any>) => {
             state.selectedTab = action.payload;
         },
@@ -87,7 +91,8 @@ export const {
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregatedCosts,
-    addInitialData
+    addInitialData,
+    setSelectedConfig
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;

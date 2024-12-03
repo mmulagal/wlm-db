@@ -85,6 +85,7 @@ import GetWell from '../../GetWell/GetWell';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
+import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 
 type Tab = {
     tab: string;
@@ -784,6 +785,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {/* For optimize tab */}
 
                     {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
+
+                    {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
 
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>

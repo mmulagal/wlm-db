@@ -163,6 +163,7 @@ export interface DatabaseHostsEntities {
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
+    selectedConfig: string;
 }
 
 export interface TemplateRes {

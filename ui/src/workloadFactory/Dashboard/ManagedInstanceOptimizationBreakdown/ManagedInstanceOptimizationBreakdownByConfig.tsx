@@ -2,8 +2,17 @@ import { DsButton, DsTypography } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
+import { useDispatch } from 'react-redux';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { WLF_TABS } from '../../../utils/consts';
+import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const ManagedInstanceOptimizationBreakdownByConfig = () => {
+    const dispatch = useDispatch();
+    const handleOptimize = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
+        dispatch(setSelectedConfig(type));
+    };
     return (
         <div className={styles.managedBreakdown}>
             <div className={styles.headSection}>
@@ -29,7 +38,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('Storage tier');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -49,7 +64,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('File system headroom');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -58,7 +79,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="Log drive size "
+                        headingText="Log drive size"
                         percentage={55}
                         beforeOutOf={65}
                         afterOutOf={120}
@@ -69,7 +90,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('Log drive size');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -89,7 +116,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('TempDB drive size');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -109,7 +142,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('User data files (.mdf)');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -118,7 +157,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="Log files (.ldf) "
+                        headingText="Log files (.ldf)"
                         percentage={55}
                         beforeOutOf={65}
                         afterOutOf={120}
@@ -129,7 +168,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('Log files (.ldf)');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -149,7 +194,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('TempDB placement');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -169,7 +220,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('ONTAP configuration');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -189,7 +246,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('Operating system');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
@@ -209,7 +272,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton variant="secondary" isThin={true} onClick={() => {}}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize('Compute rightsizing');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>
