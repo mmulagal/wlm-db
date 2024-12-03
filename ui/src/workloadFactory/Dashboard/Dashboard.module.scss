@@ -40,6 +40,10 @@
     }
 }
 
+[class*='Dialog-module_dialog'] {
+    z-index: 4 !important;
+}
+
 @media screen and (max-width: 1700px) {
     .dashboard {
         .fourthLevelContainer {
