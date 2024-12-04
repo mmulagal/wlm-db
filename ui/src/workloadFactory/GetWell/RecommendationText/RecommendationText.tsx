@@ -1,12 +1,39 @@
 import { DsTypography } from '@netapp/design-system';
+import { ReactComponent as Light } from '../../../assets/Light.svg';
 import styles from './RecommendationText.module.scss';
 
-const RecommendationText = ({ data }: { data: { title: string; description: string; values?: Array<string> } }) => {
-    return (
-        <div className={styles.recommendationText}>
-            <DsTypography variant="Semibold_14">{data?.title}</DsTypography>
+type RecommendationTextProps = {
+    data: {
+        title: string;
+        description: string;
+        values?: Array<string>;
+    };
+    from?: string;
+    cardName?: string;
+};
 
-            <div className={styles.desc} style={{ whiteSpace: 'pre-wrap' }}>
+const RecommendationText = ({ data, from = 'optimize', cardName }: RecommendationTextProps) => {
+    return (
+        <div
+            className={styles.recommendationText}
+            style={{ padding: from === 'dashboard' ? '24px 40px' : '32px 0px 16px 0px' }}
+        >
+            {from === 'optimize' && <DsTypography variant="Semibold_14">{data?.title}</DsTypography>}
+
+            {from === 'dashboard' && (
+                <div className={styles.dashboardHeading}>
+                    <Light />
+                    <DsTypography variant="Semibold_14">{data?.title}</DsTypography>
+                </div>
+            )}
+
+            <div
+                className={styles.desc}
+                style={{
+                    whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
+                    width: from === 'dashboard' ? 'unset' : '1400px'
+                }}
+            >
                 <DsTypography variant="Regular_14">{data?.description}</DsTypography>
             </div>
 

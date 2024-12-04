@@ -5,10 +5,191 @@ import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
+import { DsTypography } from '@netapp/design-system';
+import ValueCard from './ValueCard/ValueCard';
+import TagComponent from './TagComponent/TagComponent';
+import { useEffect, useState } from 'react';
+import { cardDataDefault } from '../../GetWell/GetWellUtils';
+import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
+import StorageTierTable from './RenderTables/StorageTierTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const [valueCardData, setValueCardData] = useState<any>({
+        optimizationScore: '',
+        optimizedInstances: '',
+        notOptimizedInstances: '',
+        severity: '',
+        cardHeight: '',
+        tagHeight: '',
+        data: {
+            title: '',
+            description: '',
+            values: []
+        },
+        cardName: ''
+    });
+
+    useEffect(() => {
+        switch (selectedConfig) {
+            case 'Storage tier':
+                setValueCardData({
+                    optimizationScore: '55%',
+                    optimizedInstances: '55',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.storage_tier?.recommendation?.description
+                    }
+                });
+
+                break;
+            case 'File system headroom':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '144px',
+                    tagHeight: '241px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.file_system_headroom?.recommendation?.description,
+                        values: cardDataDefault?.file_system_headroom?.recommendation?.values
+                    }
+                });
+                break;
+            case 'Log drive size':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '168px',
+                    tagHeight: '265px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,
+                        values: cardDataDefault?.transaction_log_drive_size?.recommendation?.values
+                    }
+                });
+                break;
+
+            case 'TempDB drive size':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '192px',
+                    tagHeight: '289px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.tempdb_drive_size?.recommendation?.description,
+                        values: cardDataDefault?.tempdb_drive_size?.recommendation?.values
+                    }
+                });
+                break;
+            case 'User data files (.mdf)':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.user_data_files?.recommendation?.description
+                    }
+                });
+                break;
+            case 'Log files (.ldf)':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.transaction_log_files?.recommendation?.description
+                    }
+                });
+                break;
+            case 'TempDB placement':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '160px',
+                    tagHeight: '257px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.tempdb_files?.recommendation?.description
+                    }
+                });
+                break;
+
+            case 'ONTAP configuration':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '112px',
+                    tagHeight: '209px',
+                    data: {
+                        title: 'Recommendations',
+                        description: 'View recommendation per configuration in the expand collapse view'
+                    }
+                });
+                break;
+
+            case 'Operating system':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '112px',
+                    tagHeight: '209px',
+                    data: {
+                        title: 'Recommendations',
+                        description: 'View recommendation per configuration in the expand collapse view'
+                    }
+                });
+                break;
+            case 'Compute rightsizing':
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.compute_rightsizing?.recommendation?.description
+                    },
+                    cardName: 'compute_right_sizing'
+                });
+                break;
+        }
+    }, [selectedConfig]);
+
+    const renderTable = () => {
+        switch (selectedConfig) {
+            case 'Storage tier':
+                return <StorageTierTable />;
+        }
+    };
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
@@ -27,6 +208,35 @@ const DashboardInnerPage = () => {
                         ]}
                     />
                 </div>
+
+                <div className={styles.headingSection}>
+                    <DsTypography variant="Semibold_20">{selectedConfig}</DsTypography>
+                    <DsTypography variant="Semibold_16">Manage instance optimization</DsTypography>
+                </div>
+
+                <div className={styles.mainSection}>
+                    <div className={styles.leftSection}>
+                        <ValueCard
+                            optimizationScore={valueCardData.optimizationScore}
+                            optimizedInstances={valueCardData.optimizedInstances}
+                            notOptimizedInstances={valueCardData.notOptimizedInstances}
+                            severity={valueCardData.severity}
+                        />
+
+                        <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
+                            <RecommendationText
+                                data={valueCardData?.data}
+                                from={'dashboard'}
+                                cardName={valueCardData?.cardName}
+                            />
+                        </div>
+                    </div>
+                    <div className={styles.rightSection}>
+                        <TagComponent tagHeight={valueCardData.tagHeight} />
+                    </div>
+                </div>
+
+                <div className={styles.tableSection}>{renderTable()}</div>
             </div>
         </div>
     );

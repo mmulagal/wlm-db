@@ -6,7 +6,7 @@
     "dependencies": {
         "@netapp/design-system": "1.5.10",
         "@netapp/icons": "^1.0.8",
-        "@reduxjs/toolkit": "2.3.0",
+        "@reduxjs/toolkit": "2.4.0",
         "auth0-js": "^9.24.1",
         "axios": "^1.7.4",
         "dom-to-pdf": "^0.3.2",
@@ -23,7 +23,7 @@
         "react-highlight-words": "^0.20.0",
         "react-popover": "^0.5.10",
         "react-redux": "^9.0.3",
-        "react-router-dom": "^6.22.3",
+        "react-router-dom": "^7.0.1",
         "react-scripts": "5.0.1",
         "react-syntax-highlighter": "^15.5.0",
         "redux-mock-store": "^1.5.4",
@@ -74,7 +74,7 @@
         "jest-teamcity-reporter": "^0.9.0",
         "react-scripts": "5.0.1",
         "sass": "^1.66.0",
-        "typescript": "5.6.3"
+        "typescript": "^5.7.2"
     },
     "jest": {
         "transformIgnorePatterns": []
