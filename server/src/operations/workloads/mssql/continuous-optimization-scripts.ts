@@ -76,6 +76,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
                     
                     $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                    $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
@@ -83,6 +84,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                         "lunSerialNumber" = $vol.serialnumber
                         "sizeInMb" = $winvolume.sizeInMb
                         "diskNumber" = $vol.number
+                        "accessPaths" = $partition.accesspaths
                     }
                     $type = 'data'
                     if ($winvolume.name -Contains "tempdev") {
@@ -254,12 +256,8 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
         if($netappDataDrives -contains $dataDrive.dataDriveLetter) {
             $logDrive = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq $dataDrive.databaseName }
             if (($logDrive) -and ($netappLogDrives -contains $logDrive.logDriveLetter)) {
-                $dataAccessPath = ($dataDrive.dataDrivePath.Split("\\") | Select-Object -First 2) -join "\\"
-                $dataDrive | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPath
                 $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
                 $dataDrive | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
-                $logAccessPath = ($logDrive.logDrivePath.Split("\\") | Select-Object -First 2) -join "\\"
-                $dataDrive | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logAccessPath
                 $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
                 }
             } 
@@ -484,8 +482,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetails.svmName
                 $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetails.diskNumber
                 $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetails.lunSerialNumber
+                if($logVolumeLunDetails.accessPaths -and $logVolumeLunDetails.accessPaths.Count -gt 0) {
+                    $drive | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetails.accessPaths[0]
+                    }
                 }
-                
+            $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }
+            if($dataVolumeLunDetails -and $dataVolumeLunDetails.accessPaths -and $dataVolumeLunDetails.accessPaths.Count -gt 0) {
+                $drive | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataVolumeLunDetails.accessPaths[0]         
+                }   
             }
         
         foreach ($drive in $defaultTempDBDriveSize) {
