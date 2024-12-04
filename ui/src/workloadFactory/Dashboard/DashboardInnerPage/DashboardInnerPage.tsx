@@ -11,6 +11,7 @@ import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
 import { cardDataDefault } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
+import StorageTierTable from './RenderTables/StorageTierTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -182,6 +183,13 @@ const DashboardInnerPage = () => {
                 break;
         }
     }, [selectedConfig]);
+
+    const renderTable = () => {
+        switch (selectedConfig) {
+            case 'Storage tier':
+                return <StorageTierTable />;
+        }
+    };
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
@@ -227,6 +235,8 @@ const DashboardInnerPage = () => {
                         <TagComponent tagHeight={valueCardData.tagHeight} />
                     </div>
                 </div>
+
+                <div className={styles.tableSection}>{renderTable()}</div>
             </div>
         </div>
     );
