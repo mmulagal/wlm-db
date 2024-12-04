@@ -34,6 +34,10 @@
     }
 }
 
+.dialog {
+    max-width: 900px;
+}
+
 @media screen and (max-width: 1700px) {
     .categoryComponent {
         gap: 24px;

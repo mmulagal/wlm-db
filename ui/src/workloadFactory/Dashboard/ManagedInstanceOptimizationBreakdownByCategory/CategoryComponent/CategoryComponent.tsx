@@ -1,9 +1,25 @@
-import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsButton, DsFlashingDotsLoader, DsTypography, useDialog } from '@netapp/design-system';
 import { ReactComponent as ComingSoon } from '../../../../assets/ComingSoonLarge.svg';
 import { ReactComponent as ComingSoon2 } from '../../../../assets/comingSoon2.svg';
 import styles from './CategoryComponent.module.scss';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
 import useResize from '../../../../common/hooks/useResize';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import { GENERAL } from '../../../../utils/appConstants';
+import CategoryDialogComponent from '../CategoryDialogComponent/CategoryDialogComponent';
+import { WLF_TABS } from '../../../../utils/consts';
+import { useDispatch } from 'react-redux';
+import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
+import store from '../../../../store/store';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwDatabaseStorageType,
+    setGwHostname,
+    setGwResourceId,
+    setLandingFrom
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 type CategoryComponentProps = {
     image: React.ReactNode;
@@ -25,6 +41,42 @@ const CategoryComponent = ({
 }: CategoryComponentProps) => {
     const windowSize = useResize();
     const isLoading = false;
+    const { setDialog, closeDialog } = useDialog();
+    const dispatch = useDispatch();
+
+    const redirectToGetWellPage = () => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+
+        const updatedState = store.getState();
+        const { selectedAssessmentRow }: any = updatedState.databaseHome;
+
+        dispatch(setGwHostname(selectedAssessmentRow?.hostName));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setGwResourceId(selectedAssessmentRow?.resourceId));
+        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.databaseInstanceId));
+        dispatch(setGwDatabaseInstanceName(selectedAssessmentRow?.databaseInstanceName));
+        dispatch(setGwDatabaseStorageType(selectedAssessmentRow?.sqlServerDeploymentType));
+    };
+
+    const handleDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={`${firstBlockText} optimization`}
+                content={<CategoryDialogComponent type={firstBlockText} />}
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    redirectToGetWellPage();
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.dialog}
+            />
+        );
+    };
+
     return (
         <div
             className={styles.categoryComponent}
@@ -85,7 +137,7 @@ const CategoryComponent = ({
                 {isComingSoon && windowSize.width > 1700 && <ComingSoon />}
                 {isComingSoon && windowSize.width < 1700 && <ComingSoon2 />}
                 {!isComingSoon && (
-                    <DsButton variant="secondary" isThin onClick={() => {}}>
+                    <DsButton variant="secondary" isThin onClick={() => handleDialog()}>
                         Optimize
                     </DsButton>
                 )}

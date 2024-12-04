@@ -46,7 +46,8 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         otherCostPercent: 0,
         requireBillingPerm: false
     },
-    selectedConfig: ''
+    selectedConfig: '',
+    selectedAssessmentRow: null
 };
 
 const databaseHomeSlice = createSlice({
@@ -79,6 +80,9 @@ const databaseHomeSlice = createSlice({
         },
         addInitialData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
+        },
+        setSelectedAssessmentRow: (state, action: PayloadAction<any>) => {
+            state.selectedAssessmentRow = action.payload;
         }
     }
 });
@@ -92,7 +96,8 @@ export const {
     addAggregatedStorageSavings,
     addAggregatedCosts,
     addInitialData,
-    setSelectedConfig
+    setSelectedConfig,
+    setSelectedAssessmentRow
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
