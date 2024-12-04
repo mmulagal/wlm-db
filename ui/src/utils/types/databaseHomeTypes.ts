@@ -164,6 +164,7 @@ export interface DatabaseHostsEntities {
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
     selectedConfig: string;
+    selectedAssessmentRow: any;
 }
 
 export interface TemplateRes {
