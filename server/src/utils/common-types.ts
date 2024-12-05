@@ -38,6 +38,7 @@ interface Metadata {
     updatedManually?: boolean;
     storageProtocol?: string;
     isComputeOptimized?: boolean;
+    isLicenseOptimized?: boolean;
     assessment?: ResourceAssessmentData;
 }
 interface databaseInstanceMetadata {
@@ -396,5 +397,6 @@ export {
     OptimizeMpioPolicyParams,
     StorageLayout,
     DatabaseInstancesIncludingResource,
-    ComputeAssessment
+    ComputeAssessment,
+    LicenseAssessment
 };

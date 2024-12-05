@@ -22,13 +22,14 @@ import {
     DatabaseInstance,
     databaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
+    LicenseAssessment,
     LogDriveDetails,
     Metadata,
     StorageAssessment,
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
-import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT, FINDING, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
 import {
@@ -554,7 +555,7 @@ async function calculateComputeDrift(
         let currentInstanceType;
         let recommendationOptions;
 
-        const [{ metadata }] = await listResources(accountId, databaseHostId, credentialsId, region);
+        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
         const { assessment: { compute } = {} } = metadata as unknown as Metadata;
         if (!isEmpty(compute)) {
             ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
@@ -576,6 +577,11 @@ async function calculateComputeDrift(
                     activeNodeInstanceId,
                     resourceName!
                 )) || {});
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+            (metadata as unknown as Metadata).assessment = {
+                ...existingAssessmentData,
+                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions }
+            };
         }
 
         let recommendationMessage =
@@ -621,13 +627,69 @@ async function calculateComputeDrift(
     return { errorMessage };
 }
 
+async function calculateLicenseDrift(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
+
+    let errorMessage = '';
+    try {
+        let licenseAssessment;
+
+        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        const { assessment: { license } = {} } = metadata as unknown as Metadata;
+        if (!isEmpty(license)) {
+            licenseAssessment = license as LicenseAssessment;
+        } else {
+            const { activeNodeInstanceId } = await getInstanceDetails(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId
+            );
+            licenseAssessment = await runLicenseAssessment(accountId, credentialsId, region, activeNodeInstanceId);
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+            (metadata as unknown as Metadata).assessment = {
+                ...existingAssessmentData,
+                license: licenseAssessment
+            };
+            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        }
+
+        const { licenseFinding } = licenseAssessment;
+        const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
+        const recommendationMessage =
+            licenseFinding === FINDING.NOT_OPTIMIZED
+                ? 'When Workload Factory detects that your database infrastructure is not using any of the commercial software license features you are paying for, a license is considered not optimized. A license that is not optimized might result in unnecessary additional costs.'
+                : 'When the license for your commercial software database meets your performance requirements, the license is considered optimized';
+
+        return {
+            name: 'sql-license',
+            status: matchingLicenseAssessmentStatus,
+            recommended: AssessmentStatus.OPTIMIZED,
+            severity: SEVERITY.WARNING,
+            recommendation: recommendationMessage,
+            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION]
+        };
+    } catch (error: any) {
+        errorMessage = `Error while calculating license drift. ${error.message}`;
+        logger.error({ errorMessage, error });
+    }
+    return { errorMessage };
+}
+
 async function managedHostsLicenseAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId: string
+    parentJobId?: string
 ) {
     const { id: licenseAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: 'Microsoft SQL server license assessment',
@@ -643,23 +705,7 @@ async function managedHostsLicenseAssessment(
     let licenseAssessment;
     let jobStatus;
     try {
-        const { items: [{ sqlServerInstances = [] } = {}] = [] } = await getHostAndSqlServerInfo(
-            accountId,
-            credentialsId,
-            region,
-            undefined,
-            undefined,
-            [activeNodeInstanceId]
-        );
-        const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-        licenseAssessment = await getLicenseRecommendations(
-            accountId,
-            credentialsId,
-            region,
-            activeNodeInstanceId,
-            sqlServerInstances,
-            sqlServerDeploymentType
-        );
+        licenseAssessment = await runLicenseAssessment(accountId, credentialsId, region, activeNodeInstanceId);
     } catch (error) {
         const errorMessage = `Error while performing license assessment. ${error}`;
         logger.error(errorMessage);
@@ -673,6 +719,31 @@ async function managedHostsLicenseAssessment(
     }
 
     return licenseAssessment;
+}
+
+async function runLicenseAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string
+) {
+    const { items: [{ sqlServerInstances = [] } = {}] = [] } = await getHostAndSqlServerInfo(
+        accountId,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        [activeNodeInstanceId]
+    );
+    const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
+    return getLicenseRecommendations(
+        accountId,
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        sqlServerInstances,
+        sqlServerDeploymentType
+    );
 }
 
 async function managedHostsComputeAssessment(
@@ -1236,13 +1307,17 @@ async function fetchDriftAssessment(
     const driftAssessmentData: DriftAssessmentResponseType = {};
     const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
     const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+    const shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
 
-    const [storageAssessmentResponse, computeAssessmentResponse] = await Promise.all([
+    const [storageAssessmentResponse, computeAssessmentResponse, licenseAssessmentResponse] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({}),
         shouldCalculateComputeAssessment
             ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateLicenseAssessment
+            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({})
     ]);
 
@@ -1313,18 +1388,33 @@ async function fetchDriftAssessment(
             }
         }
     }
+
+    if (!isEmpty(licenseAssessmentResponse)) {
+        driftAssessmentData.license = licenseAssessmentResponse as ParameterDriftResponseType;
+        if (isDemoFlow) {
+            const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId)) || [];
+            const licenseConfigsOptimized = (metadata as unknown as Metadata).isLicenseOptimized;
+            if (licenseConfigsOptimized) {
+                computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+                computeAssessmentResponse.recommendation = 'Your current SQL license is optimized for your workload.';
+                driftAssessmentData.license = licenseAssessmentResponse as ParameterDriftResponseType;
+            }
+        }
+    }
     return driftAssessmentData;
 }
 
 function getMatchingAssessmentStatus(finding: string) {
     logger.info('Getting matching assessment status for finding:', finding);
     switch (finding) {
+        case FINDING.NOT_OPTIMIZED:
         case 'NOT_OPTIMIZED':
             return AssessmentStatus.NOT_OPTIMIZED;
         case 'OVER_PROVISIONED':
             return AssessmentStatus.OVER_PROVISIONED;
         case 'UNDER_PROVISIONED':
             return AssessmentStatus.UNDER_PROVISIONED;
+        case FINDING.OPTIMIZED:
         case 'OPTIMIZED':
         default:
             return AssessmentStatus.OPTIMIZED;
