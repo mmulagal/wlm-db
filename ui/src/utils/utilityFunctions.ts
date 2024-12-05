@@ -1,5 +1,6 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
+import { get, sortBy, compact, uniqBy, map } from 'lodash';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
@@ -87,6 +88,23 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
 
     return rows;
 }
+
+export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) => {
+    return !data
+        ? []
+        : sortBy(
+              uniqBy(
+                  compact(
+                      map(data, row => {
+                          const value = get(row, propName, null);
+                          return { value, label: renderLabel ? renderLabel(value) : value };
+                      })
+                  ),
+                  'label'
+              ),
+              'value'
+          );
+};
 
 export const formatSize = (value: number, passedformat?: string) => {
     let byteVal = 0;
