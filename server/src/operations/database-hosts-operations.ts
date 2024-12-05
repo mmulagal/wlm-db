@@ -6,6 +6,7 @@ import {
     DescribeVolumesResult,
     DescribeVpcsCommandInput,
     DeviceType,
+    EC2ServiceException,
     Volume
 } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
@@ -52,7 +53,8 @@ import {
     WIN_SQL_EC2_USAGE_OPERATION,
     DEFAULT_INSTANCE_NAME,
     EBS_ROOT_VOLUME,
-    DatabaseTypes
+    DatabaseTypes,
+    AWS_ERROR_CODES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1346,6 +1348,9 @@ async function getNodeTopology(
                     }
                 }
             } catch (error) {
+                if (error instanceof EC2ServiceException && error.toString().includes(AWS_ERROR_CODES.ec2NotFound)) {
+                    logger.debug(error.toString());
+                }
                 logger.error(
                     `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
                 );
@@ -1393,7 +1398,7 @@ async function getNodeTopology(
             });
         }
     } else {
-        logger.error(
+        logger.info(
             `Error while fetching details for EC2 for node ${node1InstanceId} , ${node2InstanceId} in account ${accountId} as no active node was found.`
         );
     }
@@ -1440,7 +1445,7 @@ async function getDatabaseHostsSummaryV2(
     );
 
     if (isEmpty(resourceDetails)) {
-        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+        logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
 
