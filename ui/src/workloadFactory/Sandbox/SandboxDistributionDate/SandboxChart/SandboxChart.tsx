@@ -30,7 +30,7 @@ const SandboxChart = () => {
             datasets: [
                 {
                     data: Object.values(getSandboxDistributionByAge(aggregatedSandboxList)),
-                    backgroundColor: ['#68C6B3', '#0BAFFC', '#A815F3', '#FDC300']
+                    backgroundColor: ['#68C6B3', '#A815F3', '#FDC300']
                 }
             ]
             //   labels: label,

@@ -47,7 +47,8 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         requireBillingPerm: false
     },
     selectedConfig: '',
-    selectedAssessmentRow: null
+    selectedAssessmentRow: null,
+    sandboxAgeRange: ''
 };
 
 const databaseHomeSlice = createSlice({
@@ -83,6 +84,9 @@ const databaseHomeSlice = createSlice({
         },
         setSelectedAssessmentRow: (state, action: PayloadAction<any>) => {
             state.selectedAssessmentRow = action.payload;
+        },
+        setSandboxAgeRange: (state, action: PayloadAction<any>) => {
+            state.sandboxAgeRange = action.payload;
         }
     }
 });
@@ -97,7 +101,8 @@ export const {
     addAggregatedCosts,
     addInitialData,
     setSelectedConfig,
-    setSelectedAssessmentRow
+    setSelectedAssessmentRow,
+    setSandboxAgeRange
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
