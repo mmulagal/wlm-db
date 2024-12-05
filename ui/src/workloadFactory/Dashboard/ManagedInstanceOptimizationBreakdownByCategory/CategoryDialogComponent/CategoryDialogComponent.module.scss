@@ -31,7 +31,8 @@
     [class*='Table-module_header-row'] {
         position: unset !important;
         [class*='Table-module_header-cell'] {
-            background-color: unset !important;
+            background-color: var(--content-background) !important;
+            top: -40px !important;
             border-bottom: 1px solid var(--border);
         }
     }
@@ -42,6 +43,7 @@
     [class*='TableTopBar-module_base'] {
         background-color: unset !important;
         box-shadow: unset !important;
+        top: -39px !important;
     }
 
     // [class*='DialogLayout-module_dialog-content'] {
@@ -49,4 +51,3 @@
     //     overflow-y: unset !important;
     // }
 }
-
