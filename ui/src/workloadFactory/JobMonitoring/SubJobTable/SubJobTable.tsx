@@ -6,6 +6,7 @@ import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { CREATE_RESOURCE, JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WLF_TABS } from '../../../utils/consts';
@@ -196,6 +197,23 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                     container={<ErrorIcon className={styles.statusIcon} />}
                                 />
                             )}
+                            {cellData === JOB_MONITORING_STATUS.WARNING &&
+                                (rowData?.error ? (
+                                    <Popover
+                                        popoverClass={CommonStyles['popover']}
+                                        children={
+                                            <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                                {rowData?.error}
+                                            </Typography>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={<Warning className={styles.statusIcon} />}
+                                    />
+                                ) : (
+                                    <Warning />
+                                ))}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>

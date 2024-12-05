@@ -91,7 +91,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
         };
 
         const constructDataWarning = () => {
-            return [29, 1, 32, 56, 21, 12];
+            return timelineData?.warning;
         };
 
         const setMaxGraceValue = () => {
@@ -99,9 +99,11 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                 timelineData?.completed &&
                 timelineData?.completed.length &&
                 timelineData?.failed &&
-                timelineData?.failed.length
+                timelineData?.failed.length &&
+                timelineData?.warning &&
+                timelineData?.warning.length
             ) {
-                const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
+                const combinedArr = [...timelineData?.completed, ...timelineData?.failed, ...timelineData?.warning];
                 const maxVal = Math.max(...combinedArr);
                 switch (true) {
                     case maxVal === 1:
@@ -191,7 +193,14 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                let label = context.dataset.label === 'Success' ? 'Completed jobs' : 'Failed jobs';
+                                let label = '';
+                                if (context.dataset.label === 'Success') {
+                                    label = 'Completed jobs';
+                                } else if (context.dataset.label === 'Completed with warnings') {
+                                    label = 'Completed with warnings jobs';
+                                } else {
+                                    label = 'Failed jobs';
+                                }
 
                                 if (context.parsed.y !== null) {
                                     label = `${context.label} | ${context.parsed.y} ${label}`;

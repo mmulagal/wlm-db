@@ -3,7 +3,7 @@
     [
         {
             "endTime": 1705602600000,
-            "completed": 1,
+            "warning": 1,
             "failed": 1
         },
         {
@@ -33,7 +33,7 @@
         },
         {
             "endTime": 1705624200000,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         },
         {
@@ -63,7 +63,7 @@
         },
         {
             "endTime": 1705645800000,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         },
         {
@@ -103,7 +103,7 @@
         },
         {
             "endTime": 1705674600000,
-            "completed": 2,
+            "warning": 2,
             "failed": 0
         },
         {
@@ -133,7 +133,7 @@
         {
             "endTime": 1705599000000,
             "timeInterval": 18,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         },
         {
@@ -161,7 +161,7 @@
         {
             "endTime": 1705167000000,
             "timeInterval": 13,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         }
     ],
@@ -176,7 +176,7 @@
         {
             "endTime": 1705599000000,
             "timeInterval": 18,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         },
         {
@@ -194,7 +194,7 @@
         {
             "endTime": 1705339800000,
             "timeInterval": 15,
-            "completed": 2,
+            "warning": 2,
             "failed": 1
         },
         {
@@ -224,7 +224,7 @@
         {
             "endTime": 1704907800000,
             "timeInterval": 10,
-            "completed": 3,
+            "warning": 3,
             "failed": 1
         },
         {
@@ -263,7 +263,7 @@
         {
             "endTime": 1705599000000,
             "timeInterval": 18,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         },
         {
@@ -281,7 +281,7 @@
         {
             "endTime": 1705339800000,
             "timeInterval": 15,
-            "completed": 2,
+            "warning": 2,
             "failed": 1
         },
         {
@@ -323,7 +323,7 @@
         {
             "endTime": 1704735000000,
             "timeInterval": 8,
-            "completed": 2,
+            "warning": 2,
             "failed": 1
         },
         {
@@ -353,7 +353,7 @@
         {
             "endTime": 1704303000000,
             "timeInterval": 3,
-            "completed": 2,
+            "warning": 2,
             "failed": 0
         },
         {
@@ -383,7 +383,7 @@
         {
             "endTime": 1703871000000,
             "timeInterval": 29,
-            "completed": 1,
+            "warning": 1,
             "failed": 0
         },
         {
@@ -413,7 +413,7 @@
         {
             "endTime": 1703439000000,
             "timeInterval": 24,
-            "completed": 3,
+            "warning": 3,
             "failed": 1
         },
         {
@@ -431,7 +431,7 @@
         {
             "endTime": 1703179800000,
             "timeInterval": 21,
-            "completed": 7,
+            "warning": 7,
             "failed": 0
         }
     ]
