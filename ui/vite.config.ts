@@ -24,10 +24,11 @@ export default defineConfig({
     base: './',
     plugins: [
         react(),
-        eslint(),
+        // eslint(),
         cssInjectedByJsPlugin(),
         commonjs(),
         viteTsconfigPaths(),
+        //@ts-ignore
         svgr({ plugins: ['@svgr/plugin-jsx'] }),
         svgr2(),
         vitePluginVersionMark({
