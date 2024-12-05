@@ -916,7 +916,10 @@ async function instanceTypeChangePreReqs(
                     'Elastic IP address not found. On instance type change, Amazon EC2 releases the address and give your instance a new public IPv4 address'
                 );
             }
-            throw error;
+            if (process.env.NODE_ENV !== 'development') {
+                // In development, we don't want to throw the error as our test setups dont have elastic IPs
+                throw error;
+            }
         }
 
         // spot instance check
