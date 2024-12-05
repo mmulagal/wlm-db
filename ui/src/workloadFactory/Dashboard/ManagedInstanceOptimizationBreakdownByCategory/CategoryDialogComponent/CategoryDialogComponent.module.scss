@@ -37,6 +37,11 @@
     }
     [class*='Table-module_cell'] {
         border-left: unset !important;
+        background-color: unset !important;
+    }
+    [class*='TableTopBar-module_base'] {
+        background-color: unset !important;
+        box-shadow: unset !important;
     }
 
     // [class*='DialogLayout-module_dialog-content'] {
