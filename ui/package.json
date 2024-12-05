@@ -52,12 +52,6 @@
         "test": "vitest run",
         "test-dev": "vitest watch"
     },
-    "eslintConfig": {
-        "extends": [
-            "react-app",
-            "react-app/jest"
-        ]
-    },
     "browserslist": {
         "production": [
             ">0.2%",
