@@ -432,7 +432,6 @@ const JobMonitoringTable = () => {
 
     // logic to get type and status filter values
     useEffect(() => {
-        console.log(tableProps);
         const filters = tableProps?.filterState?.columns;
         JobsColDefs.map((col: any) => {
             if (col?.id in filters) {
