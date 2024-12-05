@@ -145,7 +145,11 @@ function processSqlInstances(sqlInstances: SqlServerInstanceInfoType[], edition:
     const filteredInstances = sqlInstances.filter(({ sqlServerEdition = '' }) => sqlServerEdition.includes(edition));
     if (filteredInstances.length > 0) {
         const groupByDeploymentType = groupBy(filteredInstances, 'sqlServerDeploymentType');
-        return groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT]?.[0] || filteredInstances[0];
+        return (
+            groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT]?.[0] ||
+            groupByDeploymentType[SqlServerDeploymentModel.SQL_FCI_SHORT]?.[0] ||
+            filteredInstances[0]
+        );
     }
 }
 
@@ -1098,6 +1102,7 @@ async function getSqlInstanceLicenseRecommendations(
 }
 
 export {
+    getLicenseRecommendations,
     fetchSqlServerInstanceConfiguration,
     manualModeComputeLicenseDetails,
     getSqlInstanceLicenseRecommendations,

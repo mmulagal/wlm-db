@@ -18,6 +18,7 @@ import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import storageGoldenConfigData from './continuous-optimization/golden-configs/storage';
 import {
+    ComputeAssessment,
     DatabaseInstance,
     databaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
@@ -30,9 +31,18 @@ import {
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
-import { listAllManagedInstances, listDatabaseInstances, listResources } from '../lib/database/db';
+import {
+    listAllManagedInstances,
+    listDatabaseInstances,
+    listResources,
+    updateResourceMetaData
+} from '../lib/database/db';
 import { getEC2InstanceRecommendations } from '../lib/aws/compute-optimizer';
-import { checkComputeOptimizerEnrollmentStatus } from './recommendation-operations';
+import {
+    checkComputeOptimizerEnrollmentStatus,
+    fetchSqlServerInstanceConfiguration,
+    getLicenseRecommendations
+} from './recommendation-operations';
 import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
 import {
     AssessmentCategories,
@@ -54,6 +64,8 @@ import {
 } from '../lib/database/database-instance-config';
 import { listJobs } from '../lib/database/job';
 import getMissingPermissionsList from './aws/iam-operations';
+import { getHostAndSqlServerInfo } from './discover-operations';
+import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -537,22 +549,34 @@ async function calculateComputeDrift(
 
     let errorMessage = '';
     try {
-        const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId
-        );
-        const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
-            (await initiateComputeAssessment(
-                cloudProviderAccountId!,
+        let finding;
+        let findingReasonCodes;
+        let currentInstanceType;
+        let recommendationOptions;
+
+        const [{ metadata }] = await listResources(accountId, databaseHostId, credentialsId, region);
+        const { assessment: { compute } = {} } = metadata as unknown as Metadata;
+        if (!isEmpty(compute)) {
+            ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
+                compute as ComputeAssessment);
+        } else {
+            const { activeNodeInstanceId, cloudProviderAccountId, resourceName } = await getInstanceDetails(
                 accountId,
                 credentialsId,
                 region,
-                activeNodeInstanceId,
-                resourceName!
-            )) || {};
+                databaseHostId,
+                databaseInstanceId
+            );
+            ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
+                (await initiateComputeAssessment(
+                    cloudProviderAccountId!,
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    resourceName!
+                )) || {});
+        }
 
         let recommendationMessage =
             'Your current instance is being analyzed for rightsizing. Please check back later for recommendations.';
@@ -597,6 +621,158 @@ async function calculateComputeDrift(
     return { errorMessage };
 }
 
+async function managedHostsLicenseAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    resourceName: string,
+    parentJobId: string
+) {
+    const { id: licenseAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+        name: 'Microsoft SQL server license assessment',
+        description: 'Microsoft SQL server license assessment',
+        resourceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId
+    });
+
+    let licenseAssessment;
+    let jobStatus;
+    try {
+        const { items: [{ sqlServerInstances = [] } = {}] = [] } = await getHostAndSqlServerInfo(
+            accountId,
+            credentialsId,
+            region,
+            undefined,
+            undefined,
+            [activeNodeInstanceId]
+        );
+        const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
+        licenseAssessment = await getLicenseRecommendations(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            sqlServerInstances,
+            sqlServerDeploymentType
+        );
+    } catch (error) {
+        const errorMessage = `Error while performing license assessment. ${error}`;
+        logger.error(errorMessage);
+
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, licenseAssessmentJobId, {
+            endTime: Date.now(),
+            status: jobStatus || JOBSTATUS.COMPLETED
+        });
+    }
+
+    return licenseAssessment;
+}
+
+async function managedHostsComputeAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    awsAccountId: string,
+    activeNodeInstanceId: string,
+    resourceName: string,
+    parentJobId: string
+) {
+    const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+        name: 'Microsoft SQL server compute assessment',
+        description: 'Microsoft SQL server compute assessment',
+        resourceName,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId
+    });
+
+    let computeAssessment;
+    let jobStatus;
+    try {
+        computeAssessment =
+            (await initiateComputeAssessment(
+                awsAccountId!,
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName!
+            )) || {};
+    } catch (error) {
+        const errorMessage = `Error while performing compute assessment. ${error}`;
+        logger.error(errorMessage);
+
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, computeAssessmentJobId, {
+            endTime: Date.now(),
+            status: jobStatus || JOBSTATUS.COMPLETED
+        });
+    }
+    return computeAssessment;
+}
+
+async function initiateComputeLicenseAssessmentCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    resourceName: string,
+    jobId: string
+) {
+    const [{ metadata, cloud_provider_account_id: awsAccountId }] = await listResources(
+        accountId,
+        databaseHostId,
+        credentialsId,
+        region
+    );
+    if (metadata) {
+        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+
+        const { activeNodeInstanceId = '' } = await getActiveSqlNode(
+            credentialsId,
+            region,
+            node1InstanceId,
+            node2InstanceId
+        );
+
+        const licenseAssessment = await managedHostsLicenseAssessment(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            resourceName,
+            jobId
+        );
+        const computeAssessment = await managedHostsComputeAssessment(
+            accountId,
+            credentialsId,
+            region,
+            awsAccountId!,
+            activeNodeInstanceId,
+            resourceName,
+            jobId
+        );
+        if (!isEmpty(licenseAssessment) || !isEmpty(computeAssessment)) {
+            (metadata as unknown as Metadata).assessment = {
+                license: licenseAssessment || undefined,
+                compute: computeAssessment || undefined
+            };
+            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        }
+    } else {
+        logger.error('No metadata found for the resource', { accountId, databaseHostId, credentialsId, region });
+    }
+}
 async function initiateStorageAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -762,7 +938,7 @@ async function initiateComputeAssessment(
                         platformDifferences
                     }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
                 )
-        };
+        } as ComputeAssessment;
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;
         logger.error({ errorMessage, error });
@@ -996,6 +1172,28 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                             },
                             {
                                 concurrency: 1
+                            }
+                        )
+                    );
+
+                    const uniqueResources = [...new Set(managedInstances.map(({ resource }) => resource))];
+                    await Promise.all(
+                        uniqueResources.map(
+                            async ({
+                                account_id: wfAccountId,
+                                credentials_id: credentialsId,
+                                region,
+                                resource_id: databaseHostId,
+                                resource_name: resourceName
+                            }) => {
+                                await initiateComputeLicenseAssessmentCollection(
+                                    wfAccountId,
+                                    credentialsId,
+                                    region!,
+                                    databaseHostId,
+                                    resourceName!,
+                                    parentJobId
+                                );
                             }
                         )
                     );
