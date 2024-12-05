@@ -24,7 +24,7 @@ export default defineConfig({
     base: './',
     plugins: [
         react(),
-        // eslint(),
+        eslint(),
         cssInjectedByJsPlugin(),
         commonjs(),
         viteTsconfigPaths(),
