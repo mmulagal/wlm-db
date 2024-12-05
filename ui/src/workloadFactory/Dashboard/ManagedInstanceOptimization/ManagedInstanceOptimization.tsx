@@ -7,6 +7,7 @@ import useResize from '../../../common/hooks/useResize';
 
 const ManagedInstanceOptimization = () => {
     const windowSize = useResize();
+    const loading = false;
     return (
         <div className={styles.managedInstance}>
             <div className={styles.headSection}>
@@ -30,9 +31,18 @@ const ManagedInstanceOptimization = () => {
 
                     <div className={styles.contentSection}>
                         <div className={styles.firstBlock}>
-                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                120
-                            </DsTypography>
+                            <div className={styles.loadingState}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                    120
+                                </DsTypography>
+
+                                {loading && (
+                                    <div className={styles.loadingPosition}>
+                                        <DsFlashingDotsLoader />
+                                    </div>
+                                )}
+                            </div>
+
                             <DsTypography variant="Regular_14">Total managed instances</DsTypography>
                         </div>
                         <SeparatorComponent variant="vertical" height="48px" />
@@ -42,7 +52,7 @@ const ManagedInstanceOptimization = () => {
                             color="var(--chart-4)"
                             text={'Optimized instances'}
                             isLoading={false}
-                            // loadingInFirstRow={loading}
+                            loadingInFirstRow={loading}
                         />
 
                         <SeparatorComponent variant="vertical" height="48px" />
@@ -51,7 +61,7 @@ const ManagedInstanceOptimization = () => {
                             color="var(--chart-disabled)"
                             text={'Not-optimized instances '}
                             isLoading={false}
-                            // loadingInFirstRow={loading}
+                            loadingInFirstRow={loading}
                         />
                     </div>
                 </div>
@@ -72,11 +82,11 @@ const ManagedInstanceOptimization = () => {
                             <DsTypography variant="Semibold_16" className={styles.heading}>
                                 Total managed instances &nbsp;120
                             </DsTypography>
-                            {/* {loading && (
-                         <div style={{ position: 'relative', top: '12px' }}>
-                             <DsFlashingDotsLoader />
-                         </div>
-                     )} */}
+                            {loading && (
+                                <div style={{ position: 'relative', top: '12px' }}>
+                                    <DsFlashingDotsLoader />
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.firstBlockSection}>
@@ -86,9 +96,12 @@ const ManagedInstanceOptimization = () => {
                                     Optimized instances
                                 </DsTypography>
                             </div>
-                            <DsTypography className={styles.valueText} variant="Semibold_14">
-                                {String(72)} instances
-                            </DsTypography>
+                            <div className={styles.loadingState}>
+                                <DsTypography className={styles.valueText} variant="Semibold_14">
+                                    {String(72)} instances
+                                </DsTypography>
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
                         </div>
 
                         <div className={styles.firstBlockSection} style={{ borderTop: 'none' }}>
@@ -98,9 +111,12 @@ const ManagedInstanceOptimization = () => {
                                     Not-optimized instances
                                 </DsTypography>
                             </div>
-                            <DsTypography className={styles.valueText} variant="Semibold_14">
-                                {String(48)} instances
-                            </DsTypography>
+                            <div className={styles.loadingState}>
+                                <DsTypography className={styles.valueText} variant="Semibold_14">
+                                    {String(48)} instances
+                                </DsTypography>
+                                {loading && <DsFlashingDotsLoader />}
+                            </div>
                         </div>
                     </div>
                 </div>

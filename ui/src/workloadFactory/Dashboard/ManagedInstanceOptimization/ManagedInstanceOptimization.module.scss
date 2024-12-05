@@ -37,6 +37,14 @@
             }
         }
     }
+    .loadingState {
+        display: flex;
+        gap: 8px;
+        .loadingPosition {
+            position: relative;
+            top: 18px;
+        }
+    }
 
     .smallMainSection {
         padding: 40px 80px 40px 40px;

@@ -501,7 +501,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <Typography
                                         variant="Regular_14"
                                         className={
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart1
