@@ -12,6 +12,13 @@ import { useEffect, useState } from 'react';
 import { cardDataDefault } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import StorageTierTable from './RenderTables/StorageTierTable';
+import FileSystemHeadroomTable from './RenderTables/FileSystemHeadroom';
+import LogDriveSizeTable from './RenderTables/LogDriveSizeTable';
+import TempDBDriveSizeTable from './RenderTables/TempDBDriveSizeTable';
+import UserDataFilesTable from './RenderTables/UserDataFilesTable';
+import LogFileTable from './RenderTables/LogFileTable';
+import TempDBPlacement from './RenderTables/TempDBPlacement';
+import ComputeRightSizingTable from './RenderTables/ComputeRightSizingTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -188,6 +195,20 @@ const DashboardInnerPage = () => {
         switch (selectedConfig) {
             case 'Storage tier':
                 return <StorageTierTable />;
+            case 'File system headroom':
+                return <FileSystemHeadroomTable />;
+            case 'Log drive size':
+                return <LogDriveSizeTable />;
+            case 'TempDB drive size':
+                return <TempDBDriveSizeTable />;
+            case 'User data files (.mdf)':
+                return <UserDataFilesTable />;
+            case 'Log files (.ldf)':
+                return <LogFileTable />;
+            case 'TempDB placement':
+                return <TempDBPlacement />;
+            case 'Compute rightsizing':
+                return <ComputeRightSizingTable />;
         }
     };
     return (

@@ -11,6 +11,8 @@ type BarComponentType = {
     afterOutOf?: string | number;
     width?: string;
     progressBarHeight?: string;
+    from?: string;
+    optimizePercentage?: number | any;
 };
 
 const BarComponent = ({
@@ -21,8 +23,89 @@ const BarComponent = ({
     beforeOutOf,
     afterOutOf,
     width,
-    progressBarHeight
+    progressBarHeight,
+    from,
+    optimizePercentage
 }: BarComponentType) => {
+    const handleProgressBar = () => {
+        if (percentage === 100) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: color
+                        }}
+                    ></div>
+                </>
+            );
+        }
+        if (optimizePercentage !== 0 && percentage !== 0) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar}`}
+                        style={{
+                            width: `${percentage}%`,
+                            backgroundColor: color
+                        }}
+                    ></div>
+                    <div className={styles.separator}></div>
+                    <div
+                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${optimizePercentage}%`,
+                            backgroundColor: 'var(--chart-6)'
+                        }}
+                    ></div>
+                    <div
+                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100 - optimizePercentage + percentage}%`,
+                            backgroundColor: 'var(--border)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+
+        if (percentage === 0 && optimizePercentage === 0) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: 'var(--border)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+
+        if (percentage !== 0 && optimizePercentage === 0) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${percentage}%`,
+                            backgroundColor: color
+                        }}
+                    ></div>
+
+                    <div
+                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100 - percentage}%`,
+                            backgroundColor: 'var(--border)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+    };
     return (
         <div className={styles.barComponent}>
             <div className={styles.rightSection} style={{ width: width }}>
@@ -40,7 +123,9 @@ const BarComponent = ({
 
                 <div className={styles.bottomSection}>
                     <div className={styles.getWellBar}>
-                        <ProgressBar value={percentage} color={color} />
+                        {from === 'dashboard' && <div className={styles.progressBar}>{handleProgressBar()}</div>}
+
+                        {from !== 'dashboard' && <ProgressBar value={percentage} color={color} />}
                     </div>
                 </div>
 

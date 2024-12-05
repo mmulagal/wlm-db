@@ -33,6 +33,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -59,6 +61,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={10}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -85,6 +89,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -111,6 +117,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -137,6 +145,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -163,6 +173,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -189,6 +201,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -215,6 +229,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={120}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -241,6 +257,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={100}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -267,6 +285,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                         afterOutOf={100}
                         bottomText="Optimized instances:"
                         width="360px"
+                        from="dashboard"
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
