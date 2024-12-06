@@ -696,7 +696,6 @@ async function managedHostsLicenseAssessment(
         description: 'Microsoft SQL server license assessment',
         resourceName,
         startTime: Date.now(),
-        endTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.ASSESSMENT,
         parentJobId
@@ -1407,14 +1406,12 @@ async function fetchDriftAssessment(
 function getMatchingAssessmentStatus(finding: string) {
     logger.info('Getting matching assessment status for finding:', finding);
     switch (finding) {
-        case FINDING.NOT_OPTIMIZED:
         case 'NOT_OPTIMIZED':
             return AssessmentStatus.NOT_OPTIMIZED;
         case 'OVER_PROVISIONED':
             return AssessmentStatus.OVER_PROVISIONED;
         case 'UNDER_PROVISIONED':
             return AssessmentStatus.UNDER_PROVISIONED;
-        case FINDING.OPTIMIZED:
         case 'OPTIMIZED':
         default:
             return AssessmentStatus.OPTIMIZED;
