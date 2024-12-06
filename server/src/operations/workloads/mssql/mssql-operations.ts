@@ -1020,14 +1020,12 @@ async function getActiveSqlNode(
                     };
                 }
             }
+            errorMessage = `SSM connection to nodes and SQL server status check for nodes ${node1InstanceId} ${
+                node2InstanceId ? `and ${node1InstanceId}` : ''
+            } has failed.`;
+            errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
+            logger.error(errorMessage, { connectionStatus });
         }
-
-        errorMessage = `SSM connection to nodes and SQL server status check for nodes ${node1InstanceId} ${
-            node2InstanceId ? `and ${node1InstanceId}` : ''
-        } has failed.`;
-        errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-        logger.error(errorMessage, { connectionStatus });
-
         return { isSSMConnected: false, ssmConnectionStatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
@@ -1262,6 +1260,7 @@ async function getActiveSqlNodeAndInstanceDetails(
         resourceName
     });
     try {
+        const inActiveNodes: { nodeId: string; connStatus: string }[] = [];
         for (const nodeId of nodeIds) {
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
@@ -1299,13 +1298,12 @@ async function getActiveSqlNodeAndInstanceDetails(
                     logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
             } else {
-                logger.error(
-                    `SSM status of node ${nodeId} is not running :${connectionStatus.Status}  for resourceid: ${resourceId}, resource name : ${resourceName}`
-                );
+                inActiveNodes.push({ nodeId, connStatus: connectionStatus?.Status ?? '' });
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
-        logger.error(errorMessage);
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${[
+            ...inActiveNodes
+        ]} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
         const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId}, resource name: ${resourceName} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;

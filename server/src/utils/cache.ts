@@ -64,7 +64,7 @@ const AWS_CE_CACHE = new LRUCache({
     ttl: ms('1d')
 });
 
-function getCacheByType(type: string) {
+function getCacheByType(type: string, checkCache: boolean = false) {
     logger.debug('Getting cache by type:', type);
 
     switch (type) {
@@ -89,7 +89,9 @@ function getCacheByType(type: string) {
         case AWS_CE_TYPE:
             return AWS_CE_CACHE;
         default:
-            logger.error('Could not found compatible cache');
+            if (!checkCache) {
+                logger.error('Could not found compatible cache: ', type);
+            }
     }
 }
 
@@ -116,7 +118,7 @@ function readFromCacheByKey(type: string, key: string) {
 function hasCache(type: string, key: string) {
     logger.debug('Has cache', { key });
 
-    const cache = getCacheByType(type);
+    const cache = getCacheByType(type, true);
 
     const response = cache?.has(key);
     logger.debug('Has cache ?', response);
@@ -127,7 +129,7 @@ function hasCache(type: string, key: string) {
 function deleteFromCache(type: string, key: string) {
     logger.info('Delete cache', { key });
 
-    const cache = getCacheByType(type);
+    const cache = getCacheByType(type, true);
 
     cache?.delete(key);
 }
