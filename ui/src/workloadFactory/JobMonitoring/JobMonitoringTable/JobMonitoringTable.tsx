@@ -349,7 +349,23 @@ const JobMonitoringTable = () => {
                                 />
                             )}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
-                            {cellData === JOB_MONITORING_STATUS.WARNING && <Warning />}
+                            {cellData === JOB_MONITORING_STATUS.WARNING &&
+                                (rowData?.error ? (
+                                    <Popover
+                                        popoverClass={CommonStyles['popover']}
+                                        children={
+                                            <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                                {rowData?.error}
+                                            </Typography>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={<Warning className={styles.statusIcon} />}
+                                    />
+                                ) : (
+                                    <Warning />
+                                ))}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>
                     </div>

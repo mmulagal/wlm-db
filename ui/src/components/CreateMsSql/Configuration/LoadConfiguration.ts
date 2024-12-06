@@ -131,7 +131,7 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any, databaseType: st
     const state = store.getState();
     let apis = [];
     const credId = loadData?.awsAccount?.selectedCredential?.data?.credentialsId;
-    const regionId = loadData?.regionAndVpc?.selectedRegion?.value;
+    const regionId = loadData?.regionAndVpc?.selectedRegion?.data?.regionCode;
     const vpcId = loadData?.regionAndVpc?.selectedVPC?.label2;
     const osVersion = loadData?.operatingSystem?.label;
     const dbVersion = loadData?.dbVersion?.value;
@@ -139,7 +139,7 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any, databaseType: st
 
     // cred value was getting compared earlier. But found 1 case where cred id was same but name was different so comparing with credId now.
     const isSameCred = state.mssqlForm.awsAccount?.selectedCredential?.data?.credentialsId === credId;
-    const isSameRegion = state.mssqlForm.regionAndVpc?.selectedRegion?.value === regionId;
+    const isSameRegion = state.mssqlForm.regionAndVpc?.selectedRegion?.data?.regionCode === regionId;
     const isSameVpc = state.mssqlForm.regionAndVpc?.selectedVPC?.label2 === vpcId;
 
     const isSameOs = state.mssqlForm?.operatingSystem?.label === osVersion;
