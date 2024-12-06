@@ -759,7 +759,6 @@ async function managedHostsComputeAssessment(
         description: 'Microsoft SQL server compute assessment',
         resourceName,
         startTime: Date.now(),
-        endTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.ASSESSMENT,
         parentJobId
