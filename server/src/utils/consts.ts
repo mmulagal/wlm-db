@@ -1442,6 +1442,11 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'fsx:UpdateFileSystem',
     'fsx:UpdateVolume'
 ];
+
+const AWS_ERROR_CODES = {
+    ec2NotFound: 'InvalidInstanceID.NotFound'
+};
+
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
 const DEMO_DEFAULT_REGION = 'us-east-1';
 
@@ -1768,5 +1773,6 @@ export {
     DEMO_AWS_ACCOUNT_ID,
     DEMO_DEFAULT_REGION,
     ENT_ENGINE_EDITION,
-    STD_ENGINE_EDITION
+    STD_ENGINE_EDITION,
+    AWS_ERROR_CODES
 };
