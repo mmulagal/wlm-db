@@ -582,6 +582,7 @@ async function calculateComputeDrift(
                 ...existingAssessmentData,
                 compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions }
             };
+            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
         let recommendationMessage =
@@ -796,8 +797,19 @@ async function initiateComputeLicenseAssessmentCollection(
     region: string,
     databaseHostId: string,
     resourceName: string,
-    jobId: string
+    jobId: string,
+    fields: string[]
 ) {
+    logger.info('Initiate compute/license assessment collection', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        resourceName,
+        jobId,
+        fields
+    });
+
     const [{ metadata, cloud_provider_account_id: awsAccountId }] = await listResources(
         accountId,
         databaseHostId,
@@ -814,23 +826,29 @@ async function initiateComputeLicenseAssessmentCollection(
             node2InstanceId
         );
 
-        const licenseAssessment = await managedHostsLicenseAssessment(
-            accountId,
-            credentialsId,
-            region,
-            activeNodeInstanceId,
-            resourceName,
-            jobId
-        );
-        const computeAssessment = await managedHostsComputeAssessment(
-            accountId,
-            credentialsId,
-            region,
-            awsAccountId!,
-            activeNodeInstanceId,
-            resourceName,
-            jobId
-        );
+        let licenseAssessment;
+        let computeAssessment;
+        if (fields?.includes(AssessmentCategories.LICENSE)) {
+            licenseAssessment = await managedHostsLicenseAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName,
+                jobId
+            );
+        }
+        if (fields?.includes(AssessmentCategories.LICENSE)) {
+            computeAssessment = await managedHostsComputeAssessment(
+                accountId,
+                credentialsId,
+                region,
+                awsAccountId!,
+                activeNodeInstanceId,
+                resourceName,
+                jobId
+            );
+        }
         if (!isEmpty(licenseAssessment) || !isEmpty(computeAssessment)) {
             (metadata as unknown as Metadata).assessment = {
                 license: licenseAssessment || undefined,
@@ -1082,6 +1100,8 @@ async function driftAssessmentDataCollection(
     }
 
     const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+    const shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+    const shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
 
     if (shouldRunStorageAssessment) {
         await initiateStorageAssessmentCollection(
@@ -1091,6 +1111,18 @@ async function driftAssessmentDataCollection(
             databaseHostId,
             jobId,
             databaseInstanceRecord
+        );
+    }
+
+    if (shouldRunComputeAssessment || shouldRunLicenseAssessment) {
+        await initiateComputeLicenseAssessmentCollection(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceRecord.resourceName,
+            jobId,
+            fieldsValues
         );
     }
 }
@@ -1245,7 +1277,14 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         )
                     );
 
-                    const uniqueResources = [...new Set(managedInstances.map(({ resource }) => resource))];
+                    const uniqueResMap = new Map(
+                        managedInstances.map(({ resource }) => [
+                            `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
+                            resource
+                        ])
+                    ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
+                    const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
+
                     await Promise.all(
                         uniqueResources.map(
                             async ({
@@ -1261,7 +1300,8 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                     region!,
                                     databaseHostId,
                                     resourceName!,
-                                    parentJobId
+                                    parentJobId,
+                                    [AssessmentCategories.LICENSE, AssessmentCategories.COMPUTE]
                                 );
                             }
                         )
