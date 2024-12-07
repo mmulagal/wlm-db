@@ -656,8 +656,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={styles.spaceArea}>
-                                <div className={styles.contentArea}>
+                            <div className={setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
+                                <div className={setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
                                     {selectComponents()}
                                     <div className={styles.content}>
                                         <>
