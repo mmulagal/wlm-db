@@ -110,6 +110,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const newDashboardItem = localStorage.getItem('newDashboard');
+    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -732,8 +734,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            {/* <DatabaseHomePage /> */}
-                            <Dashboard />
+                            {!setFlagForNewDashboard && <DatabaseHomePage />}
+                            {setFlagForNewDashboard && <Dashboard />}
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (
