@@ -1,9 +1,7 @@
-.sandboxDate {
-    box-shadow: 2px 2px 6px var(--grey-15);
-    height: 376px;
-    width: 32.31%;
-    max-width: 520px;
+.sandboxes {
     background-color: var(--content-background);
+    width: 792px;
+    height: 432px;
 
     .headSection {
         display: flex;
@@ -15,9 +13,9 @@
     }
 
     .mainSection {
-        padding: 56px 40px 56px 40px;
+        padding: 76px 40px;
         display: flex;
-        gap: 40px;
+        gap: 120px;
         flex-direction: row;
         align-items: center;
     }
@@ -25,13 +23,20 @@
     .rightSide {
         display: flex;
         flex-direction: column;
-        gap: 24px;
-        margin-top: 8px;
 
         .individualRow {
+            .squareSetup {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
             display: flex;
             align-items: center;
-            gap: 8px;
+
+            width: 358px;
+            height: 56px;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
 
             .square {
                 width: 12px;
@@ -46,20 +51,28 @@
                 border-right: 1px solid var(--field-border-disabled);
                 height: 18px;
             }
+
+            .count {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
         }
     }
 }
 
-@media screen and (min-width: 1429px) and (max-width: 1800px) {
-    .sandboxDate {
-        width: 45.8% !important;
-        max-width: 1000px;
-    }
-}
+@media screen and (max-width: 1700px) {
+    .sandboxes {
+        width: 650px;
 
-@media screen and (max-width: 1428px) {
-    .sandboxDate {
-        width: 456px;
-        min-width: 456px;
+        .mainSection {
+            gap: 55px;
+        }
+
+        .rightSide {
+            .individualRow {
+                width: 300px;
+            }
+        }
     }
 }

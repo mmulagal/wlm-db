@@ -84,6 +84,8 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
+import Dashboard from '../../Dashboard/Dashboard';
+import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 
 type Tab = {
     tab: string;
@@ -108,6 +110,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const newDashboardItem = localStorage.getItem('newDashboard');
+    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -499,7 +503,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <Typography
                                         variant="Regular_14"
                                         className={
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart1
@@ -729,7 +734,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            <DatabaseHomePage />
+                            {!setFlagForNewDashboard && <DatabaseHomePage />}
+                            {setFlagForNewDashboard && <Dashboard />}
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (
@@ -782,6 +788,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {/* For optimize tab */}
 
                     {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
+
+                    {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
 
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>

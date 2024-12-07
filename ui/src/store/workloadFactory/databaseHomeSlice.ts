@@ -45,13 +45,19 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         connectivityCostPercent: 0,
         otherCostPercent: 0,
         requireBillingPerm: false
-    }
+    },
+    selectedConfig: '',
+    selectedAssessmentRow: null,
+    sandboxAgeRange: ''
 };
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setSelectedConfig: (state, action: PayloadAction<any>) => {
+            state.selectedConfig = action.payload;
+        },
         selectedTabSelection: (state, action: PayloadAction<any>) => {
             state.selectedTab = action.payload;
         },
@@ -75,6 +81,12 @@ const databaseHomeSlice = createSlice({
         },
         addInitialData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
+        },
+        setSelectedAssessmentRow: (state, action: PayloadAction<any>) => {
+            state.selectedAssessmentRow = action.payload;
+        },
+        setSandboxAgeRange: (state, action: PayloadAction<any>) => {
+            state.sandboxAgeRange = action.payload;
         }
     }
 });
@@ -87,7 +99,10 @@ export const {
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregatedCosts,
-    addInitialData
+    addInitialData,
+    setSelectedConfig,
+    setSelectedAssessmentRow,
+    setSandboxAgeRange
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
