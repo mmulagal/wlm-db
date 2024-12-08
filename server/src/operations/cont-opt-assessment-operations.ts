@@ -838,7 +838,7 @@ async function initiateComputeLicenseAssessmentCollection(
                 jobId
             );
         }
-        if (fields?.includes(AssessmentCategories.LICENSE)) {
+        if (fields?.includes(AssessmentCategories.COMPUTE)) {
             computeAssessment = await managedHostsComputeAssessment(
                 accountId,
                 credentialsId,
