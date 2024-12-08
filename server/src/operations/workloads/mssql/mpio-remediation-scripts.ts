@@ -83,6 +83,7 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
     )}' | ConvertFrom-Json
     Write-Information "iSCSI Target Addresses: $currentMpioSessionsCountPerTarget"
     $result = @()
+    $sessions = Get-IscsiSession
     Foreach ($each in $currentMpioSessionsCountPerTarget) {
         $address = $each.address
         $sessionsCount = $each.count
@@ -92,14 +93,21 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
                         "status" = "success"
                         "error" = $null}
         if($sessionsCount -gt 5) {
-            try {
-                $sessions | Select-Object -First ($sessionsCount - 5) | Unregister-IscsiSession -SessionIdentifier $_.SessionIdentifier
-                $perAddress.status = "success"
-            } catch {
-                Write-Information "Failed to unregister iSCSI session for address $address. Error message: $_.Exception.Message"
-                $perAddress.status = "failed"
-                $perAddress.error = $_.Exception.Message
+            Foreach ($session in $sessions) {
+                if($session.IsConnected -and $session.IsPersistent) {
+                    $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+                    if($targetPortalAddress -eq $address) {
+                        try {
+                          Unregister-IscsiSession -SessionIdentifier $session.SessionIdentifier
+                          $perAddress.status = "success"
+                        } catch {
+                          Write-Information "Failed to unregister iSCSI session for address $address and session $session.SessionIdentifier. Error message: $_.Exception.Message"
+                          $perAddress.status = "failed"
+                          $perAddress.error = $_.Exception.Message
+                        }
                     }
+                    }
+                }
             }
         elseif($sessionsCount -lt 5) {
             try{
@@ -107,7 +115,6 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
             $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
             $LocaliSCSIAddress = $data.Content
             #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
-
             1..(5 - $sessionsCount) | % { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
             $perAddress.status = "success"
             } catch {

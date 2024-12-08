@@ -222,7 +222,7 @@ async function triggerAssessmentAfterOptimization(
             break;
         }
         if (!isDemoFlow) {
-            await sleep(30000);
+            await sleep(35000);
         }
     }
 
@@ -1444,21 +1444,38 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
     }
 }
 
-async function validateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIscsiSessionsParams) {
+async function validateMpioSessions(
+    optimizeMpioisSessionsParams: OptimizeMpioIscsiSessionsParams,
+    runningOnPrimaryNode: boolean = true
+) {
     logger.info(`Validating MPIO iSCSI sessions for ${optimizeMpioisSessionsParams}`);
-    const { accountId, credentialsId, region, parentJobId, serverNameWithHostName, activeNodeInstanceId } =
-        optimizeMpioisSessionsParams;
+    const {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        serverNameWithHostName,
+        activeNodeInstanceId,
+        standbyNodeInstanceId,
+        sqlDeploymentType
+    } = optimizeMpioisSessionsParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
+    const jobDescription =
+        sqlDeploymentType !== 'Standalone'
+            ? `Validate MPIO iSCSI sessions on ${
+                  runningOnPrimaryNode ? 'primary node' : 'standby node'
+              } in ${serverNameWithHostName}.`
+            : `Validate MPIO iSCSI sessions in ${serverNameWithHostName}`;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
-        `Validate MPIO iSCSI sessions for ${serverNameWithHostName}`,
-        `Validate MPIO iSCSI sessions for ${serverNameWithHostName}`,
+        jobDescription,
+        jobDescription,
         parentJobId
     );
 
@@ -1469,7 +1486,7 @@ async function validateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             credentialsId,
             region,
             [ssmCommand],
-            activeNodeInstanceId!,
+            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
             accountId,
             false
         );
@@ -1494,7 +1511,10 @@ async function validateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
     return parsedResponse;
 }
 
-async function remediateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIscsiSessionsParams) {
+async function remediateMpioSessions(
+    optimizeMpioisSessionsParams: OptimizeMpioIscsiSessionsParams,
+    runningOnPrimaryNode: boolean = true
+) {
     const {
         accountId,
         credentialsId,
@@ -1509,23 +1529,31 @@ async function remediateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioI
         fsxId,
         awsAccountId,
         databaseHostId,
-        instanceMetadata
+        instanceMetadata,
+        standbyNodeInstanceId,
+        sqlDeploymentType
     } = optimizeMpioisSessionsParams;
 
     logger.info(
-        `Remediating MPIO iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${serverNameWithHostName}, ${activeNodeInstanceId}`
+        `Remediating MPIO iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${serverNameWithHostName}, ${activeNodeInstanceId}, ${standbyNodeInstanceId}`
     );
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
+    const jobDescription =
+        sqlDeploymentType !== 'Standalone'
+            ? `Remediate MPIO iSCSI sessions on ${
+                  runningOnPrimaryNode ? 'primary node' : 'standby node'
+              } in ${serverNameWithHostName}.`
+            : `Remediate MPIO iSCSI sessions in ${serverNameWithHostName}`;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
-        `Remediate MPIO iSCSI sessions for ${serverNameWithHostName}`,
-        `Remediate MPIO iSCSI sessions for ${serverNameWithHostName}`,
+        jobDescription,
+        jobDescription,
         parentJobId
     );
 
@@ -1546,7 +1574,25 @@ async function remediateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioI
             : parsedResponse.every((address: { status: string }) => address.status === 'failed')
             ? JOBSTATUS.FAILED
             : JOBSTATUS.WARNING;
-        if (jobStatus !== JOBSTATUS.FAILED) {
+    } catch (error) {
+        const errorMessage = `Error while remediating MPIO iSCSI sessions  ${error}`;
+        logger.error(errorMessage);
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = errorMessage;
+        throw errorMessage;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        if (jobStatus === JOBSTATUS.FAILED) {
+            await updateJobDetails(accountId, parentJobId, {
+                status: jobStatus,
+                endTime: Date.now()
+            });
+            await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+        } else {
             const instanceToAssess: WorkloadInstance = {
                 id: instanceId,
                 name: instanceName,
@@ -1579,25 +1625,6 @@ async function remediateMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioI
                 instanceToAssess
             );
         }
-    } catch (error) {
-        const errorMessage = `Error while remediating MPIO iSCSI sessions  ${error}`;
-        logger.error(errorMessage);
-        jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
-    } finally {
-        await updateJobDetails(accountId, jobId, {
-            status: jobStatus,
-            endTime: Date.now(),
-            error: jobError
-        });
-        if (jobStatus === JOBSTATUS.FAILED) {
-            await updateJobDetails(accountId, parentJobId, {
-                status: jobStatus,
-                endTime: Date.now()
-            });
-            await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-        }
     }
 }
 
@@ -1615,12 +1642,18 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
         databaseHostId,
         awsAccountId,
         activeNodeInstanceId,
-        sqlDeploymentType
+        sqlDeploymentType,
+        databaseType,
+        instanceMetadata,
+        sqlAuthEnabled,
+        standbyNodeInstanceId
     } = optimizeMpioisSessionsParams;
 
     logger.info(
-        `Optimizing MPIO iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${fsxId}, ${svmId}, ${instanceId}, ${instanceName}, ${serverNameWithHostName}, ${databaseHostId}, ${awsAccountId}, ${activeNodeInstanceId}, ${sqlDeploymentType}`
+        `Optimizing MPIO iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${fsxId}, ${svmId}, ${instanceId}, ${instanceName}, ${serverNameWithHostName}, ${databaseHostId}, ${awsAccountId}, ${activeNodeInstanceId}, ${sqlDeploymentType}, ${standbyNodeInstanceId}`
     );
+
+    // Fetch iSCSCI target addresses
     const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
         credentialsId,
         region,
@@ -1631,22 +1664,65 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             Iscsi: { IpAddresses: [] }
         }
     } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
-
     optimizeMpioisSessionsParams.iscsiTargetAddresses = iscsiTargetAddresses;
 
-    const sessionsPerTarget = await validateMpioSessions(optimizeMpioisSessionsParams);
-    const violations = sessionsPerTarget.filter((address: { count: number }) => address.count !== 5);
-    if (isEmpty(violations)) {
-        // No action required as remediated offline
-        await updateJobDetails(accountId, parentJobId, {
-            status: JOBSTATUS.WARNING,
-            endTime: Date.now(),
-            error: 'No action required as remediated offline.'
-        });
-        await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+    let violationsStandbyNode = [];
+
+    // Run validation on primary node
+    const sessionsPerTargetOnPrimaryNode = await validateMpioSessions(optimizeMpioisSessionsParams);
+    const violationsPrimaryNode = sessionsPerTargetOnPrimaryNode.filter(
+        (address: { count: number }) => address.count !== 5
+    );
+
+    if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+        // Run validation on standby node
+        const sessionsPerTargetOnStandbyNode = await validateMpioSessions(optimizeMpioisSessionsParams, false);
+        violationsStandbyNode = sessionsPerTargetOnStandbyNode.filter(
+            (address: { count: number }) => address.count !== 5
+        );
+    }
+    if (isEmpty(violationsPrimaryNode) && isEmpty(violationsStandbyNode)) {
+        const instanceToAssess: WorkloadInstance = {
+            id: instanceId,
+            name: instanceName,
+            type: databaseType,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            fsxFileSystem: fsxId,
+            activeNodeInstanceid: activeNodeInstanceId!,
+            cloudProviderAccountId: awsAccountId,
+            resourceName: serverNameWithHostName
+        };
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                [OptimizeOperatingSystemParams.MPIO_SESSIONS],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+
+        await triggerAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess
+        );
     } else {
-        optimizeMpioisSessionsParams.currentMpioSessionsCount = violations;
+        // Run remediation on primary node
+        optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsPrimaryNode;
         await remediateMpioSessions(optimizeMpioisSessionsParams);
+
+        // Run remediation on standby node
+        if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+            optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsStandbyNode;
+            await remediateMpioSessions(optimizeMpioisSessionsParams, false);
+        }
     }
 }
 
@@ -1800,7 +1876,8 @@ async function optimizeOperatingSystemSettings(
                     svmId,
                     databaseType,
                     instanceMetadata,
-                    sqlAuthEnabled
+                    sqlAuthEnabled,
+                    standbyNodeInstanceId
                 });
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
