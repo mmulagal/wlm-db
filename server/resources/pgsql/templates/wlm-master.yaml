@@ -49,7 +49,6 @@ Metadata:
           - FSxDataVolumeSize
           - FSxLogVolumeName
           - FSxLogVolumeSize
-          - FSxDataLunSize
           - FSxVolumeThroughputCapacity
           - ONTAPSecurityGroupID
           - FileSystemEncryptionKeyId
@@ -192,8 +191,6 @@ Parameters:
   {{{FSxLogVolumeName}}}
   
   {{{FSxLogVolumeSize}}}
-
-  {{{FSxDataLunSize}}}
 
   {{{FSxAdminUsername}}}
          
@@ -714,8 +711,6 @@ Resources:
           Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
-        FSxDataLunSize:
-          Ref: FSxDataLunSize
         NumberOfNodes: "1"
         FSxLogVolumeName:
           Ref: FSxLogVolumeName
