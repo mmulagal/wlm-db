@@ -770,3 +770,4 @@ Resources:
             - 'Standalone'
       FileSystemType: 'FSXN'
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'
+      FSxDataVolumeName: !Ref 'FSxDataVolumeName'

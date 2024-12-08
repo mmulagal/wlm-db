@@ -585,6 +585,25 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     sqlLicenseIncluded: Type.Optional(Type.Boolean())
 });
 
+const PgSqlDbHostsSummaryResponse = Type.Pick(DatabaseHostSummaryForMultiInstanceResponse, [
+    'id',
+    'name',
+    'databaseHostStatus',
+    'estimatedUsageCost',
+    'fsxnResourceInfo',
+    'clusterNodeDetails',
+    'databaseInstanceDetails',
+    'nodeTopology',
+    'ssmStatus',
+    'storageAllocation',
+    'errors'
+]);
+
+const PgSqlDbHostSummaryListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(PgSqlDbHostsSummaryResponse),
+    nextToken: Type.Optional(Type.String())
+});
 const DatabaseHostSummaryForMultiInstanceListResponse = Type.Object({
     count: Type.Number(),
     items: Type.Array(DatabaseHostSummaryForMultiInstanceResponse),
@@ -682,5 +701,7 @@ export {
     DatabaseInstanceTopologyType,
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
-    DatabaseQueryString
+    DatabaseQueryString,
+    PgSqlDbHostsSummaryResponse,
+    PgSqlDbHostSummaryListResponse
 };

@@ -5,32 +5,31 @@ import getLogger from '../../../utils/logger';
 
 const logger = getLogger();
 
-async function getPgSqlInstanceId(
+async function getPgSqlInstanceInfo(
     accountId: string,
     credentialsId: string,
     region: string,
     instanceName: string,
-    nodeIds: string[]
+    nodeIds: string[],
+    fsxDataVolumeName: string
 ) {
-    logger.info('Fetching pg sql instance id', accountId, nodeIds, instanceName);
+    logger.info('Fetching pg sql instance info', accountId, nodeIds, instanceName, fsxDataVolumeName);
     const commands = [
-        'sudo -u postgres pg_controldata /var/lib/pgsql/data | grep "Database system identifier" | awk \'{print $4}\''
+        // eslint-disable-next-line no-useless-escape
+        `sudo -u postgres pg_controldata /${fsxDataVolumeName} | grep -E "Database system identifier|Database cluster state" | awk '{\$1=\$1;print}'`
     ];
     let response;
     try {
-        let sqlInstanceId;
-
         for (const nodeId of nodeIds) {
             logger.info('Fetching PGSQL instance GUID', nodeId);
             response = await executeBashSsmCommand(credentialsId, region, commands, nodeId, accountId);
             if (response) {
-                sqlInstanceId = response;
-                return sqlInstanceId;
+                return response;
             }
         }
 
-        if (!sqlInstanceId) {
-            const errorMessage = `Error fetching instance id from nodes: ${nodeIds.join(', ')}`;
+        if (!response) {
+            const errorMessage = `Error fetching instance info from nodes: ${nodeIds.join(', ')}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
         }
@@ -50,4 +49,4 @@ function getPgSqlResourceId(node1InstanceId: string, node2InstanceId?: string) {
     return node2InstanceId ? generateHash(node1InstanceId + node2InstanceId) : generateHash(node1InstanceId);
 }
 
-export { getPgSqlResourceId, getPgSqlInstanceId };
+export { getPgSqlResourceId, getPgSqlInstanceInfo };

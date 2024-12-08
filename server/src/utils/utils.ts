@@ -555,6 +555,32 @@ function sqlResponseParsing(response: string) {
     }
 }
 
+function parsePgSqlInstanceInfo(instanceInfo: string) {
+    try {
+        let dbInstanceId;
+        let dbClusterState;
+
+        // Regular expressions to match the desired values
+        const dbSystemIdentifierRegex = /Database system identifier:\s*(\d+)/;
+        const dbClusterStateRegex = /Database cluster state:\s*(.+)/;
+
+        const dbSystemIdentifierMatch = instanceInfo.match(dbSystemIdentifierRegex);
+        if (dbSystemIdentifierMatch) {
+            [, dbInstanceId] = dbSystemIdentifierMatch;
+        }
+
+        const dbClusterStateMatch = instanceInfo.match(dbClusterStateRegex);
+        if (dbClusterStateMatch) {
+            [, dbClusterState] = dbClusterStateMatch;
+        }
+
+        return { dbInstanceId, dbClusterState };
+    } catch (error) {
+        logger.error('Error parsing instance information:', instanceInfo);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing instance information: ${instanceInfo}`);
+    }
+}
+
 function convertGiBToBytes(sizeInGiB: number) {
     return sizeInGiB * 1024 * 1024 * 1024;
 }
@@ -840,5 +866,6 @@ export {
     filterActions,
     getRegionDetails,
     calculateFsxStorageCapacityForHeadroomOptimization,
-    getSubJobDescriptions
+    getSubJobDescriptions,
+    parsePgSqlInstanceInfo
 };

@@ -28,7 +28,6 @@ import { calculatePrice } from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
-    RESOURCESTYPE,
     ServerState,
     STANDALONE,
     FCI,
@@ -52,7 +51,8 @@ import {
     UNKNOWN,
     WIN_SQL_EC2_USAGE_OPERATION,
     DEFAULT_INSTANCE_NAME,
-    EBS_ROOT_VOLUME
+    EBS_ROOT_VOLUME,
+    DatabaseTypes
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1351,10 +1351,13 @@ async function getNodeTopology(
                 );
             }
         }
-        const activeDirectoryDetails = {
-            name: activeDirectoryName || '',
-            address: activeDirectoryAddress || ''
-        };
+        const activeDirectoryDetails =
+            resourceData?.resource_type === DatabaseTypes.PG_SQL
+                ? undefined
+                : {
+                      name: activeDirectoryName || '',
+                      address: activeDirectoryAddress || ''
+                  };
 
         nodeTopologyData = {
             awsAccount: awsAccountId || '',
@@ -1407,7 +1410,8 @@ async function getDatabaseHostsSummaryV2(
     nextToken?: string,
     vpcId?: string,
     fsxId?: string,
-    pageSize?: number
+    pageSize?: number,
+    databaseType: string = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info(
         'Fetching all database hosts deployed in account ',
@@ -1428,7 +1432,7 @@ async function getDatabaseHostsSummaryV2(
         undefined,
         customerCredentialsId,
         awsRegion,
-        RESOURCESTYPE.MSSQL,
+        databaseType,
         fsxId,
         undefined,
         apiPageSize,
@@ -1639,7 +1643,8 @@ async function getDatabaseHostSummaryV2(
         region,
         credentials_id: credentialsId,
         metadata,
-        ec2UsageOperation
+        ec2UsageOperation,
+        resource_type: resourceType
     } = resourceDetail;
 
     let fieldsValues: Array<string> = [];
@@ -1671,13 +1676,16 @@ async function getDatabaseHostSummaryV2(
         isManaged: true
     }));
     const errormessages: { [index: string]: string } = {};
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, fsxDataVolumeName } = metadata as unknown as Metadata;
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
         node2InstanceId,
-        resourceId
+        resourceId,
+        accountId,
+        resourceType,
+        fsxDataVolumeName
     );
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
@@ -1709,13 +1717,16 @@ async function getDatabaseHostSummaryV2(
                     }));
             }
 
-            databaseInstancesDetail = await getDatabaseInstancesDetails(
-                credentialsId,
-                region,
-                instancesManaged,
-                resourceId,
-                instancesDetails
-            );
+            databaseInstancesDetail =
+                resourceType === DatabaseTypes.PG_SQL
+                    ? instancesDetails
+                    : await getDatabaseInstancesDetails(
+                          credentialsId,
+                          region,
+                          instancesManaged,
+                          resourceId,
+                          instancesDetails
+                      );
 
             databaseHostDetails.databaseInstanceDetails = databaseInstancesDetail;
             const promises = [];

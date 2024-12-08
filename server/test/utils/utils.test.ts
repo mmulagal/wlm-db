@@ -14,7 +14,8 @@ import {
     fsxStorageCapacityBreakdown,
     convertGiBToBytes,
     calculateFsxnStorageCapacity,
-    getRegionDetails
+    getRegionDetails,
+    parsePgSqlInstanceInfo
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -123,5 +124,12 @@ describe(' Secrets Manager string', () => {
         expect(getRegionDetails('42').name).toBeDefined();
         expect(getRegionDetails('42').name).toBe('');
         expect(getRegionDetails('eu-west-1')).toEqual({ name: 'Europe (Ireland)', code: 'eu-west-1' });
+    });
+
+    it('Parse PGSQL Instance Info', () => {
+        const instanceInfo = 'Database system identifier: 7445925805002571469\nDatabase cluster state: in production\n';
+        const { dbInstanceId, dbClusterState } = parsePgSqlInstanceInfo(instanceInfo);
+        expect(dbInstanceId).toBe('7445925805002571469');
+        expect(dbClusterState).toBe('in production');
     });
 });

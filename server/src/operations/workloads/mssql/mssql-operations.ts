@@ -55,7 +55,8 @@ import {
     generateHash,
     sqlResponseParsing,
     getOriginalDatabaseInstanceName,
-    isDemo
+    isDemo,
+    parsePgSqlInstanceInfo
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getResources } from '../../database/database-operations';
@@ -68,6 +69,7 @@ import {
 } from './ssm-script-utils';
 import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
+import { getPgSqlInstanceInfo } from '../pgsql/pgsql-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -916,14 +918,19 @@ async function getActiveSqlNode(
     region: string,
     node1InstanceId: string,
     node2InstanceId?: string,
-    resourceId?: string
+    resourceId?: string,
+    accountId?: string,
+    resourceType: string = DatabaseTypes.MS_SQL_SERVER,
+    fsxDataVolumeName: string = ''
 ) {
     logger.info('Getting active SQL node', {
         credentialsId,
         region,
         node1InstanceId,
         node2InstanceId,
-        resourceId
+        resourceId,
+        resourceType,
+        fsxDataVolumeName
     });
     try {
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
@@ -931,6 +938,32 @@ async function getActiveSqlNode(
         let errorMessage = '';
         // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+            if (resourceType === DatabaseTypes.PG_SQL) {
+                const instanceInfo =
+                    (await getPgSqlInstanceInfo(
+                        accountId!,
+                        credentialsId,
+                        region,
+                        '',
+                        [node1InstanceId],
+                        fsxDataVolumeName
+                    )) || '';
+                const { dbInstanceId, dbClusterState } = parsePgSqlInstanceInfo(instanceInfo);
+                const instanceDetails = {
+                    databaseInstanceId: dbInstanceId,
+                    instanceName: 'postgresql',
+                    isManaged: true,
+                    instanceState: dbClusterState === 'in production' ? ServerState.UP : ServerState.DOWN, // in production state: The database cluster is fully operational and running. This is the normal state when the PostgreSQL server is up and accepting connections
+                    isDefault: true
+                };
+                return {
+                    isSSMConnected: true,
+                    activeNodeInstanceId: node1InstanceId,
+                    instanceName: 'postgresql', // PGSQL instances have no instance name, defaulting to postgresql
+                    ssmConnectionStatus: connectionStatus.Status,
+                    instancesDetails: [instanceDetails]
+                };
+            }
             const { instanceName, instancesDetails = [] } =
                 (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
             if (instanceName) {
