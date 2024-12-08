@@ -896,7 +896,7 @@ async function triggerAssessment(
         cloudProviderAccountId = instanceDetails.cloudProviderAccountId;
     } catch (error: any) {
         logger.error(`Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`);
-        return;
+        return false;
     }
 
     const jobName = `Assess SQL Server instance ${resourceWithInstanceName}`;
@@ -987,7 +987,6 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     status: JOBSTATUS.IN_PROGRESS,
                     type: JOBTYPE.ASSESSMENT
                 });
-
                 try {
                     await Promise.all(
                         managedInstances.map(

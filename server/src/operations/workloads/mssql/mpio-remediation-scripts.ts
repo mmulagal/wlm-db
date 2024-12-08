@@ -51,4 +51,48 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
     Stop-Transcript | Out-Null
 `;
 
-export { REMEDIATE_MPIO_POLICY, CHECK_MPIO_POLICY, RESTART_INSTANCE };
+const CHECK_IF_MPIO_INSTALLED = `
+$mpioInstalled = Get-WindowsFeature -Name  Multipath-IO | Select-Object -ExpandProperty Installed
+
+return @{"mpioInstalled" = $mpioInstalled} | ConvertTo-Json
+`;
+
+const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
+
+    Start-Transcript -Path "C:\\cfn\\log\\mpio-installation.log.txt" -Append | Out-Null
+
+    $TargetPortalAddresses = ${iscsiTargetAddresses}
+    $ProgressPreference = "SilentlyContinue"
+    $ErrorActionPreference = "Stop"
+    try {
+        $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+        $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
+        $LocaliSCSIAddress = $data.Content
+        Foreach ($TargetPortalAddress in $TargetPortalAddresses) {
+            New-IscsiTargetPortal -TargetPortalAddress $TargetPortalAddress -TargetPortalPortNumber 3260 -InitiatorPortalAddress $LocaliSCSIAddress
+        }
+
+        #Add MPIO support for iSCSI
+        New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
+
+        #Enable PathVerificationState
+        Set-MPIOSetting -NewPathVerificationState Enabled
+
+        #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
+        1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
+        #Set the MPIO Policy to Round Robin
+        Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
+    }
+    catch {
+        $FailureReason = "Error connecting to Iscsi targets"
+        Write-Output $FailureReason
+    }
+`;
+
+export {
+    REMEDIATE_MPIO_POLICY,
+    CHECK_MPIO_POLICY,
+    RESTART_INSTANCE,
+    CHECK_IF_MPIO_INSTALLED,
+    ENABLE_MPIO_AND_CONFIGURE
+};
