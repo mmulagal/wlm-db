@@ -1,6 +1,6 @@
 #!/bin/bash
 exec > /var/log/netapp_wf_configure-pgsql.log 2>&1
-echo "Setting up the environment..."
+echo "Setting up the postgresql environment..."
 
 # Parse command-line arguments
 while getopts "d:l:v:w:" opt; do

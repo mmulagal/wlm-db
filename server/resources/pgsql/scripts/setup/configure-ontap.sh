@@ -1,6 +1,6 @@
 #!/bin/bash
-exec > /var/log/netapp_wf_configure.log 2>&1
-echo "Setting up the environment..."
+exec > /var/log/netapp_wf_configure-ontap.log 2>&1
+echo "Setting up the ontap environment..."
 
 # Parse command-line arguments
 while getopts "f:r:u:p:s:n:a:d:l:" opt; do
@@ -37,11 +37,12 @@ check_status "Failed to download certificate"
 ontap_request () {
     management_ip=management.$filesystemid.fsx.$region.amazonaws.com
     auth=$(printf '%s:%s' "$fsxusername" "$fsxpassword" | base64)
-    ontap_result=curl -s -H "Basic $auth" \
+    ontap_result=$(curl -s -H "Basic $auth" \
         -X $1 \
         --cacert /tmp/bundle-$region.pem \
         ${$3:+ --json "$3"} \
         "https://$management_ip/api/$2"
+    )
 }
 
 # Check if data volume exists
