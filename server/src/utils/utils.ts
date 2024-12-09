@@ -145,9 +145,9 @@ function generateDeploymentParams(
         FSxSvmName: `${prefix}_svm_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
         FSxStorageCapacity: fsxStorageCapacity,
-        FSxDataLunSize: FSxDataLunSizeInMib,
         NodeNetBIOSNames: databaseType === DatabaseTypes.PG_SQL ? netbiosPgsql : netbios,
         ...(databaseType === DatabaseTypes.MS_SQL_SERVER && {
+            FSxDataLunSize: FSxDataLunSizeInMib,
             SQLigroupname: `${prefix}_sqligroup_${suffix}`,
             FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
             FSxTempDbVolumeSize // 10% of FSxDataVolumeSize
