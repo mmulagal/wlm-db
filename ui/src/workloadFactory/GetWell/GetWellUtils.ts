@@ -10,6 +10,7 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
+import { GENERAL } from '../../utils/appConstants';
 import {
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -340,9 +341,9 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         tags: ['Security']
     },
-    application_sql_server: {
+    sql_licenses: {
         block_one: {
-            type: 'Application (SQL Server)',
+            type: GENERAL.APPLICATION_SQL_SERVER,
             value: 'Licenses'
         },
         block_two: {
@@ -881,7 +882,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
-        application_sql_server: { category: 'Application', subCategory: 'Application_sub' }
+        sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
     };
     Object.keys(cardData).map((key: any) => {
         const checkCategory =

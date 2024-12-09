@@ -1188,7 +1188,8 @@ export const GENERAL = {
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RIGHTSIZING_TOOLTIP:
-        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.'
+        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
+    APPLICATION_SQL_SERVER: 'Application (SQL Server)'
 };
 
 export const CODE_VIEWER = {

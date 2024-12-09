@@ -386,7 +386,7 @@
     },
     "license": {
         "name": "sql-license",
-        "status": "optimized",
+        "status": "not-optimized",
         "recommended": "optimized",
         "severity": "warning",
         "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
