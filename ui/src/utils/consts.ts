@@ -729,7 +729,8 @@ export const GETWELL_CONFIG: any = {
     'default-log-files-location': 'transaction_log_files',
     'default-data-files-location': 'user_data_files',
     'compute-rightsizing': 'compute_rightsizing',
-    'operating-system-patch': 'operating_system_patch'
+    'operating-system-patch': 'operating_system_patch',
+    'sql-license': 'application_sql_server'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [

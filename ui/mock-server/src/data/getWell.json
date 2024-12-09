@@ -261,7 +261,7 @@
             {
                 "name": "tempdb-drive-size",
                 "recommended": "10-20%",
-                "status": "not-applicable",
+                "status": "not-optimized",
                 "severity": "warning",
                 "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                 "tags": [
@@ -287,7 +287,7 @@
         "layout": [
             {
                 "name": "user-database-layout",
-                "status": "not-optimized",
+                "status": "optimized",
                 "recommended": "",
                 "severity": "warning",
                 "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
@@ -382,6 +382,16 @@
             "EBS throughput over-provisioned",
             "Network bandwidth over-provisioned",
             "Network PPS over-provisioned"
+        ]
+    },
+    "license": {
+        "name": "sql-license",
+        "status": "optimized",
+        "recommended": "optimized",
+        "severity": "warning",
+        "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+        "tags": [
+            "Cost optimization"
         ]
     }
 }

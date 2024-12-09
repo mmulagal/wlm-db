@@ -39,10 +39,11 @@ const OptimizationBreakdown = () => {
                         isComingSoon={false}
                     />
                     <OptimizeComponent
-                        value={<ComingSoon />}
+                        value={optimizationBreakDown?.application?.percent || 0}
+                        data={optimizationBreakDown?.application}
                         text={'Application (SQL Server)'}
                         image={<Applications />}
-                        isComingSoon={true}
+                        isComingSoon={false}
                     />
                 </div>
 

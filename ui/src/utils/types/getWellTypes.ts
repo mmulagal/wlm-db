@@ -13,6 +13,7 @@ export interface GetWellSliceInterface {
     optimizationBreakDown: {
         storage?: CountBreakDown;
         compute?: CountBreakDown;
+        application?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -48,6 +49,7 @@ export interface AssessmentResponseInterface {
         layout?: PerConfigInterface[];
     };
     compute?: PerConfigInterface;
+    license?: PerConfigInterface;
 }
 
 export interface PerConfigInterface {
