@@ -30,6 +30,7 @@ interface Metadata {
     activeDirectoryAddress?: string;
     creationDate?: string;
     fsxSvmId?: string;
+    fsxDataVolumeName?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
