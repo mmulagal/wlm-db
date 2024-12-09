@@ -40,7 +40,8 @@ import {
     assessmentJobData,
     optimizeStorageJobData,
     optimizeOperatingSystemJobData,
-    mockPGSqlStandaloneDeploymentStack
+    mockPGSqlStandaloneDeploymentStack,
+    optimizeStorageTierJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -804,6 +805,38 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
         uuidVolumeIdMap
     };
 }
+
+async function createStorageTierJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate storage-tier optimize mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeStorageTierJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -819,5 +852,6 @@ export {
     updateOptimizedConfigNameInInstanceTable,
     createDeploymentMockDataInDBForPgSql,
     createOperatingSystemOptimizeJobMockData,
-    demoGetFsxnVolIdsFromOntapVolIds
+    demoGetFsxnVolIdsFromOntapVolIds,
+    createStorageTierJobMockData
 };
