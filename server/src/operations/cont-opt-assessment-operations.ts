@@ -957,7 +957,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
 
     const allManagedInstances = (await listAllManagedInstances()) as DatabaseInstancesIncludingResource[];
     if (isEmpty(allManagedInstances)) {
-        logger.error('No successfully managed database instances found.');
+        logger.info('No successfully managed database instances found.');
         return;
     }
 
@@ -976,7 +976,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
         Object.entries(managedInstancesGroupedByAccountId).map(async ([accountId, managedInstances]) => {
             if (isEmpty(managedInstances)) {
                 const errorMessage = `No managed instances found for account ${accountId}.`;
-                logger.error(errorMessage);
+                logger.info(errorMessage);
             } else {
                 const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
@@ -1014,7 +1014,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 }
                 if (assessmentErrors.length === managedInstances.length) {
                     const errorMessage = `No managed instance is up and running in account ${accountId}.`;
-                    logger.error(errorMessage);
+                    logger.info(errorMessage);
                     await updateJobDetails(accountId, parentJobId, {
                         status: JOBSTATUS.WARNING,
                         error: errorMessage,
