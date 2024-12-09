@@ -114,7 +114,7 @@ Resources:
         CreationPolicy:
             ResourceSignal:
                 Count: '1'
-                Timeout: PT90M
+                Timeout: PT30M
         Metadata:
             AWS::CloudFormation::Init:
                 configSets:
@@ -128,7 +128,8 @@ Resources:
                 InstallSSM:
                     commands:
                         a-install-ssm:
-                            command: sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+                            command: !sub
+                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
                 CreateTempFolder:
                     commands:
                         a-create-temp-folder:
@@ -271,7 +272,7 @@ Resources:
                         echo "Status code: $StatusCode"
                         if [ "$StatusCode" != "200" ]; then
                             echo $FailureReason
-                            aws cloudformation signal-resource --stack ${AWS::StackName} --logical-resource-id ValidationNode1 --status FAILURE --reason "$FailureReason" --region ${AWS::Region}
+                            aws cloudformation signal-resource --stack ${AWS::StackName} --logical-resource-id SqlNode --status FAILURE --reason "$FailureReason" --region ${AWS::Region}
                             exit 1
                         else
                             echo "CF endpoint is reachable."
