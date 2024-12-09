@@ -222,7 +222,7 @@ async function triggerAssessmentAfterOptimization(
             break;
         }
         if (!isDemoFlow) {
-            await sleep(35000);
+            await sleep(30000);
         }
     }
 
