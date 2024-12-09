@@ -93,7 +93,7 @@ const Sandboxes = () => {
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAge(aggregatedSandboxList)['30-60']
+                                        getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                                     } ${GENERAL.SANDBOXES}`}</DsTypography>
                                 </>
                             )}
@@ -107,7 +107,7 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox('30-60')}>
+                            <DsButton type="text" onClick={() => redirectToSandbox('31-60')}>
                                 View
                             </DsButton>
                         </div>
@@ -131,7 +131,7 @@ const Sandboxes = () => {
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAge(aggregatedSandboxList)['60+']
+                                        getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                                     } ${GENERAL.SANDBOXES}`}</DsTypography>
                                 </>
                             )}
@@ -145,7 +145,7 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox('60+')}>
+                            <DsButton type="text" onClick={() => redirectToSandbox('61+')}>
                                 View
                             </DsButton>
                         </div>
