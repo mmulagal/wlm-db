@@ -868,7 +868,7 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license`
                 })
             }),
             optimizeStorageSizing: builder.mutation({

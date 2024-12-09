@@ -352,7 +352,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_three: {
             type: 'License edition',
-            value: ''
+            value: '',
+            smallFont: true
         },
         block_four: {
             type: 'Severity',
@@ -386,6 +387,19 @@ export const formatApplicationCardMainConfig = (
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
+    let licenseVal = '';
+    const state = store.getState();
+    const selectedDatabaseLicense = state.getWellOptimize.selectedDatabaseLicense || '';
+    if (selectedDatabaseLicense.includes('Standard')) {
+        licenseVal = 'Standard';
+    } else if (selectedDatabaseLicense.includes('Enterprise')) {
+        licenseVal = 'Enterprise';
+    } else if (selectedDatabaseLicense.includes('Developer')) {
+        licenseVal = 'Developer';
+    } else {
+        licenseVal = selectedDatabaseLicense;
+    }
+
     cardsData = {
         ...cardsData,
         [itemName]: {
@@ -396,7 +410,7 @@ export const formatApplicationCardMainConfig = (
             },
             block_three: {
                 ...(cardDataDefault?.[itemName]?.block_three || {}),
-                value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended
+                value: licenseVal
             },
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
