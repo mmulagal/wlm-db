@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { ExploreSavingsSliceEntities } from '../../utils/types/exploreSavingsType';
+import { WLF_TABS } from '../../utils/consts';
 
 export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedSnapshotFrequency: null,
@@ -120,13 +121,17 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualStorageCapacityUnit: null,
     selectedManualFSXIOPS: 6000,
     selectedManualFSXThroughput: 128,
-    snapshotLoading: false
+    snapshotLoading: false,
+    selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setSelectedExploreSavingsTab: (state, action: PayloadAction<any>) => {
+            state.selectedExploreSavingsTab = action.payload;
+        },
         setSelectedManualFSXThroughput: (state, action: PayloadAction<any>) => {
             state.selectedManualFSXThroughput = action.payload;
         },
@@ -407,6 +412,7 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setSelectedExploreSavingsTab,
     setRequestedRegion,
     addManualRegionsList,
     setManualRegionsLoading,

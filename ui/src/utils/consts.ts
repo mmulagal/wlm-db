@@ -357,7 +357,10 @@ export const WLF_TABS = {
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     UNDETECTED_HOSTS: 'Undetected hosts',
     REDIRECT_COMPONENT: 'Redirect Component',
-    OPTIMIZE: 'Optimize'
+    OPTIMIZE: 'Optimize',
+    MSSQL_ELASTIC_BLOCK_STORE: 'MsSQL on Elastic Block Store (EBS)',
+    MSSQL_FSX_FOR_WINDOWS: 'MsSQL on FSx for Windows',
+    MSSQL_ON_PREMISES: 'MsSQL on On-Premises'
 };
 
 export const DRIVE_LETTER_TYPE = {
