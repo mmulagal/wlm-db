@@ -45,6 +45,6 @@ export default defineConfig({
     },
     build: {
         outDir: 'build',
-        sourcemap: true
+        sourcemap: 'inline'
     }
 });
