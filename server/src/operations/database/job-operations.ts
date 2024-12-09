@@ -361,12 +361,16 @@ async function updateLongRunningJobs() {
     try {
         await Promise.all(
             runningJobs.map(async runningJob => {
+                const subJobs = await getSubJobs(runningJob.account_id, runningJob.id);
+                runningJobs.push(...subJobs);
                 logger.info('Marking job as failed ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.id, {
-                    status: JOBSTATUS.FAILED,
-                    endTime: new Date().valueOf(),
-                    error: 'Stack creation failed. Check cloud formation for failure reason.'
-                });
+                if (runningJob.end_time === null || runningJob.end_time === undefined) {
+                    updateJobDetails(runningJob.account_id, runningJob.id, {
+                        status: JOBSTATUS.FAILED,
+                        endTime: new Date().valueOf(),
+                        error: 'Stack creation failed. Check cloud formation for failure reason.'
+                    });
+                }
             })
         );
     } catch (error) {
