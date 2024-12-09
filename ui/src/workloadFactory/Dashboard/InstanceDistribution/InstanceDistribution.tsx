@@ -1,4 +1,4 @@
-import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsButton, DsFlashingDotsLoader, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './InstanceDistribution.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -12,6 +12,12 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 const InstanceDistribution = () => {
     const dispatch = useDispatch();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const mssqlDatabaseHostsLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
+    const pgsqlDatabaseHostsLoading = useAppSelector(
+        state => state.inventoryV2.getPgSqlDatabaseHosts.databaseHostsLoading
+    );
+    const mssqlHostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
+    const pgsqlHostData = useAppSelector(state => state.databaseHome.aggregatedPgSqlHostsCount);
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -25,7 +31,7 @@ const InstanceDistribution = () => {
                 </DsTypography>
 
                 <div className={styles.rightSection}>
-                    {/* {loading && <FlashingDotsLoader />} */}
+                    {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading) && <FlashingDotsLoader />}
                     <DsButton variant="secondary" isThin={true} onClick={() => handleClick(WLF_TABS.INVENTORY)}>
                         Manage instances
                     </DsButton>
@@ -44,12 +50,12 @@ const InstanceDistribution = () => {
                                 variant="Regular_32"
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
                             >
-                                200
-                                {/* <DsFlashingDotsLoader /> */}
+                                {mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading ? (
+                                    <DsFlashingDotsLoader />
+                                ) : (
+                                    (mssqlHostData?.totalInstances || 0) + (pgsqlHostData?.totalInstances || 0)
+                                )}
                             </DsTypography>
-                            {/* <div className={styles.loadingSection}>
-                            <DsFlashingDotsLoader />
-                        </div> */}
                             <DsTypography variant="Regular_14">Total instances</DsTypography>
                         </div>
                     </div>
@@ -58,11 +64,12 @@ const InstanceDistribution = () => {
 
                     <div className={styles.valueSection}>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            120
+                            {mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading ? (
+                                <FlashingDotsLoader />
+                            ) : (
+                                (mssqlHostData?.managedInstances || 0) + (pgsqlHostData?.managedInstances || 0)
+                            )}
                         </DsTypography>
-                        {/* <div className={styles.loadingSection}>
-                            <DsFlashingDotsLoader />
-                        </div> */}
 
                         <DsTypography variant="Regular_14">Managed instances</DsTypography>
                     </div>
@@ -73,18 +80,22 @@ const InstanceDistribution = () => {
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={20}
-                        beforeOutOf={100}
-                        afterOutOf={120}
+                        percentage={Math.round(
+                            ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) * 100
+                        )}
+                        beforeOutOf={mssqlHostData?.managedInstances || 0}
+                        afterOutOf={mssqlHostData?.totalInstances || 0}
                         bottomText="Managed instances:"
                         width="440px"
                     />
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={20}
-                        beforeOutOf={100}
-                        afterOutOf={120}
+                        percentage={Math.round(
+                            ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) * 100
+                        )}
+                        beforeOutOf={pgsqlHostData?.managedInstances || 0}
+                        afterOutOf={pgsqlHostData?.totalInstances || 0}
                         bottomText="Managed instances:"
                         width="440px"
                     />

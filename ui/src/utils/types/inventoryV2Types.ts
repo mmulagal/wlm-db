@@ -9,6 +9,11 @@ export interface InventorySliceData {
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
     };
+    getPgSqlDatabaseHosts: {
+        databaseHostsData: any;
+        databaseHostsLoading: boolean;
+        fullHostDataLoading: boolean;
+    };
     discoveredHosts: {
         discoveredHostData: any;
         discoverHostLoading: boolean;

@@ -683,6 +683,25 @@ export const inventoryApiV2 = createApi({
                     return response;
                 }
             }),
+            getPgSqlDatabaseHostsList: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getMssqlInstanceDataV2: builder.mutation({
                 query: ({ credentialId, regionId, instances, fields, nextToken = null }) => ({
                     url: nextToken
@@ -984,6 +1003,7 @@ export const {
 export const {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
+    useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
     useManageMssqlInstanceMutation,
