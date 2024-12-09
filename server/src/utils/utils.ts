@@ -560,23 +560,26 @@ function parsePgSqlInstanceInfo(instanceInfo: string) {
         let dbInstanceId;
         let dbClusterState;
 
-        // Regular expressions to match the desired values
-        const dbSystemIdentifierRegex = /Database system identifier:\s*(\d+)/;
-        const dbClusterStateRegex = /Database cluster state:\s*(.+)/;
+        const parsedInstanceInfo = JSON.parse(instanceInfo);
+        const result: { [key: string]: string } = {};
 
-        const dbSystemIdentifierMatch = instanceInfo.match(dbSystemIdentifierRegex);
-        if (dbSystemIdentifierMatch) {
-            [, dbInstanceId] = dbSystemIdentifierMatch;
+        parsedInstanceInfo?.forEach((item: string) => {
+            const [key, value] = item.split(/:/);
+            if (key && value) {
+                result[key.trim()] = value.trim();
+            }
+        });
+        if (result['Database system identifier']) {
+            dbInstanceId = result['Database system identifier'];
         }
 
-        const dbClusterStateMatch = instanceInfo.match(dbClusterStateRegex);
-        if (dbClusterStateMatch) {
-            [, dbClusterState] = dbClusterStateMatch;
+        if (result['Database cluster state']) {
+            dbClusterState = result['Database cluster state'];
         }
 
         return { dbInstanceId, dbClusterState };
-    } catch (error) {
-        logger.error('Error parsing instance information:', instanceInfo);
+    } catch (error: any) {
+        logger.error('Error parsing instance information:', error?.message);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing instance information: ${instanceInfo}`);
     }
 }

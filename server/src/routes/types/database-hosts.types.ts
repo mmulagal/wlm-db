@@ -585,18 +585,10 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
     sqlLicenseIncluded: Type.Optional(Type.Boolean())
 });
 
-const PgSqlDbHostsSummaryResponse = Type.Pick(DatabaseHostSummaryForMultiInstanceResponse, [
-    'id',
-    'name',
-    'databaseHostStatus',
-    'estimatedUsageCost',
-    'fsxnResourceInfo',
-    'clusterNodeDetails',
-    'databaseInstanceDetails',
-    'nodeTopology',
-    'ssmStatus',
-    'storageAllocation',
-    'errors'
+const PgSqlDbHostsSummaryResponse = Type.Omit(DatabaseHostSummaryForMultiInstanceResponse, [
+    'ebsResourceInfo',
+    'databaseInstancesSummary',
+    'sqlLicenseIncluded'
 ]);
 
 const PgSqlDbHostSummaryListResponse = Type.Object({

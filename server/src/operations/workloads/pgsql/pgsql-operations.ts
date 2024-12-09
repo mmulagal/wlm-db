@@ -14,10 +14,7 @@ async function getPgSqlInstanceInfo(
     fsxDataVolumeName: string
 ) {
     logger.info('Fetching pg sql instance info', accountId, nodeIds, instanceName, fsxDataVolumeName);
-    const commands = [
-        // eslint-disable-next-line no-useless-escape
-        `sudo -u postgres pg_controldata /${fsxDataVolumeName} | grep -E "Database system identifier|Database cluster state" | awk '{\$1=\$1;print}'`
-    ];
+    const commands = [`sudo -u postgres pg_controldata /${fsxDataVolumeName} | jq -R -s -c 'split("\\n")[:-1]'`];
     let response;
     try {
         for (const nodeId of nodeIds) {

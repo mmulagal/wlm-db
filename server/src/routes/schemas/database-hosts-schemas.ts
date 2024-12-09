@@ -251,8 +251,8 @@ const DatabaseHostsSummarySchemaV2 = {
 
 const PgSqlDbHostsSummarySchema = {
     ...resourceRequest,
-    summary: 'Get PostgreSql database hosts details',
-    description: 'Get database hosts summary details',
+    summary: 'Get Postgresql database hosts details',
+    description: 'Get Postgresql database hosts summary details',
     querystring: DatabaseHostQueryString,
     response: {
         200: PgSqlDbHostSummaryListResponse
@@ -273,9 +273,9 @@ const DatabaseHostDetailsSchemaV2 = {
 
 const PgSqlDbHostDetailsSchema = {
     ...resourceRequest,
-    summary: 'Fetch PostgreSql database server details',
+    summary: 'Fetch Postgresql database server details',
     description:
-        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network), storage savings, usage cost and databases in the server.',
+        'Fetch Postgresql database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network), storage savings, usage cost and databases in the server.',
     params: DatabaseHostSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
