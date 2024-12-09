@@ -78,7 +78,7 @@ const DashboardSandbox = () => {
                         {!isNA && (
                             <>
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['30-60']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
@@ -109,7 +109,7 @@ const DashboardSandbox = () => {
                         {!isNA && (
                             <>
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['60+']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}

@@ -74,13 +74,13 @@ const SandboxDistributionDate = () => {
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['30-60']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
                         {windowSize.width <= 1428 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
-                                getSandboxDistributionByAge(aggregatedSandboxList)['30-60']
+                                getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                             })`}</DsTypography>
                         )}
                         {isNA && (
@@ -109,14 +109,14 @@ const SandboxDistributionDate = () => {
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['60+']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
 
                         {windowSize.width <= 1428 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
-                                getSandboxDistributionByAge(aggregatedSandboxList)['60+']
+                                getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                             })`}</DsTypography>
                         )}
                         {isNA && (
