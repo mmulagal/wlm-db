@@ -894,9 +894,10 @@ async function triggerAssessment(
         activeNodeInstanceId = instanceDetails.activeNodeInstanceId;
         newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
         cloudProviderAccountId = instanceDetails.cloudProviderAccountId;
-    } catch (error: any) {
-        logger.error(`Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`);
-        return;
+    } catch (error) {
+        errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     const jobName = `Assess SQL Server instance ${resourceWithInstanceName}`;
@@ -977,6 +978,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 const errorMessage = `No managed instances found for account ${accountId}.`;
                 logger.error(errorMessage);
             } else {
+                logger.info('i am here');
                 const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
@@ -987,12 +989,16 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     status: JOBSTATUS.IN_PROGRESS,
                     type: JOBTYPE.ASSESSMENT
                 });
-
+                const assessmentErrors: unknown[] = [];
                 try {
                     await Promise.all(
                         managedInstances.map(
                             async managedInstance => {
-                                await triggerAssessment(managedInstance, parentJobId, fields);
+                                try {
+                                    await triggerAssessment(managedInstance, parentJobId, fields);
+                                } catch (error) {
+                                    assessmentErrors.push(error);
+                                }
                             },
                             {
                                 concurrency: 1
@@ -1004,6 +1010,15 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     await updateJobDetails(accountId, parentJobId, {
                         status: JOBSTATUS.FAILED,
                         error: error.message,
+                        endTime: Date.now()
+                    });
+                }
+                if (assessmentErrors.length === managedInstances.length) {
+                    const errorMessage = `No managed instance is up and running in account ${accountId}.`;
+                    logger.info(errorMessage);
+                    await updateJobDetails(accountId, parentJobId, {
+                        status: JOBSTATUS.WARNING,
+                        error: errorMessage,
                         endTime: Date.now()
                     });
                 }
