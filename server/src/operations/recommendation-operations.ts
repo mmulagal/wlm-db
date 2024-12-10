@@ -131,8 +131,10 @@ async function getLicenseRecommendations(
     const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);
 
     let recommendedLicenseType = SQL_ENT;
-    if (!usingEnterpriseConfiguration) {
+    if (runningEnterpriseEditionSqlServerInstances.length > 0 && !usingEnterpriseConfiguration) {
         licenseFinding = FINDING.NOT_OPTIMIZED;
+        recommendedLicenseType = SQL_STD;
+    } else if (isEmpty(runningEnterpriseEditionSqlServerInstances)) {
         recommendedLicenseType = SQL_STD;
     }
     return { licenseFinding, recommendedLicenseType, sqlServerInstances };
