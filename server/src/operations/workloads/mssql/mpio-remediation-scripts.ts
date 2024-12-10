@@ -93,22 +93,21 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
                         "status" = "success"
                         "error" = $null}
         if($sessionsCount -gt 5) {
+            $sessions = $sessions | Where-Object {$_.IsConnected -and $_.IsPersistent} | Select-Object -Last ($sessions.count - 5)
             Foreach ($session in $sessions) {
-                if($session.IsConnected -and $session.IsPersistent) {
-                    $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
-                    if($targetPortalAddress -eq $address) {
-                        try {
+                $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+                if($targetPortalAddress -eq $address) {
+                    try {
                           Unregister-IscsiSession -SessionIdentifier $session.SessionIdentifier
                           $perAddress.status = "success"
-                        } catch {
+                    } catch {
                           Write-Information "Failed to unregister iSCSI session for address $address and session $session.SessionIdentifier. Error message: $_.Exception.Message"
                           $perAddress.status = "failed"
                           $perAddress.error = $_.Exception.Message
-                        }
-                    }
                     }
                 }
             }
+        }
         elseif($sessionsCount -lt 5) {
             try{
             $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
