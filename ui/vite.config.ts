@@ -44,6 +44,7 @@ export default defineConfig({
         port: 4300
     },
     build: {
-        outDir: 'build'
+        outDir: 'build',
+        sourcemap: true
     }
 });

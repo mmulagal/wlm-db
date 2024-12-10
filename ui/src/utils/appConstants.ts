@@ -909,10 +909,9 @@ export const GENERAL = {
     ANALYTICS: 'Analytics',
     SANDBOX_OTHER: 'Other',
     SANDBOXES_DISTRIBUTION_BY_AGE: 'Sandboxes distribution by age',
-    ONE_SEVEN_DAYS: '0-7 days',
-    SEVEN_FOURTEEN_DAYS: ' 8-14 days',
-    FOURTEEN_THIRTY_DAYS: '15-30 days',
-    THIRTY_PLUS_DAYS: '30+ days',
+    ONE_THIRTY_DAYS: '0-30 days',
+    THIRTY_SIXTY_DAYS: '31-60 days',
+    SIXTY_PLUS_DAYS: '61+ days',
     CREATE_SANDBOX: 'Create sandbox',
     TARGET_HOST: 'Target database host',
     TARGET_INSTANCE: 'Target database instance',
@@ -1189,7 +1188,8 @@ export const GENERAL = {
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RIGHTSIZING_TOOLTIP:
-        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.'
+        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
+    APPLICATION_SQL_SERVER: 'Application (SQL Server)'
 };
 
 export const CODE_VIEWER = {

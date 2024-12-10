@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addDatabaseHostsDataV2,
+    addPgSqlDatabaseHostsData,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setInventoryChartData,
@@ -11,6 +12,7 @@ import {
     setIsDiscoveredHostData,
     setIsFullHostDataLoading,
     setIsManagedHostListLoading,
+    setIsPgSqlDatabaseHostsLoading,
     setIsRefreshed,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
@@ -24,7 +26,8 @@ import {
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useLazyGetFsxCredentialStatusQuery,
-    useLazyGetManagedHostDataQuery
+    useLazyGetManagedHostDataQuery,
+    useLazyGetPgSqlDatabaseHostsListQuery
 } from '../../utils/apiService';
 import {
     formatDiscoveredInventoryData,
@@ -72,6 +75,10 @@ const InventoryApisV2 = () => {
     // database-hosts without fields values
     const [getDatabaseHostsListApi] = useLazyGetDatabaseHostsListV2Query();
     const [topologyHostData, setTopologyHostData] = useState<any>({});
+
+    // pgsql database-hosts without fields values
+    const [getPgSqlDatabaseHostsListApi] = useLazyGetPgSqlDatabaseHostsListQuery();
+    const [pgsqlTopologyHostData, setPgsqlTopologyHostData] = useState<any>({});
 
     // database-hosts with fields values
     const [getDatabaseHostsFullDataApi] = useLazyGetDatabaseHostsFullDataV2Query();
@@ -237,6 +244,52 @@ const InventoryApisV2 = () => {
             } catch (error) {
                 dispatch(setIsDatabaseHostsLoading(false));
                 setTopologyHostData(managedList);
+            }
+        }
+    };
+
+    // This function is to get basic managed rows info for pgsql. This output is used only in dashboard page as of now.
+    const getPgSqlDatabaseHostsList = async (
+        managedList: string[],
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getPgSqlDatabaseHostsListApi({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: nextToken
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setResetManagedData(false));
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = { ...managedList, [perRow?.id]: perRow };
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setPgsqlTopologyHostData(managedList);
+                            getPgSqlDatabaseHostsList(
+                                managedList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setIsPgSqlDatabaseHostsLoading(false));
+                            setPgsqlTopologyHostData(managedList);
+                        }
+                    } else {
+                        dispatch(setIsPgSqlDatabaseHostsLoading(false));
+                        setPgsqlTopologyHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsPgSqlDatabaseHostsLoading(false));
+                setPgsqlTopologyHostData(managedList);
             }
         }
     };
@@ -575,10 +628,12 @@ const InventoryApisV2 = () => {
         dispatch(setIsManagedHostListLoading(true));
         // reset for getDatabaseHostsList
         dispatch(setIsDatabaseHostsLoading(true));
+        dispatch(setIsPgSqlDatabaseHostsLoading(true));
         setTopologyHostData({});
         // reset for getDatabaseHostsFullData
         dispatch(setIsFullHostDataLoading(true));
         dispatch(addDatabaseHostsDataV2(null));
+        dispatch(addPgSqlDatabaseHostsData(null));
         setFullHostData({});
         // reset for discovery
         dispatch(setIsDiscoveredHostData(null));
@@ -617,6 +672,7 @@ const InventoryApisV2 = () => {
                 setTimeout(() => {
                     getManagedHostList(managedList, null, credId, regionId);
                     getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
                     getDatabaseHostsFullData(fullHostData, null, credId, regionId);
                     getDiscoveryHostsList(discoveredList, null, credId, regionId);
                 }, 10);
@@ -636,6 +692,7 @@ const InventoryApisV2 = () => {
                 setTimeout(() => {
                     getManagedHostList(managedList, null, credId, regionId);
                     getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
                     getDatabaseHostsFullData(fullHostData, null, credId, regionId);
                     getDiscoveryHostsList(discoveredList, null, credId, regionId);
                 }, 10);
@@ -675,6 +732,31 @@ const InventoryApisV2 = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullHostData, topologyHostData, fullHostDataLoading]);
+
+    // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object for pgsql.
+    useEffect(() => {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData) {
+            let databaseHostDataObj: any = {};
+            Object.keys(pgsqlTopologyHostData).map((key: string) => {
+                if (key in fullHostData) {
+                    const perObj = {
+                        ...pgsqlTopologyHostData[key],
+                        ...fullHostData[key],
+                        loading: false,
+                        databaseHostStatus: pgsqlTopologyHostData[key]?.databaseHostStatus
+                    };
+                    databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+                } else {
+                    const perObj = { ...pgsqlTopologyHostData[key], loading: fullHostDataLoading ? true : false };
+                    databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+                }
+            });
+            dispatch(addPgSqlDatabaseHostsData(databaseHostDataObj));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fullHostData, pgsqlTopologyHostData, fullHostDataLoading]);
 
     // This data is coming from discover API
     useEffect(() => {

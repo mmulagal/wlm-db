@@ -1370,6 +1370,14 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ArtifactsSignatures',
         url: `${WLMDB}/pgsql/signig_files.zip`
+    },
+    {
+        name: 'ScriptCommon',
+        url: `${WLMDB}/pgsql/scripts/common.zip`
+    },
+    {
+        name: 'ScriptSetup',
+        url: `${WLMDB}/pgsql/scripts/setup.zip`
     }
 ];
 
@@ -1436,6 +1444,14 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
 ];
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
 const DEMO_DEFAULT_REGION = 'us-east-1';
+
+/*
+sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.
+    2 = Standard (For Standard, Web, and Business Intelligence.)
+    3 = Enterprise (For Evaluation, Developer, and Enterprise editions.)
+    */
+const ENT_ENGINE_EDITION = 3;
+const STD_ENGINE_EDITION = 2;
 
 export {
     WLMDB,
@@ -1750,5 +1766,7 @@ export {
     MSSQL,
     AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
-    DEMO_DEFAULT_REGION
+    DEMO_DEFAULT_REGION,
+    ENT_ENGINE_EDITION,
+    STD_ENGINE_EDITION
 };

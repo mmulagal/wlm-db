@@ -63,21 +63,18 @@ export const getUniqueSourceDatabasesCount = (sandBoxList: SandboxListEntities) 
 
 export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) => {
     let distribution = {
-        '0-7': 0,
-        '8-14': 0,
-        '15-30': 0,
-        '30+': 0
+        '0-30': 0,
+        '31-60': 0,
+        '61+': 0
     };
     sandBoxList.map(item => {
         const age = getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt));
-        if (age < 8) {
-            distribution['0-7']++;
-        } else if (age < 15) {
-            distribution['8-14']++;
-        } else if (age < 31) {
-            distribution['15-30']++;
+        if (age <= 30) {
+            distribution['0-30']++;
+        } else if (age <= 60) {
+            distribution['31-60']++;
         } else {
-            distribution['30+']++;
+            distribution['61+']++;
         }
     });
     return distribution;
