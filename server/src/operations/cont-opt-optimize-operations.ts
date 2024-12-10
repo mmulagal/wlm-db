@@ -1516,14 +1516,6 @@ async function remediateMpioSessions(
         parentJobId,
         serverNameWithHostName,
         activeNodeInstanceId,
-        instanceId,
-        instanceName,
-        databaseType,
-        sqlAuthEnabled,
-        fsxId,
-        awsAccountId,
-        databaseHostId,
-        instanceMetadata,
         standbyNodeInstanceId,
         sqlDeploymentType
     } = optimizeMpioisSessionsParams;
@@ -1581,45 +1573,7 @@ async function remediateMpioSessions(
             error: jobError
         });
     }
-    if (jobStatus === JOBSTATUS.FAILED) {
-        await updateJobDetails(accountId, parentJobId, {
-            status: jobStatus,
-            endTime: Date.now()
-        });
-        await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-    } else {
-        const instanceToAssess: WorkloadInstance = {
-            id: instanceId,
-            name: instanceName,
-            type: databaseType,
-            region,
-            sqlAuthEnabled: sqlAuthEnabled || false,
-            fsxFileSystem: fsxId,
-            activeNodeInstanceid: activeNodeInstanceId!,
-            cloudProviderAccountId: awsAccountId,
-            resourceName: serverNameWithHostName
-        };
-
-        if (isDemoFlow) {
-            await updateOptimizedConfigNameInInstanceTable(
-                accountId,
-                instanceId,
-                [OptimizeOperatingSystemParams.MPIO_SESSIONS],
-                'OS',
-                instanceMetadata || {}
-            );
-        }
-
-        await triggerAssessmentAfterOptimization(
-            credentialsId,
-            region,
-            accountId,
-            databaseHostId,
-            serverNameWithHostName,
-            parentJobId,
-            instanceToAssess
-        );
-    }
+    return jobStatus;
 }
 
 async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIscsiSessionsParams) {
@@ -1709,13 +1663,58 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
         );
     } else {
         // Run remediation on primary node
+        let primaryRemediateJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+        let standbyRemediateJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
         optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsPrimaryNode;
-        await remediateMpioSessions(optimizeMpioisSessionsParams);
+        primaryRemediateJobStatus = await remediateMpioSessions(optimizeMpioisSessionsParams);
 
         // Run remediation on standby node
         if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
             optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsStandbyNode;
-            await remediateMpioSessions(optimizeMpioisSessionsParams, false);
+            standbyRemediateJobStatus = await remediateMpioSessions(optimizeMpioisSessionsParams, false);
+        }
+
+        if (primaryRemediateJobStatus === JOBSTATUS.FAILED && standbyRemediateJobStatus === JOBSTATUS.FAILED) {
+            await updateJobDetails(accountId, parentJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now()
+            });
+            await updateLongRunningAuditGroup(
+                AuditStatus.FAILED,
+                `Failed to remediate MPIO iSCSI sessions on ${serverNameWithHostName}`
+            );
+        } else {
+            const instanceToAssess: WorkloadInstance = {
+                id: instanceId,
+                name: instanceName,
+                type: databaseType,
+                region,
+                sqlAuthEnabled: sqlAuthEnabled || false,
+                fsxFileSystem: fsxId,
+                activeNodeInstanceid: activeNodeInstanceId!,
+                cloudProviderAccountId: awsAccountId,
+                resourceName: serverNameWithHostName
+            };
+
+            if (isDemoFlow) {
+                await updateOptimizedConfigNameInInstanceTable(
+                    accountId,
+                    instanceId,
+                    [OptimizeOperatingSystemParams.MPIO_SESSIONS],
+                    'OS',
+                    instanceMetadata || {}
+                );
+            }
+
+            await triggerAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess
+            );
         }
     }
 }
