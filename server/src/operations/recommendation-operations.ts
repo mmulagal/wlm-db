@@ -3,10 +3,12 @@ import { cloneDeep, compact, groupBy, isEmpty } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
 import {
+    ENT_ENGINE_EDITION,
     FINDING,
     HOURS_IN_MONTH,
     HttpErrorCodes,
     SQL_SERVICE_STATE,
+    STD_ENGINE_EDITION,
     SqlServerDeploymentModel,
     WIN_SQL_EC2_USAGE_OPERATION
 } from '../utils/consts';
@@ -36,14 +38,6 @@ const logger = getLogger();
 const SQL_ENT = 'SQL Ent';
 const SQL_STD = 'SQL Std';
 const SQL_WEB = 'SQL Web';
-
-/*
-sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.
-    2 = Standard (For Standard, Web, and Business Intelligence.)
-    3 = Enterprise (For Evaluation, Developer, and Enterprise editions.)
-    */
-const ENT_ENGINE_EDITION = 3;
-const STD_ENGINE_EDITION = 2;
 
 async function isUsingEnterpriseConfiguration(
     accountId: string,
@@ -131,10 +125,8 @@ async function getLicenseRecommendations(
     const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);
 
     let recommendedLicenseType = SQL_ENT;
-    if (runningEnterpriseEditionSqlServerInstances.length > 0 && !usingEnterpriseConfiguration) {
+    if (!usingEnterpriseConfiguration) {
         licenseFinding = FINDING.NOT_OPTIMIZED;
-        recommendedLicenseType = SQL_STD;
-    } else if (isEmpty(runningEnterpriseEditionSqlServerInstances)) {
         recommendedLicenseType = SQL_STD;
     }
     return { licenseFinding, recommendedLicenseType, sqlServerInstances };

@@ -29,7 +29,14 @@ import {
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
-import { CUSTOM_SSM_EXECUTION_TIMEOUT, FINDING, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    ENT_ENGINE_EDITION,
+    FINDING,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    SQL_STD
+} from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
 import {
@@ -738,14 +745,21 @@ async function runLicenseAssessment(
         [activeNodeInstanceId]
     );
     const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-    return getLicenseRecommendations(
-        accountId,
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        sqlServerInstances,
-        sqlServerDeploymentType
-    );
+    if (sqlServerInstances.some(instance => instance.sqlServerEngineEdition === ENT_ENGINE_EDITION)) {
+        return getLicenseRecommendations(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            sqlServerInstances,
+            sqlServerDeploymentType
+        );
+    }
+    return {
+        licenseFinding: FINDING.OPTIMIZED,
+        recommendedLicenseType: SQL_STD,
+        sqlServerInstances
+    };
 }
 
 async function managedHostsComputeAssessment(
