@@ -37,8 +37,7 @@ describe('terraform operations', () => {
             'test-deployment',
             'test-path',
             [],
-            'test-url',
-            'test-metrics'
+            'test-url'
         );
         expect(resp).toBeDefined();
     });
