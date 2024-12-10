@@ -41,6 +41,7 @@ import {
     optimizeStorageJobData,
     optimizeOperatingSystemJobData,
     mockPGSqlStandaloneDeploymentStack,
+    optimizeMpioSessionsJobData,
     optimizeStorageTierJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
@@ -656,6 +657,37 @@ async function createOperatingSystemOptimizeJobMockData(
     );
 }
 
+async function createOperatingSystemMpioSessionsOptimizeJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate operating system optimize mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeMpioSessionsJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 async function createDeploymentMockDataInDBForPgSql(
     accountId: string,
     stackId: string,
@@ -853,5 +885,6 @@ export {
     createDeploymentMockDataInDBForPgSql,
     createOperatingSystemOptimizeJobMockData,
     demoGetFsxnVolIdsFromOntapVolIds,
+    createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData
 };

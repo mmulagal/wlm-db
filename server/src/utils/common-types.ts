@@ -398,6 +398,29 @@ interface StorageTierParams {
     svmName: string;
 }
 
+interface OptimizeMpioIscsiSessionsParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    databaseType: string;
+    fsxId: string;
+    svmId: string;
+    instanceId: string;
+    sqlAuthEnabled: boolean;
+    instanceName: string;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    awsAccountId: string;
+    sqlDeploymentType?: string;
+    activeNodeInstanceId?: string;
+    standbyNodeInstanceId?: string;
+    iscsiTargetAddresses?: string[];
+    currentMpioSessionsCount?: { address: string; count: number }[];
+    instanceMetadata: any;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -429,5 +452,6 @@ export {
     DatabaseInstancesIncludingResource,
     StorageTierParams,
     ComputeAssessment,
-    LicenseAssessment
+    LicenseAssessment,
+    OptimizeMpioIscsiSessionsParams
 };

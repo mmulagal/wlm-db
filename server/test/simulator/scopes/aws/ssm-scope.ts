@@ -71,7 +71,9 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/drift-assessment-scripts';
 import {
     CHECK_MPIO_POLICY,
-    REMEDIATE_MPIO_POLICY
+    REMEDIATE_MPIO_POLICY,
+    REMEDIATE_MPIO_ISCSI_SESSIONS,
+    MPIO_ISCSI_SESSIONS
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 
@@ -506,6 +508,14 @@ const setMpioPolicy = {
     commands: [REMEDIATE_MPIO_POLICY]
 };
 
+const validateMpioSessionsSsm = {
+    commands: [MPIO_ISCSI_SESSIONS]
+};
+
+const remediateMpioSessions = {
+    commands: [REMEDIATE_MPIO_ISCSI_SESSIONS]
+};
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
@@ -670,6 +680,10 @@ ssmMock
     .resolves(listSendCommandCommandResponse.validateMpioCommand)
     .on(SendCommandCommand, { Parameters: setMpioPolicy })
     .resolves(listSendCommandCommandResponse.setMpioPolicyCommand)
+    .on(SendCommandCommand, { Parameters: validateMpioSessionsSsm })
+    .resolves(listSendCommandCommandResponse.validateMpioSessionsCommand)
+    .on(SendCommandCommand, { Parameters: remediateMpioSessions })
+    .resolves(listSendCommandCommandResponse.remediateMpioSessionsCommand)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
         return getLunDetailsRegex.test(params.Parameters.commands[0]);
@@ -842,6 +856,15 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand'
     })
     .resolves(getCommandInvocationResponse.setMpioPolicyCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand'
+    })
+    .resolvesOnce(getCommandInvocationResponse.validateMpioSessionsViolationCommandResponse)
+    .resolves(getCommandInvocationResponse.validateMpioSessionsCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-remediateMpioSessionsCommand'
+    })
+    .resolves(getCommandInvocationResponse.remediateMpioSessionsCommandResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
     })

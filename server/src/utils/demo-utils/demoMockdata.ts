@@ -2128,6 +2128,86 @@ function optimizeOperatingSystemJobData(
         }
     ];
 }
+
+function optimizeMpioSessionsJobData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    instanceId: string,
+    resourceId: string
+) {
+    const instanceDetailsForJob = {
+        hostName: resourceName,
+        resourceId,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: instanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    };
+    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
+    return [
+        {
+            id: parentJobId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Optimize operating system MPIO iSCSI sessions for ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Validate MPIO iSCSCI sessions on ${resourceName}\\${instanceName}`,
+            description: `Validate MPIO iSCSCI sessions on ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now() - 14000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Optimize MPIO iSCSCI sessions on ${resourceName}\\${instanceName}.`,
+            description: `Optimize MPIO iSCSCI sessions on ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 14000),
+            end_time: new Date(Date.now() - 8000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 4000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
 function mockPGSqlStandaloneDeployementValidationStack(
     accountId: string,
     resourceName: string,
@@ -2585,5 +2665,6 @@ export {
     optimizeOperatingSystemJobData,
     mockPGSqlStandaloneDeploymentStack,
     savePGSQLConfigurationData,
+    optimizeMpioSessionsJobData,
     optimizeStorageTierJobData
 };
