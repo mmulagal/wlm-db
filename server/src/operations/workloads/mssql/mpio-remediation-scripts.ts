@@ -1,4 +1,4 @@
-import { OptimizeMpioPolicyParams } from '../../../utils/common-types';
+import { OptimizeMpioIscsiSessionsParams, OptimizeMpioPolicyParams } from '../../../utils/common-types';
 
 const CHECK_MPIO_POLICY = `
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
@@ -51,4 +51,86 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
     Stop-Transcript | Out-Null
 `;
 
-export { REMEDIATE_MPIO_POLICY, CHECK_MPIO_POLICY, RESTART_INSTANCE };
+const MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSessionsParams) =>
+    `
+    Start-Transcript -Path "C:\\cfn\\log\\mpio-iscsci-sessions-remediation.log.txt" -Append | Out-Null
+    $iscsiTargetAddresses = '${JSON.stringify(mpioisSessionsParams.iscsiTargetAddresses)}' | ConvertFrom-Json
+    Write-Information "iSCSI Target Addresses: $iscsiTargetAddresses"
+    $result = @()
+    try{
+        Foreach ($address in $iscsiTargetAddresses) {
+            $sessions = Get-IscsiConnection | Where-Object {$_.TargetAddress -eq $address} 
+            $sessionsCount = $sessions.Count 
+            if($sessionsCount -eq $null) {
+                $sessionsCount = 0}
+            Write-Information "iSCSI Target Address: $address"
+            Write-Information "Number of iSCSI Sessions: $sessionsCount"
+            $countPerAddress = @{"address" = $address
+                                "count" = $sessionsCount}
+            $result += $countPerAddress
+        }
+    }catch{
+        $result = @(@{ status = 'failed'; error = $_.Exception.Message })
+    } finally {
+        $result | ConvertTo-Json
+    }
+`;
+
+const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSessionsParams) => `
+    Start-Transcript -Path "C:\\cfn\\log\\mpio-iscsci-sessions-remediation.log.txt" -Append | Out-Null
+    $currentMpioSessionsCountPerTarget = '${JSON.stringify(
+        mpioisSessionsParams.currentMpioSessionsCount
+    )}' | ConvertFrom-Json
+    Write-Information "iSCSI Target Addresses: $currentMpioSessionsCountPerTarget"
+    $result = @()
+    $sessions = Get-IscsiSession
+    Foreach ($each in $currentMpioSessionsCountPerTarget) {
+        $address = $each.address
+        $sessionsCount = $each.count
+        Write-Information "iSCSI Target Address: $address"
+        Write-Information "Number of iSCSI Sessions: $sessionsCount"
+        $perAddress = @{"address" = $address
+                        "status" = "success"
+                        "error" = $null}
+        if($sessionsCount -gt 5) {
+            $sessions = $sessions | Where-Object {$_.IsConnected -and $_.IsPersistent} | Select-Object -Last ($sessions.count - 5)
+            Foreach ($session in $sessions) {
+                $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+                if($targetPortalAddress -eq $address) {
+                    try {
+                          Unregister-IscsiSession -SessionIdentifier $session.SessionIdentifier
+                          $perAddress.status = "success"
+                    } catch {
+                          Write-Information "Failed to unregister iSCSI session for address $address and session $session.SessionIdentifier. Error message: $_.Exception.Message"
+                          $perAddress.status = "failed"
+                          $perAddress.error = $_.Exception.Message
+                    }
+                }
+            }
+        }
+        elseif($sessionsCount -lt 5) {
+            try{
+            $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+            $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
+            $LocaliSCSIAddress = $data.Content
+            #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
+            1..(5 - $sessionsCount) | % { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
+            $perAddress.status = "success"
+            } catch {
+                Write-Information "Failed to create iSCSI session for address $address. Error message: $_.Exception.Message"
+                $perAddress.status = "failed"
+                $perAddress.error = $_.Exception.Message
+                    }
+            }
+        $result += $perAddress
+        }
+    $result | ConvertTo-Json
+`;
+
+export {
+    REMEDIATE_MPIO_POLICY,
+    CHECK_MPIO_POLICY,
+    RESTART_INSTANCE,
+    MPIO_ISCSI_SESSIONS,
+    REMEDIATE_MPIO_ISCSI_SESSIONS
+};

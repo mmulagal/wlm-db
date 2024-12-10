@@ -44,7 +44,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
-import { formatDateWithTime } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, getTimeDifferenceInDays } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
@@ -54,6 +54,7 @@ const SandboxTable = () => {
     const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
+    const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 

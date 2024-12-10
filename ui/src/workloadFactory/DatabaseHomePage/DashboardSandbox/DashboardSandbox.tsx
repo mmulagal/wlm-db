@@ -40,45 +40,14 @@ const DashboardSandbox = () => {
                                 variant="Regular_14"
                                 className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                             >
-                                {GENERAL.ONE_SEVEN_DAYS}
+                                {GENERAL.ONE_THIRTY_DAYS}
                             </DsTypography>
                         </div>
 
                         {!isNA && (
                             <>
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['0-7']
-                                } ${GENERAL.SANDBOXES}`}</DsTypography>
-                            </>
-                        )}
-
-                        {isNA && (
-                            <>
-                                <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
-                                </DsTypography>
-                            </>
-                        )}
-                    </div>
-
-                    <div className={styles.individualRow}>
-                        <div className={styles.squareSetup}>
-                            <div
-                                className={styles.square}
-                                style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#0BAFFC' }}
-                            />
-                            <DsTypography
-                                variant="Regular_14"
-                                className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
-                            >
-                                {GENERAL.SEVEN_FOURTEEN_DAYS}
-                            </DsTypography>
-                        </div>
-
-                        {!isNA && (
-                            <>
-                                <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['8-14']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['0-30']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
@@ -102,14 +71,14 @@ const DashboardSandbox = () => {
                                 variant="Regular_14"
                                 className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                             >
-                                {GENERAL.FOURTEEN_THIRTY_DAYS}
+                                {GENERAL.THIRTY_SIXTY_DAYS}
                             </DsTypography>
                         </div>
 
                         {!isNA && (
                             <>
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['15-30']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
@@ -123,7 +92,7 @@ const DashboardSandbox = () => {
                         )}
                     </div>
 
-                    <div className={styles.individualRow} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>
                             <div
                                 className={styles.square}
@@ -133,14 +102,14 @@ const DashboardSandbox = () => {
                                 variant="Regular_14"
                                 className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                             >
-                                {GENERAL.THIRTY_PLUS_DAYS}
-                            </DsTypography>{' '}
+                                {GENERAL.SIXTY_PLUS_DAYS}
+                            </DsTypography>
                         </div>
 
                         {!isNA && (
                             <>
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['30+']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}

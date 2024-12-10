@@ -2,7 +2,8 @@ import config from 'config';
 
 enum AssessmentCategories {
     STORAGE = 'storage',
-    COMPUTE = 'compute'
+    COMPUTE = 'compute',
+    LICENSE = 'license'
 }
 
 enum AssessmentTriggeredBy {

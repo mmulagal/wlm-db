@@ -123,7 +123,7 @@ async function manageInstanceRecommendationPreReqsForManagedInstances(
                 (await getInstanceTypesFromInstanceRequirementsForManagedInstances(
                     credentialsId,
                     region,
-                    resourceArn
+                    instanceId
                 )) || [];
 
             if (instanceTypes && instanceTypes.length <= 0) {

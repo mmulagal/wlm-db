@@ -21,7 +21,8 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
-    useOptimizeStorageSizingMutation
+    useOptimizeStorageSizingMutation,
+    useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
@@ -41,6 +42,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const [disableText, setDisableText] = useState(false);
@@ -54,11 +56,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     }, [isAssessmentAvailable, loading]);
 
     const { setDialog, closeDialog } = useDialog();
-
-    const isDialogPrimaryBtnDisabled = useMemo(() => {
-        const id = cardData?.id;
-        return (!isDemoMode && id === 'compute-rightsizing') || id === 'performance-tier';
-    }, [cardData, isDemoMode]);
 
     const disableOptimizeButton = useMemo(() => {
         if (cardData?.id === 'headroom') {
@@ -239,7 +236,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any) => {
-        let payload = {};
+        let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
@@ -253,6 +250,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 type: [cardData?.id]
             };
+        } else if (type === 'Storage tier') {
+            apiCall = optimizeStorageTier;
+            payload = null;
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -348,8 +348,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }
-                primaryButtonDisabled={isDialogPrimaryBtnDisabled}
-                primaryButtonTooltip={isDialogPrimaryBtnDisabled ? GENERAL.COMING_SOON : ''}
             />
         );
     };
