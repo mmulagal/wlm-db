@@ -1455,6 +1455,71 @@ async function fetchDriftAssessment(
     return driftAssessmentData;
 }
 
+async function fetchDriftAssessmentPerHost(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    fields?: string
+) {
+    logger.info('Fetching drift assessment per host', { accountId, credentialsId, region, databaseHostId, fields });
+
+    const [resourceDetail] = await listResources(accountId, databaseHostId, credentialsId, region);
+
+    if (isEmpty(resourceDetail)) {
+        const infoMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.info(infoMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
+    }
+
+    const instancesManaged = await listDatabaseInstances(accountId, {
+        resourceId: databaseHostId,
+        credentialsId,
+        region
+    });
+    logger.info('Instances managed:', instancesManaged);
+
+    if (isEmpty(instancesManaged)) {
+        const infoMessage = `No managed instances found for account ${accountId} and host ${databaseHostId}.`;
+        logger.info(infoMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
+    }
+
+    const driftAssessments: Array<{
+        databaseInstanceId: string;
+        assessments?: DriftAssessmentResponseType;
+        error?: string;
+    }> = [];
+    await Promise.all(
+        instancesManaged.map(async managedInstance => {
+            const { database_instance_id: databaseInstanceId } = managedInstance;
+
+            try {
+                const driftAssessment = await fetchDriftAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
+                );
+                driftAssessments.push({
+                    databaseInstanceId,
+                    assessments: driftAssessment
+                });
+            } catch (error: any) {
+                const errorMessage = `Error while fetching drift assessment for ${databaseInstanceId}. Error: ${error.message}`;
+                logger.error(errorMessage);
+                driftAssessments.push({ databaseInstanceId, error: errorMessage });
+            }
+        })
+    );
+    return {
+        databaseHostId,
+        instancesAssessment: driftAssessments
+    };
+}
+
 function getMatchingAssessmentStatus(finding: string) {
     logger.info('Getting matching assessment status for finding:', finding);
     switch (finding) {
@@ -1544,5 +1609,6 @@ export {
     getTempDbVolumeDrift,
     getFsxStorageDetails,
     onDemandTriggerDriftAssessmentDataCollection,
-    calculateComputeDrift
+    calculateComputeDrift,
+    fetchDriftAssessmentPerHost
 };
