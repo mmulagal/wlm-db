@@ -64,6 +64,7 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
     $TargetPortalAddresses = ${iscsiTargetAddresses}
     $ProgressPreference = "SilentlyContinue"
     $ErrorActionPreference = "Stop"
+    $OptimizeResult = @{}
     try {
         $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
         $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
@@ -82,17 +83,18 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
         1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
         #Set the MPIO Policy to Round Robin
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
+
+        $OptimizeResult = @{"status" = "success", "error" = $null} | ConvertTo-Json
     }
     catch {
-        $FailureReason = "Error connecting to Iscsi targets"
-        Write-Output $FailureReason
+        $OptimizeResult = @{"status" = "failed", "error" = $_.Exception.Message} | ConvertTo-Json
     }
     `;
 
-const MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSessionsParams) =>
+const MPIO_ISCSI_SESSIONS = (iscsiTargetAddresses: string[]) =>
     `
     Start-Transcript -Path "C:\\cfn\\log\\mpio-iscsci-sessions-remediation.log.txt" -Append | Out-Null
-    $iscsiTargetAddresses = '${JSON.stringify(mpioisSessionsParams.iscsiTargetAddresses)}' | ConvertFrom-Json
+    $iscsiTargetAddresses = ${iscsiTargetAddresses}
     Write-Information "iSCSI Target Addresses: $iscsiTargetAddresses"
     $result = @()
     try{

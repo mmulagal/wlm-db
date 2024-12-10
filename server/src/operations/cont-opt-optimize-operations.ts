@@ -1486,22 +1486,16 @@ async function configureMpio(
             accountId,
             false
         );
-        const parsedResponse = sqlResponseParsing(response);
-        if (!parsedResponse) {
-            const errorMessage = `MPIO is not installed on ${serverNameWithHostName}.`;
-            logger.error(errorMessage);
+        const { status, error } = sqlResponseParsing(response);
+        if (status === 'failed') {
+            jobError = `Error while configuring MPIO iscsi sessions on ${serverNameWithHostName}. ${error}.`;
             jobStatus = JOBSTATUS.FAILED;
-            jobError = errorMessage;
-            throw errorMessage;
         } else {
             jobStatus = JOBSTATUS.COMPLETED;
         }
     } catch (error) {
-        const errorMessage = `Error while validating MPIO policy to Round Robin ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while configuring MPIO iscsi sessions on ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -1509,6 +1503,7 @@ async function configureMpio(
             error: jobError
         });
     }
+    return jobStatus;
 }
 
 async function checkMpioInstallation(
@@ -1633,16 +1628,16 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
                 ? await checkMpioInstallation(optimizeMpioParams, false)
                 : true;
         if (!isMpioInstalledOnPrimary && !isMpioInstalledOnStandby) {
-            await updateJobDetails(accountId, parentJobId, {
-                status: JOBSTATUS.FAILED,
-                error: `MPIO is not installed on ${serverNameWithHostName}.`
-            });
+            jobStatus = JOBSTATUS.FAILED;
+            jobError = `MPIO is not installed on ${serverNameWithHostName}.`;
         } else {
+            let primaryConfigureMpioJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+            let standbyConfigureMpioJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
             if (isMpioInstalledOnPrimary) {
-                await configureMpio(optimizeMpioParams);
+                primaryConfigureMpioJobStatus = await configureMpio(optimizeMpioParams);
             }
             if (isMpioInstalledOnStandby) {
-                await configureMpio(optimizeMpioParams, false);
+                standbyConfigureMpioJobStatus = await configureMpio(optimizeMpioParams, false);
             }
             if (isDemoFlow) {
                 await updateOptimizedConfigNameInInstanceTable(
@@ -1653,28 +1648,41 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
                     instanceMetadata || {}
                 );
             }
-
-            // Trigger assessment after optimization
-            const instanceToAssess: WorkloadInstance = {
-                id: instanceId,
-                name: instanceName,
-                type: databaseType,
-                region,
-                sqlAuthEnabled: sqlAuthEnabled || false,
-                fsxFileSystem: fsxId,
-                activeNodeInstanceid: activeNodeInstanceId!,
-                resourceName: serverNameWithHostName,
-                cloudProviderAccountId: awsAccountId
-            };
-            await triggerAssessmentAfterOptimization(
-                credentialsId,
-                region,
-                accountId,
-                databaseHostId,
-                serverNameWithHostName,
-                parentJobId,
-                instanceToAssess
-            );
+            if (
+                primaryConfigureMpioJobStatus === JOBSTATUS.FAILED &&
+                standbyConfigureMpioJobStatus === JOBSTATUS.FAILED
+            ) {
+                await updateJobDetails(accountId, parentJobId, {
+                    status: JOBSTATUS.FAILED,
+                    endTime: Date.now()
+                });
+                updateLongRunningAuditGroup(
+                    AuditStatus.FAILED,
+                    `Error while enabling MPIO and configuring MPIO sessions on ${serverNameWithHostName}.`
+                );
+            } else {
+                // Trigger assessment after optimization
+                const instanceToAssess: WorkloadInstance = {
+                    id: instanceId,
+                    name: instanceName,
+                    type: databaseType,
+                    region,
+                    sqlAuthEnabled: sqlAuthEnabled || false,
+                    fsxFileSystem: fsxId,
+                    activeNodeInstanceid: activeNodeInstanceId!,
+                    resourceName: serverNameWithHostName,
+                    cloudProviderAccountId: awsAccountId
+                };
+                await triggerAssessmentAfterOptimization(
+                    credentialsId,
+                    region,
+                    accountId,
+                    databaseHostId,
+                    serverNameWithHostName,
+                    parentJobId,
+                    instanceToAssess
+                );
+            }
         }
     } catch (error) {
         jobError = `Error while enabling MPIO and configuring MPIO sessions ${error}`;
@@ -1684,11 +1692,6 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
             endTime: Date.now(),
             error: jobError
         });
-    } finally {
-        updateLongRunningAuditGroup(
-            jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
-            JOBSTATUS.COMPLETED ? '' : jobError
-        );
     }
 }
 
@@ -1729,7 +1732,7 @@ async function validateMpioSessions(
 
     let parsedResponse;
     try {
-        const ssmCommand = MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams);
+        const ssmCommand = MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams.iscsiTargetAddresses!);
         const validateMpioSessionsResponse = await callSsmExecution(
             credentialsId,
             region,
@@ -2044,19 +2047,27 @@ async function optimizeOperatingSystemSettings(
         standbyNodeName = await getResourceNameFromTags(Reservations?.[1].Instances?.[0].Tags);
     }
 
-    let parentJobId = '';
+    const svmDetailsObject = svmDetails as Record<string, string>;
+    const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
+
+    const jobDescription = OptimizeOperatingSystemParams.MPIO_POLICY
+        ? `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
+        : OptimizeOperatingSystemParams.MPIO_SESSIONS
+        ? `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
+        : OptimizeOperatingSystemParams.MPIO_ENABLE
+        ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
+        : '';
+    const parentJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        serverNameWithHostName,
+        JOBTYPE.OPTIMIZATION,
+        jobDescription,
+        jobDescription
+    );
     switch (configurationName) {
         case OptimizeOperatingSystemParams.MPIO_POLICY: {
-            // create the parent job for optimize operation
-            parentJobId = await handleOptimizeJobCreation(
-                accountId,
-                credentialsId,
-                region,
-                serverNameWithHostName,
-                JOBTYPE.OPTIMIZATION,
-                `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`,
-                `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
-            );
             try {
                 optimizeMpio({
                     accountId,
@@ -2094,18 +2105,6 @@ async function optimizeOperatingSystemSettings(
             break;
         }
         case OptimizeOperatingSystemParams.MPIO_SESSIONS: {
-            const svmDetailsObject = svmDetails as Record<string, string>;
-            const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
-
-            parentJobId = await handleOptimizeJobCreation(
-                accountId,
-                credentialsId,
-                region,
-                serverNameWithHostName,
-                JOBTYPE.OPTIMIZATION,
-                `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`,
-                `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
-            );
             try {
                 optimizeMpioSessions({
                     accountId,
@@ -2140,8 +2139,6 @@ async function optimizeOperatingSystemSettings(
         }
         case OptimizeOperatingSystemParams.MPIO_ENABLE: {
             try {
-                const svmDetailsObject = svmDetails as Record<string, string>;
-                const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
                 await enableMpioAndConfigureSessions({
                     accountId,
                     credentialsId,
