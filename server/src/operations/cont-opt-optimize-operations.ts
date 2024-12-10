@@ -77,7 +77,6 @@ import {
 import { listResources, updateResourceMetaData } from '../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 import { listJobs } from '../lib/database/job';
-import { MappedOnTapVolumeResponse } from './database-hosts-operations';
 
 const isDemoFlow = isDemo();
 
@@ -2182,16 +2181,17 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
     );
 
     try {
-        const instanceVolumeMapping = ((await getMappedOntapVolumes(
-            credentialsId,
-            region,
-            fsxId,
-            false,
-            activeNodeInstanceId!,
-            [instanceName],
-            sqlAuthEnabled,
-            true
-        )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
+        const instanceVolumeMapping =
+            (await getMappedOntapVolumes(
+                credentialsId,
+                region,
+                fsxId,
+                false,
+                activeNodeInstanceId!,
+                [instanceName],
+                sqlAuthEnabled,
+                true
+            )) || [];
 
         const volumeRecords =
             Object.values(instanceVolumeMapping)
@@ -2215,12 +2215,12 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
 
         if (objectsOptimized !== volumeNames.length) {
             if (objectsOptimized === 0) {
-                jobError = `Failed to optimize  ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
+                jobError = `Failed to optimize storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
                 logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
                 jobStatus = JOBSTATUS.FAILED;
             } else {
                 const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
-                jobError = `Failed to optimize  ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                jobError = `Failed to optimize storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
                 jobStatus = JOBSTATUS.WARNING;
             }
         } else {
