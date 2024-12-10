@@ -109,6 +109,18 @@ const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
 
+async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
+    const missingPermissions: string[] = [];
+    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
+    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
+    if (combinedDeniedPermissions.length > 0) {
+        combinedDeniedPermissions.forEach(permission => {
+            missingPermissions.push(`${permission.service}:${permission.action}`);
+        });
+    }
+    return missingPermissions;
+}
+
 function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
     logger.info('Getting log volume drift', logVolumes);
 
@@ -214,15 +226,10 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
             : AssessmentStatus.OPTIMIZED;
 
     // Check for 'fsx:UpdateFileSystem' permissions
-    const missingPermissions = [];
+    let missingPermissions: string[] = [];
     let newFsxStorageCapactiyGiB = 0;
     if (status !== AssessmentStatus.OPTIMIZED) {
-        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, [
-            'fsx:UpdateFileSystem'
-        ]);
-        if (implicitlyDenied.length > 0 || explicitlyDenied.length > 0) {
-            missingPermissions.push('fsx:UpdateFileSystem');
-        }
+        missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
         newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
             totalVolumeSizeInBytes,
             ssdStorageCapacityInBytes
@@ -475,7 +482,7 @@ async function calculateStorageDrift(
     if (errors && errors.sizing) {
         driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
     } else {
-        Object.entries(sizing).forEach(([key, value]) => {
+        Object.entries(sizing).forEach(async ([key, value]) => {
             let goldenData = sizingConfigData.find(data => data.parameter === key);
 
             let overProvisionedDrives;
@@ -505,6 +512,17 @@ async function calculateStorageDrift(
                         getTempDbVolumeDrift(value, status, key));
                 }
 
+                let missingPermissions: string[] = [];
+                // Check for 'fsx:UpdateVolume' permissions
+                if (
+                    (key === 'data-log-drive-details' || key === 'data-tempdb-drive-details') &&
+                    status !== AssessmentStatus.OPTIMIZED
+                ) {
+                    missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, [
+                        'fsx:UpdateVolume'
+                    ]);
+                }
+
                 driftAssessmentData.sizing.push({
                     name: key,
                     recommended: goldenData.value.toString(),
@@ -512,7 +530,8 @@ async function calculateStorageDrift(
                     severity: goldenData.severity,
                     recommendation: goldenData.recommendation,
                     tags: goldenData.tags,
-                    sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives }
+                    sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives },
+                    missingPermissions
                 });
             }
         });
@@ -1651,5 +1670,6 @@ export {
     getFsxStorageDetails,
     onDemandTriggerDriftAssessmentDataCollection,
     calculateComputeDrift,
+    checkForMissingOptimizePermissions,
     fetchDriftAssessmentPerHost
 };
