@@ -369,6 +369,26 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
     resource: Resource;
 }
 
+interface StorageTierParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    fsxId: string;
+    instanceId: string;
+    instanceName: string;
+    databaseType: string;
+    sqlAuthEnabled: boolean;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    activeNodeInstanceId?: string;
+    awsAccountId: string;
+    instanceMetadata: any;
+    svmId: string;
+    svmName: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -398,6 +418,7 @@ export {
     OptimizeMpioPolicyParams,
     StorageLayout,
     DatabaseInstancesIncludingResource,
+    StorageTierParams,
     ComputeAssessment,
     LicenseAssessment
 };

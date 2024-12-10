@@ -104,11 +104,25 @@ const OptimizeOperatingSystemSchema = {
     }
 };
 
+const OptimizeStorageTierSchema = {
+    ...resourceRequest,
+    summary: 'Optimize storage-tier settings',
+    description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
     OptimizeStorageSchema,
     OptimizeSizingSchema,
     OptimizeComputeSchema,
-    OptimizeOperatingSystemSchema
+    OptimizeOperatingSystemSchema,
+    OptimizeStorageTierSchema
 };
