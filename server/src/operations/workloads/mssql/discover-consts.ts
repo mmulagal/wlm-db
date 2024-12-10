@@ -190,15 +190,19 @@ const HOST_AND_SQL_INFO_PS1 = [
       $DriveLetteriScsiTargetAddress += $object
     }
 
+    $IscsciTargets = $DriveLetteriScsiTargetAddress | Where-Object { (-not([string]::IsNullOrEmpty($_.TargetAddress)))  } 
+   
     $DriveTargetMap = @{}
     ForEach ($item in $DriveLetteriScsiTargetAddress) {
       If ($item.DriveLetters -eq $null) {
         Continue
       }
 
-      If ($item.TargetAddress -ne $null) {
+      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -eq  $item.SerialNumber } 
+
+      If ($Target.TargetAddress -ne $null) {
         $item.DriveLetters | ForEach-Object {
-          $DriveTargetMap.Add($_, $item.TargetAddress)
+          $DriveTargetMap.Add($_, $Target.TargetAddress)
         }
       } ElseIf ($item.SerialNumber -ne $null) {
         $item.DriveLetters | ForEach-Object {
