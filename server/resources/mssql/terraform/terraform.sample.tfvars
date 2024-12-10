@@ -48,7 +48,7 @@ fsx_svm_name            = "wlmdb_svm_1724065163786"
 
 sql_igroup_name          = "wlmdb_sqligroup_1724065163786"
 sql_svm_name             = "wlmdb_sqlsvm_1724065163786"
-node_net_bios_names      = "sqlnode-tf-sathish"
+node_net_bios_names      = "sqlnode-tf-test"
 fsx_storage_capacity     = 1024
 fsx_data_lun_size        = 204800
 fsx_admin_username       = "fsxadmin" #fsx_user_name
