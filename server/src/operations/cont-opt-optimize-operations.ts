@@ -1580,45 +1580,45 @@ async function remediateMpioSessions(
             endTime: Date.now(),
             error: jobError
         });
-        if (jobStatus === JOBSTATUS.FAILED) {
-            await updateJobDetails(accountId, parentJobId, {
-                status: jobStatus,
-                endTime: Date.now()
-            });
-            await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
-        } else {
-            const instanceToAssess: WorkloadInstance = {
-                id: instanceId,
-                name: instanceName,
-                type: databaseType,
-                region,
-                sqlAuthEnabled: sqlAuthEnabled || false,
-                fsxFileSystem: fsxId,
-                activeNodeInstanceid: activeNodeInstanceId!,
-                cloudProviderAccountId: awsAccountId,
-                resourceName: serverNameWithHostName
-            };
+    }
+    if (jobStatus === JOBSTATUS.FAILED) {
+        await updateJobDetails(accountId, parentJobId, {
+            status: jobStatus,
+            endTime: Date.now()
+        });
+        await updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+    } else {
+        const instanceToAssess: WorkloadInstance = {
+            id: instanceId,
+            name: instanceName,
+            type: databaseType,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            fsxFileSystem: fsxId,
+            activeNodeInstanceid: activeNodeInstanceId!,
+            cloudProviderAccountId: awsAccountId,
+            resourceName: serverNameWithHostName
+        };
 
-            if (isDemoFlow) {
-                await updateOptimizedConfigNameInInstanceTable(
-                    accountId,
-                    instanceId,
-                    [OptimizeOperatingSystemParams.MPIO_SESSIONS],
-                    'OS',
-                    instanceMetadata || {}
-                );
-            }
-
-            await triggerAssessmentAfterOptimization(
-                credentialsId,
-                region,
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
                 accountId,
-                databaseHostId,
-                serverNameWithHostName,
-                parentJobId,
-                instanceToAssess
+                instanceId,
+                [OptimizeOperatingSystemParams.MPIO_SESSIONS],
+                'OS',
+                instanceMetadata || {}
             );
         }
+
+        await triggerAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess
+        );
     }
 }
 
