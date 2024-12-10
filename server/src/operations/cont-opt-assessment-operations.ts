@@ -483,16 +483,17 @@ async function calculateStorageDrift(
 
                 const missingPermissions = [];
                 // Check for 'fsx:UpdateVolume' permissions
-                if (key === 'data-log-drive-details' || key === 'data-tempdb-drive-details') {
-                    if (status !== AssessmentStatus.OPTIMIZED) {
-                        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
-                            credentialsId,
-                            region,
-                            ['fsx:UpdateVolume']
-                        );
-                        if (implicitlyDenied.length > 0 || explicitlyDenied.length > 0) {
-                            missingPermissions.push('fsx:UpdateVolume');
-                        }
+                if (
+                    (key === 'data-log-drive-details' || key === 'data-tempdb-drive-details') &&
+                    status !== AssessmentStatus.OPTIMIZED
+                ) {
+                    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
+                        credentialsId,
+                        region,
+                        ['fsx:UpdateVolume']
+                    );
+                    if (implicitlyDenied.length > 0 || explicitlyDenied.length > 0) {
+                        missingPermissions.push('fsx:UpdateVolume');
                     }
                 }
 
