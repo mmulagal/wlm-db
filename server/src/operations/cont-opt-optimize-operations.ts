@@ -1490,6 +1490,9 @@ async function configureMpio(
         if (status === 'failed') {
             jobError = `Error while configuring MPIO iscsi sessions on ${serverNameWithHostName}. ${error}.`;
             jobStatus = JOBSTATUS.FAILED;
+        } else if (status === 'warning') {
+            jobError = error;
+            jobStatus = JOBSTATUS.WARNING;
         } else {
             jobStatus = JOBSTATUS.COMPLETED;
         }
@@ -1542,7 +1545,7 @@ async function checkMpioInstallation(
         parentJobId
     );
 
-    let isMpioInstalled = false;
+    let mpioInstalled = false;
     try {
         const response = await callSsmExecution(
             credentialsId,
@@ -1552,9 +1555,9 @@ async function checkMpioInstallation(
             accountId,
             false
         );
-        const parsedResponse = sqlResponseParsing(response);
-        isMpioInstalled = parsedResponse.get('mpioInstalled');
-        if (!isMpioInstalled) {
+        const parsedResonse = sqlResponseParsing(response);
+        mpioInstalled = parsedResonse.mpioInstalled;
+        if (!mpioInstalled) {
             const errorMessage = `MPIO is not installed on ${serverNameWithHostName}.`;
             logger.error(errorMessage);
             jobStatus = JOBSTATUS.FAILED;
@@ -1576,7 +1579,7 @@ async function checkMpioInstallation(
             error: jobError
         });
     }
-    return isMpioInstalled;
+    return mpioInstalled;
 }
 
 async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIscsiSessionsParams) {
@@ -1622,76 +1625,80 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
 
     // Check if MPIO is installed on primary node
     try {
+        // Run validation and configuration on primary node
         const isMpioInstalledOnPrimary = await checkMpioInstallation(optimizeMpioParams);
-        const isMpioInstalledOnStandby =
-            sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
-                ? await checkMpioInstallation(optimizeMpioParams, false)
-                : true;
-        if (!isMpioInstalledOnPrimary && !isMpioInstalledOnStandby) {
-            jobStatus = JOBSTATUS.FAILED;
-            jobError = `MPIO is not installed on ${serverNameWithHostName}.`;
-        } else {
-            let primaryConfigureMpioJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-            let standbyConfigureMpioJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-            if (isMpioInstalledOnPrimary) {
-                primaryConfigureMpioJobStatus = await configureMpio(optimizeMpioParams);
-            }
+        let primaryConfigureMpioJobStatus;
+        if (isMpioInstalledOnPrimary) {
+            primaryConfigureMpioJobStatus = await configureMpio(optimizeMpioParams);
+        }
+
+        // Run validation and configuration on standby node
+        let standbyConfigureMpioJobStatus;
+        if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+            const isMpioInstalledOnStandby = await checkMpioInstallation(optimizeMpioParams, false);
             if (isMpioInstalledOnStandby) {
                 standbyConfigureMpioJobStatus = await configureMpio(optimizeMpioParams, false);
             }
-            if (isDemoFlow) {
-                await updateOptimizedConfigNameInInstanceTable(
-                    accountId,
-                    instanceId,
-                    [OptimizeOperatingSystemParams.MPIO_ENABLE],
-                    'OS',
-                    instanceMetadata || {}
-                );
+        }
+
+        if (sqlDeploymentType !== SqlServerDeploymentModel.SQL_FCI_SHORT) {
+            if (primaryConfigureMpioJobStatus === JOBSTATUS.FAILED) {
+                jobStatus = JOBSTATUS.FAILED;
+                jobError = `Error while enabling MPIO and configuring MPIO sessions on ${serverNameWithHostName}.`;
             }
-            if (
-                primaryConfigureMpioJobStatus === JOBSTATUS.FAILED &&
-                standbyConfigureMpioJobStatus === JOBSTATUS.FAILED
-            ) {
-                await updateJobDetails(accountId, parentJobId, {
-                    status: JOBSTATUS.FAILED,
-                    endTime: Date.now()
-                });
-                updateLongRunningAuditGroup(
-                    AuditStatus.FAILED,
-                    `Error while enabling MPIO and configuring MPIO sessions on ${serverNameWithHostName}.`
-                );
-            } else {
-                // Trigger assessment after optimization
-                const instanceToAssess: WorkloadInstance = {
-                    id: instanceId,
-                    name: instanceName,
-                    type: databaseType,
-                    region,
-                    sqlAuthEnabled: sqlAuthEnabled || false,
-                    fsxFileSystem: fsxId,
-                    activeNodeInstanceid: activeNodeInstanceId!,
-                    resourceName: serverNameWithHostName,
-                    cloudProviderAccountId: awsAccountId
-                };
-                await triggerAssessmentAfterOptimization(
-                    credentialsId,
-                    region,
-                    accountId,
-                    databaseHostId,
-                    serverNameWithHostName,
-                    parentJobId,
-                    instanceToAssess
-                );
-            }
+        } else if (
+            primaryConfigureMpioJobStatus === JOBSTATUS.FAILED &&
+            standbyConfigureMpioJobStatus === JOBSTATUS.FAILED
+        ) {
+            jobStatus = JOBSTATUS.FAILED;
+            jobError = `Error while enabling MPIO and configuring MPIO sessions on ${serverNameWithHostName}.`;
+        }
+
+        if (isDemoFlow) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                [OptimizeOperatingSystemParams.MPIO_ENABLE],
+                'OS',
+                instanceMetadata || {}
+            );
+        }
+
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            // Trigger assessment after optimization
+            const instanceToAssess: WorkloadInstance = {
+                id: instanceId,
+                name: instanceName,
+                type: databaseType,
+                region,
+                sqlAuthEnabled: sqlAuthEnabled || false,
+                fsxFileSystem: fsxId,
+                activeNodeInstanceid: activeNodeInstanceId!,
+                resourceName: serverNameWithHostName,
+                cloudProviderAccountId: awsAccountId
+            };
+            await triggerAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess
+            );
         }
     } catch (error) {
         jobError = `Error while enabling MPIO and configuring MPIO sessions ${error}`;
         jobStatus = JOBSTATUS.FAILED;
+    } finally {
         await updateJobDetails(accountId, parentJobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
         });
+        if (jobStatus === JOBSTATUS.FAILED) {
+            updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+        }
     }
 }
 
@@ -2139,7 +2146,7 @@ async function optimizeOperatingSystemSettings(
         }
         case OptimizeOperatingSystemParams.MPIO_ENABLE: {
             try {
-                await enableMpioAndConfigureSessions({
+                enableMpioAndConfigureSessions({
                     accountId,
                     credentialsId,
                     region,
@@ -2156,7 +2163,8 @@ async function optimizeOperatingSystemSettings(
                     awsAccountId: resourceDetail.cloud_provider_account_id!,
                     standbyNodeInstanceId,
                     instanceMetadata,
-                    svmId
+                    svmId,
+                    sqlDeploymentType
                 });
             } catch (error) {
                 const errorMessage = `Error while enabling MPIO and configuring MPIO sessions: ${error}`;

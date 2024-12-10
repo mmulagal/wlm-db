@@ -52,49 +52,74 @@ const REMEDIATE_MPIO_POLICY = (mpioParams: OptimizeMpioPolicyParams, runningOnPr
 `;
 
 const CHECK_IF_MPIO_INSTALLED = `
-$mpioInstalled = Get-WindowsFeature -Name  Multipath-IO | Select-Object -ExpandProperty Installed
+    $mpioInstalled = Get-WindowsFeature -Name  Multipath-IO | Select-Object -ExpandProperty Installed
 
-return @{"mpioInstalled" = $mpioInstalled} | ConvertTo-Json
+    return @{"mpioInstalled" = $mpioInstalled} | ConvertTo-Json
 `;
 
 const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
 
     Start-Transcript -Path "C:\\cfn\\log\\mpio-installation.log.txt" -Append | Out-Null
 
-    $TargetPortalAddresses = ${iscsiTargetAddresses}
+    $TargetPortalAddresses =  '${JSON.stringify(iscsiTargetAddresses)}' | ConvertFrom-Json
+    Write-Information "TargetPortalAddresses: $TargetPortalAddresses"
+    
+    # Check if session is already established
+    $RunConfigure = $false
+    Foreach ($address in $TargetPortalAddresses) {
+            $sessions = Get-IscsiConnection | Where-Object {$_.TargetAddress -eq $address} 
+            $sessionsCount = $sessions.Count 
+            if($sessionsCount -gt 0) {
+                $RunConfigure = $false
+                break}
+            $RunConfigure = $true
+        }
+    if($RunConfigure -eq $false) {
+        Write-Information "iSCSI sessions are already established"
+        return @{"status" = "warning"; "error" = "iSCSI sessions are already established"} | ConvertTo-Json
+    }
+
     $ProgressPreference = "SilentlyContinue"
     $ErrorActionPreference = "Stop"
-    $OptimizeResult = @{}
     try {
         $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
         $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
         $LocaliSCSIAddress = $data.Content
+        Write-Information "Adding iSCSI Target Portals"
         Foreach ($TargetPortalAddress in $TargetPortalAddresses) {
             New-IscsiTargetPortal -TargetPortalAddress $TargetPortalAddress -TargetPortalPortNumber 3260 -InitiatorPortalAddress $LocaliSCSIAddress
         }
 
         #Add MPIO support for iSCSI
+        Write-Information "Adding MPIO support for iSCSI"
         New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
 
         #Enable PathVerificationState
+        Write-Information "Enabling PathVerificationState"
         Set-MPIOSetting -NewPathVerificationState Enabled
 
         #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
+        Write-Information "Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance"
         1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
         #Set the MPIO Policy to Round Robin
+        Write-Information "Set the MPIO Policy to Round Robin"
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
 
-        $OptimizeResult = @{"status" = "success", "error" = $null} | ConvertTo-Json
+        return @{"status" = "success"
+                 "error" = $null} | ConvertTo-Json
     }
     catch {
-        $OptimizeResult = @{"status" = "failed", "error" = $_.Exception.Message} | ConvertTo-Json
+        return @{"status" = "failed"
+                 "error" = $_.Exception.Message} | ConvertTo-Json
     }
+
+
     `;
 
 const MPIO_ISCSI_SESSIONS = (iscsiTargetAddresses: string[]) =>
     `
     Start-Transcript -Path "C:\\cfn\\log\\mpio-iscsci-sessions-remediation.log.txt" -Append | Out-Null
-    $iscsiTargetAddresses = ${iscsiTargetAddresses}
+    $iscsiTargetAddresses = '${JSON.stringify(iscsiTargetAddresses)}' | ConvertFrom-Json
     Write-Information "iSCSI Target Addresses: $iscsiTargetAddresses"
     $result = @()
     try{
