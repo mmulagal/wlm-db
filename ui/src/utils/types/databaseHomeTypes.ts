@@ -160,9 +160,13 @@ export interface DatabaseHostsEntities {
         jobsSummaryError: null;
     };
     aggregatedHostsCount: AggregatedHostsCountRes | null;
+    aggregatedPgSqlHostsCount: AggregatedHostsCountRes | null;
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
+    selectedConfig: string;
+    selectedAssessmentRow: any;
+    sandboxAgeRange: string;
 }
 
 export interface TemplateRes {

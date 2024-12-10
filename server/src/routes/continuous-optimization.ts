@@ -11,13 +11,15 @@ import {
     OptimizeStorageSchema,
     OptimizeSizingSchema,
     OptimizeOperatingSystemSchema,
-    OptimizeComputeSchema
+    OptimizeComputeSchema,
+    OptimizeStorageTierSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
     optimizeSizing,
     optimizeOperatingSystemSettings,
-    optimizeCompute
+    optimizeCompute,
+    optimizeStorageTier
 } from '../operations/cont-opt-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -141,6 +143,24 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     instanceType
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
+            { schema: OptimizeStorageTierSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                } = request;
+
+                const response = await optimizeStorageTier(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
                 );
                 return reply.send(response);
             }

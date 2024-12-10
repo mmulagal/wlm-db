@@ -12,6 +12,11 @@ const initialInventoryV2State: InventorySliceData = {
         databaseHostsLoading: false, // To check if partial database-hosts api is running
         fullHostDataLoading: false // To check if full database-hosts api is running
     },
+    getPgSqlDatabaseHosts: {
+        databaseHostsData: null,
+        databaseHostsLoading: false,
+        fullHostDataLoading: false
+    },
     discoveredHosts: {
         discoveredHostData: null,
         discoverHostLoading: false
@@ -69,11 +74,20 @@ const inventoryV2Slice = createSlice({
         setIsDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.databaseHostsLoading = action.payload;
         },
+        setIsPgSqlDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
+            state.getPgSqlDatabaseHosts.databaseHostsLoading = action.payload;
+        },
         setIsFullHostDataLoading: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.fullHostDataLoading = action.payload;
         },
+        setIsFullPgSqlHostDataLoading: (state, action: PayloadAction<any>) => {
+            state.getPgSqlDatabaseHosts.fullHostDataLoading = action.payload;
+        },
         addDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.databaseHostsData = action.payload;
+        },
+        addPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.getPgSqlDatabaseHosts.databaseHostsData = action.payload;
         },
         setIsDiscoveredHostData: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoveredHostData = action.payload;
@@ -150,8 +164,11 @@ export const {
     setInventoryChartData,
     setIsManagedHostListLoading,
     setIsDatabaseHostsLoading,
+    setIsPgSqlDatabaseHostsLoading,
     setIsFullHostDataLoading,
+    setIsFullPgSqlHostDataLoading,
     addDatabaseHostsDataV2,
+    addPgSqlDatabaseHostsData,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading,
     setFsxCredentialStatus,

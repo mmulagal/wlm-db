@@ -10,6 +10,7 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
+import { GENERAL } from '../../utils/appConstants';
 import {
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -339,7 +340,92 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Whenever possible, it is highly recommended to apply the latest patches to ensure security and stability.\nDoing so will help protect your SQL Server DB from vulnerabilities and significantly improve overall system reliability.'
         },
         tags: ['Security']
+    },
+    sql_licenses: {
+        block_one: {
+            type: GENERAL.APPLICATION_SQL_SERVER,
+            value: 'Licenses'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'License edition',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'Application recommendation',
+            description: ''
+        },
+        tags: ['Cost optimization']
     }
+};
+
+export const formatApplicationCardMainConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: any,
+    cardsData: any
+) => {
+    let item: any = data?.license;
+    let categoryVal = 'application';
+    let optimizedDesc =
+        'When the license for your commercial software database meets your performance \nrequirements, the license is considered optimized';
+    let notOptimizedDesc =
+        "When Workload Factory detects that your database infrastructure isn't using any of the \ncommercial software license features you're paying for, a license is considered not \noptimized. A license that isn't optimized might result in unnecessary additional costs.";
+
+    let itemName = item?.name || '';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let licenseVal = '';
+    const state = store.getState();
+    const selectedDatabaseLicense = state.getWellOptimize.selectedDatabaseLicense || '';
+    if (selectedDatabaseLicense.includes('Standard')) {
+        licenseVal = 'Standard';
+    } else if (selectedDatabaseLicense.includes('Enterprise')) {
+        licenseVal = 'Enterprise';
+    } else if (selectedDatabaseLicense.includes('Developer')) {
+        licenseVal = 'Developer';
+    } else {
+        licenseVal = selectedDatabaseLicense;
+    }
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: licenseVal
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            recommendation: {
+                ...cardDataDefault?.[itemName]?.recommendation,
+                description: status === 'optimized' ? optimizedDesc : notOptimizedDesc
+            },
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
 };
 
 // This function is used to format the data for the individual card main config.
@@ -377,6 +463,9 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
             }
         });
         category?.map((item: PerConfigInterface) => {
+            if (item?.name === 'user-database-layout') {
+                return;
+            }
             let itemName = item?.name || '';
             let status = item?.status || '';
             let severity = item?.severity || '';
@@ -558,6 +647,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let notOptimizedStorage = 0;
     let optimizedCompute = 0;
     let notOptimizedCompute = 0;
+    let optimizedApplication = 0;
+    let notOptimizedApplication = 0;
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
@@ -572,6 +663,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
+            }
+        } else if (nestedObject?.category === 'application') {
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+                optimizedApplication++;
+            } else {
+                notOptimizedApplication++;
             }
         }
     });
@@ -592,20 +689,31 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
             : 0
     };
+    let applicationCount = {
+        total: optimizedApplication + notOptimizedApplication,
+        optimized: optimizedApplication,
+        notOptimized: notOptimizedApplication,
+        percent: optimizedApplication
+            ? formatNumberWithCustomComma(
+                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+              )
+            : 0
+    };
 
     let optBreakDown = {
         storage: storageCount,
         compute: computeCount,
+        application: applicationCount,
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            total: storageCount?.total + computeCount?.total,
-            optimized: storageCount?.optimized + computeCount?.optimized,
-            notOptimized: storageCount?.notOptimized + computeCount?.notOptimized,
+            total: storageCount?.total + computeCount?.total + applicationCount?.total,
+            optimized: storageCount?.optimized + computeCount?.optimized + applicationCount?.optimized,
+            notOptimized: storageCount?.notOptimized + computeCount?.notOptimized + applicationCount?.notOptimized,
             percent:
-                storageCount?.optimized || computeCount?.optimized
+                storageCount?.optimized || computeCount?.optimized || applicationCount?.optimized
                     ? formatNumberWithCustomComma(
-                          ((storageCount?.optimized + computeCount?.optimized || 0) /
-                              (storageCount?.total + computeCount?.total || 1)) *
+                          ((storageCount?.optimized + computeCount?.optimized + applicationCount?.optimized || 0) /
+                              (storageCount?.total + computeCount?.total + applicationCount?.total || 1)) *
                               100
                       )
                     : 0
@@ -622,6 +730,8 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
         data = state.getWellOptimize.driftAssessmentData || {};
     }
     let cardsData = formatIndividualCardMainConfig(data, optimizingData);
+
+    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
 
     const {
         formatOntapConfigList,
@@ -785,7 +895,8 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-        compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' }
+        compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
+        sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
     };
     Object.keys(cardData).map((key: any) => {
         const checkCategory =

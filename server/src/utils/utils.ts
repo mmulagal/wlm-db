@@ -145,9 +145,9 @@ function generateDeploymentParams(
         FSxSvmName: `${prefix}_svm_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
         FSxStorageCapacity: fsxStorageCapacity,
-        FSxDataLunSize: FSxDataLunSizeInMib,
         NodeNetBIOSNames: databaseType === DatabaseTypes.PG_SQL ? netbiosPgsql : netbios,
         ...(databaseType === DatabaseTypes.MS_SQL_SERVER && {
+            FSxDataLunSize: FSxDataLunSizeInMib,
             SQLigroupname: `${prefix}_sqligroup_${suffix}`,
             FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
             FSxTempDbVolumeSize // 10% of FSxDataVolumeSize
@@ -555,6 +555,35 @@ function sqlResponseParsing(response: string) {
     }
 }
 
+function parsePgSqlInstanceInfo(instanceInfo: string) {
+    try {
+        let dbInstanceId;
+        let dbClusterState;
+
+        const parsedInstanceInfo = JSON.parse(instanceInfo);
+        const result: { [key: string]: string } = {};
+
+        parsedInstanceInfo?.forEach((item: string) => {
+            const [key, value] = item.split(/:/);
+            if (key && value) {
+                result[key.trim()] = value.trim();
+            }
+        });
+        if (result['Database system identifier']) {
+            dbInstanceId = result['Database system identifier'];
+        }
+
+        if (result['Database cluster state']) {
+            dbClusterState = result['Database cluster state'];
+        }
+
+        return { dbInstanceId, dbClusterState };
+    } catch (error: any) {
+        logger.error('Error parsing instance information:', error?.message);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing instance information: ${instanceInfo}`);
+    }
+}
+
 function convertGiBToBytes(sizeInGiB: number) {
     return sizeInGiB * 1024 * 1024 * 1024;
 }
@@ -840,5 +869,6 @@ export {
     filterActions,
     getRegionDetails,
     calculateFsxStorageCapacityForHeadroomOptimization,
-    getSubJobDescriptions
+    getSubJobDescriptions,
+    parsePgSqlInstanceInfo
 };

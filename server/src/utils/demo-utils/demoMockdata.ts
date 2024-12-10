@@ -2583,6 +2583,72 @@ async function mockPGSqlStandaloneDeploymentStack(
     const vpcEndpointStack = mockCreateVpcEndpoint(accountId, resourceName, stackId, credentialsId, region);
     return [...parentStack, ...vpcEndpointStack, ...validationStack, ...fsxStack, ...pgServerStack];
 }
+
+function optimizeStorageTierJobData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    instanceId: string,
+    resourceId: string
+) {
+    const instanceDetailsForJob = {
+        hostName: resourceName,
+        resourceId,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: instanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    };
+    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
+    return [
+        {
+            id: parentJobId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Optimize storage-tier for ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${resourceName}\\${instanceName}`,
+            description: `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now() - 14000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 14000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
 export {
     masterStackData,
     validationStack1Data,
@@ -2599,5 +2665,6 @@ export {
     optimizeOperatingSystemJobData,
     mockPGSqlStandaloneDeploymentStack,
     savePGSQLConfigurationData,
-    optimizeMpioSessionsJobData
+    optimizeMpioSessionsJobData,
+    optimizeStorageTierJobData
 };

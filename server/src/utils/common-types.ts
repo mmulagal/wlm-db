@@ -1,6 +1,26 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
+import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
 
+interface LicenseAssessment {
+    licenseFinding: string;
+    recommendedLicenseType: string;
+}
+interface ComputeAssessment {
+    currentInstanceType: string;
+    finding: string;
+    findingReasonCodes: string[];
+    recommendationOptions: {
+        instanceType?: string;
+        rank?: number;
+        savingsOpportunity: SavingsOpportunity;
+        platformDifferences: PlatformDifference[];
+    }[];
+}
+interface ResourceAssessmentData {
+    license?: LicenseAssessment;
+    compute?: ComputeAssessment;
+}
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -10,6 +30,7 @@ interface Metadata {
     activeDirectoryAddress?: string;
     creationDate?: string;
     fsxSvmId?: string;
+    fsxDataVolumeName?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
@@ -18,6 +39,8 @@ interface Metadata {
     updatedManually?: boolean;
     storageProtocol?: string;
     isComputeOptimized?: boolean;
+    isLicenseOptimized?: boolean;
+    assessment?: ResourceAssessmentData;
 }
 interface databaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
@@ -346,6 +369,26 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
     resource: Resource;
 }
 
+interface StorageTierParams {
+    accountId: string;
+    region: string;
+    credentialsId: string;
+    parentJobId: string;
+    fsxId: string;
+    instanceId: string;
+    instanceName: string;
+    databaseType: string;
+    sqlAuthEnabled: boolean;
+    serverNameWithHostName: string;
+    databaseHostId: string;
+    databaseInstanceId: string;
+    activeNodeInstanceId?: string;
+    awsAccountId: string;
+    instanceMetadata: any;
+    svmId: string;
+    svmName: string;
+}
+
 interface OptimizeMpioIscsiSessionsParams {
     accountId: string;
     region: string;
@@ -398,5 +441,8 @@ export {
     OptimizeMpioPolicyParams,
     StorageLayout,
     DatabaseInstancesIncludingResource,
+    StorageTierParams,
+    ComputeAssessment,
+    LicenseAssessment,
     OptimizeMpioIscsiSessionsParams
 };
