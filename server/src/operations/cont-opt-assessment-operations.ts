@@ -29,7 +29,14 @@ import {
     TempDbDriveDetails,
     WorkloadInstance
 } from '../utils/common-types';
-import { CUSTOM_SSM_EXECUTION_TIMEOUT, FINDING, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    CUSTOM_SSM_EXECUTION_TIMEOUT,
+    ENT_ENGINE_EDITION,
+    FINDING,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    SQL_STD
+} from '../utils/consts';
 import { registerJob, updateJobDetails } from './database/job-operations';
 
 import {
@@ -54,6 +61,7 @@ import {
 import {
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
+    LicenseDriftResponseType,
     ParameterDriftResponseType,
     SizingViolationResponseType,
     StorageParameterDriftResponseType
@@ -662,7 +670,7 @@ async function calculateLicenseDrift(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
-        const { licenseFinding } = licenseAssessment;
+        const { licenseFinding, sqlServerInstances } = licenseAssessment;
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
         const recommendationMessage =
             licenseFinding === FINDING.NOT_OPTIMIZED
@@ -675,7 +683,8 @@ async function calculateLicenseDrift(
             recommended: AssessmentStatus.OPTIMIZED,
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION]
+            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
+            sqlServerInstances
         };
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
@@ -736,14 +745,21 @@ async function runLicenseAssessment(
         [activeNodeInstanceId]
     );
     const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-    return getLicenseRecommendations(
-        accountId,
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        sqlServerInstances,
-        sqlServerDeploymentType
-    );
+    if (sqlServerInstances.some(instance => instance.sqlServerEngineEdition === ENT_ENGINE_EDITION)) {
+        return getLicenseRecommendations(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            sqlServerInstances,
+            sqlServerDeploymentType
+        );
+    }
+    return {
+        licenseFinding: FINDING.OPTIMIZED,
+        recommendedLicenseType: SQL_STD,
+        sqlServerInstances
+    };
 }
 
 async function managedHostsComputeAssessment(
@@ -1047,26 +1063,6 @@ async function updateMasterAssessment(accountId: string, masterAssessmentJobId: 
         ? JOBSTATUS.WARNING
         : JOBSTATUS.IN_PROGRESS;
 
-    // Create dummy compute right sizing assessment jobs for each managed resource
-    if (masterJobStatus !== JOBSTATUS.IN_PROGRESS) {
-        const allManagedResources = allSubJobs
-            .map(item => item.resource_name)
-            .filter((value, index, self) => self.indexOf(value) === index);
-        allManagedResources.forEach(async resource => {
-            const resourceName = resource.split('\\')[0]!;
-            const jobString = `Assess SQL Server host ${resourceName} compute right sizing`;
-            await registerJob(accountId, '', '', {
-                name: jobString,
-                description: jobString,
-                resourceName,
-                startTime: Date.now(),
-                endTime: Date.now(),
-                status: JOBSTATUS.COMPLETED,
-                type: JOBTYPE.ASSESSMENT,
-                parentJobId: masterAssessmentJobId
-            });
-        });
-    }
     await updateJobDetails(accountId, masterAssessmentJobId, {
         status: masterJobStatus,
         endTime: Date.now()
@@ -1225,7 +1221,6 @@ async function triggerAssessment(
             status: jobStatus,
             endTime: Date.now()
         });
-        await updateMasterAssessment(accountId, parentJobId);
     }
 }
 
@@ -1282,35 +1277,46 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         )
                     );
 
-                    const uniqueResMap = new Map(
-                        managedInstances.map(({ resource }) => [
-                            `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
-                            resource
-                        ])
-                    ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
-                    const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
+                    if (assessmentErrors.length === managedInstances.length) {
+                        const errorMessage = `No managed instance is up and running in account ${accountId}.`;
+                        logger.info(errorMessage);
+                        await updateJobDetails(accountId, parentJobId, {
+                            status: JOBSTATUS.WARNING,
+                            error: errorMessage,
+                            endTime: Date.now()
+                        });
+                    } else {
+                        // Proceeding with compute and license assessment at host level
+                        const uniqueResMap = new Map(
+                            managedInstances.map(({ resource }) => [
+                                `${resource.account_id} + ${resource.credentials_id} + ${resource.id}`,
+                                resource
+                            ])
+                        ); // create a map with unique resources; key being (accountId,credsId,resourceId unique combination) and value being actual resource
+                        const uniqueResources = Array.from(uniqueResMap.values()); // getting all the unique resources from the map
 
-                    await Promise.all(
-                        uniqueResources.map(
-                            async ({
-                                account_id: wfAccountId,
-                                credentials_id: credentialsId,
-                                region,
-                                resource_id: databaseHostId,
-                                resource_name: resourceName
-                            }) => {
-                                await initiateComputeLicenseAssessmentCollection(
-                                    wfAccountId,
-                                    credentialsId,
-                                    region!,
-                                    databaseHostId,
-                                    resourceName!,
-                                    parentJobId,
-                                    [AssessmentCategories.LICENSE, AssessmentCategories.COMPUTE]
-                                );
-                            }
-                        )
-                    );
+                        await Promise.all(
+                            uniqueResources.map(
+                                async ({
+                                    account_id: wfAccountId,
+                                    credentials_id: credentialsId,
+                                    region,
+                                    resource_id: databaseHostId,
+                                    resource_name: resourceName
+                                }) => {
+                                    await initiateComputeLicenseAssessmentCollection(
+                                        wfAccountId,
+                                        credentialsId,
+                                        region!,
+                                        databaseHostId,
+                                        resourceName!,
+                                        parentJobId,
+                                        [AssessmentCategories.LICENSE, AssessmentCategories.COMPUTE]
+                                    );
+                                }
+                            )
+                        );
+                    }
                 } catch (error: any) {
                     logger.info('Error while triggering drift assessment for account', { accountId, error });
                     await updateJobDetails(accountId, parentJobId, {
@@ -1318,15 +1324,8 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         error: error.message,
                         endTime: Date.now()
                     });
-                }
-                if (assessmentErrors.length === managedInstances.length) {
-                    const errorMessage = `No managed instance is up and running in account ${accountId}.`;
-                    logger.info(errorMessage);
-                    await updateJobDetails(accountId, parentJobId, {
-                        status: JOBSTATUS.WARNING,
-                        error: errorMessage,
-                        endTime: Date.now()
-                    });
+                } finally {
+                    await updateMasterAssessment(accountId, parentJobId);
                 }
             }
         })
@@ -1442,14 +1441,14 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(licenseAssessmentResponse)) {
-        driftAssessmentData.license = licenseAssessmentResponse as ParameterDriftResponseType;
+        driftAssessmentData.license = licenseAssessmentResponse as LicenseDriftResponseType;
         if (isDemoFlow) {
             const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId)) || [];
             const licenseConfigsOptimized = (metadata as unknown as Metadata).isLicenseOptimized;
             if (licenseConfigsOptimized) {
                 computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
                 computeAssessmentResponse.recommendation = 'Your current SQL license is optimized for your workload.';
-                driftAssessmentData.license = licenseAssessmentResponse as ParameterDriftResponseType;
+                driftAssessmentData.license = licenseAssessmentResponse as LicenseDriftResponseType;
             }
         }
     }
