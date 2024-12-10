@@ -5,6 +5,15 @@ import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-
 interface LicenseAssessment {
     licenseFinding: string;
     recommendedLicenseType: string;
+    sqlServerInstances?: {
+        sqlServerInstance: string;
+        sqlServerState: string;
+        sqlServerVersion: string;
+        sqlServerProductYear: number;
+        sqlServerEdition?: string;
+        sqlServerEngineEdition?: number;
+        sqlServerName?: string;
+    }[];
 }
 interface ComputeAssessment {
     currentInstanceType: string;

@@ -135,7 +135,7 @@ async function getLicenseRecommendations(
         licenseFinding = FINDING.NOT_OPTIMIZED;
         recommendedLicenseType = SQL_STD;
     }
-    return { licenseFinding, recommendedLicenseType };
+    return { licenseFinding, recommendedLicenseType, sqlServerInstances };
 }
 
 /* The function processes the SQL Server instances based on the edition and deployment type. If there are multiple sql server instances of a certain edition with both AOAG and Standalone configuration, then AOAG configuration is given preference fist */

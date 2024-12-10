@@ -54,6 +54,7 @@ import {
 import {
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
+    LicenseDriftResponseType,
     ParameterDriftResponseType,
     SizingViolationResponseType,
     StorageParameterDriftResponseType
@@ -662,7 +663,7 @@ async function calculateLicenseDrift(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
-        const { licenseFinding } = licenseAssessment;
+        const { licenseFinding, sqlServerInstances } = licenseAssessment;
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
         const recommendationMessage =
             licenseFinding === FINDING.NOT_OPTIMIZED
@@ -675,7 +676,8 @@ async function calculateLicenseDrift(
             recommended: AssessmentStatus.OPTIMIZED,
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION]
+            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
+            sqlServerInstances
         };
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
@@ -1425,14 +1427,14 @@ async function fetchDriftAssessment(
     }
 
     if (!isEmpty(licenseAssessmentResponse)) {
-        driftAssessmentData.license = licenseAssessmentResponse as ParameterDriftResponseType;
+        driftAssessmentData.license = licenseAssessmentResponse as LicenseDriftResponseType;
         if (isDemoFlow) {
             const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId)) || [];
             const licenseConfigsOptimized = (metadata as unknown as Metadata).isLicenseOptimized;
             if (licenseConfigsOptimized) {
                 computeAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
                 computeAssessmentResponse.recommendation = 'Your current SQL license is optimized for your workload.';
-                driftAssessmentData.license = licenseAssessmentResponse as ParameterDriftResponseType;
+                driftAssessmentData.license = licenseAssessmentResponse as LicenseDriftResponseType;
             }
         }
     }
