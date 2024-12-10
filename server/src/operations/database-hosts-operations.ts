@@ -1285,6 +1285,7 @@ async function getNodeTopology(
     };
 
     if (node1InstanceId && activeNodeInstanceId) {
+        logger.info(`Getting node ${node1InstanceId} , ${node2InstanceId} details for account ${accountId}.`);
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
 
         let ec2InstanceDetails;
@@ -1350,10 +1351,11 @@ async function getNodeTopology(
             } catch (error) {
                 if (error instanceof EC2ServiceException && error.toString().includes(AWS_ERROR_CODES.ec2NotFound)) {
                     logger.debug(error.toString());
+                } else {
+                    logger.error(
+                        `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
+                    );
                 }
-                logger.error(
-                    `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
-                );
             }
         }
         const activeDirectoryDetails =
@@ -1397,12 +1399,7 @@ async function getNodeTopology(
                 ...(standbyNodeStatus && { nodeStatus: standbyNodeStatus })
             });
         }
-    } else {
-        logger.info(
-            `Error while fetching details for EC2 for node ${node1InstanceId} , ${node2InstanceId} in account ${accountId} as no active node was found.`
-        );
     }
-
     logger.debug('Topology data', nodeTopologyData);
     return nodeTopologyData;
 }

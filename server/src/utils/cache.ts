@@ -10,7 +10,8 @@ import {
     REQUEST_IN_PROGRESS_TYPE,
     AWS_PRICING_TYPE,
     AWS_FSX_TYPE,
-    AWS_CE_TYPE
+    AWS_CE_TYPE,
+    AWS_SSM_PARAMETER
 } from './consts.js';
 import getLogger from './logger.js';
 
@@ -64,6 +65,11 @@ const AWS_CE_CACHE = new LRUCache({
     ttl: ms('1d')
 });
 
+const AWS_SSM_PARAMETER_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('1d')
+});
+
 function getCacheByType(type: string, checkCache: boolean = false) {
     logger.debug('Getting cache by type:', type);
 
@@ -88,6 +94,8 @@ function getCacheByType(type: string, checkCache: boolean = false) {
             return AWS_FSX_CACHE;
         case AWS_CE_TYPE:
             return AWS_CE_CACHE;
+        case AWS_SSM_PARAMETER:
+            return AWS_SSM_PARAMETER_CACHE;
         default:
             if (!checkCache) {
                 logger.error('Could not found compatible cache: ', type);

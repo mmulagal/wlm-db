@@ -1020,9 +1020,7 @@ async function getActiveSqlNode(
                     };
                 }
             }
-            errorMessage = `SSM connection to nodes and SQL server status check for nodes ${node1InstanceId} ${
-                node2InstanceId ? `and ${node1InstanceId}` : ''
-            } has failed.`;
+            errorMessage = `SSM connection to node and SQL server status check for node ${node2InstanceId} has failed.`;
             errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
             logger.error(errorMessage, { connectionStatus });
         }
