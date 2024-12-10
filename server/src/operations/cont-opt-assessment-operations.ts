@@ -30,6 +30,7 @@ import {
     WorkloadInstance
 } from '../utils/common-types';
 import {
+    AuditStatus,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     ENT_ENGINE_EDITION,
     FINDING,
@@ -37,7 +38,7 @@ import {
     RESOURCESTYPE,
     SQL_STD
 } from '../utils/consts';
-import { registerJob, updateJobDetails } from './database/job-operations';
+import { getJobDetails, registerJob, updateJobDetails } from './database/job-operations';
 
 import {
     listAllManagedInstances,
@@ -55,6 +56,7 @@ import { translateFindingReasonCode } from './aws/compute-optimizer-operations';
 import {
     AssessmentCategories,
     AssessmentStatus,
+    AssessmentTriggeredBy,
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../utils/continous-optimization-consts';
@@ -75,6 +77,7 @@ import { listJobs } from '../lib/database/job';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
+import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -1052,21 +1055,24 @@ async function initiateComputeAssessment(
 async function updateMasterAssessment(accountId: string, masterAssessmentJobId: string) {
     logger.info('Updating master assessment', { accountId, masterAssessmentJobId });
 
-    const allSubJobs = await listJobs(accountId, '', '', masterAssessmentJobId);
-    const masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
-        ? JOBSTATUS.IN_PROGRESS
-        : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
-        ? JOBSTATUS.FAILED
-        : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
-        ? JOBSTATUS.COMPLETED
-        : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
-        ? JOBSTATUS.WARNING
-        : JOBSTATUS.IN_PROGRESS;
+    const masterAssessmentJob = await getJobDetails(accountId, masterAssessmentJobId);
+    if (masterAssessmentJob.status !== JOBSTATUS.FAILED) {
+        const allSubJobs = await listJobs(accountId, '', '', masterAssessmentJobId);
+        const masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+            ? JOBSTATUS.IN_PROGRESS
+            : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.FAILED
+            : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+            ? JOBSTATUS.COMPLETED
+            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.WARNING
+            : JOBSTATUS.IN_PROGRESS;
 
-    await updateJobDetails(accountId, masterAssessmentJobId, {
-        status: masterJobStatus,
-        endTime: Date.now()
-    });
+        await updateJobDetails(accountId, masterAssessmentJobId, {
+            status: masterJobStatus,
+            endTime: Date.now()
+        });
+    }
 }
 
 async function driftAssessmentDataCollection(
@@ -1251,6 +1257,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 logger.info(errorMessage);
             } else {
                 const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                let parentJobStatus = '';
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
                     description: jobDescription,
@@ -1319,13 +1326,16 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     }
                 } catch (error: any) {
                     logger.info('Error while triggering drift assessment for account', { accountId, error });
+                    parentJobStatus = JOBSTATUS.FAILED;
                     await updateJobDetails(accountId, parentJobId, {
-                        status: JOBSTATUS.FAILED,
+                        status: parentJobStatus,
                         error: error.message,
                         endTime: Date.now()
                     });
                 } finally {
-                    await updateMasterAssessment(accountId, parentJobId);
+                    if (parentJobStatus !== JOBSTATUS.FAILED) {
+                        await updateMasterAssessment(accountId, parentJobId);
+                    }
                 }
             }
         })
@@ -1535,6 +1545,36 @@ function getMatchingAssessmentStatus(finding: string) {
     }
 }
 
+async function handleAssessment(
+    accountId: string,
+    managedInstance: DatabaseInstancesIncludingResource,
+    masterAssessmentJobId: string,
+    initiatedBy: string,
+    fields?: string
+) {
+    let jobStatus = '';
+    try {
+        await triggerAssessment(managedInstance, masterAssessmentJobId, fields);
+    } catch (error) {
+        jobStatus = JOBSTATUS.FAILED;
+        await updateJobDetails(accountId, masterAssessmentJobId, {
+            status: jobStatus,
+            endTime: Date.now()
+        });
+        logger.error(`Error while fetching database instance details ${accountId}, ${error}`);
+    } finally {
+        jobStatus = jobStatus || JOBSTATUS.COMPLETED;
+        if (jobStatus !== JOBSTATUS.FAILED) {
+            // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
+            await updateMasterAssessment(accountId, masterAssessmentJobId);
+        }
+    }
+    if (initiatedBy === AssessmentTriggeredBy.USER) {
+        const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
+        updateLongRunningAuditGroup(auditStatus);
+    }
+}
+
 async function onDemandTriggerDriftAssessmentDataCollection(
     accountId: string,
     credentialsId: string,
@@ -1592,7 +1632,8 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             type: JOBTYPE.ASSESSMENT,
             parentJobId
         });
-        triggerAssessment(managedInstance, jobId, fields);
+        // Call the async function without awaiting it
+        handleAssessment(accountId, managedInstance, jobId, initiatedBy, fields);
 
         return { jobId };
     } catch (error) {
