@@ -342,6 +342,10 @@ async function calculateStorageDrift(
         });
     }
 
+    if (errors && errors['mpio-policy']) {
+        driftAssessmentData.configuration.os.push({ errorMessage: errors['mpio-policy'] });
+    }
+
     Object.entries(os).forEach(([key, value]) => {
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
