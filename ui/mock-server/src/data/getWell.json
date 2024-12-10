@@ -392,6 +392,26 @@
         "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
         "tags": [
             "Cost optimization"
+        ],
+        "sqlServerInstances": [
+            {
+                "sqlServerInstance": "MSSQLSERVER",
+                "sqlServerState": "Running",
+                "sqlServerVersion": "16.0.4080.1",
+                "sqlServerProductYear": 2019,
+                "sqlServerEdition": "Enterprise Edition (64-bit)",
+                "sqlServerEngineEdition": 3,
+                "sqlServerName": "SQLServer-Prod-02"
+            },
+            {
+                "sqlServerInstance": "Prod-HelpDesk",
+                "sqlServerState": "Running",
+                "sqlServerVersion": "16.0.4080.1",
+                "sqlServerProductYear": 2019,
+                "sqlServerEdition": "Enterprise Edition (64-bit)",
+                "sqlServerEngineEdition": 3,
+                "sqlServerName": "SQLServer-Prod-02"
+            }
         ]
     }
 }

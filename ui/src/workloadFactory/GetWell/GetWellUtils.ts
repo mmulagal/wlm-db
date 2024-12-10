@@ -389,7 +389,11 @@ export const formatApplicationCardMainConfig = (
 
     let licenseVal = '';
     const state = store.getState();
-    const selectedDatabaseLicense = state.getWellOptimize.selectedDatabaseLicense || '';
+    const selectedDatabaseInstanceName = state.getWellOptimize.selectedDatabaseInstanceName || '';
+    const instance = item?.sqlServerInstances?.find(
+        (instance: any) => instance?.sqlServerInstance === selectedDatabaseInstanceName
+    );
+    const selectedDatabaseLicense = instance?.sqlServerEdition || '';
     if (selectedDatabaseLicense.includes('Standard')) {
         licenseVal = 'Standard';
     } else if (selectedDatabaseLicense.includes('Enterprise')) {

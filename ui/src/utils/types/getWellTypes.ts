@@ -7,7 +7,6 @@ export interface GetWellSliceInterface {
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
     selectedDatabaseStorageType: string;
-    selectedDatabaseLicense: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
     ontapConfigTableData: PerConfigInterface[] | null;

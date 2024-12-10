@@ -11,7 +11,6 @@ const initialState: GetWellSliceInterface = {
     selectedDatabaseInstance: '',
     selectedDatabaseInstanceName: '',
     selectedDatabaseStorageType: '',
-    selectedDatabaseLicense: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
     ontapConfigTableData: null,
@@ -54,9 +53,6 @@ const getWellOptimizeSlice = createSlice({
         setGwDatabaseStorageType: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseStorageType = action.payload;
         },
-        setGwDatabaseLicense: (state, action: PayloadAction<any>) => {
-            state.selectedDatabaseLicense = action.payload;
-        },
         setCardData: (state, action: PayloadAction<any>) => {
             state.cardData = action.payload;
         },
@@ -84,7 +80,6 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
             state.selectedDatabaseStorageType = '';
-            state.selectedDatabaseLicense = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
@@ -126,7 +121,6 @@ export const {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
     setGwDatabaseStorageType,
-    setGwDatabaseLicense,
     setCardData,
     setOsConfigTableData,
     setOntapConfigTableData,

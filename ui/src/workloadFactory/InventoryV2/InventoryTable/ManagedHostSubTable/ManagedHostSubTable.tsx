@@ -60,7 +60,6 @@ import useResize from '../../../../common/hooks/useResize';
 import {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
-    setGwDatabaseLicense,
     setGwDatabaseStorageType,
     setGwHostname,
     setGwResourceId,
@@ -215,7 +214,6 @@ const ManagedHostSubTable = ({
         dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
         dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
         dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
-        dispatch(setGwDatabaseLicense(targettedDbInstance?.databaseServer?.serverEdition));
     };
 
     const resetDialogValues = () => {
