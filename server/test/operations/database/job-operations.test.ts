@@ -314,12 +314,11 @@ describe('updateLongRunningJobs', async () => {
 
     it('should fail longrunning jobs and subjobs', async () => {
         await updateLongRunningJobs();
-        const jobs = await getJobs(ACCOUNT_ID);
-        const masterJob = jobs.items[0];
+        const masterJob = (await getJobs(ACCOUNT_ID)).items[0];
         const subjobs = (await getJobDetails(ACCOUNT_ID, masterJob.id, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION))
             .subJobs;
-        expect(jobs.items[0].endTime).toBeDefined();
-        expect(jobs.items[0].status).toBe(JOBSTATUS.FAILED);
+        expect(masterJob.endTime).toBeDefined();
+        expect(masterJob.status).toBe(JOBSTATUS.FAILED);
         expect(subjobs[0].endTime).toBeDefined();
         expect(subjobs[0].status).toBe(JOBSTATUS.FAILED);
         expect(subjobs[1].endTime).toBeDefined();
