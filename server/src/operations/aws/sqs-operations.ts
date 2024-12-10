@@ -231,7 +231,7 @@ async function modifyMasterJobStatus(
 
     let combinedErrors: string[] = [];
     if (jobStatus === JOBSTATUS.FAILED) {
-        const childJobs = await getJobDetails(accountId, credentialsId, region, masterJob.id);
+        const childJobs = await getJobDetails(accountId, masterJob.id, credentialsId, region);
         combinedErrors = (childJobs.subJobs as job[])
             .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
             .map(jobObject => jobObject.error!);
@@ -329,7 +329,7 @@ async function createOrUpdateChildJobs(
 
         let combinedErrors: string[] = [];
         if (jobStatus === JOBSTATUS.FAILED) {
-            const childJobs = await getJobDetails(accountId, credentialsId, region, childJob.id);
+            const childJobs = await getJobDetails(accountId, childJob.id, credentialsId, region);
             combinedErrors = (childJobs.subJobs as job[])
                 .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
                 .map(jobObject => jobObject.error!);

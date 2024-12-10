@@ -128,7 +128,7 @@ Resources:
                 InstallSSM:
                     commands:
                         a-install-ssm:
-                            command: !sub
+                            command: !Sub
                                 'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
                 CreateTempFolder:
                     commands:
