@@ -774,8 +774,7 @@ async function getTerraformSetup(
             tfDeploymentName,
             customTerraformModulesPath,
             templateParameters,
-            initializationScriptURLs,
-            metrics
+            initializationScriptURLs
         );
 
         const contents = await createRootModuleFile(

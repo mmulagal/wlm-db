@@ -209,8 +209,7 @@ async function createTFVarsFile(
     deploymentName: string,
     templatePath: string,
     templateParameters: Array<Parameter>,
-    initializationScriptURLs: any,
-    metrics: string
+    initializationScriptURLs: any
 ) {
     logger.info('Creating terraform vars file', region, resourceType, deploymentName, templatePath, templateParameters);
     try {
@@ -221,7 +220,6 @@ async function createTFVarsFile(
                 creator_tag: deploymentName,
                 deployment_name: deploymentName,
                 role_credentials_id: '',
-                metrics,
                 aws_profile: 'default'
             };
             let terraformVariableString = '';
