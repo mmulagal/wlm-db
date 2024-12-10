@@ -18,7 +18,7 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL
 } from '../../utils/consts';
-import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
+import { AssessmentResponseInterface, GwCardDataInterface, GwSqlServerInstanceInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
 import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
@@ -391,7 +391,7 @@ export const formatApplicationCardMainConfig = (
     const state = store.getState();
     const selectedDatabaseInstanceName = state.getWellOptimize.selectedDatabaseInstanceName || '';
     const instance = item?.sqlServerInstances?.find(
-        (instance: any) => instance?.sqlServerInstance === selectedDatabaseInstanceName
+        (instance: GwSqlServerInstanceInterface) => instance?.sqlServerInstance === selectedDatabaseInstanceName
     );
     const selectedDatabaseLicense = instance?.sqlServerEdition || '';
     if (selectedDatabaseLicense.includes('Standard')) {

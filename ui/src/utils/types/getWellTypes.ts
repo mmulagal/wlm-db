@@ -103,3 +103,13 @@ export interface GwPerConfigCardInterface {
     tags: string[];
     category?: string;
 }
+
+export interface GwSqlServerInstanceInterface {
+    sqlServerInstance: string;
+    sqlServerState?: string;
+    sqlServerVersion?: string;
+    sqlServerProductYear?: number;
+    sqlServerEdition: string;
+    sqlServerEngineEdition?: number;
+    sqlServerName?: string;
+};
