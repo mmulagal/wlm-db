@@ -25,7 +25,9 @@ import {
     DatabasesListSchemaV2,
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
-    GetCollationDetailsSchemaV2
+    GetCollationDetailsSchemaV2,
+    PgSqlDbHostDetailsSchema,
+    PgSqlDbHostsSummarySchema
 } from './schemas/database-hosts-schemas';
 import {
     createSandbox,
@@ -40,8 +42,10 @@ import {
     checkDatabaseIntegrity,
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
+import { DatabaseTypes } from '../utils/consts';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
+const PGSQL_API_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -261,8 +265,48 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
+            `${PGSQL_API_PREFIX_PATH}/database-hosts`,
+            { schema: PgSqlDbHostsSummarySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    query: { fields, nextToken, vpcId, fsxId, pageSize }
+                } = request;
+                const response = await getDatabaseHostsSummaryV2(
+                    accountId,
+                    region,
+                    credentialsId,
+                    fields,
+                    nextToken,
+                    vpcId,
+                    fsxId,
+                    pageSize,
+                    DatabaseTypes.PG_SQL
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId`,
             { schema: DatabaseHostDetailsSchemaV2 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostSummaryV2(
+                    accountId,
+                    databaseHostId,
+                    credentialsId,
+                    region,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${PGSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId`,
+            { schema: PgSqlDbHostDetailsSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },

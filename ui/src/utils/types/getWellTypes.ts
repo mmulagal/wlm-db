@@ -7,12 +7,14 @@ export interface GetWellSliceInterface {
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
     selectedDatabaseStorageType: string;
+    selectedDatabaseLicense: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
     ontapConfigTableData: PerConfigInterface[] | null;
     optimizationBreakDown: {
         storage?: CountBreakDown;
         compute?: CountBreakDown;
+        application?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -48,6 +50,7 @@ export interface AssessmentResponseInterface {
         layout?: PerConfigInterface[];
     };
     compute?: PerConfigInterface;
+    license?: PerConfigInterface;
 }
 
 export interface PerConfigInterface {

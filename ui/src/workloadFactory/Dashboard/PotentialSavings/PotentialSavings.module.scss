@@ -1,0 +1,58 @@
+.potentialSavings {
+    background-color: var(--content-background);
+    width: 792px;
+    height: 432px;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .rightSection {
+        display: flex;
+        gap: 8px;
+    }
+
+    .mainSection {
+        padding: 40px 120px 40px 40px;
+        display: flex;
+        gap: 112px;
+
+        .valueSection {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            max-height: 280px;
+
+            .subContent {
+                display: flex;
+                flex-direction: column;
+                width: 160px;
+
+                .loaderText {
+                    display: flex;
+                    gap: 8px;
+                }
+            }
+        }
+
+        .chartSection {
+            max-height: 306px;
+        }
+    }
+}
+
+@media screen and (max-width: 1700px) {
+    .potentialSavings {
+        width: 650px;
+
+        .mainSection {
+            padding: 0 40px 40px 40px;
+            gap: 40px;
+        }
+    }
+}

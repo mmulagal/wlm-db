@@ -46,9 +46,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         return (
             rowData?.name === 'OS type' ||
             rowData?.name === 'NTFS allocation unit size' ||
-            rowData?.name === 'Operating system patch' ||
-            (!isDemoMode && rowData?.id === 'mpio-iscsi-count') ||
-            (!isDemoMode && rowData?.id === 'mpio-enabled')
+            rowData?.name === 'Operating system patch'
         );
     };
 

@@ -57,7 +57,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const isDialogPrimaryBtnDisabled = useMemo(() => {
         const id = cardData?.id;
-        return (!isDemoMode && id === 'compute-rightsizing') || id === 'performance-tier';
+        return id === 'performance-tier';
     }, [cardData, isDemoMode]);
 
     const disableOptimizeButton = useMemo(() => {

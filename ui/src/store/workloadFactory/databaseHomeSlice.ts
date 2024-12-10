@@ -20,6 +20,17 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         managedDatabases: 0,
         managedInstances: 0
     },
+    aggregatedPgSqlHostsCount: {
+        totalDatabases: 0,
+        totalHosts: 0,
+        totalUpHosts: 0,
+        totalInitializingHosts: 0,
+        totalDownHosts: 0,
+        totalFailedHosts: 0,
+        totalInstances: 0,
+        managedDatabases: 0,
+        managedInstances: 0
+    },
     aggregatedProtectionDbCount: {
         protectedDb: 0,
         unprotectedDb: 0,
@@ -45,13 +56,19 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         connectivityCostPercent: 0,
         otherCostPercent: 0,
         requireBillingPerm: false
-    }
+    },
+    selectedConfig: '',
+    selectedAssessmentRow: null,
+    sandboxAgeRange: ''
 };
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setSelectedConfig: (state, action: PayloadAction<any>) => {
+            state.selectedConfig = action.payload;
+        },
         selectedTabSelection: (state, action: PayloadAction<any>) => {
             state.selectedTab = action.payload;
         },
@@ -64,6 +81,9 @@ const databaseHomeSlice = createSlice({
         addAggregateHostsCountData: (state, action: PayloadAction<any>) => {
             state.aggregatedHostsCount = action.payload;
         },
+        addAggregatePgSqlHostsCountData: (state, action: PayloadAction<any>) => {
+            state.aggregatedPgSqlHostsCount = action.payload;
+        },
         addAggregatedProtectionDbCount: (state, action: PayloadAction<any>) => {
             state.aggregatedProtectionDbCount = action.payload;
         },
@@ -75,6 +95,12 @@ const databaseHomeSlice = createSlice({
         },
         addInitialData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
+        },
+        setSelectedAssessmentRow: (state, action: PayloadAction<any>) => {
+            state.selectedAssessmentRow = action.payload;
+        },
+        setSandboxAgeRange: (state, action: PayloadAction<any>) => {
+            state.sandboxAgeRange = action.payload;
         }
     }
 });
@@ -84,10 +110,14 @@ export const {
     addJobsSummary,
     addJobsSummaryLoading,
     addAggregateHostsCountData,
+    addAggregatePgSqlHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregatedCosts,
-    addInitialData
+    addInitialData,
+    setSelectedConfig,
+    setSelectedAssessmentRow,
+    setSandboxAgeRange
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;

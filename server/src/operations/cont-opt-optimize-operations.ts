@@ -329,9 +329,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
 
     logger.debug(`Job created with id ${jobId}`);
     let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let parentJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let newJobError;
-    let parentJobError;
     let newJobDescription;
 
     try {
@@ -389,20 +387,12 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         logger.error(errorMessage);
         newJobStatus = JOBSTATUS.FAILED;
         newJobError = errorMessage;
-
-        parentJobStatus = JOBSTATUS.FAILED;
-        parentJobError = errorMessage;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: newJobStatus,
             endTime: Date.now(),
             error: newJobError,
             description: newJobDescription
-        });
-        await updateJobDetails(accountId, parentJobId, {
-            status: parentJobStatus,
-            endTime: Date.now(),
-            error: parentJobError
         });
     }
 }

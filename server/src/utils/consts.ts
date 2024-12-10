@@ -1370,6 +1370,14 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ArtifactsSignatures',
         url: `${WLMDB}/pgsql/signig_files.zip`
+    },
+    {
+        name: 'ScriptCommon',
+        url: `${WLMDB}/pgsql/scripts/common.zip`
+    },
+    {
+        name: 'ScriptSetup',
+        url: `${WLMDB}/pgsql/scripts/setup.zip`
     }
 ];
 
