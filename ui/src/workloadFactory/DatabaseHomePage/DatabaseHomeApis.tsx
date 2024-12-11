@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
+    addAggregatedPgsqlCosts,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregateHostsCountData,
@@ -91,6 +92,24 @@ const DatabaseHomeApis = () => {
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, sandboxSavings]);
+
+    // To have pgsql database hosts data in dashboard
+    useEffect(() => {
+        if (!pgsqlHostData) {
+            return;
+        }
+
+        // const aggrProtection = getManagedAggrProtection(pgsqlHostData);
+        // dispatch(addAggregatedProtectionDbCount(aggrProtection));
+
+        // const aggrStorage = getManagedAggrStorageSavings(pgsqlHostData);
+        // dispatch(addAggregatedStorageSavings(aggrStorage));
+
+        const aggrCost = getManageAggrCost(pgsqlHostData);
+        dispatch(addAggregatedPgsqlCosts(aggrCost));
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pgsqlHostData]);
 
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
