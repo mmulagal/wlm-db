@@ -670,11 +670,14 @@ const InventoryApisV2 = () => {
     };
 
     const callManagedAssessment = (resourceIds: Array<string>) => {
-        if (resourceIds && resourceIds.length > 0) {
+        if (resourceIds.length > 0) {
             let mssqlAssessmentDataLoad: any = {};
             let noRunningList: Array<string> = [];
             resourceIds?.map((resourceId: any) => {
-                if (runningManagedAssessmentRef.current.includes(resourceId)) {
+                if (
+                    runningManagedAssessmentRef.current?.length &&
+                    runningManagedAssessmentRef.current.includes(resourceId)
+                ) {
                     return;
                 }
                 mssqlAssessmentDataLoad[resourceId] = {
