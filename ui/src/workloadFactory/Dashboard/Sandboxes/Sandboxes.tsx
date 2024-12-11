@@ -17,7 +17,12 @@ const Sandboxes = () => {
     const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
 
     const redirectToSandbox = (range: string) => {
-        dispatch(setSandboxAgeRange(range));
+        dispatch(
+            setSandboxAgeRange({
+                range: range,
+                from: 'Dashboard'
+            })
+        );
         setTimeout(() => {
             dispatch(setSelectedHeaderTab(WLF_TABS.SANDBOXES));
         }, 1);
@@ -69,7 +74,7 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox('0-30')}>
+                            <DsButton type="text" onClick={() => redirectToSandbox(GENERAL.ONE_THIRTY_DAYS)}>
                                 View
                             </DsButton>
                         </div>
@@ -107,7 +112,7 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox('31-60')}>
+                            <DsButton type="text" onClick={() => redirectToSandbox(GENERAL.THIRTY_SIXTY_DAYS)}>
                                 View
                             </DsButton>
                         </div>
@@ -145,7 +150,7 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox('61+')}>
+                            <DsButton type="text" onClick={() => redirectToSandbox(GENERAL.SIXTY_PLUS_DAYS)}>
                                 View
                             </DsButton>
                         </div>

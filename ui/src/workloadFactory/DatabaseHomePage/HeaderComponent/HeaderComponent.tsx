@@ -86,6 +86,7 @@ import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFac
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
+import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 
 type Tab = {
     tab: string;
@@ -576,6 +577,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                   }`
                                         }
                                         onClick={() => {
+                                            dispatch(setSandboxAgeRange({ range: '', from: 'Header' }));
                                             handleClick(WLF_TABS.SANDBOXES);
                                         }}
                                         id="sandboxes"

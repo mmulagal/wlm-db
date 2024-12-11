@@ -17,7 +17,7 @@ router.get(
                     sourceDatabaseName: 'dbname1',
                     sourceDatabaseHostName: 'dbhost',
                     sourceDatabaseInstanceName: 'dbinstance',
-                    creationTime: '1649875812345',
+                    createdAt: '1733821459096',
                     tag: 'dev'
                 },
                 {
@@ -28,7 +28,7 @@ router.get(
                     sourceDatabaseName: 'dbname2',
                     sourceDatabaseHostName: 'dbhost',
                     sourceDatabaseInstanceName: 'dbinstance',
-                    creationTime: '1649875812345',
+                    createdAt: '1649875812345',
                     tag: 'qa'
                 },
                 {
@@ -39,7 +39,7 @@ router.get(
                     sourceDatabaseName: 'dbname1',
                     sourceDatabaseHostName: 'dbhost',
                     sourceDatabaseInstanceName: 'dbinstance',
-                    creationTime: '1649875812345',
+                    createdAt: '1649875812345',
                     tag: 'dev'
                 },
                 {
@@ -50,7 +50,7 @@ router.get(
                     sourceDatabaseName: 'dbname2',
                     sourceDatabaseHostName: 'dbhost',
                     sourceDatabaseInstanceName: 'dbinstance',
-                    creationTime: '1649875812345',
+                    createdAt: '1649875812345',
                     tag: 'qa'
                 }
             ]
