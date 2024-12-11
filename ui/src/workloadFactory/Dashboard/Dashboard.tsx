@@ -11,9 +11,11 @@ import ManagedInstanceOptimizationBreakdownByConfig from './ManagedInstanceOptim
 import ManagedInstanceOptimizationBreakdownByCategory from './ManagedInstanceOptimizationBreakdownByCategory/ManagedInstanceOptimizationBreakdownByCategory';
 import PotentialSavings from './PotentialSavings/PotentialSavings';
 import Sandboxes from './Sandboxes/Sandboxes';
+import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 const Dashboard = () => {
-    const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const mssqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlStorageSavings);
+    const pgsqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const mssqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
     const pgsqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlCosts);
     const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
@@ -26,6 +28,10 @@ const Dashboard = () => {
         });
         return costData;
     }, [mssqlHostCostData, pgsqlHostCostData]);
+
+    const hostStorageSavingsData = useMemo(() => {
+        return getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData);
+    }, [mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData]);
 
     return (
         <div className={styles.dashboard}>
@@ -53,7 +59,10 @@ const Dashboard = () => {
                 {/* Bar lines */}
                 <div className={styles.barContainer}>
                     <div className={styles.commonContainer}>
-                        <StorageSavings hostData={hostStorageSavingsData} hostsLoading={false} />
+                        <StorageSavings
+                            hostData={hostStorageSavingsData}
+                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                        />
                     </div>
 
                     <div className={styles.commonContainer}>

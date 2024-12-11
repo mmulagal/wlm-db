@@ -45,6 +45,11 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         storageSavings: '0',
         storageSavingsPercent: 0
     },
+    aggregatedPgsqlStorageSavings: {
+        storageConsumes: '0',
+        storageSavings: '0',
+        storageSavingsPercent: 0
+    },
     aggregatedCosts: {
         storageCost: 0,
         computeCost: 0,
@@ -105,6 +110,9 @@ const databaseHomeSlice = createSlice({
         addAggregatedStorageSavings: (state, action: PayloadAction<any>) => {
             state.aggregatedStorageSavings = action.payload;
         },
+        addAggregatedPgsqlStorageSavings: (state, action: PayloadAction<any>) => {
+            state.aggregatedPgsqlStorageSavings = action.payload;
+        },
         addAggregatedCosts: (state, action: PayloadAction<any>) => {
             state.aggregatedCosts = action.payload;
         },
@@ -131,6 +139,7 @@ export const {
     addAggregatePgSqlHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
+    addAggregatedPgsqlStorageSavings,
     addAggregatedCosts,
     addAggregatedPgsqlCosts,
     addInitialData,

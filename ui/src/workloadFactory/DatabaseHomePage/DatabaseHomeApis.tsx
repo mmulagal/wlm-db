@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
     addAggregatedPgsqlCosts,
+    addAggregatedPgsqlStorageSavings,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregateHostsCountData,
@@ -99,11 +100,8 @@ const DatabaseHomeApis = () => {
             return;
         }
 
-        // const aggrProtection = getManagedAggrProtection(pgsqlHostData);
-        // dispatch(addAggregatedProtectionDbCount(aggrProtection));
-
-        // const aggrStorage = getManagedAggrStorageSavings(pgsqlHostData);
-        // dispatch(addAggregatedStorageSavings(aggrStorage));
+        const aggrStorage = getManagedAggrStorageSavings(pgsqlHostData);
+        dispatch(addAggregatedPgsqlStorageSavings(aggrStorage));
 
         const aggrCost = getManageAggrCost(pgsqlHostData);
         dispatch(addAggregatedPgsqlCosts(aggrCost));

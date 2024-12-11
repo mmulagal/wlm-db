@@ -107,6 +107,10 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
 };
 
 export const formatSize = (value: number, passedformat?: string) => {
+    return numeral(getByteVal(value, passedformat)).format('0.[00] ib');
+};
+
+export const getByteVal = (value: number, passedformat?: string) => {
     let byteVal = 0;
     if (passedformat === 'kib') {
         byteVal = value * 1024;
@@ -119,7 +123,7 @@ export const formatSize = (value: number, passedformat?: string) => {
     } else {
         byteVal = value;
     }
-    return numeral(byteVal).format('0.[00] ib');
+    return byteVal;
 };
 
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
