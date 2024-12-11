@@ -386,7 +386,7 @@ export const cardDataDefault: GwCardDataInterface = {
 
 export const formatApplicationCardMainConfig = (
     data: AssessmentResponseInterface,
-    optimizingData: any,
+    optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
     let item: any = data?.license;
@@ -441,7 +441,10 @@ export const formatApplicationCardMainConfig = (
 };
 
 // This function is used to format the data for the individual card main config.
-export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatIndividualCardMainConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string }
+) => {
     let cardsData: any = cardDataDefault;
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
     let computeMissingPermissions = false;
@@ -530,7 +533,7 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
 };
 
 // This function is used to format the ONTAP configuration data.
-export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let ontapTagsList: Array<string> = [];
     let highestOntapSeverity = 'None';
     let formatOntapConfigList: PerConfigInterface[] = [];
@@ -606,7 +609,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 };
 
 // This function is used to format the OS configuration data.
-export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let osTagsList: Array<string> = [];
     let highestOsSeverity = 'None';
     let formatOsConfigList: PerConfigInterface[] = [];
@@ -734,7 +737,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     return optBreakDown;
 };
 
-export const getCardsData = (data: any, optimizingData: any) => {
+export const getCardsData = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     const {
         formatOntapConfigList,
         ontapTagsList,

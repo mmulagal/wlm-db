@@ -52,6 +52,11 @@ export interface AssessmentResponseInterface {
     license?: PerConfigInterface;
 }
 
+export interface HostAssessmentResponseInterface {
+    databaseInstanceId: string;
+    assessment: AssessmentResponseInterface;
+}
+
 export interface PerConfigInterface {
     id?: string;
     type?: string;

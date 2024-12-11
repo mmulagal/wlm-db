@@ -109,7 +109,6 @@ const ManagedHostSubTable = ({
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     useEffect(() => {
-        console.log(managedAssessmentHostData);
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
             let optimizationStatusLoading = false;
             let optimizationStatusList: any = [];
@@ -687,7 +686,7 @@ const ManagedHostSubTable = ({
             Header: 'Storage availability',
             accessor: 'fileSystemDeploymentMode',
             id: '5',
-            width: '193px',
+            width: '188px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -700,14 +699,6 @@ const ManagedHostSubTable = ({
             width: '210px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                // let linkText = GENERAL.NOT_AVAILABLE;
-                // if (
-                //     rowData.statusColText === INVENTORY_STATUS.MANAGED &&
-                //     rowData.fileSystemType === GENERAL.FSX_FOR_ONTAP
-                // ) {
-                //     linkText = 'Optimized';
-                // }
-
                 let disableMsg = '';
                 let disableMenu = () => {
                     if (
@@ -770,32 +761,29 @@ const ManagedHostSubTable = ({
 
                 return (
                     <>
-                        {data[0] && data[0]?.loading && <DsFlashingDotsLoader />}
-                        {!data[0]?.loading &&
-                            (disableMenu() ? (
-                                <div className={styles.naContainer}>
-                                    <Popover
-                                        popoverClass={''}
-                                        children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        isAppendedToBody={false}
-                                        container={<TooltipIcon />}
-                                    />
-                                    <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
-                                </div>
-                            ) : rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
-                              rowData?.optimizationStatusLoading ? (
-                                <DsFlashingDotsLoader />
-                            ) : (
-                                <div className={styles.statusCol}>
-                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                    <DsButton type="text" onClick={() => redirectToAction(rowData)}>
-                                        View
-                                    </DsButton>
-                                </div>
-                            ))}
+                        {disableMenu() ? (
+                            <div className={styles.naContainer}>
+                                <Popover
+                                    popoverClass={''}
+                                    children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
+                                    trigger="hover"
+                                    delayHide={200}
+                                    interactive={true}
+                                    isAppendedToBody={false}
+                                    container={<TooltipIcon />}
+                                />
+                                <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
+                            </div>
+                        ) : rowData?.optimizationStatusLoading ? (
+                            <DsFlashingDotsLoader />
+                        ) : (
+                            <div className={styles.statusCol}>
+                                <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                <DsButton type="text" onClick={() => redirectToAction(rowData)}>
+                                    View
+                                </DsButton>
+                            </div>
+                        )}
                     </>
                 );
             }
@@ -804,7 +792,7 @@ const ManagedHostSubTable = ({
             Header: 'Protection',
             accessor: 'protectionText',
             id: '7',
-            width: '135px',
+            width: '130px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
@@ -821,7 +809,7 @@ const ManagedHostSubTable = ({
             Header: 'Performance',
             accessor: 'performance.assessment',
             id: '8',
-            width: '150px',
+            width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
@@ -833,24 +821,26 @@ const ManagedHostSubTable = ({
                     </>
                 );
             }
+        },
+        {
+            Header: 'Allocation capacity',
+            accessor: 'allocatedCapacityText',
+            id: '9',
+            width: '190px',
+            isSortable: true,
+            renderCell: (cellData: string | number, rowData: any) => {
+                return renderAllocatedCapacity(cellData, rowData);
+            }
         }
-        // {
-        //     Header: 'Allocation capacity',
-        //     accessor: 'allocatedCapacityText',
-        //     id: '9',
-        //     width: '190px',
-        //     isSortable: true,
-        //     renderCell: (cellData: string | number, rowData: any) => {
-        //         return renderAllocatedCapacity(cellData, rowData);
-        //     }
-        // }
     ];
 
-    if (windowSize.width > 1841) {
-        managedHostSubTableColDefs.push(lastColDetails());
-    } else {
-        managedHostSubTableColDefs.unshift(lastColDetails());
-    }
+    // if (windowSize.width > 1841) {
+    //     managedHostSubTableColDefs.push(lastColDetails());
+    // } else {
+    //     managedHostSubTableColDefs.unshift(lastColDetails());
+    // }
+
+    managedHostSubTableColDefs.unshift(lastColDetails());
 
     const tableProps = useTable({
         isSorting: false,

@@ -45,6 +45,7 @@ import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -1888,11 +1889,14 @@ export const getProtectionText = (data: any) => {
     return protectionText;
 };
 
-export const getOptimizationStatus = (databaseInstanceId: string, optimizationStatusList: any) => {
+export const getOptimizationStatus = (
+    databaseInstanceId: string,
+    optimizationStatusList: Array<HostAssessmentResponseInterface>
+) => {
     if (!optimizationStatusList) {
         return '';
     }
-    let instanceRow = optimizationStatusList?.find((per: any) => per?.databaseInstanceId === databaseInstanceId);
+    let instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
     if (instanceRow) {
         let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessment, {});
