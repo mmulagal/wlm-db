@@ -70,6 +70,7 @@ const ComparisonChartStack = React.memo(
                                                     popoverClass={styles['popover']}
                                                     isAppendedToBody={true}
                                                     placement="auto"
+                                                    key={stackIndex}
                                                     children={
                                                         <div className={styles.tooltipContainer}>
                                                             <div className={styles.tooltipContentRowFirst}>

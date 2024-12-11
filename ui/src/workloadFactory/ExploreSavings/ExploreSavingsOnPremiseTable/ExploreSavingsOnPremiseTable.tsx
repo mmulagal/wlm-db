@@ -142,7 +142,11 @@ const ExploreSavingsOnPremiseTable = () => {
                     <div>
                         {cellData && Number(cellData) !== 0 ? (
                             <div className={styles.container}>
-                                <Typography variant="Regular_14" className={styles.sqlServerInstance}>
+                                <Typography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
                                     {truncatedItems?.maxItemsToShow.join(', ')}
                                 </Typography>
                                 {truncatedItems?.remaining.length > 0 && (
