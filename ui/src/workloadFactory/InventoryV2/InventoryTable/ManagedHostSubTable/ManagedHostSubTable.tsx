@@ -56,6 +56,7 @@ import {
 import { updateResourceId } from '../../../../store/authSlice';
 import {
     detectFieldsValidation,
+    getOptimizationStatus,
     getProtectionText,
     renderAllocatedCapacity,
     renderCellData,
@@ -93,6 +94,7 @@ const ManagedHostSubTable = ({
     const resourceId = hostData?.resourceId;
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
@@ -107,13 +109,24 @@ const ManagedHostSubTable = ({
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
 
     useEffect(() => {
+        console.log(managedAssessmentHostData);
         if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
+            let optimizationStatusLoading = false;
+            let optimizationStatusList: any = [];
+            if (managedAssessmentHostData?.[rowId]) {
+                let assessmentData = managedAssessmentHostData?.[rowId];
+                optimizationStatusLoading = assessmentData?.loading;
+                optimizationStatusList = assessmentData?.data;
+            }
             const newTable = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
                 let protectionText = getProtectionText(perRow);
+                let optimizationStatus = getOptimizationStatus(perRow?.databaseInstanceId, optimizationStatusList);
                 return {
                     ...perRow,
                     loading: inventoryTableData?.[rowId]?.loading,
                     subLoading: perRow?.loading,
+                    optimizationStatusLoading: optimizationStatusLoading,
+                    optimizationStatus: optimizationStatus,
                     protectionText: protectionText,
                     allocatedCapacityText: perRow?.allocatedCapacity
                         ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
@@ -127,7 +140,7 @@ const ManagedHostSubTable = ({
         } else {
             setData([]);
         }
-    }, [rowId, inventoryTableData, inProgressInstances]);
+    }, [rowId, inventoryTableData, inProgressInstances, managedAssessmentHostData]);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -570,16 +583,10 @@ const ManagedHostSubTable = ({
         };
     };
 
-    const redirectToAction = (type: string, rowData: any) => {
-        if (type === 'Detect instance') {
-            handleDetectDialog(rowData);
-        } else if (type === 'Manage instance') {
-            handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
-        } else if (type === 'Optimized') {
-            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-            optimizeAction(rowData);
-        }
+    const redirectToAction = (rowData: any) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        optimizeAction(rowData);
     };
 
     const managedHostSubTableColDefs: ColumnProps[] = [
@@ -654,7 +661,7 @@ const ManagedHostSubTable = ({
             Header: 'Storage type',
             accessor: 'fileSystemType',
             id: '3',
-            width: '160px',
+            width: '150px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -690,16 +697,16 @@ const ManagedHostSubTable = ({
             Header: 'Optimization status',
             accessor: 'optimizationStatus',
             id: '6',
-            width: '190px',
+            width: '210px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                let linkText = GENERAL.NOT_AVAILABLE;
-                if (
-                    rowData.statusColText === INVENTORY_STATUS.MANAGED &&
-                    rowData.fileSystemType === GENERAL.FSX_FOR_ONTAP
-                ) {
-                    linkText = 'Optimized';
-                }
+                // let linkText = GENERAL.NOT_AVAILABLE;
+                // if (
+                //     rowData.statusColText === INVENTORY_STATUS.MANAGED &&
+                //     rowData.fileSystemType === GENERAL.FSX_FOR_ONTAP
+                // ) {
+                //     linkText = 'Optimized';
+                // }
 
                 let disableMsg = '';
                 let disableMenu = () => {
@@ -749,6 +756,15 @@ const ManagedHostSubTable = ({
                         disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
                         return true;
                     }
+
+                    if (
+                        !cellData &&
+                        rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
+                        !rowData?.optimizationStatusLoading
+                    ) {
+                        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
+                        return true;
+                    }
                     return false;
                 };
 
@@ -769,12 +785,13 @@ const ManagedHostSubTable = ({
                                     />
                                     <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                                 </div>
-                            ) : linkText === INVENTORY_STATUS.IN_PROGRESS ? (
+                            ) : rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
+                              rowData?.optimizationStatusLoading ? (
                                 <DsFlashingDotsLoader />
                             ) : (
                                 <div className={styles.statusCol}>
-                                    <DsTypography variant="Regular_13">{linkText}</DsTypography>
-                                    <DsButton type="text" onClick={() => redirectToAction(linkText, rowData)}>
+                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                    <DsButton type="text" onClick={() => redirectToAction(rowData)}>
                                         View
                                     </DsButton>
                                 </div>
@@ -804,7 +821,7 @@ const ManagedHostSubTable = ({
             Header: 'Performance',
             accessor: 'performance.assessment',
             id: '8',
-            width: '160px',
+            width: '150px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;

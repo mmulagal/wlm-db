@@ -40,6 +40,8 @@ export interface InventorySliceData {
     selectedHeaderTab: string;
     managedHostInitialColumns: any;
     isRefreshed: boolean;
+    managedAssessmentHostIdsList: Array<string>;
+    managedAssessmentHostData: any;
 }
 
 export interface InventoryTableData {

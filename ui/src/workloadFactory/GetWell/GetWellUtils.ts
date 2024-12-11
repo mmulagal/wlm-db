@@ -734,17 +734,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     return optBreakDown;
 };
 
-// This function is used to format the get well data.
-export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
-    const state = store.getState();
-    const optimizingData = state.getWellOptimize.optimizingData || {};
-    if (!data) {
-        data = state.getWellOptimize.driftAssessmentData || {};
-    }
-    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
-
-    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
-
+export const getCardsData = (data: any, optimizingData: any) => {
     const {
         formatOntapConfigList,
         ontapTagsList,
@@ -752,6 +742,10 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
         ontapNotOptimizedConfig,
         highestOntapSeverity
     } = formatOntapConfig(data, optimizingData);
+
+    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
+
+    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
 
     cardsData = {
         ...cardsData,
@@ -807,6 +801,18 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
             category: 'storage'
         }
     };
+
+    return { cardsData, formatOntapConfigList, formatOsConfigList };
+};
+
+// This function is used to format the get well data.
+export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
+    const state = store.getState();
+    const optimizingData = state.getWellOptimize.optimizingData || {};
+    if (!data) {
+        data = state.getWellOptimize.driftAssessmentData || {};
+    }
+    let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(data, optimizingData);
 
     let optBreakDown = formatOptimizationBreakDown(cardsData);
 

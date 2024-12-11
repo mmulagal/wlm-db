@@ -14,6 +14,8 @@ import {
     setIsManagedHostListLoading,
     setIsPgSqlDatabaseHostsLoading,
     setIsRefreshed,
+    setManagedAssessmentHostData,
+    setManagedAssessmentHostIdsList,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setRemoveSecNodeDiscoveredList,
@@ -21,6 +23,7 @@ import {
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
+    useGetMssqlAssessmentDataForHostMutation,
     useGetMssqlInstanceDataV2Mutation,
     useLazyDiscoverHostsQuery,
     useLazyGetDatabaseHostsFullDataV2Query,
@@ -58,10 +61,13 @@ const InventoryApisV2 = () => {
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const [runningPerfInstanceList, setRunningPerfInstanceList] = useState<Array<string>>([]);
+    const [runningManagedAssessmentList, setRunningManagedAssessmentList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const managedAssessmentHostIdsList = useAppSelector(state => state.inventoryV2.managedAssessmentHostIdsList);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
+    const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -93,18 +99,27 @@ const InventoryApisV2 = () => {
     // Get Instance data mutation. This will be called to get unmanaged rows full data - ToDo
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataV2Mutation();
 
+    // Get managed assessment data
+    const [getMssqlAssessmentData] = useGetMssqlAssessmentDataForHostMutation();
+
     const credIdRef = useRef();
     const regionIdRef = useRef();
     const fsxCredentialStatusObjRef: any = useRef();
     const mssqlInstancesDataRef: any = useRef();
     const perfMssqlInstancesDataRef: any = useRef();
+    const managedAssessmentHostDataRef: any = useRef();
     const runningInstanceListRef: any = useRef();
 
     const runningPerfInstanceListRef: any = useRef();
+    const runningManagedAssessmentRef: any = useRef();
 
     useEffect(() => {
         runningPerfInstanceListRef.current = runningPerfInstanceList;
     }, [runningPerfInstanceList]);
+
+    useEffect(() => {
+        runningManagedAssessmentRef.current = runningManagedAssessmentList;
+    }, [runningManagedAssessmentList]);
 
     useEffect(() => {
         runningInstanceListRef.current = runningInstanceList;
@@ -121,6 +136,10 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         perfMssqlInstancesDataRef.current = perfMssqlInstancesData;
     }, [perfMssqlInstancesData]);
+
+    useEffect(() => {
+        managedAssessmentHostDataRef.current = managedAssessmentHostData;
+    }, [managedAssessmentHostData]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -566,6 +585,58 @@ const InventoryApisV2 = () => {
         }
     };
 
+    const getManagedAssessmentData = async (resourceId: string) => {
+        try {
+            const result: any = await getMssqlAssessmentData({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                databaseHostId: resourceId
+            });
+            if (result && !result?.error) {
+                let mssqlAssessmentDataRes: any = {};
+                if (result?.data) {
+                    if (managedAssessmentHostDataRef.current[resourceId]) {
+                        mssqlAssessmentDataRes[resourceId] = {
+                            loading: false,
+                            data: result?.data?.instancesAssessment,
+                            error: result?.data?.error
+                        };
+                    }
+                }
+                if (!mssqlAssessmentDataRes?.[resourceId]) {
+                    mssqlAssessmentDataRes[resourceId] = {
+                        loading: false,
+                        data: null,
+                        error: null
+                    };
+                }
+                dispatch(
+                    setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataRes })
+                );
+            } else {
+                let mssqlAssessmentDataErr: any = {};
+                mssqlAssessmentDataErr[resourceId] = {
+                    loading: false,
+                    data: null,
+                    error: result?.error?.data?.message
+                };
+                dispatch(
+                    setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataErr })
+                );
+            }
+        } catch (error) {
+            let mssqlAssessmentDataErr: any = {};
+            mssqlAssessmentDataErr[resourceId] = {
+                loading: false,
+                data: null,
+                error: error
+            };
+            dispatch(
+                setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataErr })
+            );
+        }
+    };
+
     // This is to call instance API to get perf and protection data
     const callUnmanagedPerfInstanceApi = (
         instancesList: Array<string>,
@@ -598,6 +669,33 @@ const InventoryApisV2 = () => {
         }
     };
 
+    const callManagedAssessment = (resourceIds: Array<string>) => {
+        if (resourceIds && resourceIds.length > 0) {
+            let mssqlAssessmentDataLoad: any = {};
+            let noRunningList: Array<string> = [];
+            resourceIds?.map((resourceId: any) => {
+                if (runningManagedAssessmentRef.current.includes(resourceId)) {
+                    return;
+                }
+                mssqlAssessmentDataLoad[resourceId] = {
+                    loading: true,
+                    data: null,
+                    error: null
+                };
+                noRunningList.push(resourceId);
+            });
+            dispatch(
+                setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataLoad })
+            );
+            setRunningManagedAssessmentList([...runningManagedAssessmentRef.current, ...noRunningList]);
+            noRunningList?.map((resourceId: any) => {
+                setTimeout(() => {
+                    getManagedAssessmentData(resourceId);
+                }, 1);
+            });
+        }
+    };
+
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
@@ -619,6 +717,13 @@ const InventoryApisV2 = () => {
             callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
         }
     }, [unManagedPerfInstanceIdsList]);
+
+    useEffect(() => {
+        // Assessment call for managed rows
+        if (managedAssessmentHostIdsList) {
+            callManagedAssessment(managedAssessmentHostIdsList);
+        }
+    }, [managedAssessmentHostIdsList]);
 
     const resetValues = () => {
         dispatch(setResetManagedData(true));
@@ -656,8 +761,12 @@ const InventoryApisV2 = () => {
         dispatch(setRemoveSecNodeDiscoveredList([]));
         // Perf and protection call for unmanaged rows
         dispatch(setUnManagedPerfInstanceIdsList([]));
+        // Assessment call for managed rows
+        dispatch(setManagedAssessmentHostIdsList([]));
         setRunningPerfInstanceList([]);
+        setRunningManagedAssessmentList([]);
         dispatch(setPerfMssqlInstancesData({}));
+        dispatch(setManagedAssessmentHostData({}));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
