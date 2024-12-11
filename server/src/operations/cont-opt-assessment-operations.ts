@@ -728,8 +728,8 @@ async function managedHostsLicenseAssessment(
     parentJobId?: string
 ) {
     const { id: licenseAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Microsoft SQL server license assessment',
-        description: 'Microsoft SQL server license assessment',
+        name: `Microsoft SQL server license assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL server license assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -798,8 +798,8 @@ async function managedHostsComputeAssessment(
     parentJobId: string
 ) {
     const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Microsoft SQL server compute assessment',
-        description: 'Microsoft SQL server compute assessment',
+        name: `Microsoft SQL server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
+        description: `Microsoft SQL server compute assessment for ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -858,16 +858,15 @@ async function initiateComputeLicenseAssessmentCollection(
         credentialsId,
         region
     );
-    if (metadata) {
-        const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-        const { activeNodeInstanceId = '' } = await getActiveSqlNode(
-            credentialsId,
-            region,
-            node1InstanceId,
-            node2InstanceId
-        );
-
+    const { activeNodeInstanceId = '' } = await getActiveSqlNode(
+        credentialsId,
+        region,
+        node1InstanceId,
+        node2InstanceId
+    );
+    if (metadata && activeNodeInstanceId) {
         let licenseAssessment;
         let computeAssessment;
         if (fields?.includes(AssessmentCategories.LICENSE)) {
@@ -899,7 +898,7 @@ async function initiateComputeLicenseAssessmentCollection(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
     } else {
-        logger.error('No metadata found for the resource', { accountId, databaseHostId, credentialsId, region });
+        logger.error('No active node found for the resource', { accountId, databaseHostId, credentialsId, region });
     }
 }
 async function initiateStorageAssessmentCollection(
@@ -1016,7 +1015,7 @@ async function initiateComputeAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string,
+    ec2InstanceId: string,
     resourceName: string
 ) {
     logger.info('Initiate compute assessment', {
@@ -1024,14 +1023,14 @@ async function initiateComputeAssessment(
         accountId,
         credentialsId,
         region,
-        databaseHostId,
+        ec2InstanceId,
         resourceName
     });
     let errorMessage = '';
     try {
         await checkComputeOptimizerEnrollmentStatus(accountId, credentialsId, region);
 
-        const resourceArn = getEc2Arn(awsAccountId, region, databaseHostId);
+        const resourceArn = getEc2Arn(awsAccountId, region, ec2InstanceId);
         const computeOptimizerInstanceRecommendations = await getEC2InstanceRecommendations(
             region,
             credentialsId,
