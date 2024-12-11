@@ -585,6 +585,7 @@ const ManagedHostSubTable = ({
     const redirectToAction = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
         optimizeAction(rowData);
     };
 
@@ -774,7 +775,8 @@ const ManagedHostSubTable = ({
                                 />
                                 <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
                             </div>
-                        ) : rowData?.optimizationStatusLoading ? (
+                        ) : rowData?.optimizationStatusLoading ||
+                          rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS ? (
                             <DsFlashingDotsLoader />
                         ) : (
                             <div className={styles.statusCol}>
@@ -833,12 +835,6 @@ const ManagedHostSubTable = ({
             }
         }
     ];
-
-    // if (windowSize.width > 1841) {
-    //     managedHostSubTableColDefs.push(lastColDetails());
-    // } else {
-    //     managedHostSubTableColDefs.unshift(lastColDetails());
-    // }
 
     managedHostSubTableColDefs.unshift(lastColDetails());
 

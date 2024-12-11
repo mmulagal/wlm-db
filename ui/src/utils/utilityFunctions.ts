@@ -277,7 +277,7 @@ export const isNotNumberOrNA = (value: string | number) => {
     if (!value) {
         return false;
     } else {
-        return isNaN(parseFloat(String(value))) && value !== 'N/A';
+        return isNaN(parseFloat(String(value))) && value !== GENERAL.NOT_AVAILABLE;
     }
 };
 
@@ -1091,7 +1091,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                     value = '"' + value + '"';
                 }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : GENERAL.NOT_AVAILABLE + ',';
                 } else if (key === 'name' && value) {
                     result += value.split(';href')[0] + ',';
                 } else if (key === 'status' && value) {

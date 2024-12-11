@@ -440,7 +440,7 @@ export const GENERAL = {
         "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
-    NOT_AVAILABLE: 'N/A',
+    NOT_AVAILABLE: 'n/a',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -1000,9 +1000,9 @@ export const GENERAL = {
         OPTIMIZED: 'Optimized',
         NOT_OPTIMIZED: 'Not optimized',
         OVER_PROVISIONED: 'Over-provisioned',
-        INSUFFICIENT_DATA: 'N/A',
+        INSUFFICIENT_DATA: 'n/a',
         UNDER_PROVISIONED: 'Under-provisioned',
-        INSUFFICIENT_PERMISSIONS: 'N/A'
+        INSUFFICIENT_PERMISSIONS: 'n/a'
     },
     INSTANCE_TYPE_FINDINGS_TOOLTIP:
         'Displays findings (over-provisioned, under-provisioned, or optimized) based on analysis of Amazon CloudWatch metrics (CPU, bandwidth, network, and more) of the current instance and on the current memory of the instance. No finding appears when Workload Factory has insufficient permissions or unavailable metrics.',
