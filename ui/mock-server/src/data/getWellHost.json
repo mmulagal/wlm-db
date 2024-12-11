@@ -3,7 +3,7 @@
     "instancesAssessment": [
         {
             "databaseInstanceId": "41",
-            "assessment": {
+            "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
                     "optimisedCount": {
@@ -423,7 +423,7 @@
         },
         {
             "databaseInstanceId": "42",
-            "assessment": {
+            "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
                     "optimisedCount": {
@@ -843,7 +843,7 @@
         },
         {
             "databaseInstanceId": "43",
-            "assessment": {
+            "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
                     "optimisedCount": {
@@ -1263,7 +1263,7 @@
         },
         {
             "databaseInstanceId": "44",
-            "assessment": {
+            "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
                     "optimisedCount": {

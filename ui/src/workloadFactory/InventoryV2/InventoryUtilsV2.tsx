@@ -1899,7 +1899,7 @@ export const getOptimizationStatus = (
     let instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
     if (instanceRow) {
-        let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessment, {});
+        let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
         let optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0

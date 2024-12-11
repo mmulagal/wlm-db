@@ -54,7 +54,7 @@ export interface AssessmentResponseInterface {
 
 export interface HostAssessmentResponseInterface {
     databaseInstanceId: string;
-    assessment: AssessmentResponseInterface;
+    assessments: AssessmentResponseInterface;
 }
 
 export interface PerConfigInterface {
