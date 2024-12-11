@@ -1097,6 +1097,7 @@ export const GENERAL = {
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
     ASSESSMENT_FOR_MANAGE: 'Continuous optimization is only supported for managed instances.',
+    ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     FSXN_OPTIMIZE_SUPPORTED:
         'Continuous optimization is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage',
     MANAGE_DISABLE_FOR_UNDETECTED:
