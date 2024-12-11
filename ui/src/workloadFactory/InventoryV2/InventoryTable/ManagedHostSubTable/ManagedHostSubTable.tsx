@@ -1,4 +1,12 @@
-import { Table, useTable, useDialog, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import {
+    Table,
+    useTable,
+    useDialog,
+    DsTypography,
+    DsFlashingDotsLoader,
+    DsButton,
+    Popover
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ManagedHostSubTable.module.scss';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
@@ -65,6 +73,7 @@ import {
     setGwResourceId,
     setLandingFrom
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 
 const ManagedHostSubTable = ({
     handleManageInstances
@@ -351,7 +360,7 @@ const ManagedHostSubTable = ({
 
     const lastColDetails = () => {
         return {
-            id: '9',
+            id: '10',
             Header: '',
             accessor: 'name',
 
@@ -559,6 +568,18 @@ const ManagedHostSubTable = ({
         };
     };
 
+    const redirectToAction = (type: string, rowData: any) => {
+        if (type === 'Detect instance') {
+            handleDetectDialog(rowData);
+        } else if (type === 'Manage instance') {
+            handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
+        } else if (type === 'Optimized') {
+            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+            optimizeAction(rowData);
+        }
+    };
+
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance',
@@ -664,9 +685,106 @@ const ManagedHostSubTable = ({
             }
         },
         {
+            Header: 'Optimization status',
+            accessor: 'optimizationStatus',
+            id: '6',
+            width: '190px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                let linkText = GENERAL.NOT_AVAILABLE;
+                if (
+                    rowData.statusColText === INVENTORY_STATUS.MANAGED &&
+                    rowData.fileSystemType === GENERAL.FSX_FOR_ONTAP
+                ) {
+                    linkText = 'Optimized';
+                }
+
+                let disableMsg = '';
+                let disableMenu = () => {
+                    if (
+                        (hostData?.status === INVENTORY_STATUS.OFFLINE ||
+                            hostData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+                            rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+                            rowData?.status === INVENTORY_STATUS.STOPPED) &&
+                        rowData?.statusColText === INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
+                        return true;
+                    }
+                    if (
+                        (hostData?.status === INVENTORY_STATUS.OFFLINE ||
+                            hostData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+                            rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+                            rowData?.status === INVENTORY_STATUS.STOPPED) &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
+                        return true;
+                    }
+
+                    if (
+                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+                    ) {
+                        disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+                        return true;
+                    }
+
+                    if (
+                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+                    ) {
+                        disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
+                        return true;
+                    }
+
+                    if (
+                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                        rowData.fileSystemType === GENERAL.FSX_FOR_ONTAP
+                    ) {
+                        disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+                        return true;
+                    }
+                    return false;
+                };
+
+                return (
+                    <>
+                        {data[0] && data[0]?.loading && <DsFlashingDotsLoader />}
+                        {!data[0]?.loading &&
+                            (disableMenu() ? (
+                                <div className={styles.naContainer}>
+                                    <Popover
+                                        popoverClass={''}
+                                        children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        isAppendedToBody={false}
+                                        container={<TooltipIcon />}
+                                    />
+                                    <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
+                                </div>
+                            ) : linkText === INVENTORY_STATUS.IN_PROGRESS ? (
+                                <DsFlashingDotsLoader />
+                            ) : (
+                                <div className={styles.statusCol}>
+                                    <DsTypography variant="Regular_13">{linkText}</DsTypography>
+                                    <DsButton type="text" onClick={() => redirectToAction(linkText, rowData)}>
+                                        View
+                                    </DsButton>
+                                </div>
+                            ))}
+                    </>
+                );
+            }
+        },
+        {
             Header: 'Protection',
             accessor: 'protectionText',
-            id: '6',
+            id: '7',
             width: '135px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
@@ -683,7 +801,7 @@ const ManagedHostSubTable = ({
         {
             Header: 'Performance',
             accessor: 'performance.assessment',
-            id: '7',
+            id: '8',
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
@@ -696,17 +814,17 @@ const ManagedHostSubTable = ({
                     </>
                 );
             }
-        },
-        {
-            Header: 'Allocation capacity',
-            accessor: 'allocatedCapacityText',
-            id: '8',
-            width: '190px',
-            isSortable: true,
-            renderCell: (cellData: string | number, rowData: any) => {
-                return renderAllocatedCapacity(cellData, rowData);
-            }
         }
+        // {
+        //     Header: 'Allocation capacity',
+        //     accessor: 'allocatedCapacityText',
+        //     id: '9',
+        //     width: '190px',
+        //     isSortable: true,
+        //     renderCell: (cellData: string | number, rowData: any) => {
+        //         return renderAllocatedCapacity(cellData, rowData);
+        //     }
+        // }
     ];
 
     if (windowSize.width > 1841) {

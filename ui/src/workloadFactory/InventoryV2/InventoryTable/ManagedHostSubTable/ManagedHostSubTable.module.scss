@@ -26,6 +26,23 @@
         align-items: center;
     }
 
+    .statusCol {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .naContainer {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
     .extraDiv2 {
         width: 70px;
         position: sticky;
