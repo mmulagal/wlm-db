@@ -1444,7 +1444,6 @@ async function configureMpio(
     optimizeMpioParams: OptimizeMpioIscsiSessionsParams,
     runningOnPrimaryNode: boolean = true
 ) {
-    logger.info(`Configure MPIO on ${optimizeMpioParams}`);
     const {
         accountId,
         credentialsId,
@@ -1456,6 +1455,8 @@ async function configureMpio(
         sqlDeploymentType,
         iscsiTargetAddresses
     } = optimizeMpioParams;
+
+    logger.info(`Configure MPIO on ${optimizeMpioParams}`);
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
@@ -1481,7 +1482,7 @@ async function configureMpio(
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses!)],
+            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses as string[])],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
             accountId,
             false
@@ -1598,14 +1599,11 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
         activeNodeInstanceId,
         sqlDeploymentType,
         instanceMetadata,
-        standbyNodeInstanceId,
         databaseType,
         sqlAuthEnabled
     } = optimizeMpioParams;
 
-    logger.info(
-        `Enabling MPIO and configuring iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${fsxId}, ${svmId}, ${instanceId}, ${instanceName}, ${serverNameWithHostName}, ${databaseHostId}, ${awsAccountId}, ${activeNodeInstanceId}, ${sqlDeploymentType}, ${standbyNodeInstanceId}`
-    );
+    logger.info(`Enabling MPIO and configuring iSCSI sessions for ${optimizeMpioParams}`);
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
@@ -1616,15 +1614,18 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
         region,
         fsxId as string
     );
-    const {
-        Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] as string[] } = { IpAddresses: [] } } = {
-            Iscsi: { IpAddresses: [] }
-        }
-    } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
+    const { Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] } = {} } = {} } =
+        fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
+
     optimizeMpioParams.iscsiTargetAddresses = iscsiTargetAddresses;
 
-    // Check if MPIO is installed on primary node
     try {
+        // Fail if iSCSI target addresses are not available
+        if (isEmpty(iscsiTargetAddresses)) {
+            jobError = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
+            throw createError(400, jobError);
+        }
+
         // Run validation and configuration on primary node
         const isMpioInstalledOnPrimary = await checkMpioInstallation(optimizeMpioParams);
         let primaryConfigureMpioJobStatus;
@@ -1647,7 +1648,7 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
                 jobError = `Error while enabling MPIO and configuring MPIO sessions on ${serverNameWithHostName}.`;
             }
         } else if (
-            primaryConfigureMpioJobStatus === JOBSTATUS.FAILED &&
+            primaryConfigureMpioJobStatus === JOBSTATUS.FAILED ||
             standbyConfigureMpioJobStatus === JOBSTATUS.FAILED
         ) {
             jobStatus = JOBSTATUS.FAILED;
@@ -1876,6 +1877,11 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             Iscsi: { IpAddresses: [] }
         }
     } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
+
+    if (isEmpty(iscsiTargetAddresses)) {
+        const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
+        throw createError(400, errorMessage);
+    }
     optimizeMpioisSessionsParams.iscsiTargetAddresses = iscsiTargetAddresses;
 
     let violationsStandbyNode = [];
