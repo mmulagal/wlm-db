@@ -4,6 +4,7 @@ import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryV2State: InventorySliceData = {
+    breadCrumbSelectedFrom: '',
     inventoryTableData: null,
     inventoryChartData: null,
     isManagedHostListLoading: false,
@@ -50,6 +51,9 @@ const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setBreadCrumbSelectedFrom: (state, action: PayloadAction<any>) => {
+            state.breadCrumbSelectedFrom = action.payload;
+        },
         setDefaultFilterOptions: (state, action: PayloadAction<any>) => {
             state.defaultFilterOptions = action.payload;
         },
@@ -189,7 +193,8 @@ export const {
     setManagedHostInstanceLoading,
     setSelectedHeaderTab,
     setManagedHostColState,
-    setIsRefreshed
+    setIsRefreshed,
+    setBreadCrumbSelectedFrom
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
