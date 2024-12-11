@@ -1090,11 +1090,15 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
+    ASSESSMENT_FOR_MANAGE: 'Continuous optimization is only supported for managed instances.',
+    FSXN_OPTIMIZE_SUPPORTED:
+        'Continuous optimization is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage',
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
