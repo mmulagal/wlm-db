@@ -54,10 +54,10 @@ const TaskTable = ({ taskList = [] }: any) => {
                             </Typography>
                         </div>
                         <Typography variant="Regular_14" className={styles.fourthItem}>
-                            {task?.startTime ? formatDateWithTime(task?.startTime) : 'N/A'}
+                            {task?.startTime ? formatDateWithTime(task?.startTime) : GENERAL.NOT_AVAILABLE}
                         </Typography>
                         <Typography variant="Regular_14" className={styles.fifthItem}>
-                            {task?.endTime ? formatDateWithTime(task?.endTime) : 'N/A'}
+                            {task?.endTime ? formatDateWithTime(task?.endTime) : GENERAL.NOT_AVAILABLE}
                         </Typography>
                     </div>
                 );
