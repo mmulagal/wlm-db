@@ -1193,7 +1193,9 @@ export const GENERAL = {
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
-    APPLICATION_SQL_SERVER: 'Application (SQL Server)'
+    APPLICATION_SQL_SERVER: 'Application (SQL Server)',
+    MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
+        'Total managed instances include only those whose assessment has been completed and are currently online.'
 };
 
 export const CODE_VIEWER = {

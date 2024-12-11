@@ -97,8 +97,10 @@ export interface GwPerConfigCardInterface {
     };
     recommendation?: {
         title: string;
-        description: string;
+        description?: string;
         values?: string[] | undefined;
+        descriptionList?: Array<{ title: string; description: string }> | undefined;
+        info?: string;
     };
     tags: string[];
     category?: string;
@@ -112,4 +114,4 @@ export interface GwSqlServerInstanceInterface {
     sqlServerEdition: string;
     sqlServerEngineEdition?: number;
     sqlServerName?: string;
-};
+}

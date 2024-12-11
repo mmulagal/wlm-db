@@ -18,6 +18,7 @@ import {
     createFileSystemForDemo,
     createOperatingSystemOptimizeJobMockData,
     createOptimizeJobMockData,
+    createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
@@ -208,6 +209,17 @@ async function createDemoResourcesPerRegion(
             );
             await createJobs(accountId, operatingSystemOptimizeJobMockData);
 
+            const operatingSystemMpioSessionsOptimizeJobMockData =
+                await createOperatingSystemMpioSessionsOptimizeJobMockData(
+                    accountId,
+                    hostName,
+                    instanceNames[0],
+                    credentialsId,
+                    region,
+                    instanceIds.split(',')[0],
+                    resourceId
+                );
+            await createJobs(accountId, operatingSystemMpioSessionsOptimizeJobMockData);
             const storageTierJobMockData = await createStorageTierJobMockData(
                 accountId,
                 hostName,

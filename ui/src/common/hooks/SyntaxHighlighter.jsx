@@ -6,13 +6,13 @@ import jsx from 'react-syntax-highlighter/dist/esm//languages/prism/jsx';
 import yaml from 'react-syntax-highlighter/dist/esm//languages/prism/yaml';
 import bash from 'react-syntax-highlighter/dist/esm//languages/prism/bash';
 import hcl from 'react-syntax-highlighter/dist/esm//languages/prism/hcl';
+import { isObject } from 'lodash';
 SyntaxHighlighter.registerLanguage('json', json);
 SyntaxHighlighter.registerLanguage('javascript', js);
 SyntaxHighlighter.registerLanguage('jsx', jsx);
 SyntaxHighlighter.registerLanguage('yaml', yaml);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('hcl', hcl);
-const _ = require('lodash');
 
 const style = {
     'code[class*="language-"]': {
@@ -201,7 +201,7 @@ export default React.memo(({ children: _children, ...props }) => {
     const [children, setChildren] = useState(null);
 
     useEffect(() => {
-        const children = _.isObject(_children) ? JSON.stringify(_children, null, 4) : _children;
+        const children = isObject(_children) ? JSON.stringify(_children, null, 4) : _children;
         setChildren(children);
     }, [_children]);
 

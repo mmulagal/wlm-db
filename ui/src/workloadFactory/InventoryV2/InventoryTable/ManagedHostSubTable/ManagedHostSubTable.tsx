@@ -24,6 +24,7 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import {
+    setBreadCrumbSelectedFrom,
     setDetectManagePassword,
     setDetectManageUserName,
     setDetectONTAPPassword,
@@ -523,6 +524,7 @@ const ManagedHostSubTable = ({
                                         if (menuId === 'optimize') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                                             optimizeAction(rowData);
                                         }
 

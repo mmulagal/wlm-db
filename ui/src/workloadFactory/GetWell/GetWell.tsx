@@ -54,7 +54,9 @@ import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection
 
 const GetWell = () => {
     const dispatch = useDispatch();
-    const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
+    const { optimizeFilterTags, defaultFilterOptions, breadCrumbSelectedFrom } = useAppSelector(
+        state => state.inventoryV2
+    );
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -242,9 +244,13 @@ const GetWell = () => {
                         <BreadCrumbs
                             items={[
                                 {
-                                    title: 'Inventory',
+                                    title: breadCrumbSelectedFrom === WLF_TABS.INVENTORY ? 'Inventory' : 'Dashboard',
                                     onClick: () => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                        if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                        } else {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                                        }
                                         dispatch(resetGwData({}));
                                     }
                                 },
