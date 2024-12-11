@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHost } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
-import { getFilterOptions } from '../../../utils/utilityFunctions';
+import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 
 import FileUpload from './FileUpload';
@@ -73,38 +73,6 @@ const ExploreSavingsOnPremiseTable = () => {
             setTableData([]);
         }
     }, [unManagedHostFormatedList]);
-
-    const getTruncatedItems = (items: any) => {
-        let totalWidth = 0;
-
-        const maxItemsToShow = [];
-        const remaining = [];
-
-        // Dynamically calculate the width
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        //@ts-ignore
-        context.font = '14px'; // Adjust font-size and family as per your table
-
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            //@ts-ignore
-            const itemWidth = context.measureText(item + ', ').width;
-            //@ts-ignore
-            if (totalWidth + itemWidth <= 261 || maxItemsToShow.length === 0) {
-                maxItemsToShow.push(item);
-                totalWidth += itemWidth;
-            } else {
-                remaining.push(...items.slice(i));
-                break;
-            }
-        }
-
-        return {
-            maxItemsToShow: maxItemsToShow,
-            remaining: remaining
-        };
-    };
 
     const lastColDetails = () => {
         return {
