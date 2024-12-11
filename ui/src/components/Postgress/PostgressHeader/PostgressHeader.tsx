@@ -18,7 +18,7 @@ import { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMuta
 import { navigateToCanvas } from '../../../utils/appConfig';
 import LoadConfig from '../../CreateMsSql/LoadConfig/LoadConfig';
 import { useEffect, useState } from 'react';
-const _ = require('lodash');
+import { uniq } from 'lodash';
 
 const PostgressHeader = () => {
     const { setDialog, closeDialog } = useDialog();
@@ -52,7 +52,7 @@ const PostgressHeader = () => {
             if (
                 refetchApiCount?.isLoading &&
                 (refetchApiCount?.expected.length === 0 ||
-                    _.uniq(refetchApiCount?.ran).length === _.uniq(refetchApiCount?.expected).length)
+                    uniq(refetchApiCount?.ran).length === uniq(refetchApiCount?.expected).length)
             ) {
                 resetChecksAfterLoad(dispatch, closeDialog);
             }

@@ -43,8 +43,7 @@ import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-
-const _ = require('lodash');
+import { isEqual } from 'lodash';
 
 const PostgreCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -104,7 +103,7 @@ const PostgreCodebox = () => {
             openDemoInfoDialog();
         } else {
             const updatedFormData = { mssqlFormData, pgsqlFormData };
-            if (!formData || !_.isEqual(updatedFormData, formData)) {
+            if (!formData || !isEqual(updatedFormData, formData)) {
                 // If form changed so template API will get called again to get latest CF url
                 dispatch(setIsLoading(true));
                 setFormData(updatedFormData);
@@ -135,7 +134,7 @@ const PostgreCodebox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
             // If user is switching between CF and CLI than no need to call template APi again
             const updatedFormData = { mssqlFormData, pgsqlFormData };
-            if (!formData || !_.isEqual(updatedFormData, formData)) {
+            if (!formData || !isEqual(updatedFormData, formData)) {
                 setFormData(updatedFormData);
                 getTemplateResponse();
             }

@@ -63,8 +63,28 @@ const AdditionalComputeParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalLicenseParameterDriftResponse = Type.Optional(
+    Type.Object({
+        sqlServerInstances: Type.Array(
+            Type.Object({
+                sqlServerInstance: Type.String(),
+                sqlServerState: Type.String(),
+                sqlServerVersion: Type.String(),
+                sqlServerProductYear: Type.Number(),
+                sqlServerEdition: Type.Optional(Type.String()),
+                sqlServerEngineEdition: Type.Optional(Type.Number()),
+                sqlServerName: Type.Optional(Type.String())
+            })
+        )
+    })
+);
+
 const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
 type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
+
+const LicenseDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalLicenseParameterDriftResponse]);
+type LicenseDriftResponseType = Static<typeof LicenseDriftResponse>;
+
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
     configuration: Type.Object({
@@ -79,9 +99,20 @@ type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResp
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
-    license: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
+
+const DriftAssessmentResponsePerInstance = Type.Object({
+    databaseInstanceId: Type.String({ minLength: 1 }),
+    assessments: Type.Optional(DriftAssessmentResponse),
+    error: Type.Optional(Type.String())
+});
+
+const DriftAssessmentResponsePerHost = Type.Object({
+    databaseHostId: Type.String({ minLength: 1 }),
+    instancesAssessment: Type.Array(DriftAssessmentResponsePerInstance)
+});
 
 const OptimizeStorageRequestParams = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
@@ -116,6 +147,7 @@ export {
     DriftAssessmentResponseType,
     ParameterDriftResponseType,
     ComputeDriftResponseType,
+    LicenseDriftResponseType,
     StorageParameterDriftResponseType,
     SizingViolationResponseType,
     OptimizeStorageRequestBody,
@@ -125,5 +157,6 @@ export {
     OptimizeComputeRequestBodyType,
     OptimizeSizingRequestBody,
     OptimizeSizingRequestBodyType,
-    OptimizeOperatingSystemRequestBody
+    OptimizeOperatingSystemRequestBody,
+    DriftAssessmentResponsePerHost
 };

@@ -13,6 +13,7 @@ export interface GetWellSliceInterface {
     optimizationBreakDown: {
         storage?: CountBreakDown;
         compute?: CountBreakDown;
+        application?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -48,6 +49,7 @@ export interface AssessmentResponseInterface {
         layout?: PerConfigInterface[];
     };
     compute?: PerConfigInterface;
+    license?: PerConfigInterface;
 }
 
 export interface PerConfigInterface {
@@ -95,9 +97,21 @@ export interface GwPerConfigCardInterface {
     };
     recommendation?: {
         title: string;
-        description: string;
+        description?: string;
         values?: string[] | undefined;
+        descriptionList?: Array<{ title: string; description: string }> | undefined;
+        info?: string;
     };
     tags: string[];
     category?: string;
+}
+
+export interface GwSqlServerInstanceInterface {
+    sqlServerInstance: string;
+    sqlServerState?: string;
+    sqlServerVersion?: string;
+    sqlServerProductYear?: number;
+    sqlServerEdition: string;
+    sqlServerEngineEdition?: number;
+    sqlServerName?: string;
 }

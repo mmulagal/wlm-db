@@ -2,6 +2,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     fetchDriftAssessment,
+    fetchDriftAssessmentPerHost,
     onDemandTriggerDriftAssessmentDataCollection
 } from '../operations/cont-opt-assessment-operations';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
@@ -11,13 +12,16 @@ import {
     OptimizeStorageSchema,
     OptimizeSizingSchema,
     OptimizeOperatingSystemSchema,
-    OptimizeComputeSchema
+    OptimizeComputeSchema,
+    DriftAssessmentPerHost,
+    OptimizeStorageTierSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
     optimizeSizing,
     optimizeOperatingSystemSettings,
-    optimizeCompute
+    optimizeCompute,
+    optimizeStorageTier
 } from '../operations/cont-opt-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -141,6 +145,44 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     instanceType
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/assessment`,
+            { schema: DriftAssessmentPerHost },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = request;
+
+                const response = await fetchDriftAssessmentPerHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
+            { schema: OptimizeStorageTierSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                } = request;
+
+                const response = await optimizeStorageTier(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
                 );
                 return reply.send(response);
             }

@@ -54,7 +54,9 @@ import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection
 
 const GetWell = () => {
     const dispatch = useDispatch();
-    const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
+    const { optimizeFilterTags, defaultFilterOptions, breadCrumbSelectedFrom } = useAppSelector(
+        state => state.inventoryV2
+    );
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -188,6 +190,12 @@ const GetWell = () => {
                 label: 'Compute',
                 value: 'Compute_sub',
                 category: 'Compute'
+            },
+            {
+                id: 4,
+                label: GENERAL.APPLICATION_SQL_SERVER,
+                value: 'Application_sub',
+                category: GENERAL.APPLICATION_SQL_SERVER
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -236,9 +244,13 @@ const GetWell = () => {
                         <BreadCrumbs
                             items={[
                                 {
-                                    title: 'Inventory',
+                                    title: breadCrumbSelectedFrom === WLF_TABS.INVENTORY ? 'Inventory' : 'Dashboard',
                                     onClick: () => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                        if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                        } else {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                                        }
                                         dispatch(resetGwData({}));
                                     }
                                 },
@@ -390,7 +402,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 2
+                                                                : 3
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -404,6 +416,11 @@ const GetWell = () => {
                                                             id: 1,
                                                             label: 'Compute',
                                                             value: 'Compute'
+                                                        },
+                                                        {
+                                                            id: 2,
+                                                            label: GENERAL.APPLICATION_SQL_SERVER,
+                                                            value: 'Application'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -1436,6 +1453,7 @@ const GetWell = () => {
                                                     data={filteredCardData?.compute_rightsizing?.recommendation}
                                                 />
                                             }
+                                            style={{ marginBottom: '40px' }}
                                         />
                                     </div>
                                 )}
@@ -1496,6 +1514,77 @@ const GetWell = () => {
                                         />
                                     </div>
                                 )} */}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section five */}
+                    {filteredCardData?.sql_licenses && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    {GENERAL.APPLICATION_SQL_SERVER}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.sql_licenses && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.sql_licenses}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.APPLICATION_SQL_SERVER}
+                                        />
+                                        <DsAccordion
+                                            id="13"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.sql_licenses?.block_two?.value}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.sql_licenses?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.sql_licenses?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.sql_licenses?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.sql_licenses?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

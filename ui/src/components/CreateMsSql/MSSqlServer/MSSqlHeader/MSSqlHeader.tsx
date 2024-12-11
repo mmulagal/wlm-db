@@ -23,7 +23,7 @@ import styles from './MSSqlHeader.module.scss';
 import { setIsLoadConfig } from '../../../../store/mssql/msSqlActionSlice';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 import { useNavigate } from 'react-router-dom';
-const _ = require('lodash');
+import { uniq } from 'lodash';
 
 const MSSqlHeader = () => {
     const { setDialog, closeDialog } = useDialog();
@@ -63,7 +63,7 @@ const MSSqlHeader = () => {
             if (
                 refetchApiCount?.isLoading &&
                 (refetchApiCount?.expected.length === 0 ||
-                    _.uniq(refetchApiCount?.ran).length === _.uniq(refetchApiCount?.expected).length)
+                    uniq(refetchApiCount?.ran).length === uniq(refetchApiCount?.expected).length)
             ) {
                 resetChecksAfterLoad(dispatch, closeDialog);
             }

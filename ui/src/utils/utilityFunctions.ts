@@ -38,7 +38,7 @@ import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './t
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
-const moment = require('moment');
+import moment from 'moment';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {

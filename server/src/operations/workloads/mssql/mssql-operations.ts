@@ -55,7 +55,8 @@ import {
     generateHash,
     sqlResponseParsing,
     getOriginalDatabaseInstanceName,
-    isDemo
+    isDemo,
+    parsePgSqlInstanceInfo
 } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getResources } from '../../database/database-operations';
@@ -68,6 +69,7 @@ import {
 } from './ssm-script-utils';
 import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
+import { getPgSqlInstanceInfo } from '../pgsql/pgsql-operations';
 
 const logger = getLogger();
 const isDemoFlow = isDemo();
@@ -911,19 +913,60 @@ interface ActiveSqlNodeDetails {
     instancesDetails: InstanceDetails[];
 }
 
+async function getPgSqlInstanceDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string,
+    fsxDataVolumeName: string,
+    node2InstanceId?: string
+) {
+    logger.info('Getting PGSQL instance details', {
+        accountId,
+        credentialsId,
+        region,
+        node1InstanceId,
+        fsxDataVolumeName,
+        node2InstanceId
+    });
+    const instanceInfo =
+        (await getPgSqlInstanceInfo(accountId!, credentialsId, region, '', [node1InstanceId], fsxDataVolumeName)) || '';
+    const { dbInstanceId, dbClusterState } = parsePgSqlInstanceInfo(instanceInfo);
+    const instanceDetails = {
+        databaseInstanceId: dbInstanceId,
+        instanceName: 'postgresql',
+        isManaged: true,
+        instanceState: dbClusterState === 'in production' ? ServerState.UP : ServerState.DOWN, // in production state: The database cluster is fully operational and running. This is the normal state when the PostgreSQL server is up and accepting connections
+        isDefault: true
+    };
+    return {
+        isSSMConnected: true,
+        activeNodeInstanceId: node1InstanceId,
+        standbyNodeInstanceId: node2InstanceId,
+        instanceName: 'postgresql', // PGSQL instances have no instance name, defaulting to postgresql
+        ssmConnectionStatus: ConnectionStatus.CONNECTED,
+        instancesDetails: [instanceDetails]
+    };
+}
+
 async function getActiveSqlNode(
     credentialsId: string,
     region: string,
     node1InstanceId: string,
     node2InstanceId?: string,
-    resourceId?: string
+    resourceId?: string,
+    accountId?: string,
+    resourceType: string = DatabaseTypes.MS_SQL_SERVER,
+    fsxDataVolumeName: string = ''
 ) {
     logger.info('Getting active SQL node', {
         credentialsId,
         region,
         node1InstanceId,
         node2InstanceId,
-        resourceId
+        resourceId,
+        resourceType,
+        fsxDataVolumeName
     });
     try {
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
@@ -931,6 +974,17 @@ async function getActiveSqlNode(
         let errorMessage = '';
         // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+            if (resourceType === DatabaseTypes.PG_SQL) {
+                const pgSqlInstanceDetails = await getPgSqlInstanceDetails(
+                    accountId!,
+                    credentialsId,
+                    region,
+                    node1InstanceId,
+                    fsxDataVolumeName,
+                    node2InstanceId
+                );
+                return pgSqlInstanceDetails;
+            }
             const { instanceName, instancesDetails = [] } =
                 (await getActiveSqlInstanceName(credentialsId, region, [node1InstanceId])) || {};
             if (instanceName) {
@@ -966,14 +1020,10 @@ async function getActiveSqlNode(
                     };
                 }
             }
+            errorMessage = `SSM connection to node and SQL server status check for node ${node2InstanceId} has failed.`;
+            errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
+            logger.error(errorMessage, { connectionStatus });
         }
-
-        errorMessage = `SSM connection to nodes and SQL server status check for nodes ${node1InstanceId} ${
-            node2InstanceId ? `and ${node1InstanceId}` : ''
-        } has failed.`;
-        errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-        logger.error(errorMessage, { connectionStatus });
-
         return { isSSMConnected: false, ssmConnectionStatus: connectionStatus.Status };
     } catch (error) {
         logger.error(
@@ -1208,6 +1258,7 @@ async function getActiveSqlNodeAndInstanceDetails(
         resourceName
     });
     try {
+        const inActiveNodes: { nodeId: string; connStatus: string }[] = [];
         for (const nodeId of nodeIds) {
             const connectionStatus = await getSSMConnectionStatus(credentialsId, region, nodeId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
@@ -1245,13 +1296,12 @@ async function getActiveSqlNodeAndInstanceDetails(
                     logger.debug(`No active sql instances found in node ${nodeId} `);
                 }
             } else {
-                logger.error(
-                    `SSM status of node ${nodeId} is not running :${connectionStatus.Status}  for resourceid: ${resourceId}, resource name : ${resourceName}`
-                );
+                inActiveNodes.push({ nodeId, connStatus: connectionStatus?.Status ?? '' });
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${nodeIds} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
-        logger.error(errorMessage);
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${[
+            ...inActiveNodes
+        ]} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
         const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId}, resource name: ${resourceName} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
