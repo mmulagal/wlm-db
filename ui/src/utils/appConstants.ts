@@ -440,7 +440,7 @@ export const GENERAL = {
         "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
-    NOT_AVAILABLE: 'N/A',
+    NOT_AVAILABLE: 'n/a',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -1001,9 +1001,9 @@ export const GENERAL = {
         OPTIMIZED: 'Optimized',
         NOT_OPTIMIZED: 'Not optimized',
         OVER_PROVISIONED: 'Over-provisioned',
-        INSUFFICIENT_DATA: 'N/A',
+        INSUFFICIENT_DATA: 'n/a',
         UNDER_PROVISIONED: 'Under-provisioned',
-        INSUFFICIENT_PERMISSIONS: 'N/A'
+        INSUFFICIENT_PERMISSIONS: 'n/a'
     },
     INSTANCE_TYPE_FINDINGS_TOOLTIP:
         'Displays findings (over-provisioned, under-provisioned, or optimized) based on analysis of Amazon CloudWatch metrics (CPU, bandwidth, network, and more) of the current instance and on the current memory of the instance. No finding appears when Workload Factory has insufficient permissions or unavailable metrics.',
@@ -1091,11 +1091,16 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
+    ASSESSMENT_FOR_MANAGE: 'Continuous optimization is only supported for managed instances.',
+    ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
+    FSXN_OPTIMIZE_SUPPORTED:
+        'Continuous optimization is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage',
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:

@@ -163,7 +163,9 @@ export interface DatabaseHostsEntities {
     aggregatedPgSqlHostsCount: AggregatedHostsCountRes | null;
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
+    aggregatedPgsqlStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
+    aggregatedPgsqlCosts: AggregatedCostsRes | null;
     selectedConfig: string;
     selectedAssessmentRow: any;
     sandboxAgeRange: {

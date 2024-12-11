@@ -594,7 +594,7 @@ export const INVENTORY_STATUS = {
     SSM_ONLINE: 'online',
     SSM_CONNECTED: 'connected',
     HOST_ONLINE: 'online',
-    NOT_AVAILABLE: 'N/A',
+    NOT_AVAILABLE: 'n/a',
     UP: 'up',
     DOWN: 'down',
     RUNNING: 'Running',
@@ -685,14 +685,14 @@ export const GETWELL_STATUS = {
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
-    NOT_APPLICABLE: 'N/A',
+    NOT_APPLICABLE: 'n/a',
     ANALYZING: 'Analyzing'
 };
 
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
-    'not-applicable': 'N/A',
+    'not-applicable': 'n/a',
     'not-optimized': 'Not optimized',
     analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',

@@ -44,7 +44,9 @@ const initialInventoryV2State: InventorySliceData = {
     managedHostInitialColumns: initialColStateManagedHosts,
     isRefreshed: false,
     optimizeFilterTags: [],
-    defaultFilterOptions: {}
+    defaultFilterOptions: {},
+    managedAssessmentHostIdsList: [],
+    managedAssessmentHostData: null
 };
 
 const inventoryV2Slice = createSlice({
@@ -155,6 +157,12 @@ const inventoryV2Slice = createSlice({
         },
         setIsRefreshed: (state, action: PayloadAction<any>) => {
             state.isRefreshed = action.payload;
+        },
+        setManagedAssessmentHostIdsList: (state, action: PayloadAction<any>) => {
+            state.managedAssessmentHostIdsList = action.payload;
+        },
+        setManagedAssessmentHostData: (state, action: PayloadAction<any>) => {
+            state.managedAssessmentHostData = action.payload;
         }
     }
 });
@@ -194,7 +202,9 @@ export const {
     setSelectedHeaderTab,
     setManagedHostColState,
     setIsRefreshed,
-    setBreadCrumbSelectedFrom
+    setBreadCrumbSelectedFrom,
+    setManagedAssessmentHostIdsList,
+    setManagedAssessmentHostData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
