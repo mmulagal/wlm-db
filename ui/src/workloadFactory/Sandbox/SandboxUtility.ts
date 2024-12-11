@@ -24,6 +24,16 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
     return payload;
 };
 
+const formatAge = (val: any) => {
+    if (Number(val) >= 0 && Number(val) <= 30) {
+        return '0-30 days';
+    } else if (Number(val) >= 31 && Number(val) <= 60) {
+        return '31-60 days';
+    } else {
+        return '61+ days';
+    }
+};
+
 export const formatSandboxListData = (data: SandboxListEntities) => {
     const retData = data
         .filter(item => !item?.error)
@@ -41,6 +51,7 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 actualUpdated: item?.updatedAt || '',
                 updatedAt: formatDateWithTime(item?.updatedAt || ''),
                 age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
+                ageByRange: `${formatAge(getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt)))}`,
                 tag: item?.tag,
                 status: 'active',
                 baseSnapshot: item?.baseSnapshot,

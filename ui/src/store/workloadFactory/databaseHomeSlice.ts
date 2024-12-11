@@ -59,7 +59,10 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
     },
     selectedConfig: '',
     selectedAssessmentRow: null,
-    sandboxAgeRange: ''
+    sandboxAgeRange: {
+        from: '',
+        range: ''
+    }
 };
 
 const databaseHomeSlice = createSlice({

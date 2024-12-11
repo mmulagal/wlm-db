@@ -166,7 +166,10 @@ export interface DatabaseHostsEntities {
     aggregatedCosts: AggregatedCostsRes | null;
     selectedConfig: string;
     selectedAssessmentRow: any;
-    sandboxAgeRange: string;
+    sandboxAgeRange: {
+        from: string;
+        range: string;
+    };
 }
 
 export interface TemplateRes {
