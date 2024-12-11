@@ -732,6 +732,7 @@ const ManagedHostSubTable = ({
 
                     if (
                         hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData.fileSystemType &&
                         rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
                     ) {
                         if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
@@ -743,7 +744,7 @@ const ManagedHostSubTable = ({
                         }
                     }
 
-                    if (rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+                    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
                         if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
                             disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
                             return true;
