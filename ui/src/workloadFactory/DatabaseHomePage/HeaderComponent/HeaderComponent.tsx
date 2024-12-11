@@ -113,6 +113,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const newDashboardItem = localStorage.getItem('newDashboard');
     const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
+    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -358,6 +359,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                         }
+                        isDisabled={
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                        }
                     />
                 </div>
 
@@ -393,6 +398,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                        isDisabled={
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
                         }
                     />
                 </div>

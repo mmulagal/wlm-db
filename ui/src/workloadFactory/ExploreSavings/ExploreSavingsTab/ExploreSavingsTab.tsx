@@ -36,7 +36,7 @@ const ExploreSavingsTab = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE)}
                 >
-                    MsSQL on Elastic Block Store (EBS)
+                    SQL Server on Elastic Block Store (EBS)
                 </DsTypography>
             </div>
             <div
@@ -55,7 +55,7 @@ const ExploreSavingsTab = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.MSSQL_FSX_FOR_WINDOWS)}
                 >
-                    MsSQL on FSx for Windows
+                    SQL Server on FSx for Windows
                 </DsTypography>
             </div>
 
@@ -75,7 +75,7 @@ const ExploreSavingsTab = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
                 >
-                    MsSQL on On-Premises
+                    SQL Server On-Premises
                 </DsTypography>
             </div>
         </div>

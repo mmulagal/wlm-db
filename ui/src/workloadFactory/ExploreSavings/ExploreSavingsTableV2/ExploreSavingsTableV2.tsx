@@ -19,6 +19,7 @@ const ExploreSavingsTableV2 = () => {
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const getInitialFilter = () => {
@@ -218,8 +219,16 @@ const ExploreSavingsTableV2 = () => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
-                singularTitle={GENERAL.ES_TABLE_TITLE}
+                pluralTitle={
+                    selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+                        ? `${GENERAL.ES_TABLE_TITLE}s`
+                        : `${GENERAL.ES_TABLE_FSXW_TITLE}s`
+                }
+                singularTitle={
+                    selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+                        ? `${GENERAL.ES_TABLE_TITLE}`
+                        : `${GENERAL.ES_TABLE_FSXW_TITLE}`
+                }
             />
             <Table
                 //@ts-ignore

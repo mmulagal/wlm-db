@@ -5,6 +5,22 @@
     margin-top: 24px;
     margin-bottom: 40px;
 
+    .container {
+        display: flex;
+        gap: 8px;
+        .sqlServerInstance {
+            max-width: 261px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .colorText {
+            cursor: pointer;
+            color: var(--text-button-primary);
+        }
+    }
+
     .statusIcon {
         width: 10px;
         height: 10px;

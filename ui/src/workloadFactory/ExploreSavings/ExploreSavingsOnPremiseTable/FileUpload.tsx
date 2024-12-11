@@ -19,7 +19,7 @@ const FileUpload = () => {
                     <Upload />
                 </div>
                 <DsTypography variant="Semibold_14" className={styles.text}>
-                    Upload script
+                    Upload script results
                 </DsTypography>
             </label>
             {/* Hidden file input */}

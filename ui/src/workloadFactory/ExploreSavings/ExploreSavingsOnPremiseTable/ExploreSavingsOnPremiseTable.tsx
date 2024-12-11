@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, DsTypography } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, DsTypography, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
@@ -9,7 +9,7 @@ import { onClickESHost } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
-import { ReactComponent as Upload } from '../../../assets/ic_upload.svg';
+
 import FileUpload from './FileUpload';
 
 const ExploreSavingsOnPremiseTable = () => {
@@ -74,6 +74,38 @@ const ExploreSavingsOnPremiseTable = () => {
         }
     }, [unManagedHostFormatedList]);
 
+    const getTruncatedItems = (items: any) => {
+        let totalWidth = 0;
+
+        const maxItemsToShow = [];
+        const remaining = [];
+
+        // Dynamically calculate the width
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        //@ts-ignore
+        context.font = '14px'; // Adjust font-size and family as per your table
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            //@ts-ignore
+            const itemWidth = context.measureText(item + ', ').width;
+            //@ts-ignore
+            if (totalWidth + itemWidth <= 261 || maxItemsToShow.length === 0) {
+                maxItemsToShow.push(item);
+                totalWidth += itemWidth;
+            } else {
+                remaining.push(...items.slice(i));
+                break;
+            }
+        }
+
+        return {
+            maxItemsToShow: maxItemsToShow,
+            remaining: remaining
+        };
+    };
+
     const lastColDetails = () => {
         return {
             id: '9',
@@ -133,15 +165,35 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '4',
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'totalInstance'),
-            renderCell: (cellData: string) => {
+            renderCell: (cellData: string, rowData: any) => {
+                const instanceData = rowData?.sqlServerInstances;
+                const instanceNames = instanceData?.map((instance: any) => instance?.sqlServerInstance);
+                const truncatedItems = getTruncatedItems(instanceNames);
+
                 return (
                     <div>
                         {cellData && Number(cellData) !== 0 ? (
-                            <>
-                                <Typography variant="Regular_14">
-                                    {cellData} {Number(cellData) > 1 ? 'instances' : 'instance'}
+                            <div className={styles.container}>
+                                <Typography variant="Regular_14" className={styles.sqlServerInstance}>
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
                                 </Typography>
-                            </>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <>
+                                        <Popover
+                                            popoverClass={styles['popover']}
+                                            children={truncatedItems?.remaining.map((item: any) => (
+                                                <Typography variant="Regular_14">{item}</Typography>
+                                            ))}
+                                            trigger="hover"
+                                            container={
+                                                <Typography variant="Regular_14" className={styles.colorText}>
+                                                    {`+ ${truncatedItems?.remaining.length}`}
+                                                </Typography>
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </div>
                         ) : (
                             ''
                         )}
@@ -184,8 +236,8 @@ const ExploreSavingsOnPremiseTable = () => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
-                singularTitle={GENERAL.ES_TABLE_TITLE}
+                pluralTitle={`MsSQL on On-Premises host`}
+                singularTitle={`MsSQL on On-Premises hosts`}
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload />
