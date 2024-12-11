@@ -703,21 +703,10 @@ const ManagedHostSubTable = ({
                 let disableMsg = '';
                 let disableMenu = () => {
                     if (
-                        (hostData?.status === INVENTORY_STATUS.OFFLINE ||
-                            hostData?.ssmState === INVENTORY_STATUS.OFFLINE ||
-                            rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
-                            rowData?.status === INVENTORY_STATUS.STOPPED) &&
-                        rowData?.statusColText === INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
-                        return true;
-                    }
-                    if (
-                        (hostData?.status === INVENTORY_STATUS.OFFLINE ||
-                            hostData?.ssmState === INVENTORY_STATUS.OFFLINE ||
-                            rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
-                            rowData?.status === INVENTORY_STATUS.STOPPED) &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                        hostData?.status === INVENTORY_STATUS.OFFLINE ||
+                        hostData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+                        rowData?.status === INVENTORY_STATUS.STOPPED
                     ) {
                         disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
                         return true;
