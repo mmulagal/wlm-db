@@ -41,9 +41,37 @@ async function getPgSqlInstanceInfo(
     }
 }
 
+async function getPgSqlDatabaseCount(accountId: string, credentialsId: string, region: string, nodeIds: string[]) {
+    logger.info('Fetching pg sql database count', accountId, region, nodeIds);
+
+    const command = 'sudo -u postgres /usr/bin/psql -c "Select Count(*) from pg_database"';
+
+    try {
+        const responses = await Promise.all(
+            nodeIds.map(async nodeId => {
+                logger.info('Fetching PGSQL database count', nodeId);
+                return executeBashSsmCommand(credentialsId, region, [command], nodeId, accountId);
+            })
+        );
+
+        const validResponse = responses.find(response => response);
+        if (validResponse) {
+            return validResponse;
+        }
+
+        const errorMessage = `Error fetching database count from nodes: ${nodeIds.join(', ')}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    } catch (err) {
+        const errorMessage = `Error fetching pgsql database count: ${err}, ${credentialsId}, ${region}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
 function getPgSqlResourceId(node1InstanceId: string, node2InstanceId?: string) {
     logger.info('Get MS SQL resource ID:', { node1InstanceId, node2InstanceId });
     return node2InstanceId ? generateHash(node1InstanceId + node2InstanceId) : generateHash(node1InstanceId);
 }
 
-export { getPgSqlResourceId, getPgSqlInstanceInfo };
+export { getPgSqlResourceId, getPgSqlInstanceInfo, getPgSqlDatabaseCount };
