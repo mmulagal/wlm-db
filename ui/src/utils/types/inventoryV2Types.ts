@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    breadCrumbSelectedFrom: string;
     defaultFilterOptions: {} | any;
     optimizeFilterTags: [] | any;
     inventoryTableData: { [key: string]: InventoryTableData } | null;
@@ -39,6 +40,8 @@ export interface InventorySliceData {
     selectedHeaderTab: string;
     managedHostInitialColumns: any;
     isRefreshed: boolean;
+    managedAssessmentHostIdsList: Array<string>;
+    managedAssessmentHostData: any;
 }
 
 export interface InventoryTableData {

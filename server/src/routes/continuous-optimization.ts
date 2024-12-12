@@ -2,6 +2,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     fetchDriftAssessment,
+    fetchDriftAssessmentPerHost,
     onDemandTriggerDriftAssessmentDataCollection
 } from '../operations/cont-opt-assessment-operations';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
@@ -12,6 +13,7 @@ import {
     OptimizeSizingSchema,
     OptimizeOperatingSystemSchema,
     OptimizeComputeSchema,
+    DriftAssessmentPerHost,
     OptimizeStorageTierSchema
 } from './schemas/continuous-optimization-schema';
 import {
@@ -147,6 +149,26 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
+        .get(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/assessment`,
+            { schema: DriftAssessmentPerHost },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, databaseHostId },
+                    query: { fields }
+                } = request;
+
+                const response = await fetchDriftAssessmentPerHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
             { schema: OptimizeStorageTierSchema },

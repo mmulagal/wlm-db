@@ -49,15 +49,17 @@ const AdditionalComputeParameterDriftResponse = Type.Optional(
             Type.Object({
                 instanceType: Type.String(),
                 rank: Type.Number(),
-                savingsOpportunity: Type.Object({
-                    savingsOpportunityPercentage: Type.Optional(Type.Number()),
-                    estimatedMonthlySavings: Type.Optional(
-                        Type.Object({
-                            currency: Type.Optional(Type.String()),
-                            value: Type.Optional(Type.Number())
-                        })
-                    )
-                })
+                savingsOpportunity: Type.Optional(
+                    Type.Object({
+                        savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                        estimatedMonthlySavings: Type.Optional(
+                            Type.Object({
+                                currency: Type.Optional(Type.String()),
+                                value: Type.Optional(Type.Number())
+                            })
+                        )
+                    })
+                )
             })
         )
     })
@@ -103,6 +105,17 @@ const DriftAssessmentResponse = Type.Object({
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
+const DriftAssessmentResponsePerInstance = Type.Object({
+    databaseInstanceId: Type.String({ minLength: 1 }),
+    assessments: Type.Optional(DriftAssessmentResponse),
+    error: Type.Optional(Type.String())
+});
+
+const DriftAssessmentResponsePerHost = Type.Object({
+    databaseHostId: Type.String({ minLength: 1 }),
+    instancesAssessment: Type.Array(DriftAssessmentResponsePerInstance)
+});
+
 const OptimizeStorageRequestParams = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
     objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
@@ -146,5 +159,6 @@ export {
     OptimizeComputeRequestBodyType,
     OptimizeSizingRequestBody,
     OptimizeSizingRequestBodyType,
-    OptimizeOperatingSystemRequestBody
+    OptimizeOperatingSystemRequestBody,
+    DriftAssessmentResponsePerHost
 };

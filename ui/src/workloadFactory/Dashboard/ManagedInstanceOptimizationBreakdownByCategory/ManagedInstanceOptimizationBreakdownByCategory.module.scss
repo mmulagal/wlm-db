@@ -1,15 +1,28 @@
 .managedByCategory {
     background-color: var(--content-background);
     width: 928px;
-    height: 621px;
+    // height: 621px;
 
-    .headSection {
-        display: flex;
-        height: 72px;
-        padding: 12px 40px;
-        align-items: center;
-        border-bottom: 1px solid var(--border);
-        justify-content: space-between;
+    [class*='dsCard'] {
+        box-shadow: unset !important;
+
+        [class*='accordionHeader'] {
+            justify-content: left !important;
+            div {
+                flex: none !important;
+            }
+        }
+    }
+
+    [class*='accordion']:hover {
+        background-color: var(--content-background) !important;
+    }
+    [class*='isExpanded'] {
+        max-height: 1000px !important;
+    }
+    [class*='accordionExpanded'] {
+        -webkit-transition: unset !important;
+        transition: unset !important;
     }
 }
 

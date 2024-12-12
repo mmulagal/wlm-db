@@ -177,10 +177,15 @@ const PreviewDefault = () => {
         {
             accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,
             defaultValue: GENERAL.PD_DISABLED,
-            editable: 'N/A',
+            editable: GENERAL.NOT_AVAILABLE,
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' },
+        {
+            accordionName: GENERAL.CLOUD_WATCH_MONITORING,
+            defaultValue: GENERAL.ENABLED,
+            editable: GENERAL.NOT_AVAILABLE,
+            id: '15'
+        },
         { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
     ];
 

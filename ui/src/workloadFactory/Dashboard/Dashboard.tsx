@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
 import EstimatedCost from '../DatabaseHomePage/EstimatedCost/EstimatedCost';
 import StorageSavings from '../DatabaseHomePage/StorageSavings/StorageSavings';
@@ -10,10 +11,29 @@ import ManagedInstanceOptimizationBreakdownByConfig from './ManagedInstanceOptim
 import ManagedInstanceOptimizationBreakdownByCategory from './ManagedInstanceOptimizationBreakdownByCategory/ManagedInstanceOptimizationBreakdownByCategory';
 import PotentialSavings from './PotentialSavings/PotentialSavings';
 import Sandboxes from './Sandboxes/Sandboxes';
+import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 const Dashboard = () => {
-    const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
-    const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
+    const mssqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlStorageSavings);
+    const pgsqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const mssqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
+    const pgsqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlCosts);
+    const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
+    const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.databaseHostsLoading);
+    const [openAccordion, setOpenAccordion] = useState(false);
+
+    const hostCostData = useMemo(() => {
+        let costData: any = {};
+        Object.keys(mssqlHostCostData).map((key: string) => {
+            costData[key] = (mssqlHostCostData[key] || 0) + (pgsqlHostCostData[key] || 0);
+        });
+        return costData;
+    }, [mssqlHostCostData, pgsqlHostCostData]);
+
+    const hostStorageSavingsData = useMemo(() => {
+        return getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData);
+    }, [mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData]);
+
     return (
         <div className={styles.dashboard}>
             <div className={styles.firstSection}>
@@ -24,11 +44,11 @@ const Dashboard = () => {
 
             <div className={styles.secondSection}>
                 <div className={styles.subSection}>
-                    <ManagedInstanceOptimization />
-                    <ManagedInstanceOptimizationBreakdownByCategory />
+                    <ManagedInstanceOptimization openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} />
+                    {/* <ManagedInstanceOptimizationBreakdownByCategory /> */}
                 </div>
 
-                <ManagedInstanceOptimizationBreakdownByConfig />
+                <ManagedInstanceOptimizationBreakdownByConfig openAccordion={openAccordion} />
             </div>
 
             <div className={styles.firstSection}>
@@ -40,11 +60,17 @@ const Dashboard = () => {
                 {/* Bar lines */}
                 <div className={styles.barContainer}>
                     <div className={styles.commonContainer}>
-                        <StorageSavings hostData={hostStorageSavingsData} hostsLoading={false} />
+                        <StorageSavings
+                            hostData={hostStorageSavingsData}
+                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                        />
                     </div>
 
                     <div className={styles.commonContainer}>
-                        <EstimatedCost hostData={hostCostData} hostsLoading={false} />
+                        <EstimatedCost
+                            hostData={hostCostData}
+                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                        />
                     </div>
                 </div>
             </div>

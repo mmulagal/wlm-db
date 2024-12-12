@@ -170,8 +170,7 @@ Resources:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
                             waitAfterCompletion: 0
                         c-verify-common-signature:
-                            command: !Sub
-                                - '/home/ec2-user/cfn/scripts/verify-signature.sh
+                            command: !Sub '/home/ec2-user/cfn/scripts/verify-signature.sh
                                     -f /home/ec2-user/cfn/scripts/common.zip
                                     -s /home/ec2-user/cfn/signig_files/common.zip.sig
                                     -p /home/ec2-user/cfn/signig_files/common.zip.pub
@@ -182,8 +181,7 @@ Resources:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/common.zip -d /home/ec2-user/cfn/scripts
                             waitAfterCompletion: 0
                         e-verify-setup-signature:
-                            command: !Sub
-                                - '/home/ec2-user/cfn/scripts/verify-signature.sh
+                            command: !Sub '/home/ec2-user/cfn/scripts/verify-signature.sh
                                     -f /home/ec2-user/cfn/scripts/setup.zip
                                     -s /home/ec2-user/cfn/signig_files/setup.zip.sig 
                                     -p /home/ec2-user/cfn/signig_files/setup.zip.pub

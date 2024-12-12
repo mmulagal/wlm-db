@@ -20,7 +20,7 @@ import { formatNumberWithCustomComma, isFsxnNew, updateSizeInGib } from '../../.
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
 import { useDispatch } from 'react-redux';
 import { setPricingPayload } from '../../../store/mssql/msSqlActionSlice';
-const _ = require('lodash');
+import { isEqual } from 'lodash';
 
 type Res = {
     data: {
@@ -213,7 +213,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                 };
             }
 
-            const comparedPayloadValues = _.isEqual(payload, pricingPayload);
+            const comparedPayloadValues = isEqual(payload, pricingPayload);
 
             if (!comparedPayloadValues) {
                 setIsLoading(true);

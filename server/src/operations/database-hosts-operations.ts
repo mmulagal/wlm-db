@@ -6,6 +6,7 @@ import {
     DescribeVolumesResult,
     DescribeVpcsCommandInput,
     DeviceType,
+    EC2ServiceException,
     Volume
 } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
@@ -52,7 +53,8 @@ import {
     WIN_SQL_EC2_USAGE_OPERATION,
     DEFAULT_INSTANCE_NAME,
     EBS_ROOT_VOLUME,
-    DatabaseTypes
+    DatabaseTypes,
+    AWS_ERROR_CODES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -1283,6 +1285,7 @@ async function getNodeTopology(
     };
 
     if (node1InstanceId && activeNodeInstanceId) {
+        logger.info(`Getting node ${node1InstanceId} , ${node2InstanceId} details for account ${accountId}.`);
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
 
         let ec2InstanceDetails;
@@ -1346,9 +1349,13 @@ async function getNodeTopology(
                     }
                 }
             } catch (error) {
-                logger.error(
-                    `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
-                );
+                if (error instanceof EC2ServiceException && error.toString().includes(AWS_ERROR_CODES.ec2NotFound)) {
+                    logger.debug(error.toString());
+                } else {
+                    logger.error(
+                        `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
+                    );
+                }
             }
         }
         const activeDirectoryDetails =
@@ -1392,12 +1399,7 @@ async function getNodeTopology(
                 ...(standbyNodeStatus && { nodeStatus: standbyNodeStatus })
             });
         }
-    } else {
-        logger.error(
-            `Error while fetching details for EC2 for node ${node1InstanceId} , ${node2InstanceId} in account ${accountId} as no active node was found.`
-        );
     }
-
     logger.debug('Topology data', nodeTopologyData);
     return nodeTopologyData;
 }
@@ -1440,7 +1442,7 @@ async function getDatabaseHostsSummaryV2(
     );
 
     if (isEmpty(resourceDetails)) {
-        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+        logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
 
@@ -1627,6 +1629,15 @@ async function getDatabaseHostSummaryV2(
     resourceDetail?: ResourceDetails,
     isManagedResource: boolean = true
 ) {
+    // Temp fix for DBS-4567, TODO: Remove this condition after demo changes for database hosts API for PGSQL is done
+    if (isDemo() && resourceDetail?.resource_type === DatabaseTypes.PG_SQL) {
+        return {
+            id: '123456',
+            name: 'postgresql',
+            databaseHostStatus: 'online',
+            ssmStatus: 'connected'
+        };
+    }
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
     if (isEmpty(resourceDetail)) {
         [resourceDetail] = await listResources(accountId, databaseHostId, customerCredentialsId, awsRegion);

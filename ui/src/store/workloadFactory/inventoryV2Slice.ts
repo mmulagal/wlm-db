@@ -4,6 +4,7 @@ import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryV2State: InventorySliceData = {
+    breadCrumbSelectedFrom: '',
     inventoryTableData: null,
     inventoryChartData: null,
     isManagedHostListLoading: false,
@@ -43,13 +44,18 @@ const initialInventoryV2State: InventorySliceData = {
     managedHostInitialColumns: initialColStateManagedHosts,
     isRefreshed: false,
     optimizeFilterTags: [],
-    defaultFilterOptions: {}
+    defaultFilterOptions: {},
+    managedAssessmentHostIdsList: [],
+    managedAssessmentHostData: null
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setBreadCrumbSelectedFrom: (state, action: PayloadAction<any>) => {
+            state.breadCrumbSelectedFrom = action.payload;
+        },
         setDefaultFilterOptions: (state, action: PayloadAction<any>) => {
             state.defaultFilterOptions = action.payload;
         },
@@ -151,6 +157,12 @@ const inventoryV2Slice = createSlice({
         },
         setIsRefreshed: (state, action: PayloadAction<any>) => {
             state.isRefreshed = action.payload;
+        },
+        setManagedAssessmentHostIdsList: (state, action: PayloadAction<any>) => {
+            state.managedAssessmentHostIdsList = action.payload;
+        },
+        setManagedAssessmentHostData: (state, action: PayloadAction<any>) => {
+            state.managedAssessmentHostData = action.payload;
         }
     }
 });
@@ -189,7 +201,10 @@ export const {
     setManagedHostInstanceLoading,
     setSelectedHeaderTab,
     setManagedHostColState,
-    setIsRefreshed
+    setIsRefreshed,
+    setBreadCrumbSelectedFrom,
+    setManagedAssessmentHostIdsList,
+    setManagedAssessmentHostData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

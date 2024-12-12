@@ -4,7 +4,13 @@ import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import { COSTING_TYPES, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
-import { formatFractionalNumber, formatSizeOnePrecision, isAwsBackupEnabled } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatSizeOnePrecision,
+    formatSizeSplit,
+    getByteVal,
+    isAwsBackupEnabled
+} from '../../utils/utilityFunctions';
 
 export const getManagedHostCount = (data: any, dispatch: any) => {
     let totalDatabases = 0;
@@ -156,6 +162,26 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
         storageConsumes: formatSizeOnePrecision(storageConsume),
         storageSavings: formatSizeOnePrecision(storageSavings),
         storageSavingsPercent: (storageSavings / totalConsume) * 100 || 0
+    };
+};
+
+export const getTotalManagedAggrStorageSavings = (mssqlSavingsObj: any, pgsqlSavingsObj: any) => {
+    const { storageConsumes: mssqlStorageConsumes, storageSavings: mssqlStorageSavings } = mssqlSavingsObj;
+    const { storageConsumes: pgsqlStorageConsumes, storageSavings: pgsqlStorageSavings } = pgsqlSavingsObj;
+    const { value: mssqlConsumesVal, format: mssqlConsumesUnit } = formatSizeSplit(mssqlStorageConsumes);
+    const { value: mssqlSavingsVal, format: mssqlSavingsUnit } = formatSizeSplit(mssqlStorageSavings);
+    const { value: pgsqlConsumesVal, format: pgsqlConsumesUnit } = formatSizeSplit(pgsqlStorageConsumes);
+    const { value: pgsqlSavingsVal, format: pgsqlSavingsUnit } = formatSizeSplit(pgsqlStorageSavings);
+    const totalConsumesVal =
+        getByteVal(parseFloat(mssqlConsumesVal), mssqlConsumesUnit.toLowerCase()) +
+        getByteVal(parseFloat(pgsqlConsumesVal), pgsqlConsumesUnit.toLowerCase());
+    const totalSavingVal =
+        getByteVal(parseFloat(mssqlSavingsVal), mssqlSavingsUnit.toLowerCase()) +
+        getByteVal(parseFloat(pgsqlSavingsVal), pgsqlSavingsUnit.toLowerCase());
+    return {
+        storageConsumes: formatSizeOnePrecision(totalConsumesVal),
+        storageSavings: formatSizeOnePrecision(totalSavingVal),
+        storageSavingsPercent: (totalSavingVal / (totalConsumesVal + totalSavingVal || 1)) * 100 || 0
     };
 };
 

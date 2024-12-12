@@ -1,5 +1,5 @@
 .categoryComponent {
-    padding: 24px 40px;
+    padding: 24px 0;
     height: 108px;
     display: flex;
     align-items: center;
@@ -40,7 +40,7 @@
 
 @media screen and (max-width: 1700px) {
     .categoryComponent {
-        gap: 24px;
+        gap: 19px;
 
         .firstBlock {
             min-width: 150px;

@@ -1,19 +1,25 @@
-import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimization.module.scss';
 import HostDistributionChart from '../HostDistribution/HostDistributionChart/HostDistributionChart';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
 import useResize from '../../../common/hooks/useResize';
+import { GENERAL } from '../../../utils/appConstants';
+import ManagedInstanceOptimizationBreakdownByCategory from '../ManagedInstanceOptimizationBreakdownByCategory/ManagedInstanceOptimizationBreakdownByCategory';
 
-const ManagedInstanceOptimization = () => {
+const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) => {
     const windowSize = useResize();
     const loading = false;
     return (
-        <div className={styles.managedInstance}>
+        <div className={styles.managedInstance} style={{ height: !openAccordion ? '436px' : '992px' }}>
             <div className={styles.headSection}>
-                <DsTypography variant="Regular_16" className={styles.title}>
-                    Managed instances optimization score
-                </DsTypography>
+                <div className={styles.ManageInstanceTooltipSection}>
+                    <DsTypography variant="Regular_16" className={styles.title}>
+                        Managed instances optimization score
+                    </DsTypography>
+
+                    <TooltipInfo>{GENERAL.MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP}</TooltipInfo>
+                </div>
 
                 {/* {loading && <FlashingDotsLoader />} */}
             </div>
@@ -121,6 +127,8 @@ const ManagedInstanceOptimization = () => {
                     </div>
                 </div>
             )}
+
+            <ManagedInstanceOptimizationBreakdownByCategory setOpenAccordion={setOpenAccordion} />
         </div>
     );
 };

@@ -16,6 +16,7 @@ import {
 } from '../../../utils/utilityFunctions';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
+import { uniq, isEqual } from 'lodash';
 
 import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
@@ -50,8 +51,6 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import TerraformColor from '../Terraform/TerraformColor';
 import { downloadTerraformZip } from '../MockTerraformZip/MockTerraformZip';
 
-const _ = require('lodash');
-
 const CodeBox = () => {
     const [copyText, setCopyText] = useState('');
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -84,7 +83,7 @@ const CodeBox = () => {
             if (
                 refetchApiCount?.isLoading &&
                 (refetchApiCount?.expected.length === 0 ||
-                    _.uniq(refetchApiCount?.ran).length === _.uniq(refetchApiCount?.expected).length)
+                    uniq(refetchApiCount?.ran).length === uniq(refetchApiCount?.expected).length)
             ) {
                 resetChecksAfterLoad(dispatch, closeDialog);
             }
@@ -286,13 +285,13 @@ const CodeBox = () => {
     useEffect(() => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
             // If user is switching between CF and CLI than no need to call template APi again
-            if (!formData || !_.isEqual(mssqlFormData, formData)) {
+            if (!formData || !isEqual(mssqlFormData, formData)) {
                 setFormData(mssqlFormData);
                 getTemplateResponse();
             }
         }
         if (dropDownValue === CODE_VIEWER.TERRAFORM && !isDemoMode) {
-            if (!formDataTerraform || !_.isEqual(mssqlFormData, formDataTerraform)) {
+            if (!formDataTerraform || !isEqual(mssqlFormData, formDataTerraform)) {
                 setFormDataTerraform(mssqlFormData);
                 getTerraformSetupResponse();
             }
@@ -306,7 +305,7 @@ const CodeBox = () => {
         if (isDemoMode) {
             if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
                 // If user is switching between CF and CLI than no need to call template APi again
-                if (!formData || !_.isEqual(mssqlFormData, formData)) {
+                if (!formData || !isEqual(mssqlFormData, formData)) {
                     setFormData(mssqlFormData);
                     getTemplateResponse();
                 }
@@ -416,7 +415,7 @@ const CodeBox = () => {
         if (isDemoMode) {
             openDemoInfoDialog();
         } else {
-            if (!formData || !_.isEqual(mssqlFormData, formData)) {
+            if (!formData || !isEqual(mssqlFormData, formData)) {
                 // If form changed so template API will get called again to get latest CF url
                 dispatch(setIsLoading(true));
                 setFormData(mssqlFormData);

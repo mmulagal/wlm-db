@@ -324,7 +324,10 @@ function Test-IscsiSessions {
         $detailsByTargetAndInitiator[$key].TotalSessions += 1
         if ($session.IsConnected) {
             $detailsByTargetAndInitiator[$key].ActiveSessions += 1
-            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session -ErrorAction SilentlyContinue).TargetPortalAddress
+            if([string]::IsNullOrEmpty($targetPortalAddress)) {
+                continue
+            }
             $targetPortalAddressCounts = $detailsByTargetAndInitiator[$key].TargetPortalAddressCounts
             if ($targetPortalAddressCounts.ContainsKey($targetPortalAddress)) {
                 $targetPortalAddressCounts[$targetPortalAddress]++
@@ -523,7 +526,10 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     # gather OS configuration data 
      $DriftAssessmentData['os'] = @{}
     try{
-        $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
+        $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 -ErrorAction SilentlyContinue | Select ProductId,VendorId 
+        if([string]::IsNullOrEmpty($MpioResponse)) {
+            throw "Unable to fetch MPIO load balancing policy details."
+        }
         $MpioStatus = $false
         if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
             $MpioStatus = $true

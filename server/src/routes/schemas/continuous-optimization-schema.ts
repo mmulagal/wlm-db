@@ -4,6 +4,7 @@ import { CredentialsIdParams } from '../types/generic.types';
 import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
+    DatabaseHostSummaryParams,
     DatabaseQueryString
 } from '../types/database-hosts.types';
 import {
@@ -11,7 +12,8 @@ import {
     OptimizeSizingRequestBody,
     DriftAssessmentResponse,
     OptimizeComputeRequestBody,
-    OptimizeOperatingSystemRequestBody
+    OptimizeOperatingSystemRequestBody,
+    DriftAssessmentResponsePerHost
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -28,6 +30,18 @@ const DriftAssessmentDataCollection = {
     querystring: DatabaseQueryString,
     response: {
         200: DriftAssessmentResponse
+    }
+};
+
+const DriftAssessmentPerHost = {
+    ...resourceRequest,
+    summary: 'Get database parameter drift from recommended settings for all instances on a host',
+    description: 'Get database parameters drift from recommended settings for all instances on a host',
+    params: DatabaseHostSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    querystring: DatabaseQueryString,
+    response: {
+        200: DriftAssessmentResponsePerHost
     }
 };
 
@@ -124,5 +138,6 @@ export {
     OptimizeSizingSchema,
     OptimizeComputeSchema,
     OptimizeOperatingSystemSchema,
+    DriftAssessmentPerHost,
     OptimizeStorageTierSchema
 };

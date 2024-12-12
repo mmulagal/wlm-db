@@ -18,7 +18,12 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL
 } from '../../utils/consts';
-import { AssessmentResponseInterface, GwCardDataInterface, GwSqlServerInstanceInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
+import {
+    AssessmentResponseInterface,
+    GwCardDataInterface,
+    GwSqlServerInstanceInterface,
+    PerConfigInterface
+} from '../../utils/types/getWellTypes';
 import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
@@ -361,7 +366,19 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         recommendation: {
             title: 'Application recommendation',
-            description: ''
+            descriptionList: [
+                {
+                    title: 'Not optimized: ',
+                    description:
+                        "When Workload Factory detects that your database infrastructure isn't using any of the commercial \nsoftware license features you're paying for, a license is considered not optimized. A license that isn't optimized might \nresult in unnecessary additional costs."
+                },
+                {
+                    title: 'Optimized: ',
+                    description:
+                        'When the license for your commercial software database meets your performance requirements, the license is \nconsidered optimized"'
+                }
+            ],
+            info: 'The SQL Server license assessment and recommendation are performed at the host level.'
         },
         tags: ['Cost optimization']
     }
@@ -369,16 +386,11 @@ export const cardDataDefault: GwCardDataInterface = {
 
 export const formatApplicationCardMainConfig = (
     data: AssessmentResponseInterface,
-    optimizingData: any,
+    optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
     let item: any = data?.license;
     let categoryVal = 'application';
-    let optimizedDesc =
-        'When the license for your commercial software database meets your performance \nrequirements, the license is considered optimized';
-    let notOptimizedDesc =
-        "When Workload Factory detects that your database infrastructure isn't using any of the \ncommercial software license features you're paying for, a license is considered not \noptimized. A license that isn't optimized might result in unnecessary additional costs.";
-
     let itemName = item?.name || '';
     let status = item?.status || '';
     let severity = item?.severity || '';
@@ -420,10 +432,6 @@ export const formatApplicationCardMainConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
-            recommendation: {
-                ...cardDataDefault?.[itemName]?.recommendation,
-                description: status === 'optimized' ? optimizedDesc : notOptimizedDesc
-            },
             tags: item?.tags,
             id: item?.name,
             category: categoryVal
@@ -433,7 +441,10 @@ export const formatApplicationCardMainConfig = (
 };
 
 // This function is used to format the data for the individual card main config.
-export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatIndividualCardMainConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string }
+) => {
     let cardsData: any = cardDataDefault;
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
     let computeMissingPermissions = false;
@@ -522,7 +533,7 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
 };
 
 // This function is used to format the ONTAP configuration data.
-export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let ontapTagsList: Array<string> = [];
     let highestOntapSeverity = 'None';
     let formatOntapConfigList: PerConfigInterface[] = [];
@@ -598,7 +609,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 };
 
 // This function is used to format the OS configuration data.
-export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let osTagsList: Array<string> = [];
     let highestOsSeverity = 'None';
     let formatOsConfigList: PerConfigInterface[] = [];
@@ -726,17 +737,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     return optBreakDown;
 };
 
-// This function is used to format the get well data.
-export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
-    const state = store.getState();
-    const optimizingData = state.getWellOptimize.optimizingData || {};
-    if (!data) {
-        data = state.getWellOptimize.driftAssessmentData || {};
-    }
-    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
-
-    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
-
+export const getCardsData = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     const {
         formatOntapConfigList,
         ontapTagsList,
@@ -744,6 +745,10 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
         ontapNotOptimizedConfig,
         highestOntapSeverity
     } = formatOntapConfig(data, optimizingData);
+
+    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
+
+    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
 
     cardsData = {
         ...cardsData,
@@ -799,6 +804,18 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
             category: 'storage'
         }
     };
+
+    return { cardsData, formatOntapConfigList, formatOsConfigList };
+};
+
+// This function is used to format the get well data.
+export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
+    const state = store.getState();
+    const optimizingData = state.getWellOptimize.optimizingData || {};
+    if (!data) {
+        data = state.getWellOptimize.driftAssessmentData || {};
+    }
+    let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(data, optimizingData);
 
     let optBreakDown = formatOptimizationBreakDown(cardsData);
 

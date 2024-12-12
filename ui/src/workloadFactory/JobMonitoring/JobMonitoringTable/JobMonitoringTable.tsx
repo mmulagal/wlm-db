@@ -401,7 +401,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}
@@ -416,7 +416,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '196px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}

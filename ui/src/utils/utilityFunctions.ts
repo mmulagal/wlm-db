@@ -38,7 +38,7 @@ import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './t
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
-const moment = require('moment');
+import moment from 'moment';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -107,6 +107,10 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
 };
 
 export const formatSize = (value: number, passedformat?: string) => {
+    return numeral(getByteVal(value, passedformat)).format('0.[00] ib');
+};
+
+export const getByteVal = (value: number, passedformat?: string) => {
     let byteVal = 0;
     if (passedformat === 'kib') {
         byteVal = value * 1024;
@@ -119,7 +123,7 @@ export const formatSize = (value: number, passedformat?: string) => {
     } else {
         byteVal = value;
     }
-    return numeral(byteVal).format('0.[00] ib');
+    return byteVal;
 };
 
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
@@ -277,7 +281,7 @@ export const isNotNumberOrNA = (value: string | number) => {
     if (!value) {
         return false;
     } else {
-        return isNaN(parseFloat(String(value))) && value !== 'N/A';
+        return isNaN(parseFloat(String(value))) && value !== GENERAL.NOT_AVAILABLE;
     }
 };
 
@@ -1091,7 +1095,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                     value = '"' + value + '"';
                 }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : GENERAL.NOT_AVAILABLE + ',';
                 } else if (key === 'name' && value) {
                     result += value.split(';href')[0] + ',';
                 } else if (key === 'status' && value) {
