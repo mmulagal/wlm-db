@@ -7,14 +7,14 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 
-const ManagedInstanceOptimizationBreakdownByConfig = () => {
+const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const dispatch = useDispatch();
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setSelectedConfig(type));
     };
     return (
-        <div className={styles.managedBreakdown}>
+        <div className={styles.managedBreakdown} style={{ height: !openAccordion ? '436px' : '992px' }}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Managed instances optimization breakdown by configurations
@@ -23,7 +23,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                 {/* {loading && <FlashingDotsLoader />} */}
             </div>
 
-            <div className={styles.mainSection}>
+            <div className={styles.mainSection} style={{ maxHeight: !openAccordion ? '316px' : '896px' }}>
                 <div className={`${styles.tile} ${styles.firstTile}`}>
                     <BarComponent
                         color="#5E8DCD"

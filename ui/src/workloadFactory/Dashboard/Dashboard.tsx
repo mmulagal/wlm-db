@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
 import EstimatedCost from '../DatabaseHomePage/EstimatedCost/EstimatedCost';
 import StorageSavings from '../DatabaseHomePage/StorageSavings/StorageSavings';
@@ -20,6 +20,7 @@ const Dashboard = () => {
     const pgsqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlCosts);
     const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
     const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.databaseHostsLoading);
+    const [openAccordion, setOpenAccordion] = useState(false);
 
     const hostCostData = useMemo(() => {
         let costData: any = {};
@@ -43,11 +44,11 @@ const Dashboard = () => {
 
             <div className={styles.secondSection}>
                 <div className={styles.subSection}>
-                    <ManagedInstanceOptimization />
-                    <ManagedInstanceOptimizationBreakdownByCategory />
+                    <ManagedInstanceOptimization openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} />
+                    {/* <ManagedInstanceOptimizationBreakdownByCategory /> */}
                 </div>
 
-                <ManagedInstanceOptimizationBreakdownByConfig />
+                <ManagedInstanceOptimizationBreakdownByConfig openAccordion={openAccordion} />
             </div>
 
             <div className={styles.firstSection}>
