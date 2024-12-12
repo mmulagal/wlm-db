@@ -31,4 +31,19 @@
             }
         }
     }
+
+    .arrow {
+        width: 100%;
+        display: flex;
+        justify-content: end;
+        margin-right: 40px;
+        svg {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            &.arrow-down {
+                transform: rotate(270deg);
+                -webkit-transform: rotate(270deg);
+            }
+        }
+    }
 }

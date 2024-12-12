@@ -73,7 +73,9 @@ import {
     CHECK_MPIO_POLICY,
     REMEDIATE_MPIO_POLICY,
     REMEDIATE_MPIO_ISCSI_SESSIONS,
-    MPIO_ISCSI_SESSIONS
+    MPIO_ISCSI_SESSIONS,
+    CHECK_IF_MPIO_INSTALLED,
+    ENABLE_MPIO_AND_CONFIGURE
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 
@@ -516,6 +518,14 @@ const remediateMpioSessions = {
     commands: [REMEDIATE_MPIO_ISCSI_SESSIONS]
 };
 
+const validateMpioInstallation = {
+    commands: [CHECK_IF_MPIO_INSTALLED]
+};
+
+const enableMpioAndConfigure = {
+    commands: [ENABLE_MPIO_AND_CONFIGURE]
+};
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
@@ -684,6 +694,10 @@ ssmMock
     .resolves(listSendCommandCommandResponse.validateMpioSessionsCommand)
     .on(SendCommandCommand, { Parameters: remediateMpioSessions })
     .resolves(listSendCommandCommandResponse.remediateMpioSessionsCommand)
+    .on(SendCommandCommand, { Parameters: validateMpioInstallation })
+    .resolves(listSendCommandCommandResponse.validateMpioInstallationCommand)
+    .on(SendCommandCommand, { Parameters: enableMpioAndConfigure })
+    .resolves(listSendCommandCommandResponse.enableMpioAndConfigureCommand)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
         return getLunDetailsRegex.test(params.Parameters.commands[0]);
@@ -865,6 +879,14 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-remediateMpioSessionsCommand'
     })
     .resolves(getCommandInvocationResponse.remediateMpioSessionsCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioInstallationCommand'
+    })
+    .resolves(getCommandInvocationResponse.validateMpioInstallationCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-enableMpioAndConfigureCommand'
+    })
+    .resolves(getCommandInvocationResponse.enableMpioAndConfigureCommandResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
     })

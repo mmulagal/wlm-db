@@ -5,12 +5,13 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
 import useResize from '../../../common/hooks/useResize';
 import { GENERAL } from '../../../utils/appConstants';
+import ManagedInstanceOptimizationBreakdownByCategory from '../ManagedInstanceOptimizationBreakdownByCategory/ManagedInstanceOptimizationBreakdownByCategory';
 
-const ManagedInstanceOptimization = () => {
+const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) => {
     const windowSize = useResize();
     const loading = false;
     return (
-        <div className={styles.managedInstance}>
+        <div className={styles.managedInstance} style={{ height: !openAccordion ? '436px' : '992px' }}>
             <div className={styles.headSection}>
                 <div className={styles.ManageInstanceTooltipSection}>
                     <DsTypography variant="Regular_16" className={styles.title}>
@@ -126,6 +127,8 @@ const ManagedInstanceOptimization = () => {
                     </div>
                 </div>
             )}
+
+            <ManagedInstanceOptimizationBreakdownByCategory setOpenAccordion={setOpenAccordion} />
         </div>
     );
 };
