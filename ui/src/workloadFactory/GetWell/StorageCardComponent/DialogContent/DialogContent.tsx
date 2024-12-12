@@ -291,7 +291,67 @@ const DialogContent = ({
                     </div>
                 );
             case 'Log drive size':
-                return (
+                return missingPermissions && missingPermissions.length ? (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends increasing the FSx for ONTAP volume size. However, the
+                                required modify permissions are currently missing.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Action required
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ width: '712px' }}>
+                                Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with
+                                this action.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Grant FSx for ONTAP modify permissions
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Sign in to the AWS Management Console and open the IAM service.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Edit the policy for role and add AWS FSx for ONTAP modify permissions.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles['dialog-body']}>
+                                    <div className={styles['code-box']}>
+                                        <div className={styles['code']}>
+                                            <DsTypography variant="Regular_14">
+                                                {missingPermissions.map((permission: string) => (
+                                                    <DsTypography variant="Regular_14">{permission}</DsTypography>
+                                                ))}
+                                            </DsTypography>
+                                            <div className={styles['copy']}>
+                                                <CopyToClipboard text={missingPermissions}>
+                                                    <CopyIcon />
+                                                </CopyToClipboard>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
@@ -342,7 +402,67 @@ const DialogContent = ({
                     </div>
                 );
             case 'TempDB drive size':
-                return (
+                return missingPermissions && missingPermissions.length ? (
+                    <div className={styles['storage-tier-block']}>
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                Workload Factory recommends increasing the FSx for ONTAP volume size. However, the
+                                required modify permissions are currently missing.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Action required
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" style={{ width: '712px' }}>
+                                Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with
+                                this action.
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles['first-section']}>
+                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                                Grant FSx for ONTAP modify permissions
+                            </DsTypography>
+                            <div className={styles.content}>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Sign in to the AWS Management Console and open the IAM service.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        Edit the policy for role and add AWS FSx for ONTAP modify permissions.
+                                    </DsTypography>
+                                </div>
+                                <div className={styles['dialog-body']}>
+                                    <div className={styles['code-box']}>
+                                        <div className={styles['code']}>
+                                            <DsTypography variant="Regular_14">
+                                                {missingPermissions.map((permission: string) => (
+                                                    <DsTypography variant="Regular_14">{permission}</DsTypography>
+                                                ))}
+                                            </DsTypography>
+                                            <div className={styles['copy']}>
+                                                <CopyToClipboard text={missingPermissions}>
+                                                    <CopyIcon />
+                                                </CopyToClipboard>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
                             <DsTypography variant="Semibold_14">Action summary</DsTypography>
