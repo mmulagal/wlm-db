@@ -64,6 +64,7 @@ import {
 import {
     getFsxVolumeDetails,
     getFsxnVolIdsFromOntapVolIds,
+    getIscsiTargetAddresses,
     getMappedOntapVolumes,
     updateVolumeSizeAndWaitForUpdate
 } from './aws/fsx-operations';
@@ -1482,7 +1483,7 @@ async function configureMpio(
         const response = await callSsmExecution(
             credentialsId,
             region,
-            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses as string[])],
+            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
             accountId,
             false
@@ -1590,7 +1591,6 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
         region,
         parentJobId,
         fsxId,
-        svmId,
         instanceId,
         instanceName,
         serverNameWithHostName,
@@ -1608,24 +1608,7 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
 
-    // Fetch iSCSCI target addresses
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        fsxId as string
-    );
-    const { Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] } = {} } = {} } =
-        fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
-
-    optimizeMpioParams.iscsiTargetAddresses = iscsiTargetAddresses;
-
     try {
-        // Fail if iSCSI target addresses are not available
-        if (isEmpty(iscsiTargetAddresses)) {
-            jobError = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
-            throw createError(400, jobError);
-        }
-
         // Run validation and configuration on primary node
         const isMpioInstalledOnPrimary = await checkMpioInstallation(optimizeMpioParams);
         let primaryConfigureMpioJobStatus;
@@ -1716,7 +1699,8 @@ async function validateMpioSessions(
         serverNameWithHostName,
         activeNodeInstanceId,
         standbyNodeInstanceId,
-        sqlDeploymentType
+        sqlDeploymentType,
+        iscsiTargetAddresses
     } = optimizeMpioisSessionsParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -1740,7 +1724,7 @@ async function validateMpioSessions(
 
     let parsedResponse;
     try {
-        const ssmCommand = MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams.iscsiTargetAddresses!);
+        const ssmCommand = MPIO_ISCSI_SESSIONS(iscsiTargetAddresses);
         const validateMpioSessionsResponse = await callSsmExecution(
             credentialsId,
             region,
@@ -1865,24 +1849,6 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
     logger.info(
         `Optimizing MPIO iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${fsxId}, ${svmId}, ${instanceId}, ${instanceName}, ${serverNameWithHostName}, ${databaseHostId}, ${awsAccountId}, ${activeNodeInstanceId}, ${sqlDeploymentType}, ${standbyNodeInstanceId}`
     );
-
-    // Fetch iSCSCI target addresses
-    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
-        credentialsId,
-        region,
-        fsxId as string
-    );
-    const {
-        Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] as string[] } = { IpAddresses: [] } } = {
-            Iscsi: { IpAddresses: [] }
-        }
-    } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
-
-    if (isEmpty(iscsiTargetAddresses)) {
-        const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
-        throw createError(400, errorMessage);
-    }
-    optimizeMpioisSessionsParams.iscsiTargetAddresses = iscsiTargetAddresses;
 
     let violationsStandbyNode = [];
 
@@ -2119,6 +2085,14 @@ async function optimizeOperatingSystemSettings(
         }
         case OptimizeOperatingSystemParams.MPIO_SESSIONS: {
             try {
+                // Fetch iSCSCI target addresses
+                const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
+
+                if (isEmpty(iscsiTargetAddresses)) {
+                    const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
+                    throw createError(400, errorMessage);
+                }
+
                 optimizeMpioSessions({
                     accountId,
                     region,
@@ -2136,7 +2110,8 @@ async function optimizeOperatingSystemSettings(
                     databaseType,
                     instanceMetadata,
                     sqlAuthEnabled,
-                    standbyNodeInstanceId
+                    standbyNodeInstanceId,
+                    iscsiTargetAddresses
                 });
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
@@ -2152,6 +2127,13 @@ async function optimizeOperatingSystemSettings(
         }
         case OptimizeOperatingSystemParams.MPIO_ENABLE: {
             try {
+                // Fetch iSCSCI target addresses
+                const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
+
+                if (isEmpty(iscsiTargetAddresses)) {
+                    const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
+                    throw createError(400, errorMessage);
+                }
                 enableMpioAndConfigureSessions({
                     accountId,
                     credentialsId,
@@ -2170,7 +2152,8 @@ async function optimizeOperatingSystemSettings(
                     standbyNodeInstanceId,
                     instanceMetadata,
                     svmId,
-                    sqlDeploymentType
+                    sqlDeploymentType,
+                    iscsiTargetAddresses
                 });
             } catch (error) {
                 const errorMessage = `Error while enabling MPIO and configuring MPIO sessions: ${error}`;
