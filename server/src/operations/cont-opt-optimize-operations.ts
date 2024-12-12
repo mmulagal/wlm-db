@@ -1870,7 +1870,8 @@ async function optimizeOperatingSystemSettings(
                     databaseType,
                     instanceMetadata,
                     sqlAuthEnabled,
-                    standbyNodeInstanceId
+                    standbyNodeInstanceId,
+                    sqlDeploymentType
                 });
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
