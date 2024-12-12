@@ -715,7 +715,8 @@ const ManagedHostSubTable = ({
                     if (
                         (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
                             rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        (!rowData.fileSystemType || rowData.fileSystemType === GENERAL.NOT_AVAILABLE)
+                        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
+
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
                         return true;

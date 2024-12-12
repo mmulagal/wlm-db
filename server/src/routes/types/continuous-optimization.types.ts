@@ -144,6 +144,12 @@ const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
 });
 
+const DriftAssessmentResponsePerAccount = Type.Object({
+    count: Type.Number(),
+    assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
+    nextToken: Type.Optional(Type.String())
+});
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -160,5 +166,6 @@ export {
     OptimizeSizingRequestBody,
     OptimizeSizingRequestBodyType,
     OptimizeOperatingSystemRequestBody,
-    DriftAssessmentResponsePerHost
+    DriftAssessmentResponsePerHost,
+    DriftAssessmentResponsePerAccount
 };
