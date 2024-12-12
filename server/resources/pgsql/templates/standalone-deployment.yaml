@@ -161,6 +161,11 @@ Resources:
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
+                        /home/ec2-user/cfn/scripts/setup.zip:
+                            source: {{{ FsxCertificates }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-change-to-sudo-user:
@@ -190,6 +195,9 @@ Resources:
                             waitAfterCompletion: 0
                         f-unpack-setup-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/setup.zip -d /home/ec2-user/cfn/scripts
+                            waitAfterCompletion: 0
+                        g-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
                             waitAfterCompletion: 0
                 Configure:
                     commands:
