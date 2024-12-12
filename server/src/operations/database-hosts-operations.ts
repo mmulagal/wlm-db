@@ -102,6 +102,7 @@ import {
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
+import { getPgSqlDatabaseCount } from './workloads/pgsql/pgsql-operations';
 
 const logger = getLogger();
 
@@ -1811,16 +1812,29 @@ async function getDatabaseHostSummaryV2(
                 }));
 
                 if (runningDatabaseInstances.length > 0) {
-                    promises.push(
-                        getDatabaseInstancesSummary(
-                            accountId,
-                            credentialsId,
-                            activeNodeInstanceId!,
-                            region,
-                            runningDatabaseInstances,
-                            fields
-                        )
-                    );
+                    if (resourceType === DatabaseTypes.PG_SQL) {
+                        promises.push(
+                            getPgSqlDatabaseInstancesSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId!,
+                                region,
+                                runningDatabaseInstances,
+                                fields
+                            )
+                        );
+                    } else {
+                        promises.push(
+                            getDatabaseInstancesSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId!,
+                                region,
+                                runningDatabaseInstances,
+                                fields
+                            )
+                        );
+                    }
                 } else {
                     promises.push(Promise.resolve());
                 }
@@ -2530,6 +2544,107 @@ async function getAllClusterNodeDetails(
     return compact(
         clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => ({ ec2InstanceId, ec2InstanceName }))
     );
+}
+
+async function getPgSqlDatabaseInstancesSummary(
+    accountId: string,
+    credentialsId: string,
+    activeNodeInstanceId: string,
+    region: string,
+    databaseInstances: DatabaseInstance[],
+    fields?: string,
+    resourceDetails?: ResourceDetails,
+    standbyNodeInstanceId?: string
+) {
+    logger.info(
+        'Fetching summary of PGSQL database instance',
+        accountId,
+        credentialsId,
+        activeNodeInstanceId,
+        region,
+        databaseInstances,
+        fields,
+        resourceDetails,
+        standbyNodeInstanceId
+    );
+
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLocaleLowerCase());
+    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
+
+    let storageData: any;
+    let databasesCount: any;
+    const errormessages: { [index: string]: string } = {};
+
+    const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
+
+    try {
+        [storageData, databasesCount] = await Promise.all(
+            [
+                ...(getStorageSavings
+                    ? [
+                          Promise.all(
+                              databaseInstances.map(dbInstance => getStorageData(undefined, dbInstance, VERSION_2_0))
+                          )
+                      ]
+                    : [Promise.resolve()]), // Fetch storage savings data
+                ...(getDbCount
+                    ? [getPgSqlDatabaseCount(accountId, credentialsId, region, [activeNodeInstanceId])] // this has to be an string only
+                    : [Promise.resolve()])
+            ].map((p, index) =>
+                p.catch(error => {
+                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                    }
+                    logger.error(`Error while fetching data: ${error}.`);
+                })
+            )
+        );
+    } catch (error) {
+        logger.error(`Error while fetching PGSQL database instance summary ${accountId}, ${error}`);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching PGSQL database instance summary ${accountId}, ${error}`
+        );
+    }
+
+    return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
+        const instanceName = instanceNames?.[index];
+        const {
+            database_instance_id: databaseInstanceId,
+            database_instance_name: savedDatabaseInstanceName
+            // metadata
+            // created_time: creationDate,
+            // database_deployment_type: databaseDeploymentType
+        } = databaseInstance;
+
+        const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
+            databaseInstanceId,
+            databaseInstanceName: savedDatabaseInstanceName,
+            status: '',
+            databaseCount: 0
+        };
+
+        databaseInstanceDetails.status = ServerState.UP;
+
+        const [instanceDbCount] = databasesCount?.[instanceName] ?? [];
+        if (getDbCount && instanceDbCount) {
+            databaseInstanceDetails.databaseCount = instanceDbCount?.totalCount || 0;
+        }
+
+        databaseInstanceDetails.storage = storageData?.[index];
+
+        if (!isEmpty(errormessages)) {
+            databaseInstanceDetails.errors = errormessages;
+        }
+
+        return databaseInstanceDetails;
+    });
 }
 
 export {
