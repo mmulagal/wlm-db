@@ -94,15 +94,20 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
                         "error" = $null}
 
         $sessionsPersistentConnected = $sessions | Where-Object {$_.IsConnected -and $_.IsPersistent}
+        $sessionsPersistentConnectedCount = $sessionsPersistentConnected.Count
         $sessionsNonPersistentConnected = $sessions | Where-Object {$_.IsConnected -and (-Not($_.IsPersistent))}
+        $sessionsNonPersistentConnectedCount = $sessionsNonPersistentConnected.Count
+
         Write-Information "Connected and persistent iSCSI sessions: $sessionsPersistentConnected"
+        Write-Information "Connected and persistent iSCSI sessions Count: $sessionsPersistentConnectedCount"
         Write-Information "Connected and non-persistent iSCSI sessions: $sessionsNonPersistentConnected"
+        Write-Information "Connected and non-persistent iSCSI sessions Count: $sessionsNonPersistentConnectedCount"
 
         if($sessionsCount -gt 5) {
 
             # Case when persistent sessions are less than 5
-            if($sessionsPersistentConnected.Count -lt 5) {
-                $sessionsToConnect = 5 - $sessionsPersistentConnected.Count
+            if($sessionsPersistentConnectedCount -lt 5) {
+                $sessionsToConnect = 5 - $sessionsPersistentConnectedCount
                 $count = 0
                 Foreach ($session in $sessionsNonPersistentConnected) {
                     $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
@@ -140,7 +145,7 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
                             $perAddress.error = $_.Exception.Message
                         }
                     }
-                    if($count -eq 5) {
+                    if($count -eq ($sessionsPersistentConnectedCount - 5)) {
                         $perAddress.status = "success"
                         $perAddress.error = $null
                         break
