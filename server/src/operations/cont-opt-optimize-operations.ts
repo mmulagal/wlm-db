@@ -1561,11 +1561,8 @@ async function remediateMpioSessions(
             ? JOBSTATUS.FAILED
             : JOBSTATUS.WARNING;
     } catch (error) {
-        const errorMessage = `Error while remediating MPIO iSCSI sessions  ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while remediating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
