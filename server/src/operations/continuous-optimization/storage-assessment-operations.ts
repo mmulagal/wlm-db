@@ -70,12 +70,14 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
+    const currentSizePercentForAllVolumes: number[] = [];
     driveDetails.forEach((drive: LogDriveDetails) => {
         const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(drive as SizingViolationResponseType);
         } else if (dataAccessPath !== logAccessPath) {
             const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
+            currentSizePercentForAllVolumes.push(logToDriveSizePercent);
             if (logToDriveSizePercent > 30) {
                 overProvisionedDrives.push(drive as SizingViolationResponseType);
             } else if (logToDriveSizePercent < 20) {
@@ -99,7 +101,15 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             ? AssessmentStatus.NOT_APPLICABLE
             : AssessmentStatus.OPTIMIZED;
 
-    return { key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives, optimisedDrives };
+    return {
+        key,
+        status,
+        overProvisionedDrives,
+        underProvisionedDrives,
+        ignoredDrives,
+        optimisedDrives,
+        currentSizePercentForAllVolumes
+    };
 }
 
 function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
@@ -108,6 +118,7 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     const overProvisionedDrives: SizingViolationResponseType[] = [];
     const underProvisionedDrives: SizingViolationResponseType[] = [];
     const ignoredDrives: SizingViolationResponseType[] = [];
+    const currentSizePercentForAllVolumes: number[] = [];
 
     let tempdbPercent = 0;
     const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
@@ -118,6 +129,7 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
         ignoredDrives.push(value);
     } else {
         tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
+        currentSizePercentForAllVolumes.push(tempdbPercent);
         status =
             tempdbPercent > 20
                 ? AssessmentStatus.OVER_PROVISIONED
@@ -139,21 +151,26 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
         ontapVolumeUuid,
         underProvisionedDrives,
         overProvisionedDrives,
-        ignoredDrives
+        ignoredDrives,
+        currentSizePercentForAllVolumes
     };
 }
 
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
     logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
 
-    const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
+    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
+        credentialsId,
+        region,
+        fileSystemId
+    );
 
-    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fileSystemId);
-
-    const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
+    const headroomPercent = Math.ceil(
+        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
+    );
     const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
     const status =
-        headroomPercent < 95 // FOR TESTING ONLY
+        headroomPercent < 35
             ? AssessmentStatus.UNDER_PROVISIONED
             : headroomPercent > 100 &&
               ssdStorageCapacityInBytes &&
@@ -167,7 +184,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     if (status !== AssessmentStatus.OPTIMIZED) {
         missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
         newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-            totalUsed,
+            totalVolumeSizeInBytes,
             ssdStorageCapacityInBytes
         );
     }
@@ -175,7 +192,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
         status,
         headroomPercent,
         ssdStorageCapacityInBytes,
-        totalUsed,
+        totalVolumeSizeInBytes,
         missingPermissions,
         newFsxStorageCapactiyGiB
     };
@@ -313,7 +330,8 @@ async function calculateStorageDrift(
                     status,
                     severity: goldenData.severity,
                     recommendation: goldenData.recommendation,
-                    tags: goldenData.tags
+                    tags: goldenData.tags,
+                    current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
                 });
             }
             if (key === 'user-database-layout') {
@@ -413,7 +431,8 @@ async function calculateStorageDrift(
                     tags: [
                         AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                         AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                    ]
+                    ],
+                    current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
                 });
             }
         });
@@ -428,6 +447,7 @@ async function calculateStorageDrift(
             let overProvisionedDrives;
             let underProvisionedDrives;
             let ignoredDrives;
+            let currentSizePercentForAllVolumes;
 
             if (key === 'data-log-drive-details') {
                 goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
@@ -436,20 +456,40 @@ async function calculateStorageDrift(
                 goldenData = sizingConfigData.find(data => data.parameter === 'tempdb-drive-size');
             }
             if (!isEmpty(goldenData)) {
+                let currentSizeRange = '';
                 let status = AssessmentStatus.NOT_OPTIMIZED;
                 if (key === 'performance-tier') {
+                    // Old assessment data has performance-tier as boolean, new assessment data has performance-tier as list of numbers
+                    if (typeof value !== 'boolean') {
+                        const minSizePercent = Math.min(...value);
+                        const maxSizePercent = Math.max(...value);
+                        currentSizeRange =
+                            minSizePercent === maxSizePercent
+                                ? `${maxSizePercent}%`
+                                : `${minSizePercent}% - ${maxSizePercent}%`;
+                        value = minSizePercent === 100 && maxSizePercent === 100;
+                    }
                     status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
                 }
                 if (key === 'data-log-drive-details') {
-                    ({ key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives } = getLogVolumeDrift(
-                        value,
+                    ({
+                        key,
                         status,
-                        key
-                    ));
+                        overProvisionedDrives,
+                        underProvisionedDrives,
+                        ignoredDrives,
+                        currentSizePercentForAllVolumes
+                    } = getLogVolumeDrift(value, status, key));
                 }
                 if (key === 'data-tempdb-drive-details') {
-                    ({ status, key, overProvisionedDrives, underProvisionedDrives, ignoredDrives } =
-                        getTempDbVolumeDrift(value, status, key));
+                    ({
+                        status,
+                        key,
+                        overProvisionedDrives,
+                        underProvisionedDrives,
+                        ignoredDrives,
+                        currentSizePercentForAllVolumes
+                    } = getTempDbVolumeDrift(value, status, key));
                 }
 
                 let missingPermissions: string[] = [];
@@ -463,6 +503,14 @@ async function calculateStorageDrift(
                     ]);
                 }
 
+                if (currentSizePercentForAllVolumes !== undefined && currentSizePercentForAllVolumes.length > 0) {
+                    const minSizePercent = Math.min(...currentSizePercentForAllVolumes);
+                    const maxSizePercent = Math.max(...currentSizePercentForAllVolumes);
+                    currentSizeRange =
+                        minSizePercent === maxSizePercent
+                            ? `${maxSizePercent}%`
+                            : `${minSizePercent}% - ${maxSizePercent}%`;
+                }
                 driftAssessmentData.sizing.push({
                     name: key,
                     recommended: goldenData.value.toString(),
@@ -471,7 +519,8 @@ async function calculateStorageDrift(
                     recommendation: goldenData.recommendation,
                     tags: goldenData.tags,
                     sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives },
-                    missingPermissions
+                    missingPermissions,
+                    current: currentSizeRange
                 });
             }
         });
@@ -483,7 +532,7 @@ async function calculateStorageDrift(
     } else {
         try {
             const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-            const { status, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
+            const { status, headroomPercent, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
                 credentialsId,
                 region,
                 filesystemId
@@ -497,7 +546,8 @@ async function calculateStorageDrift(
                 recommendation: goldenData!.recommendation,
                 tags: goldenData!.tags,
                 missingPermissions,
-                recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0
+                recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0,
+                current: `${headroomPercent}%`
             });
         } catch (error: any) {
             logger.error(
@@ -508,5 +558,6 @@ async function calculateStorageDrift(
 
     return driftAssessmentData;
 }
+
 
 export { calculateStorageDrift, getHeadroomDrift, getLogVolumeDrift, getTempDbVolumeDrift };
