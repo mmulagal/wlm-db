@@ -153,7 +153,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             Header: 'Configuration',
             accessor: 'name',
             width: '18%',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '3',
@@ -171,7 +174,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                 <InProgress className={styles.statusIcon} />
                             )}
                         </div>
-                        <div>{cellData}</div>
+                        <div>{cellData || GENERAL.NOT_AVAILABLE}</div>
                     </div>
                 );
             }
@@ -181,7 +184,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             Header: 'Severity',
             accessor: 'severity',
             width: '14%',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '5',
@@ -236,18 +242,25 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                     <>
                         <div className={styles.recommendation}>
                             <div className={styles.tooltipContainer}>
-                                <div className={styles.tooltip}>
-                                    <Popover
-                                        popoverClass={''}
-                                        children={cellData && <RecommendationTooltip data={cellData} />}
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        isAppendedToBody={false}
-                                        container={<TooltipIcon />}
-                                        placement="bottom"
-                                    />
-                                </div>
+                                {cellData?.length === 0 && (
+                                    <div>
+                                        <DisabledTooltipIcon />
+                                    </div>
+                                )}
+                                {cellData?.length > 0 && (
+                                    <div className={styles.tooltip}>
+                                        <Popover
+                                            popoverClass={''}
+                                            children={cellData && <RecommendationTooltip data={cellData} />}
+                                            trigger="hover"
+                                            delayHide={200}
+                                            interactive={true}
+                                            isAppendedToBody={false}
+                                            container={<TooltipIcon />}
+                                            placement="bottom"
+                                        />
+                                    </div>
+                                )}
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
                                     {'View recommendation'}
                                 </DsTypography>

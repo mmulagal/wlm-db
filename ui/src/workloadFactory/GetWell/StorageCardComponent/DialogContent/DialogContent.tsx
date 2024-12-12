@@ -309,12 +309,6 @@ const DialogContent = ({
                                 Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with
                                 this action.
                             </DsTypography>
-                        </div>
-
-                        <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Grant FSx for ONTAP modify permissions
-                            </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
                                     <div>
@@ -419,12 +413,6 @@ const DialogContent = ({
                             <DsTypography variant="Regular_14" style={{ width: '712px' }}>
                                 Grant the necessary FSx ONTAP modify permissions to Workload Factory to proceed with
                                 this action.
-                            </DsTypography>
-                        </div>
-
-                        <div className={styles['first-section']}>
-                            <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                                Grant FSx for ONTAP modify permissions
                             </DsTypography>
                             <div className={styles.content}>
                                 <div className={styles.row}>
