@@ -6,9 +6,11 @@ import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import useResize from '../../../common/hooks/useResize';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const dispatch = useDispatch();
+    const windowSize = useResize();
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setSelectedConfig(type));
@@ -32,7 +34,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -60,7 +62,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={10}
                     />
@@ -88,7 +90,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -116,7 +118,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -144,7 +146,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -172,7 +174,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -200,7 +202,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -228,7 +230,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={120}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -256,7 +258,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={100}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -284,7 +286,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         beforeOutOf={65}
                         afterOutOf={100}
                         bottomText="Optimized instances:"
-                        width="360px"
+                       width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />

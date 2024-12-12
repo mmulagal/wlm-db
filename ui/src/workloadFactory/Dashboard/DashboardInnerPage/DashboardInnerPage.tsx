@@ -19,6 +19,8 @@ import UserDataFilesTable from './RenderTables/UserDataFilesTable';
 import LogFileTable from './RenderTables/LogFileTable';
 import TempDBPlacement from './RenderTables/TempDBPlacement';
 import ComputeRightSizingTable from './RenderTables/ComputeRightSizingTable';
+import OntapConfig from './RenderTables/OntapConfig';
+import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -209,6 +211,10 @@ const DashboardInnerPage = () => {
                 return <TempDBPlacement />;
             case 'Compute rightsizing':
                 return <ComputeRightSizingTable />;
+                case 'ONTAP configuration':
+                    return <OntapConfig />;
+                case 'Operating system':
+                    return <OperatingSystemTable />;
         }
     };
     return (
