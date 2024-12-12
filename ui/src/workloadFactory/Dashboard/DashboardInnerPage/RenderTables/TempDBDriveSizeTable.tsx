@@ -5,7 +5,11 @@ import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 
-const TempDBDriveSizeTable = () => {
+interface StorageTierTableProps {
+    handleDialog: (dialogType: string) => void;
+}
+
+const TempDBDriveSizeTable = ({ handleDialog }: StorageTierTableProps) => {
     const mockData = [
         {
             serverInstanceName: 'SQL Server 1',
@@ -47,7 +51,7 @@ const TempDBDriveSizeTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.buttonContainer}>
-                        <DsButton isThin variant="secondary" onClick={() => {}}>
+                        <DsButton isThin variant="secondary" onClick={() => handleDialog('TempDB drive size')}>
                             Optimize
                         </DsButton>
                     </div>

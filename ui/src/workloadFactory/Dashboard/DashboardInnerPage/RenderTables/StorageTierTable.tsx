@@ -1,19 +1,15 @@
-import {
-    Table,
-    useTable,
-    Typography,
-    TableTopBar,
-    DsButton,
-    DsTypography,
-    DsFlashingDotsLoader
-} from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsButton, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 
-const StorageTierTable = () => {
+interface StorageTierTableProps {
+    handleDialog: (dialogType: string) => void;
+}
+
+const StorageTierTable = ({ handleDialog }: StorageTierTableProps) => {
     const mockData = [
         {
             serverInstanceName: 'SQL Server 1',
@@ -55,7 +51,7 @@ const StorageTierTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.buttonContainer}>
-                        <DsButton isThin variant="secondary" onClick={() => {}}>
+                        <DsButton isThin variant="secondary" onClick={() => handleDialog('Storage tier')}>
                             Optimize
                         </DsButton>
                     </div>
