@@ -1490,11 +1490,8 @@ async function validateMpioSessions(
             endTime: Date.now()
         });
     } catch (error) {
-        const errorMessage = `Error while validating MPIO iSCSI sessions  ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while validating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -1550,7 +1547,7 @@ async function remediateMpioSessions(
             credentialsId,
             region,
             [ssmCommand],
-            activeNodeInstanceId!,
+            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
             accountId,
             false
         );
@@ -1561,11 +1558,8 @@ async function remediateMpioSessions(
             ? JOBSTATUS.FAILED
             : JOBSTATUS.WARNING;
     } catch (error) {
-        const errorMessage = `Error while remediating MPIO iSCSI sessions  ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while remediating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -1870,7 +1864,8 @@ async function optimizeOperatingSystemSettings(
                     databaseType,
                     instanceMetadata,
                     sqlAuthEnabled,
-                    standbyNodeInstanceId
+                    standbyNodeInstanceId,
+                    sqlDeploymentType
                 });
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
