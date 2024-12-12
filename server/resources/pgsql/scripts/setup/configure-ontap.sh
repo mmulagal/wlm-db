@@ -43,7 +43,7 @@ if [ $is_public_network = true ]; then
     cert_path=/tmp/bundle-$region.pem
     curl -s -o $cert_path $cert_url
 else
-    cert_path=/home/ec2-user/fsx_certs/bundle-$region.pem
+    cert_path=/home/ec2-user/cfn/fsx_certs/bundle-$region.pem
 fi
 
 ontap_request () {
@@ -57,7 +57,6 @@ ontap_request () {
     fi
 
     args=(
-        --silent
         --header "Authorization: Basic $auth"
         --request $method
         --cacert $cert_path
@@ -73,7 +72,7 @@ check_and_create_ontap_volumes() {
     # Check if data volume exists
     ontap_request 'GET' "storage/volumes?name=$fsxdatavolumename"
     data_volume=$(echo $return_result | jq -r '.records[0].name')
-    if [ $data_volume != $fsxdatavolumename ]; then
+    if [ "$data_volume" != "$fsxdatavolumename" ]; then
         echo "Creating data volume..."
         local data='{"name":"'$fsxdatavolumename'","size":"10G","nas":{"path":"'$fsxdatamountpoint'"},"svm":{"name":"'$fsxsvmname'"},"aggregates":[{"name":"'$fsxaggrname'"}]}'
         ontap_request 'POST' 'storage/volumes' "$data"
@@ -85,7 +84,7 @@ check_and_create_ontap_volumes() {
     # Check if log volume exists
     ontap_request 'GET' "storage/volumes?name=$fsxlogvolumename"
     log_volume=$(echo $return_result | jq -r '.records[0].name')
-    if [ $log_volume != $fsxlogvolumename ]; then
+    if [ "$log_volume" != "$fsxlogvolumename" ]; then
         echo "Creating log volume..."
         local data='{"name":"'$fsxlogvolumename'","size":"1G","nas":{"path":"'$fsxlogmountpoint'"},"svm":{"name":"'$fsxsvmname'"},"aggregates":[{"name":"'$fsxaggrname'"}]}'
         ontap_request 'POST' 'storage/volumes' "$data"
