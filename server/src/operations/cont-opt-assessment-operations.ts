@@ -515,7 +515,7 @@ async function calculateStorageDrift(
                 let missingPermissions: string[] = [];
                 // Check for 'fsx:UpdateVolume' permissions
                 if (
-                    (key === 'data-log-drive-details' || key === 'data-tempdb-drive-details') &&
+                    (key === 'tempdb-drive-size' || key === 'log-drive-size') &&
                     status !== AssessmentStatus.OPTIMIZED
                 ) {
                     missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, [
