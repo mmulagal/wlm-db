@@ -1061,7 +1061,10 @@ async function initiateComputeAssessment(
             finding,
             findingReasonCodes,
             recommendationOptions: coRecOptions
-                ?.filter(({ platformDifferences }) => platformDifferences?.length === 0)
+                ?.filter(
+                    ({ instanceType, platformDifferences }) =>
+                        platformDifferences?.length === 0 && /^[mcr]/.test(instanceType!)
+                )
                 ?.map(
                     ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
                         instanceType,
