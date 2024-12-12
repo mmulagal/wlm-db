@@ -206,7 +206,9 @@
                             "severity": "critical",
                             "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
-                            "sizingViolations": {}
+                            "sizingViolations": {},
+                            "current": "94% - 100%"
+
                         },
                         {
                             "name": "log-drive-size",
@@ -249,7 +251,8 @@
                                         "logDriveTotalSizeMB": 307
                                     }
                                 ]
-                            }
+                            },
+                            "current":"10%"
                         },
                         {
                             "name": "tempdb-drive-size",
@@ -267,12 +270,13 @@
                                         "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
                                         "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ab3fd3b5-b2e2-4c97-b026-52ba19accc41",
-                                        "tempdbDriveTotalSizeMB": 42,
+                                        "tempdbDriveTotalSizeMB": 291930,
                                         "diskSerialNumber": "lWB4c$XRevT9"
                                     }
                                 ],
                                 "ignoredDrives": []
-                            }
+                            },
+                            "current":"3%"
                         },
                         {
                             "name": "headroom",
@@ -282,7 +286,8 @@
                             "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
-                            "recommendedSizeInGib": 0
+                            "recommendedSizeInGib": 0,
+                            "current":"45%"
                         }
                     ],
                     "layout": [
@@ -292,7 +297,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         },
                         {
                             "name": "default-log-files-location",
@@ -300,7 +306,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                             "current": "separate-drive"
                         },
                         {
                             "name": "default-data-files-location",
@@ -308,7 +315,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                             "current": "separate-drive"
                         }
                     ]
                 }
@@ -519,7 +527,8 @@
                             "severity": "critical",
                             "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
-                            "sizingViolations": {}
+                            "sizingViolations": {},
+                            "current": "94% - 100%"
                         },
                         {
                             "name": "log-drive-size",
@@ -562,7 +571,8 @@
                                         "logDriveTotalSizeMB": 307
                                     }
                                 ]
-                            }
+                            },
+                            "current":"10%"
                         },
                         {
                             "name": "tempdb-drive-size",
@@ -580,12 +590,13 @@
                                         "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
                                         "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ab3fd3b5-b2e2-4c97-b026-52ba19accc41",
-                                        "tempdbDriveTotalSizeMB": 42,
+                                        "tempdbDriveTotalSizeMB": 291930,
                                         "diskSerialNumber": "lWB4c$XRevT9"
                                     }
                                 ],
                                 "ignoredDrives": []
-                            }
+                            },
+                            "current":"3%"
                         },
                         {
                             "name": "headroom",
@@ -595,7 +606,8 @@
                             "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
-                            "recommendedSizeInGib": 0
+                            "recommendedSizeInGib": 0,
+                            "current": "45%"
                         }
                     ],
                     "layout": [
@@ -605,7 +617,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         },
                         {
                             "name": "default-log-files-location",
@@ -613,7 +626,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         },
                         {
                             "name": "default-data-files-location",
@@ -621,7 +635,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         }
                     ]
                 }
@@ -832,7 +847,8 @@
                             "severity": "critical",
                             "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
-                            "sizingViolations": {}
+                            "sizingViolations": {},
+                            "current": "94% - 100%"
                         },
                         {
                             "name": "log-drive-size",
@@ -875,7 +891,8 @@
                                         "logDriveTotalSizeMB": 307
                                     }
                                 ]
-                            }
+                            },
+                            "current":"10%"
                         },
                         {
                             "name": "tempdb-drive-size",
@@ -893,12 +910,13 @@
                                         "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
                                         "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ab3fd3b5-b2e2-4c97-b026-52ba19accc41",
-                                        "tempdbDriveTotalSizeMB": 42,
+                                        "tempdbDriveTotalSizeMB": 486550,
                                         "diskSerialNumber": "lWB4c$XRevT9"
                                     }
                                 ],
                                 "ignoredDrives": []
-                            }
+                            },
+                            "current":"5%"
                         },
                         {
                             "name": "headroom",
@@ -908,7 +926,8 @@
                             "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
-                            "recommendedSizeInGib": 0
+                            "recommendedSizeInGib": 0,
+                            "current": "35%"
                         }
                     ],
                     "layout": [
@@ -918,7 +937,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         },
                         {
                             "name": "default-log-files-location",
@@ -926,7 +946,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         },
                         {
                             "name": "default-data-files-location",
@@ -934,7 +955,8 @@
                             "recommended": "separate-drive",
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                            "tags": ["Performance efficiency", "Operational excellence"]
+                            "tags": ["Performance efficiency", "Operational excellence"],
+                            "current": "separate-drive"
                         }
                     ]
                 }
