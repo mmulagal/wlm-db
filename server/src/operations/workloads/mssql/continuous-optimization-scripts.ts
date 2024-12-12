@@ -435,6 +435,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
         $isPerformanceTier100Percent = $true
         # loop through each volume and get data
+        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent
         foreach ($perVolumeData in $Volumes) {
         if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
                 $isPerformanceTier100Percent = $false
@@ -515,9 +516,10 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'user-database-layout' = $($responseObject);}
         
         $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = $isPerformanceTier100Percent;
+                                        'performance-tier' = $PerformanceTierPercent;
                                         'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);}
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
+                                        }
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
         $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
