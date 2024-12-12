@@ -4,11 +4,14 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './RenderTables.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { expandTableRow } from '../../../../utils/utilityFunctions';
 import { useCallback } from 'react';
+import { useAppSelector } from '../../../../store/storeHooks';
+import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
 
 const OperatingSystemTable = () => {
+    const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
     const mockData = [
         {
             serverInstanceName: 'SQL Server 1',
@@ -126,7 +129,14 @@ const OperatingSystemTable = () => {
         lastColDetails()
     ];
     const ExpandedRow = useCallback(({ rowData }: any) => {
-        return <div>Content here</div>;
+        return (
+            <RecommendationTable
+                tableData={ontapConfigTableData}
+                isLoading={false}
+                optimizePrintState={false}
+                from={WLF_TABS.DASHBOARD}
+            />
+        );
     }, []);
 
     const tableComponentProps = {
