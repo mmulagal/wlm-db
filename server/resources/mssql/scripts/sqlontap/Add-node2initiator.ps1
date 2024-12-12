@@ -56,7 +56,7 @@ try {
     Write-Output "Connected to NetApp controller at $MgmtDNS"
     
     $retryCount = 0
-    $maxRetries = 3
+    $maxRetries = 30
     $ig = $null
 
     while ($retryCount -lt $maxRetries -and $null -eq $ig) {
@@ -64,12 +64,12 @@ try {
             $ig = Get-NcIgroup -Name $igroup
             if ($null -eq $ig) {
                 Write-Output "Igroup $igroup not found, retrying..."
-                Start-Sleep -Seconds 5
+                Start-Sleep -Seconds 15
             }
         }
         catch {
             Write-Output "Error retrieving igroup: $_"
-            Start-Sleep -Seconds 5
+            Start-Sleep -Seconds 15
         }
         $retryCount++
     }
