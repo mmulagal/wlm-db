@@ -128,7 +128,7 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
                         $perAddress.error = $null
                         break }
                 }
-            } else {
+            } elseif($sessionsPersistentConnectedCount -gt 5) {
                 # Case when persistent sessions are more than 5
                 $count = 0
                 Foreach ($session in $sessionsPersistentConnected) {
