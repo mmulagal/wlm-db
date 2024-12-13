@@ -67,7 +67,6 @@ describe('License assessment operations', () => {
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            DEMO_AWS_ACCOUNT_ID,
             'i-07e76a4b916548dc0',
             'test-resource',
             'test-job-id'
