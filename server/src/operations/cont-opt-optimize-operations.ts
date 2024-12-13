@@ -746,7 +746,7 @@ async function headroomOptimization(
     let jobStatus;
     let errorMessage;
     try {
-        const { headroomPercent, ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getHeadroomDrift(
+        const { headroomPercent, ssdStorageCapacityInBytes, totalUsed } = await getHeadroomDrift(
             credentialsId,
             region,
             fileSystemId
@@ -759,7 +759,7 @@ async function headroomOptimization(
             const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
             const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
             const newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-                totalVolumeSizeInBytes,
+                totalUsed,
                 ssdStorageCapacityInBytes
             );
             if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapactiyGiB) {
