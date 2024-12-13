@@ -1,5 +1,4 @@
 import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
-import { DEMO_AWS_ACCOUNT_ID } from '../../../src/utils/consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/fsx-scope';
