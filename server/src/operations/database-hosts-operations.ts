@@ -102,7 +102,7 @@ import {
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
-import { getPgSqlDatabaseCount } from './workloads/pgsql/pgsql-operations';
+import { getPgSqlDatabaseCount, getPgSqlStorageSavingsVolumeData } from './workloads/pgsql/pgsql-operations';
 
 const logger = getLogger();
 
@@ -1794,7 +1794,8 @@ async function getDatabaseHostSummaryV2(
                         databaseInstancesDetail.some(
                             (instance: InstanceDetails) =>
                                 instance.instanceState === ServerState.UP &&
-                                instance.instanceName === resource.database_instance_name
+                                (instance.instanceName === resource.database_instance_name ||
+                                    (resourceType === DatabaseTypes.PG_SQL && resourceId === resource.resource_id))
                         )
                     );
                 } else {
@@ -2580,21 +2581,26 @@ async function getPgSqlDatabaseInstancesSummary(
     let storageData: any;
     let databasesCount: any;
     const errormessages: { [index: string]: string } = {};
-
-    const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
-
     try {
         [storageData, databasesCount] = await Promise.all(
             [
                 ...(getStorageSavings
                     ? [
                           Promise.all(
-                              databaseInstances.map(dbInstance => getStorageData(undefined, dbInstance, VERSION_2_0))
+                              databaseInstances.map(dbInstance =>
+                                  getPgSqlStorageSavingsVolumeData(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      dbInstance.fsxn_ids
+                                  )
+                              )
                           )
                       ]
                     : [Promise.resolve()]), // Fetch storage savings data
                 ...(getDbCount
-                    ? [getPgSqlDatabaseCount(accountId, credentialsId, region, [activeNodeInstanceId])] // this has to be an string only
+                    ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -2614,27 +2620,20 @@ async function getPgSqlDatabaseInstancesSummary(
     }
 
     return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
-        const instanceName = instanceNames?.[index];
-        const {
-            database_instance_id: databaseInstanceId,
-            database_instance_name: savedDatabaseInstanceName
-            // metadata
-            // created_time: creationDate,
-            // database_deployment_type: databaseDeploymentType
-        } = databaseInstance;
+        const { database_instance_id: databaseInstanceId } = databaseInstance;
 
         const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
             databaseInstanceId,
-            databaseInstanceName: savedDatabaseInstanceName,
+            databaseInstanceName: 'postgresql',
             status: '',
             databaseCount: 0
         };
 
         databaseInstanceDetails.status = ServerState.UP;
 
-        const [instanceDbCount] = databasesCount?.[instanceName] ?? [];
+        const [instanceDbCount] = databasesCount?.[index] ?? [];
         if (getDbCount && instanceDbCount) {
-            databaseInstanceDetails.databaseCount = instanceDbCount?.totalCount || 0;
+            databaseInstanceDetails.databaseCount = instanceDbCount || 0;
         }
 
         databaseInstanceDetails.storage = storageData?.[index];
