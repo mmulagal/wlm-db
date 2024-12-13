@@ -157,23 +157,72 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
         $perAddress = @{"address" = $address
                         "status" = "success"
                         "error" = $null}
+
+        $sessionsPersistentConnected = $sessions | Where-Object {$_.IsConnected -and $_.IsPersistent}
+        $sessionsPersistentConnectedCount = $sessionsPersistentConnected.Count
+        $sessionsNonPersistentConnected = $sessions | Where-Object {$_.IsConnected -and (-Not($_.IsPersistent))}
+        $sessionsNonPersistentConnectedCount = $sessionsNonPersistentConnected.Count
+
+        Write-Information "Connected and persistent iSCSI sessions: $sessionsPersistentConnected"
+        Write-Information "Connected and persistent iSCSI sessions Count: $sessionsPersistentConnectedCount"
+        Write-Information "Connected and non-persistent iSCSI sessions: $sessionsNonPersistentConnected"
+        Write-Information "Connected and non-persistent iSCSI sessions Count: $sessionsNonPersistentConnectedCount"
+
         if($sessionsCount -gt 5) {
-            $sessions = $sessions | Where-Object {$_.IsConnected -and $_.IsPersistent} | Select-Object -Last ($sessions.count - 5)
-            Foreach ($session in $sessions) {
-                $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
-                if($targetPortalAddress -eq $address) {
-                    try {
-                          Unregister-IscsiSession -SessionIdentifier $session.SessionIdentifier
-                          $perAddress.status = "success"
-                    } catch {
-                          Write-Information "Failed to unregister iSCSI session for address $address and session $session.SessionIdentifier. Error message: $_.Exception.Message"
-                          $perAddress.status = "failed"
-                          $perAddress.error = $_.Exception.Message
+
+            # Case when persistent sessions are less than 5
+            if($sessionsPersistentConnectedCount -lt 5) {
+                $sessionsToConnect = 5 - $sessionsPersistentConnectedCount
+                $count = 0
+                Foreach ($session in $sessionsNonPersistentConnected) {
+                    $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+                    if($targetPortalAddress -eq $address) {
+                        try {
+                            Register-IscsiSession -SessionIdentifier $session.SessionIdentifier
+                            $perAddress.status = "success"
+                            Write-Information "Successfully registered iSCSI session for address $address and session $session.SessionIdentifier"
+                            $count++
+                        } catch {
+                            Write-Information "Failed to register iSCSI session for address $address and session $session.SessionIdentifier. Error message: $_.Exception.Message"
+                            $perAddress.status = "failed"
+                            $perAddress.error = $_.Exception.Message
+                        }
                     }
+                    if($count -eq $sessionsToConnect) {
+                        $perAddress.status = "success"
+                        $perAddress.error = $null
+                        break }
+                }
+            } elseif($sessionsPersistentConnectedCount -gt 5) {
+                # Case when persistent sessions are more than 5
+                $count = 0
+                Foreach ($session in $sessionsPersistentConnected) {
+                    $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+                    if($targetPortalAddress -eq $address) {
+                        try {
+                            Unregister-IscsiSession -SessionIdentifier $session.SessionIdentifier -ErrorAction SilentlyContinue
+                            $perAddress.status = "success"
+                            Write-Information "Successfully unregistered iSCSI session for address $address and session $session.SessionIdentifier"
+                            $count++
+                        } catch {
+                            Write-Information "Failed to unregister iSCSI session for address $address and session $session.SessionIdentifier. Error message: $_.Exception.Message"
+                            $perAddress.status = "failed"
+                            $perAddress.error = $_.Exception.Message
+                        }
+                    }
+                    if($count -eq ($sessionsPersistentConnectedCount - 5)) {
+                        $perAddress.status = "success"
+                        $perAddress.error = $null
+                        break
                 }
             }
         }
+        
+    }
         elseif($sessionsCount -lt 5) {
+            if($sessionsCount -ne 0 -and $sessionsPersistentConnected.Count -lt 5) {
+                $sessionsCount = 5 - $sessionsPersistentConnected.Count
+            }
             try{
             $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
             $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
@@ -181,6 +230,7 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
             #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
             1..(5 - $sessionsCount) | % { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
             $perAddress.status = "success"
+            Write-Information "Successfully created iSCSI session for address $address."
             } catch {
                 Write-Information "Failed to create iSCSI session for address $address. Error message: $_.Exception.Message"
                 $perAddress.status = "failed"

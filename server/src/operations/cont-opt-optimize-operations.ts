@@ -1739,11 +1739,8 @@ async function validateMpioSessions(
             endTime: Date.now()
         });
     } catch (error) {
-        const errorMessage = `Error while validating MPIO iSCSI sessions  ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while validating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -1799,7 +1796,7 @@ async function remediateMpioSessions(
             credentialsId,
             region,
             [ssmCommand],
-            activeNodeInstanceId!,
+            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
             accountId,
             false
         );
@@ -1898,12 +1895,16 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
         // Run remediation on primary node
         let primaryRemediateJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
         let standbyRemediateJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-        optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsPrimaryNode;
-        primaryRemediateJobStatus = await remediateMpioSessions(optimizeMpioisSessionsParams);
+
+        if (!isEmpty(violationsPrimaryNode)) {
+            optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsPrimaryNode;
+            primaryRemediateJobStatus = await remediateMpioSessions(optimizeMpioisSessionsParams);
+        }
 
         // Run remediation on standby node
-        if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+        if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && !isEmpty(violationsStandbyNode)) {
             optimizeMpioisSessionsParams.currentMpioSessionsCount = violationsStandbyNode;
+
             standbyRemediateJobStatus = await remediateMpioSessions(optimizeMpioisSessionsParams, false);
         }
 
