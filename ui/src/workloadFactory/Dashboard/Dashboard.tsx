@@ -8,26 +8,21 @@ import HostDistribution from './HostDistribution/HostDistribution';
 import InstanceDistribution from './InstanceDistribution/InstanceDistribution';
 import ManagedInstanceOptimization from './ManagedInstanceOptimization/ManagedInstanceOptimization';
 import ManagedInstanceOptimizationBreakdownByConfig from './ManagedInstanceOptimizationBreakdown/ManagedInstanceOptimizationBreakdownByConfig';
-import ManagedInstanceOptimizationBreakdownByCategory from './ManagedInstanceOptimizationBreakdownByCategory/ManagedInstanceOptimizationBreakdownByCategory';
 import PotentialSavings from './PotentialSavings/PotentialSavings';
 import Sandboxes from './Sandboxes/Sandboxes';
-import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
+import { getTotalManagedAggrCost, getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
 
 const Dashboard = () => {
     const mssqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlStorageSavings);
     const pgsqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const mssqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
     const pgsqlHostCostData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlCosts);
-    const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsLoading);
-    const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.databaseHostsLoading);
     const [openAccordion, setOpenAccordion] = useState(false);
+    const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
+    const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.fullHostDataLoading);
 
     const hostCostData = useMemo(() => {
-        let costData: any = {};
-        Object.keys(mssqlHostCostData).map((key: string) => {
-            costData[key] = (mssqlHostCostData[key] || 0) + (pgsqlHostCostData[key] || 0);
-        });
-        return costData;
+        return getTotalManagedAggrCost(mssqlHostCostData, pgsqlHostCostData);
     }, [mssqlHostCostData, pgsqlHostCostData]);
 
     const hostStorageSavingsData = useMemo(() => {
