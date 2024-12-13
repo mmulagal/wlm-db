@@ -366,20 +366,20 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'Application recommendation',
+            title: 'License recommendation',
             descriptionList: [
                 {
                     title: 'Not optimized: ',
                     description:
-                        "When Workload Factory detects that your database infrastructure isn't using any of the commercial \nsoftware license features you're paying for, a license is considered not optimized. A license that isn't optimized might \nresult in unnecessary additional costs."
+                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An unoptimized license \nmight result in unnecessary costs.'
                 },
                 {
                     title: 'Optimized: ',
                     description:
-                        'When the license for your commercial software database meets your performance requirements, the license is \nconsidered optimized"'
+                        'A license is considered "optimized" when the commercial software license for your databases meets your \nperformance requirements.'
                 }
             ],
-            info: 'The SQL Server license assessment and recommendation are performed at the host level.'
+            info: 'The SQL Server license assessment and recommendation are provided at the host level.'
         },
         tags: ['Cost optimization']
     }

@@ -55,7 +55,8 @@ export interface AssessmentResponseInterface {
 
 export interface HostAssessmentResponseInterface {
     databaseInstanceId: string;
-    assessments: AssessmentResponseInterface;
+    assessments?: AssessmentResponseInterface;
+    error?: string;
 }
 
 export interface PerConfigInterface {

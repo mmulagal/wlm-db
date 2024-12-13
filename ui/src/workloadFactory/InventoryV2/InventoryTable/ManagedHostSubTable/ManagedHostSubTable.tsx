@@ -716,7 +716,6 @@ const ManagedHostSubTable = ({
                         (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
                             rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
                         (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
-
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
                         return true;
@@ -756,9 +755,10 @@ const ManagedHostSubTable = ({
                     }
 
                     if (
-                        !cellData &&
-                        rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
-                        !rowData?.optimizationStatusLoading
+                        (!cellData &&
+                            rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
+                            !rowData?.optimizationStatusLoading) ||
+                        cellData === INVENTORY_STATUS.IN_PROGRESS
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
                         return true;

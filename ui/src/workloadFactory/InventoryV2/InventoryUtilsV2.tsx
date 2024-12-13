@@ -1898,7 +1898,7 @@ export const getOptimizationStatus = (
     }
     let instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
-    if (instanceRow) {
+    if (instanceRow && instanceRow?.assessments) {
         let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
         let optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
@@ -1907,6 +1907,8 @@ export const getOptimizationStatus = (
                     ? optBreakDown?.total?.notOptimized + ' recommendation'
                     : optBreakDown?.total?.notOptimized + ' recommendations'
                 : 'Optimized';
+    } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
+        optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     }
     return optimizationStatus;
 };
