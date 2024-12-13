@@ -7,7 +7,8 @@ import {
     getParametersByPath,
     getConnectionStatus,
     putParameter,
-    getParameter
+    getParameter,
+    describeInstancePatchStates
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -21,6 +22,8 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import putParameterResponse from '../../simulator/responses/aws/ssm-put-parameter.json';
 import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
+import describePatchStatesResponse from '../../simulator/responses/aws/ssm-describe-patch-states.json';
+
 import { AL2023_AMI_NAME } from '../../../src/utils/consts';
 
 const credentialsId = `${faker.string.alpha(20)}`;
@@ -74,5 +77,13 @@ describe('sendSSMCommand', () => {
     it('Get parameters from SSM parameter store', async () => {
         const response = await getParameter(credentialsId, 'us-east-1', '/netapp/wlmdb/i-test-ec2');
         expect(response).toEqual(getParameterResponse.Parameter.Value);
+    });
+
+    it('Describe instance patch states', async () => {
+        const params = {
+            InstanceIds: ['i-0e5af83448e1b83ef']
+        };
+        const response = await describeInstancePatchStates(credentialsId, 'us-east-1', params);
+        expect(response.InstancePatchStates).toEqual(describePatchStatesResponse.InstancePatchStates);
     });
 });

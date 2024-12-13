@@ -1647,5 +1647,26 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "getPatchBaselineCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "b699d322-6011-4371-a194-706306a25595",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "539404d1-1495-4cd8-8a1e-8d5bf054afd0",
+        "Comment": "",
+        "DocumentName": "AWS-RunPatchBaseline",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionEndDateTime": "",
+        "InstanceId": "i-07e76a4b916548dc0",
+        "ResponseCode": 0,
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

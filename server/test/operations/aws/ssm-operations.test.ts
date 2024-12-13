@@ -4,7 +4,10 @@ import {
     getFSxOntapRegionsList,
     ssmPutParameters,
     getEc2SqlParameters,
-    getGenericFSxOntapRegionsList
+    getGenericFSxOntapRegionsList,
+    runAwsPatchBaseline,
+    pollCommandStatusForAllInstances,
+    getInstancesPatchStatus
 } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -196,5 +199,30 @@ describe('executeSsmDocument', () => {
     it('Get generic Amazon FSx for NetApp ONTAP regions', async () => {
         const response = await getGenericFSxOntapRegionsList();
         expect(response).toBeDefined();
+    });
+
+    it('Should run AWS patch baseline assessment', async () => {
+        const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
+        const response = await runAwsPatchBaseline(credentialsId, 'us-east-1', instanceIds);
+        const allResponsesSucceeded = response?.every(({ response: { Status } }) => Status === 'Success');
+        expect(allResponsesSucceeded).toBeTruthy();
+    });
+
+    it('Should poll command status for all instances', async () => {
+        const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
+        const response = await pollCommandStatusForAllInstances(
+            credentialsId,
+            'us-east-1',
+            'a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand',
+            instanceIds
+        );
+
+        expect(response.length).toEqual(instanceIds.length);
+    });
+
+    it('Get instances patch states', async () => {
+        const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
+        const response = await getInstancesPatchStatus(credentialsId, 'us-east-1', instanceIds);
+        expect(response.InstancePatchStates?.length).toEqual(instanceIds.length);
     });
 });

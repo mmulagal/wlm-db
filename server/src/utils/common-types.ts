@@ -26,9 +26,19 @@ interface ComputeAssessment {
         platformDifferences: PlatformDifference[];
     }[];
 }
+
+interface HostOsPatchAssessmentObject {
+    baselineId: string;
+    criticalNonCompliantCount: number;
+    ec2InstanceId: string;
+    operationStartTime: number;
+    operationEndTime: number;
+    securityNonCompliantCount: number;
+}
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
+    hostOsPatch?: HostOsPatchAssessmentObject[];
 }
 interface Metadata {
     node1InstanceId: string;
@@ -49,6 +59,7 @@ interface Metadata {
     storageProtocol?: string;
     isComputeOptimized?: boolean;
     isLicenseOptimized?: boolean;
+    isHostOsPatchOptimized?: boolean;
     assessment?: ResourceAssessmentData;
 }
 interface databaseInstanceMetadata {
@@ -453,5 +464,6 @@ export {
     StorageTierParams,
     ComputeAssessment,
     LicenseAssessment,
+    HostOsPatchAssessmentObject,
     OptimizeMpioIscsiSessionsParams
 };

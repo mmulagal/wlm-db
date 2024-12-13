@@ -10,13 +10,15 @@ import {
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
 import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
+import { isEmpty } from 'lodash-es';
 import {
     sendSSMCommand,
     getCommandInvocation,
     getParametersByPath,
     getConnectionStatus,
     putParameter,
-    getParameter
+    getParameter,
+    describeInstancePatchStates
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
 import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
@@ -30,12 +32,46 @@ import { SSM_RUN_SHELL_SCRIPT_DOC } from '../workloads/pgsql/const';
 
 const logger = getLogger();
 
+async function pollCommandStatusForAllInstances(
+    credentialsId: string,
+    region: string,
+    commandId: string,
+    instanceIds: string[],
+    pollDuration: number = ms(config.get<string>('ssm.poll-interval'))
+) {
+    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollDuration });
+    const pollStatuses: { commandId: string; instanceId: string; response: GetCommandInvocationCommandOutput }[] = [];
+    await Promise.all(
+        instanceIds.map(async instanceId => {
+            const pollParams = {
+                CommandId: commandId,
+                InstanceId: instanceId
+            };
+            try {
+                const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
+                logger.debug('SSM command Response:', response);
+                pollStatuses.push({
+                    commandId,
+                    instanceId,
+                    response
+                });
+            } catch (error) {
+                const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+                logger.error(errorMessage);
+                throw createError(errorMessage);
+            }
+        })
+    );
+    return pollStatuses;
+}
+
 async function pollCommandStatus(
     credentialsId: string,
     region: string,
-    pollParams: GetCommandInvocationCommandInput
+    pollParams: GetCommandInvocationCommandInput,
+    pollDuration: number = ms(config.get<string>('ssm.poll-interval'))
 ): Promise<GetCommandInvocationCommandOutput> {
-    logger.debug('Polling SSM command execution', pollParams);
+    logger.debug('Polling SSM command execution', pollParams, pollDuration);
 
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
@@ -67,25 +103,66 @@ async function pollCommandStatus(
             }
         }
 
-        await sleep(ms(config.get<string>('ssm.poll-interval')));
-        return await pollCommandStatus(credentialsId, region, pollParams);
+        await sleep(pollDuration);
+        return await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
     } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
-            await sleep(ms(config.get<string>('ssm.poll-interval')));
-            return pollCommandStatus(credentialsId, region, pollParams);
+            await sleep(pollDuration);
+            return pollCommandStatus(credentialsId, region, pollParams, pollDuration);
         }
         throw new Error(error);
     }
+}
+
+async function executeSSMDocumentMultipleInstances(
+    credentialsId: string,
+    region: string,
+    params: SendCommandCommandInput,
+    accountId?: string,
+    pollDuration?: number
+) {
+    logger.info('Execute SSM document on multiple instances', {
+        credentialsId,
+        region,
+        params,
+        accountId,
+        pollDuration
+    });
+    const { InstanceIds: instanceIds } = params;
+    if (instanceIds && !isEmpty(instanceIds)) {
+        const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
+        await sleep(1000);
+        try {
+            if (commandId) {
+                const response = await pollCommandStatusForAllInstances(
+                    credentialsId,
+                    region,
+                    commandId,
+                    instanceIds,
+                    pollDuration
+                );
+                logger.debug('SSM command Response:', response);
+                return response;
+            }
+            throw new Error('SSM command Id not found');
+        } catch (error) {
+            const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+    }
+    throw createError('Failed to execute SSM document for multiple instances. InstanceIds not found');
 }
 
 async function executeSSMDocument(
     credentialsId: string,
     region: string,
     params: SendCommandCommandInput,
-    accountId?: string
+    accountId?: string,
+    pollDuration?: number
 ) {
-    logger.info('Execute SSM document', { credentialsId, region, params, accountId });
+    logger.info('Execute SSM document', { credentialsId, region, params, accountId, pollDuration });
 
     const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
     const [instanceIds] = params?.InstanceIds ?? [];
@@ -97,7 +174,7 @@ async function executeSSMDocument(
     // Sleep for 1 second to avoid immediate polling
     await sleep(1000);
     try {
-        const response = await pollCommandStatus(credentialsId, region, pollParams);
+        const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
         logger.debug('SSM command Response:', response);
         return response;
     } catch (error) {
@@ -349,6 +426,45 @@ async function getEc2SqlParameters(credentialsId: string, region: string, ec2Ins
     return [];
 }
 
+async function runAwsPatchBaseline(
+    credentialId: string,
+    region: string,
+    instanceId: string[],
+    operation: string[] = ['Scan']
+) {
+    logger.info('Run AWS Patch Baseline', { credentialId, region, instanceId, operation });
+
+    try {
+        const params = {
+            DocumentName: 'AWS-RunPatchBaseline',
+            InstanceIds: instanceId,
+            Parameters: {
+                Operation: operation
+            }
+        };
+        return await executeSSMDocumentMultipleInstances(credentialId, region, params, undefined, 5000);
+    } catch (error) {
+        const errorMessage = `Failed to run AWS Patch Baseline. Reason: ${error}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
+async function getInstancesPatchStatus(credentialsId: string, region: string, instanceIds: string[]) {
+    logger.info('Get Instance Patch Status', { credentialsId, region, instanceIds });
+
+    try {
+        const params = {
+            InstanceIds: instanceIds
+        };
+        return await describeInstancePatchStates(credentialsId, region, params);
+    } catch (error) {
+        const errorMessage = `Failed to run get instance patch status. Reason: ${error}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
 export {
     executeSSMDocument,
     getGenericFSxOntapRegionsList,
@@ -356,7 +472,10 @@ export {
     getSSMConnectionStatus,
     ssmPutParameters,
     pollCommandStatus,
+    pollCommandStatusForAllInstances,
     callSsmExecution,
     getEc2SqlParameters,
-    executeBashSsmCommand
+    executeBashSsmCommand,
+    runAwsPatchBaseline,
+    getInstancesPatchStatus
 };

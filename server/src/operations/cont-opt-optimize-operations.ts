@@ -35,13 +35,7 @@ import {
     getResourceNameFromTags,
     calculateFsxStorageCapacityForHeadroomOptimization
 } from '../utils/utils';
-import {
-    calculateComputeDrift,
-    getHeadroomDrift,
-    getLogVolumeDrift,
-    getTempDbVolumeDrift,
-    onDemandTriggerDriftAssessmentDataCollection
-} from './cont-opt-assessment-operations';
+import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -83,6 +77,12 @@ import {
 import { listResources, updateResourceMetaData } from '../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from './workloads/mssql/discover-consts';
 import { listJobs } from '../lib/database/job';
+import {
+    getHeadroomDrift,
+    getLogVolumeDrift,
+    getTempDbVolumeDrift
+} from './continuous-optimization/storage-assessment-operations';
+import { calculateComputeDrift } from './continuous-optimization/compute-assessment-operations';
 
 const isDemoFlow = isDemo();
 
