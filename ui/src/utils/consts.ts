@@ -729,13 +729,14 @@ export const GETWELL_CONFIG: any = {
     'default-log-files-location': 'transaction_log_files',
     'default-data-files-location': 'user_data_files',
     'compute-rightsizing': 'compute_rightsizing',
-    'operating-system-patch': 'operating_system_patch',
-    'sql-license': 'sql_licenses'
+    'sql-license': 'sql_licenses',
+    'host-os-patch': 'host_os_patch'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
     'User data files (.mdf) placement',
     'Log files (.ldf) placement',
     'TempDB placement',
-    'Licenses' // Licenses is for Application (SQL Server)
+    'Licenses', // Licenses is for Application (SQL Server)
+    GENERAL.OPERATING_SYSTEM_PATCH
 ];

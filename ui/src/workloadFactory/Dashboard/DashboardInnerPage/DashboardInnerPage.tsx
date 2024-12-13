@@ -210,7 +210,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'Compute rightsizing':
+            case GENERAL.COMPUTE_RIGHTSIZING:
                 setValueCardData({
                     optimizationScore: '65%',
                     optimizedInstances: '75',
@@ -223,6 +223,34 @@ const DashboardInnerPage = () => {
                         description: cardDataDefault?.compute_rightsizing?.recommendation?.description
                     },
                     cardName: 'compute_right_sizing'
+                });
+                break;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.host_os_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.APPLICATION_SQL_SERVER:
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.sql_licenses?.recommendation?.description
+                    }
                 });
                 break;
         }

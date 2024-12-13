@@ -322,10 +322,10 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },
-    operating_system_patch: {
+    host_os_patch: {
         block_one: {
             type: 'Compute',
-            value: 'Operating system patch'
+            value: GENERAL.OPERATING_SYSTEM_PATCH
         },
         block_two: {
             type: 'Status',
@@ -333,7 +333,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_three: {
             type: 'Missing patches',
-            value: ''
+            value: '',
+            smallFont: true
         },
         block_four: {
             type: 'Severity',
@@ -342,9 +343,9 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
-                'Whenever possible, it is highly recommended to apply the latest patches to ensure security and stability.\nDoing so will help protect your SQL Server DB from vulnerabilities and significantly improve overall system reliability.'
+                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities and significantly improves overall system reliability.'
         },
-        tags: ['Security']
+        tags: ['Security', 'Reliability']
     },
     sql_licenses: {
         block_one: {
@@ -440,6 +441,52 @@ export const formatApplicationCardMainConfig = (
     return cardsData;
 };
 
+export const formatOsPatchCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.hostOsPatch;
+    let categoryVal = 'compute';
+    let itemName = item?.name || 'host-os-patch';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let totalViolations = 0;
+
+    data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
+        totalViolations += perInstance?.criticalNonCompliantCount || 0;
+        totalViolations += perInstance?.securityNonCompliantCount || 0;
+    });
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: totalViolations
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            tags: item?.tags || cardDataDefault?.[itemName]?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
+};
+
 // This function is used to format the data for the individual card main config.
 export const formatIndividualCardMainConfig = (
     data: AssessmentResponseInterface,
@@ -459,12 +506,21 @@ export const formatIndividualCardMainConfig = (
                 errorMessage: data?.compute?.errorMessage
             }
         ]);
+    } else {
+        cardMainConfig?.push([
+            {
+                ...data?.compute,
+                name: 'compute-rightsizing',
+                errorMessage: data?.compute?.errorMessage
+            }
+        ]);
     }
+
     cardMainConfig?.map((category, index) => {
         let categoryVal = '';
         if (index === 0 || index === 1) {
             categoryVal = 'storage';
-        } else if (index === 2) {
+        } else if (index === 2 || index === 3) {
             categoryVal = 'compute';
         }
 
@@ -750,6 +806,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
 
+    cardsData = formatOsPatchCardConfig(data, optimizingData, cardsData);
+
     cardsData = {
         ...cardsData,
         ['ontap_configuration']: {
@@ -917,6 +975,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
+        host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
         sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
     };
     Object.keys(cardData).map((key: any) => {

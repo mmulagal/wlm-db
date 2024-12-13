@@ -313,6 +313,8 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized =
                     instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOperatingSystemOptimized =
+                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
                 const isLicenseOptimized =
                     instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every(
@@ -330,6 +332,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 );
                 if (
                     isComputeOptimized &&
+                    isOperatingSystemOptimized &&
                     isLicenseOptimized &&
                     isStorageLayoutOptimized &&
                     isStorageSizingOptimized &&
@@ -362,6 +365,8 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized =
                     instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOperatingSystemPatchOptimized =
+                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every(
                     (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
                 );
@@ -377,7 +382,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 );
                 const isApplicationOptimized =
                     instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                if (isComputeOptimized) {
+                if (isComputeOptimized && isOperatingSystemPatchOptimized) {
                     assessmentGroupedByCategory.compute++;
                 }
                 if (isStorageLayoutOptimized && isStorageSizingOptimized && isStorageConfigOptimized) {
@@ -404,6 +409,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         ontapConfiguration: 0,
         operatingSystem: 0,
         computeRightsizing: 0,
+        operatingSystemPatch: 0,
+        applicationSqlServer: 0,
         total: 0
     };
     assessmentData.map((databaseHost: any) => {
@@ -451,6 +458,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 );
                 const isComputeRightsizingOptimized =
                     instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOpearingSystemPatchOptimized =
+                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isApplicationSqlServerOptimized =
+                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.fileSystemHeadroom += isFileSystemHeadroomOptimized ? 1 : 0;
@@ -462,6 +473,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.ontapConfiguration += isOntapConfigurationOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.operatingSystem += isOperatingSystemOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.computeRightsizing += isComputeRightsizingOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.operatingSystemPatch += isOpearingSystemPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
             }
         });
     });
