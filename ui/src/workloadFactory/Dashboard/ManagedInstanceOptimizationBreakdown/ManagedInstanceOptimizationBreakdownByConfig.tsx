@@ -321,8 +321,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.OPERATING_SYSTEM_PATCH}
-                        percentage={Math.round(((configData.computeRightsizing || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.computeRightsizing}
+                        percentage={Math.round(((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.operatingSystemPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
@@ -352,8 +352,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.APPLICATION_SQL_SERVER}
-                        percentage={Math.round(((configData.computeRightsizing || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.computeRightsizing}
+                        percentage={Math.round(((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.applicationSqlServer}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
