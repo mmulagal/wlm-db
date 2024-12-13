@@ -1,41 +1,43 @@
-import { Table, useTable, TableTopBar, DsButton, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
+import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { expandTableRow } from '../../../../utils/utilityFunctions';
+import { useCallback } from 'react';
+import { useAppSelector } from '../../../../store/storeHooks';
+import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
 
-interface StorageTierTableProps {
-    handleDialog: (dialogType: string) => void;
-}
-
-const StorageTierTable = ({ handleDialog }: StorageTierTableProps) => {
+const OntapConfig = () => {
+    const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
     const mockData = [
         {
             serverInstanceName: 'SQL Server 1',
             status: 'Running',
-            performanceTier: '25%',
+            notOptimizedConfig: '4 out of 11',
             hostName: 'host1',
             id: '1'
         },
         {
             serverInstanceName: 'SQL Server 2',
             status: 'Running',
-            performanceTier: '25%',
+            notOptimizedConfig: '4 out of 11',
             hostName: 'host1',
             id: '2'
         },
         {
             serverInstanceName: 'SQL Server 3',
             status: 'Down',
-            performanceTier: '25%',
+            notOptimizedConfig: '4 out of 11',
             hostName: 'host1',
             id: '3'
         },
         {
             serverInstanceName: 'SQL Server 4',
             status: 'Down',
-            performanceTier: '25%',
+            notOptimizedConfig: '4 out of 11',
             hostName: 'host1',
             id: '4'
         }
@@ -47,14 +49,21 @@ const StorageTierTable = ({ handleDialog }: StorageTierTableProps) => {
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '316px',
-            renderCell: (cellData: any, rowData: any) => {
+            width: '318px',
+            renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
+                const currentRowState = rowsState[rowData.id];
                 return (
-                    <div className={styles.buttonContainer}>
-                        <DsButton isThin variant="secondary" onClick={() => handleDialog('Storage tier')}>
-                            Optimize
-                        </DsButton>
-                    </div>
+                    <>
+                        <div className={styles.arrow}>
+                            <ArrowIcon
+                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
+                            />
+                        </div>
+                    </>
                 );
             }
         };
@@ -111,14 +120,29 @@ const StorageTierTable = ({ handleDialog }: StorageTierTableProps) => {
             filterOptions: 'auto'
         },
         {
-            Header: 'Performance tier',
-            accessor: 'performanceTier',
+            Header: 'Not-optimizes configuration',
+            accessor: 'notOptimizedConfig',
             id: '3',
             width: '320px',
             filterOptions: 'auto'
         },
         lastColDetails()
     ];
+    const ExpandedRow = useCallback(({ rowData }: any) => {
+        return (
+            <RecommendationTable
+                tableData={ontapConfigTableData}
+                isLoading={false}
+                optimizePrintState={false}
+                from={WLF_TABS.DASHBOARD}
+            />
+        );
+    }, []);
+
+    const tableComponentProps = {
+        ExpandedRow,
+        lazyLoadingText: 'Loading'
+    };
 
     const tableProps = useTable({
         //@ts-ignore
@@ -142,10 +166,11 @@ const StorageTierTable = ({ handleDialog }: StorageTierTableProps) => {
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
+                {...tableComponentProps}
                 isDoubleRow={true}
             />
         </div>
     );
 };
 
-export default StorageTierTable;
+export default OntapConfig;

@@ -46,7 +46,9 @@ const initialInventoryV2State: InventorySliceData = {
     optimizeFilterTags: [],
     defaultFilterOptions: {},
     managedAssessmentHostIdsList: [],
-    managedAssessmentHostData: null
+    managedAssessmentHostData: null,
+    allmssqlHostAssessmentData: [],
+    allmssqlHostAssessmentLoading: false
 };
 
 const inventoryV2Slice = createSlice({
@@ -163,6 +165,12 @@ const inventoryV2Slice = createSlice({
         },
         setManagedAssessmentHostData: (state, action: PayloadAction<any>) => {
             state.managedAssessmentHostData = action.payload;
+        },
+        addAllMssqlHostAssessmentData: (state, action: PayloadAction<any>) => {
+            state.allmssqlHostAssessmentData = action.payload;
+        },
+        setAllMssqlHostAssessmentLoading: (state, action: PayloadAction<any>) => {
+            state.allmssqlHostAssessmentLoading = action.payload;
         }
     }
 });
@@ -204,7 +212,9 @@ export const {
     setIsRefreshed,
     setBreadCrumbSelectedFrom,
     setManagedAssessmentHostIdsList,
-    setManagedAssessmentHostData
+    setManagedAssessmentHostData,
+    addAllMssqlHostAssessmentData,
+    setAllMssqlHostAssessmentLoading
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

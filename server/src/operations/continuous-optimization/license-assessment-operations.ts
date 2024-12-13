@@ -100,7 +100,7 @@ async function managedHostsLicenseAssessment(
 
     let licenseAssessment;
     let jobStatus;
-    let errorMessage = '';
+    let errorMessage;
     try {
         licenseAssessment = await runLicenseAssessment(accountId, credentialsId, region, activeNodeInstanceId);
     } catch (error) {

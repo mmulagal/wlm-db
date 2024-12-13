@@ -26,7 +26,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
-const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
+const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }: any) => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
 
@@ -152,8 +152,11 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             id: '1',
             Header: 'Configuration',
             accessor: 'name',
-            width: '18%',
-            isSortable: true
+            width: from === WLF_TABS.INVENTORY ? '18%' : '280px',
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '3',
@@ -171,7 +174,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                 <InProgress className={styles.statusIcon} />
                             )}
                         </div>
-                        <div>{cellData}</div>
+                        <div>{cellData || GENERAL.NOT_AVAILABLE}</div>
                     </div>
                 );
             }
@@ -180,14 +183,17 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             id: '4',
             Header: 'Severity',
             accessor: 'severity',
-            width: '14%',
-            isSortable: true
+            width: from === WLF_TABS.INVENTORY ? '14%' : '200px',
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '5',
             Header: 'Tags',
             accessor: 'tags',
-            width: '14%',
+            width: from === WLF_TABS.INVENTORY ? '14%' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -230,24 +236,31 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: '40%',
+            width: from === WLF_TABS.INVENTORY ? '40%' : '575px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         <div className={styles.recommendation}>
                             <div className={styles.tooltipContainer}>
-                                <div className={styles.tooltip}>
-                                    <Popover
-                                        popoverClass={''}
-                                        children={cellData && <RecommendationTooltip data={cellData} />}
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        isAppendedToBody={false}
-                                        container={<TooltipIcon />}
-                                        placement="bottom"
-                                    />
-                                </div>
+                                {cellData?.length === 0 && (
+                                    <div>
+                                        <DisabledTooltipIcon />
+                                    </div>
+                                )}
+                                {cellData?.length > 0 && (
+                                    <div className={styles.tooltip}>
+                                        <Popover
+                                            popoverClass={''}
+                                            children={cellData && <RecommendationTooltip data={cellData} />}
+                                            trigger="hover"
+                                            delayHide={200}
+                                            interactive={true}
+                                            isAppendedToBody={false}
+                                            container={<TooltipIcon />}
+                                            placement="bottom"
+                                        />
+                                    </div>
+                                )}
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
                                     {'View recommendation'}
                                 </DsTypography>
@@ -300,9 +313,11 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         }
     ];
 
+    const colDefsForDashboard = ColDefs.filter((item: any) => item.id !== '3');
+
     const tableProps = useTable({
         isSorting: false,
-        columns: ColDefs,
+        columns: from === WLF_TABS.INVENTORY ? ColDefs : colDefsForDashboard,
         rows: tableData,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -310,7 +325,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     });
 
     return (
-        <div className={styles.recommendationTable}>
+        <div className={from === WLF_TABS.INVENTORY ? styles.recommendationTable : styles.recommendationTableDashboard}>
             {/* <div className={styles.table}> */}
             <Table
                 //@ts-ignore

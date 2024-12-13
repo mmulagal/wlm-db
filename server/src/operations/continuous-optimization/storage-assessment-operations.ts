@@ -48,6 +48,141 @@ const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
 
+function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
+    logger.info('Getting log volume drift', logVolumes);
+
+    const overProvisionedDrives: SizingViolationResponseType[] = [];
+    const underProvisionedDrives: SizingViolationResponseType[] = [];
+    const ignoredDrives: SizingViolationResponseType[] = [];
+    const optimisedDrives: SizingViolationResponseType[] = [];
+
+    const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
+    driveDetails.forEach((drive: LogDriveDetails) => {
+        const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
+            ignoredDrives.push(drive as SizingViolationResponseType);
+        } else if (dataAccessPath !== logAccessPath) {
+            const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
+            if (logToDriveSizePercent > 30) {
+                overProvisionedDrives.push(drive as SizingViolationResponseType);
+            } else if (logToDriveSizePercent < 20) {
+                underProvisionedDrives.push(drive as SizingViolationResponseType);
+            } else {
+                optimisedDrives.push(drive as SizingViolationResponseType);
+            }
+        } else {
+            ignoredDrives.push(drive as SizingViolationResponseType);
+        }
+    });
+    key = 'log-drive-size';
+    status =
+        !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.NOT_OPTIMIZED
+            : !isEmpty(overProvisionedDrives) && isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.OVER_PROVISIONED
+            : isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
+            ? AssessmentStatus.UNDER_PROVISIONED
+            : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
+            ? AssessmentStatus.NOT_APPLICABLE
+            : AssessmentStatus.OPTIMIZED;
+
+    return { key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives, optimisedDrives };
+}
+function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
+    logger.info('Getting tempdb volume drift', value);
+
+    const overProvisionedDrives: SizingViolationResponseType[] = [];
+    const underProvisionedDrives: SizingViolationResponseType[] = [];
+    const ignoredDrives: SizingViolationResponseType[] = [];
+
+    let tempdbPercent = 0;
+    const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
+        value;
+    if (defaultDataDriveLetter === tempdbDriveLetter) {
+        status = AssessmentStatus.NOT_APPLICABLE;
+
+        ignoredDrives.push(value);
+    } else {
+        tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
+        status =
+            tempdbPercent > 20
+                ? AssessmentStatus.OVER_PROVISIONED
+                : tempdbPercent < 10
+                ? AssessmentStatus.UNDER_PROVISIONED
+                : AssessmentStatus.OPTIMIZED;
+        if (status === AssessmentStatus.OVER_PROVISIONED) {
+            overProvisionedDrives.push(value);
+        } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
+            underProvisionedDrives.push(value);
+        }
+    }
+    key = 'tempdb-drive-size';
+    return {
+        status,
+        key,
+        tempdbPercent,
+        dataDriveTotalSizeMB,
+        ontapVolumeUuid,
+        underProvisionedDrives,
+        overProvisionedDrives,
+        ignoredDrives
+    };
+}
+
+async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
+    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
+
+    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
+        credentialsId,
+        region,
+        fileSystemId
+    );
+
+    const headroomPercent = Math.ceil(
+        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
+    );
+    const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
+    const status =
+        headroomPercent < 35
+            ? AssessmentStatus.UNDER_PROVISIONED
+            : headroomPercent > 100 &&
+              ssdStorageCapacityInBytes &&
+              ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
+            ? AssessmentStatus.OVER_PROVISIONED
+            : AssessmentStatus.OPTIMIZED;
+
+    // Check for 'fsx:UpdateFileSystem' permissions
+    let missingPermissions: string[] = [];
+    let newFsxStorageCapactiyGiB = 0;
+    if (status !== AssessmentStatus.OPTIMIZED) {
+        missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
+        newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+            totalVolumeSizeInBytes,
+            ssdStorageCapacityInBytes
+        );
+    }
+    return {
+        status,
+        headroomPercent,
+        ssdStorageCapacityInBytes,
+        totalVolumeSizeInBytes,
+        missingPermissions,
+        newFsxStorageCapactiyGiB
+    };
+}
+
+async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
+    const missingPermissions: string[] = [];
+    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
+    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
+    if (combinedDeniedPermissions.length > 0) {
+        combinedDeniedPermissions.forEach(permission => {
+            missingPermissions.push(`${permission.service}:${permission.action}`);
+        });
+    }
+    return missingPermissions;
+}
+
 async function calculateStorageDrift(
     accountId: string,
     credentialsId: string,
@@ -374,142 +509,6 @@ async function calculateStorageDrift(
     }
 
     return driftAssessmentData;
-}
-
-function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
-    logger.info('Getting log volume drift', logVolumes);
-
-    const overProvisionedDrives: SizingViolationResponseType[] = [];
-    const underProvisionedDrives: SizingViolationResponseType[] = [];
-    const ignoredDrives: SizingViolationResponseType[] = [];
-    const optimisedDrives: SizingViolationResponseType[] = [];
-
-    const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
-    driveDetails.forEach((drive: LogDriveDetails) => {
-        const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
-        if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
-            ignoredDrives.push(drive as SizingViolationResponseType);
-        } else if (dataAccessPath !== logAccessPath) {
-            const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
-            if (logToDriveSizePercent > 30) {
-                overProvisionedDrives.push(drive as SizingViolationResponseType);
-            } else if (logToDriveSizePercent < 20) {
-                underProvisionedDrives.push(drive as SizingViolationResponseType);
-            } else {
-                optimisedDrives.push(drive as SizingViolationResponseType);
-            }
-        } else {
-            ignoredDrives.push(drive as SizingViolationResponseType);
-        }
-    });
-    key = 'log-drive-size';
-    status =
-        !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
-            ? AssessmentStatus.NOT_OPTIMIZED
-            : !isEmpty(overProvisionedDrives) && isEmpty(underProvisionedDrives)
-            ? AssessmentStatus.OVER_PROVISIONED
-            : isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
-            ? AssessmentStatus.UNDER_PROVISIONED
-            : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
-            ? AssessmentStatus.NOT_APPLICABLE
-            : AssessmentStatus.OPTIMIZED;
-
-    return { key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives, optimisedDrives };
-}
-
-function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
-    logger.info('Getting tempdb volume drift', value);
-
-    const overProvisionedDrives: SizingViolationResponseType[] = [];
-    const underProvisionedDrives: SizingViolationResponseType[] = [];
-    const ignoredDrives: SizingViolationResponseType[] = [];
-
-    let tempdbPercent = 0;
-    const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
-        value;
-    if (defaultDataDriveLetter === tempdbDriveLetter) {
-        status = AssessmentStatus.NOT_APPLICABLE;
-
-        ignoredDrives.push(value);
-    } else {
-        tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
-        status =
-            tempdbPercent > 20
-                ? AssessmentStatus.OVER_PROVISIONED
-                : tempdbPercent < 10
-                ? AssessmentStatus.UNDER_PROVISIONED
-                : AssessmentStatus.OPTIMIZED;
-        if (status === AssessmentStatus.OVER_PROVISIONED) {
-            overProvisionedDrives.push(value);
-        } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
-            underProvisionedDrives.push(value);
-        }
-    }
-    key = 'tempdb-drive-size';
-    return {
-        status,
-        key,
-        tempdbPercent,
-        dataDriveTotalSizeMB,
-        ontapVolumeUuid,
-        underProvisionedDrives,
-        overProvisionedDrives,
-        ignoredDrives
-    };
-}
-
-async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
-    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
-
-    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
-        credentialsId,
-        region,
-        fileSystemId
-    );
-
-    const headroomPercent = Math.ceil(
-        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
-    );
-    const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
-    const status =
-        headroomPercent < 35
-            ? AssessmentStatus.UNDER_PROVISIONED
-            : headroomPercent > 100 &&
-              ssdStorageCapacityInBytes &&
-              ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
-            ? AssessmentStatus.OVER_PROVISIONED
-            : AssessmentStatus.OPTIMIZED;
-
-    // Check for 'fsx:UpdateFileSystem' permissions
-    let missingPermissions: string[] = [];
-    let newFsxStorageCapactiyGiB = 0;
-    if (status !== AssessmentStatus.OPTIMIZED) {
-        missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
-        newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-            totalVolumeSizeInBytes,
-            ssdStorageCapacityInBytes
-        );
-    }
-    return {
-        status,
-        headroomPercent,
-        ssdStorageCapacityInBytes,
-        totalVolumeSizeInBytes,
-        missingPermissions,
-        newFsxStorageCapactiyGiB
-    };
-}
-
-async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
-    const missingPermissions: string[] = [];
-    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
-    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
-    if (combinedDeniedPermissions.length > 0) {
-        combinedDeniedPermissions.forEach(permission => {
-            missingPermissions.push(`${permission.service}:${permission.action}`);
-        });
-    }
-    return missingPermissions;
 }
 
 export { calculateStorageDrift, getHeadroomDrift, getLogVolumeDrift, getTempDbVolumeDrift };

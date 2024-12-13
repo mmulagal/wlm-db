@@ -1291,6 +1291,7 @@ const GetWell = () => {
                                                     tableData={ontapConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
+                                                    from={WLF_TABS.INVENTORY}
                                                 />
                                             }
                                         />
@@ -1345,6 +1346,7 @@ const GetWell = () => {
                                                     tableData={osConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
+                                                    from={WLF_TABS.INVENTORY}
                                                 />
                                             }
                                             style={{ marginBottom: '40px' }}

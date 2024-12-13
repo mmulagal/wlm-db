@@ -241,6 +241,7 @@ async function updateTemplateUrls(
             ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
             ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
             ScriptSetup: decodeURI(signedUrls.get('ScriptSetup')?.url || ''),
+            FsxCertificates: decodeURI(signedUrls.get('FsxCertificates')?.url || ''),
             ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || '')
         });
         const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');

@@ -42,7 +42,8 @@ import {
     optimizeOperatingSystemJobData,
     mockPGSqlStandaloneDeploymentStack,
     optimizeMpioSessionsJobData,
-    optimizeStorageTierJobData
+    optimizeStorageTierJobData,
+    enableMPIOJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -869,6 +870,37 @@ async function createStorageTierJobMockData(
     );
 }
 
+async function createEnableMpioJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate enable mpio mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return enableMPIOJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -886,5 +918,6 @@ export {
     createOperatingSystemOptimizeJobMockData,
     demoGetFsxnVolIdsFromOntapVolIds,
     createOperatingSystemMpioSessionsOptimizeJobMockData,
-    createStorageTierJobMockData
+    createStorageTierJobMockData,
+    createEnableMpioJobMockData
 };

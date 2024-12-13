@@ -556,19 +556,27 @@ async function fetchDriftAssessment(
         fields
     });
 
-    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
-
+    let shouldCalculateStorageAssessment = false;
+    let shouldCalculateComputeAssessment = false;
+    let shouldCalculateLicenseAssessment = false;
+    let shouldCalculateHostOsPatchAssessment = false;
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+        const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+        shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+        shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+        shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
+            AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
+        );
+    } else {
+        shouldCalculateStorageAssessment = true;
+        shouldCalculateComputeAssessment = true;
+        shouldCalculateLicenseAssessment = true;
+        shouldCalculateHostOsPatchAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
-    const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
-    const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-    const shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-    const shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
-        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-    );
+
     const [
         storageAssessmentResponse,
         computeAssessmentResponse,
@@ -847,11 +855,82 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     }
 }
 
+async function fetchDriftAssessmentPerAccount(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fields?: string,
+    nextToken?: string,
+    pageSize?: number
+) {
+    logger.info('Fetching drift assessment per host', {
+        accountId,
+        credentialsId,
+        region,
+        fields,
+        nextToken,
+        pageSize
+    });
+
+    pageSize = pageSize || 50;
+
+    const resourceDetails = await listResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        undefined,
+        undefined,
+        pageSize,
+        nextToken
+    );
+    if (isEmpty(resourceDetails)) {
+        logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
+        return { count: 0, assessmentsPerAccount: [], nextToken: '' };
+    }
+    const driftAssessmentPerAccount: Array<{
+        databaseHostId: string;
+        instancesAssessment: Array<{
+            databaseInstanceId: string;
+            assessments?: DriftAssessmentResponseType;
+            error?: string;
+        }>;
+    }> = [];
+    await Promise.all(
+        resourceDetails.map(async resourceDetail => {
+            const { resource_id: databaseHostId } = resourceDetail;
+            try {
+                const drifAssessmentPerHost = await fetchDriftAssessmentPerHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    fields
+                );
+                driftAssessmentPerAccount.push(drifAssessmentPerHost);
+            } catch (error) {
+                logger.error(
+                    `Error while fetching drift assessment per host ${accountId}, ${databaseHostId}, ${error}`
+                );
+            }
+        })
+    );
+
+    return {
+        count: driftAssessmentPerAccount.length,
+        assessmentsPerAccount: driftAssessmentPerAccount,
+        nextToken: resourceDetails?.length === pageSize ? resourceDetails[resourceDetails.length - 1].id : undefined
+    };
+}
+
 export {
     triggerDriftAssessmentDataCollection,
     fetchDriftAssessment,
     driftAssessmentDataCollection,
     getFsxStorageDetails,
     onDemandTriggerDriftAssessmentDataCollection,
-    fetchDriftAssessmentPerHost
+    fetchDriftAssessmentPerHost,
+    calculateComputeDrift,
+    fetchDriftAssessmentPerAccount
 };

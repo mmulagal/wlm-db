@@ -23,7 +23,7 @@ async function runComputeAssessment(
     ec2InstanceId: string,
     resourceName: string
 ) {
-    logger.info('Initiate compute assessment', {
+    logger.info('Running compute assessment', {
         awsAccountId,
         accountId,
         credentialsId,
@@ -62,7 +62,10 @@ async function runComputeAssessment(
             finding,
             findingReasonCodes,
             recommendationOptions: coRecOptions
-                ?.filter(({ platformDifferences }) => platformDifferences?.length === 0)
+                ?.filter(
+                    ({ instanceType, platformDifferences }) =>
+                        platformDifferences?.length === 0 && /^[mcr]/.test(instanceType!)
+                )
                 ?.map(
                     ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
                         instanceType,
@@ -177,15 +180,6 @@ async function managedHostsComputeAssessment(
     resourceName: string,
     parentJobId: string
 ) {
-    logger.info('Managed hosts compute assessment', {
-        accountId,
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        resourceName,
-        parentJobId
-    });
-
     const { id: computeAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: `Microsoft SQL server compute assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
         description: `Microsoft SQL server compute assessment for ${resourceName}`,
@@ -198,7 +192,7 @@ async function managedHostsComputeAssessment(
 
     let computeAssessment;
     let jobStatus;
-    let errorMessage = '';
+    let errorMessage;
     try {
         computeAssessment =
             (await runComputeAssessment(
