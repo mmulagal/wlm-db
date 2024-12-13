@@ -1,4 +1,4 @@
-import { DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsTypography, Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ManagedHostDialog.module.scss';
@@ -167,6 +167,13 @@ const ManagedHostDialog = ({ dialogData }: any) => {
 
     return (
         <div className={styles.managedHostDialog}>
+            <div className={styles.extraDiv} />
+            {/* <TableTopBar
+                //@ts-ignore
+                tableProps={tableProps}
+                pluralTitle={``}
+                singularTitle={''}
+            /> */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
