@@ -13,13 +13,20 @@ import {
     DriftAssessmentResponse,
     OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody,
-    DriftAssessmentResponsePerHost
+    DriftAssessmentResponsePerHost,
+    DriftAssessmentResponsePerAccount
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
     tags: [RouteTags.RESOURCE],
     params: CredentialsIdParams
 };
+
+const AssessmentQueryStringPerAccount = Type.Object({
+    fields: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String()),
+    pageSize: Type.Optional(Type.Integer())
+});
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -131,6 +138,18 @@ const OptimizeStorageTierSchema = {
     }
 };
 
+const DriftAssessmentPerAccount = {
+    ...resourceRequest,
+    summary: 'Get database parameter drift from recommended settings for all managed instances on an account',
+    description: 'Get database parameter drift from recommended settings for all managed instances on an account',
+    params: CredentialsIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    querystring: AssessmentQueryStringPerAccount,
+    response: {
+        200: DriftAssessmentResponsePerAccount
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -139,5 +158,6 @@ export {
     OptimizeComputeSchema,
     OptimizeOperatingSystemSchema,
     DriftAssessmentPerHost,
-    OptimizeStorageTierSchema
+    OptimizeStorageTierSchema,
+    DriftAssessmentPerAccount
 };

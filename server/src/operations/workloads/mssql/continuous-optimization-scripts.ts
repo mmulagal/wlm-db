@@ -527,13 +527,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
      $DriftAssessmentData['os'] = @{}
     try{
         $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 -ErrorAction SilentlyContinue | Select ProductId,VendorId 
-        if([string]::IsNullOrEmpty($MpioResponse)) {
-            throw "Unable to fetch MPIO load balancing policy details."
-        }
+        
         $MpioStatus = $false
-        if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
-            $MpioStatus = $true
+        if(-not ([string]::IsNullOrEmpty($MpioResponse))) {
+             if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
+                $MpioStatus = $true
+            } 
         }
+       
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
         
         # Fetch load balancing policy for all NetApp disks

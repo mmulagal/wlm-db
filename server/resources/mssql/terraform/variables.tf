@@ -174,11 +174,6 @@ variable "wlmdb_aws_account_id" {
   type        = number
 }
 
-variable "metrics" {
-  description = "The metrics"
-  type        = string
-}
-
 variable "s3_endpoint_route_tables" {
   description = "The S3 endpoint route tables"
   type        = string

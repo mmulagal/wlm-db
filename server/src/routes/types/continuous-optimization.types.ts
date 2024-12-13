@@ -49,15 +49,17 @@ const AdditionalComputeParameterDriftResponse = Type.Optional(
             Type.Object({
                 instanceType: Type.String(),
                 rank: Type.Number(),
-                savingsOpportunity: Type.Object({
-                    savingsOpportunityPercentage: Type.Optional(Type.Number()),
-                    estimatedMonthlySavings: Type.Optional(
-                        Type.Object({
-                            currency: Type.Optional(Type.String()),
-                            value: Type.Optional(Type.Number())
-                        })
-                    )
-                })
+                savingsOpportunity: Type.Optional(
+                    Type.Object({
+                        savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                        estimatedMonthlySavings: Type.Optional(
+                            Type.Object({
+                                currency: Type.Optional(Type.String()),
+                                value: Type.Optional(Type.Number())
+                            })
+                        )
+                    })
+                )
             })
         )
     })
@@ -142,6 +144,12 @@ const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
 });
 
+const DriftAssessmentResponsePerAccount = Type.Object({
+    count: Type.Number(),
+    assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
+    nextToken: Type.Optional(Type.String())
+});
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -158,5 +166,6 @@ export {
     OptimizeSizingRequestBody,
     OptimizeSizingRequestBodyType,
     OptimizeOperatingSystemRequestBody,
-    DriftAssessmentResponsePerHost
+    DriftAssessmentResponsePerHost,
+    DriftAssessmentResponsePerAccount
 };

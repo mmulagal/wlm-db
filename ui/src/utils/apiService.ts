@@ -664,6 +664,33 @@ export const inventoryApiV2 = createApi({
                     return response;
                 }
             }),
+            getPgsqlDatabaseHostsFullDataV2: builder.query({
+                query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
+                    if (isDemoMode) {
+                        if (nextToken) {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        } else {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                        }
+                    } else {
+                        if (nextToken) {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                        } else {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                        }
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getDatabaseHostsListV2: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
@@ -731,6 +758,15 @@ export const inventoryApiV2 = createApi({
                         return response.text();
                     }
                 })
+            }),
+            getAllMssqlHostsAssessmentData: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
+                    } else {
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
+                    }
+                }
             })
         };
     }
@@ -887,12 +923,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch`
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -1013,12 +1049,14 @@ export const {
 
 export const {
     useLazyGetDatabaseHostsFullDataV2Query,
+    useLazyGetPgsqlDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
     useManageMssqlInstanceMutation,
-    useCreateDemoResourcesMutation
+    useCreateDemoResourcesMutation,
+    useLazyGetAllMssqlHostsAssessmentDataQuery
 } = inventoryApiV2;
 
 export const {

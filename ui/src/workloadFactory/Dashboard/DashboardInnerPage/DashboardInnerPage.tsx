@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, useDialog } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
@@ -19,10 +19,17 @@ import UserDataFilesTable from './RenderTables/UserDataFilesTable';
 import LogFileTable from './RenderTables/LogFileTable';
 import TempDBPlacement from './RenderTables/TempDBPlacement';
 import ComputeRightSizingTable from './RenderTables/ComputeRightSizingTable';
+import OntapConfig from './RenderTables/OntapConfig';
+import OperatingSystemTable from './RenderTables/OperatingSystemTable';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
+import { GENERAL } from '../../../utils/appConstants';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const { cardData } = useAppSelector(state => state.getWellOptimize);
+    const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
         optimizedInstances: '',
@@ -37,6 +44,36 @@ const DashboardInnerPage = () => {
         },
         cardName: ''
     });
+
+    const handleDialog = (type: string) => {
+        setDialog(
+            <DialogComponent
+                header={`${type} optimization`}
+                content={
+                    <DialogContent
+                        type={type}
+                        recommendationOptions={cardData?.recommendationOptions}
+                        missingPermissions={cardData?.missingPermissions}
+                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                    />
+                }
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    // callOptimizeApi(type);
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.colorSet}
+                hidePrimaryButton={
+                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
+                    cardData?.missingPermissions &&
+                    cardData?.missingPermissions.length > 0
+                }
+            />
+        );
+    };
 
     useEffect(() => {
         switch (selectedConfig) {
@@ -173,7 +210,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'Compute rightsizing':
+            case GENERAL.COMPUTE_RIGHTSIZING:
                 setValueCardData({
                     optimizationScore: '65%',
                     optimizedInstances: '75',
@@ -188,19 +225,47 @@ const DashboardInnerPage = () => {
                     cardName: 'compute_right_sizing'
                 });
                 break;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.host_os_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.APPLICATION_SQL_SERVER:
+                setValueCardData({
+                    optimizationScore: '65%',
+                    optimizedInstances: '75',
+                    notOptimizedInstances: '65',
+                    severity: 'Critical',
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.sql_licenses?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig]);
 
     const renderTable = () => {
         switch (selectedConfig) {
             case 'Storage tier':
-                return <StorageTierTable />;
+                return <StorageTierTable handleDialog={handleDialog} />;
             case 'File system headroom':
-                return <FileSystemHeadroomTable />;
+                return <FileSystemHeadroomTable handleDialog={handleDialog} />;
             case 'Log drive size':
-                return <LogDriveSizeTable />;
+                return <LogDriveSizeTable handleDialog={handleDialog} />;
             case 'TempDB drive size':
-                return <TempDBDriveSizeTable />;
+                return <TempDBDriveSizeTable handleDialog={handleDialog} />;
             case 'User data files (.mdf)':
                 return <UserDataFilesTable />;
             case 'Log files (.ldf)':
@@ -208,7 +273,11 @@ const DashboardInnerPage = () => {
             case 'TempDB placement':
                 return <TempDBPlacement />;
             case 'Compute rightsizing':
-                return <ComputeRightSizingTable />;
+                return <ComputeRightSizingTable handleDialog={handleDialog} />;
+            case 'ONTAP configuration':
+                return <OntapConfig />;
+            case 'Operating system':
+                return <OperatingSystemTable />;
         }
     };
     return (

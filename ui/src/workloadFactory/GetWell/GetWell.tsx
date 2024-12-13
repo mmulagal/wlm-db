@@ -1291,6 +1291,7 @@ const GetWell = () => {
                                                     tableData={ontapConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
+                                                    from={WLF_TABS.INVENTORY}
                                                 />
                                             }
                                         />
@@ -1345,6 +1346,7 @@ const GetWell = () => {
                                                     tableData={osConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
+                                                    from={WLF_TABS.INVENTORY}
                                                 />
                                             }
                                             style={{ marginBottom: '40px' }}
@@ -1356,7 +1358,7 @@ const GetWell = () => {
                     )}
 
                     {/* Section four */}
-                    {(filteredCardData?.compute_rightsizing || filteredCardData?.operating_system_patch) && (
+                    {(filteredCardData?.compute_rightsizing || filteredCardData?.host_os_patch) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -1453,31 +1455,28 @@ const GetWell = () => {
                                                     data={filteredCardData?.compute_rightsizing?.recommendation}
                                                 />
                                             }
-                                            style={{ marginBottom: '40px' }}
                                         />
                                     </div>
                                 )}
 
-                                {/* {filteredCardData?.operating_system_patch && (
+                                {filteredCardData?.host_os_patch && (
                                     <div className={styles.combineComponent}>
                                         <StorageCardComponent
-                                            cardData={filteredCardData?.operating_system_patch}
+                                            cardData={filteredCardData?.host_os_patch}
                                             optimizePrintState={optimizePrintState}
-                                            type="Operating system patch"
+                                            type={GENERAL.OPERATING_SYSTEM_PATCH}
                                         />
                                         <DsAccordion
                                             id="12"
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.operating_system_patch?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
-                                                        }
-                                                    )}
+                                                    {filteredCardData?.host_os_patch?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
                                                 </div>
                                             }
-                                            isDisabled={loading || !cardData?.operating_system_patch?.block_two?.value}
+                                            isDisabled={loading || !cardData?.host_os_patch?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
@@ -1486,8 +1485,7 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ||
-                                                        !cardData?.operating_system_patch?.block_two?.value ? (
+                                                        {loading || !cardData?.host_os_patch?.block_two?.value ? (
                                                             <LightDisabled />
                                                         ) : (
                                                             <Light />
@@ -1496,8 +1494,7 @@ const GetWell = () => {
                                                     <div
                                                         style={{
                                                             color:
-                                                                loading ||
-                                                                !cardData?.operating_system_patch?.block_two?.value
+                                                                loading || !cardData?.host_os_patch?.block_two?.value
                                                                     ? 'var(--text-disabled)'
                                                                     : 'var(--text-button-primary)'
                                                         }}
@@ -1508,12 +1505,13 @@ const GetWell = () => {
                                             ]}
                                             children={
                                                 <RecommendationText
-                                                    data={filteredCardData?.operating_system_patch?.recommendation}
+                                                    data={filteredCardData?.host_os_patch?.recommendation}
                                                 />
                                             }
+                                            style={{ marginBottom: '40px' }}
                                         />
                                     </div>
-                                )} */}
+                                )}
                             </div>
                         </div>
                     )}

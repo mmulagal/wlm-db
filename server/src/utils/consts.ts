@@ -1379,6 +1379,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptSetup',
         url: `${WLMDB}/pgsql/scripts/setup.zip`
+    },
+    {
+        name: 'FsxCertificates',
+        url: `${WLMDB}/pgsql/fsx_certs.zip`
     }
 ];
 

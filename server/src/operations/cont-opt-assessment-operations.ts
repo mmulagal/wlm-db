@@ -78,6 +78,7 @@ import getMissingPermissionsList from './aws/iam-operations';
 import { getHostAndSqlServerInfo } from './discover-operations';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import { calculateFsxnStorageEfficiencyUsingCloudwatch } from './aws/cloud-watch-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -206,18 +207,14 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
     logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
 
-    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
-        credentialsId,
-        region,
-        fileSystemId
-    );
+    const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
 
-    const headroomPercent = Math.ceil(
-        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
-    );
+    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fileSystemId);
+
+    const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
     const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
     const status =
-        headroomPercent < 35
+        headroomPercent < 95 // FOR TESTING ONLY
             ? AssessmentStatus.UNDER_PROVISIONED
             : headroomPercent > 100 &&
               ssdStorageCapacityInBytes &&
@@ -231,7 +228,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     if (status !== AssessmentStatus.OPTIMIZED) {
         missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
         newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-            totalVolumeSizeInBytes,
+            totalUsed,
             ssdStorageCapacityInBytes
         );
     }
@@ -239,7 +236,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
         status,
         headroomPercent,
         ssdStorageCapacityInBytes,
-        totalVolumeSizeInBytes,
+        totalUsed,
         missingPermissions,
         newFsxStorageCapactiyGiB
     };
@@ -519,7 +516,7 @@ async function calculateStorageDrift(
                 let missingPermissions: string[] = [];
                 // Check for 'fsx:UpdateVolume' permissions
                 if (
-                    (key === 'data-log-drive-details' || key === 'data-tempdb-drive-details') &&
+                    (key === 'tempdb-drive-size' || key === 'log-drive-size') &&
                     status !== AssessmentStatus.OPTIMIZED
                 ) {
                     missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, [
@@ -739,17 +736,19 @@ async function managedHostsLicenseAssessment(
 
     let licenseAssessment;
     let jobStatus;
+    let errorMessage;
     try {
         licenseAssessment = await runLicenseAssessment(accountId, credentialsId, region, activeNodeInstanceId);
     } catch (error) {
-        const errorMessage = `Error while performing license assessment. ${error}`;
+        errorMessage = `Error while performing license assessment. ${error}`;
         logger.error(errorMessage);
 
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, licenseAssessmentJobId, {
             endTime: Date.now(),
-            status: jobStatus || JOBSTATUS.COMPLETED
+            status: jobStatus || JOBSTATUS.COMPLETED,
+            error: errorMessage
         });
     }
 
@@ -809,6 +808,7 @@ async function managedHostsComputeAssessment(
 
     let computeAssessment;
     let jobStatus;
+    let errorMessage;
     try {
         computeAssessment =
             (await initiateComputeAssessment(
@@ -820,14 +820,15 @@ async function managedHostsComputeAssessment(
                 resourceName!
             )) || {};
     } catch (error) {
-        const errorMessage = `Error while performing compute assessment. ${error}`;
+        errorMessage = `Error while performing compute assessment. ${error}`;
         logger.error(errorMessage);
 
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, computeAssessmentJobId, {
             endTime: Date.now(),
-            status: jobStatus || JOBSTATUS.COMPLETED
+            status: jobStatus || JOBSTATUS.COMPLETED,
+            error: errorMessage
         });
     }
     return computeAssessment;
@@ -1057,7 +1058,10 @@ async function initiateComputeAssessment(
             finding,
             findingReasonCodes,
             recommendationOptions: coRecOptions
-                ?.filter(({ platformDifferences }) => platformDifferences?.length === 0)
+                ?.filter(
+                    ({ instanceType, platformDifferences }) =>
+                        platformDifferences?.length === 0 && /^[mcr]/.test(instanceType!)
+                )
                 ?.map(
                     ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
                         instanceType,
@@ -1381,16 +1385,21 @@ async function fetchDriftAssessment(
         fields
     });
 
-    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
-
+    let shouldCalculateStorageAssessment = false;
+    let shouldCalculateComputeAssessment = false;
+    let shouldCalculateLicenseAssessment = false;
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+        const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+        shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+        shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+    } else {
+        shouldCalculateStorageAssessment = true;
+        shouldCalculateComputeAssessment = true;
+        shouldCalculateLicenseAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
-    const shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
-    const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-    const shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
 
     const [storageAssessmentResponse, computeAssessmentResponse, licenseAssessmentResponse] = await Promise.all([
         shouldCalculateStorageAssessment
@@ -1663,6 +1672,75 @@ async function onDemandTriggerDriftAssessmentDataCollection(
     }
 }
 
+async function fetchDriftAssessmentPerAccount(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fields?: string,
+    nextToken?: string,
+    pageSize?: number
+) {
+    logger.info('Fetching drift assessment per host', {
+        accountId,
+        credentialsId,
+        region,
+        fields,
+        nextToken,
+        pageSize
+    });
+
+    pageSize = pageSize || 50;
+
+    const resourceDetails = await listResources(
+        accountId,
+        undefined,
+        credentialsId,
+        region,
+        RESOURCESTYPE.MSSQL,
+        undefined,
+        undefined,
+        pageSize,
+        nextToken
+    );
+    if (isEmpty(resourceDetails)) {
+        logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
+        return { count: 0, assessmentsPerAccount: [], nextToken: '' };
+    }
+    const driftAssessmentPerAccount: Array<{
+        databaseHostId: string;
+        instancesAssessment: Array<{
+            databaseInstanceId: string;
+            assessments?: DriftAssessmentResponseType;
+            error?: string;
+        }>;
+    }> = [];
+    await Promise.all(
+        resourceDetails.map(async resourceDetail => {
+            const { resource_id: databaseHostId } = resourceDetail;
+            try {
+                const drifAssessmentPerHost = await fetchDriftAssessmentPerHost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    fields
+                );
+                driftAssessmentPerAccount.push(drifAssessmentPerHost);
+            } catch (error) {
+                logger.error(
+                    `Error while fetching drift assessment per host ${accountId}, ${databaseHostId}, ${error}`
+                );
+            }
+        })
+    );
+
+    return {
+        count: driftAssessmentPerAccount.length,
+        assessmentsPerAccount: driftAssessmentPerAccount,
+        nextToken: resourceDetails?.length === pageSize ? resourceDetails[resourceDetails.length - 1].id : undefined
+    };
+}
+
 export {
     triggerDriftAssessmentDataCollection,
     fetchDriftAssessment,
@@ -1673,6 +1751,7 @@ export {
     getFsxStorageDetails,
     onDemandTriggerDriftAssessmentDataCollection,
     calculateComputeDrift,
-    checkForMissingOptimizePermissions,
-    fetchDriftAssessmentPerHost
+    fetchDriftAssessmentPerHost,
+    fetchDriftAssessmentPerAccount,
+    checkForMissingOptimizePermissions
 };

@@ -50,6 +50,7 @@ export interface AssessmentResponseInterface {
     };
     compute?: PerConfigInterface;
     license?: PerConfigInterface;
+    hostOsPatch?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
@@ -72,6 +73,14 @@ export interface PerConfigInterface {
     errorMessage?: string;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    ec2InstancesToPatch?: Array<{
+        baselineId?: string;
+        criticalNonCompliantCount?: number;
+        ec2InstanceId?: string;
+        operationStartTime?: number;
+        operationEndTime?: number;
+        securityNonCompliantCount?: number;
+    }>;
 }
 
 export interface GwCardDataInterface {

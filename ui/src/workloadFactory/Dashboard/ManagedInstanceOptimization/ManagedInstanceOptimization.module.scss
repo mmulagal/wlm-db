@@ -1,7 +1,8 @@
 .managedInstance {
     background-color: var(--content-background);
     width: 928px;
-    height: 352px;
+    height: 436px;
+    box-shadow: 0px -1px 0px 0px #e0e0e0 inset;
 
     .headSection {
         display: flex;
@@ -32,11 +33,11 @@
                 flex-direction: column;
             }
 
-            [class*='SquareComponent_valueText'] {
+            [class*='_valueText'] {
                 font-size: 24px !important;
                 line-height: 30px !important;
             }
-            [class*='SquareComponent_square'] {
+            [class*='_square'] {
                 width: 8px;
                 height: 8px;
             }

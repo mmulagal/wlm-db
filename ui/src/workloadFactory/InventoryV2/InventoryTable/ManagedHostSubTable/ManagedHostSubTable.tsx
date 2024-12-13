@@ -713,29 +713,46 @@ const ManagedHostSubTable = ({
                     }
 
                     if (
-                        hostData?.serverInstallationMode === GENERAL.AOAG &&
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
+
                     ) {
-                        disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+                        disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
                         return true;
                     }
 
                     if (
                         (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
                             rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
                     ) {
                         disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
                         return true;
                     }
 
                     if (
-                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        rowData.fileSystemType === GENERAL.FSX_FOR_ONTAP
+                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData.fileSystemType &&
+                        rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
                     ) {
-                        disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
-                        return true;
+                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
+                            return true;
+                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+                            return true;
+                        }
+                    }
+
+                    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+                            return true;
+                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+                            return true;
+                        }
                     }
 
                     if (
