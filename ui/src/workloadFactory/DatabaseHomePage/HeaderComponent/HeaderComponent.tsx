@@ -112,8 +112,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const newDashboardItem = localStorage.getItem('newDashboard');
-    const setFlagForNewDashboard = true;
-    // const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
+    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 

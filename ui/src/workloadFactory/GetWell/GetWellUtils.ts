@@ -520,7 +520,7 @@ export const formatIndividualCardMainConfig = (
         let categoryVal = '';
         if (index === 0 || index === 1) {
             categoryVal = 'storage';
-        } else if (index === 2 || index === 3) {
+        } else if (index === 2) {
             categoryVal = 'compute';
         }
 
