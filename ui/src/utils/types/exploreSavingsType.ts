@@ -9,6 +9,8 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    storagePerformance: any;
+    computeInformation: any;
     selectedExploreSavingsTab: string;
     selectedManualFSXThroughput: number;
     selectedManualFSXIOPS: number;

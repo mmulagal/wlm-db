@@ -5,12 +5,17 @@ import styles from './InstanceInformation.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { FINDINGS, SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 const InstanceInformation = () => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
-    const { savingsCalculatorFrom, storageSavingsResponse, storageSavingsLoading, snapshotLoading }: any =
-        useAppSelector(state => state.exploreSavings);
+    const {
+        savingsCalculatorFrom,
+        storageSavingsResponse,
+        storageSavingsLoading,
+        snapshotLoading,
+        selectedExploreSavingsTab
+    }: any = useAppSelector(state => state.exploreSavings);
 
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -75,7 +80,7 @@ const InstanceInformation = () => {
             Header: 'Details',
             accessor: 'details',
             id: '1',
-            width: '178px',
+            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '178px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.tooltips}>
@@ -94,7 +99,7 @@ const InstanceInformation = () => {
             Header: 'Value',
             accessor: 'value',
             id: '2',
-            width: '220px',
+            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '220px',
             renderCell: (cellData: any, rowData: any) => {
                 return !loading ? (
                     <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
@@ -109,7 +114,7 @@ const InstanceInformation = () => {
             Header: 'Findings',
             accessor: 'findings',
             id: '3',
-            width: '192px',
+            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '192px',
             renderCell: (cellData: any, rowData: any) => {
                 return !storageSavingsLoading && !snapshotLoading ? (
                     <>
@@ -157,6 +162,8 @@ const InstanceInformation = () => {
         }
     ];
 
+    const tableDataForOnprem = tableData.filter((row: any) => row.details !== 'Instance type');
+
     const tableProps = useTable({
         //@ts-ignore
         selectAllProps: false,
@@ -164,7 +171,7 @@ const InstanceInformation = () => {
         manageColumnsProps: false,
 
         columns: InstanceColDefs,
-        rows: tableData,
+        rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? tableDataForOnprem : tableData,
         pageSize: 10
     });
     return (

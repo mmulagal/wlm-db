@@ -122,13 +122,30 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualFSXIOPS: 6000,
     selectedManualFSXThroughput: 128,
     snapshotLoading: false,
-    selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+    selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
+    computeInformation: {
+        SQL_ins1: { vCPUsInUse: '', memory: '', networkPerformance: '' },
+        SQL_ins2: { vCPUsInUse: '', memory: '', networkPerformance: '' },
+        SQL_ins3: { vCPUsInUse: '', memory: '', networkPerformance: '' }
+    },
+    storagePerformance: {
+        primaryData: { totalStorageAmount: '', iops: '', throughput: '' },
+        primaryLog: { totalStorageAmount: '', iops: '', throughput: '' },
+        secondaryData: { totalStorageAmount: '', iops: '', throughput: '' },
+        secondaryLog: { totalStorageAmount: '', iops: '', throughput: '' }
+    }
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setStoragePerformance(state, action: PayloadAction<any>) {
+            state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
+        },
+        setComputeInformation(state, action: PayloadAction<any>) {
+            state.computeInformation[action.payload.type][action.payload.mode] = action.payload.value;
+        },
         setSelectedExploreSavingsTab: (state, action: PayloadAction<any>) => {
             state.selectedExploreSavingsTab = action.payload;
         },
@@ -412,6 +429,8 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setStoragePerformance,
+    setComputeInformation,
     setSelectedExploreSavingsTab,
     setRequestedRegion,
     addManualRegionsList,

@@ -40,6 +40,16 @@
             box-shadow: 2px 2px 6px 0px var(--border);
         }
 
+        .onPremiseContainer {
+            width: 928px;
+            height: 1315px;
+            max-height: 1315px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background-color: var(--content-background);
+            box-shadow: 2px 2px 6px 0px var(--border);
+        }
+
         .secondContainer {
             display: flex;
             flex-direction: column;

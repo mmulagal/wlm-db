@@ -645,7 +645,8 @@ export const SAVINGS_CALC_MODE = {
     MANUAL_EBS: 'Manual_EBS',
     AUTO_EBS: 'Auto_EBS',
     AUTO_FSXW: 'Auto_FSXW',
-    MANUAL_FSXW: 'Manual_FSXW'
+    MANUAL_FSXW: 'Manual_FSXW',
+    ONPREM: 'OnPrem'
 };
 
 export const PARTNER_NODE = 'partner node';

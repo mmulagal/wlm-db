@@ -5,7 +5,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
-import { onClickESHost } from '../ExploreSavingsUtils';
+import { onClickESHost, onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
@@ -86,7 +86,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     <div
                         className={styles.detectManage}
                         onClick={() => {
-                            onClickESHost(dispatch, rowData, isWorkloadFactory);
+                            onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
                         }}
                         id="explore-savings-table-button"
                     >

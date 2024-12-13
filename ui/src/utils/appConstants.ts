@@ -1031,6 +1031,7 @@ export const GENERAL = {
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
     SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
+    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on On-Premises configuration',
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
