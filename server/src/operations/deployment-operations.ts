@@ -1467,6 +1467,8 @@ async function deployPgSql(
         tags
     });
 
+    updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
+
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
