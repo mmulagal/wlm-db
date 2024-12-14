@@ -13,7 +13,8 @@ import {
     PutParameterCommand,
     GetParameterCommand,
     DeleteParametersCommand,
-    DescribeInstancePatchStatesCommand
+    DescribeInstancePatchStatesCommand,
+    DescribeInstancePatchesCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import {
@@ -29,6 +30,7 @@ import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
 import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-states.json';
+import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     getMappedOntapVolumesScript,
@@ -920,4 +922,5 @@ ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: Describ
 
     response.InstancePatchStates = instancePatchStates;
     return response;
-});
+})
+ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse)

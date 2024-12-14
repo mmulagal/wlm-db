@@ -154,27 +154,25 @@ async function runOsPatchAssessment(
         return false;
     }); // If any of the instances failed to run the patch baseline, throw an error
 
-    const { InstancePatchStates: instancePatchStates } = await getInstancesPatchStatus(
-        credentialsId,
-        region,
-        clusterNodeInstanceIds
-    );
+    const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
 
-    const hostOsPatchAssessment = instancePatchStates?.map(
+    const hostOsPatchAssessment = response?.map(
         ({
             BaselineId: baselineId,
             CriticalNonCompliantCount: criticalNonCompliantCount,
             InstanceId: ec2InstanceId,
             OperationStartTime: operationStartTime,
             OperationEndTime: operationEndTime,
-            SecurityNonCompliantCount: securityNonCompliantCount
+            SecurityNonCompliantCount: securityNonCompliantCount,
+            missingPatchDetails
         }) => ({
             baselineId: baselineId ?? '',
             criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
             ec2InstanceId: ec2InstanceId ?? '',
             operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
             operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
-            securityNonCompliantCount: securityNonCompliantCount ?? 0
+            securityNonCompliantCount: securityNonCompliantCount ?? 0,
+            missingPatchDetails
         })
     );
 

@@ -17,7 +17,11 @@ import {
     GetParameterCommandOutput,
     DeleteParametersCommand,
     DescribeInstancePatchStatesCommand,
-    DescribeInstancePatchStatesCommandInput
+    DescribeInstancePatchStatesCommandInput,
+    DescribeInstancePatchesCommand,
+    DescribeInstancePatchesCommandInput,
+    DescribeInstancePatchesCommandOutput,
+    PatchComplianceData
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -152,6 +156,32 @@ async function describeInstancePatchStates(
 
     return response;
 }
+
+async function describeInstancePatches(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstancePatchesCommandInput
+) {
+    logger.info('Describe Instance Patches', { credentialsId, region, params });
+
+    const ssmClient = await getSSMClient(region, credentialsId);
+    let allPatches: PatchComplianceData[] = [];
+    let nextToken: string | undefined;
+    do {
+        const { Patches: patches = [], NextToken }: DescribeInstancePatchesCommandOutput = await ssmClient.send(
+            new DescribeInstancePatchesCommand({
+                ...params,
+                NextToken: nextToken
+            })
+        );
+        allPatches = allPatches.concat(patches);
+        nextToken = NextToken;
+    } while (nextToken);
+
+    logger.debug('all patches', allPatches);
+    return allPatches;
+}
+
 export {
     getSSMClient,
     sendSSMCommand,
@@ -161,5 +191,6 @@ export {
     putParameter,
     getParameter,
     deleteParameters,
-    describeInstancePatchStates
+    describeInstancePatchStates,
+    describeInstancePatches
 };

@@ -91,7 +91,18 @@ const AdditionalHostOsParameterDriftResponse = Type.Optional(
                     ec2InstanceId: Type.String(),
                     operationStartTime: Type.Number(),
                     operationEndTime: Type.Number(),
-                    securityNonCompliantCount: Type.Number()
+                    securityNonCompliantCount: Type.Number(),
+                    missingPatchDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                classification: Type.String(),
+                                kbId: Type.String(),
+                                severity: Type.String(),
+                                state: Type.String(),
+                                title: Type.String()
+                            })
+                        )
+                    )
                 })
             )
         )

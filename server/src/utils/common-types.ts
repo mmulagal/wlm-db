@@ -34,6 +34,13 @@ interface HostOsPatchAssessmentObject {
     operationStartTime: number;
     operationEndTime: number;
     securityNonCompliantCount: number;
+    missingPatchDetails?: {
+        classification?: string;
+        kbId?: string;
+        severity?: string;
+        state?: string;
+        title?: string;
+    }[];
 }
 interface ResourceAssessmentData {
     license?: LicenseAssessment;

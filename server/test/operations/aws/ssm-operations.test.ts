@@ -223,6 +223,6 @@ describe('executeSsmDocument', () => {
     it('Get instances patch states', async () => {
         const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
         const response = await getInstancesPatchStatus(credentialsId, 'us-east-1', instanceIds);
-        expect(response.InstancePatchStates?.length).toEqual(instanceIds.length);
+        expect(response?.length).toEqual(instanceIds.length);
     });
 });

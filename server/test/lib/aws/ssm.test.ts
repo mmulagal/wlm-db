@@ -8,7 +8,8 @@ import {
     getConnectionStatus,
     putParameter,
     getParameter,
-    describeInstancePatchStates
+    describeInstancePatchStates,
+    describeInstancePatches
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -85,5 +86,23 @@ describe('sendSSMCommand', () => {
         };
         const response = await describeInstancePatchStates(credentialsId, 'us-east-1', params);
         expect(response.InstancePatchStates).toEqual(describePatchStatesResponse.InstancePatchStates);
+    });
+
+    it('Describe instance patches', async () => {
+        const params = {
+            InstanceId: 'i-0e5af83448e1b83ef',
+            Filters: [
+                {
+                    Key: 'Severity',
+                    Values: ['Critical', 'Important']
+                },
+                {
+                    Key: 'State',
+                    Values: ['Missing']
+                }
+            ]
+        };
+        const [response] = await describeInstancePatches(credentialsId, 'us-east-1', params);
+        expect(response.Classification).toBeDefined();
     });
 });
