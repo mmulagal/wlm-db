@@ -43,11 +43,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const isDialogPrimaryBtnDisabled = (rowData: any) => {
-        return (
-            rowData?.name === 'OS type' ||
-            rowData?.name === 'NTFS allocation unit size' ||
-            rowData?.name === 'Operating system patch'
-        );
+        return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
     };
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus

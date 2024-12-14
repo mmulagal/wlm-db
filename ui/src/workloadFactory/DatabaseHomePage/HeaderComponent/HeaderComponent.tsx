@@ -658,8 +658,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
-                                <div className={setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
+                            <div className={!setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
+                                <div className={!setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
                                     {selectComponents()}
                                     <div className={styles.content}>
                                         <>
@@ -736,8 +736,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            {!setFlagForNewDashboard && <DatabaseHomePage />}
-                            {setFlagForNewDashboard && <Dashboard />}
+                            {setFlagForNewDashboard && <DatabaseHomePage />}
+                            {!setFlagForNewDashboard && <Dashboard />}
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (

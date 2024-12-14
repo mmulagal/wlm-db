@@ -28,7 +28,9 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                         <CategoryComponent
                             image={<Storage />}
                             firstBlockText="Storage"
-                            optimizationScore={((categoryData.storage || 0) / (categoryData.total || 1)) * 100}
+                            optimizationScore={Math.round(
+                                ((categoryData.storage || 0) / (categoryData.total || 1)) * 100
+                            )}
                             optimizationInstances={categoryData.storage || 0}
                             totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
@@ -38,7 +40,9 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                         <CategoryComponent
                             image={<Compute />}
                             firstBlockText="Compute"
-                            optimizationScore={((categoryData.compute || 0) / (categoryData.total || 1)) * 100}
+                            optimizationScore={Math.round(
+                                ((categoryData.compute || 0) / (categoryData.total || 1)) * 100
+                            )}
                             optimizationInstances={categoryData.compute || 0}
                             totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
@@ -48,7 +52,9 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                         <CategoryComponent
                             image={<Applications />}
                             firstBlockText="Application"
-                            optimizationScore={((categoryData.application || 0) / (categoryData.total || 1)) * 100}
+                            optimizationScore={Math.round(
+                                ((categoryData.application || 0) / (categoryData.total || 1)) * 100
+                            )}
                             optimizationInstances={categoryData.application || 0}
                             totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}

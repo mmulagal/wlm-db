@@ -30,6 +30,15 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 </div>
             )}
 
+            {data?.info && (
+                <div className={styles.info}>
+                    <div className={styles.setSVG}>
+                        <InfoIcon />
+                    </div>
+                    <DsTypography variant="Regular_14">{data?.info}</DsTypography>
+                </div>
+            )}
+
             {data?.description && (
                 <div
                     className={styles.desc}
@@ -85,15 +94,6 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                             </>
                         ))}
                     </div>
-                </div>
-            )}
-
-            {data?.info && (
-                <div className={styles.info}>
-                    <div className={styles.setSVG}>
-                        <InfoIcon />
-                    </div>
-                    <DsTypography variant="Regular_14">{data?.info}</DsTypography>
                 </div>
             )}
         </div>

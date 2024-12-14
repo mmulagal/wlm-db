@@ -132,6 +132,11 @@ import { getParametersByPath } from '../lib/aws/ssm';
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
 
+interface InitializationScript {
+    name: string;
+    url: string;
+}
+
 async function getSubnetsCidr(
     credentialsId: string,
     region: string,
@@ -774,8 +779,7 @@ async function getTerraformSetup(
             tfDeploymentName,
             customTerraformModulesPath,
             templateParameters,
-            initializationScriptURLs,
-            metrics
+            initializationScriptURLs as InitializationScript[]
         );
 
         const contents = await createRootModuleFile(

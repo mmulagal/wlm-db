@@ -10,6 +10,8 @@ import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import { GENERAL } from '../../../utils/appConstants';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
@@ -290,7 +292,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="Compute rightsizing"
+                        headingText={GENERAL.COMPUTE_RIGHTSIZING}
                         percentage={Math.round(((configData.computeRightsizing || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.computeRightsizing}
                         afterOutOf={configData.total}
@@ -307,11 +309,73 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('Compute rightsizing');
+                                handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
                         >
                             Optimize
                         </DsButton>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.OPERATING_SYSTEM_PATCH}
+                        percentage={Math.round(((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.operatingSystemPatch}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={0}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.APPLICATION_SQL_SERVER}
+                        percentage={Math.round(((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.applicationSqlServer}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={0}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 </div>
             </div>

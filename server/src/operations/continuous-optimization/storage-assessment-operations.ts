@@ -19,6 +19,7 @@ import { HttpErrorCodes } from '../../utils/consts';
 import { calculateFsxStorageCapacityForHeadroomOptimization, convertToBytes } from '../../utils/utils';
 import getMissingPermissionsList from '../aws/iam-operations';
 import { getFsxStorageDetails } from '../aws/fsx-operations';
+import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../aws/cloud-watch-operations';
 
 const logger = getLogger();
 interface DatabaseVolumeRecord {
@@ -47,6 +48,18 @@ const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
+
+async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
+    const missingPermissions: string[] = [];
+    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
+    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
+    if (combinedDeniedPermissions.length > 0) {
+        combinedDeniedPermissions.forEach(permission => {
+            missingPermissions.push(`${permission.service}:${permission.action}`);
+        });
+    }
+    return missingPermissions;
+}
 
 function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
     logger.info('Getting log volume drift', logVolumes);
@@ -88,6 +101,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
 
     return { key, status, overProvisionedDrives, underProvisionedDrives, ignoredDrives, optimisedDrives };
 }
+
 function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
     logger.info('Getting tempdb volume drift', value);
 
@@ -132,18 +146,14 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
     logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
 
-    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
-        credentialsId,
-        region,
-        fileSystemId
-    );
+    const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
 
-    const headroomPercent = Math.ceil(
-        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
-    );
+    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fileSystemId);
+
+    const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
     const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
     const status =
-        headroomPercent < 35
+        headroomPercent < 95 // FOR TESTING ONLY
             ? AssessmentStatus.UNDER_PROVISIONED
             : headroomPercent > 100 &&
               ssdStorageCapacityInBytes &&
@@ -157,7 +167,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     if (status !== AssessmentStatus.OPTIMIZED) {
         missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
         newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-            totalVolumeSizeInBytes,
+            totalUsed,
             ssdStorageCapacityInBytes
         );
     }
@@ -165,22 +175,10 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
         status,
         headroomPercent,
         ssdStorageCapacityInBytes,
-        totalVolumeSizeInBytes,
+        totalUsed,
         missingPermissions,
         newFsxStorageCapactiyGiB
     };
-}
-
-async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
-    const missingPermissions: string[] = [];
-    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
-    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
-    if (combinedDeniedPermissions.length > 0) {
-        combinedDeniedPermissions.forEach(permission => {
-            missingPermissions.push(`${permission.service}:${permission.action}`);
-        });
-    }
-    return missingPermissions;
 }
 
 async function calculateStorageDrift(
