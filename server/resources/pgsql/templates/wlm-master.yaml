@@ -720,6 +720,8 @@ Resources:
           Ref: SqlServerName
         SQLServiceAccountPassword:
           Ref: SQLServiceAccountPassword
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
         - IncludeNotification
