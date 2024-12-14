@@ -22,9 +22,9 @@ import {
     optimizeStorage,
     optimizeSizing,
     optimizeOperatingSystemSettings,
-    optimizeCompute,
     optimizeStorageTier
 } from '../operations/cont-opt-optimize-operations';
+import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 

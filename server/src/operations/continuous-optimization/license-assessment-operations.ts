@@ -10,7 +10,7 @@ import { getInstanceDetails } from '../database-hosts-operations';
 import { ENT_ENGINE_EDITION, FINDING, SQL_STD } from '../../utils/consts';
 import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getMatchingAssessmentStatus } from '../../utils/utils';
+import { getMatchingAssessmentStatus } from './assessment-utils';
 
 const logger = getLogger();
 

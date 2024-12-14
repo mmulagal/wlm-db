@@ -57,12 +57,14 @@ const CHECK_IF_MPIO_INSTALLED = `
     return @{"mpioInstalled" = $mpioInstalled} | ConvertTo-Json
 `;
 
-const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
+const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[], flow: string = 'optimize') => `
 
     Start-Transcript -Path "C:\\cfn\\log\\mpio-installation.log.txt" -Append | Out-Null
 
     $TargetPortalAddresses =  '${JSON.stringify(iscsiTargetAddresses)}' | ConvertFrom-Json
     Write-Information "TargetPortalAddresses: $TargetPortalAddresses"
+    
+    $flow = '${flow}'
     
     # Check if session is already established
     $RunConfigure = $false
@@ -89,11 +91,11 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
         Foreach ($TargetPortalAddress in $TargetPortalAddresses) {
             New-IscsiTargetPortal -TargetPortalAddress $TargetPortalAddress -TargetPortalPortNumber 3260 -InitiatorPortalAddress $LocaliSCSIAddress
         }
-
+        if($flow -eq 'optimize') {
         #Add MPIO support for iSCSI
         Write-Information "Adding MPIO support for iSCSI"
         New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
-
+        }
         #Enable PathVerificationState
         Write-Information "Enabling PathVerificationState"
         Set-MPIOSetting -NewPathVerificationState Enabled
@@ -101,10 +103,12 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
         #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
         Write-Information "Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance"
         1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
+        
+        if($flow -eq 'optimize') {
         #Set the MPIO Policy to Round Robin
         Write-Information "Set the MPIO Policy to Round Robin"
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
-
+        }
         return @{"status" = "success"
                  "error" = $null} | ConvertTo-Json
     }

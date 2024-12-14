@@ -45,7 +45,7 @@ import {
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
-import { AssessmentStatus, REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
+import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -824,20 +824,6 @@ function getSubJobDescriptions(dbEngineType: string) {
     return subJobDescriptions;
 }
 
-function getMatchingAssessmentStatus(finding: string) {
-    logger.info('Getting matching assessment status for finding:', finding);
-    switch (finding) {
-        case 'NOT_OPTIMIZED':
-            return AssessmentStatus.NOT_OPTIMIZED;
-        case 'OVER_PROVISIONED':
-            return AssessmentStatus.OVER_PROVISIONED;
-        case 'UNDER_PROVISIONED':
-            return AssessmentStatus.UNDER_PROVISIONED;
-        case 'OPTIMIZED':
-        default:
-            return AssessmentStatus.OPTIMIZED;
-    }
-}
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -884,6 +870,5 @@ export {
     getRegionDetails,
     calculateFsxStorageCapacityForHeadroomOptimization,
     getSubJobDescriptions,
-    parsePgSqlInstanceInfo,
-    getMatchingAssessmentStatus
+    parsePgSqlInstanceInfo
 };

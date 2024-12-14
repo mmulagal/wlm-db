@@ -7,11 +7,12 @@ import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operati
 
 import getLogger from '../../utils/logger';
 import { translateFindingReasonCode } from '../aws/compute-optimizer-operations';
-import { getEc2Arn, getMatchingAssessmentStatus } from '../../utils/utils';
+import { getEc2Arn } from '../../utils/utils';
 import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
 import { ComputeAssessment, Metadata } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
+import { getMatchingAssessmentStatus } from './assessment-utils';
 
 const logger = getLogger();
 

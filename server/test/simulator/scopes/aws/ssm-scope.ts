@@ -922,5 +922,5 @@ ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: Describ
 
     response.InstancePatchStates = instancePatchStates;
     return response;
-})
-ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse)
+});
+ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse);
