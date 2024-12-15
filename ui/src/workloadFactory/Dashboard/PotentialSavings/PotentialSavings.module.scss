@@ -27,6 +27,7 @@
             flex-direction: column;
             gap: 28px;
             max-height: 280px;
+            margin-top: 40px;
 
             .subContent {
                 display: flex;
@@ -51,7 +52,8 @@
         width: 650px;
 
         .mainSection {
-            padding: 0 40px 40px 40px;
+            // padding: 0 40px 40px 40px;
+            padding: 40px 40px 40px 40px;
             gap: 40px;
         }
     }
