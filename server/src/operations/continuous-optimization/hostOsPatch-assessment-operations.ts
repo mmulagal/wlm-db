@@ -147,8 +147,8 @@ async function runOsPatchAssessment(
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
     const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
 
-    patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } }) => {
-        if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS) {
+    patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
+        if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
             throw createError('Failed to run host OS patch baseline on the host/s database hosts in the cluster');
         }
         return false;

@@ -12,7 +12,7 @@ describe('OS Patch SSM operations', () => {
     it('Should run AWS patch baseline assessment', async () => {
         const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
         const response = await runAwsPatchBaseline(credentialsId, 'us-east-1', instanceIds);
-        const allResponsesSucceeded = response?.every(({ response: { Status } }) => Status === 'Success');
+        const allResponsesSucceeded = response?.every(({ response: { Status } = {} }) => Status === 'Success');
         expect(allResponsesSucceeded).toBeTruthy();
     });
 

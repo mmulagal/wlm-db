@@ -39,7 +39,13 @@ async function pollCommandStatusForAllInstances(
     pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
 ) {
     logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
-    const pollStatuses: { commandId: string; instanceId: string; response: GetCommandInvocationCommandOutput }[] = [];
+    const pollStatuses: {
+        commandId: string;
+        instanceId: string;
+        response?: GetCommandInvocationCommandOutput;
+        error?: string;
+    }[] = [];
+
     await Promise.all(
         instanceIds.map(async instanceId => {
             const pollParams = {
@@ -55,12 +61,17 @@ async function pollCommandStatusForAllInstances(
                     response
                 });
             } catch (error) {
-                const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+                const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
                 logger.error(errorMessage);
-                throw createError(errorMessage);
+                pollStatuses.push({
+                    commandId,
+                    instanceId,
+                    error: errorMessage
+                }); // continue polling for other instances even if one fails as this is a generic function; caller function should decide to proceed or fail based on the response
             }
         })
     );
+
     return pollStatuses;
 }
 
