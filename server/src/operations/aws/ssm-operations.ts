@@ -17,9 +17,7 @@ import {
     getParametersByPath,
     getConnectionStatus,
     putParameter,
-    getParameter,
-    describeInstancePatchStates,
-    describeInstancePatches
+    getParameter
 } from '../../lib/aws/ssm';
 import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
 import { AWS_REGIONS, SSM_COMMAND_CACHE_TYPE } from '../../utils/consts';
@@ -38,9 +36,9 @@ async function pollCommandStatusForAllInstances(
     region: string,
     commandId: string,
     instanceIds: string[],
-    pollDuration: number = ms(config.get<string>('ssm.poll-interval'))
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
 ) {
-    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollDuration });
+    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
     const pollStatuses: { commandId: string; instanceId: string; response: GetCommandInvocationCommandOutput }[] = [];
     await Promise.all(
         instanceIds.map(async instanceId => {
@@ -49,7 +47,7 @@ async function pollCommandStatusForAllInstances(
                 InstanceId: instanceId
             };
             try {
-                const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
+                const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
                 logger.debug('SSM command Response:', response);
                 pollStatuses.push({
                     commandId,
@@ -70,9 +68,9 @@ async function pollCommandStatus(
     credentialsId: string,
     region: string,
     pollParams: GetCommandInvocationCommandInput,
-    pollDuration: number = ms(config.get<string>('ssm.poll-interval'))
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
 ): Promise<GetCommandInvocationCommandOutput> {
-    logger.debug('Polling SSM command execution', pollParams, pollDuration);
+    logger.debug('Polling SSM command execution', { pollParams, pollInterval });
 
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
@@ -104,13 +102,13 @@ async function pollCommandStatus(
             }
         }
 
-        await sleep(pollDuration);
-        return await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
+        await sleep(pollInterval);
+        return await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
     } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
-            await sleep(pollDuration);
-            return pollCommandStatus(credentialsId, region, pollParams, pollDuration);
+            await sleep(pollInterval);
+            return pollCommandStatus(credentialsId, region, pollParams, pollInterval);
         }
         throw new Error(error);
     }
@@ -427,106 +425,6 @@ async function getEc2SqlParameters(credentialsId: string, region: string, ec2Ins
     return [];
 }
 
-async function runAwsPatchBaseline(
-    credentialId: string,
-    region: string,
-    instanceId: string[],
-    operation: string[] = ['Scan']
-) {
-    logger.info('Run AWS Patch Baseline', { credentialId, region, instanceId, operation });
-
-    try {
-        const params = {
-            DocumentName: 'AWS-RunPatchBaseline',
-            InstanceIds: instanceId,
-            Parameters: {
-                Operation: operation
-            }
-        };
-        return await executeSSMDocumentMultipleInstances(credentialId, region, params, undefined, 5000);
-    } catch (error) {
-        const errorMessage = `Failed to run AWS Patch Baseline. Reason: ${error}`;
-        logger.error(errorMessage);
-        throw createError(errorMessage);
-    }
-}
-async function getMissingPatchDetails(credentialsId: string, region: string, instanceIds: string[]) {
-    logger.info('Get Missing Patch Details', { credentialsId, region, instanceIds });
-
-    return Promise.all(
-        instanceIds.map(async instanceId => {
-            const params = {
-                InstanceId: instanceId,
-                Filters: [
-                    {
-                        Key: 'Severity',
-                        Values: ['Critical', 'Important']
-                    },
-                    {
-                        Key: 'State',
-                        Values: ['Missing']
-                    }
-                ]
-            };
-            const missingPatches = (await describeInstancePatches(credentialsId, region, params)) || {};
-
-            return {
-                instanceId,
-                missingPatches
-            };
-        })
-    );
-}
-
-async function getInstancesPatchStatus(credentialsId: string, region: string, instanceIds: string[]) {
-    logger.info('Get Instance Patch Status', { credentialsId, region, instanceIds });
-
-    try {
-        let response;
-        const params = {
-            InstanceIds: instanceIds
-        };
-        const { InstancePatchStates: instancePatchStates } = await describeInstancePatchStates(
-            credentialsId,
-            region,
-            params
-        );
-
-        const isNotOptimized = instancePatchStates?.some(
-            ({ CriticalNonCompliantCount: critical = 0, SecurityNonCompliantCount: security = 0 }) =>
-                critical > 0 || security > 0
-        );
-        if (isNotOptimized) {
-            const instanceMissingPatchDetails = await getMissingPatchDetails(credentialsId, region, instanceIds);
-            response = instanceMissingPatchDetails?.map(({ instanceId, missingPatches }) => {
-                const instancePatchState = instancePatchStates?.find(({ InstanceId }) => InstanceId === instanceId);
-                return {
-                    ...instancePatchState,
-                    missingPatchDetails: missingPatches?.map(
-                        ({
-                            Classification: classification,
-                            Severity: severity,
-                            State: state,
-                            Title: title,
-                            KBId: kbId
-                        }) => ({ classification, severity, state, title, kbId })
-                    )
-                };
-            });
-        } else {
-            response = instancePatchStates?.map(instancePatchState => ({
-                ...instancePatchState,
-                missingPatchDetails: []
-            }));
-        }
-        return response;
-    } catch (error) {
-        const errorMessage = `Failed to run get instance patch status. Reason: ${error}`;
-        logger.error(errorMessage);
-        throw createError(errorMessage);
-    }
-}
-
 export {
     executeSSMDocument,
     getGenericFSxOntapRegionsList,
@@ -537,7 +435,6 @@ export {
     pollCommandStatusForAllInstances,
     callSsmExecution,
     getEc2SqlParameters,
-    executeBashSsmCommand,
-    runAwsPatchBaseline,
-    getInstancesPatchStatus
+    executeSSMDocumentMultipleInstances,
+    executeBashSsmCommand
 };

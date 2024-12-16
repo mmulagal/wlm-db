@@ -8,8 +8,8 @@ import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../u
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
-import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ssm-operations';
 import { SUCCESS } from '../../utils/consts';
+import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 
 const logger = getLogger();
 

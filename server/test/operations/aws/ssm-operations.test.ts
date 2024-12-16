@@ -5,9 +5,7 @@ import {
     ssmPutParameters,
     getEc2SqlParameters,
     getGenericFSxOntapRegionsList,
-    runAwsPatchBaseline,
-    pollCommandStatusForAllInstances,
-    getInstancesPatchStatus
+    pollCommandStatusForAllInstances
 } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -201,13 +199,6 @@ describe('executeSsmDocument', () => {
         expect(response).toBeDefined();
     });
 
-    it('Should run AWS patch baseline assessment', async () => {
-        const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
-        const response = await runAwsPatchBaseline(credentialsId, 'us-east-1', instanceIds);
-        const allResponsesSucceeded = response?.every(({ response: { Status } }) => Status === 'Success');
-        expect(allResponsesSucceeded).toBeTruthy();
-    });
-
     it('Should poll command status for all instances', async () => {
         const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
         const response = await pollCommandStatusForAllInstances(
@@ -218,11 +209,5 @@ describe('executeSsmDocument', () => {
         );
 
         expect(response.length).toEqual(instanceIds.length);
-    });
-
-    it('Get instances patch states', async () => {
-        const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
-        const response = await getInstancesPatchStatus(credentialsId, 'us-east-1', instanceIds);
-        expect(response?.length).toEqual(instanceIds.length);
     });
 });

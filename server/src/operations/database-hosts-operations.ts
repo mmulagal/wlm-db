@@ -2505,7 +2505,7 @@ async function getAllClusterNodeDetails(
     });
 
     if (!node1InstanceId && !databaseHostId) {
-        logger.error('databaseHostId or nodeInstanceId is missing');
+        logger.warn('databaseHostId or nodeInstanceId is missing');
         throw createError(
             HttpErrorCodes.BAD_REQUEST,
             'Atleast one node instance ID of database host ID is required to fetch all cluster node details'
