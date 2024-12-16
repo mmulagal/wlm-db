@@ -104,7 +104,7 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[]) => `
 
         #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
         Write-Information "Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance"
-        1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
+        1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { $null = Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
         #Set the MPIO Policy to Round Robin
         Write-Information "Set the MPIO Policy to Round Robin"
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
@@ -141,7 +141,7 @@ const MPIO_ISCSI_SESSIONS = (iscsiTargetAddresses: string[]) =>
     }catch{
         $result = @(@{ status = 'failed'; error = $_.Exception.Message })
     } finally {
-        $result | ConvertTo-Json
+       ConvertTo-Json -InputObject $result
     }
 `;
 
@@ -232,7 +232,7 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
             $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
             $LocaliSCSIAddress = $data.Content
             #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
-            1..(5 - $sessionsCount) | % { Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
+            1..(5 - $sessionsCount) | % { $null = Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
             $perAddress.status = "success"
             Write-Information "Successfully created iSCSI session for address $address."
             } catch {
@@ -243,7 +243,7 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSe
             }
         $result += $perAddress
         }
-    $result | ConvertTo-Json
+    ConvertTo-Json -InputObject $result
 `;
 
 export {
