@@ -65,8 +65,13 @@ const PotentialSavings = () => {
                 {/* {loading && <FlashingDotsLoader />} */}
 
                 <div className={styles.rightSection}>
-                    {/* {loading && <FlashingDotsLoader />} */}
-                    <DsButton variant="secondary" isThin={true} onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}>
+                    {loading && <DsFlashingDotsLoader />}
+                    <DsButton
+                        variant="secondary"
+                        isThin={true}
+                        onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
+                        isDisabled={loading}
+                    >
                         Explore savings
                     </DsButton>
                 </div>

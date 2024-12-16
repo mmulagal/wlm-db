@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
@@ -12,6 +12,7 @@ Chart.register(...registerables);
 
 const SandboxChart = () => {
     const ref = useRef<HTMLCanvasElement>(null);
+    const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const { isNA } = useAppSelector(state => state.sandbox);
     const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
@@ -66,6 +67,7 @@ const SandboxChart = () => {
                 <Typography variant="Regular_14" className={isNA ? ` ${CommonStyles.notAvailable}` : ''}>
                     {GENERAL.SANDBOXES}
                 </Typography>
+                {loading && <DsFlashingDotsLoader />}
             </div>
             {/* @ts-ignore */}
             {aggregatedSandboxList.length === 0 && <div className={styles.emptyCircle}></div>}
