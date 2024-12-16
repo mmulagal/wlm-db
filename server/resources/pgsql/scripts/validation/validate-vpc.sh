@@ -1,5 +1,5 @@
 #!/bin/bash
-exec > /var/log/netapp_wf_validate_vpc.log 2>&1
+exec > /var/log/netapp_wf/validate_vpc.log 2>&1
 
 # Set args as variables
 subnet=$1
