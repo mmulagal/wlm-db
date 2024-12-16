@@ -619,7 +619,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -644,7 +647,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -669,7 +675,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -694,7 +703,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -719,7 +731,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -744,7 +759,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -769,7 +787,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -880,7 +901,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "551b3294-d372-4335-85df-b95a28de6f79-getDbVolumeLunMapping",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -905,7 +929,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "585f55b2-3bea-474a-a29e-15532e59a314-createCloneVolume",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -930,7 +957,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "7a5f55b2-3bea-174a-a29e-15532e59a314-invokeVirtualMount",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -955,7 +985,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "0b2f55b2-3bea-174a-a29e-15532e59a112-createCloneDb",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -980,7 +1013,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a91f55b2-3bea-174a-a29e-15532e59a1b4-addExtendedProperties",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1005,7 +1041,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1030,7 +1069,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1055,7 +1097,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAccessPathResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1080,7 +1125,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedPropertiesResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1105,7 +1153,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1130,7 +1181,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "f171a4a7-3693-41bb-8c31-getActiveDirectory",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1155,7 +1209,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "f171a4a7-3693-41bb-8c31-enterpriseFeatureUsageCheckCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1180,7 +1237,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1205,7 +1265,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrityResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1230,7 +1293,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1255,7 +1321,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1280,7 +1349,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1305,7 +1377,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1330,7 +1405,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1355,7 +1433,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1380,7 +1461,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1405,7 +1489,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-rescanAndExtendLogLunCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1430,7 +1517,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkNodeStatusCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1455,7 +1545,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-moveClusterGroupsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1480,7 +1573,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1505,7 +1601,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1530,7 +1629,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1555,7 +1657,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1580,7 +1685,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1605,7 +1713,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1630,7 +1741,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-remediateMpioSessionsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1655,7 +1769,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioInstallationCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1680,7 +1797,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-enableMpioAndConfigureCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1695,6 +1815,27 @@
         "StandardErrorUrl": "",
         "StandardOutputContent": "[{\"status\": \"success\", \"error\": \"\"}]",
         "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getPatchBaselineCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "b699d322-6011-4371-a194-706306a25595",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "539404d1-1495-4cd8-8a1e-8d5bf054afd0",
+        "Comment": "",
+        "DocumentName": "AWS-RunPatchBaseline",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionEndDateTime": "",
+        "InstanceId": "i-07e76a4b916548dc0",
+        "ResponseCode": 0,
         "Status": "Success",
         "StatusDetails": "Success"
     }

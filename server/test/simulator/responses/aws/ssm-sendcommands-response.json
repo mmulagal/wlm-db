@@ -269,7 +269,6 @@
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
     },
-
     "clusterNodesCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -690,7 +689,6 @@
         "$metadata": {
             "httpStatusCode": 200,
             "requestId": "f171a4a7-3693-41bb-8c31-serverDetails",
-
             "attempts": 1,
             "totalRetryDelay": 0
         },
@@ -1423,6 +1421,58 @@
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getPatchBaselineCommand": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "AlarmConfiguration": {
+                "Alarms": [],
+                "IgnorePollAlarmFailure": false
+            },
+            "CloudWatchOutputConfig": {
+                "CloudWatchLogGroupName": "",
+                "CloudWatchOutputEnabled": false
+            },
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand",
+            "Comment": "",
+            "CompletedCount": 0,
+            "DeliveryTimedOutCount": 0,
+            "DocumentName": "AWS-RunPatchBaseline",
+            "DocumentVersion": "$DEFAULT",
+            "ErrorCount": 0,
+            "ExpiresAfter": "2024-12-13T05:27:09.030Z",
+            "InstanceIds": [
+                "i-07e76a4b916548dc0"
+            ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "NotificationConfig": {
+                "NotificationArn": "",
+                "NotificationEvents": [],
+                "NotificationType": ""
+            },
+            "OutputS3BucketName": "",
+            "OutputS3KeyPrefix": "",
+            "OutputS3Region": "ap-southeast-1",
+            "Parameters": {
+                "Operation": [
+                    "Scan"
+                ]
+            },
+            "RequestedDateTime": "2024-12-12T22:27:09.030Z",
+            "ServiceRole": "",
+            "Status": "Pending",
+            "StatusDetails": "Pending",
+            "TargetCount": 1,
+            "Targets": [],
+            "TimeoutSeconds": 3600,
+            "TriggeredAlarms": []
         }
     }
 }

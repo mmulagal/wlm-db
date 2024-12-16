@@ -10,7 +10,7 @@ import {
     Volume
 } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
 import {
     TopologyResponseType,
@@ -84,7 +84,11 @@ import {
     databaseInstanceMetadata
 } from '../utils/common-types';
 import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
+import {
+    getCostAllocationTagEC2Resource,
+    getInstanceDetailsByPrivateIp,
+    isEbsAwsBackupEnabled
+} from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
@@ -96,6 +100,8 @@ import {
     isDemo
 } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
+import { callSsmExecution } from './aws/ssm-operations';
+import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 
 const logger = getLogger();
 
@@ -2482,11 +2488,56 @@ async function getDatabaseInstancesSummary(
     });
 }
 
+/* Util function to return all cluster node datails given database host ID or one of the instance IDs in the cluster */
+async function getAllClusterNodeDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId?: string,
+    node1InstanceId?: string
+) {
+    logger.info('Getting all cluster node details', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        node1InstanceId
+    });
+
+    if (!node1InstanceId && !databaseHostId) {
+        logger.warn('databaseHostId or nodeInstanceId is missing');
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'Atleast one node instance ID of database host ID is required to fetch all cluster node details'
+        );
+    }
+
+    if (!node1InstanceId) {
+        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        ({ node1InstanceId } = metadata as unknown as Metadata);
+    }
+
+    const clusterNetworkIpDetails = await callSsmExecution(
+        credentialsId,
+        region,
+        CLUSTER_NETWORK_IP_INFO_PS1,
+        node1InstanceId,
+        accountId
+    );
+    const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
+    const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
+    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
+    return compact(
+        clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => ({ ec2InstanceId, ec2InstanceName }))
+    );
+}
+
 export {
     getDatabaseHostsSummaryV2,
     getDatabaseHostSummaryV2,
     getDatabaseHostInstanceSummary,
     getDatabasesV2,
     getInstanceDetails,
-    MappedOnTapVolumeResponse
+    MappedOnTapVolumeResponse,
+    getAllClusterNodeDetails
 };

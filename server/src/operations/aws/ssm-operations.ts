@@ -10,6 +10,7 @@ import {
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
 import { DescribeRegionsCommandInput } from '@aws-sdk/client-ec2';
+import { isEmpty } from 'lodash-es';
 import {
     sendSSMCommand,
     getCommandInvocation,
@@ -30,12 +31,57 @@ import { SSM_RUN_SHELL_SCRIPT_DOC } from '../workloads/pgsql/const';
 
 const logger = getLogger();
 
+async function pollCommandStatusForAllInstances(
+    credentialsId: string,
+    region: string,
+    commandId: string,
+    instanceIds: string[],
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
+) {
+    logger.info('Polling SSM command execution for all instances', { commandId, instanceIds, pollInterval });
+    const pollStatuses: {
+        commandId: string;
+        instanceId: string;
+        response?: GetCommandInvocationCommandOutput;
+        error?: string;
+    }[] = [];
+
+    await Promise.all(
+        instanceIds.map(async instanceId => {
+            const pollParams = {
+                CommandId: commandId,
+                InstanceId: instanceId
+            };
+            try {
+                const response = await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
+                logger.debug('SSM command Response:', response);
+                pollStatuses.push({
+                    commandId,
+                    instanceId,
+                    response
+                });
+            } catch (error) {
+                const errorMessage = `Error executing SSM command on instance ${instanceId}, commandId ${commandId} :  ${error}`;
+                logger.error(errorMessage);
+                pollStatuses.push({
+                    commandId,
+                    instanceId,
+                    error: errorMessage
+                }); // continue polling for other instances even if one fails as this is a generic function; caller function should decide to proceed or fail based on the response
+            }
+        })
+    );
+
+    return pollStatuses;
+}
+
 async function pollCommandStatus(
     credentialsId: string,
     region: string,
-    pollParams: GetCommandInvocationCommandInput
+    pollParams: GetCommandInvocationCommandInput,
+    pollInterval: number = ms(config.get<string>('ssm.poll-interval'))
 ): Promise<GetCommandInvocationCommandOutput> {
-    logger.debug('Polling SSM command execution', pollParams);
+    logger.debug('Polling SSM command execution', { pollParams, pollInterval });
 
     try {
         const response = await getCommandInvocation(credentialsId, region, pollParams);
@@ -67,25 +113,66 @@ async function pollCommandStatus(
             }
         }
 
-        await sleep(ms(config.get<string>('ssm.poll-interval')));
-        return await pollCommandStatus(credentialsId, region, pollParams);
+        await sleep(pollInterval);
+        return await pollCommandStatus(credentialsId, region, pollParams, pollInterval);
     } catch (error: any) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
-            await sleep(ms(config.get<string>('ssm.poll-interval')));
-            return pollCommandStatus(credentialsId, region, pollParams);
+            await sleep(pollInterval);
+            return pollCommandStatus(credentialsId, region, pollParams, pollInterval);
         }
         throw new Error(error);
     }
+}
+
+async function executeSSMDocumentMultipleInstances(
+    credentialsId: string,
+    region: string,
+    params: SendCommandCommandInput,
+    accountId?: string,
+    pollDuration?: number
+) {
+    logger.info('Execute SSM document on multiple instances', {
+        credentialsId,
+        region,
+        params,
+        accountId,
+        pollDuration
+    });
+    const { InstanceIds: instanceIds } = params;
+    if (instanceIds && !isEmpty(instanceIds)) {
+        const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
+        await sleep(1000);
+        try {
+            if (commandId) {
+                const response = await pollCommandStatusForAllInstances(
+                    credentialsId,
+                    region,
+                    commandId,
+                    instanceIds,
+                    pollDuration
+                );
+                logger.debug('SSM command Response:', response);
+                return response;
+            }
+            throw new Error('SSM command Id not found');
+        } catch (error) {
+            const errorMessage = `Error executing SSM command on instance ${instanceIds}, commandId ${commandId} :  ${error}`;
+            logger.error(errorMessage);
+            throw createError(errorMessage);
+        }
+    }
+    throw createError('Failed to execute SSM document for multiple instances. InstanceIds not found');
 }
 
 async function executeSSMDocument(
     credentialsId: string,
     region: string,
     params: SendCommandCommandInput,
-    accountId?: string
+    accountId?: string,
+    pollDuration?: number
 ) {
-    logger.info('Execute SSM document', { credentialsId, region, params, accountId });
+    logger.info('Execute SSM document', { credentialsId, region, params, accountId, pollDuration });
 
     const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
     const [instanceIds] = params?.InstanceIds ?? [];
@@ -97,7 +184,7 @@ async function executeSSMDocument(
     // Sleep for 1 second to avoid immediate polling
     await sleep(1000);
     try {
-        const response = await pollCommandStatus(credentialsId, region, pollParams);
+        const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration);
         logger.debug('SSM command Response:', response);
         return response;
     } catch (error) {
@@ -356,7 +443,9 @@ export {
     getSSMConnectionStatus,
     ssmPutParameters,
     pollCommandStatus,
+    pollCommandStatusForAllInstances,
     callSsmExecution,
     getEc2SqlParameters,
+    executeSSMDocumentMultipleInstances,
     executeBashSsmCommand
 };
