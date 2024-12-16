@@ -936,7 +936,7 @@ const ASSESMENT_CONFIG_DATA = {
         'default-data-files-location': 'separate-drive'
     },
     sizing: {
-        'performance-tier': false,
+        'performance-tier': [94, 95, 100],
         'data-log-drive-details': [
             {
                 databaseName: 'msdb',

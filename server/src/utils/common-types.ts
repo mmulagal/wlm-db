@@ -349,7 +349,7 @@ type VolumeSpaceRecord = {
     };
 };
 
-interface OptimizeMpioPolicyParams {
+interface OptimizeParams {
     accountId: string;
     region: string;
     credentialsId: string;
@@ -362,61 +362,36 @@ interface OptimizeMpioPolicyParams {
     serverNameWithHostName: string;
     databaseHostId: string;
     databaseInstanceId: string;
-    sqlDeploymentType?: string;
     activeNodeInstanceId?: string;
-    activeNodeName?: string;
     standbyNodeInstanceId?: string;
-    standbyNodeName?: string;
     awsAccountId: string;
+    instanceMetadata: any;
+    sqlDeploymentType: string;
+}
+
+interface OptimizeMpioPolicyParams extends OptimizeParams {
+    activeNodeName?: string;
+    standbyNodeName?: string;
     changeClusterOwnership?: boolean;
     activeNodeCurrentPolicy?: string;
     standbyNodeCurrentPolicy?: string;
-    instanceMetadata: any;
 }
 
-interface OptimizeMpioIscsiSessionsParams {
-    accountId: string;
-    region: string;
-    credentialsId: string;
-    parentJobId: string;
-    databaseType: string;
-    fsxId: string;
+interface SessionsCountPerIscsiTarget {
+    address: string;
+    count: number;
+}
+interface OptimizeMpioIscsiSessionsParams extends OptimizeParams {
     svmId: string;
-    instanceId: string;
-    sqlAuthEnabled: boolean;
-    instanceName: string;
-    serverNameWithHostName: string;
-    databaseHostId: string;
-    databaseInstanceId: string;
-    awsAccountId: string;
-    sqlDeploymentType?: string;
-    activeNodeInstanceId?: string;
-    standbyNodeInstanceId?: string;
     iscsiTargetAddresses: string[];
-    currentMpioSessionsCount?: { address: string; count: number }[];
-    instanceMetadata: any;
+    currentMpioSessionsCount: SessionsCountPerIscsiTarget[];
 }
 
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
     resource: Resource;
 }
 
-interface StorageTierParams {
-    accountId: string;
-    region: string;
-    credentialsId: string;
-    parentJobId: string;
-    fsxId: string;
-    instanceId: string;
-    instanceName: string;
-    databaseType: string;
-    sqlAuthEnabled: boolean;
-    serverNameWithHostName: string;
-    databaseHostId: string;
-    databaseInstanceId: string;
-    activeNodeInstanceId?: string;
-    awsAccountId: string;
-    instanceMetadata: any;
+interface StorageTierParams extends OptimizeParams {
     svmId: string;
     svmName: string;
 }
@@ -453,5 +428,6 @@ export {
     StorageTierParams,
     ComputeAssessment,
     LicenseAssessment,
-    OptimizeMpioIscsiSessionsParams
+    OptimizeMpioIscsiSessionsParams,
+    SessionsCountPerIscsiTarget
 };

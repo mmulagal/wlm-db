@@ -1,4 +1,4 @@
-import { OptimizeMpioIscsiSessionsParams, OptimizeMpioPolicyParams } from '../../../utils/common-types';
+import { OptimizeMpioPolicyParams, SessionsCountPerIscsiTarget } from '../../../utils/common-types';
 
 const CHECK_MPIO_POLICY = `
 $currentMpioPolicy = Get-MSDSMGlobalDefaultLoadBalancePolicy
@@ -145,11 +145,9 @@ const MPIO_ISCSI_SESSIONS = (iscsiTargetAddresses: string[]) =>
     }
 `;
 
-const REMEDIATE_MPIO_ISCSI_SESSIONS = (mpioisSessionsParams: OptimizeMpioIscsiSessionsParams) => `
+const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerIscsiTarget[]) => `
     Start-Transcript -Path "C:\\cfn\\log\\mpio-iscsci-sessions-remediation.log.txt" -Append | Out-Null
-    $currentMpioSessionsCountPerTarget = '${JSON.stringify(
-        mpioisSessionsParams.currentMpioSessionsCount
-    )}' | ConvertFrom-Json
+    $currentMpioSessionsCountPerTarget = '${JSON.stringify(sessionsCountPerTarget)}' | ConvertFrom-Json
     Write-Information "iSCSI Target Addresses: $currentMpioSessionsCountPerTarget"
     $result = @()
     $sessions = Get-IscsiSession
