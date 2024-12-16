@@ -842,6 +842,7 @@ const InventoryApisV2 = () => {
         dispatch(setIsDatabaseHostsLoading(true));
         dispatch(setIsPgSqlDatabaseHostsLoading(true));
         setTopologyHostData({});
+        setPgsqlTopologyHostData({});
         // reset for getDatabaseHostsFullData
         dispatch(setIsFullHostDataLoading(true));
         dispatch(setIsFullPgSqlHostDataLoading(true));
@@ -849,6 +850,7 @@ const InventoryApisV2 = () => {
         dispatch(addDatabaseHostsDataV2(null));
         dispatch(addPgSqlDatabaseHostsData(null));
         setFullHostData({});
+        setFullPgsqlHostData({});
         // reset for discovery
         dispatch(setIsDiscoveredHostData(null));
         dispatch(setIsDiscoverHostLoading(true));
@@ -885,6 +887,7 @@ const InventoryApisV2 = () => {
             let fullHostData: any = {};
             let fullPgsqlHostData: any = {};
             let topologyHostData: any = {};
+            let pgsqlTopologyHostData: any = {};
             let discoveredList: any = [];
             let allmssqlHostAssessmentData: any = [];
             if (credId && regionId) {
@@ -909,6 +912,7 @@ const InventoryApisV2 = () => {
             let fullHostData: any = {};
             let fullPgsqlHostData: any = {};
             let topologyHostData: any = {};
+            let pgsqlTopologyHostData: any = {};
             let discoveredList: any = [];
             let allmssqlHostAssessmentData: any = [];
             if (credId && regionId && isRefreshed) {
