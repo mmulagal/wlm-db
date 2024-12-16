@@ -701,6 +701,22 @@ async function updateVolumeSizeAndWaitForUpdate(
     throw createError(errMsg);
 }
 
+async function getIscsiTargetAddresses(credentialsId: string, region: string, fsxId: string, svmId: string) {
+    // Fetch iSCSCI target addresses
+    logger.info('Fetching iSCSI target addresses', { credentialsId, region, fsxId, svmId });
+    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        fsxId as string
+    );
+    const {
+        Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] as string[] } = { IpAddresses: [] } } = {
+            Iscsi: { IpAddresses: [] }
+        }
+    } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
+    return iscsiTargetAddresses;
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -717,5 +733,6 @@ export {
     getFsxStorageDetails,
     getFsxVolumeDetails,
     getFsxnVolIdsFromOntapVolIds,
-    updateVolumeSizeAndWaitForUpdate
+    updateVolumeSizeAndWaitForUpdate,
+    getIscsiTargetAddresses
 };

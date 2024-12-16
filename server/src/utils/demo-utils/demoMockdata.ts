@@ -2649,6 +2649,86 @@ function optimizeStorageTierJobData(
     ];
 }
 
+function enableMPIOJobData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    instanceId: string,
+    resourceId: string
+) {
+    const instanceDetailsForJob = {
+        hostName: resourceName,
+        resourceId,
+        databaseInstanceId: instanceId,
+        databaseInstanceName: instanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    };
+    const instanceDetailsForJobString = JSON.stringify(instanceDetailsForJob);
+    return [
+        {
+            id: parentJobId,
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Enable MPIO and configure for MPIO iSCSI sessions ${resourceName}\\${instanceName}.`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Check if MPIO is installed on ${resourceName}\\${instanceName}`,
+            description: `Check if MPIO is installed on ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now() - 14000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `Configure MPIO on ${resourceName}\\${instanceName}`,
+            description: `Configure MPIO on ${resourceName}\\${instanceName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 18000),
+            end_time: new Date(Date.now() - 14000),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            name: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            description: `SQL Server instance(s) ${instanceName} has been scanned for best practice misalignments. Review detailed findings and recommendations in;${instanceDetailsForJobString}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            parent_job_id: parentJobId,
+            type: JOBTYPE.OPTIMIZATION,
+            start_time: new Date(Date.now() - 14000),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
 export {
     masterStackData,
     validationStack1Data,
@@ -2666,5 +2746,6 @@ export {
     mockPGSqlStandaloneDeploymentStack,
     savePGSQLConfigurationData,
     optimizeMpioSessionsJobData,
-    optimizeStorageTierJobData
+    optimizeStorageTierJobData,
+    enableMPIOJobData
 };

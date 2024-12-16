@@ -132,6 +132,11 @@ import { getParametersByPath } from '../lib/aws/ssm';
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
 
+interface InitializationScript {
+    name: string;
+    url: string;
+}
+
 async function getSubnetsCidr(
     credentialsId: string,
     region: string,
@@ -774,7 +779,7 @@ async function getTerraformSetup(
             tfDeploymentName,
             customTerraformModulesPath,
             templateParameters,
-            initializationScriptURLs
+            initializationScriptURLs as InitializationScript[]
         );
 
         const contents = await createRootModuleFile(
@@ -1461,6 +1466,8 @@ async function deployPgSql(
         triggeredFrom,
         tags
     });
+
+    updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
 
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;

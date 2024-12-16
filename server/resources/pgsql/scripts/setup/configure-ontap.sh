@@ -30,9 +30,21 @@ check_status() {
     fi
 }
 
-cert_url=https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem
-curl -s -o /tmp/bundle-$region.pem $cert_url
-check_status "Failed to download certificate"
+# Ping the IP address 1.1.1.1
+ping -c 2 1.1.1.1 > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    is_public_network=true
+else
+    is_public_network=false
+fi
+
+if [ $is_public_network = true ]; then
+    cert_url=https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem
+    cert_path=/tmp/bundle-$region.pem
+    curl -s -o $cert_path $cert_url
+else
+    cert_path=/home/ec2-user/cfn/fsx_certs/bundle-$region.pem
+fi
 
 ontap_request () {
     management_ip=management.$filesystemid.fsx.$region.amazonaws.com
@@ -45,10 +57,9 @@ ontap_request () {
     fi
 
     args=(
-        --silent
         --header "Authorization: Basic $auth"
         --request $method
-        --cacert /tmp/bundle-$region.pem
+        --cacert $cert_path
         --location https://$management_ip/api/$endpoint
         $request_body
     )
@@ -57,11 +68,11 @@ ontap_request () {
 }
 
 check_and_create_ontap_volumes() {
-    local return_result = ""
+    local return_result=""
     # Check if data volume exists
-    ontap_request 'GET' 'storage/volumes'
-    data_volume_exists=$($return_result | grep -c '"name": "'$fsxdatavolumename'"')
-    if [ $data_volume_exists -eq 0 ]; then
+    ontap_request 'GET' "storage/volumes?name=$fsxdatavolumename"
+    data_volume=$(echo $return_result | jq -r '.records[0].name')
+    if [ "$data_volume" != "$fsxdatavolumename" ]; then
         echo "Creating data volume..."
         local data='{"name":"'$fsxdatavolumename'","size":"10G","nas":{"path":"'$fsxdatamountpoint'"},"svm":{"name":"'$fsxsvmname'"},"aggregates":[{"name":"'$fsxaggrname'"}]}'
         ontap_request 'POST' 'storage/volumes' "$data"
@@ -71,9 +82,9 @@ check_and_create_ontap_volumes() {
     fi
 
     # Check if log volume exists
-    ontap_request 'GET' 'storage/volumes'
-    log_volume_exists=$($return_result | grep -c '"name": "'$fsxlogvolumename'"')
-    if [ $log_volume_exists -eq 0 ]; then
+    ontap_request 'GET' "storage/volumes?name=$fsxlogvolumename"
+    log_volume=$(echo $return_result | jq -r '.records[0].name')
+    if [ "$log_volume" != "$fsxlogvolumename" ]; then
         echo "Creating log volume..."
         local data='{"name":"'$fsxlogvolumename'","size":"1G","nas":{"path":"'$fsxlogmountpoint'"},"svm":{"name":"'$fsxsvmname'"},"aggregates":[{"name":"'$fsxaggrname'"}]}'
         ontap_request 'POST' 'storage/volumes' "$data"

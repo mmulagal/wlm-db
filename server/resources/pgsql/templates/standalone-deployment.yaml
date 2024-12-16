@@ -85,6 +85,9 @@ Parameters:
     ONTAPSecurityGroupID:
         Description: ID of the FSx for ONTAP security group.
         Type: String
+    ParentStackName:
+        Description: Stack name for the parent CloudFormation stack.
+        Type: String
 
 Resources:
     LaunchWizardSqlFSxProfile:
@@ -119,17 +122,58 @@ Resources:
             AWS::CloudFormation::Init:
                 configSets:
                     config:
-                        - InstallSSM
+                        - InstallSSMAgent
+                        - ConfigureCWLogs
                         - CreateTempFolder
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
                         - Configure
                         - Finalize
-                InstallSSM:
+                InstallSSMAgent:
                     commands:
-                        a-install-ssm:
+                        a-install-ssm-agent:
                             command: !Sub
                                 'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            waitAfterCompletion: '0'
+                        b-install-cloudwatch-agent:
+                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            waitAfterCompletion: '0'
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {
+                                    "agent": {
+                                        "metrics_collection_interval": 5,
+                                        "run_as_user": "cwagent",
+                                        "region": "${AWS::Region}"
+                                    },
+                                    "logs": {
+                                        "logs_collected": {
+                                            "files": {
+                                                "collect_list": [
+                                                    {
+                                                        "file_path": "/var/log/cfn-*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/home/ec2-user/cfn/log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                            waitAfterCompletion: '0'
                 CreateTempFolder:
                     commands:
                         a-create-temp-folder:
@@ -158,6 +202,11 @@ Resources:
                             group: ec2-user
                         /home/ec2-user/cfn/scripts/setup.zip:
                             source: {{{ ScriptSetup }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/fsx_certs.zip:
+                            source: {{{ FsxCertificates }}}
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
@@ -190,6 +239,9 @@ Resources:
                             waitAfterCompletion: 0
                         f-unpack-setup-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/setup.zip -d /home/ec2-user/cfn/scripts
+                            waitAfterCompletion: 0
+                        g-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
                             waitAfterCompletion: 0
                 Configure:
                     commands:

@@ -59,9 +59,18 @@
 
 @media screen and (min-width: 1471px) and (max-width: 1823px) {
     .exploreSavingsHeader {
-        height: 336px;
+        // height: 336px;
+        height: 380px;
 
         .topPart {
+            .svgContainer1600 {
+                width: 535px;
+                height: 380px;
+                background-color: #e8eefd;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
             .contentSection {
                 padding: 32px 64px;
 

@@ -2,6 +2,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     fetchDriftAssessment,
+    fetchDriftAssessmentPerAccount,
     fetchDriftAssessmentPerHost,
     onDemandTriggerDriftAssessmentDataCollection
 } from '../operations/cont-opt-assessment-operations';
@@ -14,7 +15,8 @@ import {
     OptimizeOperatingSystemSchema,
     OptimizeComputeSchema,
     DriftAssessmentPerHost,
-    OptimizeStorageTierSchema
+    OptimizeStorageTierSchema,
+    DriftAssessmentPerAccount
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -168,7 +170,6 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
             { schema: OptimizeStorageTierSchema },
@@ -186,5 +187,21 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 );
                 return reply.send(response);
             }
-        );
+        )
+        .get(`${MSSQL_API_PREFIX_PATH}/assessment`, { schema: DriftAssessmentPerAccount }, async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                query: { fields, nextToken, pageSize }
+            } = request;
+
+            const response = await fetchDriftAssessmentPerAccount(
+                accountId,
+                credentialsId,
+                region,
+                fields,
+                nextToken,
+                pageSize
+            );
+            return reply.send(response);
+        });
 }

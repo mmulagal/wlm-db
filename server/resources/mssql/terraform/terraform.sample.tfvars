@@ -26,7 +26,7 @@ wlmdb_aws_account_id          = 12345678
 s3_endpoint_route_tables        = ""
 private_subnet1_cidrblock       = "10.0.1.0/20"
 private_subnet2_cidrblock       = ""
-encrypted_fsx_password          = "Netapp123"
+encrypted_fsx_password          = "test123"
 ebs_volume_size                 = 100
 s3_endpoint_exists              = true
 ssm_endpoint_exists             = true
@@ -48,7 +48,7 @@ fsx_svm_name            = "wlmdb_svm_1724065163786"
 
 sql_igroup_name          = "wlmdb_sqligroup_1724065163786"
 sql_svm_name             = "wlmdb_sqlsvm_1724065163786"
-node_net_bios_names      = "sqlnode-tf-sathish"
+node_net_bios_names      = "sqlnode-tf-test"
 fsx_storage_capacity     = 1024
 fsx_data_lun_size        = 204800
 fsx_admin_username       = "fsxadmin" #fsx_user_name

@@ -435,6 +435,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
         $isPerformanceTier100Percent = $true
         # loop through each volume and get data
+        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent
         foreach ($perVolumeData in $Volumes) {
         if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
                 $isPerformanceTier100Percent = $false
@@ -515,9 +516,10 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'user-database-layout' = $($responseObject);}
         
         $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = $isPerformanceTier100Percent;
+                                        'performance-tier' = $PerformanceTierPercent;
                                         'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);}
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
+                                        }
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
         $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
@@ -527,13 +529,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
      $DriftAssessmentData['os'] = @{}
     try{
         $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 -ErrorAction SilentlyContinue | Select ProductId,VendorId 
-        if([string]::IsNullOrEmpty($MpioResponse)) {
-            throw "Unable to fetch MPIO load balancing policy details."
-        }
+        
         $MpioStatus = $false
-        if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
-            $MpioStatus = $true
+        if(-not ([string]::IsNullOrEmpty($MpioResponse))) {
+             if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
+                $MpioStatus = $true
+            } 
         }
+       
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
         
         # Fetch load balancing policy for all NetApp disks

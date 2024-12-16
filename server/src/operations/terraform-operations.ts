@@ -38,6 +38,11 @@ interface TemplateDetails {
     location: string;
 }
 
+interface InitializationScript {
+    name: string;
+    url: string;
+}
+
 async function uploadTerraformModules(
     region: string,
     resourceType: DatabaseTypes,
@@ -209,7 +214,7 @@ async function createTFVarsFile(
     deploymentName: string,
     templatePath: string,
     templateParameters: Array<Parameter>,
-    initializationScriptURLs: any
+    initializationScriptURLs: InitializationScript[]
 ) {
     logger.info('Creating terraform vars file', region, resourceType, deploymentName, templatePath, templateParameters);
     try {

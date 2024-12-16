@@ -33,11 +33,11 @@
                 flex-direction: column;
             }
 
-            [class*='SquareComponent_valueText'] {
+            [class*='_valueText'] {
                 font-size: 24px !important;
                 line-height: 30px !important;
             }
-            [class*='SquareComponent_square'] {
+            [class*='_square'] {
                 width: 8px;
                 height: 8px;
             }

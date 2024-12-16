@@ -42,6 +42,8 @@ export interface InventorySliceData {
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
     managedAssessmentHostData: any;
+    allmssqlHostAssessmentData: any;
+    allmssqlHostAssessmentLoading: boolean;
 }
 
 export interface InventoryTableData {

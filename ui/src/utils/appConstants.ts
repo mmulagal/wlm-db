@@ -1199,6 +1199,7 @@ export const GENERAL = {
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    OPERATING_SYSTEM_PATCH: 'Operating system patch',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
     APPLICATION_SQL_SERVER: 'Application (SQL Server)',

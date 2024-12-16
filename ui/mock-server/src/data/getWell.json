@@ -256,7 +256,10 @@
                             "dataDriveTotalSizeMB": 81901
                         }
                     ]
-                }
+                },
+                "missingPermissions" : [
+                    "fsx:UpdateVolume"
+                ]
             },
             {
                 "name": "tempdb-drive-size",
@@ -271,16 +274,22 @@
                     "overProvisionedDrives": [],
                     "underProvisionedDrives": [],
                     "ignoredDrives": []
-                }
+                },
+                "missingPermissions" : [
+                    "fsx:UpdateVolume"
+                ]
             },
             {
                 "name": "headroom",
                 "recommended": "36-100%",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": [
                     "Performance efficiency"
+                ],
+                "missingPermissions" : [
+                    "fsx:UpdateVolume"
                 ]
             }
         ],
@@ -411,6 +420,30 @@
                 "sqlServerEdition": "Enterprise Edition (64-bit)",
                 "sqlServerEngineEdition": 3,
                 "sqlServerName": "SQLServer-Prod-02"
+            }
+        ]
+    },
+    "hostOsPatch": {
+        "name": "host-os-patch",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "critical",
+        "recommendation": "Your host OS patch is not optimized. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.",
+        "tags": [
+            "Security",
+            "Reliability"
+        ],
+        "objectsInViolation": [
+            "i-07e76a4b916548dc0"
+        ],
+        "ec2InstancesToPatch": [
+            {
+                "baselineId": "pb-0da914616003c89f1",
+                "criticalNonCompliantCount": 0,
+                "ec2InstanceId": "i-07e76a4b916548dc0",
+                "operationStartTime": 551,
+                "operationEndTime": 115,
+                "securityNonCompliantCount": 1
             }
         ]
     }

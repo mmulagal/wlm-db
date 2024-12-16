@@ -344,7 +344,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={styles.colorSet}
                 hidePrimaryButton={
-                    type === 'File system headroom' &&
+                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }

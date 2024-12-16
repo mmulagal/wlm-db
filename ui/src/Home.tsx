@@ -59,6 +59,11 @@ const Home = () => {
                     }
                 }
             };
+        } else {
+            //For testing purpose
+            window.onmessage = (msg: any) => {
+                console.log('onmessage from WLF', msg);
+            };
         }
     });
 

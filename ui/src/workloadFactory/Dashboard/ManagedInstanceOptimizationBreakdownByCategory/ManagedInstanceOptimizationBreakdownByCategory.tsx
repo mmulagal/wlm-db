@@ -1,4 +1,4 @@
-import { DsTypography, DsAccordion } from '@netapp/design-system';
+import { DsAccordion } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimizationBreakdownByCategory.module.scss';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
@@ -6,8 +6,15 @@ import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
 import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
 import { ReactComponent as Compute } from '../../../assets/Compute.svg';
 import CategoryComponent from './CategoryComponent/CategoryComponent';
+import { useMemo } from 'react';
+import { useAppSelector } from '../../../store/storeHooks';
+import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: any) => {
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const categoryData = useMemo(() => {
+        return getAssessmentGroupedByCategory(allmssqlHostAssessmentData);
+    }, [allmssqlHostAssessmentData]);
     return (
         <div className={styles.managedByCategory}>
             <DsAccordion
@@ -21,9 +28,11 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                         <CategoryComponent
                             image={<Storage />}
                             firstBlockText="Storage"
-                            optimizationScore={55}
-                            optimizationInstances={65}
-                            totalOptimizationInstances={120}
+                            optimizationScore={Math.round(
+                                ((categoryData.storage || 0) / (categoryData.total || 1)) * 100
+                            )}
+                            optimizationInstances={categoryData.storage || 0}
+                            totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
                             isBorderRequired={true}
                         />
@@ -31,9 +40,11 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                         <CategoryComponent
                             image={<Compute />}
                             firstBlockText="Compute"
-                            optimizationScore={55}
-                            optimizationInstances={65}
-                            totalOptimizationInstances={120}
+                            optimizationScore={Math.round(
+                                ((categoryData.compute || 0) / (categoryData.total || 1)) * 100
+                            )}
+                            optimizationInstances={categoryData.compute || 0}
+                            totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
                             isBorderRequired={true}
                         />
@@ -41,10 +52,12 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                         <CategoryComponent
                             image={<Applications />}
                             firstBlockText="Application"
-                            optimizationScore={55}
-                            optimizationInstances={65}
-                            totalOptimizationInstances={120}
-                            isComingSoon={true}
+                            optimizationScore={Math.round(
+                                ((categoryData.application || 0) / (categoryData.total || 1)) * 100
+                            )}
+                            optimizationInstances={categoryData.application || 0}
+                            totalOptimizationInstances={categoryData.total || 0}
+                            isComingSoon={false}
                             isBorderRequired={true}
                         />
 

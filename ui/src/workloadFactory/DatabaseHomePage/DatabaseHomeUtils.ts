@@ -1,9 +1,8 @@
 // ToDo - Write utils dunction for dashboard page here
-
 import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
-import { COSTING_TYPES, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
+import { COSTING_TYPES, FINDINGS, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
 import {
     formatFractionalNumber,
     formatSizeOnePrecision,
@@ -262,4 +261,222 @@ export const getManageAggrCost = (data: any) => {
         otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100),
         requireBillingPerm: requireBillingPerm || noDeploymentChk
     };
+};
+
+export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) => {
+    return {
+        storageCost: (parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)).toString(),
+        computeCost: (parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)).toString(),
+        connectivityCost: formatFractionalNumber(
+            parseInt(mssqlCostObj.connectivityCost) + parseInt(pgsqlCostObj.connectivityCost),
+            2
+        ),
+        otherCost: formatFractionalNumber(parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost), 2),
+        totalCost: formatFractionalNumber(parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost), 2),
+        storageCostPercent: formatFractionalNumber(
+            ((parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)) /
+                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+                100
+        ),
+        computeCostPercent: formatFractionalNumber(
+            ((parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)) /
+                parseInt(mssqlCostObj.totalCost) +
+                parseInt(pgsqlCostObj.totalCost)) *
+                100
+        ),
+        connectivityCostPercent: formatFractionalNumber(
+            (parseInt(mssqlCostObj.connectivityCost) +
+                parseInt(pgsqlCostObj.connectivityCost) /
+                    (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+                100
+        ),
+        otherCostPercent: formatFractionalNumber(
+            ((parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost)) /
+                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+                100
+        ),
+        requireBillingPerm:
+            mssqlCostObj.requireBillingPerm ||
+            pgsqlCostObj.requireBillingPerm ||
+            mssqlCostObj.noDeploymentChk ||
+            pgsqlCostObj.noDeploymentChk
+    };
+};
+
+export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
+    let totalInstances = 0;
+    let optimizedInstances = 0;
+    assessmentData.map((databaseHost: any) => {
+        databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (!instance?.error) {
+                totalInstances++;
+                const instanceAssessmentData = instance?.assessments;
+                const isComputeOptimized =
+                    instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOperatingSystemOptimized =
+                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isLicenseOptimized =
+                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every(
+                    (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                );
+                const isStorageSizingOptimized =
+                    instanceAssessmentData?.storage?.sizing?.every((item: any) => {
+                        return item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                    }).length === 0;
+                const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
+                    (item: any) =>
+                        item?.every(
+                            (subItem: any) => subItem?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                        )
+                );
+                if (
+                    isComputeOptimized &&
+                    isOperatingSystemOptimized &&
+                    isLicenseOptimized &&
+                    isStorageLayoutOptimized &&
+                    isStorageSizingOptimized &&
+                    isStorageConfigOptimized
+                ) {
+                    optimizedInstances += 1;
+                }
+            }
+        });
+    });
+    return {
+        totalInstances,
+        optimizedInstances,
+        notOptimizedInstances: totalInstances - optimizedInstances,
+        optimizedPercent: Math.round((optimizedInstances / totalInstances) * 100)
+    };
+};
+
+export const getAssessmentGroupedByCategory = (assessmentData: any) => {
+    let assessmentGroupedByCategory: any = {
+        storage: 0,
+        compute: 0,
+        application: 0,
+        total: 0
+    };
+    assessmentData.map((databaseHost: any) => {
+        databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (!instance?.error) {
+                assessmentGroupedByCategory.total++;
+                const instanceAssessmentData = instance?.assessments;
+                const isComputeOptimized =
+                    instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOperatingSystemPatchOptimized =
+                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every(
+                    (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                );
+                const isStorageSizingOptimized =
+                    instanceAssessmentData?.storage?.sizing?.every((item: any) => {
+                        return item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                    }).length === 0;
+                const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
+                    (item: any) =>
+                        item?.every(
+                            (subItem: any) => subItem?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                        )
+                );
+                const isApplicationOptimized =
+                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                if (isComputeOptimized && isOperatingSystemPatchOptimized) {
+                    assessmentGroupedByCategory.compute++;
+                }
+                if (isStorageLayoutOptimized && isStorageSizingOptimized && isStorageConfigOptimized) {
+                    assessmentGroupedByCategory.storage++;
+                }
+                if (isApplicationOptimized) {
+                    assessmentGroupedByCategory.application++;
+                }
+            }
+        });
+    });
+    return assessmentGroupedByCategory;
+};
+
+export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
+    let getAssessmentGroupedByConfigurations: any = {
+        storageTier: 0,
+        fileSystemHeadroom: 0,
+        logDriveSize: 0,
+        tempdbDriveSize: 0,
+        userDataFiles: 0,
+        logFiles: 0,
+        tempdbPlacement: 0,
+        ontapConfiguration: 0,
+        operatingSystem: 0,
+        computeRightsizing: 0,
+        operatingSystemPatch: 0,
+        applicationSqlServer: 0,
+        total: 0
+    };
+    assessmentData.map((databaseHost: any) => {
+        databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (!instance?.error) {
+                getAssessmentGroupedByConfigurations.total++;
+                const instanceAssessmentData = instance?.assessments;
+                const isStorageTierOptimized =
+                    instanceAssessmentData?.storage?.sizing
+                        ?.find((item: any) => item.name === 'performance-tier')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isFileSystemHeadroomOptimized =
+                    instanceAssessmentData?.storage?.sizing
+                        ?.find((item: any) => item.name === 'headroom')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isLogDriveSizeOptimized =
+                    instanceAssessmentData?.storage?.sizing
+                        ?.find((item: any) => item.name === 'log-drive-size')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isTempdbDriveSizeOptimized =
+                    instanceAssessmentData?.storage?.sizing
+                        ?.find((item: any) => item.name === 'tempdb-drive-size')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isUserDataFilesOptimized =
+                    instanceAssessmentData?.storage?.layout
+                        ?.find((item: any) => item.name === 'default-data-files-location')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isLogFilesOptimized =
+                    instanceAssessmentData?.storage?.layout
+                        ?.find((item: any) => item.name === 'default-log-files-location')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isTempdbPlacementOptimized =
+                    instanceAssessmentData?.storage?.layout
+                        ?.find((item: any) => item.name === 'tempdb-files-location')
+                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOntapConfigurationOptimized =
+                    instanceAssessmentData?.storage?.configuration?.luns?.every(
+                        (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                    ) &&
+                    instanceAssessmentData?.storage?.configuration?.volumes?.every(
+                        (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                    );
+                const isOperatingSystemOptimized = instanceAssessmentData?.storage?.configuration?.os?.every(
+                    (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                );
+                const isComputeRightsizingOptimized =
+                    instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isOpearingSystemPatchOptimized =
+                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isApplicationSqlServerOptimized =
+                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+
+                getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.fileSystemHeadroom += isFileSystemHeadroomOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.logDriveSize += isLogDriveSizeOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.tempdbDriveSize += isTempdbDriveSizeOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.userDataFiles += isUserDataFilesOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.logFiles += isLogFilesOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.tempdbPlacement += isTempdbPlacementOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.ontapConfiguration += isOntapConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.operatingSystem += isOperatingSystemOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.computeRightsizing += isComputeRightsizingOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.operatingSystemPatch += isOpearingSystemPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
+            }
+        });
+    });
+    return getAssessmentGroupedByConfigurations;
 };
