@@ -200,7 +200,7 @@ async function handleComputeRemediation(
                                 accountId,
                                 undefined,
                                 undefined,
-                                'The Check-NodeStatus function checks if a specified cluster node is Up and reachable, returning the status as a compressed JSON object.'
+                                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.'
                             );
                             const { status } = sqlResponseParsing(resp);
                             if (status === 'success') {
@@ -482,7 +482,7 @@ async function moveClusterGroupOwnership(
         undefined,
         undefined,
         undefined,
-        'The Move-AllClusterGroups function moves all "SQL Server" cluster groups to a specified target node and returns the status of each move operation as a compressed JSON object.'
+        'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.'
     );
 
     let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);

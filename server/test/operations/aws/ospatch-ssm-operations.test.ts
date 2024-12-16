@@ -6,6 +6,7 @@ import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../../src/operations/aws/ospatch-ssm-operations';
+
 const credentialsId = `${faker.string.alpha(20)}`;
 
 describe('OS Patch SSM operations', () => {
