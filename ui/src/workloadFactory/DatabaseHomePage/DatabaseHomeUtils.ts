@@ -280,8 +280,7 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
         ),
         computeCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)) /
-                parseInt(mssqlCostObj.totalCost) +
-                parseInt(pgsqlCostObj.totalCost)) *
+                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
                 100
         ),
         connectivityCostPercent: formatFractionalNumber(
