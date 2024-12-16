@@ -180,7 +180,12 @@ async function handleComputeRemediation(
                             anySubJobFailed = true;
                             throw error;
                         }
-                        const clusteNodeInstanceNames = ['sqlnode2-44317', 'sqlnode1-44317'];
+                        const clusteNodeInstanceNames = compact(
+                            clusterNodeDetails.map(
+                                ({ ec2InstanceId, ec2InstanceName }) =>
+                                    ec2InstanceId !== activeNodeInstanceId && ec2InstanceName
+                            )
+                        );
                         activeNodeInstanceName =
                             clusterNodeDetails.find(({ ec2InstanceId }) => ec2InstanceId === activeNodeInstanceId)
                                 ?.ec2InstanceName ?? activeNodeInstanceName;
@@ -191,7 +196,11 @@ async function handleComputeRemediation(
                                 credentialsId,
                                 region,
                                 [CHECK_NODE_STATUS(nodeName)],
-                                activeNodeInstanceId
+                                activeNodeInstanceId,
+                                accountId,
+                                undefined,
+                                undefined,
+                                'The Check-NodeStatus function checks if a specified cluster node is Up and reachable, returning the status as a compressed JSON object.'
                             );
                             const { status } = sqlResponseParsing(resp);
                             if (status === 'success') {
@@ -469,7 +478,11 @@ async function moveClusterGroupOwnership(
         credentialsId,
         region,
         [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
-        activeNodeInstanceId
+        activeNodeInstanceId,
+        undefined,
+        undefined,
+        undefined,
+        'The Move-AllClusterGroups function moves all "SQL Server" cluster groups to a specified target node and returns the status of each move operation as a compressed JSON object.'
     );
 
     let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
@@ -501,7 +514,11 @@ async function getCurrentDnsSettings(credentialsId: string, region: string, inst
         credentialsId,
         region,
         ['Get-NetAdapter | Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses'],
-        instanceId
+        instanceId,
+        undefined,
+        undefined,
+        undefined,
+        'Retrieves the DNS server addresses for all network adapters on the system.'
     );
 }
 
@@ -531,7 +548,11 @@ async function updateDnsSettings(
             credentialsId,
             region,
             [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
-            instanceId
+            instanceId,
+            accountId,
+            undefined,
+            undefined,
+            'Sets the DNS server addresses for all network adapters to the specified addresses.'
         );
     } catch (error) {
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
@@ -648,8 +669,8 @@ async function updateNodeInstanceType(
             }
 
             await handleEc2InstanceTypeChange(credentialsId, region, ec2InstanceId, instanceType);
-            const newDnsSettings = await getCurrentDnsSettings(credentialsId, region, ec2InstanceId);
-            if (isEmpty(newDnsSettings)) {
+            const newDnsAddresses = await getCurrentDnsSettings(credentialsId, region, ec2InstanceId);
+            if (isEmpty(newDnsAddresses) || newDnsAddresses !== oldDnsAddresses) {
                 await updateDnsSettings(
                     accountId,
                     credentialsId,
