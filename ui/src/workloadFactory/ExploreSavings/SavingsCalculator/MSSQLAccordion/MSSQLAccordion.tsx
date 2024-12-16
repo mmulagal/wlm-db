@@ -4,7 +4,13 @@ import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRe
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
-import { FROM_DIALOG, MAX_SAVED_CONFIG, SAVINGS_CALC_MODE, WLF_TO_FORM_NAVIGATE } from '../../../../utils/consts';
+import {
+    FROM_DIALOG,
+    MAX_SAVED_CONFIG,
+    SAVINGS_CALC_MODE,
+    WLF_TABS,
+    WLF_TO_FORM_NAVIGATE
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
@@ -44,7 +50,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         viewCalculationsLoading,
         selectedManualDeploymentModel,
         savingsCalculatorFrom,
-        selectedManualRegion
+        selectedManualRegion,
+        selectedExploreSavingsTab
     } = useAppSelector(state => state.exploreSavings);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
@@ -172,8 +179,16 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         }, 5);
     };
 
+    const setCSS = () => {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            return `${styles.mssqlAccordion} ${styles.mssqlAccordionOnPremises}`;
+        } else {
+            return `${styles.mssqlAccordion}`;
+        }
+    };
+
     return (
-        <div className={styles.mssqlAccordion} id="recommended-accordion">
+        <div className={setCSS()} id="recommended-accordion">
             <DsAccordion
                 id="1"
                 title={GENERAL.RECOMMENDED_ES_TITLE}
@@ -254,7 +269,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 }
                                 onClick={() => handleCreateClick()}
                             >
-                                {GENERAL.CREATE}
+                                {GENERAL.CREATE_TEMPLATE}
                             </DsButton>
                         </div>
                     )

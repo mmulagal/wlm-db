@@ -111,6 +111,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             return 'Custom configuration for FSx for Windows';
         }
     };
+
+    const setCSSForTextArea = () => {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            return `${styles.selectionArea} ${styles.selectionAreaOnPrem}`;
+        } else {
+            return styles.selectionArea;
+        }
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -219,6 +227,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <InstanceInformation />
                                     <ComputeInformation />
                                     <StoragePerformance />
+                                    <SavingsSelection printState={printState} />
                                 </>
                             </div>
                         )}
@@ -239,7 +248,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     {/* Text Area */}
 
-                    <div className={styles.selectionArea}>
+                    <div className={setCSSForTextArea()}>
                         <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
                             <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>

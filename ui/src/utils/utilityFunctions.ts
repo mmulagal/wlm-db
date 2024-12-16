@@ -39,6 +39,7 @@ import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
+import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -1707,6 +1708,8 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case WLF_TABS.EXPLORE_SAVINGS_FsxW:
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case WLF_TABS.EXPLORE_SAVINGS_ONPREM:
+            return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case WLF_TABS.SANDBOXES:
             return WLF_TABS.SANDBOXES;
         case WLF_TABS.EXPLORE_SAVINGS:
@@ -1715,5 +1718,19 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.JOB_MONITORING;
         default:
             return selectedHeaderTab;
+    }
+};
+
+interface Dispatch {
+    (action: any): void;
+}
+
+export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): void => {
+    if (tabValue === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+        dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE));
+    } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+        dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_FSX_FOR_WINDOWS));
+    } else {
+        dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
     }
 };

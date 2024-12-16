@@ -349,6 +349,7 @@ export const WLF_TABS = {
     EXPLORE_SAVINGS: 'Explore savings',
     EXPLORE_SAVINGS_EBS: 'Explore savings EBS',
     EXPLORE_SAVINGS_FsxW: 'Explore savings FsxW',
+    EXPLORE_SAVINGS_ONPREM: 'Explore savings OnPrem',
     SAVINGS_CALCULATOR: 'Savings Calculator',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     JOB_MONITORING: 'Job monitoring',

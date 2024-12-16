@@ -664,6 +664,7 @@ export const GENERAL = {
     DB_CREATE_HOST: 'Host:',
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
+    CREATE_TEMPLATE: 'Create template',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
