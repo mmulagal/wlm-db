@@ -69,10 +69,11 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[], flow: string 
     $WarningPreference = 'SilentlyContinue'
 
     try {
+        if($flow -eq 'optimize') {
         #Add MPIO support for iSCSI
         Write-Information "Adding MPIO support for iSCSI"
         $null = New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
-
+        }
         #Enable PathVerificationState
         Write-Information "Enabling PathVerificationState"
         $null = Set-MPIOSetting -NewPathVerificationState Enabled
@@ -105,6 +106,8 @@ const ENABLE_MPIO_AND_CONFIGURE = (iscsiTargetAddresses: string[], flow: string 
         #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
         Write-Information "Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance"
         1..5 | % { Foreach ($TargetPortalAddress in $TargetPortalAddresses) { $null = Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true } }
+        
+        if($flow -eq 'optimize') {
         #Set the MPIO Policy to Round Robin
         Write-Information "Set the MPIO Policy to Round Robin"
         Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
