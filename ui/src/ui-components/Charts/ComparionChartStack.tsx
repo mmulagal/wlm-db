@@ -81,11 +81,14 @@ const ComparisonChartStack = React.memo(
                                                                     <div className={styles.squareChart2} />
                                                                 )}
                                                                 <DsTypography variant="Semibold_14">
-                                                                    {stackIndex === 1
-                                                                        ? tooltipHeading[0]
-                                                                        : tooltipHeading[1]}
+                                                                    {stackIndex === 1 ? tooltipHeading[0] : ''}
                                                                 </DsTypography>
-                                                                <SeparatorComponent variant="vertical" height="20px" />
+                                                                {stackIndex === 1 && (
+                                                                    <SeparatorComponent
+                                                                        variant="vertical"
+                                                                        height="20px"
+                                                                    />
+                                                                )}
                                                                 <DsTypography variant="Semibold_14">
                                                                     {stackIndex === 1 ? tooltipText[0] : tooltipText[1]}
                                                                 </DsTypography>

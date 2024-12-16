@@ -191,7 +191,7 @@ const DashboardInnerPage = () => {
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'View recommendation per configuration in the expand collapse view'
+                        description: 'Expand instances to view recommendations.'
                     }
                 });
                 break;
@@ -206,7 +206,7 @@ const DashboardInnerPage = () => {
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'View recommendation per configuration in the expand collapse view'
+                        description: 'Expand instances to view recommendations.'
                     }
                 });
                 break;
