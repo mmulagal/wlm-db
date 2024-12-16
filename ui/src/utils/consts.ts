@@ -700,7 +700,9 @@ export const GETWELL_VALUES: any = {
     same_drive: 'Same drive',
     critical: 'Critical',
     warning: 'Warning',
-    none: 'None'
+    none: 'None',
+    'separate drive': 'Separate drive',
+    'same drive': 'Same drive'
 };
 
 export const GETWELL_CONFIG: any = {

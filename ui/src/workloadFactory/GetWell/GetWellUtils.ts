@@ -557,6 +557,13 @@ export const formatIndividualCardMainConfig = (
 
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
+            let blockThreeValue = '';
+            if (categoryVal === 'storage') {
+                blockThreeValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else {
+                blockThreeValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
+            }
+
             cardsData = {
                 ...cardsData,
                 [itemName]: {
@@ -567,7 +574,7 @@ export const formatIndividualCardMainConfig = (
                     },
                     block_three: {
                         ...(cardDataDefault?.[itemName]?.block_three || {}),
-                        value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended,
+                        value: blockThreeValue,
                         list: item?.objectsInViolation ? item?.objectsInViolation : null
                     },
                     block_four: {
