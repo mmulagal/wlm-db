@@ -159,18 +159,14 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
 async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
     logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
 
-    const { ssdStorageCapacityInBytes, totalVolumeSizeInBytes } = await getFsxStorageDetails(
-        credentialsId,
-        region,
-        fileSystemId
-    );
+    const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
 
-    const headroomPercent = Math.ceil(
-        ((ssdStorageCapacityInBytes - totalVolumeSizeInBytes) / ssdStorageCapacityInBytes) * 100
-    );
+    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fileSystemId);
+
+    const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
     const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
     const status =
-        headroomPercent < 35
+        headroomPercent < 95 // FOR TESTING ONLY
             ? AssessmentStatus.UNDER_PROVISIONED
             : headroomPercent > 100 &&
               ssdStorageCapacityInBytes &&
@@ -184,7 +180,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     if (status !== AssessmentStatus.OPTIMIZED) {
         missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
         newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-            totalVolumeSizeInBytes,
+            totalUsed,
             ssdStorageCapacityInBytes
         );
     }
@@ -192,7 +188,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
         status,
         headroomPercent,
         ssdStorageCapacityInBytes,
-        totalVolumeSizeInBytes,
+        totalUsed,
         missingPermissions,
         newFsxStorageCapactiyGiB
     };
@@ -558,6 +554,5 @@ async function calculateStorageDrift(
 
     return driftAssessmentData;
 }
-
 
 export { calculateStorageDrift, getHeadroomDrift, getLogVolumeDrift, getTempDbVolumeDrift };

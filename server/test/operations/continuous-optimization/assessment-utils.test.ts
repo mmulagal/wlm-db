@@ -1,4 +1,3 @@
-
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/fsx-scope';
@@ -9,7 +8,10 @@ import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
-import { getMatchingAssessmentStatus, handleOptimizeJobCreation } from '../../../src/operations/continuous-optimization/assessment-utils';
+import {
+    getMatchingAssessmentStatus,
+    handleOptimizeJobCreation
+} from '../../../src/operations/continuous-optimization/assessment-utils';
 import { FINDING } from '../../../src/utils/consts';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
 
@@ -21,7 +23,15 @@ describe('Assessment utils', () => {
     });
 
     it('Handle optimize job creation', async () => {
-        const response = await handleOptimizeJobCreation(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, 'test-server', 'test-job', 'test-job', 'test-job');
+        const response = await handleOptimizeJobCreation(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            'test-server',
+            'test-job',
+            'test-job',
+            'test-job'
+        );
         expect(response).toBeDefined();
     });
 });
