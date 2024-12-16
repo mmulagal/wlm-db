@@ -52,3 +52,6 @@ else
     echo ""
     cfn-signal -e $? --stack $Stackname --resource $ResourceId --region $region
 fi
+
+echo "Sleeping for 60 seconds before exiting for cloudwatch logs to be updated"
+sleep 60
