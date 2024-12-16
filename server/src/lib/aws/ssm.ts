@@ -152,7 +152,7 @@ async function describeInstancePatchStates(
 
     const ssmClient = await getSSMClient(region, credentialsId);
     const response = await ssmClient.send(new DescribeInstancePatchStatesCommand(params));
-    logger.info('Response', response);
+    logger.debug('describeInstancePatchStates response', response);
 
     return response;
 }
