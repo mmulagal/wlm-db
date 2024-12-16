@@ -146,7 +146,7 @@ Resources:
                 configSets:
                     config:
                         - InstallSSMAgent
-                        - CreateTempFolder
+                        - CreateDeploymentFolders
                         - ConfigureCWLogs
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
@@ -160,17 +160,21 @@ Resources:
                         b-install-cloudwatch-agent:
                             command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
                             waitAfterCompletion: '0'
-                CreateTempFolder:
+                CreateDeploymentFolders:
                     commands:
-                        a-create-temp-folder:
+                        a-create-scripts-folder:
                             command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                            waitAfterCompletion: '0'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
+                            waitAfterCompletion: '0'
                 ConfigureCWLogs:
                     files:
                         /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
                             content: !Sub |
                                 {
                                     "agent": {
-                                        "metrics_collection_interval": 5,
+                                        "metrics_collection_interval": 1,
                                         "run_as_user": "cwagent",
                                         "region": "${AWS::Region}"
                                     },
@@ -185,6 +189,11 @@ Resources:
                                                     },
                                                     {
                                                         "file_path": "/home/ec2-user/cfn/log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/var/log/netapp_wf/*.log",
                                                         "log_group_name": "${ParentStackName}",
                                                         "log_stream_name": "{instance_id}"
                                                     }

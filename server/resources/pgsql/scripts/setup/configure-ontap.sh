@@ -1,5 +1,5 @@
 #!/bin/bash
-exec > /var/log/netapp_wf_configure-ontap.log 2>&1
+exec > /var/log/netapp_wf/configure-ontap.log 2>&1
 echo "Setting up the ontap environment..."
 
 # Parse command-line arguments
