@@ -128,7 +128,7 @@ const PotentialSavings = () => {
                             colors={['chart-2', 'chart-3', 'chart-2']}
                             categories={['FSx for ONTAP', 'Amazon Elastic Block Store', 'Amazon Elastic Block Store2']}
                             tooltipHeading={['EBS', 'FSxW']}
-                            tooltipText={['Amazon Elastic Block Store', 'FSx for Windows']}
+                            tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
                         />
                     )}
                 </div>
