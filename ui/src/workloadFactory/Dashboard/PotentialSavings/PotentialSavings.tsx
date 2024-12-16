@@ -9,17 +9,47 @@ import ComparisonChartStack from '../../../ui-components/Charts/ComparionChartSt
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as PotentialSavingsImage } from '../../../assets/potential_savings.svg';
+import { useEffect, useState } from 'react';
+import { GENERAL } from '../../../utils/appConstants';
 
 const PotentialSavings = () => {
     const dispatch = useDispatch();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
+    const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
+    const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
+    const [loading, setLoading] = useState(false);
+
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
         handleURL(value, isWorkloadFactory);
     };
-    const loading = false;
+
     const windowSize = useResize();
     const noData = true;
+
+    useEffect(() => {
+        if (unManagedHostFormatedList) {
+            let ebsCount = 0;
+            let fsxwCount = 0;
+            unManagedHostFormatedList?.map((perRow: any) => {
+                perRow?.sqlServerInstances?.map((row: any) => {
+                    if (row?.fileSystemType === GENERAL.EBS) {
+                        ebsCount++;
+                    } else if (row?.fileSystemType === GENERAL.FSX_FOR_WINDOWS) {
+                        fsxwCount++;
+                    }
+                });
+            });
+            setEsCount({ ebs: ebsCount, fsxw: fsxwCount });
+        }
+    }, [unManagedHostFormatedList]);
+
+    useEffect(() => {
+        setLoading(isDiscoverInProgress || isManagedHostListLoading);
+    }, [isDiscoverInProgress, isManagedHostListLoading]);
+
     return (
         <div className={styles.potentialSavings}>
             <div className={styles.headSection}>
@@ -51,7 +81,7 @@ const PotentialSavings = () => {
                     <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                51
+                                {esCount?.ebs}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>
@@ -78,7 +108,7 @@ const PotentialSavings = () => {
                     <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                37
+                                {esCount?.fsxw}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>
