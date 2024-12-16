@@ -1791,7 +1791,7 @@ async function remediateMpioSessions(
 
     let parsedResponse;
     try {
-        const ssmCommand = REMEDIATE_MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams);
+        const ssmCommand = REMEDIATE_MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams.currentMpioSessionsCount);
         const remediateResponse = await callSsmExecution(
             credentialsId,
             region,
@@ -1908,7 +1908,7 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             standbyRemediateJobStatus = await remediateMpioSessions(optimizeMpioisSessionsParams, false);
         }
 
-        if (primaryRemediateJobStatus === JOBSTATUS.FAILED && standbyRemediateJobStatus === JOBSTATUS.FAILED) {
+        if (primaryRemediateJobStatus === JOBSTATUS.FAILED || standbyRemediateJobStatus === JOBSTATUS.FAILED) {
             await updateJobDetails(accountId, parentJobId, {
                 status: JOBSTATUS.FAILED,
                 endTime: Date.now()
@@ -1976,7 +1976,7 @@ async function optimizeOperatingSystemSettings(
     }
 
     const { metadata, resource_name: sqlServerName } = resourceDetail;
-    const { sqlDeploymentType, node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { sqlDeploymentType = '', node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
     const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
@@ -2110,7 +2110,8 @@ async function optimizeOperatingSystemSettings(
                     sqlAuthEnabled,
                     standbyNodeInstanceId,
                     sqlDeploymentType,
-                    iscsiTargetAddresses
+                    iscsiTargetAddresses,
+                    currentMpioSessionsCount: []
                 });
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
@@ -2152,7 +2153,8 @@ async function optimizeOperatingSystemSettings(
                     instanceMetadata,
                     svmId,
                     sqlDeploymentType,
-                    iscsiTargetAddresses
+                    iscsiTargetAddresses,
+                    currentMpioSessionsCount: []
                 });
             } catch (error) {
                 const errorMessage = `Error while enabling MPIO and configuring MPIO sessions: ${error}`;
