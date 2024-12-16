@@ -1382,7 +1382,7 @@ const PGSQL_RESOURCE_ASSETS = [
     },
     {
         name: 'FsxCertificates',
-        url: `${WLMDB}/pgsql/fsx_certs.zip`
+        url: `${WLMDB}/fsx_certs.zip`
     }
 ];
 
