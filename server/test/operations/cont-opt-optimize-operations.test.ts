@@ -105,7 +105,7 @@ beforeAll(async () => {
                     'default-data-files-location': 'separate-drive'
                 },
                 sizing: {
-                    'performance-tier': true,
+                    'performance-tier': [100, 100, 100],
                     'data-log-drive-details': [
                         {
                             databaseName: 'casaba',

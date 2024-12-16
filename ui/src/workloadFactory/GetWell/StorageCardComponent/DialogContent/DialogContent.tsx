@@ -175,7 +175,7 @@ const DialogContent = ({
                                         <Bullet />
                                     </div>
                                     <DsTypography variant="Regular_14">
-                                        Data movement: The data will be moved gradually from the capacity tier to the
+                                        Data movement: The data will move gradually from the capacity tier to the
                                         performance tier.
                                     </DsTypography>
                                 </div>

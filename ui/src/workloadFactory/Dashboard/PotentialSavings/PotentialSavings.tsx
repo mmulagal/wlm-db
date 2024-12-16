@@ -9,6 +9,7 @@ import ComparisonChartStack from '../../../ui-components/Charts/ComparionChartSt
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import useResize from '../../../common/hooks/useResize';
 import { ReactComponent as PotentialSavingsImage } from '../../../assets/potential_savings.svg';
+import { ReactComponent as PotentialSavingsDarkModeImage } from '../../../assets/potential_savings_darkMode.svg';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 
@@ -20,6 +21,7 @@ const PotentialSavings = () => {
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
     const [loading, setLoading] = useState(false);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
@@ -63,8 +65,13 @@ const PotentialSavings = () => {
                 {/* {loading && <FlashingDotsLoader />} */}
 
                 <div className={styles.rightSection}>
-                    {/* {loading && <FlashingDotsLoader />} */}
-                    <DsButton variant="secondary" isThin={true} onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}>
+                    {loading && <DsFlashingDotsLoader />}
+                    <DsButton
+                        variant="secondary"
+                        isThin={true}
+                        onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
+                        isDisabled={loading}
+                    >
                         Explore savings
                     </DsButton>
                 </div>
@@ -117,7 +124,7 @@ const PotentialSavings = () => {
                     </div>
                 </div>
                 <div className={styles.chartSection}>
-                    {noData && <PotentialSavingsImage />}
+                    {noData && (isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />)}
                     {!noData && (
                         <ComparisonChartStack
                             data={[[3750], [6475, 6475]]}
@@ -126,7 +133,7 @@ const PotentialSavings = () => {
                             colors={['chart-2', 'chart-3', 'chart-2']}
                             categories={['FSx for ONTAP', 'Amazon Elastic Block Store', 'Amazon Elastic Block Store2']}
                             tooltipHeading={['EBS', 'FSxW']}
-                            tooltipText={['Amazon Elastic Block Store', 'FSx for Windows']}
+                            tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
                         />
                     )}
                 </div>

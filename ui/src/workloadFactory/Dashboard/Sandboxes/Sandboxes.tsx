@@ -1,11 +1,11 @@
-import { DsTypography, DsButton } from '@netapp/design-system';
-import { useDispatch, useSelector } from 'react-redux';
+import { DsTypography, DsButton, DsFlashingDotsLoader } from '@netapp/design-system';
+import { useDispatch } from 'react-redux';
 import styles from './Sandboxes.module.scss';
 import SandboxChart from '../../Sandbox/SandboxDistributionDate/SandboxChart/SandboxChart';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { getSandboxDistributionByAge } from '../../Sandbox/SandboxUtility';
+import { getSandboxDistributionByAgeValue } from '../../Sandbox/SandboxUtility';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { WLF_TABS } from '../../../utils/consts';
@@ -54,14 +54,15 @@ const Sandboxes = () => {
                             >
                                 {GENERAL.ONE_THIRTY_DAYS}
                             </DsTypography>
+                            {loading && <DsFlashingDotsLoader />}
                         </div>
 
                         <div className={styles.count}>
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAge(aggregatedSandboxList)['0-30']
-                                    } ${GENERAL.SANDBOXES}`}</DsTypography>
+                                        getSandboxDistributionByAgeValue(aggregatedSandboxList)['0-30']
+                                    }`}</DsTypography>
                                 </>
                             )}
 
@@ -92,14 +93,15 @@ const Sandboxes = () => {
                             >
                                 {GENERAL.THIRTY_SIXTY_DAYS}
                             </DsTypography>
+                            {loading && <DsFlashingDotsLoader />}
                         </div>
 
                         <div className={styles.count}>
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
-                                    } ${GENERAL.SANDBOXES}`}</DsTypography>
+                                        getSandboxDistributionByAgeValue(aggregatedSandboxList)['31-60']
+                                    }`}</DsTypography>
                                 </>
                             )}
 
@@ -130,14 +132,15 @@ const Sandboxes = () => {
                             >
                                 {GENERAL.SIXTY_PLUS_DAYS}
                             </DsTypography>
+                            {loading && <DsFlashingDotsLoader />}
                         </div>
 
                         <div className={styles.count}>
                             {!isNA && (
                                 <>
                                     <DsTypography variant="Semibold_14">{`${
-                                        getSandboxDistributionByAge(aggregatedSandboxList)['61+']
-                                    } ${GENERAL.SANDBOXES}`}</DsTypography>
+                                        getSandboxDistributionByAgeValue(aggregatedSandboxList)['61+']
+                                    }`}</DsTypography>
                                 </>
                             )}
 

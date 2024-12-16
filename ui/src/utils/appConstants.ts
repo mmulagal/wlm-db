@@ -875,6 +875,7 @@ export const GENERAL = {
     SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
+    SANDBOX: 'Sandbox',
     SANDBOXES: 'Sandboxes',
     SANDBOX_HEADER_CONTENT:
         'Sandbox is an on-demand, isolated database environment that can be used for testing, integration, diagnostics, and training, without affecting production data. It streamlines the development lifecycle while ensuring data integrity and security.',
