@@ -77,7 +77,7 @@ import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsM
 import store from '../../../store/store';
 import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-const _ = require('lodash');
+import { isEqual } from 'lodash';
 
 type optionsType = {
     value?: string | number;
@@ -640,7 +640,7 @@ const Chatbot = () => {
                     }
                     break;
                 case 'tags':
-                    if (!_.isEqual(mssqlFormData?.tags, value)) {
+                    if (!isEqual(mssqlFormData?.tags, value)) {
                         dispatch(setTags(value || []));
                     }
                     break;

@@ -4,8 +4,10 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
-
-const FileSystemHeadroomTable = () => {
+interface StorageTierTableProps {
+    handleDialog: (dialogType: string) => void;
+}
+const FileSystemHeadroomTable = ({ handleDialog }: StorageTierTableProps) => {
     const mockData = [
         {
             serverInstanceName: 'SQL Server 1',
@@ -47,7 +49,13 @@ const FileSystemHeadroomTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.buttonContainer}>
-                        <DsButton isThin variant="secondary" onClick={() => {}}>
+                        <DsButton
+                            isThin
+                            variant="secondary"
+                            onClick={() => {
+                                handleDialog('File system headroom');
+                            }}
+                        >
                             Optimize
                         </DsButton>
                     </div>

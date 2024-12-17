@@ -54,7 +54,9 @@ import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection
 
 const GetWell = () => {
     const dispatch = useDispatch();
-    const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
+    const { optimizeFilterTags, defaultFilterOptions, breadCrumbSelectedFrom } = useAppSelector(
+        state => state.inventoryV2
+    );
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -188,6 +190,12 @@ const GetWell = () => {
                 label: 'Compute',
                 value: 'Compute_sub',
                 category: 'Compute'
+            },
+            {
+                id: 4,
+                label: GENERAL.APPLICATION_SQL_SERVER,
+                value: 'Application_sub',
+                category: GENERAL.APPLICATION_SQL_SERVER
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -236,9 +244,13 @@ const GetWell = () => {
                         <BreadCrumbs
                             items={[
                                 {
-                                    title: 'Inventory',
+                                    title: breadCrumbSelectedFrom === WLF_TABS.INVENTORY ? 'Inventory' : 'Dashboard',
                                     onClick: () => {
-                                        dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                        if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
+                                        } else {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                                        }
                                         dispatch(resetGwData({}));
                                     }
                                 },
@@ -390,7 +402,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 2
+                                                                : 3
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -404,6 +416,11 @@ const GetWell = () => {
                                                             id: 1,
                                                             label: 'Compute',
                                                             value: 'Compute'
+                                                        },
+                                                        {
+                                                            id: 2,
+                                                            label: GENERAL.APPLICATION_SQL_SERVER,
+                                                            value: 'Application'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -1274,6 +1291,7 @@ const GetWell = () => {
                                                     tableData={ontapConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
+                                                    from={WLF_TABS.INVENTORY}
                                                 />
                                             }
                                         />
@@ -1328,6 +1346,7 @@ const GetWell = () => {
                                                     tableData={osConfigTableData}
                                                     isLoading={loading}
                                                     optimizePrintState={optimizePrintState}
+                                                    from={WLF_TABS.INVENTORY}
                                                 />
                                             }
                                             style={{ marginBottom: '40px' }}
@@ -1339,7 +1358,7 @@ const GetWell = () => {
                     )}
 
                     {/* Section four */}
-                    {(filteredCardData?.compute_rightsizing || filteredCardData?.operating_system_patch) && (
+                    {(filteredCardData?.compute_rightsizing || filteredCardData?.host_os_patch) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -1440,26 +1459,24 @@ const GetWell = () => {
                                     </div>
                                 )}
 
-                                {/* {filteredCardData?.operating_system_patch && (
+                                {filteredCardData?.host_os_patch && (
                                     <div className={styles.combineComponent}>
                                         <StorageCardComponent
-                                            cardData={filteredCardData?.operating_system_patch}
+                                            cardData={filteredCardData?.host_os_patch}
                                             optimizePrintState={optimizePrintState}
-                                            type="Operating system patch"
+                                            type={GENERAL.OPERATING_SYSTEM_PATCH}
                                         />
                                         <DsAccordion
                                             id="12"
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.operating_system_patch?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
-                                                        }
-                                                    )}
+                                                    {filteredCardData?.host_os_patch?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
                                                 </div>
                                             }
-                                            isDisabled={loading || !cardData?.operating_system_patch?.block_two?.value}
+                                            isDisabled={loading || !cardData?.host_os_patch?.block_two?.value}
                                             isExpanded={optimizePrintState}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
@@ -1468,8 +1485,7 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ||
-                                                        !cardData?.operating_system_patch?.block_two?.value ? (
+                                                        {loading || !cardData?.host_os_patch?.block_two?.value ? (
                                                             <LightDisabled />
                                                         ) : (
                                                             <Light />
@@ -1478,8 +1494,7 @@ const GetWell = () => {
                                                     <div
                                                         style={{
                                                             color:
-                                                                loading ||
-                                                                !cardData?.operating_system_patch?.block_two?.value
+                                                                loading || !cardData?.host_os_patch?.block_two?.value
                                                                     ? 'var(--text-disabled)'
                                                                     : 'var(--text-button-primary)'
                                                         }}
@@ -1490,12 +1505,84 @@ const GetWell = () => {
                                             ]}
                                             children={
                                                 <RecommendationText
-                                                    data={filteredCardData?.operating_system_patch?.recommendation}
+                                                    data={filteredCardData?.host_os_patch?.recommendation}
+                                                />
+                                            }
+                                            style={{ marginBottom: '40px' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section five */}
+                    {filteredCardData?.sql_licenses && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    {GENERAL.APPLICATION_SQL_SERVER}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.sql_licenses && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.sql_licenses}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.APPLICATION_SQL_SERVER}
+                                        />
+                                        <DsAccordion
+                                            id="13"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.sql_licenses?.block_two?.value}
+                                            isExpanded={optimizePrintState}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.sql_licenses?.tags?.map((perTag: string) => {
+                                                        return <Tag text={perTag} />;
+                                                    })}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.sql_licenses?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.sql_licenses?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.sql_licenses?.recommendation}
                                                 />
                                             }
                                         />
                                     </div>
-                                )} */}
+                                )}
                             </div>
                         </div>
                     )}

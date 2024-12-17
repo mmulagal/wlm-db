@@ -10,6 +10,7 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
+import { GENERAL } from '../../utils/appConstants';
 import {
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -17,7 +18,12 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL
 } from '../../utils/consts';
-import { AssessmentResponseInterface, GwCardDataInterface, PerConfigInterface } from '../../utils/types/getWellTypes';
+import {
+    AssessmentResponseInterface,
+    GwCardDataInterface,
+    GwSqlServerInstanceInterface,
+    PerConfigInterface
+} from '../../utils/types/getWellTypes';
 import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
@@ -67,7 +73,7 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
-            values: ['Under-provisioned: 0-35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
+            values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
     },
@@ -92,7 +98,7 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'Log drive size recommendation',
             description:
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-            values: ['Under-provisioned: 0-20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
+            values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
     },
@@ -117,7 +123,7 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-            values: ['Under-provisioned: 0-10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
+            values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
     },
@@ -316,10 +322,10 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },
-    operating_system_patch: {
+    host_os_patch: {
         block_one: {
             type: 'Compute',
-            value: 'Operating system patch'
+            value: GENERAL.OPERATING_SYSTEM_PATCH
         },
         block_two: {
             type: 'Status',
@@ -327,7 +333,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_three: {
             type: 'Missing patches',
-            value: ''
+            value: '',
+            smallFont: true
         },
         block_four: {
             type: 'Severity',
@@ -336,14 +343,155 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
-                'Whenever possible, it is highly recommended to apply the latest patches to ensure security and stability.\nDoing so will help protect your SQL Server DB from vulnerabilities and significantly improve overall system reliability.'
+                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities and significantly improves overall system reliability.'
         },
-        tags: ['Security']
+        tags: ['Security', 'Reliability']
+    },
+    sql_licenses: {
+        block_one: {
+            type: GENERAL.APPLICATION_SQL_SERVER,
+            value: 'Licenses'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'License edition',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'License recommendation',
+            descriptionList: [
+                {
+                    title: 'Not optimized: ',
+                    description:
+                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An not-optimized license \nmight result in unnecessary costs.'
+                },
+                {
+                    title: 'Optimized: ',
+                    description:
+                        'A license is considered "optimized" when the commercial software license for your databases meets your \nperformance requirements.'
+                }
+            ],
+            info: 'The SQL Server license assessment and recommendation are provided at the host level.'
+        },
+        tags: ['Cost optimization']
     }
 };
 
+export const formatApplicationCardMainConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.license;
+    let categoryVal = 'application';
+    let itemName = item?.name || '';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let licenseVal = '';
+    const state = store.getState();
+    const selectedDatabaseInstanceName = state.getWellOptimize.selectedDatabaseInstanceName || '';
+    const instance = item?.sqlServerInstances?.find(
+        (instance: GwSqlServerInstanceInterface) => instance?.sqlServerInstance === selectedDatabaseInstanceName
+    );
+    const selectedDatabaseLicense = instance?.sqlServerEdition || '';
+    if (selectedDatabaseLicense.includes('Standard')) {
+        licenseVal = 'Standard';
+    } else if (selectedDatabaseLicense.includes('Enterprise')) {
+        licenseVal = 'Enterprise';
+    } else if (selectedDatabaseLicense.includes('Developer')) {
+        licenseVal = 'Developer';
+    } else {
+        licenseVal = selectedDatabaseLicense;
+    }
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: licenseVal
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
+};
+
+export const formatOsPatchCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.hostOsPatch;
+    let categoryVal = 'compute';
+    let itemName = item?.name || 'host-os-patch';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let totalViolations = 0;
+
+    data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
+        totalViolations += perInstance?.criticalNonCompliantCount || 0;
+        totalViolations += perInstance?.securityNonCompliantCount || 0;
+    });
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: totalViolations
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            tags: item?.tags || cardDataDefault?.[itemName]?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
+};
+
 // This function is used to format the data for the individual card main config.
-export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatIndividualCardMainConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string }
+) => {
     let cardsData: any = cardDataDefault;
     let cardMainConfig = [data?.storage?.sizing, data?.storage?.layout];
     let computeMissingPermissions = false;
@@ -358,7 +506,16 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                 errorMessage: data?.compute?.errorMessage
             }
         ]);
+    } else {
+        cardMainConfig?.push([
+            {
+                ...data?.compute,
+                name: 'compute-rightsizing',
+                errorMessage: data?.compute?.errorMessage
+            }
+        ]);
     }
+
     cardMainConfig?.map((category, index) => {
         let categoryVal = '';
         if (index === 0 || index === 1) {
@@ -377,6 +534,9 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
             }
         });
         category?.map((item: PerConfigInterface) => {
+            if (item?.name === 'user-database-layout') {
+                return;
+            }
             let itemName = item?.name || '';
             let status = item?.status || '';
             let severity = item?.severity || '';
@@ -397,6 +557,13 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
 
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
+            let blockThreeValue = '';
+            if (categoryVal === 'storage') {
+                blockThreeValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else {
+                blockThreeValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
+            }
+
             cardsData = {
                 ...cardsData,
                 [itemName]: {
@@ -407,7 +574,7 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
                     },
                     block_three: {
                         ...(cardDataDefault?.[itemName]?.block_three || {}),
-                        value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended,
+                        value: blockThreeValue,
                         list: item?.objectsInViolation ? item?.objectsInViolation : null
                     },
                     block_four: {
@@ -429,7 +596,7 @@ export const formatIndividualCardMainConfig = (data: AssessmentResponseInterface
 };
 
 // This function is used to format the ONTAP configuration data.
-export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let ontapTagsList: Array<string> = [];
     let highestOntapSeverity = 'None';
     let formatOntapConfigList: PerConfigInterface[] = [];
@@ -505,7 +672,7 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 };
 
 // This function is used to format the OS configuration data.
-export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: any) => {
+export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     let osTagsList: Array<string> = [];
     let highestOsSeverity = 'None';
     let formatOsConfigList: PerConfigInterface[] = [];
@@ -558,6 +725,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let notOptimizedStorage = 0;
     let optimizedCompute = 0;
     let notOptimizedCompute = 0;
+    let optimizedApplication = 0;
+    let notOptimizedApplication = 0;
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
@@ -572,6 +741,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
+            }
+        } else if (nestedObject?.category === 'application') {
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+                optimizedApplication++;
+            } else {
+                notOptimizedApplication++;
             }
         }
     });
@@ -592,20 +767,31 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             ? formatNumberWithCustomComma((optimizedCompute / (optimizedCompute + notOptimizedCompute)) * 100)
             : 0
     };
+    let applicationCount = {
+        total: optimizedApplication + notOptimizedApplication,
+        optimized: optimizedApplication,
+        notOptimized: notOptimizedApplication,
+        percent: optimizedApplication
+            ? formatNumberWithCustomComma(
+                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+              )
+            : 0
+    };
 
     let optBreakDown = {
         storage: storageCount,
         compute: computeCount,
+        application: applicationCount,
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            total: storageCount?.total + computeCount?.total,
-            optimized: storageCount?.optimized + computeCount?.optimized,
-            notOptimized: storageCount?.notOptimized + computeCount?.notOptimized,
+            total: storageCount?.total + computeCount?.total + applicationCount?.total,
+            optimized: storageCount?.optimized + computeCount?.optimized + applicationCount?.optimized,
+            notOptimized: storageCount?.notOptimized + computeCount?.notOptimized + applicationCount?.notOptimized,
             percent:
-                storageCount?.optimized || computeCount?.optimized
+                storageCount?.optimized || computeCount?.optimized || applicationCount?.optimized
                     ? formatNumberWithCustomComma(
-                          ((storageCount?.optimized + computeCount?.optimized || 0) /
-                              (storageCount?.total + computeCount?.total || 1)) *
+                          ((storageCount?.optimized + computeCount?.optimized + applicationCount?.optimized || 0) /
+                              (storageCount?.total + computeCount?.total + applicationCount?.total || 1)) *
                               100
                       )
                     : 0
@@ -614,15 +800,7 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     return optBreakDown;
 };
 
-// This function is used to format the get well data.
-export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
-    const state = store.getState();
-    const optimizingData = state.getWellOptimize.optimizingData || {};
-    if (!data) {
-        data = state.getWellOptimize.driftAssessmentData || {};
-    }
-    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
-
+export const getCardsData = (data: AssessmentResponseInterface, optimizingData: { [key: string]: string }) => {
     const {
         formatOntapConfigList,
         ontapTagsList,
@@ -630,6 +808,12 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
         ontapNotOptimizedConfig,
         highestOntapSeverity
     } = formatOntapConfig(data, optimizingData);
+
+    let cardsData = formatIndividualCardMainConfig(data, optimizingData);
+
+    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
+
+    cardsData = formatOsPatchCardConfig(data, optimizingData, cardsData);
 
     cardsData = {
         ...cardsData,
@@ -685,6 +869,18 @@ export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterf
             category: 'storage'
         }
     };
+
+    return { cardsData, formatOntapConfigList, formatOsConfigList };
+};
+
+// This function is used to format the get well data.
+export const formatGetWellData = (dispatch: any, data?: AssessmentResponseInterface | undefined) => {
+    const state = store.getState();
+    const optimizingData = state.getWellOptimize.optimizingData || {};
+    if (!data) {
+        data = state.getWellOptimize.driftAssessmentData || {};
+    }
+    let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(data, optimizingData);
 
     let optBreakDown = formatOptimizationBreakDown(cardsData);
 
@@ -785,7 +981,9 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-        compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' }
+        compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
+        host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
+        sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
     };
     Object.keys(cardData).map((key: any) => {
         const checkCategory =

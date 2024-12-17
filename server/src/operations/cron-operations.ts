@@ -293,7 +293,7 @@ async function scheduledAssessment() {
         driftAssessmentQueue.upsertJobScheduler(
             contOpt,
             {
-                every: Number(ms(config.get('redis.cron-job-interval'))) // 24 hours in milliseconds
+                pattern: '0 0 0 * * *' // Run every day at midnight
             },
             {
                 name: contOpt,

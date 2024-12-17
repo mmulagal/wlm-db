@@ -1,7 +1,12 @@
 import { Button, DsFlashingDotsLoader, DsTypography, Popover, TooltipInfo } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../store/notificationSlice';
 import store from '../../store/store';
-import { setFsxCredentialStatus, setSelectedHeaderTab, setUnManagedPerfInstanceIdsList } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    setFsxCredentialStatus,
+    setManagedAssessmentHostIdsList,
+    setSelectedHeaderTab,
+    setUnManagedPerfInstanceIdsList
+} from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     DETECT_HOST_VAR,
@@ -39,6 +44,8 @@ import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
+import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -1882,6 +1889,30 @@ export const getProtectionText = (data: any) => {
     return protectionText;
 };
 
+export const getOptimizationStatus = (
+    databaseInstanceId: string,
+    optimizationStatusList: Array<HostAssessmentResponseInterface>
+) => {
+    if (!optimizationStatusList) {
+        return '';
+    }
+    let instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
+    let optimizationStatus = '';
+    if (instanceRow && instanceRow?.assessments) {
+        let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
+        let optBreakDown = formatOptimizationBreakDown(cardsData);
+        optimizationStatus =
+            optBreakDown?.total?.notOptimized !== 0
+                ? optBreakDown?.total?.notOptimized === 1
+                    ? optBreakDown?.total?.notOptimized + ' recommendation'
+                    : optBreakDown?.total?.notOptimized + ' recommendations'
+                : 'Optimized';
+    } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
+        optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
+    }
+    return optimizationStatus;
+};
+
 export const getPartnerNodeEc2InstanceId = (error: string) => {
     const pattern = new RegExp(`\\b${PARTNER_NODE}\\b\\s*((?:\\w|-)+)`);
     const match = pattern.exec(error);
@@ -1912,6 +1943,21 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
             dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...instanceList]));
         }
         // This has to be called even if any row is becoming unmanaged row or managed row
+    }
+};
+
+export const addInstanceIdToGetAssessment = (rowData: any, dispatch: any) => {
+    // First check if this is already opened or closed. If this data is already available or not.
+    const state = store.getState();
+    const managedAssessmentIdsList = state.inventoryV2.managedAssessmentHostIdsList;
+    if (!managedAssessmentIdsList.includes(rowData?.resourceId)) {
+        // If this has unmanaged rows or not ?
+        let managedRows = rowData?.sqlServerInstances?.filter(
+            (per: any) => per?.statusColText === INVENTORY_STATUS.MANAGED
+        );
+        if (managedRows && managedRows?.length > 0 && rowData?.resourceId) {
+            dispatch(setManagedAssessmentHostIdsList([...managedAssessmentIdsList, rowData?.resourceId]));
+        }
     }
 };
 

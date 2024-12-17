@@ -39,7 +39,8 @@ import {
     installModuleNotification,
     renderCellData,
     renderEstimatedCost,
-    renderAllocatedCapacity
+    renderAllocatedCapacity,
+    addInstanceIdToGetAssessment
 } from '../InventoryUtilsV2';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../utils/apiService';
@@ -574,6 +575,7 @@ const InventoryTable = () => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
                                     addInstanceIdToGetPerf(rowData, dispatch);
+                                    addInstanceIdToGetAssessment(rowData, dispatch);
                                 }}
                             />
                         </div>

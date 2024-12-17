@@ -13,6 +13,7 @@ export interface GetWellSliceInterface {
     optimizationBreakDown: {
         storage?: CountBreakDown;
         compute?: CountBreakDown;
+        application?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -48,6 +49,14 @@ export interface AssessmentResponseInterface {
         layout?: PerConfigInterface[];
     };
     compute?: PerConfigInterface;
+    license?: PerConfigInterface;
+    hostOsPatch?: PerConfigInterface;
+}
+
+export interface HostAssessmentResponseInterface {
+    databaseInstanceId: string;
+    assessments?: AssessmentResponseInterface;
+    error?: string;
 }
 
 export interface PerConfigInterface {
@@ -65,6 +74,14 @@ export interface PerConfigInterface {
     errorMessage?: string;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    ec2InstancesToPatch?: Array<{
+        baselineId?: string;
+        criticalNonCompliantCount?: number;
+        ec2InstanceId?: string;
+        operationStartTime?: number;
+        operationEndTime?: number;
+        securityNonCompliantCount?: number;
+    }>;
 }
 
 export interface GwCardDataInterface {
@@ -95,9 +112,21 @@ export interface GwPerConfigCardInterface {
     };
     recommendation?: {
         title: string;
-        description: string;
+        description?: string;
         values?: string[] | undefined;
+        descriptionList?: Array<{ title: string; description: string }> | undefined;
+        info?: string;
     };
     tags: string[];
     category?: string;
+}
+
+export interface GwSqlServerInstanceInterface {
+    sqlServerInstance: string;
+    sqlServerState?: string;
+    sqlServerVersion?: string;
+    sqlServerProductYear?: number;
+    sqlServerEdition: string;
+    sqlServerEngineEdition?: number;
+    sqlServerName?: string;
 }

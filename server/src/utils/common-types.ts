@@ -1,6 +1,52 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
+import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
 
+interface LicenseAssessment {
+    licenseFinding: string;
+    recommendedLicenseType: string;
+    sqlServerInstances?: {
+        sqlServerInstance: string;
+        sqlServerState: string;
+        sqlServerVersion: string;
+        sqlServerProductYear: number;
+        sqlServerEdition?: string;
+        sqlServerEngineEdition?: number;
+        sqlServerName?: string;
+    }[];
+}
+interface ComputeAssessment {
+    currentInstanceType: string;
+    finding: string;
+    findingReasonCodes: string[];
+    recommendationOptions: {
+        instanceType?: string;
+        rank?: number;
+        savingsOpportunity: SavingsOpportunity;
+        platformDifferences: PlatformDifference[];
+    }[];
+}
+
+interface HostOsPatchAssessmentObject {
+    baselineId: string;
+    criticalNonCompliantCount: number;
+    ec2InstanceId: string;
+    operationStartTime: number;
+    operationEndTime: number;
+    securityNonCompliantCount: number;
+    missingPatchDetails?: {
+        classification?: string;
+        kbId?: string;
+        severity?: string;
+        state?: string;
+        title?: string;
+    }[];
+}
+interface ResourceAssessmentData {
+    license?: LicenseAssessment;
+    compute?: ComputeAssessment;
+    hostOsPatch?: HostOsPatchAssessmentObject[];
+}
 interface Metadata {
     node1InstanceId: string;
     node2InstanceId?: string;
@@ -10,6 +56,7 @@ interface Metadata {
     activeDirectoryAddress?: string;
     creationDate?: string;
     fsxSvmId?: string;
+    fsxDataVolumeName?: string;
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
@@ -18,6 +65,9 @@ interface Metadata {
     updatedManually?: boolean;
     storageProtocol?: string;
     isComputeOptimized?: boolean;
+    isLicenseOptimized?: boolean;
+    isHostOsPatchOptimized?: boolean;
+    assessment?: ResourceAssessmentData;
 }
 interface databaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
@@ -317,7 +367,7 @@ type VolumeSpaceRecord = {
     };
 };
 
-interface OptimizeMpioPolicyParams {
+interface OptimizeParams {
     accountId: string;
     region: string;
     credentialsId: string;
@@ -330,20 +380,38 @@ interface OptimizeMpioPolicyParams {
     serverNameWithHostName: string;
     databaseHostId: string;
     databaseInstanceId: string;
-    sqlDeploymentType?: string;
     activeNodeInstanceId?: string;
-    activeNodeName?: string;
     standbyNodeInstanceId?: string;
-    standbyNodeName?: string;
     awsAccountId: string;
+    instanceMetadata: any;
+    sqlDeploymentType: string;
+}
+
+interface OptimizeMpioPolicyParams extends OptimizeParams {
+    activeNodeName?: string;
+    standbyNodeName?: string;
     changeClusterOwnership?: boolean;
     activeNodeCurrentPolicy?: string;
     standbyNodeCurrentPolicy?: string;
-    instanceMetadata: any;
+}
+
+interface SessionsCountPerIscsiTarget {
+    address: string;
+    count: number;
+}
+interface OptimizeMpioIscsiSessionsParams extends OptimizeParams {
+    svmId: string;
+    iscsiTargetAddresses: string[];
+    currentMpioSessionsCount: SessionsCountPerIscsiTarget[];
 }
 
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
     resource: Resource;
+}
+
+interface StorageTierParams extends OptimizeParams {
+    svmId: string;
+    svmName: string;
 }
 
 export {
@@ -374,5 +442,11 @@ export {
     VolumeSpaceRecord,
     OptimizeMpioPolicyParams,
     StorageLayout,
-    DatabaseInstancesIncludingResource
+    DatabaseInstancesIncludingResource,
+    StorageTierParams,
+    ComputeAssessment,
+    LicenseAssessment,
+    HostOsPatchAssessmentObject,
+    OptimizeMpioIscsiSessionsParams,
+    SessionsCountPerIscsiTarget
 };

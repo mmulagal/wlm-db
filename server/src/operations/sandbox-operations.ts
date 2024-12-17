@@ -279,7 +279,7 @@ async function getSandboxesInfo(accountId: string, credentialsId: string, region
     );
 
     if (isEmpty(resourceDetails)) {
-        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+        logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
 
@@ -334,7 +334,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
         );
 
         if (isEmpty(resourceDetails)) {
-            logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+            logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
             return savingsData;
         }
 

@@ -2,7 +2,9 @@ import config from 'config';
 
 enum AssessmentCategories {
     STORAGE = 'storage',
-    COMPUTE = 'compute'
+    COMPUTE = 'compute',
+    LICENSE = 'license',
+    HOST_OS_PATCH = 'host-os-patch'
 }
 
 enum AssessmentTriggeredBy {

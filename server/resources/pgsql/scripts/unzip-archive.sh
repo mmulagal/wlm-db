@@ -1,4 +1,6 @@
 #!/bin/bash
+exec > /var/log/netapp_wf/unzip_archive.log 2>&1
+
 usage() {
     echo "Usage: $0 -s <source> -d <destination>"
     exit 1

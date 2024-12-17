@@ -26,6 +26,23 @@
         align-items: center;
     }
 
+    .statusCol {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .naContainer {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
     .extraDiv2 {
         width: 70px;
         position: sticky;
@@ -85,7 +102,7 @@
     }
 
     .managedSubTable {
-        width: 1500px;
+        width: 1670px;
         padding: 48px 12px 48px 0;
     }
 

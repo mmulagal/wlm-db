@@ -324,7 +324,10 @@ function Test-IscsiSessions {
         $detailsByTargetAndInitiator[$key].TotalSessions += 1
         if ($session.IsConnected) {
             $detailsByTargetAndInitiator[$key].ActiveSessions += 1
-            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session -ErrorAction SilentlyContinue).TargetPortalAddress
+            if([string]::IsNullOrEmpty($targetPortalAddress)) {
+                continue
+            }
             $targetPortalAddressCounts = $detailsByTargetAndInitiator[$key].TargetPortalAddressCounts
             if ($targetPortalAddressCounts.ContainsKey($targetPortalAddress)) {
                 $targetPortalAddressCounts[$targetPortalAddress]++
@@ -360,7 +363,7 @@ function Test-IscsiSessions {
 `;
 
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
-    `
+    `#Get Storage Configuration Assessment
     $DriftAssessmentData = @{}
     $DriftAssessmentData['errors'] = @{}
     $sqlInstance = "${instanceRecord.name}"
@@ -432,6 +435,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
         $isPerformanceTier100Percent = $true
         # loop through each volume and get data
+        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent
         foreach ($perVolumeData in $Volumes) {
         if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
                 $isPerformanceTier100Percent = $false
@@ -512,9 +516,10 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'user-database-layout' = $($responseObject);}
         
         $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = $isPerformanceTier100Percent;
+                                        'performance-tier' = $PerformanceTierPercent;
                                         'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);}
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
+                                        }
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
         $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
@@ -523,11 +528,15 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     # gather OS configuration data 
      $DriftAssessmentData['os'] = @{}
     try{
-        $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 | Select ProductId,VendorId 
+        $MpioResponse = Get-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9 -ErrorAction SilentlyContinue | Select ProductId,VendorId 
+        
         $MpioStatus = $false
-        if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
-            $MpioStatus = $true
+        if(-not ([string]::IsNullOrEmpty($MpioResponse))) {
+             if(($MpioResponse.VendorId -eq "MSFT2005") -and ($MpioResponse.ProductId -eq "iSCSIBusType_0x9")) {
+                $MpioStatus = $true
+            } 
         }
+       
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
         
         # Fetch load balancing policy for all NetApp disks

@@ -243,14 +243,24 @@ async function getJobDetails(accountId: string, jobId: string, credentialsId?: s
     }
 }
 
-async function getSubJobs(accountId: string, jobId: string, credentialsId?: string, region?: string) {
+async function getSubJobs(
+    accountId: string,
+    jobId: string,
+    credentialsId?: string,
+    region?: string,
+    flatten: boolean = false
+) {
     logger.info('Get subjobs', { accountId, credentialsId, region, jobId });
 
     const subJobs = await listJobs(accountId, credentialsId, region, jobId);
     await Promise.all(
         (subJobs || []).map(async (subJob: JobWithSubJobsDbSchema) => {
             const { id } = subJob;
-            subJob.subJobs = await getSubJobs(accountId, id, credentialsId, region);
+            if (flatten) {
+                subJobs.concat(await getSubJobs(accountId, id, credentialsId, region));
+            } else {
+                subJob.subJobs = await getSubJobs(accountId, id, credentialsId, region);
+            }
         })
     );
     return subJobs;
@@ -355,18 +365,37 @@ async function getJobSummaryByTime(
     }, []);
 }
 
+async function getLongRunningJobsAndSubjobs() {
+    let runningJobs = await listLongRunningJobs();
+    await Promise.all(
+        runningJobs.map(async masterJob => {
+            const subjobs = await getSubJobs(
+                masterJob.account_id,
+                masterJob.id,
+                masterJob.credentials_id,
+                masterJob.region,
+                true
+            );
+            runningJobs = runningJobs.concat(subjobs);
+        })
+    );
+    return runningJobs;
+}
+
 async function updateLongRunningJobs() {
     logger.info('Checking for long running (> 4 HOURS) parent deployment jobs');
-    const runningJobs = await listLongRunningJobs();
+    const runningJobs = await getLongRunningJobsAndSubjobs();
     try {
         await Promise.all(
             runningJobs.map(async runningJob => {
                 logger.info('Marking job as failed ', runningJob.name);
-                updateJobDetails(runningJob.account_id, runningJob.id, {
-                    status: JOBSTATUS.FAILED,
-                    endTime: new Date().valueOf(),
-                    error: 'Stack creation failed. Check cloud formation for failure reason.'
-                });
+                if (runningJob.end_time === null || runningJob.end_time === undefined) {
+                    updateJobDetails(runningJob.account_id, runningJob.id, {
+                        status: JOBSTATUS.FAILED,
+                        endTime: new Date().valueOf(),
+                        error: 'Stack creation failed. Check cloud formation for failure reason.'
+                    });
+                }
             })
         );
     } catch (error) {

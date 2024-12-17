@@ -4,7 +4,6 @@ import { ReactComponent as NoData } from '../../../assets/empty table message.sv
 import styles from './LineChart.module.scss';
 import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
-const moment = require('moment');
 
 Chart.register(...registerables);
 

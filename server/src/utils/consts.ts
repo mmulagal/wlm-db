@@ -1089,6 +1089,7 @@ const AWS_PRICING_TYPE = 'AWS_PRICING';
 const AWS_FSX_TYPE = 'AWS_FSX';
 const AWS_SSM_PARAMETER = 'AWS_SSM_PARAMETER';
 const AWS_CE_TYPE = 'AWS_CE';
+const AWS_CO_TYPE = 'AWS_CO';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -1370,6 +1371,18 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'ArtifactsSignatures',
         url: `${WLMDB}/pgsql/signig_files.zip`
+    },
+    {
+        name: 'ScriptCommon',
+        url: `${WLMDB}/pgsql/scripts/common.zip`
+    },
+    {
+        name: 'ScriptSetup',
+        url: `${WLMDB}/pgsql/scripts/setup.zip`
+    },
+    {
+        name: 'FsxCertificates',
+        url: `${WLMDB}/fsx_certs.zip`
     }
 ];
 
@@ -1434,8 +1447,21 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'fsx:UpdateFileSystem',
     'fsx:UpdateVolume'
 ];
+
+const AWS_ERROR_CODES = {
+    ec2NotFound: 'InvalidInstanceID.NotFound'
+};
+
 const DEMO_AWS_ACCOUNT_ID = randomize('0', 12);
 const DEMO_DEFAULT_REGION = 'us-east-1';
+
+/*
+sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.
+    2 = Standard (For Standard, Web, and Business Intelligence.)
+    3 = Enterprise (For Evaluation, Developer, and Enterprise editions.)
+    */
+const ENT_ENGINE_EDITION = 3;
+const STD_ENGINE_EDITION = 2;
 
 export {
     WLMDB,
@@ -1742,6 +1768,7 @@ export {
     TERRAFORM_FOLDER_PATH,
     TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     AWS_CE_TYPE,
+    AWS_CO_TYPE,
     PGSQL_MASTER_TEMPLATE_PATH,
     MAX_DATA_LUN_SIZE_IN_GIB,
     TF_VARS_CONFIG,
@@ -1750,5 +1777,8 @@ export {
     MSSQL,
     AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
-    DEMO_DEFAULT_REGION
+    DEMO_DEFAULT_REGION,
+    ENT_ENGINE_EDITION,
+    STD_ENGINE_EDITION,
+    AWS_ERROR_CODES
 };

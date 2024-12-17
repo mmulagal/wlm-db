@@ -1,4 +1,4 @@
-import { DsButton, DsTypography } from '@netapp/design-system';
+import { DsButton, DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import styles from './ManagedInstanceOptimizationBreakdownByConfig.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
@@ -6,33 +6,46 @@ import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { WLF_TABS } from '../../../utils/consts';
 import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import useResize from '../../../common/hooks/useResize';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useMemo } from 'react';
+import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import { GENERAL } from '../../../utils/appConstants';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
-const ManagedInstanceOptimizationBreakdownByConfig = () => {
+const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const dispatch = useDispatch();
+    const windowSize = useResize();
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setSelectedConfig(type));
     };
+
+    const configData = useMemo(() => {
+        return getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
+    }, [allmssqlHostAssessmentData]);
+
     return (
-        <div className={styles.managedBreakdown}>
+        <div className={styles.managedBreakdown} style={{ height: !openAccordion ? '436px' : '992px' }}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Managed instances optimization breakdown by configurations
                 </DsTypography>
 
-                {/* {loading && <FlashingDotsLoader />} */}
+                {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
             </div>
 
-            <div className={styles.mainSection}>
+            <div className={styles.mainSection} style={{ maxHeight: !openAccordion ? '316px' : '896px' }}>
                 <div className={`${styles.tile} ${styles.firstTile}`}>
                     <BarComponent
                         color="#5E8DCD"
                         headingText="Storage tier"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData?.storageTier || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData?.storageTier || 0}
+                        afterOutOf={configData?.total || 0}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -56,13 +69,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="File system headroom"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.fileSystemHeadroom || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.fileSystemHeadroom}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={10}
+                        optimizePercentage={0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -84,11 +97,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="Log drive size"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.logDriveSize || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.logDriveSize}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -112,11 +125,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="TempDB drive size"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.tempdbDriveSize || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.tempdbDriveSize}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -140,11 +153,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="User data files (.mdf)"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.userDataFiles || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.userDataFiles}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -168,11 +181,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="Log files (.ldf)"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.logFiles || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.logFiles}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -196,11 +209,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="TempDB placement"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.tempdbPlacement || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.tempdbPlacement}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -224,11 +237,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="ONTAP configuration"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={120}
+                        percentage={Math.round(((configData.ontapConfiguration || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.ontapConfiguration}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -252,11 +265,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                     <BarComponent
                         color="#5E8DCD"
                         headingText="Operating system"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={100}
+                        percentage={Math.round(((configData.operatingSystem || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.operatingSystem}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -279,12 +292,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="Compute rightsizing"
-                        percentage={55}
-                        beforeOutOf={65}
-                        afterOutOf={100}
+                        headingText={GENERAL.COMPUTE_RIGHTSIZING}
+                        percentage={Math.round(((configData.computeRightsizing || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.computeRightsizing}
+                        afterOutOf={configData.total}
                         bottomText="Optimized instances:"
-                        width="360px"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={0}
                     />
@@ -296,11 +309,77 @@ const ManagedInstanceOptimizationBreakdownByConfig = () => {
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('Compute rightsizing');
+                                handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
                         >
                             Optimize
                         </DsButton>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.OPERATING_SYSTEM_PATCH}
+                        percentage={Math.round(
+                            ((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100
+                        )}
+                        beforeOutOf={configData.operatingSystemPatch}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={0}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.APPLICATION_SQL_SERVER}
+                        percentage={Math.round(
+                            ((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100
+                        )}
+                        beforeOutOf={configData.applicationSqlServer}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={0}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 </div>
             </div>

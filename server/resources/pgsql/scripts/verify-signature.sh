@@ -1,4 +1,5 @@
 #!/bin/bash
+exec > /var/log/netapp_wf/verify_signature.log 2>&1
 
 # Function to print usage
 usage() {

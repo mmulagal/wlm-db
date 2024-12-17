@@ -1,4 +1,13 @@
 .managedHostDialog {
+    .extraDiv {
+        height: 40px;
+        background: var(--content-background);
+        margin-top: -40px;
+        position: relative;
+        z-index: 2;
+        position: sticky;
+        top: -39px;
+    }
     .inProgress {
         display: flex;
         gap: 16px;
@@ -9,6 +18,9 @@
         span {
             background-color: var(--main-background) !important;
         }
+    }
+    [class*='PaginationPanel-module_pagination-panel'] {
+        bottom: -40px !important;
     }
 }
 

@@ -1,7 +1,7 @@
 .managedBreakdown {
     background-color: var(--content-background);
     width: 655px;
-    height: 995px;
+    height: 436px;
 
     .headSection {
         display: flex;
@@ -13,7 +13,7 @@
     }
 
     .mainSection {
-        max-height: 874px;
+        max-height: 316px;
         overflow-y: scroll;
         width: calc(100% - 16px);
         margin-top: 24px;

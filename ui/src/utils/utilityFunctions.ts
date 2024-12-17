@@ -1,5 +1,6 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
+import { get, sortBy, compact, uniqBy, map } from 'lodash';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
@@ -37,7 +38,7 @@ import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './t
 import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
-const moment = require('moment');
+import moment from 'moment';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -88,7 +89,28 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
     return rows;
 }
 
+export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) => {
+    return !data
+        ? []
+        : sortBy(
+              uniqBy(
+                  compact(
+                      map(data, row => {
+                          const value = get(row, propName, null);
+                          return { value, label: renderLabel ? renderLabel(value) : value };
+                      })
+                  ),
+                  'label'
+              ),
+              'value'
+          );
+};
+
 export const formatSize = (value: number, passedformat?: string) => {
+    return numeral(getByteVal(value, passedformat)).format('0.[00] ib');
+};
+
+export const getByteVal = (value: number, passedformat?: string) => {
     let byteVal = 0;
     if (passedformat === 'kib') {
         byteVal = value * 1024;
@@ -101,7 +123,7 @@ export const formatSize = (value: number, passedformat?: string) => {
     } else {
         byteVal = value;
     }
-    return numeral(byteVal).format('0.[00] ib');
+    return byteVal;
 };
 
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
@@ -259,7 +281,7 @@ export const isNotNumberOrNA = (value: string | number) => {
     if (!value) {
         return false;
     } else {
-        return isNaN(parseFloat(String(value))) && value !== 'N/A';
+        return isNaN(parseFloat(String(value))) && value !== GENERAL.NOT_AVAILABLE;
     }
 };
 
@@ -966,9 +988,9 @@ export const openCredentialTab = () => {
     const isWorkloadFactoryStatus = state.auth.isWorkloadFactory;
     let url;
     if (isWorkloadFactoryStatus) {
-        url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+        url = import.meta.env.VITE_APP_CREDENTIAL_WF_LINK;
     } else {
-        url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+        url = import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
     }
     window.open(url, '_blank', 'noopener');
 };
@@ -1073,7 +1095,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                     value = '"' + value + '"';
                 }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : GENERAL.NOT_AVAILABLE + ',';
                 } else if (key === 'name' && value) {
                     result += value.split(';href')[0] + ',';
                 } else if (key === 'status' && value) {

@@ -444,7 +444,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n\"records\":[\r\n{\r\n\"uuid\":\"032cd032-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqltemp_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":{\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/032cd032-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\r\n\"name\":\"wlmdb_sqldata_1718157389159\",\r\n\"snapshot_count\":3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":\"03486072-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqldata_1698276677110\",\r\n\"snapshot_count\":3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/03486072-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"035b0b46-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_sqllog_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/035b0b46-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"095e5132-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_quorum_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/095e5132-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n}\r\n],\r\n    \"num_records\":  4,\r\n    \"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes?uuid=032cd032-7391-11ee-8151-1feabed00a0f,095e5132-7391-11ee-8151-1feabed00a0f,03486072-7391-11ee-8151-1feabed00a0f,035b0b46-7391-11ee-8151-1feabed00a0f\\u0026fields=snapshot_count\"\r\n}\r\n}\r\n}\r\n",
+        "StandardOutputContent": "{\r\n\"records\":[\r\n{\r\n\"uuid\":\"032cd032-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqltemp_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":{\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/032cd032-7391-11ee-8151-1feabed00a0g\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\r\n\"name\":\"wlmdb_sqldata_1718157389159\",\r\n\"snapshot_count\":3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":\"03486072-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqldata_1698276677110\",\r\n\"snapshot_count\":3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/03486072-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"035b0b46-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_sqllog_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/035b0b46-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"095e5132-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_quorum_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/095e5132-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n}\r\n],\r\n    \"num_records\":  4,\r\n    \"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes?uuid=032cd032-7391-11ee-8151-1feabed00a0h,095e5132-7391-11ee-8151-1feabed00a0f,03486072-7391-11ee-8151-1feabed00a0f,035b0b46-7391-11ee-8151-1feabed00a0f\\u0026fields=snapshot_count\"\r\n}\r\n}\r\n}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -462,7 +462,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"MSSQLSERVER\": {\"volumeDBMap\":[{\"ontapVolumeuuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"driveVolumeName\":\"SQL-Data\",\"databaseName\":\"master\",\"driveVolumeId\":\"Volume{54500894-6228-4770-8901-8dcbf98c9d83}\",\"ontapVolumeName\":\"wlmdb_sqldata_1718157389159\"}],\"volumes\":{\"records\":[{\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"name\":\"wlmdb_sqldata_1718157389159\",\"snapshot_count\": 1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"}}}],\"num_records\":1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes?name=/vol/wlmdb_sqldata_1718157389159/sqldata\"}}}}}",
+        "StandardOutputContent": "{\"MSSQLSERVER\": {\"volumeDBMap\":[{\"ontapVolumeuuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"driveVolumeName\":\"SQL-Data\",\"databaseName\":\"master\",\"driveVolumeId\":\"Volume{54500894-6228-4770-8901-8dcbf98c9d83}\",\"ontapVolumeName\":\"wlmdb_sqldata_1718157389159\"},{\"ontapVolumeuuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"driveVolumeName\":\"SQL-Data\",\"databaseName\":\"master\",\"driveVolumeId\":\"Volume{54500894-6228-4770-8901-8dcbf98c9d83}\",\"ontapVolumeName\":\"wlmdb_sqldata_1718157389159\"},{\"ontapVolumeuuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"driveVolumeName\":\"SQL-Data\",\"databaseName\":\"master\",\"driveVolumeId\":\"Volume{54500894-6228-4770-8901-8dcbf98c9d83}\",\"ontapVolumeName\":\"wlmdb_sqldata_1718157389159\"}],\"volumes\":{\"records\":[{\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"name\":\"wlmdb_sqldata_1718157389159\",\"snapshot_count\": 1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"}}},{\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"name\":\"wlmdb_sqldata_1718157389159\",\"snapshot_count\": 1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"}}},{\"uuid\":\"2f004bac-2865-11ef-b359-1b0fb5fca86e\",\"name\":\"wlmdb_sqldata_1718157389159\",\"snapshot_count\": 1,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes/2f004bac-2865-11ef-b359-1b0fb5fca86e\"}}}],\"num_records\":3,\"_links\":{\"self\":{\"href\":\"/api/storage/volumes?name=/vol/wlmdb_sqldata_1718157389159/sqldata\"}}}}}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -619,7 +619,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -644,7 +647,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -669,7 +675,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -694,7 +703,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "273558f7-f7cc-4858-ad61-9ab5eb564c0d",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -719,7 +731,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -744,7 +759,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -769,7 +787,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "3ea7ae59-c4e2-4f7f-8bae-db6ffb46d24f",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -880,7 +901,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "551b3294-d372-4335-85df-b95a28de6f79-getDbVolumeLunMapping",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -905,7 +929,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "585f55b2-3bea-474a-a29e-15532e59a314-createCloneVolume",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -930,7 +957,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "7a5f55b2-3bea-174a-a29e-15532e59a314-invokeVirtualMount",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -955,7 +985,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "0b2f55b2-3bea-174a-a29e-15532e59a112-createCloneDb",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -980,7 +1013,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a91f55b2-3bea-174a-a29e-15532e59a1b4-addExtendedProperties",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1005,7 +1041,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1030,7 +1069,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1055,7 +1097,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAccessPathResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1080,7 +1125,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedPropertiesResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1105,7 +1153,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1130,7 +1181,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "f171a4a7-3693-41bb-8c31-getActiveDirectory",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1155,7 +1209,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "f171a4a7-3693-41bb-8c31-enterpriseFeatureUsageCheckCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1180,7 +1237,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1205,7 +1265,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrityResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1230,7 +1293,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1255,7 +1321,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1280,7 +1349,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1305,7 +1377,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1330,7 +1405,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoResp",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1355,7 +1433,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryResponse",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1380,7 +1461,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1405,7 +1489,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-rescanAndExtendLogLunCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1430,7 +1517,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkNodeStatusCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1455,7 +1545,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-moveClusterGroupsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1480,7 +1573,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1505,7 +1601,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1530,7 +1629,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1555,7 +1657,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1569,6 +1674,192 @@
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
         "StandardOutputContent": "",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "validateMpioSessionsViolationCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"address\": \"10.34.11.56\", \"count\": \"5\"},{\"address\": \"10.34.11.57\", \"count\": \"8\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "validateMpioSessionsCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"address\": \"10.34.11.56\", \"count\": \"5\"},{\"address\": \"10.34.11.57\", \"count\": \"5\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "remediateMpioSessionsCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-remediateMpioSessionsCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-remediateMpioSessionsCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"address\": \"10.34.11.56\", \"status\": \"success\", \"error\": \"\"},{\"address\": \"10.34.11.57\", \"status\": \"success\", \"error\": \"\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "validateMpioInstallationCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioInstallationCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioInstallationCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"mpioInstalled\": true}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "enableMpioAndConfigureCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-enableMpioAndConfigureCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-enableMpioAndConfigureCommand",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"status\": \"success\", \"error\": \"\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getPatchBaselineCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "b699d322-6011-4371-a194-706306a25595",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "539404d1-1495-4cd8-8a1e-8d5bf054afd0",
+        "Comment": "",
+        "DocumentName": "AWS-RunPatchBaseline",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionEndDateTime": "",
+        "InstanceId": "i-07e76a4b916548dc0",
+        "ResponseCode": 0,
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "assessmentConfigData": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData",
+        "Comment": "",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT7.723S",
+        "ExecutionEndDateTime": "2024-04-26T07:41:01.902Z",
+        "ExecutionStartDateTime": "2024-04-26T07:40:54.902Z",
+        "InstanceId": "i-07862593751ba045b",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"os\":{\"mpio-enabled\":false,\"mpio-iscsi-count\":\"50\",\"ntfs-allocation-details\":[{\"DriveLetter\":\"S\",\"AllocationUnitSize\":6553},{\"DriveLetter\":\"T\",\"AllocationUnitSize\":6553},{\"DriveLetter\":\"L\",\"AllocationUnitSize\":6553}],\"ntfs-allocation-unit-size\":6553,\"mpio-load-balance-policy\":\"LB\"},\"luns\":[{\"name\":\"/vol/wlmdb_sqldata_1728552629461/sqldata\",\"os-type\":\"windows\",\"space-reservation-enabled\":false,\"space-allocation-allocated\":false},{\"name\":\"/vol/wlmdb_sqltemp_1728552629461/tempdb\",\"os-type\":\"windows\",\"space-reservation-enabled\":false,\"space-allocation-allocated\":false},{\"name\":\"/vol/wlmdb_sqldata_1728574994/sqldata\",\"os-type\":\"windows\",\"space-reservation-enabled\":false,\"space-allocation-allocated\":false}],\"layout\":{\"tempdb-files-location\":\"separate-drive\",\"default-log-files-location\":\"separate-drive\",\"default-data-files-location\":\"separate-drive\"},\"sizing\":{\"performance-tier\":[100,96,100],\"data-log-drive-details\":[{\"databaseName\":\"msdb\",\"logDrivePath\":\"S:\\\\mssql\\\\system\\\\MSSQL15.MSSQLSERVER\\\\MSSQL\\\\DATA\\\\MSDBLog.ldf\",\"dataDrivePath\":\"S:\\\\mssql\\\\system\\\\MSSQL15.MSSQLSERVER\\\\MSSQL\\\\DATA\\\\MSDBData.mdf\",\"logAccessPath\":\"S:\\\\mssql\",\"dataAccessPath\":\"S:\\\\mssql\",\"logDriveLetter\":\"S:\",\"dataDriveLetter\":\"S:\",\"logDriveTotalSizeMB\":307,\"dataDriveTotalSizeMB\":3071820},{\"lunUuid\":\"ce0cca99-e9fd-42af-9daa-50039625d44d\",\"svmName\":\"wlmdb_sqlsvm_1731915150431\",\"diskNumber\":8,\"databaseName\":\"Nachos\",\"logDrivePath\":\"G:\\\\MSSQL\\\\log\\\\Nachos_log.ldf\",\"dataDrivePath\":\"F:\\\\MSSQL\\\\data\\\\Nachos_data.mdf\",\"logAccessPath\":\"G:\\\\MSSQL\",\"dataAccessPath\":\"F:\\\\MSSQL\",\"logDriveLetter\":\"G:\",\"dataDriveLetter\":\"F:\",\"ontapVolumeName\":\"wlmdb_sqllog_1731988070\",\"ontapVolumeUuid\":\"1c3c25e9-a629-11ef-8dba-75539f3dc73f\",\"diskSerialNumber\":\"lWB4c$XRevTA\",\"logDriveTotalSizeMB\":97,\"dataDriveTotalSizeMB\":429420},{\"lunUuid\":\"74897647-0db1-4e4c-934a-8faa6cae7087\",\"svmName\":\"wlmdb_sqlsvm_1731915150431\",\"diskNumber\":6,\"databaseName\":\"Primordial\",\"logDrivePath\":\"E:\\\\MSSQL\\\\log\\\\Primordial_log.ldf\",\"dataDrivePath\":\"D:\\\\MSSQL\\\\data\\\\Primordial_data.mdf\",\"logAccessPath\":\"E:\\\\MSSQL\",\"dataAccessPath\":\"D:\\\\MSSQL\",\"logDriveLetter\":\"E:\",\"dataDriveLetter\":\"D:\",\"ontapVolumeName\":\"wlmdb_sqllog_1731987160\",\"ontapVolumeUuid\":\"f3c8df60-a626-11ef-8dba-75539f3dc73f\",\"diskSerialNumber\":\"lWB4c$XRevT9\",\"logDriveTotalSizeMB\":107,\"dataDriveTotalSizeMB\":1072200}],\"data-tempdb-drive-details\":{\"lunUuid\":\"ab3fd3b5-b2e2-4c97-b026-52ba19accc41\",\"svmName\":\"wlmdb_sqlsvm_1731915150431\",\"diskNumber\":6,\"ontapVolumeName\":\"wlmdb_sqltemp_1731915150431\",\"ontapVolumeUuid\":\"c4585626-a581-11ef-8dba-75539f3dc73f\",\"tempdbDrivePath\":\"T:\\\\mssql\\\\data\\\\tempdb.mdf\",\"diskSerialNumber\":\"lWB4c$XRevT9\",\"tempdbDriveLetter\":\"T:\",\"dataDriveTotalSizeMB\":9731000,\"defaultDataDriveLetter\":\"S:\",\"tempdbDriveTotalSizeMB\":42}},\"volumes\":[{\"name\":\"wlmdb_sqldata_1728552629461\",\"autosize\":\"off\",\"autosize-mode\":\"off\",\"thin-provision\":false,\"tiering-policy\":\"auto\",\"space-guarantee\":\"volume\",\"fractional-reserve\":10,\"snapshot-autodelete\":false,\"snapshot-copy-reserve\":15,\"tiering-min-cooling-days\":17},{\"name\":\"wlmdb_sqltemp_1728552629461\",\"autosize\":\"off\",\"autosize-mode\":\"off\",\"thin-provision\":false,\"tiering-policy\":\"auto\",\"space-guarantee\":\"volume\",\"fractional-reserve\":10,\"snapshot-autodelete\":false,\"snapshot-copy-reserve\":15,\"tiering-min-cooling-days\":17},{\"name\":\"wlmdb_sqldata_1728574994\",\"autosize\":\"off\",\"autosize-mode\":\"off\",\"thin-provision\":true,\"tiering-policy\":\"auto\",\"space-guarantee\":\"volume\",\"fractional-reserve\":10,\"snapshot-autodelete\":false,\"snapshot-copy-reserve\":15,\"tiering-min-cooling-days\":17}]}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

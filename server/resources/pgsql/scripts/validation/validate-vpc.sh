@@ -1,4 +1,5 @@
 #!/bin/bash
+exec > /var/log/netapp_wf/validate_vpc.log 2>&1
 
 # Set args as variables
 subnet=$1
@@ -51,3 +52,6 @@ else
     echo ""
     cfn-signal -e $? --stack $Stackname --resource $ResourceId --region $region
 fi
+
+echo "Sleeping for 60 seconds before exiting for cloudwatch logs to be updated"
+sleep 60

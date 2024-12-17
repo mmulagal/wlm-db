@@ -86,6 +86,7 @@ import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFac
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
+import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 
 type Tab = {
     tab: string;
@@ -110,6 +111,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const newDashboardItem = localStorage.getItem('newDashboard');
+    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -501,7 +504,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <Typography
                                         variant="Regular_14"
                                         className={
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart1
@@ -573,6 +577,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                   }`
                                         }
                                         onClick={() => {
+                                            dispatch(setSandboxAgeRange({ range: '', from: 'Header' }));
                                             handleClick(WLF_TABS.SANDBOXES);
                                         }}
                                         id="sandboxes"
@@ -653,8 +658,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={styles.spaceArea}>
-                                <div className={styles.contentArea}>
+                            <div className={!setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
+                                <div className={!setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
                                     {selectComponents()}
                                     <div className={styles.content}>
                                         <>
@@ -731,8 +736,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            {/* <DatabaseHomePage /> */}
-                            <Dashboard />
+                            {setFlagForNewDashboard && <DatabaseHomePage />}
+                            {!setFlagForNewDashboard && <Dashboard />}
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (

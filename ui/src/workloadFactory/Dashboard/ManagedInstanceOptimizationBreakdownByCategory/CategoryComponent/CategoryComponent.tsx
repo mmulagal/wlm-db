@@ -9,7 +9,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import CategoryDialogComponent from '../CategoryDialogComponent/CategoryDialogComponent';
 import { WLF_TABS } from '../../../../utils/consts';
 import { useDispatch } from 'react-redux';
-import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import store from '../../../../store/store';
 import {
@@ -47,6 +47,7 @@ const CategoryComponent = ({
     const redirectToGetWellPage = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.DASHBOARD));
 
         const updatedState = store.getState();
         const { selectedAssessmentRow }: any = updatedState.databaseHome;

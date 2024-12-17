@@ -145,14 +145,73 @@ Resources:
             AWS::CloudFormation::Init:
                 configSets:
                     config:
-                        - CreateTempFolder
+                        - InstallSSMAgent
+                        - CreateDeploymentFolders
+                        - ConfigureCWLogs
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
-                        - Finalize       
-                CreateTempFolder:
+                        - Finalize
+                InstallSSMAgent:
                     commands:
-                        a-create-temp-folder:
+                        a-install-ssm-agent:
+                            command: !Sub
+                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            waitAfterCompletion: '0'
+                        b-install-cloudwatch-agent:
+                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            waitAfterCompletion: '0'
+                CreateDeploymentFolders:
+                    commands:
+                        a-create-scripts-folder:
                             command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                            waitAfterCompletion: '0'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
+                            waitAfterCompletion: '0'
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {
+                                    "agent": {
+                                        "metrics_collection_interval": 5,
+                                        "run_as_user": "cwagent",
+                                        "region": "${AWS::Region}"
+                                    },
+                                    "logs": {
+                                        "logs_collected": {
+                                            "files": {
+                                                "collect_list": [
+                                                    {
+                                                        "file_path": "/var/log/cfn-*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/home/ec2-user/cfn/log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/var/log/netapp_wf/*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
+                            waitAfterCompletion: '0'
                 FetchResources:
                     files:
                         /home/ec2-user/cfn/scripts/verify-signature.sh:

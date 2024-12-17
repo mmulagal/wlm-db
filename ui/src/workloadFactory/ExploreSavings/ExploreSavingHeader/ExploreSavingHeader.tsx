@@ -1,6 +1,7 @@
 import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as ExploreSaving } from '../../../assets/explore-saving.svg';
 import { ReactComponent as ExploreSaving1600 } from '../../../assets/exploreSaving1600.svg';
+import { ReactComponent as ExploreSavingCommon } from '../../../assets/exploreSavingsCommon.svg';
 import { ReactComponent as ExploreSaving1440 } from '../../../assets/exploreSaving1440.svg';
 import styles from './ExploreSavingHeader.module.scss';
 
@@ -75,8 +76,9 @@ const ExploreSavingHeader = () => {
             {windowSize.width > 1471 && windowSize.width <= 1823 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
-                        <div className={styles.svgContainer}>
-                            <ExploreSaving1600 />
+                        <div className={styles.svgContainer1600}>
+                            {/* <ExploreSaving1600 /> */}
+                            <ExploreSavingCommon />
                         </div>
                         <div className={styles.contentSection}>
                             <div className={styles.leftSide}>
@@ -103,7 +105,7 @@ const ExploreSavingHeader = () => {
                                     <span
                                         className={styles.link}
                                         id="explore-savings-manually-ebs"
-                                        style={{whiteSpace: 'unset'}}
+                                        style={{ whiteSpace: 'unset' }}
                                         onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
                                     >
                                         {GENERAL.EXPLORE_SAVING_MANUALLY}

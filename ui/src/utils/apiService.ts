@@ -48,7 +48,7 @@ const prepareHeaders = (
 export const getBaseUrl = () => {
     const state = store.getState();
     const accountId = state?.auth?.accountId;
-    const apiHost = process.env.REACT_APP_CM_URL;
+    const apiHost = import.meta.env.VITE_APP_CM_URL;
     return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
 };
 
@@ -60,8 +60,8 @@ const rawBaseQuery = fetchBaseQuery({
 export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { auth } = api.getState() as RootState;
     const { accountId } = auth;
-    const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
-    const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
+    const isDevMode = import.meta.env.VITE_APP_USE_CM_FORWARDER !== 'true';
+    const apiHost = isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_CM_URL;
     return `${apiHost}/accounts/${accountId}/wlmdb`;
 };
 
@@ -515,7 +515,8 @@ export const headersApi = createApi({
 export const policiesApi = createApi({
     reducerPath: 'policiesApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
+        baseUrl:
+            import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION ? WLMDB_POLICIES_PROD_LINK : WLMDB_POLICIES_STAGE_LINK
     }),
     endpoints: builder => {
         return {
@@ -663,12 +664,58 @@ export const inventoryApiV2 = createApi({
                     return response;
                 }
             }),
+            getPgsqlDatabaseHostsFullDataV2: builder.query({
+                query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
+                    if (isDemoMode) {
+                        if (nextToken) {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                        } else {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                        }
+                    } else {
+                        if (nextToken) {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                        } else {
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                        }
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
             getDatabaseHostsListV2: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
                         return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
                     } else {
                         return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
+                    }
+                },
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
+            }),
+            getPgSqlDatabaseHostsList: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology&nextToken=${nextToken}`;
+                    } else {
+                        return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=nodeTopology`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -711,6 +758,15 @@ export const inventoryApiV2 = createApi({
                         return response.text();
                     }
                 })
+            }),
+            getAllMssqlHostsAssessmentData: builder.query({
+                query: ({ credentialId, regionId, nextToken = null }) => {
+                    if (nextToken) {
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
+                    } else {
+                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
+                    }
+                }
             })
         };
     }
@@ -867,7 +923,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch`
+                })
+            }),
+            getMssqlAssessmentDataForHost: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch`
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -896,6 +957,12 @@ export const getWellApi = createApi({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/compute`,
                     method: 'POST',
                     body: payload
+                })
+            }),
+            optimizeStorageTier: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-tier`,
+                    method: 'POST'
                 })
             })
         };
@@ -982,11 +1049,14 @@ export const {
 
 export const {
     useLazyGetDatabaseHostsFullDataV2Query,
+    useLazyGetPgsqlDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
+    useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
     useManageMssqlInstanceMutation,
-    useCreateDemoResourcesMutation
+    useCreateDemoResourcesMutation,
+    useLazyGetAllMssqlHostsAssessmentDataQuery
 } = inventoryApiV2;
 
 export const {
@@ -1014,8 +1084,10 @@ export const {
 
 export const {
     useGetMssqlAssessmentDataMutation,
+    useGetMssqlAssessmentDataForHostMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeStorageSizingMutation,
-    useOptimizeOperatingSystemMutation
+    useOptimizeOperatingSystemMutation,
+    useOptimizeStorageTierMutation
 } = getWellApi;

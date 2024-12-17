@@ -40,47 +40,33 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
     let signedUrl: string = '';
     const signedUrls: Map<string, TemplateDetails> = new Map();
 
-    let assets = [];
-    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        assets = SQL_RESOURCE_ASSETS;
-
-        const bucketname = getArtifactsRegionBucketName(region);
-        if (assets?.length) {
-            await Promise.all(
-                assets.map(async resource => {
-                    logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
-                    try {
-                        signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
-                        signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
-                    } catch (error) {
-                        const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
-                        logger.error(errorMessage);
-                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-                    }
-                })
-            );
-        }
+    let assets: Record<string, string>[] = [];
+    switch (resourceType) {
+        case DatabaseTypes.MS_SQL_SERVER:
+            assets = SQL_RESOURCE_ASSETS;
+            break;
+        case DatabaseTypes.PG_SQL:
+            assets = PGSQL_RESOURCE_ASSETS;
+            break;
+        default:
+            break;
     }
 
-    if (resourceType === DatabaseTypes.PG_SQL) {
-        assets = PGSQL_RESOURCE_ASSETS;
-
-        const bucketname = getArtifactsRegionBucketName(region);
-        if (assets?.length) {
-            await Promise.all(
-                assets.map(async resource => {
-                    logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
-                    try {
-                        signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
-                        signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
-                    } catch (error) {
-                        const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
-                        logger.error(errorMessage);
-                        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-                    }
-                })
-            );
-        }
+    const bucketname = getArtifactsRegionBucketName(region);
+    if (assets?.length) {
+        await Promise.all(
+            assets.map(async resource => {
+                logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
+                try {
+                    signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
+                    signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
+                } catch (error) {
+                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+                }
+            })
+        );
     }
 
     logger.debug('Signed urls', signedUrls);
@@ -250,7 +236,14 @@ async function updateTemplateUrls(
             location: customTemplatePath
         });
     } else if (templateType === TEMPLATE_TYPES.PGSQLSTANDALONE) {
-        const contents = template({});
+        const contents = template({
+            ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
+            ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+            ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
+            ScriptSetup: decodeURI(signedUrls.get('ScriptSetup')?.url || ''),
+            FsxCertificates: decodeURI(signedUrls.get('FsxCertificates')?.url || ''),
+            ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || '')
+        });
         const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
         await putObjectBucket(

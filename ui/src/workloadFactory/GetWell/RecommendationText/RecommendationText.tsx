@@ -1,12 +1,15 @@
 import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as Light } from '../../../assets/Light.svg';
 import styles from './RecommendationText.module.scss';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 
 type RecommendationTextProps = {
     data: {
         title: string;
         description: string;
         values?: Array<string>;
+        descriptionList?: Array<{ title: string; description: string }> | undefined;
+        info?: string;
     };
     from?: string;
     cardName?: string;
@@ -27,15 +30,45 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 </div>
             )}
 
-            <div
-                className={styles.desc}
-                style={{
-                    whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
-                    width: from === 'dashboard' ? 'unset' : '1400px'
-                }}
-            >
-                <DsTypography variant="Regular_14">{data?.description}</DsTypography>
-            </div>
+            {data?.info && (
+                <div className={styles.info}>
+                    <div className={styles.setSVG}>
+                        <InfoIcon />
+                    </div>
+                    <DsTypography variant="Regular_14">{data?.info}</DsTypography>
+                </div>
+            )}
+
+            {data?.description && (
+                <div
+                    className={styles.desc}
+                    style={{
+                        //@ts-ignore
+                        whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
+                        width: from === 'dashboard' ? 'unset' : '1400px'
+                    }}
+                >
+                    <DsTypography variant="Regular_14">{data?.description}</DsTypography>
+                </div>
+            )}
+
+            {data?.descriptionList?.map(item => {
+                return (
+                    <div
+                        style={{
+                            //@ts-ignore
+                            whiteSpace: from === 'dashboard' ? '' : 'pre-wrap',
+                            width: from === 'dashboard' ? 'unset' : '1400px',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <DsTypography variant="Regular_14">
+                            <span style={{ fontWeight: 500 }}>{item?.title}</span>
+                            {item?.description}
+                        </DsTypography>
+                    </div>
+                );
+            })}
 
             {data?.values && data?.values?.length > 0 && (
                 <div className={styles.values}>

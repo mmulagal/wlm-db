@@ -3,10 +3,12 @@ import { cloneDeep, compact, groupBy, isEmpty } from 'lodash-es';
 import { _InstanceType } from '@aws-sdk/client-ec2';
 import { STORAGE_TYPE } from '@prisma/client';
 import {
+    ENT_ENGINE_EDITION,
     FINDING,
     HOURS_IN_MONTH,
     HttpErrorCodes,
     SQL_SERVICE_STATE,
+    STD_ENGINE_EDITION,
     SqlServerDeploymentModel,
     WIN_SQL_EC2_USAGE_OPERATION
 } from '../utils/consts';
@@ -36,14 +38,6 @@ const logger = getLogger();
 const SQL_ENT = 'SQL Ent';
 const SQL_STD = 'SQL Std';
 const SQL_WEB = 'SQL Web';
-
-/*
-sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.
-    2 = Standard (For Standard, Web, and Business Intelligence.)
-    3 = Enterprise (For Evaluation, Developer, and Enterprise editions.)
-    */
-const ENT_ENGINE_EDITION = 3;
-const STD_ENGINE_EDITION = 2;
 
 async function isUsingEnterpriseConfiguration(
     accountId: string,
@@ -135,7 +129,7 @@ async function getLicenseRecommendations(
         licenseFinding = FINDING.NOT_OPTIMIZED;
         recommendedLicenseType = SQL_STD;
     }
-    return { licenseFinding, recommendedLicenseType };
+    return { licenseFinding, recommendedLicenseType, sqlServerInstances };
 }
 
 /* The function processes the SQL Server instances based on the edition and deployment type. If there are multiple sql server instances of a certain edition with both AOAG and Standalone configuration, then AOAG configuration is given preference fist */
@@ -145,7 +139,11 @@ function processSqlInstances(sqlInstances: SqlServerInstanceInfoType[], edition:
     const filteredInstances = sqlInstances.filter(({ sqlServerEdition = '' }) => sqlServerEdition.includes(edition));
     if (filteredInstances.length > 0) {
         const groupByDeploymentType = groupBy(filteredInstances, 'sqlServerDeploymentType');
-        return groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT]?.[0] || filteredInstances[0];
+        return (
+            groupByDeploymentType[SqlServerDeploymentModel.SQL_AOAG_SHORT]?.[0] ||
+            groupByDeploymentType[SqlServerDeploymentModel.SQL_FCI_SHORT]?.[0] ||
+            filteredInstances[0]
+        );
     }
 }
 
@@ -1098,6 +1096,7 @@ async function getSqlInstanceLicenseRecommendations(
 }
 
 export {
+    getLicenseRecommendations,
     fetchSqlServerInstanceConfiguration,
     manualModeComputeLicenseDetails,
     getSqlInstanceLicenseRecommendations,

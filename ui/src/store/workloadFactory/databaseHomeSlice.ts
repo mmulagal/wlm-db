@@ -20,6 +20,17 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         managedDatabases: 0,
         managedInstances: 0
     },
+    aggregatedPgSqlHostsCount: {
+        totalDatabases: 0,
+        totalHosts: 0,
+        totalUpHosts: 0,
+        totalInitializingHosts: 0,
+        totalDownHosts: 0,
+        totalFailedHosts: 0,
+        totalInstances: 0,
+        managedDatabases: 0,
+        managedInstances: 0
+    },
     aggregatedProtectionDbCount: {
         protectedDb: 0,
         unprotectedDb: 0,
@@ -30,6 +41,11 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         sqlServerBackupDb: 0
     },
     aggregatedStorageSavings: {
+        storageConsumes: '0',
+        storageSavings: '0',
+        storageSavingsPercent: 0
+    },
+    aggregatedPgsqlStorageSavings: {
         storageConsumes: '0',
         storageSavings: '0',
         storageSavingsPercent: 0
@@ -46,8 +62,24 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         otherCostPercent: 0,
         requireBillingPerm: false
     },
+    aggregatedPgsqlCosts: {
+        storageCost: 0,
+        computeCost: 0,
+        connectivityCost: 0,
+        otherCost: 0,
+        totalCost: 0,
+        storageCostPercent: 0,
+        computeCostPercent: 0,
+        connectivityCostPercent: 0,
+        otherCostPercent: 0,
+        requireBillingPerm: false
+    },
     selectedConfig: '',
-    selectedAssessmentRow: null
+    selectedAssessmentRow: null,
+    sandboxAgeRange: {
+        from: '',
+        range: ''
+    }
 };
 
 const databaseHomeSlice = createSlice({
@@ -69,20 +101,32 @@ const databaseHomeSlice = createSlice({
         addAggregateHostsCountData: (state, action: PayloadAction<any>) => {
             state.aggregatedHostsCount = action.payload;
         },
+        addAggregatePgSqlHostsCountData: (state, action: PayloadAction<any>) => {
+            state.aggregatedPgSqlHostsCount = action.payload;
+        },
         addAggregatedProtectionDbCount: (state, action: PayloadAction<any>) => {
             state.aggregatedProtectionDbCount = action.payload;
         },
         addAggregatedStorageSavings: (state, action: PayloadAction<any>) => {
             state.aggregatedStorageSavings = action.payload;
         },
+        addAggregatedPgsqlStorageSavings: (state, action: PayloadAction<any>) => {
+            state.aggregatedPgsqlStorageSavings = action.payload;
+        },
         addAggregatedCosts: (state, action: PayloadAction<any>) => {
             state.aggregatedCosts = action.payload;
+        },
+        addAggregatedPgsqlCosts: (state, action: PayloadAction<any>) => {
+            state.aggregatedPgsqlCosts = action.payload;
         },
         addInitialData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
         },
         setSelectedAssessmentRow: (state, action: PayloadAction<any>) => {
             state.selectedAssessmentRow = action.payload;
+        },
+        setSandboxAgeRange: (state, action: PayloadAction<any>) => {
+            state.sandboxAgeRange = action.payload;
         }
     }
 });
@@ -92,12 +136,16 @@ export const {
     addJobsSummary,
     addJobsSummaryLoading,
     addAggregateHostsCountData,
+    addAggregatePgSqlHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
+    addAggregatedPgsqlStorageSavings,
     addAggregatedCosts,
+    addAggregatedPgsqlCosts,
     addInitialData,
     setSelectedConfig,
-    setSelectedAssessmentRow
+    setSelectedAssessmentRow,
+    setSandboxAgeRange
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;

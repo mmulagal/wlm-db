@@ -4,6 +4,7 @@ import { CredentialsIdParams } from '../types/generic.types';
 import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
+    DatabaseHostSummaryParams,
     DatabaseQueryString
 } from '../types/database-hosts.types';
 import {
@@ -11,13 +12,21 @@ import {
     OptimizeSizingRequestBody,
     DriftAssessmentResponse,
     OptimizeComputeRequestBody,
-    OptimizeOperatingSystemRequestBody
+    OptimizeOperatingSystemRequestBody,
+    DriftAssessmentResponsePerHost,
+    DriftAssessmentResponsePerAccount
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
     tags: [RouteTags.RESOURCE],
     params: CredentialsIdParams
 };
+
+const AssessmentQueryStringPerAccount = Type.Object({
+    fields: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String()),
+    pageSize: Type.Optional(Type.Integer())
+});
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -28,6 +37,18 @@ const DriftAssessmentDataCollection = {
     querystring: DatabaseQueryString,
     response: {
         200: DriftAssessmentResponse
+    }
+};
+
+const DriftAssessmentPerHost = {
+    ...resourceRequest,
+    summary: 'Get database parameter drift from recommended settings for all instances on a host',
+    description: 'Get database parameters drift from recommended settings for all instances on a host',
+    params: DatabaseHostSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    querystring: DatabaseQueryString,
+    response: {
+        200: DriftAssessmentResponsePerHost
     }
 };
 
@@ -104,11 +125,39 @@ const OptimizeOperatingSystemSchema = {
     }
 };
 
+const OptimizeStorageTierSchema = {
+    ...resourceRequest,
+    summary: 'Optimize storage-tier settings',
+    description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ASSESSMENT],
+    response: {
+        200: {
+            jobId: Type.String()
+        }
+    }
+};
+
+const DriftAssessmentPerAccount = {
+    ...resourceRequest,
+    summary: 'Get database parameter drift from recommended settings for all managed instances on an account',
+    description: 'Get database parameter drift from recommended settings for all managed instances on an account',
+    params: CredentialsIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    querystring: AssessmentQueryStringPerAccount,
+    response: {
+        200: DriftAssessmentResponsePerAccount
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
     OptimizeStorageSchema,
     OptimizeSizingSchema,
     OptimizeComputeSchema,
-    OptimizeOperatingSystemSchema
+    OptimizeOperatingSystemSchema,
+    DriftAssessmentPerHost,
+    OptimizeStorageTierSchema,
+    DriftAssessmentPerAccount
 };

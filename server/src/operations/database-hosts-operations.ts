@@ -6,10 +6,11 @@ import {
     DescribeVolumesResult,
     DescribeVpcsCommandInput,
     DeviceType,
+    EC2ServiceException,
     Volume
 } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { listDatabaseInstances, listResources } from '../lib/database/db';
 import {
     TopologyResponseType,
@@ -28,7 +29,6 @@ import { calculatePrice } from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
-    RESOURCESTYPE,
     ServerState,
     STANDALONE,
     FCI,
@@ -52,7 +52,9 @@ import {
     UNKNOWN,
     WIN_SQL_EC2_USAGE_OPERATION,
     DEFAULT_INSTANCE_NAME,
-    EBS_ROOT_VOLUME
+    EBS_ROOT_VOLUME,
+    DatabaseTypes,
+    AWS_ERROR_CODES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -82,7 +84,11 @@ import {
     databaseInstanceMetadata
 } from '../utils/common-types';
 import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
-import { getCostAllocationTagEC2Resource, isEbsAwsBackupEnabled } from './aws/ec2-operations';
+import {
+    getCostAllocationTagEC2Resource,
+    getInstanceDetailsByPrivateIp,
+    isEbsAwsBackupEnabled
+} from './aws/ec2-operations';
 import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
@@ -94,6 +100,8 @@ import {
     isDemo
 } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
+import { callSsmExecution } from './aws/ssm-operations';
+import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 
 const logger = getLogger();
 
@@ -1283,6 +1291,7 @@ async function getNodeTopology(
     };
 
     if (node1InstanceId && activeNodeInstanceId) {
+        logger.info(`Getting node ${node1InstanceId} , ${node2InstanceId} details for account ${accountId}.`);
         const instanceIds = node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId];
 
         let ec2InstanceDetails;
@@ -1346,15 +1355,22 @@ async function getNodeTopology(
                     }
                 }
             } catch (error) {
-                logger.error(
-                    `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
-                );
+                if (error instanceof EC2ServiceException && error.toString().includes(AWS_ERROR_CODES.ec2NotFound)) {
+                    logger.debug(error.toString());
+                } else {
+                    logger.error(
+                        `Error while fetching details for EC2 for node ${activeNodeInstanceId} in account ${accountId} Error: ${error}`
+                    );
+                }
             }
         }
-        const activeDirectoryDetails = {
-            name: activeDirectoryName || '',
-            address: activeDirectoryAddress || ''
-        };
+        const activeDirectoryDetails =
+            resourceData?.resource_type === DatabaseTypes.PG_SQL
+                ? undefined
+                : {
+                      name: activeDirectoryName || '',
+                      address: activeDirectoryAddress || ''
+                  };
 
         nodeTopologyData = {
             awsAccount: awsAccountId || '',
@@ -1389,12 +1405,7 @@ async function getNodeTopology(
                 ...(standbyNodeStatus && { nodeStatus: standbyNodeStatus })
             });
         }
-    } else {
-        logger.error(
-            `Error while fetching details for EC2 for node ${node1InstanceId} , ${node2InstanceId} in account ${accountId} as no active node was found.`
-        );
     }
-
     logger.debug('Topology data', nodeTopologyData);
     return nodeTopologyData;
 }
@@ -1407,7 +1418,8 @@ async function getDatabaseHostsSummaryV2(
     nextToken?: string,
     vpcId?: string,
     fsxId?: string,
-    pageSize?: number
+    pageSize?: number,
+    databaseType: string = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info(
         'Fetching all database hosts deployed in account ',
@@ -1428,7 +1440,7 @@ async function getDatabaseHostsSummaryV2(
         undefined,
         customerCredentialsId,
         awsRegion,
-        RESOURCESTYPE.MSSQL,
+        databaseType,
         fsxId,
         undefined,
         apiPageSize,
@@ -1436,7 +1448,7 @@ async function getDatabaseHostsSummaryV2(
     );
 
     if (isEmpty(resourceDetails)) {
-        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+        logger.info(`No successfully deployed database hosts found for account ${accountId}.`);
         return { count: 0, items: [], nextToken: '' };
     }
 
@@ -1623,6 +1635,15 @@ async function getDatabaseHostSummaryV2(
     resourceDetail?: ResourceDetails,
     isManagedResource: boolean = true
 ) {
+    // Temp fix for DBS-4567, TODO: Remove this condition after demo changes for database hosts API for PGSQL is done
+    if (isDemo() && resourceDetail?.resource_type === DatabaseTypes.PG_SQL) {
+        return {
+            id: '123456',
+            name: 'postgresql',
+            databaseHostStatus: 'online',
+            ssmStatus: 'connected'
+        };
+    }
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
     if (isEmpty(resourceDetail)) {
         [resourceDetail] = await listResources(accountId, databaseHostId, customerCredentialsId, awsRegion);
@@ -1639,7 +1660,8 @@ async function getDatabaseHostSummaryV2(
         region,
         credentials_id: credentialsId,
         metadata,
-        ec2UsageOperation
+        ec2UsageOperation,
+        resource_type: resourceType
     } = resourceDetail;
 
     let fieldsValues: Array<string> = [];
@@ -1671,13 +1693,16 @@ async function getDatabaseHostSummaryV2(
         isManaged: true
     }));
     const errormessages: { [index: string]: string } = {};
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+    const { node1InstanceId, node2InstanceId, fsxDataVolumeName } = metadata as unknown as Metadata;
     let { ssmConnectionStatus, activeNodeInstanceId, standbyNodeInstanceId, instancesDetails } = await getActiveSqlNode(
         credentialsId,
         region!,
         node1InstanceId,
         node2InstanceId,
-        resourceId
+        resourceId,
+        accountId,
+        resourceType,
+        fsxDataVolumeName
     );
     const databaseHostDetails: DatabaseHostSummaryForMultiInstanceResponseType = {
         id: resourceId,
@@ -1709,13 +1734,16 @@ async function getDatabaseHostSummaryV2(
                     }));
             }
 
-            databaseInstancesDetail = await getDatabaseInstancesDetails(
-                credentialsId,
-                region,
-                instancesManaged,
-                resourceId,
-                instancesDetails
-            );
+            databaseInstancesDetail =
+                resourceType === DatabaseTypes.PG_SQL
+                    ? instancesDetails
+                    : await getDatabaseInstancesDetails(
+                          credentialsId,
+                          region,
+                          instancesManaged,
+                          resourceId,
+                          instancesDetails
+                      );
 
             databaseHostDetails.databaseInstanceDetails = databaseInstancesDetail;
             const promises = [];
@@ -2460,11 +2488,56 @@ async function getDatabaseInstancesSummary(
     });
 }
 
+/* Util function to return all cluster node datails given database host ID or one of the instance IDs in the cluster */
+async function getAllClusterNodeDetails(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId?: string,
+    node1InstanceId?: string
+) {
+    logger.info('Getting all cluster node details', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        node1InstanceId
+    });
+
+    if (!node1InstanceId && !databaseHostId) {
+        logger.warn('databaseHostId or nodeInstanceId is missing');
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'Atleast one node instance ID of database host ID is required to fetch all cluster node details'
+        );
+    }
+
+    if (!node1InstanceId) {
+        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        ({ node1InstanceId } = metadata as unknown as Metadata);
+    }
+
+    const clusterNetworkIpDetails = await callSsmExecution(
+        credentialsId,
+        region,
+        CLUSTER_NETWORK_IP_INFO_PS1,
+        node1InstanceId,
+        accountId
+    );
+    const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
+    const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
+    const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
+    return compact(
+        clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => ({ ec2InstanceId, ec2InstanceName }))
+    );
+}
+
 export {
     getDatabaseHostsSummaryV2,
     getDatabaseHostSummaryV2,
     getDatabaseHostInstanceSummary,
     getDatabasesV2,
     getInstanceDetails,
-    MappedOnTapVolumeResponse
+    MappedOnTapVolumeResponse,
+    getAllClusterNodeDetails
 };

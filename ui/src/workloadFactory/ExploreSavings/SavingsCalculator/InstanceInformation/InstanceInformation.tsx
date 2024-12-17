@@ -22,9 +22,11 @@ const InstanceInformation = () => {
             storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
         const findingsLicenseData =
             storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
-        const findingsDbModel = selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)
-            ? FINDINGS.NOT_OPTIMIZED
-            : FINDINGS.OPTIMIZED;
+        const findingsDbModel =
+            selectedHostDetails?.serverInstallationMode?.length &&
+            selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)
+                ? FINDINGS.NOT_OPTIMIZED
+                : FINDINGS.OPTIMIZED;
 
         setNoOfInstances(selectedHostDetails?.totalInstance || 0);
 

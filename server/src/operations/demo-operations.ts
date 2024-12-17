@@ -40,7 +40,10 @@ import {
     assessmentJobData,
     optimizeStorageJobData,
     optimizeOperatingSystemJobData,
-    mockPGSqlStandaloneDeploymentStack
+    mockPGSqlStandaloneDeploymentStack,
+    optimizeMpioSessionsJobData,
+    optimizeStorageTierJobData,
+    enableMPIOJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -655,6 +658,37 @@ async function createOperatingSystemOptimizeJobMockData(
     );
 }
 
+async function createOperatingSystemMpioSessionsOptimizeJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate operating system optimize mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeMpioSessionsJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 async function createDeploymentMockDataInDBForPgSql(
     accountId: string,
     stackId: string,
@@ -804,6 +838,69 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
         uuidVolumeIdMap
     };
 }
+
+async function createStorageTierJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate storage-tier optimize mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeStorageTierJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
+async function createEnableMpioJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate enable mpio mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return enableMPIOJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -819,5 +916,8 @@ export {
     updateOptimizedConfigNameInInstanceTable,
     createDeploymentMockDataInDBForPgSql,
     createOperatingSystemOptimizeJobMockData,
-    demoGetFsxnVolIdsFromOntapVolIds
+    demoGetFsxnVolIdsFromOntapVolIds,
+    createOperatingSystemMpioSessionsOptimizeJobMockData,
+    createStorageTierJobMockData,
+    createEnableMpioJobMockData
 };

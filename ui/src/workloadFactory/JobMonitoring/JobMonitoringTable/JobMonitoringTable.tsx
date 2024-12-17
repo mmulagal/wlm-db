@@ -349,7 +349,23 @@ const JobMonitoringTable = () => {
                                 />
                             )}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
-                            {cellData === JOB_MONITORING_STATUS.WARNING && <Warning />}
+                            {cellData === JOB_MONITORING_STATUS.WARNING &&
+                                (rowData?.error ? (
+                                    <Popover
+                                        popoverClass={CommonStyles['popover']}
+                                        children={
+                                            <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                                {rowData?.error}
+                                            </Typography>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive={true}
+                                        container={<Warning className={styles.statusIcon} />}
+                                    />
+                                ) : (
+                                    <Warning />
+                                ))}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>
                     </div>
@@ -385,7 +401,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}
@@ -400,7 +416,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '196px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}

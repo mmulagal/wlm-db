@@ -21,7 +21,8 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
-    useOptimizeStorageSizingMutation
+    useOptimizeStorageSizingMutation,
+    useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
@@ -31,6 +32,7 @@ import store from '../../../store/store';
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
@@ -41,6 +43,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const [disableText, setDisableText] = useState(false);
@@ -54,11 +57,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     }, [isAssessmentAvailable, loading]);
 
     const { setDialog, closeDialog } = useDialog();
-
-    const isDialogPrimaryBtnDisabled = useMemo(() => {
-        const id = cardData?.id;
-        return (!isDemoMode && id === 'compute-rightsizing') || id === 'performance-tier';
-    }, [cardData, isDemoMode]);
 
     const disableOptimizeButton = useMemo(() => {
         if (cardData?.id === 'headroom') {
@@ -239,7 +237,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     // This is the function that will be called when the optimize button is clicked from main cards
     const callOptimizeApi = (type: any) => {
-        let payload = {};
+        let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
@@ -253,6 +251,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 type: [cardData?.id]
             };
+        } else if (type === 'Storage tier') {
+            apiCall = optimizeStorageTier;
+            payload = null;
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -344,12 +345,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={styles.colorSet}
                 hidePrimaryButton={
-                    type === 'File system headroom' &&
+                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }
-                primaryButtonDisabled={isDialogPrimaryBtnDisabled}
-                primaryButtonTooltip={isDialogPrimaryBtnDisabled ? GENERAL.COMING_SOON : ''}
             />
         );
     };
@@ -418,7 +417,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             width="120px"
                             height="30px"
                         >
-                            <div>
+                            <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                                 <DsButton variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
@@ -434,7 +433,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         width="310px"
                         height="50px"
                     >
-                        <div>
+                        <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
                                 Optimize
                             </DsButton>
@@ -442,7 +441,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </TooltipComponent>
                 ) : (
                     <div
-                        className={styles.buttonSection}
+                        className={
+                            isDarkTheme && (loading || disableOptimizeButton)
+                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                : styles.buttonSection
+                        }
                         style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
                         id={`${cardData?.id}-optimize`}
                     >

@@ -8,6 +8,7 @@ import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
 import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
 
 const OptimizationBreakdown = () => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
@@ -39,10 +40,11 @@ const OptimizationBreakdown = () => {
                         isComingSoon={false}
                     />
                     <OptimizeComponent
-                        value={<ComingSoon />}
-                        text={'Application (SQL Server)'}
+                        value={optimizationBreakDown?.application?.percent || 0}
+                        data={optimizationBreakDown?.application}
+                        text={GENERAL.APPLICATION_SQL_SERVER}
                         image={<Applications />}
-                        isComingSoon={true}
+                        isComingSoon={false}
                     />
                 </div>
 

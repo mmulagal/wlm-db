@@ -9,49 +9,63 @@ type Utilisation = {
     used: string;
     total: string;
     remaining: string;
-}
+};
 
 type ResourceDistributionProps = {
-    mssqlCpu: Utilisation,
-    mssqlMemory: Utilisation,
-    mssqlDisk: Utilisation
-}
+    mssqlCpu: Utilisation;
+    mssqlMemory: Utilisation;
+    mssqlDisk: Utilisation;
+};
 
 type ResourceData = {
-    resourceName: string,
-    percentage: string,
-    dataToShowValue: string,
-    dataToShowUnit: string,
-    dataLabel: string,
-}
+    resourceName: string;
+    percentage: string;
+    dataToShowValue: string;
+    dataToShowUnit: string;
+    dataLabel: string;
+};
 
-const ResourceDistribution = ({mssqlCpu, mssqlMemory, mssqlDisk}: ResourceDistributionProps) => {
+const ResourceDistribution = ({ mssqlCpu, mssqlMemory, mssqlDisk }: ResourceDistributionProps) => {
     const cpuMsgCheck = isNotNumberOrNA(mssqlCpu?.percentUsed);
-        const memoryMsgCheck = isNotNumberOrNA(mssqlMemory?.percentUsed);
-        const diskMsgCheck =  isNotNumberOrNA(mssqlDisk?.percentUsed);
-    
-        const totalMemory = formatSizeSplit(mssqlMemory?.total);
-        const totalSize = formatSizeSplit(mssqlDisk?.total);
-    
-        const cpuUsedValue = !cpuMsgCheck && mssqlCpu?.percentUsed !== 'N/A' && mssqlCpu?.percentUsed;
-        const cpuUsedFormat = (mssqlCpu?.percentUsed && !cpuMsgCheck && mssqlCpu?.percentUsed !== 'N/A') ? '%' : '';
-        const cpuUsedTooltip = (mssqlCpu?.percentUsed && `${mssqlCpu.percentUsed}% ${GENERAL.MS_SQL_CPU_USED}`) || 'N/A';
-        const cpuRemTooltip = (mssqlCpu?.percentUsed && !cpuMsgCheck) ? 
-            `${(100 - parseInt(mssqlCpu?.percentUsed))}%  ${GENERAL.CPU_REM}` : 'N/A';
-        const memoryUsedValue = (!memoryMsgCheck && mssqlMemory?.percentUsed !== 'N/A' && mssqlMemory?.percentUsed) || 0;
-        const memoryUsedTooltip = (mssqlMemory?.used && !memoryMsgCheck) ? 
-            displayFormattedValue(parseInt(mssqlMemory?.used), GENERAL.MS_SQL_MEMORY_USED) : 'N/A';
-        const memoryRemTooltip = (mssqlMemory?.remaining && !memoryMsgCheck) ? 
-            displayFormattedValue(parseInt(mssqlMemory?.remaining), GENERAL.MEMORY_REM): 'N/A';
-        const diskUsedValue = (!diskMsgCheck && mssqlDisk?.percentUsed !== 'N/A' && mssqlDisk?.percentUsed) || 0;
-        const diskUsedTooltip = (mssqlDisk?.used && !diskMsgCheck) ? 
-            displayFormattedValue(parseInt(mssqlDisk?.used), GENERAL.MS_SQL_DISK_USED) : 'N/A';
-        const diskRemTooltip = (mssqlDisk?.remaining && !diskMsgCheck) ? 
-            displayFormattedValue(parseInt(mssqlDisk?.remaining), GENERAL.DISK_REM): 'N/A';
-    
-        const cpuInfoMsg = cpuMsgCheck && mssqlCpu.percentUsed;
-        const memoryInfoMsg = memoryMsgCheck && mssqlMemory.percentUsed;
-        const diskInfoMsg = diskMsgCheck && mssqlDisk.percentUsed;
+    const memoryMsgCheck = isNotNumberOrNA(mssqlMemory?.percentUsed);
+    const diskMsgCheck = isNotNumberOrNA(mssqlDisk?.percentUsed);
+
+    const totalMemory = formatSizeSplit(mssqlMemory?.total);
+    const totalSize = formatSizeSplit(mssqlDisk?.total);
+
+    const cpuUsedValue = !cpuMsgCheck && mssqlCpu?.percentUsed !== GENERAL.NOT_AVAILABLE && mssqlCpu?.percentUsed;
+    const cpuUsedFormat =
+        mssqlCpu?.percentUsed && !cpuMsgCheck && mssqlCpu?.percentUsed !== GENERAL.NOT_AVAILABLE ? '%' : '';
+    const cpuUsedTooltip =
+        (mssqlCpu?.percentUsed && `${mssqlCpu.percentUsed}% ${GENERAL.MS_SQL_CPU_USED}`) || GENERAL.NOT_AVAILABLE;
+    const cpuRemTooltip =
+        mssqlCpu?.percentUsed && !cpuMsgCheck
+            ? `${100 - parseInt(mssqlCpu?.percentUsed)}%  ${GENERAL.CPU_REM}`
+            : GENERAL.NOT_AVAILABLE;
+    const memoryUsedValue =
+        (!memoryMsgCheck && mssqlMemory?.percentUsed !== GENERAL.NOT_AVAILABLE && mssqlMemory?.percentUsed) || 0;
+    const memoryUsedTooltip =
+        mssqlMemory?.used && !memoryMsgCheck
+            ? displayFormattedValue(parseInt(mssqlMemory?.used), GENERAL.MS_SQL_MEMORY_USED)
+            : GENERAL.NOT_AVAILABLE;
+    const memoryRemTooltip =
+        mssqlMemory?.remaining && !memoryMsgCheck
+            ? displayFormattedValue(parseInt(mssqlMemory?.remaining), GENERAL.MEMORY_REM)
+            : GENERAL.NOT_AVAILABLE;
+    const diskUsedValue =
+        (!diskMsgCheck && mssqlDisk?.percentUsed !== GENERAL.NOT_AVAILABLE && mssqlDisk?.percentUsed) || 0;
+    const diskUsedTooltip =
+        mssqlDisk?.used && !diskMsgCheck
+            ? displayFormattedValue(parseInt(mssqlDisk?.used), GENERAL.MS_SQL_DISK_USED)
+            : GENERAL.NOT_AVAILABLE;
+    const diskRemTooltip =
+        mssqlDisk?.remaining && !diskMsgCheck
+            ? displayFormattedValue(parseInt(mssqlDisk?.remaining), GENERAL.DISK_REM)
+            : GENERAL.NOT_AVAILABLE;
+
+    const cpuInfoMsg = cpuMsgCheck && mssqlCpu.percentUsed;
+    const memoryInfoMsg = memoryMsgCheck && mssqlMemory.percentUsed;
+    const diskInfoMsg = diskMsgCheck && mssqlDisk.percentUsed;
 
     const resourceDistributionData = [
         {
@@ -107,19 +121,19 @@ const ResourceDistribution = ({mssqlCpu, mssqlMemory, mssqlDisk}: ResourceDistri
                         labels: []
                     };
 
-                    const tooltipList = [resource.usedTooltip, resource.remTooltip]
+                    const tooltipList = [resource.usedTooltip, resource.remTooltip];
 
-                    const optionsObj={
+                    const optionsObj = {
                         plugins: {
-                          tooltip: {
-                            callbacks: {
-                              label: (item:any) => {
-                               return  `${tooltipList[item.dataIndex]}`
-                              }
+                            tooltip: {
+                                callbacks: {
+                                    label: (item: any) => {
+                                        return `${tooltipList[item.dataIndex]}`;
+                                    }
+                                }
                             }
-                          }
                         }
-                      }
+                    };
 
                     return (
                         <div className={styles.resourceContainer}>

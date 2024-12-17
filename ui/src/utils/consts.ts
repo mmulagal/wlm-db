@@ -591,7 +591,7 @@ export const INVENTORY_STATUS = {
     SSM_ONLINE: 'online',
     SSM_CONNECTED: 'connected',
     HOST_ONLINE: 'online',
-    NOT_AVAILABLE: 'N/A',
+    NOT_AVAILABLE: 'n/a',
     UP: 'up',
     DOWN: 'down',
     RUNNING: 'Running',
@@ -652,7 +652,8 @@ export const FINDINGS = {
     NOT_OPTIMIZED: 'NOT_OPTIMIZED',
     INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
     UNDER_PROVISIONED: 'UNDER_PROVISIONED',
-    INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
+    INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS',
+    NOT_APPLICABLE: 'not-applicable'
 };
 
 export const TCO_MANUAL_DEPLOYMENT_TYPE = {
@@ -682,14 +683,14 @@ export const GETWELL_STATUS = {
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
-    NOT_APPLICABLE: 'N/A',
+    NOT_APPLICABLE: 'n/a',
     ANALYZING: 'Analyzing'
 };
 
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
-    'not-applicable': 'N/A',
+    'not-applicable': 'n/a',
     'not-optimized': 'Not optimized',
     analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',
@@ -700,7 +701,9 @@ export const GETWELL_VALUES: any = {
     same_drive: 'Same drive',
     critical: 'Critical',
     warning: 'Warning',
-    none: 'None'
+    none: 'None',
+    'separate drive': 'Separate drive',
+    'same drive': 'Same drive'
 };
 
 export const GETWELL_CONFIG: any = {
@@ -729,11 +732,14 @@ export const GETWELL_CONFIG: any = {
     'default-log-files-location': 'transaction_log_files',
     'default-data-files-location': 'user_data_files',
     'compute-rightsizing': 'compute_rightsizing',
-    'operating-system-patch': 'operating_system_patch'
+    'sql-license': 'sql_licenses',
+    'host-os-patch': 'host_os_patch'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
     'User data files (.mdf) placement',
     'Log files (.ldf) placement',
-    'TempDB placement'
+    'TempDB placement',
+    'Licenses', // Licenses is for Application (SQL Server)
+    GENERAL.OPERATING_SYSTEM_PATCH
 ];

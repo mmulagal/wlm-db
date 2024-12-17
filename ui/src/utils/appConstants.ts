@@ -440,7 +440,7 @@ export const GENERAL = {
         "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
-    NOT_AVAILABLE: 'N/A',
+    NOT_AVAILABLE: 'n/a',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -875,6 +875,7 @@ export const GENERAL = {
     SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
+    SANDBOX: 'Sandbox',
     SANDBOXES: 'Sandboxes',
     SANDBOX_HEADER_CONTENT:
         'Sandbox is an on-demand, isolated database environment that can be used for testing, integration, diagnostics, and training, without affecting production data. It streamlines the development lifecycle while ensuring data integrity and security.',
@@ -909,10 +910,9 @@ export const GENERAL = {
     ANALYTICS: 'Analytics',
     SANDBOX_OTHER: 'Other',
     SANDBOXES_DISTRIBUTION_BY_AGE: 'Sandboxes distribution by age',
-    ONE_SEVEN_DAYS: '0-7 days',
-    SEVEN_FOURTEEN_DAYS: ' 8-14 days',
-    FOURTEEN_THIRTY_DAYS: '15-30 days',
-    THIRTY_PLUS_DAYS: '30+ days',
+    ONE_THIRTY_DAYS: '0-30 days',
+    THIRTY_SIXTY_DAYS: '31-60 days',
+    SIXTY_PLUS_DAYS: '61+ days',
     CREATE_SANDBOX: 'Create sandbox',
     TARGET_HOST: 'Target database host',
     TARGET_INSTANCE: 'Target database instance',
@@ -1001,9 +1001,9 @@ export const GENERAL = {
         OPTIMIZED: 'Optimized',
         NOT_OPTIMIZED: 'Not optimized',
         OVER_PROVISIONED: 'Over-provisioned',
-        INSUFFICIENT_DATA: 'N/A',
+        INSUFFICIENT_DATA: 'n/a',
         UNDER_PROVISIONED: 'Under-provisioned',
-        INSUFFICIENT_PERMISSIONS: 'N/A'
+        INSUFFICIENT_PERMISSIONS: 'n/a'
     },
     INSTANCE_TYPE_FINDINGS_TOOLTIP:
         'Displays findings (over-provisioned, under-provisioned, or optimized) based on analysis of Amazon CloudWatch metrics (CPU, bandwidth, network, and more) of the current instance and on the current memory of the instance. No finding appears when Workload Factory has insufficient permissions or unavailable metrics.',
@@ -1091,6 +1091,18 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    // Otimization status n/a messages
+    ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
+    ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
+    FSXN_OPTIMIZE_SUPPORTED:
+        'Optimization assessment is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
+    ASSESSMENT_FOR_UNDETECTED_FSXN: 'Optimization assessment is only supported for detected and managed instances.',
+    ASSESSMENT_STORAGE_TYPE_UNKNOWN:
+        'Optimization assessment is only supported for detected and managed FSx for ONTAP instances.',
+    ASSESSMENT_AOAG_DETECTED: 'Optimization assessment is only supported for managed instances.',
+    ASSESSMENT_AOAG_UNDETECTED: 'Optimization assessment is only supported for detected and managed instances.',
+
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
@@ -1188,8 +1200,12 @@ export const GENERAL = {
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    OPERATING_SYSTEM_PATCH: 'Operating system patch',
     RIGHTSIZING_TOOLTIP:
-        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.'
+        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
+    APPLICATION_SQL_SERVER: 'Application (SQL Server)',
+    MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
+        'Total managed instances include only those whose assessment has been completed and are currently online.'
 };
 
 export const CODE_VIEWER = {

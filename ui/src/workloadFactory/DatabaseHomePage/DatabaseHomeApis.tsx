@@ -2,9 +2,12 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
+    addAggregatedPgsqlCosts,
+    addAggregatedPgsqlStorageSavings,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
     addAggregateHostsCountData,
+    addAggregatePgSqlHostsCountData,
     addJobsSummary,
     addJobsSummaryLoading
 } from '../../store/workloadFactory/databaseHomeSlice';
@@ -20,6 +23,7 @@ import {
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
     const databaseHostsDataV2 = useAppSelector(state => state.inventoryV2.getDatabaseHosts.databaseHostsData);
+    const { databaseHostsData: pgsqlHostData } = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { sandboxSavings } = useAppSelector(state => state.sandbox.getSandboxSavings);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
@@ -90,6 +94,21 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, sandboxSavings]);
 
+    // To have pgsql database hosts data in dashboard
+    useEffect(() => {
+        if (!pgsqlHostData) {
+            return;
+        }
+
+        const aggrStorage = getManagedAggrStorageSavings(pgsqlHostData);
+        dispatch(addAggregatedPgsqlStorageSavings(aggrStorage));
+
+        const aggrCost = getManageAggrCost(pgsqlHostData);
+        dispatch(addAggregatedPgsqlCosts(aggrCost));
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pgsqlHostData]);
+
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
         if (!databaseHostsDataV2) {
@@ -99,6 +118,16 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregateHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, inventoryTableData]);
+
+    // To have pgsql database hosts count data in dashboard
+    useEffect(() => {
+        if (!pgsqlHostData) {
+            return;
+        }
+        const hostStatusCount = getManagedHostCount(pgsqlHostData, dispatch);
+        dispatch(addAggregatePgSqlHostsCountData(hostStatusCount));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pgsqlHostData, inventoryTableData]);
 
     return <></>;
 };

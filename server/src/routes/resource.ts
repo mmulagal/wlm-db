@@ -62,12 +62,12 @@ export default function resourceRoutes(fastify: FastifyInstance) {
     server.post(
         `${MSSQL_API_PATH_RESOURCES}/create-demo-resources`,
         { schema: CreateDemoDataSchema },
-        async request => {
+        async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region }
             } = request;
             const response = await createDemoDataforRegion(accountId, credentialsId, region);
-            return response;
+            return reply.code(201).send(response);
         }
     );
 }

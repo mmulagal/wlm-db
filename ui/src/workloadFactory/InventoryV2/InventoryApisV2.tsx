@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
+    addAllMssqlHostAssessmentData,
     addDatabaseHostsDataV2,
+    addPgSqlDatabaseHostsData,
+    setAllMssqlHostAssessmentLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setInventoryChartData,
@@ -10,8 +13,12 @@ import {
     setIsDiscoverHostLoading,
     setIsDiscoveredHostData,
     setIsFullHostDataLoading,
+    setIsFullPgSqlHostDataLoading,
     setIsManagedHostListLoading,
+    setIsPgSqlDatabaseHostsLoading,
     setIsRefreshed,
+    setManagedAssessmentHostData,
+    setManagedAssessmentHostIdsList,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setRemoveSecNodeDiscoveredList,
@@ -19,12 +26,16 @@ import {
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
+    useGetMssqlAssessmentDataForHostMutation,
     useGetMssqlInstanceDataV2Mutation,
     useLazyDiscoverHostsQuery,
+    useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetDatabaseHostsFullDataV2Query,
     useLazyGetDatabaseHostsListV2Query,
     useLazyGetFsxCredentialStatusQuery,
-    useLazyGetManagedHostDataQuery
+    useLazyGetManagedHostDataQuery,
+    useLazyGetPgsqlDatabaseHostsFullDataV2Query,
+    useLazyGetPgSqlDatabaseHostsListQuery
 } from '../../utils/apiService';
 import {
     formatDiscoveredInventoryData,
@@ -41,10 +52,14 @@ import {
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
 import { INSTANCE_API_FIELDS } from '../../utils/consts';
+import { all } from 'axios';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
     const { databaseHostsData, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { fullHostDataLoading: pgsqlFullHostDataLoading } = useAppSelector(
+        state => state.inventoryV2.getPgSqlDatabaseHosts
+    );
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
@@ -55,10 +70,13 @@ const InventoryApisV2 = () => {
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const [runningPerfInstanceList, setRunningPerfInstanceList] = useState<Array<string>>([]);
+    const [runningManagedAssessmentList, setRunningManagedAssessmentList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const managedAssessmentHostIdsList = useAppSelector(state => state.inventoryV2.managedAssessmentHostIdsList);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
+    const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -73,9 +91,17 @@ const InventoryApisV2 = () => {
     const [getDatabaseHostsListApi] = useLazyGetDatabaseHostsListV2Query();
     const [topologyHostData, setTopologyHostData] = useState<any>({});
 
+    // pgsql database-hosts without fields values
+    const [getPgSqlDatabaseHostsListApi] = useLazyGetPgSqlDatabaseHostsListQuery();
+    const [pgsqlTopologyHostData, setPgsqlTopologyHostData] = useState<any>({});
+
     // database-hosts with fields values
     const [getDatabaseHostsFullDataApi] = useLazyGetDatabaseHostsFullDataV2Query();
     const [fullHostData, setFullHostData] = useState<any>({});
+
+    // pgsql database-hosts with fields values
+    const [getPgSqlDatabaseHostsFullDataApi] = useLazyGetPgsqlDatabaseHostsFullDataV2Query();
+    const [fullPgsqlHostData, setFullPgsqlHostData] = useState<any>({});
 
     // Discover API
     const [getDiscoveryHostsListApi] = useLazyDiscoverHostsQuery();
@@ -86,18 +112,31 @@ const InventoryApisV2 = () => {
     // Get Instance data mutation. This will be called to get unmanaged rows full data - ToDo
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataV2Mutation();
 
+    // Get managed assessment data
+    const [getMssqlAssessmentData] = useGetMssqlAssessmentDataForHostMutation();
+
+    // Get all managed hosts assessment data
+    const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
+    const [allmssqlHostAssessmentData, setAllmssqlHostAssessmentData] = useState<any>([]);
+
     const credIdRef = useRef();
     const regionIdRef = useRef();
     const fsxCredentialStatusObjRef: any = useRef();
     const mssqlInstancesDataRef: any = useRef();
     const perfMssqlInstancesDataRef: any = useRef();
+    const managedAssessmentHostDataRef: any = useRef();
     const runningInstanceListRef: any = useRef();
 
     const runningPerfInstanceListRef: any = useRef();
+    const runningManagedAssessmentRef: any = useRef();
 
     useEffect(() => {
         runningPerfInstanceListRef.current = runningPerfInstanceList;
     }, [runningPerfInstanceList]);
+
+    useEffect(() => {
+        runningManagedAssessmentRef.current = runningManagedAssessmentList;
+    }, [runningManagedAssessmentList]);
 
     useEffect(() => {
         runningInstanceListRef.current = runningInstanceList;
@@ -114,6 +153,10 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         perfMssqlInstancesDataRef.current = perfMssqlInstancesData;
     }, [perfMssqlInstancesData]);
+
+    useEffect(() => {
+        managedAssessmentHostDataRef.current = managedAssessmentHostData;
+    }, [managedAssessmentHostData]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -241,6 +284,52 @@ const InventoryApisV2 = () => {
         }
     };
 
+    // This function is to get basic managed rows info for pgsql. This output is used only in dashboard page as of now.
+    const getPgSqlDatabaseHostsList = async (
+        managedList: string[],
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getPgSqlDatabaseHostsListApi({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: nextToken
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setResetManagedData(false));
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = { ...managedList, [perRow?.id]: perRow };
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setPgsqlTopologyHostData(managedList);
+                            getPgSqlDatabaseHostsList(
+                                managedList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setIsPgSqlDatabaseHostsLoading(false));
+                            setPgsqlTopologyHostData(managedList);
+                        }
+                    } else {
+                        dispatch(setIsPgSqlDatabaseHostsLoading(false));
+                        setPgsqlTopologyHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsPgSqlDatabaseHostsLoading(false));
+                setPgsqlTopologyHostData(managedList);
+            }
+        }
+    };
+
     // This function is to get all managed rows data. This output is used both in managed tab and dashboard page.
     const getDatabaseHostsFullData = async (
         managedList: any,
@@ -284,6 +373,53 @@ const InventoryApisV2 = () => {
             } catch (error) {
                 dispatch(setIsFullHostDataLoading(false));
                 setFullHostData(managedList);
+            }
+        }
+    };
+
+    // This function is to get all managed rows data for pgsql. This output is used both in managed tab and dashboard page.
+    const getPgsqlDatabaseHostsFullData = async (
+        managedList: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getPgSqlDatabaseHostsFullDataApi({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: nextToken,
+                    isDemoMode: isDemoMode
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setResetManagedData(false));
+                    if (result && !result?.error) {
+                        result?.data?.items?.map((perRow: any) => {
+                            if (perRow?.id) {
+                                managedList = { ...managedList, [perRow?.id]: perRow };
+                            }
+                        });
+                        if (result?.data?.nextToken) {
+                            setFullPgsqlHostData(managedList);
+                            getPgsqlDatabaseHostsFullData(
+                                managedList,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setIsFullPgSqlHostDataLoading(false));
+                            setFullPgsqlHostData(managedList);
+                        }
+                    } else {
+                        dispatch(setIsFullPgSqlHostDataLoading(false));
+                        setFullPgsqlHostData(managedList);
+                    }
+                }
+            } catch (error) {
+                dispatch(setIsFullPgSqlHostDataLoading(false));
+                setFullPgsqlHostData(managedList);
             }
         }
     };
@@ -513,6 +649,98 @@ const InventoryApisV2 = () => {
         }
     };
 
+    const getManagedAssessmentData = async (resourceId: string) => {
+        try {
+            const result: any = await getMssqlAssessmentData({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                databaseHostId: resourceId
+            });
+            if (result && !result?.error) {
+                let mssqlAssessmentDataRes: any = {};
+                if (result?.data) {
+                    if (managedAssessmentHostDataRef.current[resourceId]) {
+                        mssqlAssessmentDataRes[resourceId] = {
+                            loading: false,
+                            data: result?.data?.instancesAssessment,
+                            error: result?.data?.error
+                        };
+                    }
+                }
+                if (!mssqlAssessmentDataRes?.[resourceId]) {
+                    mssqlAssessmentDataRes[resourceId] = {
+                        loading: false,
+                        data: null,
+                        error: null
+                    };
+                }
+                dispatch(
+                    setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataRes })
+                );
+            } else {
+                let mssqlAssessmentDataErr: any = {};
+                mssqlAssessmentDataErr[resourceId] = {
+                    loading: false,
+                    data: null,
+                    error: result?.error?.data?.message
+                };
+                dispatch(
+                    setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataErr })
+                );
+            }
+        } catch (error) {
+            let mssqlAssessmentDataErr: any = {};
+            mssqlAssessmentDataErr[resourceId] = {
+                loading: false,
+                data: null,
+                error: error
+            };
+            dispatch(
+                setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataErr })
+            );
+        }
+    };
+
+    const getAllMssqlHostAssessmentData = async (
+        assessmentData: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+            try {
+                const result: any = await getAllMssqlHostAssessmentAPI({
+                    credentialId: credId,
+                    regionId: regionId,
+                    nextToken: nextToken
+                });
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    if (result && !result?.error) {
+                        assessmentData = [...assessmentData, ...result?.data?.assessmentsPerAccount];
+                        if (result?.data?.nextToken) {
+                            setAllmssqlHostAssessmentData(assessmentData);
+                            getAllMssqlHostAssessmentData(
+                                assessmentData,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setAllMssqlHostAssessmentLoading(false));
+                            setAllmssqlHostAssessmentData(assessmentData);
+                        }
+                    } else {
+                        dispatch(setAllMssqlHostAssessmentLoading(false));
+                        setAllmssqlHostAssessmentData(assessmentData);
+                    }
+                }
+            } catch (error) {
+                dispatch(setAllMssqlHostAssessmentLoading(false));
+                setAllmssqlHostAssessmentData(assessmentData);
+            }
+        }
+    };
+
     // This is to call instance API to get perf and protection data
     const callUnmanagedPerfInstanceApi = (
         instancesList: Array<string>,
@@ -545,6 +773,36 @@ const InventoryApisV2 = () => {
         }
     };
 
+    const callManagedAssessment = (resourceIds: Array<string>) => {
+        if (resourceIds.length > 0) {
+            let mssqlAssessmentDataLoad: any = {};
+            let noRunningList: Array<string> = [];
+            resourceIds?.map((resourceId: any) => {
+                if (
+                    runningManagedAssessmentRef.current?.length &&
+                    runningManagedAssessmentRef.current.includes(resourceId)
+                ) {
+                    return;
+                }
+                mssqlAssessmentDataLoad[resourceId] = {
+                    loading: true,
+                    data: null,
+                    error: null
+                };
+                noRunningList.push(resourceId);
+            });
+            dispatch(
+                setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataLoad })
+            );
+            setRunningManagedAssessmentList([...runningManagedAssessmentRef.current, ...noRunningList]);
+            noRunningList?.map((resourceId: any) => {
+                setTimeout(() => {
+                    getManagedAssessmentData(resourceId);
+                }, 1);
+            });
+        }
+    };
+
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
@@ -567,6 +825,13 @@ const InventoryApisV2 = () => {
         }
     }, [unManagedPerfInstanceIdsList]);
 
+    useEffect(() => {
+        // Assessment call for managed rows
+        if (managedAssessmentHostIdsList) {
+            callManagedAssessment(managedAssessmentHostIdsList);
+        }
+    }, [managedAssessmentHostIdsList]);
+
     const resetValues = () => {
         dispatch(setResetManagedData(true));
         // reset for getManagedHostList
@@ -575,11 +840,17 @@ const InventoryApisV2 = () => {
         dispatch(setIsManagedHostListLoading(true));
         // reset for getDatabaseHostsList
         dispatch(setIsDatabaseHostsLoading(true));
+        dispatch(setIsPgSqlDatabaseHostsLoading(true));
         setTopologyHostData({});
+        setPgsqlTopologyHostData({});
         // reset for getDatabaseHostsFullData
         dispatch(setIsFullHostDataLoading(true));
+        dispatch(setIsFullPgSqlHostDataLoading(true));
+        dispatch(setAllMssqlHostAssessmentLoading(true));
         dispatch(addDatabaseHostsDataV2(null));
+        dispatch(addPgSqlDatabaseHostsData(null));
         setFullHostData({});
+        setFullPgsqlHostData({});
         // reset for discovery
         dispatch(setIsDiscoveredHostData(null));
         dispatch(setIsDiscoverHostLoading(true));
@@ -601,8 +872,12 @@ const InventoryApisV2 = () => {
         dispatch(setRemoveSecNodeDiscoveredList([]));
         // Perf and protection call for unmanaged rows
         dispatch(setUnManagedPerfInstanceIdsList([]));
+        // Assessment call for managed rows
+        dispatch(setManagedAssessmentHostIdsList([]));
         setRunningPerfInstanceList([]);
+        setRunningManagedAssessmentList([]);
         dispatch(setPerfMssqlInstancesData({}));
+        dispatch(setManagedAssessmentHostData({}));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -610,14 +885,20 @@ const InventoryApisV2 = () => {
         if (!refreshBlocked) {
             let managedList: string[] = [];
             let fullHostData: any = {};
+            let fullPgsqlHostData: any = {};
             let topologyHostData: any = {};
+            let pgsqlTopologyHostData: any = {};
             let discoveredList: any = [];
+            let allmssqlHostAssessmentData: any = [];
             if (credId && regionId) {
                 resetValues();
                 setTimeout(() => {
                     getManagedHostList(managedList, null, credId, regionId);
                     getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
                     getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                    getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
+                    getAllMssqlHostAssessmentData(allmssqlHostAssessmentData, null, credId, regionId);
                     getDiscoveryHostsList(discoveredList, null, credId, regionId);
                 }, 10);
             }
@@ -629,14 +910,20 @@ const InventoryApisV2 = () => {
         if (!refreshBlocked && isRefreshed) {
             let managedList: string[] = [];
             let fullHostData: any = {};
+            let fullPgsqlHostData: any = {};
             let topologyHostData: any = {};
+            let pgsqlTopologyHostData: any = {};
             let discoveredList: any = [];
+            let allmssqlHostAssessmentData: any = [];
             if (credId && regionId && isRefreshed) {
                 resetValues();
                 setTimeout(() => {
                     getManagedHostList(managedList, null, credId, regionId);
                     getDatabaseHostsList(topologyHostData, null, credId, regionId);
+                    getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
                     getDatabaseHostsFullData(fullHostData, null, credId, regionId);
+                    getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
+                    getAllMssqlHostAssessmentData(allmssqlHostAssessmentData, null, credId, regionId);
                     getDiscoveryHostsList(discoveredList, null, credId, regionId);
                 }, 10);
             }
@@ -675,6 +962,31 @@ const InventoryApisV2 = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullHostData, topologyHostData, fullHostDataLoading]);
+
+    // This will combine fullHostData (getDatabaseHostsFullData) and topologyHostData (getDatabaseHostsList) data and store in single object for pgsql.
+    useEffect(() => {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData) {
+            let databaseHostDataObj: any = {};
+            Object.keys(pgsqlTopologyHostData).map((key: string) => {
+                if (key in fullPgsqlHostData) {
+                    const perObj = {
+                        ...pgsqlTopologyHostData[key],
+                        ...fullPgsqlHostData[key],
+                        loading: false,
+                        databaseHostStatus: pgsqlTopologyHostData[key]?.databaseHostStatus
+                    };
+                    databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+                } else {
+                    const perObj = { ...pgsqlTopologyHostData[key], loading: pgsqlFullHostDataLoading ? true : false };
+                    databaseHostDataObj = { ...databaseHostDataObj, ...{ [key]: perObj } };
+                }
+            });
+            dispatch(addPgSqlDatabaseHostsData(databaseHostDataObj));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fullPgsqlHostData, pgsqlTopologyHostData, pgsqlFullHostDataLoading]);
 
     // This data is coming from discover API
     useEffect(() => {
@@ -772,6 +1084,10 @@ const InventoryApisV2 = () => {
             dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
         }
     }, [inventoryTableData, removeSecNodeDiscoveredList]);
+
+    useEffect(() => {
+        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+    }, [allmssqlHostAssessmentData]);
 };
 
 export default InventoryApisV2;

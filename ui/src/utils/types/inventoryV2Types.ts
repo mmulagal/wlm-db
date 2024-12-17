@@ -1,10 +1,16 @@
 export interface InventorySliceData {
+    breadCrumbSelectedFrom: string;
     defaultFilterOptions: {} | any;
     optimizeFilterTags: [] | any;
     inventoryTableData: { [key: string]: InventoryTableData } | null;
     inventoryChartData: InventoryChartData | null;
     isManagedHostListLoading: boolean;
     getDatabaseHosts: {
+        databaseHostsData: any;
+        databaseHostsLoading: boolean;
+        fullHostDataLoading: boolean;
+    };
+    getPgSqlDatabaseHosts: {
         databaseHostsData: any;
         databaseHostsLoading: boolean;
         fullHostDataLoading: boolean;
@@ -34,6 +40,10 @@ export interface InventorySliceData {
     selectedHeaderTab: string;
     managedHostInitialColumns: any;
     isRefreshed: boolean;
+    managedAssessmentHostIdsList: Array<string>;
+    managedAssessmentHostData: any;
+    allmssqlHostAssessmentData: any;
+    allmssqlHostAssessmentLoading: boolean;
 }
 
 export interface InventoryTableData {

@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, Table, useTable, TableTopBar } from '@netapp/design-system';
 import styles from './CategoryDialogComponent.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -145,6 +145,12 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
                 be redirected to the instance optimization page.
             </DsTypography>
             <div className={styles.table}>
+                <TableTopBar
+                    //@ts-ignore
+                    tableProps={tableProps}
+                    pluralTitle="Non-optimized instances"
+                    singularTitle="Non-optimized instance"
+                />
                 <Table
                     //@ts-ignore
                     tableProps={tableProps}

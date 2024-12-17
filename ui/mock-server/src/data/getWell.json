@@ -256,12 +256,15 @@
                             "dataDriveTotalSizeMB": 81901
                         }
                     ]
-                }
+                },
+                "missingPermissions" : [
+                    "fsx:UpdateVolume"
+                ]
             },
             {
                 "name": "tempdb-drive-size",
                 "recommended": "10-20%",
-                "status": "not-applicable",
+                "status": "not-optimized",
                 "severity": "warning",
                 "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                 "tags": [
@@ -271,23 +274,29 @@
                     "overProvisionedDrives": [],
                     "underProvisionedDrives": [],
                     "ignoredDrives": []
-                }
+                },
+                "missingPermissions" : [
+                    "fsx:UpdateVolume"
+                ]
             },
             {
                 "name": "headroom",
                 "recommended": "36-100%",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": [
                     "Performance efficiency"
+                ],
+                "missingPermissions" : [
+                    "fsx:UpdateVolume"
                 ]
             }
         ],
         "layout": [
             {
                 "name": "user-database-layout",
-                "status": "not-optimized",
+                "status": "optimized",
                 "recommended": "",
                 "severity": "warning",
                 "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
@@ -382,6 +391,60 @@
             "EBS throughput over-provisioned",
             "Network bandwidth over-provisioned",
             "Network PPS over-provisioned"
+        ]
+    },
+    "license": {
+        "name": "sql-license",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "warning",
+        "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+        "tags": [
+            "Cost optimization"
+        ],
+        "sqlServerInstances": [
+            {
+                "sqlServerInstance": "MSSQLSERVER",
+                "sqlServerState": "Running",
+                "sqlServerVersion": "16.0.4080.1",
+                "sqlServerProductYear": 2019,
+                "sqlServerEdition": "Enterprise Edition (64-bit)",
+                "sqlServerEngineEdition": 3,
+                "sqlServerName": "SQLServer-Prod-02"
+            },
+            {
+                "sqlServerInstance": "Prod-HelpDesk",
+                "sqlServerState": "Running",
+                "sqlServerVersion": "16.0.4080.1",
+                "sqlServerProductYear": 2019,
+                "sqlServerEdition": "Enterprise Edition (64-bit)",
+                "sqlServerEngineEdition": 3,
+                "sqlServerName": "SQLServer-Prod-02"
+            }
+        ]
+    },
+    "hostOsPatch": {
+        "name": "host-os-patch",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "critical",
+        "recommendation": "Your host OS patch is not optimized. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.",
+        "tags": [
+            "Security",
+            "Reliability"
+        ],
+        "objectsInViolation": [
+            "i-07e76a4b916548dc0"
+        ],
+        "ec2InstancesToPatch": [
+            {
+                "baselineId": "pb-0da914616003c89f1",
+                "criticalNonCompliantCount": 0,
+                "ec2InstanceId": "i-07e76a4b916548dc0",
+                "operationStartTime": 551,
+                "operationEndTime": 115,
+                "securityNonCompliantCount": 1
+            }
         ]
     }
 }

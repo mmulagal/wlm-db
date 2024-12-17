@@ -9,6 +9,7 @@ import { onClickESHost } from '../ExploreSavingsUtils';
 import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import { renderAllocatedCapacity, renderInstanceListText, renderUnmanagedAZ } from '../../InventoryV2/InventoryUtilsV2';
+import { getFilterOptions } from '../../../utils/utilityFunctions';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -119,7 +120,7 @@ const ExploreSavingsTableV2 = () => {
             accessor: 'serverInstallationMode',
             id: '2',
             width: '225px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -142,13 +143,15 @@ const ExploreSavingsTableV2 = () => {
             accessor: 'totalInstance',
             id: '4',
             width: '200px',
-            filterOptions: 'auto',
+            filterOptions: getFilterOptions(tableData, 'totalInstance'),
             renderCell: (cellData: string) => {
                 return (
                     <div>
                         {cellData && Number(cellData) !== 0 ? (
                             <>
-                                <Typography variant="Regular_14">{cellData} {Number(cellData) > 1 ? 'instances' : 'instance'}</Typography>
+                                <Typography variant="Regular_14">
+                                    {cellData} {Number(cellData) > 1 ? 'instances' : 'instance'}
+                                </Typography>
                             </>
                         ) : (
                             ''

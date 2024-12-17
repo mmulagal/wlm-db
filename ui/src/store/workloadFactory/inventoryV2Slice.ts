@@ -4,6 +4,7 @@ import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
 
 const initialInventoryV2State: InventorySliceData = {
+    breadCrumbSelectedFrom: '',
     inventoryTableData: null,
     inventoryChartData: null,
     isManagedHostListLoading: false,
@@ -11,6 +12,11 @@ const initialInventoryV2State: InventorySliceData = {
         databaseHostsData: null, // To fetch database-hosts API data
         databaseHostsLoading: false, // To check if partial database-hosts api is running
         fullHostDataLoading: false // To check if full database-hosts api is running
+    },
+    getPgSqlDatabaseHosts: {
+        databaseHostsData: null,
+        databaseHostsLoading: false,
+        fullHostDataLoading: false
     },
     discoveredHosts: {
         discoveredHostData: null,
@@ -38,13 +44,20 @@ const initialInventoryV2State: InventorySliceData = {
     managedHostInitialColumns: initialColStateManagedHosts,
     isRefreshed: false,
     optimizeFilterTags: [],
-    defaultFilterOptions: {}
+    defaultFilterOptions: {},
+    managedAssessmentHostIdsList: [],
+    managedAssessmentHostData: null,
+    allmssqlHostAssessmentData: [],
+    allmssqlHostAssessmentLoading: false
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setBreadCrumbSelectedFrom: (state, action: PayloadAction<any>) => {
+            state.breadCrumbSelectedFrom = action.payload;
+        },
         setDefaultFilterOptions: (state, action: PayloadAction<any>) => {
             state.defaultFilterOptions = action.payload;
         },
@@ -69,11 +82,20 @@ const inventoryV2Slice = createSlice({
         setIsDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.databaseHostsLoading = action.payload;
         },
+        setIsPgSqlDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
+            state.getPgSqlDatabaseHosts.databaseHostsLoading = action.payload;
+        },
         setIsFullHostDataLoading: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.fullHostDataLoading = action.payload;
         },
+        setIsFullPgSqlHostDataLoading: (state, action: PayloadAction<any>) => {
+            state.getPgSqlDatabaseHosts.fullHostDataLoading = action.payload;
+        },
         addDatabaseHostsDataV2: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts.databaseHostsData = action.payload;
+        },
+        addPgSqlDatabaseHostsData: (state, action: PayloadAction<any>) => {
+            state.getPgSqlDatabaseHosts.databaseHostsData = action.payload;
         },
         setIsDiscoveredHostData: (state, action: PayloadAction<any>) => {
             state.discoveredHosts.discoveredHostData = action.payload;
@@ -137,6 +159,18 @@ const inventoryV2Slice = createSlice({
         },
         setIsRefreshed: (state, action: PayloadAction<any>) => {
             state.isRefreshed = action.payload;
+        },
+        setManagedAssessmentHostIdsList: (state, action: PayloadAction<any>) => {
+            state.managedAssessmentHostIdsList = action.payload;
+        },
+        setManagedAssessmentHostData: (state, action: PayloadAction<any>) => {
+            state.managedAssessmentHostData = action.payload;
+        },
+        addAllMssqlHostAssessmentData: (state, action: PayloadAction<any>) => {
+            state.allmssqlHostAssessmentData = action.payload;
+        },
+        setAllMssqlHostAssessmentLoading: (state, action: PayloadAction<any>) => {
+            state.allmssqlHostAssessmentLoading = action.payload;
         }
     }
 });
@@ -150,8 +184,11 @@ export const {
     setInventoryChartData,
     setIsManagedHostListLoading,
     setIsDatabaseHostsLoading,
+    setIsPgSqlDatabaseHostsLoading,
     setIsFullHostDataLoading,
+    setIsFullPgSqlHostDataLoading,
     addDatabaseHostsDataV2,
+    addPgSqlDatabaseHostsData,
     setIsDiscoveredHostData,
     setIsDiscoverHostLoading,
     setFsxCredentialStatus,
@@ -172,7 +209,12 @@ export const {
     setManagedHostInstanceLoading,
     setSelectedHeaderTab,
     setManagedHostColState,
-    setIsRefreshed
+    setIsRefreshed,
+    setBreadCrumbSelectedFrom,
+    setManagedAssessmentHostIdsList,
+    setManagedAssessmentHostData,
+    addAllMssqlHostAssessmentData,
+    setAllMssqlHostAssessmentLoading
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
