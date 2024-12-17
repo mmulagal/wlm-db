@@ -120,9 +120,9 @@ const CreateSandboxSchema = {
     description: 'Create sandbox in same or alternate host',
     body: CreateSandboxBody,
     response: {
-        202: {
+        202: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -196,11 +196,11 @@ const GetSandboxConnectionStringSchema = {
     summary: 'Get Sandbox connection string',
     description: 'Get sandbox connection string for sql server connection',
     response: {
-        200: {
+        200: Type.Object({
             server: Type.String(),
             database: Type.String(),
             userId: Type.Optional(Type.String())
-        }
+        })
     }
 };
 
@@ -220,9 +220,9 @@ const DeleteSandboxSchema = {
     summary: 'Delete sandbox',
     description: 'Delete sandbox within a database host',
     response: {
-        202: {
+        202: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -233,9 +233,9 @@ const SandboxLifeCycleSchema = {
     description: 'Sandbox lifecycle operations',
     body: SandboxLifeCycleBody,
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -301,9 +301,9 @@ const SandboxSplitSchema = {
     summary: 'Sandbox split',
     description: 'Sandbox split operation',
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 

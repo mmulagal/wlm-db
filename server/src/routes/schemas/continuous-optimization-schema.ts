@@ -60,9 +60,9 @@ const TriggerDriftAssessmentSchema = {
     tags: [RouteTags.ASSESSMENT],
     querystring: DatabaseQueryString,
     response: {
-        202: {
+        202: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -77,9 +77,9 @@ const OptimizeStorageSchema = {
     tags: [RouteTags.ASSESSMENT],
     body: OptimizeStorageRequestBody,
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -91,9 +91,9 @@ const OptimizeSizingSchema = {
     body: OptimizeSizingRequestBody,
     tags: [RouteTags.ASSESSMENT],
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -105,9 +105,9 @@ const OptimizeComputeSchema = {
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.ASSESSMENT],
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -119,9 +119,9 @@ const OptimizeOperatingSystemSchema = {
     tags: [RouteTags.ASSESSMENT],
     body: OptimizeOperatingSystemRequestBody,
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -132,9 +132,9 @@ const OptimizeStorageTierSchema = {
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
