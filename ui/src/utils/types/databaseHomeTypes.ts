@@ -167,6 +167,12 @@ export interface DatabaseHostsEntities {
     aggregatedCosts: AggregatedCostsRes | null;
     aggregatedPgsqlCosts: AggregatedCostsRes | null;
     selectedConfig: string;
+    selectedConfigSummary: {
+        optimizationScore: string;
+        optimizedInstances: number;
+        notOptimizedInstances: number;
+        severity: string;
+    };
     selectedAssessmentRow: any;
     sandboxAgeRange: {
         from: string;
