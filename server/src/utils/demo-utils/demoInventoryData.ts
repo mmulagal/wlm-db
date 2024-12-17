@@ -475,7 +475,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             },
             {
                 ec2InstanceId: 'i-0ab2e12971d543c14',
-                ec2InstanceType: 'm5.2xlarge',
+                ec2InstanceType: 'm5.xlarge',
                 ec2InstanceName: 'app-server-19',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
