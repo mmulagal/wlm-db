@@ -251,6 +251,14 @@ interface InstanceDetails {
     sqlAuthEnabled?: boolean;
 }
 
+interface PgSqlInstanceDetails {
+    databaseInstanceId: string;
+    instanceName: string;
+    isManaged: boolean;
+    instanceState: string;
+    isDefault: boolean;
+}
+
 interface WorkloadInstance {
     id: string;
     name: string;
@@ -448,5 +456,6 @@ export {
     LicenseAssessment,
     HostOsPatchAssessmentObject,
     OptimizeMpioIscsiSessionsParams,
-    SessionsCountPerIscsiTarget
+    SessionsCountPerIscsiTarget,
+    PgSqlInstanceDetails
 };

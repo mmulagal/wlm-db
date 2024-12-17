@@ -632,7 +632,7 @@ async function processCloudFormationMessages() {
                                                                       nodeIds,
                                                                       accountId
                                                                   )
-                                                                : [{ instanceName: 'DEFAULT' }];
+                                                                : [{ instanceName: 'postgresql' }];
 
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>

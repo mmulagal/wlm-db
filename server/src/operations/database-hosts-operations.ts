@@ -54,7 +54,8 @@ import {
     DEFAULT_INSTANCE_NAME,
     EBS_ROOT_VOLUME,
     DatabaseTypes,
-    AWS_ERROR_CODES
+    AWS_ERROR_CODES,
+    DATABASE_INSTANCE_INDEX_MAPPING
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -102,7 +103,7 @@ import {
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
-import { getPgSqlDatabaseCount, getPgSqlStorageSavingsVolumeData } from './workloads/pgsql/pgsql-operations';
+import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 
 const logger = getLogger();
 
@@ -120,17 +121,6 @@ const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
     1: 'billing/pricing',
     2: 'instanceSummary'
-};
-const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
-    0: 'serverDetails',
-    1: 'databaseInstancetopologyData',
-    2: 'performance',
-    3: 'storage',
-    4: 'protection',
-    5: 'resourceUtilization',
-    6: 'databasesCount',
-    7: 'nodeTopology',
-    8: 'storageSavingsFromOntap'
 };
 
 interface MappedOnTapVolumeResponse {
@@ -1737,7 +1727,13 @@ async function getDatabaseHostSummaryV2(
 
             databaseInstancesDetail =
                 resourceType === DatabaseTypes.PG_SQL
-                    ? instancesDetails
+                    ? await getPgSqlDatabaseInstancesDetails(
+                          credentialsId,
+                          region,
+                          instancesManaged,
+                          resourceId,
+                          instancesDetails
+                      )
                     : await getDatabaseInstancesDetails(
                           credentialsId,
                           region,
@@ -2545,105 +2541,6 @@ async function getAllClusterNodeDetails(
     return compact(
         clusterNodeDetails.map(({ ec2InstanceId, ec2InstanceName }) => ({ ec2InstanceId, ec2InstanceName }))
     );
-}
-
-async function getPgSqlDatabaseInstancesSummary(
-    accountId: string,
-    credentialsId: string,
-    activeNodeInstanceId: string,
-    region: string,
-    databaseInstances: DatabaseInstance[],
-    fields?: string,
-    resourceDetails?: ResourceDetails,
-    standbyNodeInstanceId?: string
-) {
-    logger.info(
-        'Fetching summary of PGSQL database instance',
-        accountId,
-        credentialsId,
-        activeNodeInstanceId,
-        region,
-        databaseInstances,
-        fields,
-        resourceDetails,
-        standbyNodeInstanceId
-    );
-
-    let fieldsValues: Array<string> = [];
-
-    if (fields) {
-        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    }
-
-    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLocaleLowerCase());
-    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
-
-    let storageData: any;
-    let databasesCount: any;
-    const errormessages: { [index: string]: string } = {};
-    try {
-        [storageData, databasesCount] = await Promise.all(
-            [
-                ...(getStorageSavings
-                    ? [
-                          Promise.all(
-                              databaseInstances.map(dbInstance =>
-                                  getPgSqlStorageSavingsVolumeData(
-                                      accountId,
-                                      credentialsId,
-                                      region,
-                                      activeNodeInstanceId,
-                                      dbInstance.fsxn_ids
-                                  )
-                              )
-                          )
-                      ]
-                    : [Promise.resolve()]), // Fetch storage savings data
-                ...(getDbCount
-                    ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
-                    : [Promise.resolve()])
-            ].map((p, index) =>
-                p.catch(error => {
-                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
-                    }
-                    logger.error(`Error while fetching data: ${error}.`);
-                })
-            )
-        );
-    } catch (error) {
-        logger.error(`Error while fetching PGSQL database instance summary ${accountId}, ${error}`);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching PGSQL database instance summary ${accountId}, ${error}`
-        );
-    }
-
-    return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
-        const { database_instance_id: databaseInstanceId } = databaseInstance;
-
-        const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
-            databaseInstanceId,
-            databaseInstanceName: 'postgresql',
-            status: '',
-            databaseCount: 0
-        };
-
-        databaseInstanceDetails.status = ServerState.UP;
-
-        const [instanceDbCount] = databasesCount?.[index] ?? [];
-        if (getDbCount && instanceDbCount) {
-            databaseInstanceDetails.databaseCount = instanceDbCount || 0;
-        }
-
-        databaseInstanceDetails.storage = storageData?.[index];
-
-        if (!isEmpty(errormessages)) {
-            databaseInstanceDetails.errors = errormessages;
-        }
-
-        return databaseInstanceDetails;
-    });
 }
 
 export {

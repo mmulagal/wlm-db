@@ -1,9 +1,19 @@
 import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
 import { generateHash } from '../../../utils/utils';
 import { executeBashSsmCommand } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
-import { getParameter } from '../../../lib/aws/ssm';
-import { SSM_PARAM_PREFIX } from '../../../utils/consts';
+import {
+    DATABASE_INSTANCE_INDEX_MAPPING,
+    DatabaseHostsQueryFields,
+    HttpErrorCodes,
+    ServerState,
+    STORAGE_PROTOCOLS
+} from '../../../utils/consts';
+import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
+import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
+import DATABASES_COUNT from './queries';
+import getPgSqlStorageSavings from './pgsql-ssm-script-utils';
 
 const logger = getLogger();
 
@@ -15,7 +25,7 @@ async function getPgSqlInstanceInfo(
     nodeIds: string[],
     fsxDataVolumeName: string
 ) {
-    logger.info('Fetching pg sql instance info', accountId, nodeIds, instanceName, fsxDataVolumeName);
+    logger.info('Fetching pg sql instance info', { accountId, nodeIds, instanceName, fsxDataVolumeName });
     const commands = [`sudo -u postgres pg_controldata /${fsxDataVolumeName} | jq -R -s -c 'split("\\n")[:-1]'`];
     let response;
     try {
@@ -38,7 +48,6 @@ async function getPgSqlInstanceInfo(
             ${credentialsId},
             ${region},
             ${instanceName},`;
-        logger.error(errorMessage);
         throw createError(errorMessage);
     }
 }
@@ -49,12 +58,11 @@ async function getPgSqlDatabaseCount(
     region: string,
     node1InstanceId: string
 ) {
-    logger.info('Fetching pg sql database count', accountId, credentialsId, region, node1InstanceId);
+    logger.info('Fetching pg sql database count', { accountId, credentialsId, region, node1InstanceId });
 
     try {
-        const command = 'sudo -u postgres /usr/bin/psql -t -A -c "Select Count(*) from pg_database"';
+        const command = DATABASES_COUNT;
         const response = await executeBashSsmCommand(credentialsId, region, [command], node1InstanceId, accountId);
-
         if (response) {
             return response;
         }
@@ -105,25 +113,24 @@ async function getPgSqlStorageSavingsVolumeData(
     logger.info('Fetching storage savings volume data', { accountId, credentialsId, region, node1InstanceId, fsxNId });
     let response;
     try {
-        const mountedVolume = await getPgSqlDataMountedVolume(credentialsId, region, node1InstanceId);
-        const apiEndpoint = `https://management.${fsxNId}.fsx.${region}.amazonaws.com/api/storage/volumes?fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used&name=${mountedVolume}`;
-
-        const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxNId}`);
-        const fsxCreds = JSON.parse(fsxCredentials!.replace(/'/g, '"').replace(/(\w+):/g, '"$1":')); // converts single quotes to double quotes and add double quotes to keys
-        const auth: string = Buffer.from(`${fsxCreds?.fsx?.username}:${fsxCreds?.fsx?.password}`).toString('base64');
-
-        const commands = [`curl -k -sS -X GET '${apiEndpoint}' --header 'Authorization: Basic ${auth}' | jq '.'`];
-        response = await executeBashSsmCommand(credentialsId, region, commands, node1InstanceId);
-
-        const { records } = JSON.parse(response!);
-        const volSavingsData = records?.[0];
+        const endpoint =
+            'storage/volumes?fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used';
+        const commands = getPgSqlStorageSavings(fsxNId, region, endpoint);
+        response = await executeBashSsmCommand(credentialsId, region, [commands], node1InstanceId);
+        const {
+            records: [volSavingsData]
+        } = JSON.parse(response!) || {};
+        const {
+            efficiency: { space_savings: spaceSavings },
+            space
+        } = volSavingsData;
         const instanceStorageSavingsInfo = {
             fsxn: {
-                spaceSavings: volSavingsData.efficiency.space_savings.total,
-                spaceSavingsPercentage: volSavingsData.efficiency.space_savings.total_percent,
-                size: volSavingsData.space.size,
-                used: volSavingsData.space.used,
-                protocol: ['NFS']
+                spaceSavings: spaceSavings.total,
+                spaceSavingsPercentage: spaceSavings.total_percent,
+                size: space.size,
+                used: space.used,
+                protocol: [STORAGE_PROTOCOLS.NFS]
             }
         };
         logger.debug('Instance Storage Savings Data:', instanceStorageSavingsInfo);
@@ -137,10 +144,141 @@ async function getPgSqlStorageSavingsVolumeData(
     }
 }
 
+async function getPgSqlDatabaseInstancesSummary(
+    accountId: string,
+    credentialsId: string,
+    activeNodeInstanceId: string,
+    region: string,
+    databaseInstances: DatabaseInstance[],
+    fields?: string,
+    resourceDetails?: ResourceDetails,
+    standbyNodeInstanceId?: string
+) {
+    logger.info('Fetching summary of PGSQL database instance', {
+        accountId,
+        credentialsId,
+        activeNodeInstanceId,
+        region,
+        databaseInstances,
+        fields,
+        resourceDetails,
+        standbyNodeInstanceId
+    });
+
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLocaleLowerCase());
+    const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
+
+    let storageData: any;
+    let databasesCount: any;
+    const errormessages: { [index: string]: string } = {};
+    try {
+        [storageData, databasesCount] = await Promise.all(
+            [
+                ...(getStorageSavings
+                    ? [
+                          Promise.all(
+                              databaseInstances.map(dbInstance =>
+                                  getPgSqlStorageSavingsVolumeData(
+                                      accountId,
+                                      credentialsId,
+                                      region,
+                                      activeNodeInstanceId,
+                                      dbInstance.fsxn_ids
+                                  )
+                              )
+                          )
+                      ]
+                    : [Promise.resolve()]), // Fetch storage savings data
+                ...(getDbCount
+                    ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
+                    : [Promise.resolve()])
+            ].map((p, index) =>
+                p.catch(error => {
+                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                    }
+                    logger.error(`Error while fetching data: ${error}.`);
+                })
+            )
+        );
+    } catch (error) {
+        logger.error(`Error while fetching PGSQL database instance summary ${accountId}, ${error}`);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching PGSQL database instance summary ${accountId}, ${error}`
+        );
+    }
+
+    return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
+        const { database_instance_id: databaseInstanceId } = databaseInstance;
+
+        const databaseInstanceDetails: DatabaseHostInstanceSummaryResponseType = {
+            databaseInstanceId,
+            databaseInstanceName: 'postgresql',
+            status: '',
+            databaseCount: 0
+        };
+
+        databaseInstanceDetails.status = ServerState.UP;
+
+        const [instanceDbCount] = databasesCount?.[index] ?? [];
+        if (getDbCount && instanceDbCount) {
+            databaseInstanceDetails.databaseCount = instanceDbCount || 0;
+        }
+
+        databaseInstanceDetails.storage = storageData?.[index];
+
+        if (!isEmpty(errormessages)) {
+            databaseInstanceDetails.errors = errormessages;
+        }
+
+        return databaseInstanceDetails;
+    });
+}
+
+async function getPgSqlDatabaseInstancesDetails(
+    credentialsId: string,
+    region: string,
+    instancesManaged: DatabaseInstance[],
+    resourceId: string,
+    instanceDetails?: PgSqlInstanceDetails[] | undefined
+) {
+    logger.info('Getting pgsql database Instances details for resource', {
+        credentialsId,
+        region,
+        instancesManaged,
+        resourceId,
+        instanceDetails
+    });
+
+    const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
+        instanceName: item.database_instance_name,
+        isDefault: item.is_default,
+        instanceState: ServerState.DOWN,
+        isManaged: true,
+        databaseInstanceId: item.database_instance_id
+    }));
+
+    const existingInstanceIDs = new Set(instanceDetails?.map(({ databaseInstanceId }) => databaseInstanceId));
+    const updatedInstanceDetails = [
+        ...(instanceDetails ?? []),
+        ...managedInstancesName.filter(({ databaseInstanceId }) => !existingInstanceIDs.has(databaseInstanceId))
+    ];
+    return updatedInstanceDetails;
+}
+
 export {
     getPgSqlResourceId,
     getPgSqlInstanceInfo,
     getPgSqlStorageSavingsVolumeData,
     getPgSqlDataMountedVolume,
-    getPgSqlDatabaseCount
+    getPgSqlDatabaseCount,
+    getPgSqlDatabaseInstancesSummary,
+    getPgSqlDatabaseInstancesDetails
 };
