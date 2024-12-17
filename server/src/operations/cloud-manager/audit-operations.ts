@@ -99,7 +99,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
         logger.debug(clonedData);
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
-        const { context } = reply;
+        const { context } = reply as any;
         const { schema } = context as unknown as Context;
 
         const auditGroup: CreateAuditGroupSchemaType = {

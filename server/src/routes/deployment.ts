@@ -22,6 +22,7 @@ import {
     TerraformSetupSchema,
     PgSqlCloudFormationTemplateSchema
 } from './schemas/deployment-schemas';
+import castRequest from './utils';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_MSSQL_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -51,7 +52,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                         credentialsId,
                         region
                     }
-                } = request;
+                } = castRequest(request);
                 const response = await getCloudformationTemplate(
                     networkConfiguration,
                     ec2Configuration,
@@ -60,7 +61,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
-                    triggeredFrom,
+                    triggeredFrom as string,
                     tags,
                     credentialsId,
                     region
@@ -85,7 +86,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                         enableCloudWatch,
                         tags
                     }
-                } = request;
+                } = castRequest(request);
                 const response = await deployStackOrCreateTemplateURL(
                     credentialsId,
                     region,
@@ -96,7 +97,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
-                    triggeredFrom,
+                    triggeredFrom as string,
                     tags
                 );
                 return reply.code(202).send(response);
@@ -108,7 +109,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId }
-                } = request;
+                } = castRequest(request);
                 const response = await deploymentStatus(accountId);
                 return reply.send(response);
             }
@@ -119,7 +120,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, stackName }
-                } = request;
+                } = castRequest(request);
                 const response = await deploymentStatusByName(accountId, stackName);
                 return reply.send(response);
             }
@@ -130,7 +131,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId }
-                } = request;
+                } = castRequest(request);
                 const response = await getFSXAvailableRegionsForThrougput(accountId);
                 return reply.send(response!);
             }
@@ -139,7 +140,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId },
                 query: { version: mssqlVersion }
-            } = request;
+            } = castRequest(request);
             const response = getCollationDetailsForDeployment(accountId, mssqlVersion);
             return reply.send(response);
         })
@@ -159,7 +160,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                         enableCloudWatch,
                         tags
                     }
-                } = request;
+                } = castRequest(request);
                 const response = await deployPgSql(
                     credentialsId,
                     region,
@@ -169,7 +170,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
-                    triggeredFrom,
+                    triggeredFrom as string,
                     tags
                 );
                 return reply.code(202).send(response);
@@ -192,7 +193,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                         credentialsId,
                         region
                     }
-                } = request;
+                } = castRequest(request);
                 const response = await getPgSqlCfTemplate(
                     networkConfiguration,
                     ec2Configuration,
@@ -200,7 +201,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
-                    triggeredFrom,
+                    triggeredFrom as string,
                     tags,
                     credentialsId,
                     region
@@ -223,7 +224,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region
                 }
-            } = request;
+            } = castRequest(request);
             const response = await getTerraformSetup(
                 networkConfiguration,
                 ec2Configuration,
@@ -232,7 +233,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
-                triggeredFrom,
+                triggeredFrom as string,
                 tags,
                 credentialsId,
                 region

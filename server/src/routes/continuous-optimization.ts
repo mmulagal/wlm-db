@@ -25,6 +25,7 @@ import {
     optimizeStorageTier
 } from '../operations/cont-opt-optimize-operations';
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
+import castRequest from './utils';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -39,7 +40,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
                 const response = await fetchDriftAssessment(
                     accountId,
                     credentialsId,
@@ -58,7 +59,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
                 const response = await onDemandTriggerDriftAssessmentDataCollection(
                     accountId,
                     credentialsId,
@@ -76,8 +77,9 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             { schema: OptimizeStorageSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
-                } = request;
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { assessments }
+                } = castRequest(request);
 
                 const response = await optimizeStorage({
                     accountId,
@@ -85,7 +87,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    optimizationTargets: request.body.assessments
+                    optimizationTargets: assessments
                 } as OptimizeStorageParams);
                 return reply.send(response);
             }
@@ -97,7 +99,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
                     body: { type }
-                } = request;
+                } = castRequest(request);
 
                 const response = await optimizeSizing(
                     accountId,
@@ -117,7 +119,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
                     body: { configurationName }
-                } = request;
+                } = castRequest(request);
 
                 const response = await optimizeOperatingSystemSettings(
                     accountId,
@@ -138,7 +140,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
                     body: { instanceType }
-                } = request;
+                } = castRequest(request);
 
                 const response = await optimizeCompute(
                     accountId,
@@ -158,7 +160,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
 
                 const response = await fetchDriftAssessmentPerHost(
                     accountId,
@@ -176,7 +178,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
-                } = request;
+                } = castRequest(request);
 
                 const response = await optimizeStorageTier(
                     accountId,
@@ -192,7 +194,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, region },
                 query: { fields, nextToken, pageSize }
-            } = request;
+            } = castRequest(request);
 
             const response = await fetchDriftAssessmentPerAccount(
                 accountId,
