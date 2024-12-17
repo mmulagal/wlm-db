@@ -25,7 +25,7 @@ async function calculateHostOsPatchDrift(
         let hostOsPatchAssessment;
 
         const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-        const { assessment: { hostOsPatch } = {}, node1InstanceId } = metadata as unknown as Metadata;
+        const { assessment: { hostOsPatch } = {}, node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         if (!isEmpty(hostOsPatch)) {
             hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
         } else {
@@ -34,7 +34,8 @@ async function calculateHostOsPatchDrift(
                 credentialsId,
                 region,
                 databaseHostId,
-                node1InstanceId
+                node1InstanceId,
+                !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
             );
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
@@ -80,6 +81,7 @@ async function managedHostOsPatchAssessment(
     region: string,
     databaseHostId: string,
     activeNodeInstanceId: string,
+    isPartOfCluster: boolean = false,
     resourceName: string,
     parentJobId: string
 ) {
@@ -89,6 +91,7 @@ async function managedHostOsPatchAssessment(
         region,
         databaseHostId,
         activeNodeInstanceId,
+        isPartOfCluster,
         resourceName,
         parentJobId
     });
@@ -111,7 +114,8 @@ async function managedHostOsPatchAssessment(
             credentialsId,
             region,
             databaseHostId,
-            activeNodeInstanceId
+            activeNodeInstanceId,
+            isPartOfCluster
         );
     } catch (error) {
         errorMessage = `Error while performing host OS patch assessment. ${error}`;
@@ -133,50 +137,57 @@ async function runOsPatchAssessment(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    nodeInstanceId: string
+    nodeInstanceId: string,
+    isPartOfCluster: boolean = false
 ) {
-    logger.info('Running OS patch assessment', { accountId, credentialsId, region, databaseHostId, nodeInstanceId });
-
-    const clusterNodeDetails = await getAllClusterNodeDetails(
+    logger.info('Running OS patch assessment', {
         accountId,
         credentialsId,
         region,
         databaseHostId,
-        nodeInstanceId
-    );
+        nodeInstanceId,
+        isPartOfCluster
+    });
+
+    const clusterNodeDetails = isPartOfCluster
+        ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
+        : [{ ec2InstanceId: nodeInstanceId }];
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
-    const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
+    if (isEmpty(clusterNodeInstanceIds)) {
+        const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
 
-    patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
-        if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
-            throw createError('Failed to run host OS patch baseline on the host/s database hosts in the cluster');
-        }
-        return false;
-    }); // If any of the instances failed to run the patch baseline, throw an error
+        patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
+            if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
+                throw createError('Failed to run host OS patch baseline on the host/s database hosts in the cluster');
+            }
+            return false;
+        }); // If any of the instances failed to run the patch baseline, throw an error
 
-    const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
+        const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
 
-    const hostOsPatchAssessment = response?.map(
-        ({
-            BaselineId: baselineId,
-            CriticalNonCompliantCount: criticalNonCompliantCount,
-            InstanceId: ec2InstanceId,
-            OperationStartTime: operationStartTime,
-            OperationEndTime: operationEndTime,
-            SecurityNonCompliantCount: securityNonCompliantCount,
-            missingPatchDetails
-        }) => ({
-            baselineId: baselineId ?? '',
-            criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
-            ec2InstanceId: ec2InstanceId ?? '',
-            operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
-            operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
-            securityNonCompliantCount: securityNonCompliantCount ?? 0,
-            missingPatchDetails
-        })
-    );
+        const hostOsPatchAssessment = response?.map(
+            ({
+                BaselineId: baselineId,
+                CriticalNonCompliantCount: criticalNonCompliantCount,
+                InstanceId: ec2InstanceId,
+                OperationStartTime: operationStartTime,
+                OperationEndTime: operationEndTime,
+                SecurityNonCompliantCount: securityNonCompliantCount,
+                missingPatchDetails
+            }) => ({
+                baselineId: baselineId ?? '',
+                criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
+                ec2InstanceId: ec2InstanceId ?? '',
+                operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
+                operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
+                securityNonCompliantCount: securityNonCompliantCount ?? 0,
+                missingPatchDetails
+            })
+        );
 
-    return hostOsPatchAssessment;
+        return hostOsPatchAssessment;
+    }
+    throw createError('No instances found to run the host OS patch baseline');
 }
 
 export { calculateHostOsPatchDrift, managedHostOsPatchAssessment };
