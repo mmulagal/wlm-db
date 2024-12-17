@@ -20,9 +20,6 @@ const CloudWatch = ({ wizardType }: CloudWatchProps) => {
     const { isDemoMode } = useAppSelector(state => state.auth);
     //Set the Header text here
     const setHeader = () => {
-        if (wizardType === WIZARD_TYPE.PGSQL && !isDemoMode) {
-            return <Typography variant="Regular_14">{'Disabled'}</Typography>;
-        }
         return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
     };
 
@@ -40,12 +37,7 @@ const CloudWatch = ({ wizardType }: CloudWatchProps) => {
             >
                 <AccordionCardContent>
                     <Typography>
-                        <ToggleSelector
-                            value={wizardType === WIZARD_TYPE.PGSQL && !isDemoMode ? false : toggle}
-                            className=""
-                            onChange={handleChange}
-                            isDisabled={wizardType === WIZARD_TYPE.PGSQL && !isDemoMode ? true : false}
-                        >
+                        <ToggleSelector value={toggle} className="" onChange={handleChange} isDisabled={false}>
                             {GENERAL.CLOUD_WATCH_MONITORING}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
