@@ -25,7 +25,6 @@ import {
 import {
     CLOUD_FORMATION_STACK_URL,
     MISSING_PERMISSIONS,
-    CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
@@ -106,7 +105,6 @@ import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getServicesWithNoEndpoint, enableVpcDnsAttributes } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
-import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
@@ -1211,10 +1209,10 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
-    if (cfStackQuotaReached) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
-    }
+    // const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
+    // if (cfStackQuotaReached) {
+    //     throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
+    // }
 
     // Set EnableDnsSupport and EnableDnsHostnames to true
     await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
@@ -1605,10 +1603,10 @@ async function deployCfTemplateForPgSql(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
-    if (cfStackQuotaReached) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
-    }
+    // const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
+    // if (cfStackQuotaReached) {
+    //     throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
+    // }
 
     const { stackName, templateParameters: templateParams } = await formatPgSqlTemplateParameters(
         networkConfiguration,
