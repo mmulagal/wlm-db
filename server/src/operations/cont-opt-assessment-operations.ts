@@ -716,7 +716,7 @@ async function fetchDriftAssessmentPerHost(
         credentialsId,
         region
     });
-    logger.info('Instances managed:', instancesManaged);
+    logger.debug('Instances managed:', instancesManaged);
 
     if (isEmpty(instancesManaged)) {
         const infoMessage = `No managed instances found for account ${accountId} and host ${databaseHostId}.`;
@@ -724,14 +724,19 @@ async function fetchDriftAssessmentPerHost(
         throw createError(HttpErrorCodes.NOT_FOUND, `${infoMessage}`);
     }
 
+    let { resource_name: databaseHostName } = resourceDetail;
+    databaseHostName ||= '';
+
     const driftAssessments: Array<{
         databaseInstanceId: string;
+        databaseInstanceName: string;
         assessments?: DriftAssessmentResponseType;
         error?: string;
     }> = [];
     await Promise.all(
         instancesManaged.map(async managedInstance => {
-            const { database_instance_id: databaseInstanceId } = managedInstance;
+            const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
+                managedInstance;
 
             try {
                 const driftAssessment = await fetchDriftAssessment(
@@ -744,17 +749,20 @@ async function fetchDriftAssessmentPerHost(
                 );
                 driftAssessments.push({
                     databaseInstanceId,
+                    databaseInstanceName,
                     assessments: driftAssessment
                 });
             } catch (error: any) {
                 const errorMessage = `Error while fetching drift assessment for ${databaseInstanceId}. Error: ${error.message}`;
                 logger.error(errorMessage);
-                driftAssessments.push({ databaseInstanceId, error: errorMessage });
+                driftAssessments.push({ databaseInstanceId, databaseInstanceName, error: errorMessage });
             }
         })
     );
+
     return {
         databaseHostId,
+        databaseHostName,
         instancesAssessment: driftAssessments
     };
 }
@@ -891,8 +899,10 @@ async function fetchDriftAssessmentPerAccount(
     }
     const driftAssessmentPerAccount: Array<{
         databaseHostId: string;
+        databaseHostName: string;
         instancesAssessment: Array<{
             databaseInstanceId: string;
+            databaseInstanceName: string;
             assessments?: DriftAssessmentResponseType;
             error?: string;
         }>;

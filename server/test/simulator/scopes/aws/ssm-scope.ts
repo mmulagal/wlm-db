@@ -33,7 +33,6 @@ import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
-    getMappedOntapVolumesScript,
     restGetUtilForOntap,
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -222,10 +221,6 @@ const getOntapSnapshotCountParams = {
             'fields=snapshot_count'
         )
     ]
-};
-
-const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION, '$false', [DEFAULT_INSTANCE_NAME])]
 };
 
 const getStorageParams = {
@@ -535,6 +530,9 @@ const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
 const checkNodeStatusRegex = /#Check Node Status/;
+const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
+const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -586,8 +584,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.nativeSqlBackupDatabasesCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
-    .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
-    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
     .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
@@ -711,7 +707,15 @@ ssmMock
         const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
         return getLunDetailsRegex.test(params.Parameters.commands?.[0]);
     })
-    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails);
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
+    .on(SendCommandCommand, params => {
+        return getMappedOntapVolumesRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
+    .on(SendCommandCommand, params => {
+        return getStorageAssessmentDataRegex.test(params.Parameters.commands[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getStorageAssessmentCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -900,6 +904,10 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
     })
     .resolves(getCommandInvocationResponse.getLunDetailsResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData'
+    })
+    .resolves(getCommandInvocationResponse.assessmentConfigData)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand'
     })

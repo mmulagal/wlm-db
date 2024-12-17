@@ -2298,24 +2298,23 @@ async function triggerAssessmentAfterOptimization(
     );
 
     let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-
-    let retries = 5;
-    while (retries > 0) {
-        retries -= 1;
-        const allSubJobs = await listJobs(accountId, '', '', parentJobId);
-        masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
-            ? JOBSTATUS.IN_PROGRESS
-            : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
-            ? JOBSTATUS.FAILED
-            : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
-            ? JOBSTATUS.COMPLETED
-            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)
-            ? JOBSTATUS.WARNING
-            : JOBSTATUS.IN_PROGRESS;
-        if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
-            break;
-        }
-        if (!isDemoFlow) {
+    if (!isDemoFlow) {
+        let retries = 5;
+        while (retries > 0) {
+            retries -= 1;
+            const allSubJobs = await listJobs(accountId, '', '', parentJobId);
+            masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+                ? JOBSTATUS.IN_PROGRESS
+                : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+                ? JOBSTATUS.FAILED
+                : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+                ? JOBSTATUS.COMPLETED
+                : allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.IN_PROGRESS;
+            if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
+                break;
+            }
             await sleep(30000);
         }
     }

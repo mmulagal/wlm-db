@@ -75,6 +75,12 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         requireBillingPerm: false
     },
     selectedConfig: '',
+    selectedConfigSummary: {
+        optimizationScore: '',
+        optimizedInstances: 0,
+        notOptimizedInstances: 0,
+        severity: ''
+    },
     selectedAssessmentRow: null,
     sandboxAgeRange: {
         from: '',
@@ -88,6 +94,9 @@ const databaseHomeSlice = createSlice({
     reducers: {
         setSelectedConfig: (state, action: PayloadAction<any>) => {
             state.selectedConfig = action.payload;
+        },
+        setSelectedConfigSummary: (state, action: PayloadAction<any>) => {
+            state.selectedConfigSummary = action.payload;
         },
         selectedTabSelection: (state, action: PayloadAction<any>) => {
             state.selectedTab = action.payload;
@@ -145,7 +154,8 @@ export const {
     addInitialData,
     setSelectedConfig,
     setSelectedAssessmentRow,
-    setSandboxAgeRange
+    setSandboxAgeRange,
+    setSelectedConfigSummary
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
