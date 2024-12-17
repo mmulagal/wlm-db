@@ -18,6 +18,7 @@ import {
 } from '../operations/discover-operations';
 
 import getLogger from '../utils/logger';
+import castRequest from './utils';
 
 const logger = getLogger();
 
@@ -31,7 +32,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId, credentialsId, region },
             query: { pageSize, nextToken }
-        } = request;
+        } = castRequest(request);
 
         const startTime = performance.now();
         const apiInfo = await getHostAndSqlServerInfo(accountId, credentialsId, region, pageSize, nextToken);
@@ -44,7 +45,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId, credentialsId, region },
             body: { ec2InstanceId, databaseInstanceNames, databaseHostId }
-        } = request;
+        } = castRequest(request);
         const apiInfo = await manageSqlServerV2(
             accountId,
             credentialsId,
@@ -63,7 +64,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, region, instanceId },
                 body: { credentials, clusterNodesIpAddress }
-            } = request;
+            } = castRequest(request);
 
             return validateAndStoreDiscoveredParameters(
                 accountId,
@@ -80,7 +81,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId, credentialsId, region },
             query: { instances, fields }
-        } = request;
+        } = castRequest(request);
 
         return fetchUnmanagedHostsInformationV2(accountId, credentialsId, region, instances.split(','), fields);
     });
@@ -91,7 +92,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         async request => {
             const {
                 params: { accountId, credentialsId, region, instanceId }
-            } = request;
+            } = castRequest(request);
 
             const apiInfo = await prepareForManage(accountId, credentialsId, region, instanceId);
             return { jobId: apiInfo };
@@ -105,7 +106,7 @@ export default function discoverRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, resourceId },
                 query: { databaseInstanceIds }
-            } = request;
+            } = castRequest(request);
 
             const response = await unmanageDatabaseInstance(
                 accountId,

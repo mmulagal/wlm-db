@@ -12,6 +12,7 @@ import {
     getFileSystemsCredentialsStatus,
     getManagedResources
 } from '../operations/resource-operations';
+import castRequest from './utils';
 
 export default function resourceRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -26,7 +27,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId },
                 query: { fsxids }
-            } = request;
+            } = castRequest(request);
 
             const response = await getFileSystemsCredentialsStatus(accountId, fsxids);
             return reply.send(response);
@@ -39,7 +40,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { accountId, fileSystemId }
-            } = request;
+            } = castRequest(request);
 
             const response = await getFileSystemCredentialsStatus(accountId, fileSystemId);
             return reply.send(response);
@@ -53,7 +54,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, region },
                 query: { pageSize, nextToken }
-            } = request;
+            } = castRequest(request);
             const response = await getManagedResources(accountId, credentialsId, region, pageSize, nextToken);
             return reply.send(response);
         }
@@ -65,7 +66,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region }
-            } = request;
+            } = castRequest(request);
             const response = await createDemoDataforRegion(accountId, credentialsId, region);
             return reply.code(201).send(response);
         }
