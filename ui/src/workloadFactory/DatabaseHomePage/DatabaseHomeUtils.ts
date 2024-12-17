@@ -302,6 +302,10 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
     };
 };
 
+const isOptimized = (status?: string) =>
+    status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
+    status?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase();
+
 export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
     let totalInstances = 0;
     let optimizedInstances = 0;
@@ -310,24 +314,18 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
             if (!instance?.error) {
                 totalInstances++;
                 const instanceAssessmentData = instance?.assessments;
-                const isComputeOptimized =
-                    instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isOperatingSystemOptimized =
-                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isLicenseOptimized =
-                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every(
-                    (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                const isComputeOptimized = isOptimized(instanceAssessmentData?.compute?.status);
+                const isOperatingSystemOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
+                const isLicenseOptimized = isOptimized(instanceAssessmentData?.license?.status);
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
+                    isOptimized(item?.status)
                 );
                 const isStorageSizingOptimized =
                     instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                        return item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                        return isOptimized(item?.status);
                     }).length === 0;
                 const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
-                    (item: any) =>
-                        item?.every(
-                            (subItem: any) => subItem?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
-                        )
+                    (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
                 if (
                     isComputeOptimized &&
@@ -362,25 +360,19 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
             if (!instance?.error) {
                 assessmentGroupedByCategory.total++;
                 const instanceAssessmentData = instance?.assessments;
-                const isComputeOptimized =
-                    instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isOperatingSystemPatchOptimized =
-                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every(
-                    (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                const isComputeOptimized = isOptimized(instanceAssessmentData?.compute?.status);
+                const isOperatingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
+                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
+                    isOptimized(item?.status)
                 );
                 const isStorageSizingOptimized =
                     instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                        return item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                        return isOptimized(item?.status);
                     }).length === 0;
                 const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
-                    (item: any) =>
-                        item?.every(
-                            (subItem: any) => subItem?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
-                        )
+                    (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
-                const isApplicationOptimized =
-                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
                 if (isComputeOptimized && isOperatingSystemPatchOptimized) {
                     assessmentGroupedByCategory.compute++;
                 }
@@ -417,50 +409,47 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
             if (!instance?.error) {
                 getAssessmentGroupedByConfigurations.total++;
                 const instanceAssessmentData = instance?.assessments;
-                const isStorageTierOptimized =
-                    instanceAssessmentData?.storage?.sizing
-                        ?.find((item: any) => item.name === 'performance-tier')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isFileSystemHeadroomOptimized =
-                    instanceAssessmentData?.storage?.sizing
-                        ?.find((item: any) => item.name === 'headroom')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isLogDriveSizeOptimized =
-                    instanceAssessmentData?.storage?.sizing
-                        ?.find((item: any) => item.name === 'log-drive-size')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isTempdbDriveSizeOptimized =
-                    instanceAssessmentData?.storage?.sizing
-                        ?.find((item: any) => item.name === 'tempdb-drive-size')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isUserDataFilesOptimized =
-                    instanceAssessmentData?.storage?.layout
-                        ?.find((item: any) => item.name === 'default-data-files-location')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isLogFilesOptimized =
-                    instanceAssessmentData?.storage?.layout
-                        ?.find((item: any) => item.name === 'default-log-files-location')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isTempdbPlacementOptimized =
-                    instanceAssessmentData?.storage?.layout
-                        ?.find((item: any) => item.name === 'tempdb-files-location')
-                        ?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isStorageTierOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.sizing?.find((item: any) => item.name === 'performance-tier')
+                        ?.status
+                );
+                const isFileSystemHeadroomOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.sizing?.find((item: any) => item.name === 'headroom')?.status
+                );
+                const isLogDriveSizeOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.sizing?.find((item: any) => item.name === 'log-drive-size')?.status
+                );
+                const isTempdbDriveSizeOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.sizing?.find((item: any) => item.name === 'tempdb-drive-size')
+                        ?.status
+                );
+                const isUserDataFilesOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.layout?.find(
+                        (item: any) => item.name === 'default-data-files-location'
+                    )?.status
+                );
+                const isLogFilesOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.layout?.find(
+                        (item: any) => item.name === 'default-log-files-location'
+                    )?.status
+                );
+                const isTempdbPlacementOptimized = isOptimized(
+                    instanceAssessmentData?.storage?.layout?.find((item: any) => item.name === 'tempdb-files-location')
+                        ?.status
+                );
                 const isOntapConfigurationOptimized =
-                    instanceAssessmentData?.storage?.configuration?.luns?.every(
-                        (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                    instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) =>
+                        isOptimized(item?.status)
                     ) &&
-                    instanceAssessmentData?.storage?.configuration?.volumes?.every(
-                        (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                    instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) =>
+                        isOptimized(item?.status)
                     );
                 const isOperatingSystemOptimized = instanceAssessmentData?.storage?.configuration?.os?.every(
-                    (item: any) => item?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase()
+                    (item: any) => isOptimized(item?.status)
                 );
-                const isComputeRightsizingOptimized =
-                    instanceAssessmentData?.compute?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isOpearingSystemPatchOptimized =
-                    instanceAssessmentData?.hostOsPatch?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
-                const isApplicationSqlServerOptimized =
-                    instanceAssessmentData?.license?.status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase();
+                const isComputeRightsizingOptimized = isOptimized(instanceAssessmentData?.compute?.status);
+                const isOpearingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
+                const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.fileSystemHeadroom += isFileSystemHeadroomOptimized ? 1 : 0;
