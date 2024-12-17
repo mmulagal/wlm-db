@@ -140,12 +140,14 @@ type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
 const DriftAssessmentResponsePerInstance = Type.Object({
     databaseInstanceId: Type.String({ minLength: 1 }),
+    databaseInstanceName: Type.String(),
     assessments: Type.Optional(DriftAssessmentResponse),
     error: Type.Optional(Type.String())
 });
 
 const DriftAssessmentResponsePerHost = Type.Object({
     databaseHostId: Type.String({ minLength: 1 }),
+    databaseHostName: Type.String(),
     instancesAssessment: Type.Array(DriftAssessmentResponsePerInstance)
 });
 
