@@ -442,9 +442,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 ) : (
                     <div
                         className={
-                            !isDarkTheme
-                                ? styles.buttonSection
-                                : `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                            isDarkTheme && (loading || disableOptimizeButton)
+                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                : styles.buttonSection
                         }
                         style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
                         id={`${cardData?.id}-optimize`}
