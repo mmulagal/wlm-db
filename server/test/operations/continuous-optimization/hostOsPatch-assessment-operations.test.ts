@@ -60,7 +60,22 @@ describe('Host OS Patch assessment operations', () => {
         expect(response.name).toEqual('host-os-patch');
     });
 
-    it('Should perform host os patch assessment for managed hosts', async () => {
+    it('Should perform host os patch assessment for managed hosts clustered', async () => {
+        const [response] =
+            (await managedHostOsPatchAssessment(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                'i-07e76a4b916548dc0',
+                true,
+                'test-resource',
+                'test-job-id'
+            )) || [];
+        expect(response.baselineId).toBeDefined();
+    });
+
+    it('Should perform host os patch assessment for managed hosts standalone', async () => {
         const [response] =
             (await managedHostOsPatchAssessment(
                 ACCOUNT_ID,

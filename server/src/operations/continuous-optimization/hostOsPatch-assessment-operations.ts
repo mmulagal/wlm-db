@@ -153,7 +153,7 @@ async function runOsPatchAssessment(
         ? await getAllClusterNodeDetails(accountId, credentialsId, region, databaseHostId, nodeInstanceId)
         : [{ ec2InstanceId: nodeInstanceId }];
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
-    if (isEmpty(clusterNodeInstanceIds)) {
+    if (!isEmpty(clusterNodeInstanceIds)) {
         const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
 
         patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
