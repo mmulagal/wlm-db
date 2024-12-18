@@ -9,39 +9,39 @@ import { expandTableRow } from '../../../../utils/utilityFunctions';
 import { useCallback } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
+import { useMemo } from 'react';
+import { mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 const OperatingSystemTable = () => {
     const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
-    const mockData = [
-        {
-            serverInstanceName: 'SQL Server 1',
-            status: 'Running',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '1'
-        },
-        {
-            serverInstanceName: 'SQL Server 2',
-            status: 'Running',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '2'
-        },
-        {
-            serverInstanceName: 'SQL Server 3',
-            status: 'Down',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '3'
-        },
-        {
-            serverInstanceName: 'SQL Server 4',
-            status: 'Down',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '4'
-        }
-    ];
+
+    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
+        state => state.inventoryV2
+    );
+    const tableData = useMemo(() => {
+        let storageTierAssessmentData: any = [];
+        allmssqlHostAssessmentData.map((hostData: any) => {
+            hostData?.instancesAssessment?.map((instanceData: any) => {
+                if (!instanceData?.error) {
+                    const data = instanceData?.assessments?.storage?.configuration?.os;
+                    const notOptimized = data.filter((item: any) => item.status === 'not-optimized');
+
+                    storageTierAssessmentData.push({
+                        databaseHostId: hostData?.databaseHostId,
+                        instanceId: instanceData?.databaseInstanceId,
+                        configuration: `${notOptimized.length} out of ${data.length}`,
+                        id: instanceData?.databaseInstanceId,
+                        hostName: hostData?.hostName
+                    });
+                }
+            });
+        });
+        return mapHostStatusToAssessmentData(
+            inventoryTableData,
+            storageTierAssessmentData,
+            getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
+        );
+    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     const lastColDetails = () => {
         return {
@@ -121,7 +121,7 @@ const OperatingSystemTable = () => {
         },
         {
             Header: 'Not-optimizes configuration',
-            accessor: 'notOptimizedConfig',
+            accessor: 'configuration',
             id: '3',
             width: '320px',
             filterOptions: 'auto'
@@ -152,7 +152,7 @@ const OperatingSystemTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
-        rows: mockData || [],
+        rows: tableData || [],
         pageSize: 50
     });
     return (
