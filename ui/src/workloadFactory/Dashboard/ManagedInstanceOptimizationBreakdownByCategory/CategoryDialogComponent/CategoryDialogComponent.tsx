@@ -9,13 +9,6 @@ import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getAssessmentHostListGroupedByCategory } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
-interface TableTopBarProps {
-    tableProps: any;
-    pluralTitle: string;
-    singularTitle: string;
-    selectionType: 'singular' | 'multiple'; // Add this prop
-}
-
 const CategoryDialogComponent = ({ type }: { type: string }) => {
     const dispatch = useDispatch();
     const selectedRow = useAppSelector(state => state.databaseHome.selectedAssessmentRow);
