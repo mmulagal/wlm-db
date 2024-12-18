@@ -119,15 +119,19 @@ type LicenseDriftResponseType = Static<typeof LicenseDriftResponse>;
 const HostOsPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalHostOsParameterDriftResponse]);
 type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 
+const StorageParameterErrorResponse = Type.Object({
+    name: Type.String(),
+    errorMessage: Type.String()
+});
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
         luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
-        os: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
+        os: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
     }),
-    sizing: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    layout: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
+    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
 });
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({
