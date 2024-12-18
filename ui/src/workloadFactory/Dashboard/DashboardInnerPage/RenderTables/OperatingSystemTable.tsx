@@ -19,26 +19,27 @@ const OperatingSystemTable = () => {
         state => state.inventoryV2
     );
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let OSAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const data = instanceData?.assessments?.storage?.configuration?.os;
                     const notOptimized = data.filter((item: any) => item.status === 'not-optimized');
 
-                    storageTierAssessmentData.push({
+                    OSAssessmentData.push({
                         databaseHostId: hostData?.databaseHostId,
                         instanceId: instanceData?.databaseInstanceId,
+                        serverInstanceName: instanceData?.databaseInstanceName,
                         configuration: `${notOptimized.length} out of ${data.length}`,
                         id: instanceData?.databaseInstanceId,
-                        hostName: hostData?.hostName
+                        hostName: hostData?.databaseHostName
                     });
                 }
             });
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            OSAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);

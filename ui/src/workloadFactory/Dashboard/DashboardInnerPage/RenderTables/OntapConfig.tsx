@@ -20,7 +20,7 @@ const OntapConfig = () => {
     );
 
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let onTapConfigAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
@@ -29,19 +29,20 @@ const OntapConfig = () => {
                     const mergedData = [...lunsData, ...volData];
                     const notOptimized = mergedData.filter((item: any) => item.status === 'not-optimized');
 
-                    storageTierAssessmentData.push({
+                    onTapConfigAssessmentData.push({
                         databaseHostId: hostData?.databaseHostId,
                         instanceId: instanceData?.databaseInstanceId,
+                        serverInstanceName: instanceData?.databaseInstanceName,
                         configuration: `${notOptimized.length} out of ${mergedData.length}`,
                         id: instanceData?.databaseInstanceId,
-                        hostName: hostData?.hostName
+                        hostName: hostData?.databaseHostName
                     });
                 }
             });
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            onTapConfigAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
