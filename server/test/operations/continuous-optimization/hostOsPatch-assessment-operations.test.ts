@@ -1,5 +1,4 @@
 import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
-import { DEMO_AWS_ACCOUNT_ID } from '../../../src/utils/consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/fsx-scope';
@@ -61,14 +60,30 @@ describe('Host OS Patch assessment operations', () => {
         expect(response.name).toEqual('host-os-patch');
     });
 
-    it('Should perform host os patch assessment for managed hosts', async () => {
+    it('Should perform host os patch assessment for managed hosts clustered', async () => {
         const [response] =
             (await managedHostOsPatchAssessment(
                 ACCOUNT_ID,
                 DEFAULT_AWS_CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
-                DEMO_AWS_ACCOUNT_ID,
+                RESOURCE_ID,
                 'i-07e76a4b916548dc0',
+                true,
+                'test-resource',
+                'test-job-id'
+            )) || [];
+        expect(response.baselineId).toBeDefined();
+    });
+
+    it('Should perform host os patch assessment for managed hosts standalone', async () => {
+        const [response] =
+            (await managedHostOsPatchAssessment(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID,
+                'i-07e76a4b916548dc0',
+                false,
                 'test-resource',
                 'test-job-id'
             )) || [];
