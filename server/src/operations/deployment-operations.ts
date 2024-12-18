@@ -87,7 +87,8 @@ import {
     AuditStatus,
     FCI,
     PGSQL_MASTER_TEMPLATE_PATH,
-    AL2023_AMI_NAME
+    AL2023_AMI_NAME,
+    CF_QUOTA_REACHED
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -126,6 +127,7 @@ import {
     createRootModuleFile
 } from './terraform-operations';
 import { getParametersByPath } from '../lib/aws/ssm';
+import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -1209,10 +1211,10 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    // const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
-    // if (cfStackQuotaReached) {
-    //     throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
-    // }
+    const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
+    if (cfStackQuotaReached) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
+    }
 
     // Set EnableDnsSupport and EnableDnsHostnames to true
     await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
@@ -1603,10 +1605,10 @@ async function deployCfTemplateForPgSql(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    // const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
-    // if (cfStackQuotaReached) {
-    //     throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
-    // }
+    const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
+    if (cfStackQuotaReached) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
+    }
 
     const { stackName, templateParameters: templateParams } = await formatPgSqlTemplateParameters(
         networkConfiguration,
