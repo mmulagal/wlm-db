@@ -516,7 +516,11 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                         databaseHostId,
                                         resourceName!,
                                         parentJobId,
-                                        [AssessmentCategories.LICENSE, AssessmentCategories.COMPUTE]
+                                        [
+                                            AssessmentCategories.LICENSE,
+                                            AssessmentCategories.COMPUTE,
+                                            AssessmentCategories.HOST_OS_PATCH
+                                        ]
                                     );
                                 }
                             )

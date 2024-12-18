@@ -178,7 +178,9 @@ enum SqlServerDeploymentModel {
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
 
-const CF_STACK_COUNT_QUOTANAME = 'Stack count';
+const CF_STACK_COUNT_QUOTANAME = 'Stacks';
+
+const CF_STACK_COUNT_QUOTACODE = 'L-0485CB21';
 
 // Carries number of stacks that will be deployed.
 const STACKS_DEPLOYED = 5;
@@ -1793,5 +1795,6 @@ export {
     ENT_ENGINE_EDITION,
     STD_ENGINE_EDITION,
     AWS_ERROR_CODES,
+    CF_STACK_COUNT_QUOTACODE,
     DATABASE_INSTANCE_INDEX_MAPPING
 };
