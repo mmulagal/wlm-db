@@ -166,7 +166,7 @@ Resources:
                                                         "log_stream_name": "{instance_id}"
                                                     },
                                                     {
-                                                        "file_path": "/home/ec2-user/cfn/log",
+                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
                                                         "log_group_name": "${ParentStackName}",
                                                         "log_stream_name": "{instance_id}"
                                                     },
@@ -259,21 +259,19 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/setup/configure-ontap.sh
                                     -f ${FSxFileSystemId}
                                     -r ${AWS::Region}
-                                    -u ${FSXUsername}
-                                    -p ${FSXPassword}
                                     -s ${FSxSVMId}
                                     -n ${SQLSvmName}
                                     -a ${FSxAggrName}
                                     -d ${FSxDataVolumeName}
-                                    -l ${FSxLogVolumeName}'
+                                    -l ${FSxLogVolumeName}
+                                    -p ${parentStackName}'
                                 -   FSxFileSystemId: !Ref 'FSxFileSystemId'
-                                    FSXUsername: !Ref 'FSXUsername'
-                                    FSXPassword: !Ref 'FSXPassword'
                                     FSxSVMId: !Ref 'FSxSVMId'
                                     SQLSvmName: !Ref 'SQLSvmName'
                                     FSxAggrName: !Ref 'FSxAggrName'
                                     FSxDataVolumeName: !Ref 'FSxDataVolumeName'
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                                    parentStackName: !Ref 'ParentStackName'
                             waitAfterCompletion: '0'
                         b-configure-pgsql:
                             command: !Sub
