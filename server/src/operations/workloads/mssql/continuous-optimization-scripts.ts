@@ -370,6 +370,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
     $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
+    $MappedVolumeUuids = '${JSON.stringify(instanceRecord.mappedVolumesUuids)}' | ConvertFrom-Json
+    $MappedLunNames = '${JSON.stringify(instanceRecord.mappedLunNames)}' | ConvertFrom-Json
   
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
@@ -392,6 +394,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     # Volume details
     try{
+        if([string]::IsNullOrEmpty($MappedVolumeUuids)) {
+            throw "Unable to fetch ONTAP volumes details as the mapped volume UUIDs are either null or empty."
+        }
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
         $Volumes = $Response.records
 
@@ -430,6 +435,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
 
     try{
+        if([string]::IsNullOrEmpty($MappedVolumeNames)) {
+            throw "Unable to fetch ONTAP volumes details as the mapped volume names are either null or empty."
+        }
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
         $Volumes = $Response.records
 
@@ -442,7 +450,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 break
         }
         }
-    } catch {$DriftAssessmentData['errors']['volumes-footprint'] = $_.Exception.Message}
+    } catch {$DriftAssessmentData['errors']['sizing'] = $_.Exception.Message}
     
    
     # Lun details
@@ -451,6 +459,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
     
     try{
+        if([string]::IsNullOrEmpty($MappedLunNames)) {
+            throw "Unable to fetch ONTAP lun details as the mapped lun names are either null or empty."
+        }
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
         $Luns = $Response.records
     
@@ -516,7 +527,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'user-database-layout' = $($responseObject);}
         
         $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = $PerformanceTierPercent;
+                                        'performance-tier' = @($PerformanceTierPercent);
                                         'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
                                         'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
                                         }

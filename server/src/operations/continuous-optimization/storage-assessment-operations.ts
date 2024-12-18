@@ -292,7 +292,7 @@ async function calculateStorageDrift(
     }
 
     if (errors && errors['mpio-policy']) {
-        driftAssessmentData.configuration.os.push({ errorMessage: errors['mpio-policy'] });
+        driftAssessmentData.configuration.os.push({ name: 'mpio-policy', errorMessage: errors['mpio-policy'] });
     }
 
     Object.entries(os).forEach(([key, value]) => {
@@ -312,7 +312,12 @@ async function calculateStorageDrift(
     });
 
     if (errors && errors.layout) {
-        driftAssessmentData.layout.push({ errorMessage: errors.layout });
+        driftAssessmentData.layout.push(
+            { name: 'user-database-layout', errorMessage: errors.layout },
+            { name: 'default-data-files-location', errorMessage: errors.layout },
+            { name: 'default-log-files-location', errorMessage: errors.layout },
+            { name: 'tempdb-files-location', errorMessage: errors.layout }
+        );
     } else {
         Object.entries(layout).forEach(([key, value]) => {
             const goldenData = layoutConfigData.find(data => data.parameter === key);
@@ -435,7 +440,11 @@ async function calculateStorageDrift(
     }
 
     if (errors && errors.sizing) {
-        driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
+        driftAssessmentData.sizing.push(
+            { name: 'performance-tier', errorMessage: errors.sizing },
+            { name: 'tempdb-drive-size', errorMessage: errors.sizing },
+            { name: 'log-drive-size', errorMessage: errors.sizing }
+        );
     } else {
         Object.entries(sizing).forEach(async ([key, value]) => {
             let goldenData = sizingConfigData.find(data => data.parameter === key);
@@ -456,6 +465,7 @@ async function calculateStorageDrift(
                 let status = AssessmentStatus.NOT_OPTIMIZED;
                 if (key === 'performance-tier') {
                     // Old assessment data has performance-tier as boolean, new assessment data has performance-tier as list of numbers
+
                     if (typeof value !== 'boolean') {
                         const minSizePercent = Math.min(...value);
                         const maxSizePercent = Math.max(...value);
@@ -523,33 +533,30 @@ async function calculateStorageDrift(
     }
 
     // Headroom drift assessment
-    if (errors && errors.sizing) {
-        driftAssessmentData.sizing.push({ errorMessage: errors.sizing });
-    } else {
-        try {
-            const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-            const { status, headroomPercent, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
-                credentialsId,
-                region,
-                filesystemId
-            );
 
-            driftAssessmentData.sizing.push({
-                name: 'headroom',
-                recommended: goldenData!.value.toString(),
-                status,
-                severity: goldenData!.severity,
-                recommendation: goldenData!.recommendation,
-                tags: goldenData!.tags,
-                missingPermissions,
-                recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0,
-                current: `${headroomPercent}%`
-            });
-        } catch (error: any) {
-            logger.error(
-                `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
-            );
-        }
+    try {
+        const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
+        const { status, headroomPercent, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
+            credentialsId,
+            region,
+            filesystemId
+        );
+
+        driftAssessmentData.sizing.push({
+            name: 'headroom',
+            recommended: goldenData!.value.toString(),
+            status,
+            severity: goldenData!.severity,
+            recommendation: goldenData!.recommendation,
+            tags: goldenData!.tags,
+            missingPermissions,
+            recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0,
+            current: `${headroomPercent}%`
+        });
+    } catch (error: any) {
+        logger.error(
+            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
+        );
     }
 
     return driftAssessmentData;
