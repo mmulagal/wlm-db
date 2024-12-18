@@ -35,6 +35,7 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                             totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
                             isBorderRequired={true}
+                            isLoading={allmssqlHostAssessmentLoading}
                         />
 
                         <CategoryComponent
@@ -47,6 +48,7 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                             totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
                             isBorderRequired={true}
+                            isLoading={allmssqlHostAssessmentLoading}
                         />
 
                         <CategoryComponent
@@ -59,6 +61,7 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                             totalOptimizationInstances={categoryData.total || 0}
                             isComingSoon={false}
                             isBorderRequired={true}
+                            isLoading={allmssqlHostAssessmentLoading}
                         />
 
                         <CategoryComponent
@@ -69,6 +72,7 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                             totalOptimizationInstances={120}
                             isComingSoon={true}
                             isBorderRequired={true}
+                            isLoading={allmssqlHostAssessmentLoading}
                         />
 
                         <CategoryComponent
@@ -79,6 +83,7 @@ const ManagedInstanceOptimizationBreakdownByCategory = ({ setOpenAccordion }: an
                             totalOptimizationInstances={120}
                             isComingSoon={true}
                             isBorderRequired={false}
+                            isLoading={allmssqlHostAssessmentLoading}
                         />
                     </div>
                 }

@@ -10,6 +10,7 @@ import {
     getByteVal,
     isAwsBackupEnabled
 } from '../../utils/utilityFunctions';
+import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 
 export const getManagedHostCount = (data: any, dispatch: any) => {
     let totalDatabases = 0;
@@ -496,6 +497,68 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         });
     });
     return getAssessmentGroupedByConfigurations;
+};
+
+export const getAssessmentHostListGroupedByCategory = (assessmentData: any, type: string) => {
+    let tableData: any = [];
+    let id = 1;
+
+    const state = store.getState();
+    const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
+
+    assessmentData.map((databaseHost: any) => {
+        databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (!instance?.error) {
+                let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instance?.assessments, {});
+                let optBreakDown = formatOptimizationBreakDown(cardsData);
+                let score = '';
+                if (type === 'Storage') {
+                    score = (optBreakDown?.storage?.percent || '0') + '%';
+                } else if (type === 'Compute') {
+                    score = (optBreakDown?.compute?.percent || '0') + '%';
+                } else if (type === 'Application') {
+                    score = (optBreakDown?.application?.percent || '0') + '%';
+                }
+                if (score !== '100%') {
+                    let perTableData: any = {
+                        id: id++,
+                        hostName: databaseHost?.databaseHostName,
+                        score: score,
+                        databaseInstanceName: instance?.databaseInstanceName,
+                        databaseHostId: databaseHost?.databaseHostId,
+                        instanceId: instance?.databaseInstanceId
+                    };
+                    tableData.push(perTableData);
+                }
+            }
+        });
+    });
+    tableData = mapHostStatusToAssessmentData(
+        inventoryTableData,
+        tableData,
+        getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
+    );
+    return disableOfflineRows(tableData);
+};
+
+export const disableOfflineRows = (data: any) => {
+    return data.map((item: any) => {
+        if (item.status === INVENTORY_STATUS.STOPPED || item.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
+            return {
+                ...item,
+                cellProps: {
+                    isDisabled: true,
+                    selectionProps: {
+                        title: GENERAL.ONLINE_INSTANCE_ASSESS,
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
+                }
+            };
+        }
+        return item;
+    });
 };
 
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {

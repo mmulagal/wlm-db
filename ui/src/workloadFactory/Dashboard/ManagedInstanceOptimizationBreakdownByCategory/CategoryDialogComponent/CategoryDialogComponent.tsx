@@ -2,59 +2,22 @@ import { DsFlashingDotsLoader, DsTypography, Table, useTable, TableTopBar } from
 import styles from './CategoryDialogComponent.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
+import { getAssessmentHostListGroupedByCategory } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 const CategoryDialogComponent = ({ type }: { type: string }) => {
     const dispatch = useDispatch();
     const selectedRow = useAppSelector(state => state.databaseHome.selectedAssessmentRow);
-
-    const tableData: any = [
-        {
-            id: 1,
-            hostName: 'SQLServer-Dev-04',
-            score: '25%',
-            resourceId: 'b89f6bc4-e1af-4c79-a864-18c775c1fd3d',
-            databaseInstanceId: 'c551fb03-c961-484e-9e02-2f78a42e5587',
-            databaseInstanceName: 'MSSQLSERVER',
-            sqlServerDeploymentType: 'FCI',
-            status: 'Up'
-        },
-        {
-            id: 2,
-            hostName: 'SQLServer-Dev-01',
-            score: '30%',
-            resourceId: 'bb53f7de-0835-4df1-8b73-6d978c253264',
-            databaseInstanceId: '564b51ca-8ce7-4d41-a91a-c27871f86ad0',
-            databaseInstanceName: 'MSSQLSERVER',
-            sqlServerDeploymentType: 'FCI',
-            status: 'Up'
-        },
-        {
-            id: 3,
-            hostName: 'SQLServer-Dev-01',
-            score: '25%',
-            resourceId: 'bb53f7de-0835-4df1-8b73-6d978c253264',
-            databaseInstanceId: '45a17956-40ae-4498-a6f5-9d554dbf17af',
-            databaseInstanceName: 'DEV-FinancialAccounts',
-            sqlServerDeploymentType: 'FCI',
-            status: 'Up'
-        },
-        {
-            id: 4,
-            hostName: 'SQLServer-Dev-02',
-            score: '25%',
-            resourceId: 'bb53f7de-0835-4df1-8b73-6d978c253264',
-            databaseInstanceId: '45a17956-40ae-4498-a6f5-9d554dbf17af',
-            databaseInstanceName: 'DEV-FinancialAccounts',
-            sqlServerDeploymentType: 'FCI',
-            status: 'Up'
-        }
-    ];
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const [tableData, setTableData] = useState<any[]>([]);
+    useEffect(() => {
+        setTableData(getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, type));
+    }, [allmssqlHostAssessmentData]);
 
     const ColDefs: ColumnProps[] = [
         {
@@ -68,30 +31,39 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
                 return (
                     <div>
                         <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
-                        <div className={styles.firstColText}>
-                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
-                            )}
-                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
-                            </DsTypography>
-                        </div>
+                        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
+                        {!rowData?.loadingStatus && (
+                            <div className={styles.firstColText}>
+                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
+                                    ></div>
+                                )}
+                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
+                                    ></div>
+                                )}
+                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
+                                    ></div>
+                                )}
+                                <DsTypography variant="Regular_13">
+                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                        ? INVENTORY_STATUS.ONLINE
+                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                        ? INVENTORY_STATUS.OFFLINE
+                                        : rowData?.status}
+                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
+                                </DsTypography>
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -101,14 +73,20 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
             Header: 'Host name',
             accessor: 'hostName',
             width: '30%',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '3',
-            Header: 'Storage optimization',
+            Header: `${type} optimization`,
             accessor: 'score',
             width: '30%',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         }
     ];
 
@@ -117,7 +95,7 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        defaultSelectedRows: selectedRow ? [selectedRow[0] && selectedRow[0].id] : [ColDefs[0].id],
+        defaultSelectedRows: selectedRow ? [selectedRow.id] : [ColDefs[0].id],
         isSorting: false,
         selectionType: 'singular',
         columns: ColDefs,
