@@ -26,9 +26,10 @@ const ComputeRightSizingTable = ({ handleDialog }: StorageTierTableProps) => {
                         storageTierAssessmentData.push({
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
+                            serverInstanceName: instanceData?.databaseInstanceName,
                             findingReasons: `${computeRightSizingObj?.objectsInViolation?.length || 0} Findings`,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.hostName
+                            hostName: hostData?.databaseHostName
                         });
                     }
                 }

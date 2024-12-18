@@ -29,9 +29,10 @@ const StorageTierTable = ({ handleDialog }: StorageTierTableProps) => {
                         storageTierAssessmentData.push({
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
+                            serverInstanceName: instanceData?.databaseInstanceName,
                             performanceTier: performanceTierObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.hostName
+                            hostName: hostData?.databaseHostName
                         });
                     }
                 }

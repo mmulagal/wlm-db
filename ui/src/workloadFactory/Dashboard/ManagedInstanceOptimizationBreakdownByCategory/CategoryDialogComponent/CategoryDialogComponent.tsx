@@ -18,47 +18,6 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
     useEffect(() => {
         setTableData(getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, type));
     }, [allmssqlHostAssessmentData]);
-    //     {
-    //         id: 1,
-    //         hostName: 'SQLServer-Dev-04',
-    //         score: '25%',
-    //         resourceId: 'b89f6bc4-e1af-4c79-a864-18c775c1fd3d',
-    //         databaseInstanceId: 'c551fb03-c961-484e-9e02-2f78a42e5587',
-    //         databaseInstanceName: 'MSSQLSERVER',
-    //         sqlServerDeploymentType: 'FCI',
-    //         status: 'Up'
-    //     },
-    //     {
-    //         id: 2,
-    //         hostName: 'SQLServer-Dev-01',
-    //         score: '30%',
-    //         resourceId: 'bb53f7de-0835-4df1-8b73-6d978c253264',
-    //         databaseInstanceId: '564b51ca-8ce7-4d41-a91a-c27871f86ad0',
-    //         databaseInstanceName: 'MSSQLSERVER',
-    //         sqlServerDeploymentType: 'FCI',
-    //         status: 'Up'
-    //     },
-    //     {
-    //         id: 3,
-    //         hostName: 'SQLServer-Dev-01',
-    //         score: '25%',
-    //         resourceId: 'bb53f7de-0835-4df1-8b73-6d978c253264',
-    //         databaseInstanceId: '45a17956-40ae-4498-a6f5-9d554dbf17af',
-    //         databaseInstanceName: 'DEV-FinancialAccounts',
-    //         sqlServerDeploymentType: 'FCI',
-    //         status: 'Up'
-    //     },
-    //     {
-    //         id: 4,
-    //         hostName: 'SQLServer-Dev-02',
-    //         score: '25%',
-    //         resourceId: 'bb53f7de-0835-4df1-8b73-6d978c253264',
-    //         databaseInstanceId: '45a17956-40ae-4498-a6f5-9d554dbf17af',
-    //         databaseInstanceName: 'DEV-FinancialAccounts',
-    //         sqlServerDeploymentType: 'FCI',
-    //         status: 'Up'
-    //     }
-    // ];
 
     const ColDefs: ColumnProps[] = [
         {
@@ -121,7 +80,7 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
         },
         {
             id: '3',
-            Header: 'Storage optimization',
+            Header: `${type} optimization`,
             accessor: 'score',
             width: '30%',
             isSortable: true,

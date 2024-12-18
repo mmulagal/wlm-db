@@ -55,8 +55,8 @@ const CategoryComponent = ({
 
         dispatch(setGwHostname(selectedAssessmentRow?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(selectedAssessmentRow?.resourceId));
-        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.databaseInstanceId));
+        dispatch(setGwResourceId(selectedAssessmentRow?.databaseHostId));
+        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.instanceId));
         dispatch(setGwDatabaseInstanceName(selectedAssessmentRow?.databaseInstanceName));
         dispatch(setGwDatabaseStorageType(selectedAssessmentRow?.sqlServerDeploymentType));
         setTimeout(() => {
@@ -143,7 +143,12 @@ const CategoryComponent = ({
                 {isComingSoon && windowSize.width > 1700 && <ComingSoon />}
                 {isComingSoon && windowSize.width < 1700 && <ComingSoon2 />}
                 {!isComingSoon && (
-                    <DsButton variant="secondary" isThin onClick={() => handleDialog()} isDisabled={isLoading}>
+                    <DsButton
+                        variant="secondary"
+                        isThin
+                        onClick={() => handleDialog()}
+                        isDisabled={isLoading || optimizationScore === 100}
+                    >
                         Optimize
                     </DsButton>
                 )}

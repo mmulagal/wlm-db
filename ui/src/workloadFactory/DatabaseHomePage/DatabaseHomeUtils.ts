@@ -519,24 +519,46 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, type
                 } else if (type === 'Application') {
                     score = (optBreakDown?.application?.percent || '0') + '%';
                 }
-                let perTableData: any = {
-                    id: id++,
-                    hostName: databaseHost?.databaseHostName,
-                    score: score,
-                    resourceId: databaseHost?.databaseHostId,
-                    databaseInstanceId: instance?.databaseInstanceId,
-                    databaseInstanceName: instance?.databaseInstanceName,
-                    status: 'Up'
-                };
-                tableData.push(perTableData);
+                if (score !== '100%') {
+                    let perTableData: any = {
+                        id: id++,
+                        hostName: databaseHost?.databaseHostName,
+                        score: score,
+                        databaseInstanceName: instance?.databaseInstanceName,
+                        databaseHostId: databaseHost?.databaseHostId,
+                        instanceId: instance?.databaseInstanceId
+                    };
+                    tableData.push(perTableData);
+                }
             }
         });
     });
-    return mapHostStatusToAssessmentData(
+    tableData = mapHostStatusToAssessmentData(
         inventoryTableData,
         tableData,
         getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
     );
+    return disableOfflineRows(tableData);
+};
+
+export const disableOfflineRows = (data: any) => {
+    return data.map((item: any) => {
+        if (item.status === INVENTORY_STATUS.STOPPED || item.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
+            return {
+                ...item,
+                cellProps: {
+                    isDisabled: true,
+                    selectionProps: {
+                        title: GENERAL.ONLINE_INSTANCE_ASSESS,
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
+                }
+            };
+        }
+        return item;
+    });
 };
 
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
