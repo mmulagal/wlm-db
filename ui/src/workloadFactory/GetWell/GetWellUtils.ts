@@ -759,7 +759,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedStorage++;
             }
         } else if (nestedObject?.category === 'compute') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING) {
+            if (
+                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
+                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING
+            ) {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
@@ -843,7 +846,12 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             ...cardDataDefault?.ontap_configuration,
             block_two: {
                 ...cardDataDefault?.ontap_configuration?.block_two,
-                value: ((ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0) !== 0) ? (ontapNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized') : ''
+                value:
+                    (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0) !== 0
+                        ? ontapNotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
             },
             block_three: {
                 ...cardDataDefault?.ontap_configuration?.block_three,
@@ -872,7 +880,12 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             ...cardDataDefault?.os_configuration,
             block_two: {
                 ...cardDataDefault?.os_configuration?.block_two,
-                value: ((osOptimizedConfig || 0) + (osNotOptimizedConfig || 0) !== 0) ? osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized' : ''
+                value:
+                    (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0) !== 0
+                        ? osNotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
             },
             block_three: {
                 ...cardDataDefault?.os_configuration?.block_three,
