@@ -15,7 +15,13 @@ import {
     GetParameterCommand,
     GetParameterCommandInput,
     GetParameterCommandOutput,
-    DeleteParametersCommand
+    DeleteParametersCommand,
+    DescribeInstancePatchStatesCommand,
+    DescribeInstancePatchStatesCommandInput,
+    DescribeInstancePatchesCommand,
+    DescribeInstancePatchesCommandInput,
+    DescribeInstancePatchesCommandOutput,
+    PatchComplianceData
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -54,7 +60,7 @@ async function sendSSMCommand(
 }
 
 async function getCommandInvocation(credentialsId: string, region: string, params: GetCommandInvocationCommandInput) {
-    logger.info('Getting command invocation details for command', params);
+    logger.info('Getting command invocation details for command', { credentialsId, region, params });
 
     const ssmClient = await getSSMClient(region, credentialsId);
     const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
@@ -91,7 +97,7 @@ async function getConnectionStatus(
     params: GetConnectionStatusCommandInput,
     accountId?: string
 ) {
-    logger.info('Getting command invocation details for command', params, accountId);
+    logger.info('Getting connection status', { credentialsId, region, params, accountId });
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const response: GetConnectionStatusCommandOutput = await ssmClient.send(new GetConnectionStatusCommand(params));
@@ -137,6 +143,45 @@ async function deleteParameters(credentialsId: string, region: string, ssmParame
     return ssmClient.send(new DeleteParametersCommand({ Names: ssmParameterNames }));
 }
 
+async function describeInstancePatchStates(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstancePatchStatesCommandInput
+) {
+    logger.info('Describe Instance Patch States');
+
+    const ssmClient = await getSSMClient(region, credentialsId);
+    const response = await ssmClient.send(new DescribeInstancePatchStatesCommand(params));
+    logger.debug('describeInstancePatchStates response', response);
+
+    return response;
+}
+
+async function describeInstancePatches(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstancePatchesCommandInput
+) {
+    logger.info('Describe Instance Patches', { credentialsId, region, params });
+
+    const ssmClient = await getSSMClient(region, credentialsId);
+    let allPatches: PatchComplianceData[] = [];
+    let nextToken: string | undefined;
+    do {
+        const { Patches: patches = [], NextToken }: DescribeInstancePatchesCommandOutput = await ssmClient.send(
+            new DescribeInstancePatchesCommand({
+                ...params,
+                NextToken: nextToken
+            })
+        );
+        allPatches = allPatches.concat(patches);
+        nextToken = NextToken;
+    } while (nextToken);
+
+    logger.debug('all patches', allPatches);
+    return allPatches;
+}
+
 export {
     getSSMClient,
     sendSSMCommand,
@@ -145,5 +190,7 @@ export {
     getConnectionStatus,
     putParameter,
     getParameter,
-    deleteParameters
+    deleteParameters,
+    describeInstancePatchStates,
+    describeInstancePatches
 };

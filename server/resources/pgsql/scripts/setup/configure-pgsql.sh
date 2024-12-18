@@ -1,5 +1,5 @@
 #!/bin/bash
-exec > /var/log/netapp_wf_configure-pgsql.log 2>&1
+exec > /var/log/netapp_wf/configure-pgsql.log 2>&1
 echo "Setting up the postgresql environment..."
 
 # Parse command-line arguments

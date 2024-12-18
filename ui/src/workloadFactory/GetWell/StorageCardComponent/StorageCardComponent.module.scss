@@ -142,6 +142,14 @@
             color: var(--text-primary);
         }
     }
+
+    .buttonSectionDarkMode {
+        [class*='buttonContent'] {
+            div {
+                color: var(--grey-30) !important;
+            }
+        }
+    }
 }
 
 .colorSet {

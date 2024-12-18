@@ -12,7 +12,9 @@ import {
     GetConnectionStatusCommand,
     PutParameterCommand,
     GetParameterCommand,
-    DeleteParametersCommand
+    DeleteParametersCommand,
+    DescribeInstancePatchStatesCommand,
+    DescribeInstancePatchesCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import {
@@ -27,9 +29,10 @@ import getConnectionStatusResponse from '../../responses/aws/ssm-connection-stat
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
+import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-states.json';
+import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
-    getMappedOntapVolumesScript,
     restGetUtilForOntap,
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -78,6 +81,7 @@ import {
     ENABLE_MPIO_AND_CONFIGURE
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
+import { clone, cloneDeep } from 'lodash-es';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -217,10 +221,6 @@ const getOntapSnapshotCountParams = {
             'fields=snapshot_count'
         )
     ]
-};
-
-const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION, '$false', [DEFAULT_INSTANCE_NAME])]
 };
 
 const getStorageParams = {
@@ -530,6 +530,9 @@ const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
 const checkNodeStatusRegex = /#Check Node Status/;
+const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
+const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -581,8 +584,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.nativeSqlBackupDatabasesCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
-    .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
-    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
     .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
@@ -664,26 +665,30 @@ ssmMock
     .on(SendCommandCommand, { Parameters: dbSummary })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
     .on(SendCommandCommand, params => {
+        return params.DocumentName === 'AWS-RunPatchBaseline';
+    })
+    .resolves(listSendCommandCommandResponse.getPatchBaselineCommand)
+    .on(SendCommandCommand, params => {
         const newOptimizeRegex = optimizeRegex;
-        const newOptimizeParams = params.Parameters.commands[0];
+        const newOptimizeParams = params.Parameters.commands?.[0];
         return newOptimizeParams && newOptimizeRegex.test(newOptimizeParams);
     })
     .resolves(listSendCommandCommandResponse.optimizeStorageCommand)
     .on(SendCommandCommand, params => {
-        return rescanExtendRegex.test(params.Parameters.commands[0]);
+        return rescanExtendRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.rescanAndExtendLogLunCommand)
     .on(SendCommandCommand, params => {
-        return checkNodeStatusRegex.test(params.Parameters.commands[0]);
+        return checkNodeStatusRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.checkNodeStatusCommand)
     .on(SendCommandCommand, params => {
-        return moveClusterGroupsRegex.test(params.Parameters.commands[0]);
+        return moveClusterGroupsRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.moveClusterGroupsCommand)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ONTAP LUN details Script/;
-        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+        return getLunDetailsRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getLunDetailsCommand)
     .on(SendCommandCommand, { Parameters: validateMpio })
@@ -700,9 +705,17 @@ ssmMock
     .resolves(listSendCommandCommandResponse.enableMpioAndConfigureCommand)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
-        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+        return getLunDetailsRegex.test(params.Parameters.commands?.[0]);
     })
-    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails);
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
+    .on(SendCommandCommand, params => {
+        return getMappedOntapVolumesRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
+    .on(SendCommandCommand, params => {
+        return getStorageAssessmentDataRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getStorageAssessmentCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -890,10 +903,32 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
     })
-    .resolves(getCommandInvocationResponse.getLunDetailsResponse);
+    .resolves(getCommandInvocationResponse.getLunDetailsResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData'
+    })
+    .resolves(getCommandInvocationResponse.assessmentConfigData)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPatchBaselineCommandResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
 ssmMock.on(GetParameterCommand).resolves(getParameerResponse);
 ssmMock.on(DeleteParametersCommand).resolves(deleteParametersResponse);
+ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: DescribeInstancePatchStatesCommand) => {
+    const instanceIds = command.InstanceIds;
+    const response = cloneDeep(describePatchStatesResponse);
+    const instancePatchStates = [];
+    instanceIds.forEach(instanceId => {
+        const sampleinstancePatchState = describePatchStatesResponse.InstancePatchStates[0];
+        sampleinstancePatchState.InstanceId = instanceId;
+        instancePatchStates.push(sampleinstancePatchState);
+    });
+
+    response.InstancePatchStates = instancePatchStates;
+    return response;
+});
+ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse);

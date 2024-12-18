@@ -32,6 +32,7 @@ import store from '../../../store/store';
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
@@ -416,7 +417,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             width="120px"
                             height="30px"
                         >
-                            <div>
+                            <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                                 <DsButton variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
@@ -432,7 +433,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         width="310px"
                         height="50px"
                     >
-                        <div>
+                        <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
                                 Optimize
                             </DsButton>
@@ -440,7 +441,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </TooltipComponent>
                 ) : (
                     <div
-                        className={styles.buttonSection}
+                        className={
+                            isDarkTheme && (loading || disableOptimizeButton)
+                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                : styles.buttonSection
+                        }
                         style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
                         id={`${cardData?.id}-optimize`}
                     >

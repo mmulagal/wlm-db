@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
+import { getAllClusterNodeDetails, getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/aws/fsx-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -71,5 +71,15 @@ describe('Database host operations', () => {
             false
         );
         expect(resp).toBeDefined();
+    });
+
+    it('Get all cluster node details', async () => {
+        const [response] = await getAllClusterNodeDetails(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216'
+        );
+        expect(response.ec2InstanceId).toBeDefined();
     });
 });

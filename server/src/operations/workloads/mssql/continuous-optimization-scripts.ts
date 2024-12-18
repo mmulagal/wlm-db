@@ -363,7 +363,7 @@ function Test-IscsiSessions {
 `;
 
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
-    `
+    `#Get Storage Configuration Assessment
     $DriftAssessmentData = @{}
     $DriftAssessmentData['errors'] = @{}
     $sqlInstance = "${instanceRecord.name}"

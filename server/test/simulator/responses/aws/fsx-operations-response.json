@@ -1,11 +1,37 @@
 {
     "volumeMap": {
-        "volumeRecords": [{
-            "name": "wlmdb_sqldata_1718157389159",
-            "uuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
-            "snapshot_count": 1
-        }],
+        "volumeRecords": [
+            {
+                "name": "wlmdb_sqldata_1718157389159",
+                "uuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
+                "snapshot_count": 1
+            },
+            {
+                "name": "wlmdb_sqldata_1718157389159",
+                "uuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
+                "snapshot_count": 1
+            },
+            {
+                "name": "wlmdb_sqldata_1718157389159",
+                "uuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
+                "snapshot_count": 1
+            }
+        ],
         "volumeDBMap": [
+            {
+                "ontapVolumeuuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
+                "driveVolumeName": "SQL-Data",
+                "databaseName": "master",
+                "driveVolumeId": "Volume{54500894-6228-4770-8901-8dcbf98c9d83}",
+                "ontapVolumeName": "wlmdb_sqldata_1718157389159"
+            },
+            {
+                "ontapVolumeuuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
+                "driveVolumeName": "SQL-Data",
+                "databaseName": "master",
+                "driveVolumeId": "Volume{54500894-6228-4770-8901-8dcbf98c9d83}",
+                "ontapVolumeName": "wlmdb_sqldata_1718157389159"
+            },
             {
                 "ontapVolumeuuid": "2f004bac-2865-11ef-b359-1b0fb5fca86e",
                 "driveVolumeName": "SQL-Data",

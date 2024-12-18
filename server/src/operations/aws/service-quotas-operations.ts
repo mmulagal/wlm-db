@@ -35,6 +35,13 @@ async function getCfQuota(credentialsId: string, region: string) {
 
     logger.debug('CF count quota ', cfCountQuota);
 
+    if (!cfCountQuota) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            `Unable to get cloudformation quota in region ${region} and credentials ${credentialsId}. Reason: Quota not found.`
+        );
+    }
+
     if (cfCountQuota.ErrorReason?.ErrorMessage) {
         throw createError(
             HttpErrorCodes.FAILED_DEPENDENCY,

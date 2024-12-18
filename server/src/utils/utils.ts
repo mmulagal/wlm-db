@@ -461,7 +461,7 @@ function checkAccount(accountId: string) {
     logger.debug('checking account id', accountId);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const userId = getSubjectFromBearerToken();
-        return userId ? `${accountId}_${userId}` : accountId;
+        return userId && !accountId.includes('_') ? `${accountId}_${userId}` : accountId;
     }
     return accountId;
 }

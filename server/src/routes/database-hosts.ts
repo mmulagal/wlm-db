@@ -43,6 +43,7 @@ import {
     getSandboxSnapshots
 } from '../operations/sandbox-operations';
 import { DatabaseTypes } from '../utils/consts';
+import castRequest from './utils';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const PGSQL_API_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
@@ -58,7 +59,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region }
-                } = request;
+                } = castRequest(request);
                 const response = await getSandboxSavings(accountId, credentialsId, region);
                 return reply.send(response);
             }
@@ -70,7 +71,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region },
                     body: { databaseName, dataFileConfig, logFileConfig, collation, databaseInstanceId }
-                } = request;
+                } = castRequest(request);
                 const response = await deployDatabase(
                     accountId,
                     databaseHostId,
@@ -91,7 +92,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
-                } = request;
+                } = castRequest(request);
                 const response = await getCollationDetails(
                     accountId,
                     databaseHostId,
@@ -110,7 +111,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region },
                     query: { nextToken }
-                } = request;
+                } = castRequest(request);
                 const response = await getSandboxesInfo(accountId, credentialsId, region, nextToken);
                 return reply.send(response);
             }
@@ -122,7 +123,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },
                     query: { databaseName, databaseInstanceId }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabaseMountPointInfo(
                     accountId,
                     credentialsId,
@@ -138,7 +139,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, region },
                 body: { source, destination, tag, mountPoints }
-            } = request;
+            } = castRequest(request);
             const response = await createSandbox(
                 accountId,
                 credentialsId,
@@ -156,7 +157,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = request;
+                } = castRequest(request);
                 const response = await getSandboxConnectionString(
                     accountId,
                     credentialsId,
@@ -174,7 +175,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = request;
+                } = castRequest(request);
                 const response = await getSandboxSplitEstimate(
                     accountId,
                     credentialsId,
@@ -192,7 +193,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = request;
+                } = castRequest(request);
                 const response = await deleteSandbox(
                     accountId,
                     credentialsId,
@@ -211,7 +212,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName },
                     body: { snapshot, action }
-                } = request;
+                } = castRequest(request);
                 const response = await updateSandboxLifeCycle(
                     accountId,
                     credentialsId,
@@ -231,7 +232,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId, sandboxName }
-                } = request;
+                } = castRequest(request);
                 const response = await splitSandbox(
                     accountId,
                     credentialsId,
@@ -250,7 +251,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region },
                     query: { fields, nextToken, vpcId, fsxId, pageSize }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabaseHostsSummaryV2(
                     accountId,
                     region,
@@ -271,7 +272,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region },
                     query: { fields, nextToken, vpcId, fsxId, pageSize }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabaseHostsSummaryV2(
                     accountId,
                     region,
@@ -293,7 +294,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabaseHostSummaryV2(
                     accountId,
                     databaseHostId,
@@ -311,7 +312,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabaseHostSummaryV2(
                     accountId,
                     databaseHostId,
@@ -329,7 +330,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabaseHostInstanceSummary(
                     accountId,
                     credentialsId,
@@ -348,7 +349,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
                     query: { fields }
-                } = request;
+                } = castRequest(request);
                 const response = await getDatabasesV2(
                     accountId,
                     credentialsId,
@@ -366,7 +367,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId }
-                } = request;
+                } = castRequest(request);
                 const response = await checkDatabaseIntegrity(
                     accountId,
                     credentialsId,
@@ -385,7 +386,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, sandboxName, databaseInstanceId },
                     query: { historical }
-                } = request;
+                } = castRequest(request);
                 const response = await getSandboxSnapshots(
                     accountId,
                     credentialsId,
@@ -405,7 +406,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
                     query: { forSandbox }
-                } = request;
+                } = castRequest(request);
                 const response = await getDriveInfo(
                     accountId,
                     databaseHostId,

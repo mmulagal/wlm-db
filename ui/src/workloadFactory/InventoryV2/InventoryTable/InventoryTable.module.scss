@@ -37,6 +37,7 @@
 
     .topBarStyle {
         z-index: 4 !important;
+        top: 56px !important;
     }
 
     [class*='Table-module_header-row'] {
@@ -50,6 +51,7 @@
     }
 
     [class*='Table-module_header-row'] {
+        top: 122px !important;
         [class*='Table-module_header-cell'] {
             &:nth-child(5) {
                 [class*='Table-module_right-border'] {

@@ -587,7 +587,6 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
 
 const PgSqlDbHostsSummaryResponse = Type.Omit(DatabaseHostSummaryForMultiInstanceResponse, [
     'ebsResourceInfo',
-    'databaseInstancesSummary',
     'sqlLicenseIncluded'
 ]);
 

@@ -123,8 +123,8 @@ Resources:
                 configSets:
                     config:
                         - InstallSSMAgent
+                        - CreateDeploymentFolders
                         - ConfigureCWLogs
-                        - CreateTempFolder
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
                         - Configure
@@ -137,6 +137,14 @@ Resources:
                             waitAfterCompletion: '0'
                         b-install-cloudwatch-agent:
                             command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            waitAfterCompletion: '0'
+                CreateDeploymentFolders:
+                    commands:
+                        a-create-scripts-folder:
+                            command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                            waitAfterCompletion: '0'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
                             waitAfterCompletion: '0'
                 ConfigureCWLogs:
                     files:
@@ -161,6 +169,11 @@ Resources:
                                                         "file_path": "/home/ec2-user/cfn/log",
                                                         "log_group_name": "${ParentStackName}",
                                                         "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/var/log/netapp_wf/*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
                                                     }
                                                 ]
                                             }
@@ -174,10 +187,6 @@ Resources:
                         a-configure-cwlogs:
                             command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
                             waitAfterCompletion: '0'
-                CreateTempFolder:
-                    commands:
-                        a-create-temp-folder:
-                            command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
                 FetchResources:
                     files:
                         /home/ec2-user/cfn/scripts/verify-signature.sh:

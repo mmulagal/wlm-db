@@ -1498,7 +1498,7 @@ async function deployPgSql(
                 fsxConfiguration,
                 sqlConfiguration,
                 topicArn,
-                false,
+                enableCloudWatch,
                 metrics,
                 tags
             );
@@ -1524,7 +1524,7 @@ async function deployPgSql(
             fsxConfiguration,
             sqlConfiguration,
             topicArn,
-            false,
+            enableCloudWatch,
             metrics,
             tags
         );
@@ -1540,7 +1540,7 @@ async function deployPgSql(
                 fsxConfiguration,
                 sqlConfiguration,
                 topicArn,
-                false,
+                enableCloudWatch,
                 metrics,
                 tags
             );
@@ -1826,7 +1826,8 @@ async function formatPgSqlTemplateParameters(
         ...fsxConfiguration,
         ...sqlConfiguration,
         ...ec2Configuration,
-        topicArn
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {

@@ -82,7 +82,11 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import {
+    addAllMssqlHostAssessmentData,
+    setIsRefreshed,
+    setSelectedHeaderTab
+} from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
@@ -295,6 +299,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(inventoryApi.util.resetApiState());
             dispatch(inventoryApiV2.util.resetApiState());
             dispatch(setIsRefreshed(true));
+            dispatch(addAllMssqlHostAssessmentData([]));
         } else if (selectedHeaderTab === WLF_TABS.INVENTORY || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS) {
             resetDBHomePageState(dispatch);
             dispatch(inventoryApi.util.resetApiState());
