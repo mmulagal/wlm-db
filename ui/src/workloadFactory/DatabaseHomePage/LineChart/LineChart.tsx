@@ -148,7 +148,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         borderWidth: 3
                     },
                     {
-                        label: 'Completed with warnings',
+                        label: 'Completed with issues',
                         data: constructDataWarning(),
                         borderColor: '#FDC300',
 
@@ -195,8 +195,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                                 let label = '';
                                 if (context.dataset.label === 'Success') {
                                     label = 'Completed jobs';
-                                } else if (context.dataset.label === 'Completed with warnings') {
-                                    label = 'Completed with warnings jobs';
+                                } else if (context.dataset.label === 'Completed with issues') {
+                                    label = 'Completed with issues jobs';
                                 } else {
                                     label = 'Failed jobs';
                                 }
