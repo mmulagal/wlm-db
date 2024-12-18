@@ -47,7 +47,7 @@ extract_credentials() {
     echo "$fsxusername $fsxpassword"
 }
 
-creds=$(aws ssm get-parameter --name "/netapp/wlmdb/WLMDB-PgSqlStandaloneStack-1734493715972" --with-decryption --query "Parameter.Value" --output text)
+creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$parentstackname" --with-decryption --query "Parameter.Value" --output text)
 if is_valid_json "$creds"; then
     valid_creds="$creds"
 else

@@ -270,7 +270,7 @@ Resources:
                                 - aws ssm put-parameter
                                     --name "/netapp/wlmdb/${parentStackName}"
                                     --type "SecureString"
-                                    --value "$(aws ssm get-parameter --name "/netapp/wlmdb/${ParentStackName}" --with-decryption --query "Parameter.Value")"
+                                    --value "$(aws ssm get-parameter --name "/netapp/wlmdb/${ParentStackName}" --with-decryption --query "Parameter.Value" --output text)"
                                     --overwrite
                                 - parentStackName: !Ref 'ParentStackName'
                             waitAfterCompletion: '0'
