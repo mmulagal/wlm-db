@@ -9,7 +9,7 @@ const DatabaseDistribution = () => {
         <div className={styles.databaseDistribution}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Database distribution
+                    Databases distribution
                 </DsTypography>
 
                 {/* {loading && <FlashingDotsLoader />} */}

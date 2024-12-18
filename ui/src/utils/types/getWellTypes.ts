@@ -119,6 +119,7 @@ export interface GwPerConfigCardInterface {
     };
     tags: string[];
     category?: string;
+    id?: string;
 }
 
 export interface GwSqlServerInstanceInterface {

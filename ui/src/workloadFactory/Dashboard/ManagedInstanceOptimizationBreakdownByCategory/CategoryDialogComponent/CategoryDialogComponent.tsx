@@ -4,11 +4,17 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getAssessmentHostListGroupedByCategory } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+
+interface TableTopBarProps {
+    tableProps: any;
+    pluralTitle: string;
+    singularTitle: string;
+    selectionType: 'singular' | 'multiple'; // Add this prop
+}
 
 const CategoryDialogComponent = ({ type }: { type: string }) => {
     const dispatch = useDispatch();

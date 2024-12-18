@@ -134,7 +134,7 @@ const CategoryComponent = ({
                         <DsFlashingDotsLoader />
                     </div>
                 )}
-                <DsTypography variant="Regular_14">Optimization instances</DsTypography>
+                <DsTypography variant="Regular_14">Optimized instances</DsTypography>
             </div>
 
             <SeparatorComponent variant="vertical" height="60px" />
