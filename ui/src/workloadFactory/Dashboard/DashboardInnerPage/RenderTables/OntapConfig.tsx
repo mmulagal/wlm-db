@@ -13,8 +13,6 @@ import { useMemo } from 'react';
 import { mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 const OntapConfig = () => {
-    const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
-
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
@@ -22,7 +20,7 @@ const OntapConfig = () => {
     const tableData = useMemo(() => {
         let onTapConfigAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
-            hostData?.instancesAssessment?.map((instanceData: any) => {
+            hostData?.instancesAssessment?.map((instanceData: any, index: number) => {
                 if (!instanceData?.error) {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
@@ -34,8 +32,14 @@ const OntapConfig = () => {
                         instanceId: instanceData?.databaseInstanceId,
                         serverInstanceName: instanceData?.databaseInstanceName,
                         configuration: `${notOptimized.length} out of ${mergedData.length}`,
-                        id: instanceData?.databaseInstanceId,
-                        hostName: hostData?.databaseHostName
+                        id: index,
+                        hostName: hostData?.databaseHostName,
+                        fullData: mergedData?.map((item: any, index: number) => {
+                            return {
+                                ...item,
+                                id: index
+                            };
+                        })
                     });
                 }
             });
@@ -135,7 +139,7 @@ const OntapConfig = () => {
     const ExpandedRow = useCallback(({ rowData }: any) => {
         return (
             <RecommendationTable
-                tableData={ontapConfigTableData}
+                tableData={rowData?.fullData}
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}

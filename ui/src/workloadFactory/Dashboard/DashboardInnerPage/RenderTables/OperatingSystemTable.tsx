@@ -13,17 +13,22 @@ import { useMemo } from 'react';
 import { mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 const OperatingSystemTable = () => {
-    const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
-
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
     const tableData = useMemo(() => {
         let OSAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
-            hostData?.instancesAssessment?.map((instanceData: any) => {
+            hostData?.instancesAssessment?.map((instanceData: any, index: number) => {
                 if (!instanceData?.error) {
-                    const data = instanceData?.assessments?.storage?.configuration?.os;
+                    const data = instanceData?.assessments?.storage?.configuration?.os?.map(
+                        (item: any, index: number) => {
+                            return {
+                                ...item,
+                                id: index
+                            };
+                        }
+                    );
                     const notOptimized = data.filter((item: any) => item.status === 'not-optimized');
 
                     OSAssessmentData.push({
@@ -31,8 +36,9 @@ const OperatingSystemTable = () => {
                         instanceId: instanceData?.databaseInstanceId,
                         serverInstanceName: instanceData?.databaseInstanceName,
                         configuration: `${notOptimized.length} out of ${data.length}`,
-                        id: instanceData?.databaseInstanceId,
-                        hostName: hostData?.databaseHostName
+                        id: index,
+                        hostName: hostData?.databaseHostName,
+                        fullData: data
                     });
                 }
             });
@@ -132,7 +138,7 @@ const OperatingSystemTable = () => {
     const ExpandedRow = useCallback(({ rowData }: any) => {
         return (
             <RecommendationTable
-                tableData={ontapConfigTableData}
+                tableData={rowData?.fullData}
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}
