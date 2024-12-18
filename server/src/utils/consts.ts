@@ -1017,6 +1017,18 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: {
     SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string', configType: TF_VARS_CONFIG.General }
 };
 
+const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
+    0: 'serverDetails',
+    1: 'databaseInstancetopologyData',
+    2: 'performance',
+    3: 'storage',
+    4: 'protection',
+    5: 'resourceUtilization',
+    6: 'databasesCount',
+    7: 'nodeTopology',
+    8: 'storageSavingsFromOntap'
+};
+
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
     DISK = 'disk',
@@ -1780,5 +1792,6 @@ export {
     DEMO_DEFAULT_REGION,
     ENT_ENGINE_EDITION,
     STD_ENGINE_EDITION,
-    AWS_ERROR_CODES
+    AWS_ERROR_CODES,
+    DATABASE_INSTANCE_INDEX_MAPPING
 };

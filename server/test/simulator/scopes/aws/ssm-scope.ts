@@ -709,11 +709,11 @@ ssmMock
     })
     .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
     .on(SendCommandCommand, params => {
-        return getMappedOntapVolumesRegex.test(params.Parameters.commands[0]);
+        return getMappedOntapVolumesRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, params => {
-        return getStorageAssessmentDataRegex.test(params.Parameters.commands[0]);
+        return getStorageAssessmentDataRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getStorageAssessmentCommandResponse);
 

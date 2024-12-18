@@ -120,6 +120,7 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 databaseHostId,
                 activeNodeInstanceId,
+                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
                 resourceName,
                 jobId
             );

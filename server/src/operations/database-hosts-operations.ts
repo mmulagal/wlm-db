@@ -54,7 +54,8 @@ import {
     DEFAULT_INSTANCE_NAME,
     EBS_ROOT_VOLUME,
     DatabaseTypes,
-    AWS_ERROR_CODES
+    AWS_ERROR_CODES,
+    DATABASE_INSTANCE_INDEX_MAPPING
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -102,6 +103,7 @@ import {
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
+import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 
 const logger = getLogger();
 
@@ -119,17 +121,6 @@ const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
     1: 'billing/pricing',
     2: 'instanceSummary'
-};
-const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
-    0: 'serverDetails',
-    1: 'databaseInstancetopologyData',
-    2: 'performance',
-    3: 'storage',
-    4: 'protection',
-    5: 'resourceUtilization',
-    6: 'databasesCount',
-    7: 'nodeTopology',
-    8: 'storageSavingsFromOntap'
 };
 
 interface MappedOnTapVolumeResponse {
@@ -1736,7 +1727,13 @@ async function getDatabaseHostSummaryV2(
 
             databaseInstancesDetail =
                 resourceType === DatabaseTypes.PG_SQL
-                    ? instancesDetails
+                    ? await getPgSqlDatabaseInstancesDetails(
+                          credentialsId,
+                          region,
+                          instancesManaged,
+                          resourceId,
+                          instancesDetails
+                      )
                     : await getDatabaseInstancesDetails(
                           credentialsId,
                           region,
@@ -1793,7 +1790,8 @@ async function getDatabaseHostSummaryV2(
                         databaseInstancesDetail.some(
                             (instance: InstanceDetails) =>
                                 instance.instanceState === ServerState.UP &&
-                                instance.instanceName === resource.database_instance_name
+                                (instance.instanceName === resource.database_instance_name ||
+                                    (resourceType === DatabaseTypes.PG_SQL && resourceId === resource.resource_id))
                         )
                     );
                 } else {
@@ -1811,16 +1809,29 @@ async function getDatabaseHostSummaryV2(
                 }));
 
                 if (runningDatabaseInstances.length > 0) {
-                    promises.push(
-                        getDatabaseInstancesSummary(
-                            accountId,
-                            credentialsId,
-                            activeNodeInstanceId!,
-                            region,
-                            runningDatabaseInstances,
-                            fields
-                        )
-                    );
+                    if (resourceType === DatabaseTypes.PG_SQL) {
+                        promises.push(
+                            getPgSqlDatabaseInstancesSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId!,
+                                region,
+                                runningDatabaseInstances,
+                                fields
+                            )
+                        );
+                    } else {
+                        promises.push(
+                            getDatabaseInstancesSummary(
+                                accountId,
+                                credentialsId,
+                                activeNodeInstanceId!,
+                                region,
+                                runningDatabaseInstances,
+                                fields
+                            )
+                        );
+                    }
                 } else {
                     promises.push(Promise.resolve());
                 }
