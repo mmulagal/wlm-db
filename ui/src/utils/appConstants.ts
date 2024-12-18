@@ -585,8 +585,8 @@ export const GENERAL = {
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
     JM_TYPE_OPTIMIZE: 'Optimization',
-    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
-    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
+    JM_DOWNLOAD_PROGRESS: 'Download in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
     DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`,
     FSXN_SVM_ERROR: [
