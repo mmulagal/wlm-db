@@ -546,6 +546,44 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
     );
 }
 
+async function hostLevelDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    fields?: string
+) {
+    logger.info('Fetching host level drift data', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        fields
+    });
+
+    const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+    const shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+    const shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
+        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
+    );
+    const [computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse] = await Promise.all([
+        shouldCalculateComputeAssessment
+            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateLicenseAssessment
+            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateHostOsPatchAssessment
+            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
+            : Promise.resolve({})
+    ]);
+
+    return { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse };
+}
+
 async function fetchDriftAssessment(
     accountId: string,
     credentialsId: string,
@@ -586,21 +624,13 @@ async function fetchDriftAssessment(
 
     const [
         storageAssessmentResponse,
-        computeAssessmentResponse,
-        licenseAssessmentResponse,
-        hostOsPatchAssessmentResponse
+        { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse }
     ] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({}),
-        shouldCalculateComputeAssessment
-            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-            : Promise.resolve({}),
-        shouldCalculateLicenseAssessment
-            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-            : Promise.resolve({}),
-        shouldCalculateHostOsPatchAssessment
-            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
+        shouldCalculateComputeAssessment || shouldCalculateLicenseAssessment || shouldCalculateHostOsPatchAssessment
+            ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({})
     ]);
 
@@ -740,6 +770,30 @@ async function fetchDriftAssessmentPerHost(
         assessments?: DriftAssessmentResponseType;
         error?: string;
     }> = [];
+
+    const fieldsList = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+
+    let computeAssessmentResponse: ComputeDriftResponseType;
+    let licenseAssessmentResponse: LicenseDriftResponseType;
+    let hostOsPatchAssessmentResponse: HostOsPatchDriftResponseType;
+    const isHostLevelMetrics =
+        fieldsList?.includes(AssessmentCategories.COMPUTE) ||
+        fieldsList?.includes(AssessmentCategories.LICENSE) ||
+        fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH);
+    if (isHostLevelMetrics) {
+        const [{ database_instance_id: databaseInstanceId }] = instancesManaged; // get the first instance id to fetch the host level metrics as the host level metrics are same for all the instances
+        const hostLevelData = await hostLevelDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            fields
+        );
+        computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;
+        licenseAssessmentResponse = hostLevelData.licenseAssessmentResponse as LicenseDriftResponseType;
+        hostOsPatchAssessmentResponse = hostLevelData.hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType;
+    }
     await Promise.all(
         instancesManaged.map(async managedInstance => {
             const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
@@ -752,8 +806,21 @@ async function fetchDriftAssessmentPerHost(
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    fields
+                    AssessmentCategories.STORAGE
                 );
+
+                if (isHostLevelMetrics) {
+                    if (!isEmpty(computeAssessmentResponse)) {
+                        driftAssessment.compute = computeAssessmentResponse;
+                    }
+                    if (!isEmpty(licenseAssessmentResponse)) {
+                        driftAssessment.license = licenseAssessmentResponse;
+                    }
+                    if (!isEmpty(hostOsPatchAssessmentResponse)) {
+                        driftAssessment.hostOsPatch = hostOsPatchAssessmentResponse;
+                    }
+                }
+
                 driftAssessments.push({
                     databaseInstanceId,
                     databaseInstanceName,

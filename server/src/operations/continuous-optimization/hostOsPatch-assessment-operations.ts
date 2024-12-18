@@ -4,14 +4,43 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 
 import getLogger from '../../utils/logger';
-import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
-import { SUCCESS } from '../../utils/consts';
+import { HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 
 const logger = getLogger();
+
+async function triggerHostOsPatchCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    metadata: Metadata
+) {
+    const { node1InstanceId, node2InstanceId } = metadata;
+    const hostOsPatchAssessment = await runOsPatchAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        node1InstanceId,
+        !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+    );
+    const existingAssessmentData = metadata.assessment;
+    metadata.assessment = {
+        ...existingAssessmentData,
+        hostOsPatch: hostOsPatchAssessment
+    };
+    updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+}
 
 async function calculateHostOsPatchDrift(
     accountId: string,
@@ -25,24 +54,15 @@ async function calculateHostOsPatchDrift(
         let hostOsPatchAssessment;
 
         const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-        const { assessment: { hostOsPatch } = {}, node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
+        const metadataObject = metadata as unknown as Metadata;
+        const { assessment: { hostOsPatch } = {} } = metadataObject;
         if (!isEmpty(hostOsPatch)) {
             hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
         } else {
-            hostOsPatchAssessment = await runOsPatchAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                node1InstanceId,
-                !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-            );
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            (metadata as unknown as Metadata).assessment = {
-                ...existingAssessmentData,
-                hostOsPatch: hostOsPatchAssessment
-            };
-            updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+            triggerHostOsPatchCollection(accountId, credentialsId, region, databaseHostId, metadataObject); // Trigger the collection of host os patch data in the background
+            errorMessage = `No ${AssessmentCategories.HOST_OS_PATCH} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
         }
 
         const ec2InstancesToPatch = hostOsPatchAssessment?.filter(
