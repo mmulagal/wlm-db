@@ -342,7 +342,7 @@
     },
     "compute": {
         "name": "compute-rightsizing",
-        "status": "not-optimized",
+        "status": "analyzing",
         "recommended": "optimized",
         "severity": "warning",
         "recommendation": "Your current instance m5.large is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.",

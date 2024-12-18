@@ -4,7 +4,6 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';

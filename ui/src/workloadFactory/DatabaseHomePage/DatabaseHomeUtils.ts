@@ -2,7 +2,14 @@
 import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
-import { COSTING_TYPES, FINDINGS, GETWELL_VALUES, INVENTORY_STATUS, STATUS_CONST } from '../../utils/consts';
+import {
+    COSTING_TYPES,
+    FINDINGS,
+    GETWELL_CONFIG,
+    GETWELL_VALUES,
+    INVENTORY_STATUS,
+    STATUS_CONST
+} from '../../utils/consts';
 import {
     formatFractionalNumber,
     formatSizeOnePrecision,
@@ -579,5 +586,16 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
             }
         }
         return updatedAssessmentData;
+    });
+};
+
+export const formatAssessmentTableData = (data: any) => {
+    return data.map((item: any) => {
+        return {
+            ...item,
+            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+            status: GETWELL_VALUES?.[item?.status] || item?.status,
+            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+        };
     });
 };

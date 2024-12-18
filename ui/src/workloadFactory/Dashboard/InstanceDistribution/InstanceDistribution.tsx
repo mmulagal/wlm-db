@@ -27,7 +27,7 @@ const InstanceDistribution = () => {
         <div className={styles.instanceDistribution}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    Instance distribution
+                    Instances distribution
                 </DsTypography>
 
                 <div className={styles.rightSection}>

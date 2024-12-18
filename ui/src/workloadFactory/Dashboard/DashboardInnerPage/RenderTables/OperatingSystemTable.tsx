@@ -10,7 +10,7 @@ import { useCallback } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
 import { useMemo } from 'react';
-import { mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { disableOfflineRows, formatAssessmentTableData, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 const OperatingSystemTable = () => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
@@ -18,36 +18,30 @@ const OperatingSystemTable = () => {
     );
     const tableData = useMemo(() => {
         let OSAssessmentData: any = [];
+        let id = 1;
         allmssqlHostAssessmentData.map((hostData: any) => {
-            hostData?.instancesAssessment?.map((instanceData: any, index: number) => {
+            hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const data = instanceData?.assessments?.storage?.configuration?.os?.map(
-                        (item: any, index: number) => {
-                            return {
-                                ...item,
-                                id: index
-                            };
-                        }
-                    );
-                    const notOptimized = data.filter((item: any) => item.status === 'not-optimized');
+                    const notOptimized = instanceData?.assessments?.storage?.configuration?.os?.filter((item: any) => item.status === 'not-optimized');
 
                     OSAssessmentData.push({
                         databaseHostId: hostData?.databaseHostId,
                         instanceId: instanceData?.databaseInstanceId,
                         serverInstanceName: instanceData?.databaseInstanceName,
-                        configuration: `${notOptimized.length} out of ${data.length}`,
-                        id: index,
+                        configuration: `${notOptimized.length} out of ${instanceData?.assessments?.storage?.configuration?.os?.length}`,
+                        id: id++,
                         hostName: hostData?.databaseHostName,
-                        fullData: data
+                        fullData: formatAssessmentTableData(notOptimized)
                     });
                 }
             });
         });
-        return mapHostStatusToAssessmentData(
+        let tableRows =  mapHostStatusToAssessmentData(
             inventoryTableData,
             OSAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
+        return disableOfflineRows(tableRows);
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     const lastColDetails = () => {
@@ -61,15 +55,22 @@ const OperatingSystemTable = () => {
                 const currentRowState = rowsState[rowData.id];
                 return (
                     <>
-                        <div className={styles.arrow}>
-                            <ArrowIcon
-                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                }}
-                            />
-                        </div>
+                        {!rowData?.cellProps?.isDisabled && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div>
+                        )}
+                        {rowData?.cellProps?.isDisabled && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon className={styles['arrow-disable']}/>
+                            </div>
+                        )}
                     </>
                 );
             }
