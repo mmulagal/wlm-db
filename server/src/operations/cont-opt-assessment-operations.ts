@@ -74,7 +74,7 @@ async function initiateComputeLicenseAssessmentCollection(
         fields
     });
 
-    const [{ metadata, cloud_provider_account_id: awsAccountId }] = await listResources(
+    const [{ metadata, cloud_provider_account_id: awsAccountId, resource_id: resourceId }] = await listResources(
         accountId,
         databaseHostId,
         credentialsId,
@@ -86,7 +86,9 @@ async function initiateComputeLicenseAssessmentCollection(
         credentialsId,
         region,
         node1InstanceId,
-        node2InstanceId
+        node2InstanceId,
+        resourceId,
+        accountId
     );
     if (metadata && activeNodeInstanceId) {
         let licenseAssessment;
