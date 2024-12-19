@@ -4,6 +4,58 @@ import { randomUUID } from 'crypto';
 import { AWS_REGIONS, RESOURCESTYPE } from '../consts';
 import { checkAccount, getSubJobDescriptions } from '../utils';
 
+const DEMO_PRODUCT_RATE = {
+    ec2Instance: {
+        compute: {
+            pricePerUnit: 29.408,
+            unit: 'Hrs'
+        }
+    },
+    ec2Storage: {
+        storage: {
+            pricePerUnit: 0.08,
+            unit: 'GB-Mo'
+        }
+    },
+    vpc: {
+        unknown: {
+            pricePerUnit: 0.05,
+            unit: 'Hourly'
+        }
+    },
+    'ebsStorage-gp2': {
+        storage: {
+            pricePerUnit: 0.1,
+            unit: 'GB-Mo'
+        }
+    },
+    fsxnStorage: {
+        iops: {
+            pricePerUnit: 0.034,
+            unit: 'IOPS-Mo'
+        },
+        unknown: {
+            pricePerUnit: 0.0438,
+            unit: 'GB-Mo'
+        },
+        readRequest: {
+            pricePerUnit: 4e-7,
+            unit: 'Operations'
+        },
+        storageSsd: {
+            pricePerUnit: 0.25,
+            unit: 'GB-Mo'
+        },
+        throughput: {
+            pricePerUnit: 1.2,
+            unit: 'MiBps-Mo'
+        },
+        writeRequest: {
+            pricePerUnit: 0.000005,
+            unit: 'Operations'
+        }
+    }
+};
 function masterStackData(
     accountId: string,
     resourceName: string,
@@ -2747,5 +2799,6 @@ export {
     savePGSQLConfigurationData,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
-    enableMPIOJobData
+    enableMPIOJobData,
+    DEMO_PRODUCT_RATE
 };
