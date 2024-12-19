@@ -1,10 +1,18 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import styles from './DatabaseDistribution.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import { ReactComponent as Database } from '../../../assets/icon database.svg';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useMemo } from 'react';
 
 const DatabaseDistribution = () => {
+    const { aggregatedHostsCount, aggregatedPgSqlHostsCount } = useAppSelector(state => state.databaseHome);
+    const { getDatabaseHosts, getPgSqlDatabaseHosts } = useAppSelector(state => state.inventoryV2);
+    const loading = useMemo(() => {
+        return getDatabaseHosts.fullHostDataLoading || getPgSqlDatabaseHosts.fullHostDataLoading;
+    }, [getDatabaseHosts, getPgSqlDatabaseHosts]);
+
     return (
         <div className={styles.databaseDistribution}>
             <div className={styles.headSection}>
@@ -12,7 +20,7 @@ const DatabaseDistribution = () => {
                     Databases distribution
                 </DsTypography>
 
-                {/* {loading && <FlashingDotsLoader />} */}
+                {loading && <DsFlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>
@@ -27,12 +35,10 @@ const DatabaseDistribution = () => {
                                 variant="Regular_32"
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
                             >
-                                200
-                                {/* <DsFlashingDotsLoader /> */}
+                                {(aggregatedHostsCount?.totalDatabases || 0) +
+                                    (aggregatedPgSqlHostsCount?.totalDatabases || 0)}
+                                {loading && <DsFlashingDotsLoader />}
                             </DsTypography>
-                            {/* <div className={styles.loadingSection}>
-                            <DsFlashingDotsLoader />
-                        </div> */}
                             <DsTypography variant="Regular_14">Total databases</DsTypography>
                         </div>
                     </div>
@@ -40,12 +46,11 @@ const DatabaseDistribution = () => {
                     <SeparatorComponent variant="vertical" height="56px" />
 
                     <div className={styles.valueSection}>
-                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                            120
+                        <DsTypography variant="Regular_32" style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}>
+                            {(aggregatedHostsCount?.managedDatabases || 0) +
+                                (aggregatedPgSqlHostsCount?.managedDatabases || 0)}
+                            {loading && <DsFlashingDotsLoader />}
                         </DsTypography>
-                        {/* <div className={styles.loadingSection}>
-                            <DsFlashingDotsLoader />
-                        </div> */}
 
                         <DsTypography variant="Regular_14">Managed databases</DsTypography>
                     </div>
@@ -56,18 +61,26 @@ const DatabaseDistribution = () => {
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={20}
-                        beforeOutOf={100}
-                        afterOutOf={120}
+                        percentage={
+                            ((aggregatedHostsCount?.managedDatabases || 0) /
+                                (aggregatedHostsCount?.totalDatabases || 1)) *
+                            100
+                        }
+                        beforeOutOf={aggregatedHostsCount?.managedDatabases || 0}
+                        afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
                         width="440px"
                     />
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={20}
-                        beforeOutOf={100}
-                        afterOutOf={120}
+                        percentage={
+                            ((aggregatedHostsCount?.managedDatabases || 0) /
+                                (aggregatedHostsCount?.totalDatabases || 1)) *
+                            100
+                        }
+                        beforeOutOf={aggregatedPgSqlHostsCount?.managedDatabases || 0}
+                        afterOutOf={aggregatedPgSqlHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
                         width="440px"
                     />
