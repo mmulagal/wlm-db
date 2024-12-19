@@ -722,6 +722,8 @@ Resources:
           Ref: SQLServiceAccountPassword
         ParentStackName:
           Ref: AWS::StackName
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
       NotificationARNs:
         Fn::If:
         - IncludeNotification

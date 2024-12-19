@@ -88,7 +88,27 @@ Parameters:
     ParentStackName:
         Description: Stack name for the parent CloudFormation stack.
         Type: String
-
+    EnableCloudWatchLogFeature:
+        Description: Enable CloudWatch Logs feature.
+        Type: String
+        Default: 'true'
+        AllowedValues:
+            - 'true'
+            - 'false'
+Conditions:
+    isGovRegion: !Or
+        - !Equals
+          - us-gov-west-1
+          - !Ref 'AWS::Region'
+        - !Equals
+          - us-gov-east-1
+          - !Ref 'AWS::Region'
+    CreateNewRole: !Equals
+        - !Ref 'Ec2RoleName'
+        - ''
+    LogFeatureEnabled: !Equals
+        - !Ref 'EnableCloudWatchLogFeature'
+        - 'true'
 Resources:
     LaunchWizardSqlFSxProfile:
         Type: AWS::IAM::InstanceProfile
@@ -166,7 +186,7 @@ Resources:
                                                         "log_stream_name": "{instance_id}"
                                                     },
                                                     {
-                                                        "file_path": "/home/ec2-user/cfn/log",
+                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
                                                         "log_group_name": "${ParentStackName}",
                                                         "log_stream_name": "{instance_id}"
                                                     },
@@ -185,7 +205,10 @@ Resources:
                             group: cwagent
                     commands:
                         a-configure-cwlogs:
-                            command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
                             waitAfterCompletion: '0'
                 FetchResources:
                     files:
@@ -259,21 +282,19 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/setup/configure-ontap.sh
                                     -f ${FSxFileSystemId}
                                     -r ${AWS::Region}
-                                    -u ${FSXUsername}
-                                    -p ${FSXPassword}
                                     -s ${FSxSVMId}
                                     -n ${SQLSvmName}
                                     -a ${FSxAggrName}
                                     -d ${FSxDataVolumeName}
-                                    -l ${FSxLogVolumeName}'
+                                    -l ${FSxLogVolumeName}
+                                    -p ${parentStackName}'
                                 -   FSxFileSystemId: !Ref 'FSxFileSystemId'
-                                    FSXUsername: !Ref 'FSXUsername'
-                                    FSXPassword: !Ref 'FSXPassword'
                                     FSxSVMId: !Ref 'FSxSVMId'
                                     SQLSvmName: !Ref 'SQLSvmName'
                                     FSxAggrName: !Ref 'FSxAggrName'
                                     FSxDataVolumeName: !Ref 'FSxDataVolumeName'
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                                    parentStackName: !Ref 'ParentStackName'
                             waitAfterCompletion: '0'
                         b-configure-pgsql:
                             command: !Sub

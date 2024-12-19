@@ -46,6 +46,7 @@ if [ $failed = true ]; then
     echo "{\"status\": \"Failed\", \"reason\": \"$FailureReason\"}" | jq -c .
     cfn-signal -e 1 -r "$FailureReason"
     aws cloudformation signal-resource --stack-name "$Stackname" --status FAILURE --logical-resource-id "$ResourceID" --unique-id "$instanceId"
+    sleep 60
     exit 1
 else
     echo "{\"status\": \"Completed\", \"reason\": \"Done.\"}" | jq -c .

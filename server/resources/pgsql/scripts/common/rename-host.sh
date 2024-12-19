@@ -1,5 +1,5 @@
 #!/bin/bash
-exec > /var/log/netapp_wf_rename-host.log 2>&1
+exec > /var/log/netapp_wf/rename-host.log 2>&1
 echo "Renaming the host..."
 
 check_status() {

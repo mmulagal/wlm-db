@@ -188,7 +188,7 @@ Resources:
                                                         "log_stream_name": "{instance_id}"
                                                     },
                                                     {
-                                                        "file_path": "/home/ec2-user/cfn/log",
+                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
                                                         "log_group_name": "${ParentStackName}",
                                                         "log_stream_name": "{instance_id}"
                                                     },
@@ -229,6 +229,11 @@ Resources:
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
+                        /home/ec2-user/cfn/fsx_certs.zip:
+                            source: {{{ FsxCertificates }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
                         /home/ec2-user/cfn/signig_files.zip:
                             source: {{{ ArtifactsSignatures }}}
                             mode: '000755'
@@ -260,7 +265,16 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/validation/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
                                 - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
-                        b-signal-resource:
+                        b-store-credentials-in-parameter-store:
+                            command: !Sub 
+                                - aws ssm put-parameter
+                                    --name "/netapp/wlmdb/${parentStackName}"
+                                    --type "SecureString"
+                                    --value "$(aws ssm get-parameter --name "/netapp/wlmdb/${ParentStackName}" --with-decryption --query "Parameter.Value" --output text)"
+                                    --overwrite
+                                - parentStackName: !Ref 'ParentStackName'
+                            waitAfterCompletion: '0'
+                        c-signal-resource:
                             command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'
