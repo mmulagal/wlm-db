@@ -7,7 +7,7 @@ import useResize from '../../../../common/hooks/useResize';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import CategoryDialogComponent from '../CategoryDialogComponent/CategoryDialogComponent';
-import { WLF_TABS } from '../../../../utils/consts';
+import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection, setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -20,6 +20,9 @@ import {
     setGwResourceId,
     setLandingFrom
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { getAssessmentHostListGroupedByCategory } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { sortListOfDict } from '../../../../utils/utilityFunctions';
 
 type CategoryComponentProps = {
     image: React.ReactNode;
@@ -45,6 +48,8 @@ const CategoryComponent = ({
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
 
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+
     const redirectToGetWellPage = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
@@ -65,10 +70,19 @@ const CategoryComponent = ({
     };
 
     const handleDialog = () => {
+        let tableData = sortListOfDict(
+            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, firstBlockText) || [],
+            'status',
+            false
+        );
+        let isOnlineInstance = tableData.some(
+            (item: any) =>
+                item?.status === INVENTORY_STATUS.RUNNING || item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+        );
         setDialog(
             <DialogComponent
                 header={`${firstBlockText} optimization`}
-                content={<CategoryDialogComponent type={firstBlockText} />}
+                content={<CategoryDialogComponent type={firstBlockText} tableData={tableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -79,6 +93,7 @@ const CategoryComponent = ({
                     dispatch(setSelectedAssessmentRow(null));
                 }}
                 customClass={styles.dialog}
+                primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
             />
         );
     };
@@ -147,7 +162,7 @@ const CategoryComponent = ({
                         variant="secondary"
                         isThin
                         onClick={() => handleDialog()}
-                        isDisabled={isLoading || optimizationScore === 100}
+                        isDisabled={isLoading || optimizationScore === 100 || totalOptimizationInstances === 0}
                     >
                         Optimize
                     </DsButton>

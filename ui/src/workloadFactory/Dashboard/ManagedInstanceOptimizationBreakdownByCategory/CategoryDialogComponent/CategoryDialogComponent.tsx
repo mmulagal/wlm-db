@@ -2,21 +2,15 @@ import { DsFlashingDotsLoader, DsTypography, Table, useTable, TableTopBar } from
 import styles from './CategoryDialogComponent.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
-import { getAssessmentHostListGroupedByCategory } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
-const CategoryDialogComponent = ({ type }: { type: string }) => {
+const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData: any }) => {
     const dispatch = useDispatch();
     const selectedRow = useAppSelector(state => state.databaseHome.selectedAssessmentRow);
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
-    const [tableData, setTableData] = useState<any[]>([]);
-    useEffect(() => {
-        setTableData(getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, type));
-    }, [allmssqlHostAssessmentData]);
 
     const ColDefs: ColumnProps[] = [
         {
@@ -89,12 +83,27 @@ const CategoryDialogComponent = ({ type }: { type: string }) => {
         }
     ];
 
+    const firstEnabledRow = () => {
+        const enabledRow = tableData?.find((row: any) => {
+            return (
+                row?.status === INVENTORY_STATUS.RUNNING ||
+                row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP ||
+                row?.loadingStatus
+            );
+        });
+        if (enabledRow) {
+            return tableData?.[0]?.id;
+        } else {
+            return 0;
+        }
+    };
+
     const tableProps = useTable({
         //@ts-ignore
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        defaultSelectedRows: selectedRow ? [selectedRow.id] : [ColDefs[0].id],
+        defaultSelectedRows: selectedRow ? [selectedRow.id] : [firstEnabledRow()],
         isSorting: false,
         selectionType: 'singular',
         columns: ColDefs,
