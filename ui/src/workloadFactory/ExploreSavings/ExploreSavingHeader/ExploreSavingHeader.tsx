@@ -84,9 +84,9 @@ const ExploreSavingHeader = () => {
             {windowSize.width > 1471 && windowSize.width <= 1823 && (
                 <div className={styles.exploreSavingsHeader}>
                     <div className={styles.topPart}>
-                        <div className={styles.svgContainer1600}>
-                            {/* <ExploreSaving1600 /> */}
-                            <ExploreSavingCommon />
+                        <div>
+                            <ExploreSaving1600 />
+                            {/* <ExploreSavingCommon /> */}
                         </div>
                         <div className={styles.contentSection}>
                             <div className={styles.leftSide}>

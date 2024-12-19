@@ -1,10 +1,11 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsTypography, Popover } from '@netapp/design-system';
 import styles from './ExploreSavingsTab.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedExploreSavingsTab } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
 
 const ExploreSavingsTab = () => {
     const dispatch = useDispatch();
@@ -66,19 +67,26 @@ const ExploreSavingsTab = () => {
                         : `${styles.headers} ${styles.headerWidthThird}`
                 }
             >
-                <DsTypography
-                    variant="Semibold_14"
-                    // className={
-                    //     selectedTab === WLF_TABS.MSSQL_ON_PREMISES
-                    //         ? `${styles.headerPart1} ${styles.activeText}`
-                    //         : `${styles.headerPart1}`
-                    // }
-                    className={styles.headerDisabled}
-                    // onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
-                    onClick={() => {}}
-                >
-                    SQL Server On-Premises
-                </DsTypography>
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    children={GENERAL.COMING_SOON}
+                    trigger="hover"
+                    container={
+                        <DsTypography
+                            variant="Semibold_14"
+                            // className={
+                            //     selectedTab === WLF_TABS.MSSQL_ON_PREMISES
+                            //         ? `${styles.headerPart1} ${styles.activeText}`
+                            //         : `${styles.headerPart1}`
+                            // }
+                            className={styles.headerDisabled}
+                            // onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
+                            onClick={() => {}}
+                        >
+                            SQL Server On-Premises
+                        </DsTypography>
+                    }
+                />
             </div>
         </div>
     );
