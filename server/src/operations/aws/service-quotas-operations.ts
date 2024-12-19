@@ -4,10 +4,10 @@ import { getVpcsList } from './ec2-operations';
 import { currentCfStacksCount } from './cloud-formation-operations';
 import {
     VPC_COUNT_QUOTANAME,
-    CF_STACK_COUNT_QUOTANAME,
     AWSServiceNames,
     STACKS_DEPLOYED,
-    HttpErrorCodes
+    HttpErrorCodes,
+    CF_STACK_COUNT_QUOTACODE
 } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
@@ -30,11 +30,26 @@ async function getCfQuota(credentialsId: string, region: string) {
 
     const [cfCountQuota] =
         (await listServiceQuota(credentialsId, region, AWSServiceNames.CLOUDFORMATION)).Quotas?.filter(
-            x => x.QuotaName === CF_STACK_COUNT_QUOTANAME
+            x => x.QuotaCode === CF_STACK_COUNT_QUOTACODE
         ) || [];
+
     logger.debug('CF count quota ', cfCountQuota);
 
-    return { cfCountQuota: cfCountQuota.Value! };
+    if (!cfCountQuota) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            `Unable to get cloudformation quota in region ${region} and credentials ${credentialsId}. Reason: Quota not found.`
+        );
+    }
+
+    if (cfCountQuota.ErrorReason?.ErrorMessage) {
+        throw createError(
+            HttpErrorCodes.FAILED_DEPENDENCY,
+            `Unable to get cloudformation quota in region ${region} and credentials ${credentialsId}. Reason: ${cfCountQuota.ErrorReason.ErrorMessage}.`
+        );
+    }
+
+    return { cfCountQuota: cfCountQuota.Value };
 }
 
 async function isVpcQuotaReached(credentialsId: string, region: string) {
@@ -48,12 +63,14 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     logger.info('Performing cloudformation stacks quota check in region ', region);
     const quotaDetails = await getCfQuota(credentialsId, region);
     const stacksCount = await currentCfStacksCount(credentialsId, region);
-    if (!stacksCount.currentStacksCount) {
+
+    if (!stacksCount.currentStacksCount || !quotaDetails.cfCountQuota) {
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to get cloudformation stacks in region ${region} and credentials ${credentialsId}.`
+            `Unable to get cloudformation stacks/quota in region ${region} and credentials ${credentialsId}.`
         );
     }
+
     // We might deploy more than 1 stack and diff (cfstackquota, current deployed stacks) must be >= STACKS_DEPLOYED
     return (
         stacksCount.currentStacksCount === quotaDetails.cfCountQuota ||

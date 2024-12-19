@@ -36,13 +36,11 @@ const PotentialSavings = () => {
             let ebsCount = 0;
             let fsxwCount = 0;
             unManagedHostFormatedList?.map((perRow: any) => {
-                perRow?.sqlServerInstances?.map((row: any) => {
-                    if (row?.fileSystemType === GENERAL.EBS) {
-                        ebsCount++;
-                    } else if (row?.fileSystemType === GENERAL.FSX_FOR_WINDOWS) {
-                        fsxwCount++;
-                    }
-                });
+                if (perRow?.storageType === GENERAL.EBS) {
+                    ebsCount += perRow?.sqlServerInstances?.length;
+                } else if (perRow?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                    fsxwCount += perRow?.sqlServerInstances?.length;
+                }
             });
             setEsCount({ ebs: ebsCount, fsxw: fsxwCount });
         }
@@ -65,8 +63,13 @@ const PotentialSavings = () => {
                 {/* {loading && <FlashingDotsLoader />} */}
 
                 <div className={styles.rightSection}>
-                    {/* {loading && <FlashingDotsLoader />} */}
-                    <DsButton variant="secondary" isThin={true} onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}>
+                    {loading && <DsFlashingDotsLoader />}
+                    <DsButton
+                        variant="secondary"
+                        isThin={true}
+                        onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
+                        isDisabled={loading}
+                    >
                         Explore savings
                     </DsButton>
                 </div>

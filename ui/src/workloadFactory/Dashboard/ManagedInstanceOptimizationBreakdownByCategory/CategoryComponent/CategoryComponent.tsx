@@ -10,7 +10,7 @@ import CategoryDialogComponent from '../CategoryDialogComponent/CategoryDialogCo
 import { WLF_TABS } from '../../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
+import { selectedTabSelection, setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
 import store from '../../../../store/store';
 import {
     setGwDatabaseInstance,
@@ -29,6 +29,7 @@ type CategoryComponentProps = {
     totalOptimizationInstances: number;
     isComingSoon: boolean;
     isBorderRequired?: boolean;
+    isLoading: boolean;
 };
 const CategoryComponent = ({
     image,
@@ -37,10 +38,10 @@ const CategoryComponent = ({
     optimizationInstances,
     totalOptimizationInstances,
     isComingSoon,
-    isBorderRequired
+    isBorderRequired,
+    isLoading
 }: CategoryComponentProps) => {
     const windowSize = useResize();
-    const isLoading = false;
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
 
@@ -54,10 +55,13 @@ const CategoryComponent = ({
 
         dispatch(setGwHostname(selectedAssessmentRow?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(selectedAssessmentRow?.resourceId));
-        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.databaseInstanceId));
+        dispatch(setGwResourceId(selectedAssessmentRow?.databaseHostId));
+        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.instanceId));
         dispatch(setGwDatabaseInstanceName(selectedAssessmentRow?.databaseInstanceName));
         dispatch(setGwDatabaseStorageType(selectedAssessmentRow?.sqlServerDeploymentType));
+        setTimeout(() => {
+            dispatch(setSelectedAssessmentRow(null));
+        }, 5);
     };
 
     const handleDialog = () => {
@@ -72,6 +76,7 @@ const CategoryComponent = ({
                 }}
                 closeCallback={() => {
                     closeDialog();
+                    dispatch(setSelectedAssessmentRow(null));
                 }}
                 customClass={styles.dialog}
             />
@@ -129,7 +134,7 @@ const CategoryComponent = ({
                         <DsFlashingDotsLoader />
                     </div>
                 )}
-                <DsTypography variant="Regular_14">Optimization instances</DsTypography>
+                <DsTypography variant="Regular_14">Optimized instances</DsTypography>
             </div>
 
             <SeparatorComponent variant="vertical" height="60px" />
@@ -138,7 +143,12 @@ const CategoryComponent = ({
                 {isComingSoon && windowSize.width > 1700 && <ComingSoon />}
                 {isComingSoon && windowSize.width < 1700 && <ComingSoon2 />}
                 {!isComingSoon && (
-                    <DsButton variant="secondary" isThin onClick={() => handleDialog()}>
+                    <DsButton
+                        variant="secondary"
+                        isThin
+                        onClick={() => handleDialog()}
+                        isDisabled={isLoading || optimizationScore === 100}
+                    >
                         Optimize
                     </DsButton>
                 )}

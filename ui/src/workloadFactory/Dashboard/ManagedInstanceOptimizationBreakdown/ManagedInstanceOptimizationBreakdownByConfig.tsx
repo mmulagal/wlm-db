@@ -5,7 +5,7 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { WLF_TABS } from '../../../utils/consts';
-import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
+import { setSelectedConfig, setSelectedConfigSummary } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -20,6 +20,54 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setSelectedConfig(type));
+        let configKey = '';
+        switch (type) {
+            case 'Storage tier':
+                configKey = 'storageTier';
+                break;
+            case 'File system headroom':
+                configKey = 'fileSystemHeadroom';
+                break;
+            case 'Log drive size':
+                configKey = 'logDriveSize';
+                break;
+            case 'TempDB drive size':
+                configKey = 'tempdbDriveSize';
+                break;
+            case 'User data files (.mdf)':
+                configKey = 'userDataFiles';
+                break;
+            case 'Log files (.ldf)':
+                configKey = 'logFiles';
+                break;
+            case 'TempDB placement':
+                configKey = 'tempdbPlacement';
+                break;
+            case 'ONTAP configuration':
+                configKey = 'ontapConfiguration';
+                break;
+            case 'Operating system':
+                configKey = 'operatingSystem';
+                break;
+            case GENERAL.COMPUTE_RIGHTSIZING:
+                configKey = 'computeRightsizing';
+                break;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                configKey = 'operatingSystemPatch';
+                break;
+            case GENERAL.APPLICATION_SQL_SERVER:
+                configKey = 'applicationSqlServer';
+                break;
+        }
+        const optimizedInstances = configData[configKey] || 0;
+        dispatch(
+            setSelectedConfigSummary({
+                optimizedInstances: optimizedInstances,
+                notOptimizedInstances: configData?.total - optimizedInstances,
+                optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
+                severity: configData?.severityObj?.[configKey] || ''
+            })
+        );
     };
 
     const configData = useMemo(() => {
@@ -59,6 +107,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Storage tier');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -87,6 +136,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('File system headroom');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -115,6 +165,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Log drive size');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -143,6 +194,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('TempDB drive size');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -171,6 +223,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('User data files (.mdf)');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -199,6 +252,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Log files (.ldf)');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -227,6 +281,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('TempDB placement');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -255,6 +310,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('ONTAP configuration');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -283,6 +339,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Operating system');
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -311,6 +368,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
+                            isDisabled={allmssqlHostAssessmentLoading}
                         >
                             Optimize
                         </DsButton>
@@ -321,7 +379,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.OPERATING_SYSTEM_PATCH}
-                        percentage={Math.round(((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100)}
+                        percentage={Math.round(
+                            ((configData.operatingSystemPatch || 0) / (configData.total || 1)) * 100
+                        )}
                         beforeOutOf={configData.operatingSystemPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
@@ -352,7 +412,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.APPLICATION_SQL_SERVER}
-                        percentage={Math.round(((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100)}
+                        percentage={Math.round(
+                            ((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100
+                        )}
                         beforeOutOf={configData.applicationSqlServer}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"

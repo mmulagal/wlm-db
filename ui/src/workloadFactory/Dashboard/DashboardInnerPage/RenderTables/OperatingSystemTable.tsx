@@ -9,39 +9,40 @@ import { expandTableRow } from '../../../../utils/utilityFunctions';
 import { useCallback } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
+import { useMemo } from 'react';
+import { disableOfflineRows, formatAssessmentTableData, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 
 const OperatingSystemTable = () => {
-    const { ontapConfigTableData } = useAppSelector(state => state.getWellOptimize);
-    const mockData = [
-        {
-            serverInstanceName: 'SQL Server 1',
-            status: 'Running',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '1'
-        },
-        {
-            serverInstanceName: 'SQL Server 2',
-            status: 'Running',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '2'
-        },
-        {
-            serverInstanceName: 'SQL Server 3',
-            status: 'Down',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '3'
-        },
-        {
-            serverInstanceName: 'SQL Server 4',
-            status: 'Down',
-            notOptimizedConfig: '4 out of 11',
-            hostName: 'host1',
-            id: '4'
-        }
-    ];
+    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
+        state => state.inventoryV2
+    );
+    const tableData = useMemo(() => {
+        let OSAssessmentData: any = [];
+        let id = 1;
+        allmssqlHostAssessmentData.map((hostData: any) => {
+            hostData?.instancesAssessment?.map((instanceData: any) => {
+                if (!instanceData?.error) {
+                    const notOptimized = instanceData?.assessments?.storage?.configuration?.os?.filter((item: any) => item.status === 'not-optimized');
+
+                    OSAssessmentData.push({
+                        databaseHostId: hostData?.databaseHostId,
+                        instanceId: instanceData?.databaseInstanceId,
+                        serverInstanceName: instanceData?.databaseInstanceName,
+                        configuration: `${notOptimized.length} out of ${instanceData?.assessments?.storage?.configuration?.os?.length}`,
+                        id: id++,
+                        hostName: hostData?.databaseHostName,
+                        fullData: formatAssessmentTableData(notOptimized)
+                    });
+                }
+            });
+        });
+        let tableRows =  mapHostStatusToAssessmentData(
+            inventoryTableData,
+            OSAssessmentData,
+            getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
+        );
+        return disableOfflineRows(tableRows);
+    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     const lastColDetails = () => {
         return {
@@ -54,15 +55,22 @@ const OperatingSystemTable = () => {
                 const currentRowState = rowsState[rowData.id];
                 return (
                     <>
-                        <div className={styles.arrow}>
-                            <ArrowIcon
-                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                }}
-                            />
-                        </div>
+                        {!rowData?.cellProps?.isDisabled && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div>
+                        )}
+                        {rowData?.cellProps?.isDisabled && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon className={styles['arrow-disable']}/>
+                            </div>
+                        )}
                     </>
                 );
             }
@@ -121,7 +129,7 @@ const OperatingSystemTable = () => {
         },
         {
             Header: 'Not-optimizes configuration',
-            accessor: 'notOptimizedConfig',
+            accessor: 'configuration',
             id: '3',
             width: '320px',
             filterOptions: 'auto'
@@ -131,7 +139,7 @@ const OperatingSystemTable = () => {
     const ExpandedRow = useCallback(({ rowData }: any) => {
         return (
             <RecommendationTable
-                tableData={ontapConfigTableData}
+                tableData={rowData?.fullData}
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}
@@ -152,7 +160,7 @@ const OperatingSystemTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: TableColDefs,
-        rows: mockData || [],
+        rows: tableData || [],
         pageSize: 50
     });
     return (

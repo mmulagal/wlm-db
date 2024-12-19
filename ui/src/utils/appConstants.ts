@@ -569,14 +569,14 @@ export const GENERAL = {
     STEP2POINT2CONTINUE: 'Cost allocation tags',
     STEP2POINT4: 'Select',
     STEP2POINT4ACTIVATE: 'Activate.',
-    JOBS_STATUS_OVER_TIME: 'Jobs status over time',
+    JOBS_STATUS_OVER_TIME: 'Job status over time',
     JOB_MONITORING: 'Job monitoring',
     POLICY_MANAGEMENT: 'Policy management',
     //Job Monitoring constants
     JM_COMPLETED: 'Completed',
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
-    JM_WARNING: 'Completed with warnings',
+    JM_WARNING: 'Completed with issues',
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
     JM_TYPE_DEPLOYMENT: 'Deployment',
@@ -585,8 +585,8 @@ export const GENERAL = {
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
     JM_TYPE_OPTIMIZE: 'Optimization',
-    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
-    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
+    JM_DOWNLOAD_PROGRESS: 'Download in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
     DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`,
     FSXN_SVM_ERROR: [
@@ -876,6 +876,7 @@ export const GENERAL = {
     SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
+    SANDBOX: 'Sandbox',
     SANDBOXES: 'Sandboxes',
     SANDBOX_HEADER_CONTENT:
         'Sandbox is an on-demand, isolated database environment that can be used for testing, integration, diagnostics, and training, without affecting production data. It streamlines the development lifecycle while ensuring data integrity and security.',

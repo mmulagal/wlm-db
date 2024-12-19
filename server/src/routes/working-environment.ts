@@ -1,5 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
+import { FastifyRequest } from 'fastify';
 import {
     GetRelationshipsSchema,
     GetWorkingEnvironmentSchema,
@@ -10,6 +11,7 @@ import {
     getWorkingEnvironment,
     getWorkingEnvironments
 } from '../operations/working-environment-operations';
+import castRequest from './utils';
 
 const API_PATH_WORKING_ENVIRONMENTS: string = '/v1/working-environments';
 const API_PATH_RELATIONSHIP: string = '/v1/relationships';
@@ -25,10 +27,10 @@ export default function workingEnvironmentRoutes(fastify: FastifyInstance) {
     server.get(
         `${API_PATH_WORKING_ENVIRONMENTS}/:workingEnvironmentId`,
         { schema: GetWorkingEnvironmentSchema },
-        async (request, reply) => {
+        async (request: FastifyRequest, reply) => {
             const {
                 params: { workingEnvironmentId }
-            } = request;
+            } = castRequest(request);
             const response = await getWorkingEnvironment(workingEnvironmentId);
             return reply.send(response);
         }

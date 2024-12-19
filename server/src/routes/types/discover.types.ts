@@ -185,9 +185,9 @@ const MultiInstanceManageResponseBody = Type.Object({
 //     resourceId: Type.String({ description: 'ID of the managed resource' })
 // });
 
-const PrepareResourceResponseBody = {
+const PrepareResourceResponseBody = Type.Object({
     jobId: Type.String({ description: 'Resource preparation job ID' })
-};
+});
 
 type DiscoverMsSqlResponseBodyType = Static<typeof DiscoverMsSqlResponseBody>;
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;

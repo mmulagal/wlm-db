@@ -117,7 +117,7 @@ const StorageSavings = ({ hostData, hostsLoading }: StorageSavingsProps) => {
                     <SquareComponent
                         value={hostDataToShow?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
-                        text={'Storage Consumed'}
+                        text={'Consumed storage'}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent

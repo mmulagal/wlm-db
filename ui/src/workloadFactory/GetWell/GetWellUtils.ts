@@ -29,6 +29,8 @@ import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
     storage_tier: {
+        id: 'performance-tier',
+        category: 'storage',
         block_one: {
             type: 'Storage sizing',
             value: 'Storage tier'
@@ -53,6 +55,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Performance efficiency']
     },
     file_system_headroom: {
+        id: 'headroom',
+        category: 'storage',
         block_one: {
             value: 'File system headroom',
             type: 'Storage sizing'
@@ -73,11 +77,13 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
-            values: ['Under-provisioned: 0-35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
+            values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
     },
     transaction_log_drive_size: {
+        id: 'log-drive-size',
+        category: 'storage',
         block_one: {
             value: 'Log drive size',
             type: 'Storage sizing'
@@ -98,11 +104,13 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'Log drive size recommendation',
             description:
                 'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-            values: ['Under-provisioned: 0-20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
+            values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
     },
     tempdb_drive_size: {
+        id: 'tempdb-drive-size',
+        category: 'storage',
         block_one: {
             value: 'TempDB drive size',
             type: 'Storage sizing'
@@ -123,11 +131,13 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-            values: ['Under-provisioned: 0-10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
+            values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
     },
     user_data_files: {
+        id: 'default-data-files-location',
+        category: 'storage',
         block_one: {
             value: 'User data files (.mdf) placement',
             type: 'Storage layout'
@@ -153,6 +163,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Performance efficiency', 'Operational excellence']
     },
     transaction_log_files: {
+        id: 'default-log-files-location',
+        category: 'storage',
         block_one: {
             value: 'Log files (.ldf) placement',
             type: 'Storage layout'
@@ -178,6 +190,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Performance efficiency', 'Operational excellence']
     },
     tempdb_files: {
+        id: 'tempdb-files-location',
+        category: 'storage',
         block_one: {
             value: 'TempDB placement',
             type: 'Storage layout'
@@ -203,6 +217,7 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Performance efficiency', 'Operational excellence']
     },
     ontap_configuration: {
+        category: 'storage',
         block_one: {
             value: 'ONTAP configuration',
             type: 'Configuration'
@@ -222,6 +237,7 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
+        category: 'storage',
         block_one: {
             value: 'Operating system',
             type: 'Configuration'
@@ -298,6 +314,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: []
     },
     compute_rightsizing: {
+        id: 'compute-rightsizing',
+        category: 'compute',
         block_one: {
             type: 'Compute',
             value: 'Compute rightsizing'
@@ -323,6 +341,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Cost optimization', 'Performance efficiency']
     },
     host_os_patch: {
+        id: 'host-os-patch',
+        category: 'compute',
         block_one: {
             type: 'Compute',
             value: GENERAL.OPERATING_SYSTEM_PATCH
@@ -348,6 +368,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Security', 'Reliability']
     },
     sql_licenses: {
+        id: 'sql-license',
+        category: 'application',
         block_one: {
             type: GENERAL.APPLICATION_SQL_SERVER,
             value: 'Licenses'
@@ -371,7 +393,7 @@ export const cardDataDefault: GwCardDataInterface = {
                 {
                     title: 'Not optimized: ',
                     description:
-                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An unoptimized license \nmight result in unnecessary costs.'
+                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An not-optimized license \nmight result in unnecessary costs.'
                 },
                 {
                     title: 'Optimized: ',
@@ -473,7 +495,7 @@ export const formatOsPatchCardConfig = (
             },
             block_three: {
                 ...(cardDataDefault?.[itemName]?.block_three || {}),
-                value: totalViolations
+                value: String(totalViolations)
             },
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
@@ -737,7 +759,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedStorage++;
             }
         } else if (nestedObject?.category === 'compute') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (
+                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
+                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING
+            ) {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
@@ -821,7 +846,12 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             ...cardDataDefault?.ontap_configuration,
             block_two: {
                 ...cardDataDefault?.ontap_configuration?.block_two,
-                value: ontapNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized'
+                value:
+                    (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0) !== 0
+                        ? ontapNotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
             },
             block_three: {
                 ...cardDataDefault?.ontap_configuration?.block_three,
@@ -850,7 +880,12 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             ...cardDataDefault?.os_configuration,
             block_two: {
                 ...cardDataDefault?.os_configuration?.block_two,
-                value: osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized'
+                value:
+                    (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0) !== 0
+                        ? osNotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
             },
             block_three: {
                 ...cardDataDefault?.os_configuration?.block_three,

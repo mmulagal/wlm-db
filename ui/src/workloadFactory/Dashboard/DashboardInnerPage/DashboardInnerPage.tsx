@@ -27,7 +27,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
-    const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { cardData } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
@@ -79,10 +79,10 @@ const DashboardInnerPage = () => {
         switch (selectedConfig) {
             case 'Storage tier':
                 setValueCardData({
-                    optimizationScore: '55%',
-                    optimizedInstances: '55',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -94,10 +94,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'File system headroom':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '144px',
                     tagHeight: '241px',
                     data: {
@@ -109,10 +109,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'Log drive size':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '168px',
                     tagHeight: '265px',
                     data: {
@@ -125,10 +125,10 @@ const DashboardInnerPage = () => {
 
             case 'TempDB drive size':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '192px',
                     tagHeight: '289px',
                     data: {
@@ -140,10 +140,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'User data files (.mdf)':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -154,9 +154,9 @@ const DashboardInnerPage = () => {
                 break;
             case 'Log files (.ldf)':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: 'Critical',
                     cardHeight: '136px',
                     tagHeight: '233px',
@@ -168,10 +168,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'TempDB placement':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '160px',
                     tagHeight: '257px',
                     data: {
@@ -183,10 +183,10 @@ const DashboardInnerPage = () => {
 
             case 'ONTAP configuration':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
@@ -198,10 +198,10 @@ const DashboardInnerPage = () => {
 
             case 'Operating system':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
@@ -212,10 +212,10 @@ const DashboardInnerPage = () => {
                 break;
             case GENERAL.COMPUTE_RIGHTSIZING:
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '184px',
                     tagHeight: '281px',
                     data: {
@@ -227,10 +227,10 @@ const DashboardInnerPage = () => {
                 break;
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '184px',
                     tagHeight: '281px',
                     data: {
@@ -241,10 +241,10 @@ const DashboardInnerPage = () => {
                 break;
             case GENERAL.APPLICATION_SQL_SERVER:
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '184px',
                     tagHeight: '281px',
                     data: {
