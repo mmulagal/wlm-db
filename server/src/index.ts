@@ -68,12 +68,14 @@ import {
     scheduledAssessment,
     updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
-import { isActiveInstance } from './utils/utils';
+import { isActiveInstance, isDemo } from './utils/utils';
 import { resetCache } from './utils/cache';
 import { REDIS_URL } from './utils/continous-optimization-consts';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+const isDemoFlow = isDemo();
 
 logger.info(`Redis URL ${REDIS_URL}.`);
 
@@ -379,7 +381,9 @@ try {
         failLongRunningResourcePrepareJobs();
         updateTcoInstanceRecommendationPreferences();
         updateManagedInstanceRecommendationPreferences();
-        scheduledAssessment();
+        if (!isDemoFlow) {
+            scheduledAssessment();
+        }
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);
