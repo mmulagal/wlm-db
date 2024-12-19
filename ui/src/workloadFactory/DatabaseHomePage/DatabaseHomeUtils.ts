@@ -8,7 +8,8 @@ import {
     GETWELL_CONFIG,
     GETWELL_VALUES,
     INVENTORY_STATUS,
-    STATUS_CONST
+    STATUS_CONST,
+    WIZARD_TYPE
 } from '../../utils/consts';
 import {
     formatFractionalNumber,
@@ -19,7 +20,7 @@ import {
 } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 
-export const getManagedHostCount = (data: any, dispatch: any) => {
+export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZARD_TYPE.MSSQL) => {
     let totalDatabases = 0;
     let totahosts = 0;
     let managedDatabases = 0;
@@ -37,13 +38,25 @@ export const getManagedHostCount = (data: any, dispatch: any) => {
 
         const state = store.getState();
         const inventoryTableData = state.inventoryV2.inventoryTableData;
-        if (inventoryTableData?.[val]) {
-            inventoryTableData[val]?.sqlServerInstances?.map((per: any) => {
-                if (inventoryTableData[val]?.loading) {
-                    isLoading = true;
-                }
+        if (type === WIZARD_TYPE.MSSQL) {
+            if (inventoryTableData?.[val]) {
+                inventoryTableData[val]?.sqlServerInstances?.map((per: any) => {
+                    if (inventoryTableData[val]?.loading) {
+                        isLoading = true;
+                    }
+                    totalDatabases += per?.databaseCount || 0;
+                    if (per?.statusColText === INVENTORY_STATUS.MANAGED) {
+                        managedDatabases += per?.databaseCount || 0;
+                    }
+                });
+            }
+        } else {
+            data[val]?.databaseInstancesSummary?.map((per: any) => {
                 totalDatabases += per?.databaseCount || 0;
-                if (per?.statusColText === INVENTORY_STATUS.MANAGED) {
+                const instanceObj = data[val]?.databaseInstanceDetails?.find(
+                    (item: any) => item?.databaseInstanceId === per?.databaseInstanceId
+                );
+                if (instanceObj?.isManaged) {
                     managedDatabases += per?.databaseCount || 0;
                 }
             });
