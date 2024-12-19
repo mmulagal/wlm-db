@@ -51,7 +51,9 @@
             {
                 "label": "Microsoft SQL Server on On-Premises",
                 "to": "/databases/explore-savings-on-premise",
-                "bluexpTo": "/fsxdb/explore-savings-on-premise"
+                "bluexpTo": "/fsxdb/explore-savings-on-premise",
+                "isDisabled": true,
+                "disabledTooltip": "Coming soon"
             }
         ],
         "isComingSoon": false,
