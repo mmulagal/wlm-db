@@ -68,12 +68,14 @@ const ExploreSavingsTab = () => {
             >
                 <DsTypography
                     variant="Semibold_14"
-                    className={
-                        selectedTab === WLF_TABS.MSSQL_ON_PREMISES
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
-                    }
-                    onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
+                    // className={
+                    //     selectedTab === WLF_TABS.MSSQL_ON_PREMISES
+                    //         ? `${styles.headerPart1} ${styles.activeText}`
+                    //         : `${styles.headerPart1}`
+                    // }
+                    className={styles.headerDisabled}
+                    // onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
+                    onClick={() => {}}
                 >
                     SQL Server On-Premises
                 </DsTypography>

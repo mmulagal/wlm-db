@@ -36,6 +36,11 @@
         cursor: pointer;
     }
 
+    .headerDisabled {
+        color: var(--text-disabled);
+        cursor: not-allowed;
+    }
+
     .active {
         border-bottom: 2px solid var(--text-button-primary);
     }
