@@ -159,10 +159,10 @@ async function updateTcoInstRecPrefs() {
     });
 }
 
-async function updateManagedInstanceRecommendationPreferences() {
+function updateManagedInstanceRecommendationPreferences() {
     setInterval(async () => {
         await updateManagedInstRecPrefs();
-    }, Number(ms(config.get('db.manged-instance.update-recommendation-preference'))));
+    }, Number(ms(config.get('db.managed-instance.update-recommendation-preference'))));
 }
 
 interface DatabaseInstancesIncludingResource extends DatabaseInstances {
