@@ -5,6 +5,7 @@ import { ReactComponent as Database } from '../../../assets/icon database.svg';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
+import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const DatabaseDistribution = () => {
     const { aggregatedHostsCount, aggregatedPgSqlHostsCount } = useAppSelector(state => state.databaseHome);
@@ -65,10 +66,11 @@ const DatabaseDistribution = () => {
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={Math.round(
+                        percentage={formatFractionalNumber(
                             ((aggregatedHostsCount?.managedDatabases || 0) /
                                 (aggregatedHostsCount?.totalDatabases || 1)) *
-                                100
+                                100,
+                            2
                         )}
                         beforeOutOf={aggregatedHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
@@ -78,10 +80,11 @@ const DatabaseDistribution = () => {
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={Math.round(
+                        percentage={formatFractionalNumber(
                             ((aggregatedPgSqlHostsCount?.managedDatabases || 0) /
                                 (aggregatedPgSqlHostsCount?.totalDatabases || 1)) *
-                                100
+                                100,
+                            2
                         )}
                         beforeOutOf={aggregatedPgSqlHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedPgSqlHostsCount?.totalDatabases || 0}
