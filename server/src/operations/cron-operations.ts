@@ -250,13 +250,15 @@ async function updateManagedInstRecPrefs() {
     });
 }
 
-async function runScheduledAssessment() {
-    setInterval(async () => {
-        await scheduledAssessment();
-    }, Number(ms(config.get('redis.cron-job-interval'))));
+async function logQueueMetrics(queue: Queue) {
+    logger.info('Debug queue');
+    const allJobsCount = await queue.getJobCounts();
+    logger.info('allJobsCount', JSON.stringify(allJobsCount));
+    const repeatableJobs = await queue.getJobSchedulers();
+    logger.info('repeatableJobs', JSON.stringify(repeatableJobs));
 }
 
-async function scheduledAssessment() {
+function scheduledAssessment() {
     const redisDetails = getRedisDetails();
     let redisConnection: IORedis;
     try {
@@ -283,11 +285,7 @@ async function scheduledAssessment() {
             logger.error('Queue error:', error);
         });
 
-        logger.info('Debug queue');
-        let allJobsCount = await driftAssessmentQueue.getJobCounts();
-        logger.info('before allJobsCount', JSON.stringify(allJobsCount));
-        let repeatableJobs = await driftAssessmentQueue.getJobSchedulers();
-        logger.info('before repeatableJobs', JSON.stringify(repeatableJobs));
+        logQueueMetrics(driftAssessmentQueue);
 
         const contOpt = 'CONTINUOUS_OPTIMIZATION_DRIFT_ASSESSMENT';
         driftAssessmentQueue.upsertJobScheduler(
@@ -304,11 +302,7 @@ async function scheduledAssessment() {
             }
         );
 
-        logger.info('Debug queue');
-        allJobsCount = await driftAssessmentQueue.getJobCounts();
-        logger.info('after allJobsCount', JSON.stringify(allJobsCount));
-        repeatableJobs = await driftAssessmentQueue.getJobSchedulers();
-        logger.info('after repeatableJobs', JSON.stringify(repeatableJobs));
+        logQueueMetrics(driftAssessmentQueue);
 
         logger.info(`Drift assessment job added to queue with interval ${config.get('redis.cron-job-interval')}.`);
 
@@ -351,6 +345,5 @@ export {
     updateTcoInstRecPrefs,
     updateManagedInstRecPrefs,
     scheduledAssessment,
-    runScheduledAssessment,
     purgeAssessmentData
 };

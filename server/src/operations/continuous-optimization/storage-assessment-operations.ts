@@ -439,11 +439,12 @@ async function calculateStorageDrift(
         });
     }
 
-    if (errors && errors.sizing) {
+    if (errors && (errors.sizing || errors['volumes-footprint'])) {
+        const errorMessage = errors.sizing || errors['volumes-footprint'];
         driftAssessmentData.sizing.push(
-            { name: 'performance-tier', errorMessage: errors.sizing },
-            { name: 'tempdb-drive-size', errorMessage: errors.sizing },
-            { name: 'log-drive-size', errorMessage: errors.sizing }
+            { name: 'performance-tier', errorMessage },
+            { name: 'tempdb-drive-size', errorMessage },
+            { name: 'log-drive-size', errorMessage }
         );
     } else {
         Object.entries(sizing).forEach(async ([key, value]) => {
@@ -467,6 +468,12 @@ async function calculateStorageDrift(
                     // Old assessment data has performance-tier as boolean, new assessment data has performance-tier as list of numbers
 
                     if (typeof value !== 'boolean') {
+                        // DBS-4648 FIX
+                        // By default, when a list as a single element PS returns the element instead of a list.
+                        // Script has been updated to return a list even if it has a single element. However, older data still has single element so the fix.
+                        if (typeof value === 'number') {
+                            value = [value];
+                        }
                         const minSizePercent = Math.min(...value);
                         const maxSizePercent = Math.max(...value);
                         currentSizeRange =
