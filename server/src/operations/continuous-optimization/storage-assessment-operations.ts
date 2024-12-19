@@ -468,6 +468,9 @@ async function calculateStorageDrift(
                     // Old assessment data has performance-tier as boolean, new assessment data has performance-tier as list of numbers
 
                     if (typeof value !== 'boolean') {
+                        // DBS-4648 FIX
+                        // By default, when a list as a single element PS returns the element instead of a list.
+                        // Script has been updated to return a list even if it has a single element. However, older data still has single element so the fix.
                         if (typeof value === 'number') {
                             value = [value];
                         }
