@@ -75,8 +75,8 @@ const DatabaseDistribution = () => {
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
                         percentage={
-                            ((aggregatedHostsCount?.managedDatabases || 0) /
-                                (aggregatedHostsCount?.totalDatabases || 1)) *
+                            ((aggregatedPgSqlHostsCount?.managedDatabases || 0) /
+                                (aggregatedPgSqlHostsCount?.totalDatabases || 1)) *
                             100
                         }
                         beforeOutOf={aggregatedPgSqlHostsCount?.managedDatabases || 0}
