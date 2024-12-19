@@ -1,0 +1,14 @@
+.upload {
+    .fileUpload {
+        display: flex;
+        align-items: center;
+
+        border: none;
+        // borderRadius: "4px",
+        cursor: pointer;
+    }
+
+    .text {
+        color: var(--text-button-primary);
+    }
+}

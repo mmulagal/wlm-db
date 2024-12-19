@@ -17,31 +17,33 @@ const ExploreSavingsTableV2 = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const [tableData, setTableData] = useState<any>([]);
-    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    const [ebsTableData, setEBSTableData] = useState<any>([]);
+    const [fsxWTableData, setFSXWTableData] = useState<any>([]);
+    // const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
-    const getInitialFilter = () => {
-        if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            return {
-                textFilter: '',
-                count: 1,
-                columns: {
-                    '3': {
-                        activeCount: 1,
-                        values: {
-                            [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
-                                ? GENERAL.EBS
-                                : GENERAL.FSX_FOR_WINDOWS]: true
-                        },
-                        valuesArray: [true]
-                    }
-                }
-            };
-        } else {
-            return undefined;
-        }
-    };
+    // const getInitialFilter = () => {
+    //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+    //         return {
+    //             textFilter: '',
+    //             count: 1,
+    //             columns: {
+    //                 '3': {
+    //                     activeCount: 1,
+    //                     values: {
+    //                         [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
+    //                             ? GENERAL.EBS
+    //                             : GENERAL.FSX_FOR_WINDOWS]: true
+    //                     },
+    //                     valuesArray: [true]
+    //                 }
+    //             }
+    //         };
+    //     } else {
+    //         return undefined;
+    //     }
+    // };
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -67,9 +69,21 @@ const ExploreSavingsTableV2 = () => {
                 };
                 result.push(rowData);
             });
-            setTableData(result);
+            // Initialize two empty arrays
+            const ebsArray: any = [];
+            const fsxArray: any = [];
+            result.forEach((item: any) => {
+                if (item.storageType === 'EBS') {
+                    ebsArray.push(item);
+                } else if (item.storageType === 'FSx for Windows') {
+                    fsxArray.push(item);
+                }
+            });
+            setEBSTableData(ebsArray);
+            setFSXWTableData(fsxArray);
         } else {
-            setTableData([]);
+            setEBSTableData([]);
+            setFSXWTableData([]);
         }
     }, [unManagedHostFormatedList]);
 
@@ -79,7 +93,7 @@ const ExploreSavingsTableV2 = () => {
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '181px',
+            width: '247px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div
@@ -105,7 +119,7 @@ const ExploreSavingsTableV2 = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '270px',
+            width: '228px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.name;
                 return (
@@ -119,31 +133,37 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
             id: '2',
-            width: '225px',
-            filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
+            width: '228px',
+            filterOptions: getFilterOptions(
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
+                'serverInstallationMode'
+            ),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        {
-            Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
-            accessor: 'storageType',
-            id: '3',
-            width: '170px',
-            filterOptions: [
-                { label: GENERAL.EBS, value: GENERAL.EBS },
-                { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
-            ],
-            renderCell: (cellData: string) => {
-                return cellData === 'EBS' ? 'Elastic Block Store (EBS)' : cellData || GENERAL.NOT_AVAILABLE;
-            }
-        },
+        // {
+        //     Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
+        //     accessor: 'storageType',
+        //     id: '3',
+        //     width: '170px',
+        //     filterOptions: [
+        //         { label: GENERAL.EBS, value: GENERAL.EBS },
+        //         { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
+        //     ],
+        //     renderCell: (cellData: string) => {
+        //         return cellData === 'EBS' ? 'Elastic Block Store (EBS)' : cellData || GENERAL.NOT_AVAILABLE;
+        //     }
+        // },
         {
             Header: 'SQL server instances',
             accessor: 'totalInstance',
             id: '4',
-            width: '200px',
-            filterOptions: getFilterOptions(tableData, 'totalInstance'),
+            width: '216px',
+            filterOptions: getFilterOptions(
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData,
+                'totalInstance'
+            ),
             renderCell: (cellData: string) => {
                 return (
                     <div>
@@ -165,7 +185,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_INSTANCE,
             accessor: 'instanceListText',
             id: '5',
-            width: '201px',
+            width: '243px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
@@ -176,7 +196,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
             accessor: 'allocatedCapacityText',
             id: '6',
-            width: '190px',
+            width: '202px',
             isSortable: true,
             accessorForTextFilter: 'allocatedCapacityText',
             renderCell: (cellData: string | number, rowData: any) => {
@@ -187,7 +207,7 @@ const ExploreSavingsTableV2 = () => {
             Header: GENERAL.DB_HOST_AVAILABILITY,
             accessor: 'azType',
             id: '7',
-            width: '170px',
+            width: '243px',
             filterOptions: [
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
@@ -207,10 +227,9 @@ const ExploreSavingsTableV2 = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: ExploreSavingsColDefs,
-        rows: tableData || [],
+        rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading,
-        initialFilterState: getInitialFilter()
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });
 
     return (
@@ -218,8 +237,16 @@ const ExploreSavingsTableV2 = () => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`${GENERAL.ES_TABLE_TITLE}s`}
-                singularTitle={GENERAL.ES_TABLE_TITLE}
+                pluralTitle={
+                    selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+                        ? `${GENERAL.ES_TABLE_TITLE}s`
+                        : `${GENERAL.ES_TABLE_FSXW_TITLE}s`
+                }
+                singularTitle={
+                    selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+                        ? `${GENERAL.ES_TABLE_TITLE}`
+                        : `${GENERAL.ES_TABLE_FSXW_TITLE}`
+                }
             />
             <Table
                 //@ts-ignore

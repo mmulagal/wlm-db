@@ -427,7 +427,7 @@ async function getHostAndSqlInfoFromPsOutput(
         ].map((p, index) =>
             p.catch(error => {
                 if (index === 0) {
-                    const errorMessage = `Error fetching command status ${error}, on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+                    const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
                     logger.error(errorMessage);
                     throw createError(errorMessage);
                 }

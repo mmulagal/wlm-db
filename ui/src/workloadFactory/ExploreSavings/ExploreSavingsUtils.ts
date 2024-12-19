@@ -16,10 +16,33 @@ import {
     StorageSavingsInterface,
     ViewCalculationsInterface
 } from '../../utils/types/exploreSavingsType';
-import {
-    formatFractionalNumberForCost,
-    formatNumberWithCustomComma
-} from '../../utils/utilityFunctions';
+import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+
+export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
+    const deploymentModel = (() => {
+        return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
+    })();
+
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=onprem&mode=auto'
+                    : '../fsxdb/storage-saving-calculator?type=onprem&mode=auto'
+            }`,
+            replace: true
+        }
+    });
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
+
+    dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    dispatch(setSelectedInstanceId(rowData?.id));
+    dispatch(setSelectedDeploymentModel(deploymentModel));
+    dispatch(setSelectedServerName(rowData?.name || GENERAL.ES_SERVER_NAME));
+    setESInstanceData(rowData, dispatch);
+};
 
 export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     const deploymentModel = (() => {

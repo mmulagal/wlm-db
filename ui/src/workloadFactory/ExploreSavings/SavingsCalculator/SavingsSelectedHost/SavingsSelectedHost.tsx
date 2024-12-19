@@ -3,12 +3,17 @@ import styles from './SavingsSelectedHost.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
-import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 const SavingsSelectedHost = () => {
     const isDisabled = false;
-    const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading, savingsCalculatorFrom } =
-        useAppSelector(state => state.exploreSavings);
+    const {
+        selectedHostDetails,
+        selectedPartnerHostDetails,
+        getPartnerHostDetailsLoading,
+        savingsCalculatorFrom,
+        selectedExploreSavingsTab
+    } = useAppSelector(state => state.exploreSavings);
 
     const [totalVolume, setTotalVolume] = useState(0);
     const [hostname, setHostname] = useState('');
@@ -32,7 +37,10 @@ const SavingsSelectedHost = () => {
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>
                 Selected host:
             </DsTypography>
-            <div className={styles.valueArea}>
+            <div
+                className={styles.valueArea}
+                style={{ width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '848px' : '576px' }}
+            >
                 <div className={styles.container}>
                     {!selectedHostDetails?.loading && (
                         <DsTypography

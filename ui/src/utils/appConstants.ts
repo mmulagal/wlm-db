@@ -664,6 +664,7 @@ export const GENERAL = {
     DB_CREATE_HOST: 'Host:',
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
+    CREATE_TEMPLATE: 'Create template',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
@@ -945,7 +946,8 @@ export const GENERAL = {
     ES_SNAPSHOT_FREQUENCY: 'Snapshot frequency',
     ES_NO_SNAPSHOT_STORAGE: 'No snapshot storage',
     ES_CLONE_REFRESH_FREQUENCY: 'Clone refresh frequency',
-    ES_TABLE_TITLE: 'Microsoft SQL Server host',
+    ES_TABLE_TITLE: 'SQL Server hosts on Elastic Block Store',
+    ES_TABLE_FSXW_TITLE: 'MsSQL on FSx for Windows hosts',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
     ES_MSSQL_SERVER: 'Microsoft SQL Server on FSx for ONTAP',
@@ -1031,6 +1033,7 @@ export const GENERAL = {
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
     SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
+    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on On-Premises configuration',
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:

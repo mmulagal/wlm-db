@@ -379,8 +379,8 @@ async function triggerAssessment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    const jobName = `Assess SQL Server instance ${resourceWithInstanceName}`;
-    const jobDescription = `Assess SQL Server instance ${resourceWithInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
+    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         name: jobName,
         description: jobDescription,
@@ -850,9 +850,10 @@ async function onDemandTriggerDriftAssessmentDataCollection(
             sqlServerDeploymentType: RESOURCESTYPE.MSSQL
         });
         const savedInstanceName = `${resourceName}\\${instanceName}`;
-        const jobDescription = `Assess SQL Server instance ${savedInstanceName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+        const jobName = `Microsoft SQL Server storage assessment for instance ${savedInstanceName}`;
+        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: `Assess SQL Server instance ${savedInstanceName}`,
+            name: jobName,
             description: jobDescription,
             resourceName: savedInstanceName!,
             initiator: initiatedBy.toLocaleUpperCase(),

@@ -3,7 +3,7 @@ import styles from './InstanceDistribution.module.scss';
 import BarComponent from '../BarComponent/BarComponent';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../store/storeHooks';
-import { handleURL } from '../../../utils/utilityFunctions';
+import { formatFractionalNumber, handleURL } from '../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { WLF_TABS } from '../../../utils/consts';
 import { ReactComponent as Instance } from '../../../assets/instance.svg';
@@ -80,8 +80,9 @@ const InstanceDistribution = () => {
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={Math.round(
-                            ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) * 100
+                        percentage={formatFractionalNumber(
+                            ((mssqlHostData?.managedInstances || 0) / (mssqlHostData?.totalInstances || 1)) * 100,
+                            2
                         )}
                         beforeOutOf={mssqlHostData?.managedInstances || 0}
                         afterOutOf={mssqlHostData?.totalInstances || 0}
@@ -91,8 +92,9 @@ const InstanceDistribution = () => {
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={Math.round(
-                            ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) * 100
+                        percentage={formatFractionalNumber(
+                            ((pgsqlHostData?.managedInstances || 0) / (pgsqlHostData?.totalInstances || 1)) * 100,
+                            2
                         )}
                         beforeOutOf={pgsqlHostData?.managedInstances || 0}
                         afterOutOf={pgsqlHostData?.totalInstances || 0}

@@ -47,6 +47,13 @@
                 "label": "Microsoft SQL Server on FSx for Windows",
                 "to": "/databases/explore-savings-fsxw",
                 "bluexpTo": "/fsxdb/explore-savings-fsxw"
+            },
+            {
+                "label": "Microsoft SQL Server on On-Premises",
+                "to": "/databases/explore-savings-on-premise",
+                "bluexpTo": "/fsxdb/explore-savings-on-premise",
+                "isDisabled": true,
+                "disabledTooltip": "Coming soon"
             }
         ],
         "isComingSoon": false,
