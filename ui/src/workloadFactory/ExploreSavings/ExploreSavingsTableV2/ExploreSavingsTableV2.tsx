@@ -19,31 +19,31 @@ const ExploreSavingsTableV2 = () => {
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [ebsTableData, setEBSTableData] = useState<any>([]);
     const [fsxWTableData, setFSXWTableData] = useState<any>([]);
-    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    // const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
-    const getInitialFilter = () => {
-        if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            return {
-                textFilter: '',
-                count: 1,
-                columns: {
-                    '3': {
-                        activeCount: 1,
-                        values: {
-                            [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
-                                ? GENERAL.EBS
-                                : GENERAL.FSX_FOR_WINDOWS]: true
-                        },
-                        valuesArray: [true]
-                    }
-                }
-            };
-        } else {
-            return undefined;
-        }
-    };
+    // const getInitialFilter = () => {
+    //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+    //         return {
+    //             textFilter: '',
+    //             count: 1,
+    //             columns: {
+    //                 '3': {
+    //                     activeCount: 1,
+    //                     values: {
+    //                         [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
+    //                             ? GENERAL.EBS
+    //                             : GENERAL.FSX_FOR_WINDOWS]: true
+    //                     },
+    //                     valuesArray: [true]
+    //                 }
+    //             }
+    //         };
+    //     } else {
+    //         return undefined;
+    //     }
+    // };
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -229,8 +229,7 @@ const ExploreSavingsTableV2 = () => {
         columns: ExploreSavingsColDefs,
         rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? ebsTableData : fsxWTableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading,
-        initialFilterState: getInitialFilter()
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading
     });
 
     return (
