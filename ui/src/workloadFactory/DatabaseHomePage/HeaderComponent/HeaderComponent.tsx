@@ -23,6 +23,7 @@ import {
     handleURL,
     regionsSort,
     resetDBHomePageState,
+    setExploreSavingsSubTab,
     setTabValue
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -117,6 +118,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const newDashboardItem = localStorage.getItem('newDashboard');
     const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
+    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -133,13 +135,24 @@ const HeaderComponent = ({ tab }: Tab) => {
 
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
+        if (
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+        ) {
+            setExploreSavingsSubTab(tabValue, dispatch);
+        }
     }, [tab]);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+            if (
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+            ) {
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
@@ -154,7 +167,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-                } else {
+                } else if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
                         payload: {
@@ -166,6 +179,21 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                } else {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=onprem&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=onprem&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
+                    //This logic yet to decide
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 }
@@ -363,6 +391,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                         }
+                        isDisabled={
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                        }
                     />
                 </div>
 
@@ -398,6 +430,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                        }
+                        isDisabled={
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
                         }
                     />
                 </div>
@@ -597,7 +633,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
                                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart5
@@ -811,7 +848,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                     {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) && (
                         <>
                             <div className={styles.exploreSavingSection}>
                                 <div className={styles.contentArea}>

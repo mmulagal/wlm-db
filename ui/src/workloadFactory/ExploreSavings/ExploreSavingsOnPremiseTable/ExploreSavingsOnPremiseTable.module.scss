@@ -1,0 +1,126 @@
+.on-premise-table {
+    width: 100%;
+    max-width: 1607px;
+
+    margin-top: 24px;
+    margin-bottom: 40px;
+
+    .container {
+        display: flex;
+        gap: 8px;
+        .sqlServerInstance {
+            max-width: 261px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .colorText {
+            cursor: pointer;
+            color: var(--text-button-primary);
+        }
+    }
+
+    .statusIcon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.up {
+            background-color: var(--green-60);
+        }
+        &.down {
+            background-color: var(--orange-60);
+        }
+        &.initializing {
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
+        }
+        &.online {
+            background-color: var(--green-60);
+        }
+        &.offline {
+            background-color: var(--red-30);
+        }
+        &.unknown {
+            background-color: var(--grey-25);
+        }
+    }
+
+    .detectManage {
+        width: 134px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-primary);
+
+        cursor: pointer;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-primary);
+        }
+    }
+
+    .detectManageDisable {
+        width: 134px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-button-disabled);
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-button-disabled);
+        }
+    }
+
+    .detectManageDemo {
+        width: 134px;
+        height: 32px;
+        border-radius: 32px;
+        border: 1px solid var(--text-disabled);
+
+        cursor: not-allowed;
+
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
+            color: var(--text-disabled);
+        }
+    }
+
+    .detectManage:hover {
+        border: 1px solid var(--text-button-primary-hover);
+
+        .textStyle {
+            color: var(--text-button-primary-hover);
+        }
+    }
+
+    .actions {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+
+        .commonAction {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .text {
+            color: var(--text-button-primary);
+        }
+    }
+}
