@@ -35,8 +35,10 @@ const DatabaseDistribution = () => {
                                 variant="Regular_32"
                                 style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}
                             >
-                                {(aggregatedHostsCount?.totalDatabases || 0) +
-                                    (aggregatedPgSqlHostsCount?.totalDatabases || 0)}
+                                {!loading
+                                    ? (aggregatedHostsCount?.totalDatabases || 0) +
+                                      (aggregatedPgSqlHostsCount?.totalDatabases || 0)
+                                    : ''}
                                 {loading && <DsFlashingDotsLoader />}
                             </DsTypography>
                             <DsTypography variant="Regular_14">Total databases</DsTypography>
@@ -47,8 +49,10 @@ const DatabaseDistribution = () => {
 
                     <div className={styles.valueSection}>
                         <DsTypography variant="Regular_32" style={{ lineHeight: 'unset', display: 'flex', gap: '8px' }}>
-                            {(aggregatedHostsCount?.managedDatabases || 0) +
-                                (aggregatedPgSqlHostsCount?.managedDatabases || 0)}
+                            {!loading
+                                ? (aggregatedHostsCount?.managedDatabases || 0) +
+                                  (aggregatedPgSqlHostsCount?.managedDatabases || 0)
+                                : ''}
                             {loading && <DsFlashingDotsLoader />}
                         </DsTypography>
 
@@ -61,11 +65,11 @@ const DatabaseDistribution = () => {
                     <BarComponent
                         color="var(--chart-3)"
                         headingText="Microsoft SQL Server"
-                        percentage={
+                        percentage={Math.round(
                             ((aggregatedHostsCount?.managedDatabases || 0) /
                                 (aggregatedHostsCount?.totalDatabases || 1)) *
-                            100
-                        }
+                                100
+                        )}
                         beforeOutOf={aggregatedHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
@@ -74,11 +78,11 @@ const DatabaseDistribution = () => {
                     <BarComponent
                         color="var(--chart-9)"
                         headingText="PostgreSQL"
-                        percentage={
+                        percentage={Math.round(
                             ((aggregatedPgSqlHostsCount?.managedDatabases || 0) /
                                 (aggregatedPgSqlHostsCount?.totalDatabases || 1)) *
-                            100
-                        }
+                                100
+                        )}
                         beforeOutOf={aggregatedPgSqlHostsCount?.managedDatabases || 0}
                         afterOutOf={aggregatedPgSqlHostsCount?.totalDatabases || 0}
                         bottomText="Managed databases:"
