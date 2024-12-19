@@ -1,6 +1,7 @@
 import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { CommandFilterKey } from '@aws-sdk/client-ssm';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 
 import getLogger from '../../utils/logger';
@@ -15,6 +16,7 @@ import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
+import { listSsmCommands } from '../../lib/aws/ssm';
 
 const logger = getLogger();
 
@@ -152,6 +154,34 @@ async function managedHostOsPatchAssessment(
     return hostOsPatchAssessment;
 }
 
+async function checkIfPatchBaselineInProgress(credentialsId: string, region: string, instanceIds: string[]) {
+    logger.info('Checking if patch baseline is in progress', { credentialsId, region, instanceIds });
+
+    for (const instanceId of instanceIds) {
+        const listPatchBaselineCommandParams = {
+            InstanceId: instanceId,
+            MaxResults: 50,
+            Filters: [
+                {
+                    key: CommandFilterKey.DOCUMENT_NAME,
+                    value: 'AWS-RunPatchBaseline'
+                },
+                {
+                    key: CommandFilterKey.STATUS,
+                    value: 'InProgress'
+                }
+            ]
+        };
+
+        const { Commands = [] } = await listSsmCommands(credentialsId, region, listPatchBaselineCommandParams);
+        if (Commands.length > 0) {
+            logger.warn('Patch baseline is already running on the instance', { instanceId, region, credentialsId });
+            return true;
+        }
+    }
+    return false;
+}
+
 async function runOsPatchAssessment(
     accountId: string,
     credentialsId: string,
@@ -174,38 +204,50 @@ async function runOsPatchAssessment(
         : [{ ec2InstanceId: nodeInstanceId }];
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
     if (!isEmpty(clusterNodeInstanceIds)) {
-        const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
-
-        patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
-            if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
-                throw createError('Failed to run host OS patch baseline on the host/s database hosts in the cluster');
-            }
-            return false;
-        }); // If any of the instances failed to run the patch baseline, throw an error
-
-        const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
-
-        const hostOsPatchAssessment = response?.map(
-            ({
-                BaselineId: baselineId,
-                CriticalNonCompliantCount: criticalNonCompliantCount,
-                InstanceId: ec2InstanceId,
-                OperationStartTime: operationStartTime,
-                OperationEndTime: operationEndTime,
-                SecurityNonCompliantCount: securityNonCompliantCount,
-                missingPatchDetails
-            }) => ({
-                baselineId: baselineId ?? '',
-                criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
-                ec2InstanceId: ec2InstanceId ?? '',
-                operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
-                operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
-                securityNonCompliantCount: securityNonCompliantCount ?? 0,
-                missingPatchDetails
-            })
+        const isPatchBaselineInProgress = await checkIfPatchBaselineInProgress(
+            credentialsId,
+            region,
+            clusterNodeInstanceIds
         );
+        if (!isPatchBaselineInProgress) {
+            const patchBaselinResponse = await runAwsPatchBaseline(credentialsId, region, clusterNodeInstanceIds);
 
-        return hostOsPatchAssessment;
+            patchBaselinResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
+                if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
+                    throw createError(
+                        'Failed to run host OS patch baseline on the host/s database hosts in the cluster'
+                    );
+                }
+                return false;
+            }); // If any of the instances failed to run the patch baseline, throw an error
+
+            const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
+
+            const hostOsPatchAssessment = response?.map(
+                ({
+                    BaselineId: baselineId,
+                    CriticalNonCompliantCount: criticalNonCompliantCount,
+                    InstanceId: ec2InstanceId,
+                    OperationStartTime: operationStartTime,
+                    OperationEndTime: operationEndTime,
+                    SecurityNonCompliantCount: securityNonCompliantCount,
+                    missingPatchDetails
+                }) => ({
+                    baselineId: baselineId ?? '',
+                    criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
+                    ec2InstanceId: ec2InstanceId ?? '',
+                    operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
+                    operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
+                    securityNonCompliantCount: securityNonCompliantCount ?? 0,
+                    missingPatchDetails
+                })
+            );
+
+            return hostOsPatchAssessment;
+        }
+        throw createError(
+            `Another patch assessment is already in progress on ${clusterNodeInstanceIds?.join(',')} in ${region}`
+        );
     }
     throw createError('No instances found to run the host OS patch baseline');
 }

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { PutParameterCommandInput } from '@aws-sdk/client-ssm';
+import { CommandFilterKey, PutParameterCommandInput } from '@aws-sdk/client-ssm';
 import {
     sendSSMCommand,
     getCommandInvocation,
@@ -9,7 +9,8 @@ import {
     putParameter,
     getParameter,
     describeInstancePatchStates,
-    describeInstancePatches
+    describeInstancePatches,
+    listSsmCommands
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -104,5 +105,40 @@ describe('sendSSMCommand', () => {
         };
         const [response] = await describeInstancePatches(credentialsId, 'us-east-1', params);
         expect(response.Classification).toBeDefined();
+    });
+    it('List commands command', async () => {
+        const params = {
+            InstanceId: 'i-0e5af8344inProgress',
+            Filters: [
+                {
+                    key: CommandFilterKey.DOCUMENT_NAME,
+                    value: 'AWS-RunPatchBaseline'
+                },
+                {
+                    key: CommandFilterKey.STATUS,
+                    value: 'InProgress'
+                }
+            ]
+        };
+        const response = await listSsmCommands(credentialsId, 'us-east-1', params);
+        expect(response.Commands?.length).toBeGreaterThan(0);
+    });
+
+    it('List commands command none in progress', async () => {
+        const params = {
+            InstanceId: 'i-0e5af83448e1b83ef',
+            Filters: [
+                {
+                    key: CommandFilterKey.DOCUMENT_NAME,
+                    value: 'AWS-RunPatchBaseline'
+                },
+                {
+                    key: CommandFilterKey.STATUS,
+                    value: 'InProgress'
+                }
+            ]
+        };
+        const response = await listSsmCommands(credentialsId, 'us-east-1', params);
+        expect(response.Commands?.length).toEqual(0);
     });
 });
