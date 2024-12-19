@@ -377,11 +377,11 @@ logger.info('Initializing cron jobs');
 try {
     if (isActiveInstance()) {
         purgeOlderJobs();
-        failLongRunningDeploymentJobs();
-        failLongRunningResourcePrepareJobs();
-        updateTcoInstanceRecommendationPreferences();
-        updateManagedInstanceRecommendationPreferences();
         if (!isDemoFlow) {
+            failLongRunningDeploymentJobs();
+            failLongRunningResourcePrepareJobs();
+            updateTcoInstanceRecommendationPreferences();
+            updateManagedInstanceRecommendationPreferences();
             scheduledAssessment();
         }
     }
