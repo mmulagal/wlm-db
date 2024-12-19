@@ -168,6 +168,10 @@ async function initiateStorageAssessmentCollection(
         true
     )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
 
+    if (isEmpty(instanceVolumeMapping)) {
+        const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name} in the account ${accountId} with ${credentialsId} for resource ${databaseHostId}.`;
+        throw errorMessage;
+    }
     const volumeRecords =
         Object.values(instanceVolumeMapping)
             ?.map(i => i?.volumeRecords)
