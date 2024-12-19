@@ -170,7 +170,8 @@ async function initiateStorageAssessmentCollection(
 
     if (isEmpty(instanceVolumeMapping)) {
         const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name} in the account ${accountId} with ${credentialsId} for resource ${databaseHostId}.`;
-        throw errorMessage;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
     const volumeRecords =
         Object.values(instanceVolumeMapping)

@@ -250,12 +250,6 @@ async function updateManagedInstRecPrefs() {
     });
 }
 
-async function runScheduledAssessment() {
-    setInterval(async () => {
-        await scheduledAssessment();
-    }, Number(ms(config.get('redis.cron-job-interval'))));
-}
-
 async function logQueueMetrics(queue: Queue) {
     logger.info('Debug queue');
     const allJobsCount = await queue.getJobCounts();
@@ -351,6 +345,5 @@ export {
     updateTcoInstRecPrefs,
     updateManagedInstRecPrefs,
     scheduledAssessment,
-    runScheduledAssessment,
     purgeAssessmentData
 };
