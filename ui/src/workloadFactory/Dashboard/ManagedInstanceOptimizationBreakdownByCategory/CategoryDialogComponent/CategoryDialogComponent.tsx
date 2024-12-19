@@ -114,9 +114,10 @@ const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData:
     });
 
     useEffect(() => {
+        console.log(selectedRow);
         const rowNumber: any = Object.keys(tableProps?.selectionState?.rows || {})?.[0];
         if (rowNumber && rowNumber !== '0') {
-            const row = tableData?.[rowNumber - 1];
+            const row = tableData?.find((row: any) => String(row?.id) === rowNumber);
             if (row) {
                 dispatch(setSelectedAssessmentRow(row));
             }
