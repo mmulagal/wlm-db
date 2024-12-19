@@ -107,7 +107,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Storage tier');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.storageTier === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -136,7 +140,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('File system headroom');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.fileSystemHeadroom === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -165,7 +173,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Log drive size');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.logDriveSize === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -194,7 +206,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('TempDB drive size');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.tempdbDriveSize === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -223,7 +239,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('User data files (.mdf)');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.userDataFiles === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -252,7 +272,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Log files (.ldf)');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.logFiles === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -281,7 +305,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('TempDB placement');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.tempdbPlacement === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -310,7 +338,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('ONTAP configuration');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.ontapConfiguration === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -339,7 +371,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize('Operating system');
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.operatingSystem === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>
@@ -368,7 +404,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
-                            isDisabled={allmssqlHostAssessmentLoading}
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.computeRightsizing === configData?.total
+                            }
                         >
                             Optimize
                         </DsButton>

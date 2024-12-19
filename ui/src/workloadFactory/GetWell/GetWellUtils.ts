@@ -624,47 +624,53 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     let formatOntapConfigList: PerConfigInterface[] = [];
     let ontapCritical = 0;
     let ontapWarning = 0;
-    data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        formatOntapConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'volume',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    let volumesList = data?.storage?.configuration?.volumes;
+    if (volumesList && !volumesList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            formatOntapConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'volume',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+            if (item?.severity === 'critical') {
+                ontapCritical = 1;
+            } else if (item?.severity === 'warning') {
+                ontapWarning = 1;
+            }
+            ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
         });
-        if (item?.severity === 'critical') {
-            ontapCritical = 1;
-        } else if (item?.severity === 'warning') {
-            ontapWarning = 1;
-        }
-        ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
-    });
+    }
 
-    data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        formatOntapConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'lun',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    let lunsList = data?.storage?.configuration?.luns;
+    if (lunsList && !lunsList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            formatOntapConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'lun',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+            if (item?.severity === 'critical') {
+                ontapCritical = 1;
+            } else if (item?.severity === 'warning') {
+                ontapWarning = 1;
+            }
+            ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
         });
-        if (item?.severity === 'critical') {
-            ontapCritical = 1;
-        } else if (item?.severity === 'warning') {
-            ontapWarning = 1;
-        }
-        ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
-    });
+    }
 
     if (ontapCritical === 1) {
         highestOntapSeverity = 'Critical';
@@ -674,7 +680,14 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 
     let ontapOptimizedConfig = 0;
     let ontapNotOptimizedConfig = 0;
-    let ontapVolAndLunList = [data?.storage?.configuration?.volumes, data?.storage?.configuration?.luns];
+
+    let ontapVolAndLunList = [];
+    if (volumesList && !volumesList?.[0]?.errorMessage) {
+        ontapVolAndLunList.push(data?.storage?.configuration?.volumes);
+    }
+    if (lunsList && !lunsList?.[0]?.errorMessage) {
+        ontapVolAndLunList.push(data?.storage?.configuration?.luns);
+    }
     ontapVolAndLunList?.map(type => {
         type?.map((item: PerConfigInterface) => {
             if (item?.status === 'optimized') {
@@ -700,26 +713,29 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
     let formatOsConfigList: PerConfigInterface[] = [];
     let osCritical = 0;
     let osWarning = 0;
-    data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        formatOsConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'os',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    let osList = data?.storage?.configuration?.os;
+    if (osList && !osList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            formatOsConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'os',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+            if (item?.severity === 'critical') {
+                osCritical = 1;
+            } else if (item?.severity === 'warning') {
+                osWarning = 1;
+            }
+            osTagsList = [...osTagsList, ...(item?.tags || [])];
         });
-        if (item?.severity === 'critical') {
-            osCritical = 1;
-        } else if (item?.severity === 'warning') {
-            osWarning = 1;
-        }
-        osTagsList = [...osTagsList, ...(item?.tags || [])];
-    });
+    }
 
     formatOsConfigList = sortListOfDict(formatOsConfigList, 'name');
 
@@ -731,13 +747,15 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
 
     let osOptimizedConfig = 0;
     let osNotOptimizedConfig = 0;
-    data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-        if (item?.status === 'optimized') {
-            osOptimizedConfig++;
-        } else {
-            osNotOptimizedConfig++;
-        }
-    });
+    if (osList && !osList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+            if (item?.status === 'optimized') {
+                osOptimizedConfig++;
+            } else {
+                osNotOptimizedConfig++;
+            }
+        });
+    }
     return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity };
 };
 
