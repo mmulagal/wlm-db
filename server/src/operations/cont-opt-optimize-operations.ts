@@ -1961,7 +1961,7 @@ async function optimizeOperatingSystemSettings(
                 // Fetch iSCSCI target addresses
                 const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
 
-                if (isEmpty(iscsiTargetAddresses)) {
+                if (!isDemoFlow && isEmpty(iscsiTargetAddresses)) {
                     const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
                     throw createError(400, errorMessage);
                 }
@@ -2005,7 +2005,7 @@ async function optimizeOperatingSystemSettings(
                 // Fetch iSCSCI target addresses
                 const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
 
-                if (isEmpty(iscsiTargetAddresses)) {
+                if (!isDemoFlow && isEmpty(iscsiTargetAddresses)) {
                     const errorMessage = `iSCSI target addresses are not available for ${serverNameWithHostName}.`;
                     throw createError(400, errorMessage);
                 }
