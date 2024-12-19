@@ -19,6 +19,7 @@ import {
     getManagedAggrStorageSavings,
     getManagedHostCount
 } from './DatabaseHomeUtils';
+import { WIZARD_TYPE } from '../../utils/consts';
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -124,7 +125,7 @@ const DatabaseHomeApis = () => {
         if (!pgsqlHostData) {
             return;
         }
-        const hostStatusCount = getManagedHostCount(pgsqlHostData, dispatch);
+        const hostStatusCount = getManagedHostCount(pgsqlHostData, dispatch, WIZARD_TYPE.PGSQL);
         dispatch(addAggregatePgSqlHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pgsqlHostData, inventoryTableData]);
