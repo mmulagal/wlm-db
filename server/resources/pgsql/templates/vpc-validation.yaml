@@ -258,6 +258,9 @@ Resources:
                         d-unpack-validation-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
                             waitAfterCompletion: 0
+                        e-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                            waitAfterCompletion: 0
                 Finalize:
                     commands:
                         a-validate-vpc:
@@ -274,7 +277,20 @@ Resources:
                                     --overwrite
                                 - parentStackName: !Ref 'ParentStackName'
                             waitAfterCompletion: '0'
-                        c-signal-resource:
+                        c-validate-fsx-connectivity:
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/validation/validate-fsx.sh
+                                    -e ${PerformFSxCheck}
+                                    -f ${FSxFileSystemId}
+                                    -r ${AWS::Region}
+                                    -n ${AWS::StackName}
+                                    -p ${ParentStackName}
+                                    -s ValidationNode1'
+                                -   PerformFSxCheck: !Ref 'PerformFSxCheck'
+                                    FSxFileSystemId: !Ref 'FSxFileSystemId'
+                                    ParentStackName: !Ref 'ParentStackName'
+                            waitAfterCompletion: '0'
+                        d-signal-resource:
                             command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'
