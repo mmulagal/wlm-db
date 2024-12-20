@@ -13,7 +13,7 @@ import {
 import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import DATABASES_COUNT from './queries';
-import getPgSqlStorageSavings from './pgsql-ssm-script-utils';
+import { getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
 
 const logger = getLogger();
 
@@ -26,7 +26,7 @@ async function getPgSqlInstanceInfo(
     fsxDataVolumeName: string
 ) {
     logger.info('Fetching pg sql instance info', { accountId, nodeIds, instanceName, fsxDataVolumeName });
-    const commands = [`sudo -u postgres pg_controldata /${fsxDataVolumeName} | jq -R -s -c 'split("\\n")[:-1]'`];
+    const commands = [getPgsqlInstanceData(fsxDataVolumeName)];
     let response;
     try {
         for (const nodeId of nodeIds) {
@@ -67,32 +67,9 @@ async function getPgSqlDatabaseCount(
             return response;
         }
         const errorMessage = `Error fetching database count from nodes: ${node1InstanceId}`;
-        logger.error(errorMessage);
         throw createError(errorMessage);
     } catch (err) {
         const errorMessage = `Error fetching pgsql database count: ${err}, ${credentialsId}, ${region}`;
-        logger.error(errorMessage);
-        throw createError(errorMessage);
-    }
-}
-
-async function getPgSqlDataMountedVolume(credentialsId: string, region: string, node1InstanceId: string) {
-    logger.info('Fetching pg sql data volume mount point', { credentialsId, region, node1InstanceId });
-    const commands = [
-        // eslint-disable-next-line quotes
-        "findmnt -n -o SOURCE $(sudo systemctl cat postgresql | grep Environment=PGDATA | awk -F= '/Environment=PGDATA=/ {print $3}')"
-    ];
-    let response;
-    try {
-        response = await executeBashSsmCommand(credentialsId, region, commands, node1InstanceId);
-        const mountedVolume = response?.split(':')[1]?.substring(1)?.trim();
-        return mountedVolume;
-    } catch (err) {
-        const errorMessage = `Error fetching pgsql data volume mount point:,
-            ${err},
-            ${credentialsId},
-            ${region},
-            ${node1InstanceId}`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
@@ -277,7 +254,6 @@ export {
     getPgSqlResourceId,
     getPgSqlInstanceInfo,
     getPgSqlStorageSavingsVolumeData,
-    getPgSqlDataMountedVolume,
     getPgSqlDatabaseCount,
     getPgSqlDatabaseInstancesSummary,
     getPgSqlDatabaseInstancesDetails

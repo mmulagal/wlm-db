@@ -1077,7 +1077,7 @@ function saveFciConfigurationData(
         dbName,
         dbCredentials: {
             name: 'sqlsa',
-            password: 'demoPassword@1'
+            password: ''
         },
         keyPair: {
             selectedKeyPair: {
@@ -1108,7 +1108,7 @@ function saveFciConfigurationData(
             },
             domainAddress: '172.30.21.228,172.30.9.82',
             userName: 'admin',
-            password: 'demoPassword@1'
+            password: ''
         },
         instanceType: {
             value: 'm5.xlarge',
@@ -1129,7 +1129,7 @@ function saveFciConfigurationData(
             fsxNName: '',
             fsxNNewUserName: 'fsxadmin',
             fsxNExistingUserName: 'fsxadmin',
-            fsxNPassword: 'demoPassword@1'
+            fsxNPassword: ''
         },
         storageCapacity: {
             capacity: '1024',
@@ -1386,7 +1386,7 @@ function saveStandaloneConfigurationData(
         dbName,
         dbCredentials: {
             name: 'sqlsa',
-            password: 'demoPassword@1'
+            password: ''
         },
         keyPair: {
             selectedKeyPair: {
@@ -1417,7 +1417,7 @@ function saveStandaloneConfigurationData(
             },
             domainAddress: '172.30.21.228,172.30.9.82',
             userName: 'admin',
-            password: 'demoPassword@1'
+            password: ''
         },
         instanceType: {
             value: 'm5.xlarge',
@@ -1438,7 +1438,7 @@ function saveStandaloneConfigurationData(
             fsxNName: '',
             fsxNNewUserName: 'fsxadmin',
             fsxNExistingUserName: 'fsxadmin',
-            fsxNPassword: 'demoPassword@1'
+            fsxNPassword: ''
         },
         storageCapacity: {
             capacity: '1024',
@@ -1694,7 +1694,7 @@ function savePGSQLConfigurationData(
         dbName,
         dbCredentials: {
             name: 'postgres',
-            password: 'demoPassword@1'
+            password: ''
         },
         keyPair: {
             selectedKeyPair: {
@@ -1740,7 +1740,7 @@ function savePGSQLConfigurationData(
                 }
             },
             fsxNExistingUserName: 'fsxadmin',
-            fsxNPassword: 'demoPassword@1'
+            fsxNPassword: ''
         },
         storageCapacity: {
             capacity: '1024',

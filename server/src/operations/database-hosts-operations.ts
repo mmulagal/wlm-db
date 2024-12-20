@@ -1626,15 +1626,6 @@ async function getDatabaseHostSummaryV2(
     resourceDetail?: ResourceDetails,
     isManagedResource: boolean = true
 ) {
-    // Temp fix for DBS-4567, TODO: Remove this condition after demo changes for database hosts API for PGSQL is done
-    if (isDemo() && resourceDetail?.resource_type === DatabaseTypes.PG_SQL) {
-        return {
-            id: '123456',
-            name: 'postgresql',
-            databaseHostStatus: 'online',
-            ssmStatus: 'connected'
-        };
-    }
     logger.info('Fetching details about a database host ', accountId, databaseHostId, fields, isManagedResource);
     if (isEmpty(resourceDetail)) {
         [resourceDetail] = await listResources(accountId, databaseHostId, customerCredentialsId, awsRegion);
@@ -1716,7 +1707,9 @@ async function getDatabaseHostSummaryV2(
                             return true; // Exclude instances with '$' from filtering
                         }
                         return (
-                            instance.instanceName.includes(hostResourceName) || instance.instanceName === 'MSSQLSERVER'
+                            instance.instanceName.includes(hostResourceName) ||
+                            instance.instanceName === 'MSSQLSERVER' ||
+                            instance.instanceName === 'postgresql'
                         );
                     })
                     .map((instance: { instanceName: { replace: (arg0: string | null, arg1: string) => any } }) => ({

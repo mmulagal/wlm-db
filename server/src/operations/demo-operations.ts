@@ -739,7 +739,7 @@ async function createDeploymentMockDataInDBForPgSql(
         }
     });
 
-    const instanceId = randomUUID();
+    const instanceId = '7450008296037943418';
 
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('0', 8)}`;
@@ -750,7 +750,8 @@ async function createDeploymentMockDataInDBForPgSql(
         creationDate: new Date().getTime().toString(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
-        storageProtocol
+        storageProtocol,
+        fsxDataVolumeName: 'wlmdb-data-1234'
     };
 
     await createResource(accountId, {

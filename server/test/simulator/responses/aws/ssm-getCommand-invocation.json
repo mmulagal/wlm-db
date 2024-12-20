@@ -1863,5 +1863,80 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "getPgsqlInstanceInfoCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "ffb9a550-bb94-4ab1-bd04-ff98b648c08e",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "86cc75b0-f24b-4d58-9066-16dd5c3fed1d",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT0.4S",
+        "ExecutionEndDateTime": "2024-12-19T08:35:02.031Z",
+        "ExecutionStartDateTime": "2024-12-19T08:35:02.031Z",
+        "InstanceId": "i-0571e829274d756c9",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[\"pg_control version number:            1300\",\"Catalog version number:               202307071\",\"Database system identifier:           7450008296037943418\",\"Database cluster state:               in production\",\"pg_control last modified:             Thu Dec 19 06:42:39 2024\",\"Latest checkpoint location:           0/154BA18\",\"Latest checkpoint's REDO location:    0/154B9E0\",\"Latest checkpoint's REDO WAL file:    000000010000000000000001\",\"Latest checkpoint's TimeLineID:       1\",\"Latest checkpoint's PrevTimeLineID:   1\",\"Latest checkpoint's full_page_writes: on\",\"Latest checkpoint's NextXID:          0:732\",\"Latest checkpoint's NextOID:          24576\",\"Latest checkpoint's NextMultiXactId:  1\",\"Latest checkpoint's NextMultiOffset:  0\",\"Latest checkpoint's oldestXID:        722\",\"Latest checkpoint's oldestXID's DB:   1\",\"Latest checkpoint's oldestActiveXID:  732\",\"Latest checkpoint's oldestMultiXid:   1\",\"Latest checkpoint's oldestMulti's DB: 1\",\"Latest checkpoint's oldestCommitTsXid:0\",\"Latest checkpoint's newestCommitTsXid:0\",\"Time of latest checkpoint:            Thu Dec 19 06:42:37 2024\",\"Fake LSN counter for unlogged rels:   0/3E8\",\"Minimum recovery ending location:     0/0\",\"Min recovery ending loc's timeline:   0\",\"Backup start location:                0/0\",\"Backup end location:                  0/0\",\"End-of-backup record required:        no\",\"wal_level setting:                    replica\",\"wal_log_hints setting:                off\",\"max_connections setting:              100\",\"max_worker_processes setting:         8\",\"max_wal_senders setting:              10\",\"max_prepared_xacts setting:           0\",\"max_locks_per_xact setting:           64\",\"track_commit_timestamp setting:       off\",\"Maximum data alignment:               8\",\"Database block size:                  8192\",\"Blocks per segment of large relation: 131072\",\"WAL block size:                       8192\",\"Bytes per WAL segment:                16777216\",\"Maximum length of identifiers:        64\",\"Maximum columns in an index:          32\",\"Maximum size of a TOAST chunk:        1996\",\"Size of a large-object chunk:         2048\",\"Date/time type storage:               64-bit integers\",\"Float8 argument passing:              by value\",\"Data page checksum version:           0\",\"Mock authentication nonce:            5c4d36a0ef1334533c284a369890371b66b0cbeb2c6f192f38ade42218c9b4e3\"]\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getPgsqlStorageSavingsCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "0d4264bb-bcf0-417a-9eb3-e03dd760df40",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "1ec45077-c38e-4708-b0e0-0e8dce47f886",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT1.078S",
+        "ExecutionEndDateTime": "2024-12-19T09:50:25.229Z",
+        "ExecutionStartDateTime": "2024-12-19T09:50:24.229Z",
+        "InstanceId": "i-0be12a57c6319dd23",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{ \"records\": [ { \"uuid\": \"162d6894-bde6-11ef-abc8-89fce377962c\", \"name\": \"wlmdb_sqldata_1734597714655\", \"efficiency\": { \"space_savings\": { \"total\": 1486848, \"total_percent\": 5 } }, \"space\": { \"size\": 1209463209984, \"used\": 26292224 }, \"_links\": { \"self\": { \"href\": \"/api/storage/volumes/162d6894-bde6-11ef-abc8-89fce377962c\" } } } ], \"num_records\": 1, \"_links\": { \"self\": { \"href\": \"/api/storage/volumes?fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used&name=wlmdb_sqldata_1734597714655\" } } }\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getPgsqldbCountCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "84570d00-519d-4bc3-8745-006a6da47df7",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "ebb0d06a-3f1b-40e0-a9d1-a614d4cb1e3e",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT0.21S",
+        "ExecutionEndDateTime": "2024-12-19T08:35:03.785Z",
+        "ExecutionStartDateTime": "2024-12-19T08:35:03.785Z",
+        "InstanceId": "i-0571e829274d756c9",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "3",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }
