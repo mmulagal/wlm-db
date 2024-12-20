@@ -706,7 +706,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <div className={styles.content}>
                                         <>
                                             <DsButton
-                                                children="Deploy database host"
+                                                children="Deploy host"
                                                 variant="Default"
                                                 dropDown={{
                                                     trigger: 'click',
@@ -745,6 +745,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             id: '2',
                                                             label: 'PostgreSQL Server',
                                                             onClick: () => {
+                                                                dispatch(setDatabaseHostEntryPoint('database'));
                                                                 dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
                                                                 if (isWorkloadFactory) {
                                                                     navigate(WLF_TO_PROTECT_NAVIGATE);

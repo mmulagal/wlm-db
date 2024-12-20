@@ -40,10 +40,23 @@ const PostgressHeader = () => {
 
     const navigate = useNavigate();
     const handleNavigateWithoutDialog = () => {
-        if (isWorkloadFactoryStatus) {
-            navigate('../databases');
+        if (databaseHostEntryPoint === 'inventory') {
+            navigate('databases/inventory');
+        } else if (databaseHostEntryPoint === 'database') {
+            if (isWorkloadFactory) {
+                navigate('/databases');
+            } else {
+                navigate('../../fsxdb');
+            }
         } else {
-            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            if (isWorkloadFactory) {
+                navigateToCanvas('/');
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                });
+            }
         }
     };
 
@@ -138,7 +151,9 @@ const PostgressHeader = () => {
             title={'Create new PostgreSQL Server'}
             closeButtonProps={{
                 onClick: () => {
-                    handleNavigateWithoutDialog();
+                    configData && configData.length < MAX_SAVED_CONFIG
+                        ? handleSaveConfig(FROM_DIALOG.HEADER_CROSS)
+                        : handleNavigateWithoutDialog();
                 }
             }}
             style={{ width: '100vw' }}
