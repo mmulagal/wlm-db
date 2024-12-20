@@ -1,6 +1,6 @@
 #!/bin/bash
-exec > /var/log/netapp_wf/configure-ontap.log 2>&1
-echo "Setting up the ontap environment..."
+exec > /var/log/netapp_wf/validate-fsx.log 2>&1
+echo "Validating FSx file system by connecting to ONTAP rest api."
 
 # Parse command-line arguments
 while getopts "e:f:r:s:n:a:d:l:p:" opt; do
@@ -73,16 +73,16 @@ ontap_request () {
         --request $method
         --cacert $cert_path
         --location https://$management_ip/api/$endpoint
+        -o /dev/null
         --write-out "%{http_code}"
         $request_body
     )
-    echo "ONTAP rest API params: ${args[@]}"
     return_result=$(curl "${args[@]}")
     echo $return_result
 }
 
 result=$(ontap_request 'GET' 'cluster?fields=version')
-echo "ONTAP version: $result"
+echo "ONTAP version API response code: $result"
 if [[ ($result -ge 200 && $result -lt 299) || ($result -ge 500 && $result -lt 600) ]]; then
     echo "{\"status\": \"Completed\", \"reason\": \"Done.\"}" | jq -c .
     cfn-signal --exit-code 0 --stack $stackname --resource $resource --region $region --id $instanceId

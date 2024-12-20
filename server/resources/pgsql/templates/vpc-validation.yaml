@@ -258,6 +258,9 @@ Resources:
                         d-unpack-validation-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
                             waitAfterCompletion: 0
+                        e-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                            waitAfterCompletion: 0
                 Finalize:
                     commands:
                         a-validate-vpc:
