@@ -1,4 +1,4 @@
-import { Button } from '@netapp/design-system';
+import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 // import { useProtectBackupMutation } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useNavigate } from 'react-router-dom';
@@ -102,10 +102,23 @@ function PostgressFooter() {
     };
 
     const handleCancel = () => {
-        if (isWorkloadFactoryStatus) {
-            navigate('../databases');
+        if (databaseHostEntryPoint === 'inventory') {
+            navigate('databases/inventory');
+        } else if (databaseHostEntryPoint === 'database') {
+            if (isWorkloadFactoryStatus) {
+                navigate('/databases');
+            } else {
+                navigate('../../fsxdb');
+            }
         } else {
-            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            if (isWorkloadFactoryStatus) {
+                navigateToCanvas('/');
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../../../../fsxhome', replace: true }
+                });
+            }
         }
     };
 
