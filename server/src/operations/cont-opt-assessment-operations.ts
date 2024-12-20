@@ -777,10 +777,30 @@ async function fetchDriftAssessmentPerHost(
     let licenseAssessmentResponse: LicenseDriftResponseType;
     let hostOsPatchAssessmentResponse: HostOsPatchDriftResponseType;
     const isHostLevelMetrics =
+        isEmpty(fieldsList) ||
         fieldsList?.includes(AssessmentCategories.COMPUTE) ||
         fieldsList?.includes(AssessmentCategories.LICENSE) ||
-        fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH);
+        fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH); // if fields are not provided or if any of the fields are provided then fetch respective fields or all fields metrics
     if (isHostLevelMetrics) {
+        let hostFieldsToQuery = [];
+        if (isEmpty(fieldsList)) {
+            hostFieldsToQuery = [
+                AssessmentCategories.COMPUTE,
+                AssessmentCategories.LICENSE,
+                AssessmentCategories.HOST_OS_PATCH
+            ];
+        } else {
+            if (fieldsList?.includes(AssessmentCategories.COMPUTE)) {
+                hostFieldsToQuery.push(AssessmentCategories.COMPUTE);
+            }
+            if (fieldsList?.includes(AssessmentCategories.LICENSE)) {
+                hostFieldsToQuery.push(AssessmentCategories.LICENSE);
+            }
+            if (fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH)) {
+                hostFieldsToQuery.push(AssessmentCategories.HOST_OS_PATCH);
+            }
+        }
+
         const [{ database_instance_id: databaseInstanceId }] = instancesManaged; // get the first instance id to fetch the host level metrics as the host level metrics are same for all the instances
         const hostLevelData = await hostLevelDriftData(
             accountId,
@@ -788,7 +808,7 @@ async function fetchDriftAssessmentPerHost(
             region,
             databaseHostId,
             databaseInstanceId,
-            fields
+            hostFieldsToQuery.join(',')
         );
         computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;
         licenseAssessmentResponse = hostLevelData.licenseAssessmentResponse as LicenseDriftResponseType;
@@ -800,14 +820,23 @@ async function fetchDriftAssessmentPerHost(
                 managedInstance;
 
             try {
-                const driftAssessment = await fetchDriftAssessment(
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    databaseInstanceId,
-                    AssessmentCategories.STORAGE
-                );
+                let instanceFieldsToQuery = [];
+                if (isEmpty(fieldsList)) {
+                    instanceFieldsToQuery = [AssessmentCategories.STORAGE];
+                } else if (fieldsList?.includes(AssessmentCategories.STORAGE)) {
+                    instanceFieldsToQuery.push(AssessmentCategories.STORAGE);
+                }
+
+                const driftAssessment = !isEmpty(instanceFieldsToQuery)
+                    ? await fetchDriftAssessment(
+                          accountId,
+                          credentialsId,
+                          region,
+                          databaseHostId,
+                          databaseInstanceId,
+                          instanceFieldsToQuery.join(',')
+                      )
+                    : {};
 
                 if (isHostLevelMetrics) {
                     if (!isEmpty(computeAssessmentResponse)) {
