@@ -148,7 +148,7 @@ function processSqlInstances(sqlInstances: SqlServerInstanceInfoType[], edition:
 }
 
 function fetchSqlServerInstanceConfiguration(sqlServerInstances: SqlServerInstanceInfoType[]) {
-    logger.info('Fetching SQL Server instance configuration', { sqlServerInstances });
+    logger.info('Fetching SQL Server instance configuration', { sqlServerInstancesCount: sqlServerInstances.length });
     /*
 
 sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance of SQL Server installed on the server.

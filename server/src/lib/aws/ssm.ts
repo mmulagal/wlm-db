@@ -21,7 +21,9 @@ import {
     DescribeInstancePatchesCommand,
     DescribeInstancePatchesCommandInput,
     DescribeInstancePatchesCommandOutput,
-    PatchComplianceData
+    PatchComplianceData,
+    ListCommandsCommand,
+    ListCommandsCommandInput
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -57,6 +59,15 @@ async function sendSSMCommand(
 
     logger.debug('SSM Command response', response);
     return response.Command?.CommandId;
+}
+
+async function listSsmCommands(credentialsId: string, region: string, params: ListCommandsCommandInput) {
+    logger.info('Listing SSM commands', { credentialsId, region, params });
+
+    const ssmClient = await getSSMClient(region, credentialsId);
+    const response = await ssmClient.send(new ListCommandsCommand(params));
+    logger.info('SSM ListCommands response', response);
+    return response;
 }
 
 async function getCommandInvocation(credentialsId: string, region: string, params: GetCommandInvocationCommandInput) {
@@ -185,6 +196,7 @@ async function describeInstancePatches(
 export {
     getSSMClient,
     sendSSMCommand,
+    listSsmCommands,
     getCommandInvocation,
     getParametersByPath,
     getConnectionStatus,

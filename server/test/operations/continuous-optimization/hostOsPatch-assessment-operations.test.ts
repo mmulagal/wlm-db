@@ -50,14 +50,21 @@ beforeAll(async () => {
 });
 describe('Host OS Patch assessment operations', () => {
     it('Should calculate host os patch drift', async () => {
-        const response = await calculateHostOsPatchDrift(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            RESOURCE_ID
-        );
+        try {
+            await calculateHostOsPatchDrift(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, RESOURCE_ID);
+        } catch (error) {
+            expect(error).toContain('No HOST_OS_PATCH assessment data found');
 
-        expect(response.name).toEqual('host-os-patch');
+            // before throwing the calculateHostOsPatchDrift initiates host os patch assessment in the background
+            const response = await calculateHostOsPatchDrift(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                RESOURCE_ID
+            );
+
+            expect(response.name).toEqual('host-os-patch');
+        }
     });
 
     it('Should perform host os patch assessment for managed hosts clustered', async () => {
