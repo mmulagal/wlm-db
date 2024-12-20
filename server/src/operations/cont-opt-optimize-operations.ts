@@ -2169,7 +2169,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                     accountId,
                     instanceId,
                     ['performance-tier'],
-                    'STORAGE',
+                    'SIZING',
                     instanceMetadata || { configsOptimized: {} }
                 );
             }
