@@ -1628,6 +1628,42 @@ export const apiDOCURL = () => {
     }
 };
 
+export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolean) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE:
+                path = './explore-savings-ebs';
+                break;
+            case WLF_TABS.MSSQL_FSX_FOR_WINDOWS:
+                path = './explore-savings-fsxw';
+                break;
+            case WLF_TABS.MSSQL_ON_PREMISES:
+                path = './explore-savings-on-premise';
+                break;
+        }
+    } else {
+        switch (value) {
+            case WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE:
+                path = '../../fsxdb/explore-savings-ebs';
+                break;
+            case WLF_TABS.MSSQL_FSX_FOR_WINDOWS:
+                path = '../../fsxdb/explore-savings-fsxw';
+                break;
+            case WLF_TABS.MSSQL_ON_PREMISES:
+                path = '../../fsxdb/explore-savings-on-premise';
+                break;
+        }
+    }
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${path}`,
+            replace: true
+        }
+    });
+};
+
 export const handleURL = (value: string, isWorkloadFactory: boolean) => {
     let path = '';
     if (isWorkloadFactory) {

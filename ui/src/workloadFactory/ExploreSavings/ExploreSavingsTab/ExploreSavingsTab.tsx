@@ -6,11 +6,13 @@ import { WLF_TABS } from '../../../utils/consts';
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
+import { handleExploreSavingsURL } from '../../../utils/utilityFunctions';
 
 const ExploreSavingsTab = () => {
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     useEffect(() => {
         setSelectedTab(selectedExploreSavingsTab);
@@ -18,6 +20,7 @@ const ExploreSavingsTab = () => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedExploreSavingsTab(value));
+        handleExploreSavingsURL(value, isWorkloadFactory);
     };
     return (
         <div className={styles.exploreSavingsTab}>
