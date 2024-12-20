@@ -16,7 +16,8 @@ const ExploreSavingsTab = () => {
 
     useEffect(() => {
         setSelectedTab(selectedExploreSavingsTab);
-    }, [selectedExploreSavingsTab]);
+        handleExploreSavingsURL(selectedExploreSavingsTab, isWorkloadFactory);
+    }, [selectedExploreSavingsTab, isWorkloadFactory]);
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedExploreSavingsTab(value));
