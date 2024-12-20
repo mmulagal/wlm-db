@@ -82,6 +82,8 @@ import {
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
+import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
+import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -526,12 +528,19 @@ const enableMpioAndConfigure = {
     commands: [ENABLE_MPIO_AND_CONFIGURE]
 };
 
+const pgsqlInstanceInfo = {
+    commands: [getPgsqlInstanceData('wlmdb-data-1234')]
+};
+
+const pgsqldbCount = { commands: [DATABASES_COUNT] };
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
 const checkNodeStatusRegex = /#Check Node Status/;
 const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
 const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
+const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -664,6 +673,14 @@ ssmMock
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
+    .on(SendCommandCommand, { Parameters: pgsqlInstanceInfo })
+    .resolves(listSendCommandCommandResponse.getPgsqlInstanceInfoCommand)
+    .on(SendCommandCommand, params => {
+        return getPgsqlStorageSavingsRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getPgsqlStorageSavingsCommand)
+    .on(SendCommandCommand, { Parameters: pgsqldbCount })
+    .resolves(listSendCommandCommandResponse.getPgsqldbCountCommand)
     .on(SendCommandCommand, params => {
         return params.DocumentName === 'AWS-RunPatchBaseline';
     })
@@ -911,8 +928,19 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand'
     })
-    .resolves(getCommandInvocationResponse.getPatchBaselineCommandResponse);
-
+    .resolves(getCommandInvocationResponse.getPatchBaselineCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlInstanceInfoCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlInstanceInfoCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlStorageSavingsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlStorageSavingsCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldbCountCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqldbCountCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

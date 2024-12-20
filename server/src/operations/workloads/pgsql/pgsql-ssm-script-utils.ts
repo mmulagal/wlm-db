@@ -14,6 +14,7 @@ const getMappedOntapDataVolume = `
 
 const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string) => `
     #!/bin/bash
+    #PG SQL Storage Savings
     filesystemid="${fsxnId}"
     region="${region}"
  
@@ -58,4 +59,9 @@ const ontapRestApi = `
         echo $return_result
     }
 `;
-export default getPgSqlStorageSavings;
+
+const getPgsqlInstanceData = (fsxDataVolumeName: string) => `
+    sudo -u postgres pg_controldata /${fsxDataVolumeName} | jq -R -s -c 'split("\\n")[:-1]'
+`;
+
+export { getPgSqlStorageSavings, getPgsqlInstanceData };

@@ -20,7 +20,8 @@ import {
     createOptimizeJobMockData,
     createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData,
-    createEnableMpioJobMockData
+    createEnableMpioJobMockData,
+    createDeploymentMockDataInDBForPgSql
 } from '../../operations/demo-operations';
 import { createAwsCredential } from '../../lib/cloud-manager/credentials';
 import { listConfig, upsertDatabaseInstance } from '../../lib/database/db';
@@ -42,7 +43,8 @@ function createDemoResources(
     awsAccountId: string,
     serverName: string,
     storageProtocol?: string,
-    resourceId?: string
+    resourceId?: string,
+    databaseType: string = DatabaseTypes.MS_SQL_SERVER
 ) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
@@ -50,20 +52,35 @@ function createDemoResources(
     const sqlDeploymentMode = 'FCI';
     const fsxFilSystemId = `fs-${randomize('0', 8)}`;
 
-    createDeploymentMockDataInDB(
-        accountId!,
-        stackId,
-        stackName,
-        region,
-        credentialsId,
-        sqlDeploymentMode,
-        fsxFilSystemId,
-        awsAccountId,
-        serverName || `sqldatabase${randomize('a', 4)}`,
-        true,
-        storageProtocol,
-        resourceId
-    );
+    if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+        createDeploymentMockDataInDB(
+            accountId!,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlDeploymentMode,
+            fsxFilSystemId,
+            awsAccountId,
+            serverName || `sqldatabase${randomize('a', 4)}`,
+            true,
+            storageProtocol,
+            resourceId
+        );
+    } else {
+        createDeploymentMockDataInDBForPgSql(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlDeploymentMode,
+            fsxFilSystemId,
+            awsAccountId,
+            serverName || `pgsqldatabase${randomize('a', 4)}`,
+            DatabaseTypes.PG_SQL
+        );
+    }
 }
 
 async function createConfigurations(accountId: string, awsAccountId: string, credentialsId: string) {
@@ -141,7 +158,8 @@ async function createDemoResourcesPerRegion(
                 sqlInstances: [
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-MarketingCampaigns' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-SupplierManagement' }
-                ]
+                ],
+                databaseType: DatabaseTypes.MS_SQL_SERVER
             },
             {
                 resourceId: devOneResourceId,
@@ -152,7 +170,8 @@ async function createDemoResourcesPerRegion(
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-EmployeeDirectory' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-InventoryControl' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01PROD-SupplierManagement' }
-                ]
+                ],
+                databaseType: DatabaseTypes.MS_SQL_SERVER
             },
             {
                 resourceId: devFourResourceId,
@@ -161,12 +180,36 @@ async function createDemoResourcesPerRegion(
                 sqlInstances: [
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-SalesAnalytics' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-ProjectManagement' }
-                ]
+                ],
+                databaseType: DatabaseTypes.MS_SQL_SERVER
+            },
+            {
+                resourceId: randomUUID(),
+                hostName: 'PGSQLServer-Dev-01',
+                protocol: STORAGE_PROTOCOLS.NFS,
+                sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
+                databaseType: DatabaseTypes.PG_SQL
+            },
+            {
+                resourceId: randomUUID(),
+                hostName: 'PGSQLServer-Dev-02',
+                protocol: STORAGE_PROTOCOLS.NFS,
+                sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
+                databaseType: DatabaseTypes.PG_SQL
             }
         ];
 
-        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances }) => {
-            await createDemoResources(accountId, region, credentialsId, awsAccountId, hostName, protocol, resourceId);
+        instances.forEach(async ({ resourceId, hostName, protocol, sqlInstances, databaseType }) => {
+            await createDemoResources(
+                accountId,
+                region,
+                credentialsId,
+                awsAccountId,
+                hostName,
+                protocol,
+                resourceId,
+                databaseType
+            );
             const instanceNames: string[] = [];
             let instanceIds: string = '';
             for (const sqlInstance of sqlInstances) {
@@ -186,6 +229,10 @@ async function createDemoResourcesPerRegion(
                 instanceNames.push(newInstanceName);
                 instanceNames.push(DEFAULT_INSTANCE_NAME);
                 instanceIds += `${sqlInstanceId},`;
+            }
+
+            if (databaseType === DatabaseTypes.PG_SQL) {
+                return;
             }
 
             const optimizeStorageJobMockdata = await createOptimizeJobMockData(
