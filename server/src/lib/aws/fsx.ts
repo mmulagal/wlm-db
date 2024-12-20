@@ -66,7 +66,7 @@ async function describeFSx(
 
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeFileSystemsCommand(input));
-    logger.info('Describe a FSx file system response:', response);
+    logger.debug('Describe a FSx file system response:', response);
 
     return response;
 }
