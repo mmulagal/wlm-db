@@ -127,8 +127,8 @@ const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData:
     return (
         <div className={styles.categoryDialogContent}>
             <DsTypography variant="Regular_14">
-                Choose the instance you want to optimize its {type} configuration. After clicking 'Continue,' you will
-                be redirected to the instance optimization page.
+                Select the instance to optimize and then select 'Continue' to be redirected to the instance optimization
+                page.
             </DsTypography>
             <div className={styles.table}>
                 <TableTopBar
