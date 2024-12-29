@@ -204,18 +204,17 @@
                             "status": "not-optimized",
                             "recommended": "100%",
                             "severity": "critical",
-                            "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
+                            "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
                             "sizingViolations": {},
                             "current": "94% - 100%"
-
                         },
                         {
                             "name": "log-drive-size",
                             "status": "under-provisioned",
                             "recommended": "25%",
                             "severity": "warning",
-                            "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
+                            "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                             "tags": ["Operational excellence"],
                             "sizingViolations": {
                                 "overProvisionedDrives": [],
@@ -252,14 +251,14 @@
                                     }
                                 ]
                             },
-                            "current":"10%"
+                            "current": "10%"
                         },
                         {
                             "name": "tempdb-drive-size",
                             "status": "under-provisioned",
                             "recommended": "10%",
                             "severity": "warning",
-                            "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                            "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                             "tags": ["Operational excellence"],
                             "sizingViolations": {
                                 "overProvisionedDrives": [],
@@ -276,7 +275,7 @@
                                 ],
                                 "ignoredDrives": []
                             },
-                            "current":"3%"
+                            "current": "3%"
                         },
                         {
                             "name": "headroom",
@@ -287,7 +286,7 @@
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
                             "recommendedSizeInGib": 0,
-                            "current":"45%"
+                            "current": "45%"
                         }
                     ],
                     "layout": [
@@ -296,7 +295,7 @@
                             "status": "optimized",
                             "recommended": "separate-drive",
                             "severity": "critical",
-                            "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
+                            "recommendation": "Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                             "tags": ["Performance efficiency", "Operational excellence"],
                             "current": "separate-drive"
                         },
@@ -307,7 +306,7 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                             "current": "separate-drive"
+                            "current": "separate-drive"
                         },
                         {
                             "name": "default-data-files-location",
@@ -316,7 +315,7 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                             "current": "separate-drive"
+                            "current": "separate-drive"
                         }
                     ]
                 }
@@ -525,7 +524,7 @@
                             "status": "not-optimized",
                             "recommended": "100%",
                             "severity": "critical",
-                            "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
+                            "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
                             "sizingViolations": {},
                             "current": "94% - 100%"
@@ -535,7 +534,7 @@
                             "status": "under-provisioned",
                             "recommended": "25%",
                             "severity": "warning",
-                            "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
+                            "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                             "tags": ["Operational excellence"],
                             "sizingViolations": {
                                 "overProvisionedDrives": [],
@@ -572,14 +571,14 @@
                                     }
                                 ]
                             },
-                            "current":"10%"
+                            "current": "10%"
                         },
                         {
                             "name": "tempdb-drive-size",
                             "status": "under-provisioned",
                             "recommended": "10%",
                             "severity": "warning",
-                            "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                            "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                             "tags": ["Operational excellence"],
                             "sizingViolations": {
                                 "overProvisionedDrives": [],
@@ -596,7 +595,7 @@
                                 ],
                                 "ignoredDrives": []
                             },
-                            "current":"3%"
+                            "current": "3%"
                         },
                         {
                             "name": "headroom",
@@ -845,7 +844,7 @@
                             "status": "not-optimized",
                             "recommended": "100%",
                             "severity": "critical",
-                            "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency",
+                            "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
                             "sizingViolations": {},
                             "current": "94% - 100%"
@@ -855,7 +854,7 @@
                             "status": "under-provisioned",
                             "recommended": "25%",
                             "severity": "warning",
-                            "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
+                            "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                             "tags": ["Operational excellence"],
                             "sizingViolations": {
                                 "overProvisionedDrives": [],
@@ -892,14 +891,14 @@
                                     }
                                 ]
                             },
-                            "current":"10%"
+                            "current": "10%"
                         },
                         {
                             "name": "tempdb-drive-size",
                             "status": "under-provisioned",
                             "recommended": "10%",
                             "severity": "warning",
-                            "recommendation": "Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                            "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                             "tags": ["Operational excellence"],
                             "sizingViolations": {
                                 "overProvisionedDrives": [],
@@ -916,7 +915,7 @@
                                 ],
                                 "ignoredDrives": []
                             },
-                            "current":"5%"
+                            "current": "5%"
                         },
                         {
                             "name": "headroom",

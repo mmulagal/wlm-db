@@ -186,7 +186,7 @@ const GOLDEN_CONFIG = {
             value: 'separate-drive',
             severity: SEVERITY.CRITICAL,
             recommendation:
-                'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.',
+                'Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.',
             tags: [
                 AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                 AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -199,7 +199,7 @@ const GOLDEN_CONFIG = {
             value: '100%',
             severity: SEVERITY.CRITICAL,
             recommendation:
-                'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity tier may result in slower performance and high latency',
+                'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency',
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
         },
         {
@@ -215,7 +215,7 @@ const GOLDEN_CONFIG = {
             value: '25%',
             severity: SEVERITY.WARNING,
             recommendation:
-                'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.',
+                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.',
             tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
         },
         {
@@ -223,7 +223,7 @@ const GOLDEN_CONFIG = {
             value: '10%',
             severity: SEVERITY.WARNING,
             recommendation:
-                'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
             tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
         }
     ]

@@ -140,6 +140,10 @@
         span {
             background-color: var(--main-background) !important;
         }
+
+        [class*='_menuPointer'] {
+            background-color: unset !important;
+        }
     }
 }
 
