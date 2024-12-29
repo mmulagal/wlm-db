@@ -2,15 +2,11 @@ import styles from './FileUpload.module.scss';
 import { ReactComponent as Upload } from '../../../assets/ic_upload.svg';
 import { DsTypography } from '@netapp/design-system';
 
-const FileUpload = () => {
-    // Handle file selection
-    const handleFileChange = (event: any) => {
-        const selectedFile = event.target.files[0];
-        if (selectedFile) {
-            alert(`File selected: ${selectedFile.name}`);
-        }
-    };
-
+const FileUpload = ({
+    handleFileChange
+}: {
+    handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}) => {
     return (
         <div className={styles.upload}>
             {/* Styled label to act as the button */}

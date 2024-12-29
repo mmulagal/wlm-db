@@ -21,6 +21,27 @@
         }
     }
 
+    .lazyLoadContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        background-color: var(--content-background);
+        width: 259px;
+        height: 108px;
+
+        .textArea {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+
+            .text {
+                color: var(--text-primary);
+            }
+        }
+    }
+
     .statusIcon {
         width: 10px;
         height: 10px;
@@ -121,6 +142,18 @@
         }
         .text {
             color: var(--text-button-primary);
+        }
+    }
+
+    [class*='Table-module_empty-table'] {
+        svg {
+            display: none;
+        }
+
+        [class*='_lazyLoadContainer'] {
+            svg {
+                display: block;
+            }
         }
     }
 }
