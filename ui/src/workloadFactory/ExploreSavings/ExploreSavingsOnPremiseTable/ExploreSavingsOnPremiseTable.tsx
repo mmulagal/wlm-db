@@ -1,11 +1,10 @@
-import { Table, useTable, Typography, TableTopBar, DsTypography, Popover } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, DsTypography, Popover, DsSpinner } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { WLF_TABS } from '../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
-import { onClickESHost, onClickESHostOnPrem } from '../ExploreSavingsUtils';
+import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
@@ -19,28 +18,43 @@ const ExploreSavingsOnPremiseTable = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
-    const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
+    const [isUploadLoading, setIsUploadLoading] = useState(false);
+
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
-    const getInitialFilter = () => {
-        if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-            return {
-                textFilter: '',
-                count: 1,
-                columns: {
-                    '3': {
-                        activeCount: 1,
-                        values: {
-                            [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
-                                ? GENERAL.EBS
-                                : GENERAL.FSX_FOR_WINDOWS]: true
-                        },
-                        valuesArray: [true]
+    const handleFileChange = (event: any) => {
+        const selectedFile = event.target.files[0];
+        setTableData([]); //This code needs to be removed
+        setIsUploadLoading(true);
+        if (selectedFile) {
+            const reader = new FileReader();
+
+            reader.onload = e => {
+                try {
+                    // Parse the JSON data
+                    const jsonData = JSON.parse(e.target?.result as string);
+                    console.log('JSON Data:', jsonData);
+
+                    // Access the data inside the JSON
+                    if (jsonData) {
+                        console.log('Jan Data:', jsonData);
+                        setTimeout(() => {
+                            setIsUploadLoading(false);
+                            setTableData(unManagedHostFormatedList); //This code needs to be removed
+                        }, 1000);
+                    } else {
+                        console.log('No data found in the file.');
                     }
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
                 }
             };
-        } else {
-            return undefined;
+
+            reader.onerror = () => {
+                console.error('File could not be read.');
+            };
+
+            reader.readAsText(selectedFile); // Read file as text
         }
     };
 
@@ -189,6 +203,18 @@ const ExploreSavingsOnPremiseTable = () => {
         lastColDetails()
     ];
 
+    const lazyLoadComponent = () => {
+        return (
+            <div className={styles.lazyLoadContainer}>
+                <DsSpinner />
+                <div className={styles.textArea}>
+                    <DsTypography variant="Semibold_16">Uploading script</DsTypography>
+                    <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
+                </div>
+            </div>
+        );
+    };
+
     const tableProps = useTable({
         //@ts-ignore
         selectAllProps: false,
@@ -199,9 +225,12 @@ const ExploreSavingsOnPremiseTable = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading,
-        initialFilterState: getInitialFilter()
+        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || isUploadLoading
     });
+
+    const tableComponentProps = {
+        lazyLoadingText: lazyLoadComponent()
+    };
 
     return (
         <div className={styles['on-premise-table']}>
@@ -210,9 +239,10 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle={`MsSQL on On-Premises host`}
                 singularTitle={`MsSQL on On-Premises hosts`}
+                subTitle="The table contains the latest script results uploaded."
                 actionsRight={
                     <div className={styles.actions}>
-                        <FileUpload />
+                        <FileUpload handleFileChange={handleFileChange} />
                         <div className={styles.commonAction}>
                             <Download />
                             <DsTypography variant="Semibold_14" className={styles.text}>
@@ -223,6 +253,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 }
             />
             <Table
+                {...tableComponentProps}
                 //@ts-ignore
                 tableProps={tableProps}
                 isDoubleRow={true}

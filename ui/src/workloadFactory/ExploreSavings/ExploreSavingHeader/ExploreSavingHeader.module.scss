@@ -57,10 +57,16 @@
     }
 }
 
+@media screen and (min-width: 1621px) and (max-width: 1822px) {
+    .exploreSavingsHeader {
+        height: 292px;
+    }
+}
+
 @media screen and (min-width: 1471px) and (max-width: 1823px) {
     .exploreSavingsHeader {
-        // height: 336px;
-        height: 380px;
+        height: 336px;
+        //height: 380px;
 
         .topPart {
             .svgContainer1600 {
@@ -112,6 +118,23 @@
                         margin-top: 8px;
                     }
                 }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1621px) and (max-width: 1822px) {
+    .exploreSavingsHeader {
+        height: 292px;
+
+        .topPart {
+            .svgContainer1600 {
+                width: 535px;
+                height: 292px;
+                background-color: #e8eefd;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
         }
     }
