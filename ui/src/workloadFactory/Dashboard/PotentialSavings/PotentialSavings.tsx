@@ -81,9 +81,10 @@ const PotentialSavings = () => {
                 </DsTypography>
             )} */}
 
+            {/* New Design */}
             <div className={styles.mainSection}>
-                <div className={styles.valueSection}>
-                    <div className={styles.subContent}>
+                <div className={styles.topSection}>
+                    <div className={styles.subContent1}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                 {esCount?.ebs}
@@ -91,13 +92,44 @@ const PotentialSavings = () => {
                             {loading && <DsFlashingDotsLoader />}
                         </div>
 
-                        {/* <DsTypography variant="Regular_14">EBS & FSxW instances</DsTypography> */}
                         <DsTypography variant="Regular_14">Elastic Block Store (EBS) instances</DsTypography>
                     </div>
 
-                    <SeparatorComponent variant="horizontal" height="" />
+                    <SeparatorComponent variant="vertical" height="54px" />
 
-                    {/* <div className={styles.subContent}>
+                    <div className={styles.subContent2}>
+                        <div className={styles.loaderText}>
+                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                {esCount?.fsxw}
+                            </DsTypography>
+                            {loading && <DsFlashingDotsLoader />}
+                        </div>
+
+                        <DsTypography variant="Regular_14">FSx for windows file server instances</DsTypography>
+                    </div>
+                </div>
+                {noData && (isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />)}
+            </div>
+
+            {/* Old section */}
+
+            {/* <div className={styles.mainSection}>
+                <div className={styles.valueSection}>
+                    <div className={styles.subContent}>
+                        <div className={styles.loaderText}>
+                            <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                {esCount?.ebs}
+                            </DsTypography>
+                            {loading && <DsFlashingDotsLoader />}
+                        </div> */}
+
+            {/* <DsTypography variant="Regular_14">EBS & FSxW instances</DsTypography> */}
+            {/* <DsTypography variant="Regular_14">Elastic Block Store (EBS) instances</DsTypography>
+                    </div>
+
+                    <SeparatorComponent variant="horizontal" height="" /> */}
+
+            {/* <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                 $9,200
@@ -110,18 +142,18 @@ const PotentialSavings = () => {
 
                     <SeparatorComponent variant="horizontal" height="" /> */}
 
-                    <div className={styles.subContent}>
+            {/* <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                 {esCount?.fsxw}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
-                        </div>
-                        {/* <DsTypography variant="Regular_14">Savings percentage</DsTypography> */}
-                        <DsTypography variant="Regular_14">FSx for windows file server instances</DsTypography>
+                        </div> */}
+            {/* <DsTypography variant="Regular_14">Savings percentage</DsTypography> */}
+            {/* <DsTypography variant="Regular_14">FSx for windows file server instances</DsTypography>
                     </div>
-                </div>
-                <div className={styles.chartSection}>
+                </div> */}
+            {/* <div className={styles.chartSection}>
                     {noData && (isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />)}
                     {!noData && (
                         <ComparisonChartStack
@@ -134,8 +166,8 @@ const PotentialSavings = () => {
                             tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
                         />
                     )}
-                </div>
-            </div>
+                </div> */}
+            {/* </div> */}
         </div>
     );
 };
