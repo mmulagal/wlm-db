@@ -19,21 +19,34 @@
     }
 
     .mainSection {
-        padding: 40px 120px 40px 40px;
+        padding: 40px;
         display: flex;
-        gap: 112px;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
 
-        .valueSection {
+        .topSection {
+            height: 76px;
+            width: 712px;
+            background-color: var(--hover-background);
+            padding: 8px 64px;
             display: flex;
-            flex-direction: column;
-            gap: 28px;
-            max-height: 280px;
-            margin-top: 40px;
+            gap: 40px;
 
-            .subContent {
+            .subContent1 {
                 display: flex;
                 flex-direction: column;
-                width: 160px;
+                width: 244px;
+
+                .loaderText {
+                    display: flex;
+                    gap: 8px;
+                }
+            }
+            .subContent2 {
+                display: flex;
+                flex-direction: column;
+                width: 244px;
 
                 .loaderText {
                     display: flex;
@@ -41,11 +54,36 @@
                 }
             }
         }
-
-        .chartSection {
-            max-height: 306px;
-        }
     }
+
+    // .mainSection {
+    //     padding: 40px 120px 40px 40px;
+    //     display: flex;
+    //     gap: 112px;
+
+    //     .valueSection {
+    //         display: flex;
+    //         flex-direction: column;
+    //         gap: 28px;
+    //         max-height: 280px;
+    //         margin-top: 40px;
+
+    //         .subContent {
+    //             display: flex;
+    //             flex-direction: column;
+    //             width: 160px;
+
+    //             .loaderText {
+    //                 display: flex;
+    //                 gap: 8px;
+    //             }
+    //         }
+    //     }
+
+    //     .chartSection {
+    //         max-height: 306px;
+    //     }
+    // }
 }
 
 @media screen and (max-width: 1700px) {
@@ -53,10 +91,19 @@
         width: 650px;
 
         .mainSection {
-            // padding: 0 40px 40px 40px;
-            padding: 40px 40px 40px 40px;
-            //gap: 40px;
-            gap: 8px;
+            padding: 40px;
+            .topSection {
+                width: 570px;
+                padding: 8px 24px;
+                gap: 24px;
+
+                .subContent1 {
+                    width: 231px;
+                }
+                .subContent2 {
+                    width: 244px;
+                }
+            }
         }
     }
 }
