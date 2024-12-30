@@ -17,7 +17,7 @@ const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData:
             id: '1',
             Header: 'SQL Server instance name',
             accessor: 'databaseInstanceName',
-            width: '31%',
+            width: '30%',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
@@ -85,16 +85,12 @@ const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData:
 
     const firstEnabledRow = () => {
         const enabledRow = tableData?.find((row: any) => {
-            return (
-                row?.status === INVENTORY_STATUS.RUNNING ||
-                row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP ||
-                row?.loadingStatus
-            );
+            return row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP;
         });
         if (enabledRow) {
-            return tableData?.[0]?.id;
+            return enabledRow?.id;
         } else {
-            return 0;
+            return null;
         }
     };
 

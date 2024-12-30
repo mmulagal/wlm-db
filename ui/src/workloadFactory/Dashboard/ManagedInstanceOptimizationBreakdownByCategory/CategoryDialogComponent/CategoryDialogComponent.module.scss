@@ -51,6 +51,10 @@
             display: none;
         }
     }
+    
+    [class*='PaginationPanel-module_pagination-panel'] {
+        bottom: -40px !important;
+    }
 
     // [class*='DialogLayout-module_dialog-content'] {
     //     padding: 40px 40px 0px 40px !important;

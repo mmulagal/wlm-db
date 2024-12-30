@@ -3,9 +3,9 @@ import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../utils/consts';
+import { STATUS_CONST, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DsTypography, useDialog } from '@netapp/design-system';
+import { DsTypography, useDialog, DsButton } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
@@ -24,6 +24,7 @@ import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -256,24 +257,64 @@ const DashboardInnerPage = () => {
         }
     }, [selectedConfig]);
 
+    const lastColDetails = (name: string) => {
+        return {
+            id: '4',
+            Header: '',
+            accessor: '',
+            isSticky: true,
+            width: '318px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.buttonContainer}>
+                        {rowData?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase() ? (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                onClick={() => {
+                                    handleDialog(name);
+                                }}
+                            >
+                                Optimize
+                            </DsButton>
+                        ) : (
+                            <TooltipComponent
+                                title={GENERAL.ONLINE_INSTANCE_ASSESS}
+                                placement="bottom"
+                                width="280px"
+                                height="30px"
+                            >
+                                <div>
+                                    <DsButton variant="secondary" isDisabled={true}>
+                                        Optimize
+                                    </DsButton>
+                                </div>
+                            </TooltipComponent>
+                        )}
+                    </div>
+                );
+            }
+        };
+    };
+
     const renderTable = () => {
         switch (selectedConfig) {
             case 'Storage tier':
-                return <StorageTierTable handleDialog={handleDialog} />;
+                return <StorageTierTable lastColDetails={lastColDetails} />;
             case 'File system headroom':
-                return <FileSystemHeadroomTable handleDialog={handleDialog} />;
+                return <FileSystemHeadroomTable lastColDetails={lastColDetails} />;
             case 'Log drive size':
-                return <LogDriveSizeTable handleDialog={handleDialog} />;
+                return <LogDriveSizeTable lastColDetails={lastColDetails} />;
             case 'TempDB drive size':
-                return <TempDBDriveSizeTable handleDialog={handleDialog} />;
+                return <TempDBDriveSizeTable lastColDetails={lastColDetails} />;
             case 'User data files (.mdf)':
-                return <UserDataFilesTable />;
+                return <UserDataFilesTable lastColDetails={lastColDetails} />;
             case 'Log files (.ldf)':
-                return <LogFileTable />;
+                return <LogFileTable lastColDetails={lastColDetails} />;
             case 'TempDB placement':
-                return <TempDBPlacement />;
+                return <TempDBPlacement lastColDetails={lastColDetails} />;
             case 'Compute rightsizing':
-                return <ComputeRightSizingTable handleDialog={handleDialog} />;
+                return <ComputeRightSizingTable lastColDetails={lastColDetails} />;
             case 'ONTAP configuration':
                 return <OntapConfig />;
             case 'Operating system':

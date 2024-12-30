@@ -8,7 +8,7 @@ import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHom
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo } from 'react';
 
-const TempDBPlacement = () => {
+const TempDBPlacement = ({ lastColDetails }: any) => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
@@ -40,30 +40,6 @@ const TempDBPlacement = () => {
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
-
-    const lastColDetails = () => {
-        return {
-            id: '4',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: '318px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            isThin
-                            variant="secondary"
-                            onClick={() => {}}
-                            isDisabled={rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()}
-                        >
-                            Optimize
-                        </DsButton>
-                    </div>
-                );
-            }
-        };
-    };
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -131,7 +107,7 @@ const TempDBPlacement = () => {
             width: '320px',
             filterOptions: 'auto'
         },
-        lastColDetails()
+        lastColDetails('TempDB placement')
     ];
 
     const tableProps = useTable({

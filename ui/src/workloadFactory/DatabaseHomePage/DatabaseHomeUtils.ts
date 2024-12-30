@@ -323,9 +323,12 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
     };
 };
 
-export const isOptimized = (status?: string) =>
-    status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
-    status?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase();
+export const isOptimized = (status?: string) => {
+    return (
+        status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
+        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase()
+    );
+};
 
 export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
     let totalInstances = 0;
@@ -341,10 +344,16 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
                     isOptimized(item?.status)
                 );
-                const isStorageSizingOptimized =
-                    instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                        return isOptimized(item?.status);
-                    }).length === 0;
+                const isAllStorageSizingPresent =
+                    instanceAssessmentData?.storage?.sizing?.length === 4 &&
+                    instanceAssessmentData.storage.sizing.every((item: any) => {
+                        return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
+                            item?.name
+                        );
+                    });
+                const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
+                    return isOptimized(item?.status);
+                });
                 const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
@@ -353,6 +362,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     isOperatingSystemOptimized &&
                     isLicenseOptimized &&
                     isStorageLayoutOptimized &&
+                    isAllStorageSizingPresent &&
                     isStorageSizingOptimized &&
                     isStorageConfigOptimized
                 ) {
@@ -386,10 +396,16 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
                     isOptimized(item?.status)
                 );
-                const isStorageSizingOptimized =
-                    instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                        return isOptimized(item?.status);
-                    }).length === 0;
+                const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
+                    return isOptimized(item?.status);
+                });
+                const isAllStorageSizingPresent =
+                    instanceAssessmentData?.storage?.sizing?.length === 4 &&
+                    instanceAssessmentData.storage.sizing.every((item: any) => {
+                        return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
+                            item?.name
+                        );
+                    });
                 const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
@@ -397,7 +413,12 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 if (isComputeOptimized && isOperatingSystemPatchOptimized) {
                     assessmentGroupedByCategory.compute++;
                 }
-                if (isStorageLayoutOptimized && isStorageSizingOptimized && isStorageConfigOptimized) {
+                if (
+                    isStorageLayoutOptimized &&
+                    isAllStorageSizingPresent &&
+                    isStorageSizingOptimized &&
+                    isStorageConfigOptimized
+                ) {
                     assessmentGroupedByCategory.storage++;
                 }
                 if (isApplicationOptimized) {
@@ -563,13 +584,17 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, type
 
 export const disableOfflineRows = (data: any) => {
     return data.map((item: any) => {
-        if (item.status === INVENTORY_STATUS.STOPPED || item.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
+        if (
+            item.status === INVENTORY_STATUS.STOPPED ||
+            item.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+            item?.loadingStatus
+        ) {
             return {
                 ...item,
                 cellProps: {
                     isDisabled: true,
                     selectionProps: {
-                        title: GENERAL.ONLINE_INSTANCE_ASSESS,
+                        title: item?.loadingStatus ? '' : GENERAL.ONLINE_INSTANCE_ASSESS,
                         titleProps: {
                             placement: 'bottom'
                         }

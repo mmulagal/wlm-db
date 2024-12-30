@@ -1,16 +1,17 @@
-import { Table, useTable, TableTopBar, DsButton, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS, STATUS_CONST } from '../../../../utils/consts';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+
 interface StorageTierTableProps {
-    handleDialog: (dialogType: string) => void;
+    lastColDetails: any;
 }
-const FileSystemHeadroomTable = ({ handleDialog }: StorageTierTableProps) => {
+const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
@@ -42,32 +43,6 @@ const FileSystemHeadroomTable = ({ handleDialog }: StorageTierTableProps) => {
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
-
-    const lastColDetails = () => {
-        return {
-            id: '4',
-            Header: '',
-            accessor: '',
-            isSticky: true,
-            width: '318px',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.buttonContainer}>
-                        <DsButton
-                            isThin
-                            variant="secondary"
-                            onClick={() => {
-                                handleDialog('File system headroom');
-                            }}
-                            isDisabled={rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()}
-                        >
-                            Optimize
-                        </DsButton>
-                    </div>
-                );
-            }
-        };
-    };
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -135,7 +110,7 @@ const FileSystemHeadroomTable = ({ handleDialog }: StorageTierTableProps) => {
             width: '320px',
             filterOptions: 'auto'
         },
-        lastColDetails()
+        lastColDetails('File system headroom')
     ];
 
     const tableProps = useTable({

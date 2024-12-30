@@ -75,10 +75,7 @@ const CategoryComponent = ({
             'status',
             false
         );
-        let isOnlineInstance = tableData.some(
-            (item: any) =>
-                item?.status === INVENTORY_STATUS.RUNNING || item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-        );
+        let isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
             <DialogComponent
                 header={`${firstBlockText} optimization`}
