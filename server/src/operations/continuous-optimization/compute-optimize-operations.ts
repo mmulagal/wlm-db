@@ -83,6 +83,7 @@ async function handleComputeRemediation(
                     region,
                     CLUSTER_NETWORK_IP_INFO_PS1,
                     node2InstanceId,
+                    'Get cluster network IPs',
                     accountId
                 );
                 if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
@@ -197,10 +198,8 @@ async function handleComputeRemediation(
                                 region,
                                 [CHECK_NODE_STATUS(nodeName)],
                                 activeNodeInstanceId,
-                                accountId,
-                                undefined,
-                                undefined,
-                                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.'
+                                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.',
+                                accountId
                             );
                             const { status } = sqlResponseParsing(resp);
                             if (status === 'success') {
@@ -479,9 +478,6 @@ async function moveClusterGroupOwnership(
         region,
         [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
         activeNodeInstanceId,
-        undefined,
-        undefined,
-        undefined,
         'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.'
     );
 
@@ -515,9 +511,6 @@ async function getCurrentDnsSettings(credentialsId: string, region: string, inst
         region,
         ['Get-NetAdapter | Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses'],
         instanceId,
-        undefined,
-        undefined,
-        undefined,
         'Retrieves the DNS server addresses for all network adapters on the system.'
     );
 }
@@ -549,10 +542,8 @@ async function updateDnsSettings(
             region,
             [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
             instanceId,
-            accountId,
-            undefined,
-            undefined,
-            'Sets the DNS server addresses for all network adapters to the specified addresses.'
+            'Sets the DNS server addresses for all network adapters to the specified addresses.',
+            accountId
         );
     } catch (error) {
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
@@ -624,6 +615,7 @@ async function handleIscsiSessions(
             region,
             [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
             ec2InstanceId,
+            'Enable MPIO and configure ISCSI sessions',
             accountId,
             false
         );

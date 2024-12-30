@@ -2507,7 +2507,8 @@ async function getAllClusterNodeDetails(
     databaseHostId?: string,
     node1InstanceId?: string
 ) {
-    logger.info('Getting all cluster node details', {
+    const ssmComment = 'Getting all cluster node details';
+    logger.info(ssmComment, {
         accountId,
         credentialsId,
         region,
@@ -2533,6 +2534,7 @@ async function getAllClusterNodeDetails(
         region,
         CLUSTER_NETWORK_IP_INFO_PS1,
         node1InstanceId,
+        ssmComment,
         accountId
     );
     const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);

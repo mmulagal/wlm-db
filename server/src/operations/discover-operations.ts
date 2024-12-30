@@ -1427,7 +1427,15 @@ async function validateCredentials(
 
         command += '$responseObject | ConvertTo-Json -Compress';
 
-        const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
+        const ssmresponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [command],
+            instanceId,
+            'Validate credentials',
+            undefined,
+            false
+        );
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -1633,7 +1641,14 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         );
     }
 
-    const hostname = await callSsmExecution(credentialsId, region, ['hostname'], ec2InstanceId, accountId);
+    const hostname = await callSsmExecution(
+        credentialsId,
+        region,
+        ['hostname'],
+        ec2InstanceId,
+        'Get hostname',
+        accountId
+    );
     const hostnameMessage: string = isEmpty(hostname) ? '' : `with hostname '${hostname?.trim()}' `;
 
     // Check if any job is already running for the same purpose.
@@ -1797,6 +1812,7 @@ async function preparePsModulesForManage(
             region,
             INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
             ec2InstanceId,
+            'Install PowerShell modules',
             accountId,
             false,
             (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
@@ -1862,9 +1878,30 @@ async function manageSqlServerV2(
             await Promise.all([
                 describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
                 getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-                callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
-                callSsmExecution(credentialsId, region, GET_ACTIVE_DIRECTORY_DETAILS, ec2InstanceId, accountId),
-                callSsmExecution(credentialsId, region, GET_MISSING_RESOURCE_DETAILS, ec2InstanceId, accountId)
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    CLUSTER_NETWORK_IP_INFO_PS1,
+                    ec2InstanceId,
+                    'Get cluster network info',
+                    accountId
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    GET_ACTIVE_DIRECTORY_DETAILS,
+                    ec2InstanceId,
+                    'Get AD details',
+                    accountId
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    GET_MISSING_RESOURCE_DETAILS,
+                    ec2InstanceId,
+                    'Get missing resources',
+                    accountId
+                )
             ]);
 
         const node1InstanceId = ec2InstanceId;
@@ -1921,6 +1958,7 @@ async function manageSqlServerV2(
                             region,
                             GET_MISSING_RESOURCE_DETAILS,
                             node2InstanceId!,
+                            'Get missing resources',
                             accountId
                         );
 

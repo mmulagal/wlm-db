@@ -66,6 +66,7 @@ async function isUsingEnterpriseConfiguration(
         region,
         command,
         instanceId,
+        'Check SQL Enterprise Configuration',
         accountId,
         false
     );

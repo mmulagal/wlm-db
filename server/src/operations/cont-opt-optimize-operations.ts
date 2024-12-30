@@ -200,10 +200,11 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         serverNameWithHostName
     } = params;
     logger.info(`Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
+    const jobDescription = `Optimize storage for ${serverNameWithHostName}`;
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         name: `Optimize storage for ${serverNameWithHostName}`,
-        description: `Optimize storage for ${serverNameWithHostName}`,
+        description: jobDescription,
         startTime: Date.now(),
         type: JOBTYPE.OPTIMIZATION,
         status: JOBSTATUS.IN_PROGRESS,
@@ -244,7 +245,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 apiQueryFilter,
                 apiBody
             });
-            const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
+            const resp = await callSsmExecution(
+                credentialsId,
+                region,
+                [ssmCommand],
+                activeNodeInstanceId!,
+                jobDescription
+            );
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
             const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}`;
@@ -688,10 +695,16 @@ async function resizeLun(
         apiQueryFilter: '',
         apiBody: JSON.stringify({ space: { size: requiredLunSizeBytes } })
     });
-
+    const ssmComment = 'Optimizing storage';
     const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
     try {
-        await callSsmExecution(credentialsId, region, [ssmCommand, rescanExtendLunSsmCommand], activeNodeInstanceId);
+        await callSsmExecution(
+            credentialsId,
+            region,
+            [ssmCommand, rescanExtendLunSsmCommand],
+            activeNodeInstanceId,
+            ssmComment
+        );
     } catch (error) {
         throw createError(400, `Error while resizing LUN ${error}`);
     }
@@ -877,8 +890,9 @@ async function resizeVolumeAndLunSize(
         apiEndpoint: `/storage/luns/${lunUuid}`,
         apiQueryFilter: 'fields=space'
     });
+    const ssmComment = 'Get ONTAP LUN details';
 
-    const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
+    const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!, ssmComment);
     const parsedResp = sqlResponseParsing(resp);
     const {
         space: { size: existingLogLunSizeBytes }
@@ -1110,11 +1124,13 @@ async function validateMpioPolicyToRoundRobin(
     );
 
     try {
+        const ssmComment = 'Check MPIO policy';
         const validateMPIOPolicyChangeResponse = await callSsmExecution(
             credentialsId,
             region,
             [CHECK_MPIO_POLICY],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            ssmComment,
             accountId,
             false
         );
@@ -1186,11 +1202,13 @@ async function setMpioPolicyToRoundRobin(
     try {
         // Set MPIO policy to Round Robin
         const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams, runningOnPrimaryNode);
+        const ssmComment = 'Remediate MPIO policy';
         await callSsmExecution(
             credentialsId,
             region,
             [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!
+            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            ssmComment
         );
     } catch (error) {
         const errorMessage = `Error while setting MPIO policy to Round Robin ${error}`;
@@ -1360,6 +1378,7 @@ async function configureMpio(
             region,
             [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            jobDescription,
             accountId,
             false
         );
@@ -1429,6 +1448,7 @@ async function checkMpioInstallation(
             region,
             [CHECK_IF_MPIO_INSTALLED],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            jobDescription,
             accountId,
             false
         );
@@ -1600,11 +1620,13 @@ async function validateMpioSessions(
     let parsedResponse;
     try {
         const ssmCommand = MPIO_ISCSI_SESSIONS(iscsiTargetAddresses);
+        const ssmComment = 'Remediate MPIO ICSI session';
         const validateMpioSessionsResponse = await callSsmExecution(
             credentialsId,
             region,
             [ssmCommand],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            ssmComment,
             accountId,
             false
         );
@@ -1672,6 +1694,7 @@ async function remediateMpioSessions(
             region,
             [ssmCommand],
             runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            jobDescription,
             accountId,
             false
         );
@@ -2076,6 +2099,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError = '';
+    const jobDescription = `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${serverNameWithHostName}`;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -2083,7 +2107,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         serverNameWithHostName!,
         JOBTYPE.OPTIMIZATION,
         `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${serverNameWithHostName}`,
-        `Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for ${serverNameWithHostName}`,
+        jobDescription,
         parentJobId
     );
 
@@ -2116,7 +2140,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
             apiQueryFilter,
             apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
         });
-        const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!);
+        const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription);
         const parsedResp = sqlResponseParsing(resp);
         const objectsOptimized = parsedResp.num_records || 0;
 
