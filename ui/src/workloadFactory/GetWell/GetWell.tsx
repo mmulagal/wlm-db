@@ -228,6 +228,21 @@ const GetWell = () => {
         );
     };
 
+    const [expandedValue, setExpandedValue] = useState(undefined);
+    const [clickedAccordionId, setClickedAccordionId] = useState<string | undefined>(undefined);
+
+    const isAccordionExpanded = (id: string, optimizePrintState: any): boolean | undefined => {
+        if (optimizePrintState) {
+            return true;
+        }
+
+        return clickedAccordionId === expandedValue && expandedValue === id;
+    };
+
+    const handleAccordionExpanded = (id: any, isExpanded: boolean) => {
+        isExpanded && clickedAccordionId === id && setExpandedValue(id);
+    };
+
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             {optimizePrintState && (
@@ -825,7 +840,12 @@ const GetWell = () => {
                                             id="1"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.storage_tier?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('1', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('1', isExpanded);
+                                                // accordion.onExpandChange && accordion.onExpandChange(isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('1')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.storage_tier?.tags?.map((perTag: string) => {
@@ -878,7 +898,12 @@ const GetWell = () => {
                                             id="2"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.file_system_headroom?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('2', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('2', isExpanded);
+                                                // accordion.onExpandChange && accordion.onExpandChange(isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('2')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.file_system_headroom?.tags?.map(
@@ -937,7 +962,11 @@ const GetWell = () => {
                                             isDisabled={
                                                 loading || !cardData?.transaction_log_drive_size?.block_two?.value
                                             }
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('3', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('3', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('3')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.transaction_log_drive_size?.tags?.map(
@@ -994,7 +1023,11 @@ const GetWell = () => {
                                             id="4"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.tempdb_drive_size?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('4', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('4', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('4')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.tempdb_drive_size?.tags?.map(
@@ -1070,7 +1103,11 @@ const GetWell = () => {
                                             id="5"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.user_data_files?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('5', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('5', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('5')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.user_data_files?.tags?.map((perTag: string) => {
@@ -1132,7 +1169,11 @@ const GetWell = () => {
                                                 </div>
                                             }
                                             isDisabled={loading || !cardData?.transaction_log_files?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('6', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('6', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('6')}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
                                                     <div
@@ -1180,7 +1221,11 @@ const GetWell = () => {
                                             id="7"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.tempdb_files?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('7', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('7', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('7')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.tempdb_files?.tags?.map((perTag: string) => {
@@ -1250,7 +1295,11 @@ const GetWell = () => {
                                             id="9"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.ontap_configuration?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('9', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('9', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('9')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.ontap_configuration?.tags?.map(
@@ -1307,7 +1356,11 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="10"
                                             isDisabled={loading || !cardData?.os_configuration?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('10', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('10', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('10')}
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
@@ -1387,7 +1440,11 @@ const GetWell = () => {
                                                 !cardData?.compute_rightsizing?.block_two?.value ||
                                                 filteredCardData?.compute_rightsizing?.isMissingPermissions
                                             }
-                                            isExpanded={optimizePrintState}
+                                            onClick={() => setClickedAccordionId('11')}
+                                            isExpanded={isAccordionExpanded('11', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('11', isExpanded);
+                                            }}
                                             title={
                                                 filteredCardData?.compute_rightsizing?.isMissingPermissions ? (
                                                     <div className={styles.missingPermissionText}>
@@ -1477,7 +1534,11 @@ const GetWell = () => {
                                                 </div>
                                             }
                                             isDisabled={loading || !cardData?.host_os_patch?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('12', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('12', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('12')}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
                                                     <div
@@ -1542,7 +1603,11 @@ const GetWell = () => {
                                             id="13"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.sql_licenses?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('13', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('13', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('13')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.sql_licenses?.tags?.map((perTag: string) => {
