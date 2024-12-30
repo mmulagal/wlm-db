@@ -1,4 +1,4 @@
-import { countBy, isEmpty } from 'lodash-es';
+import { countBy, isEmpty, isNull } from 'lodash-es';
 import createError from 'http-errors';
 import moment from 'moment';
 import {
@@ -50,6 +50,8 @@ const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
 
 async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
+    logger.info('Checking for missing optimize permissions', { credentialsId, region, permissions });
+
     const missingPermissions: string[] = [];
     const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
     const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
@@ -72,7 +74,16 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
     const currentSizePercentForAllVolumes: number[] = [];
     driveDetails.forEach((drive: LogDriveDetails) => {
-        const { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        let { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        if (isNull(logDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
+            logDriveTotalSizeMB = 0;
+            dataDriveTotalSizeMB = 0;
+        }
+        drive = {
+            ...drive,
+            dataDriveTotalSizeMB,
+            logDriveTotalSizeMB
+        };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(drive as SizingViolationResponseType);
         } else if (dataAccessPath !== logAccessPath) {
@@ -121,8 +132,19 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     const currentSizePercentForAllVolumes: number[] = [];
 
     let tempdbPercent = 0;
-    const { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
+    let { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
         value;
+
+    if (isNull(tempdbDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
+        tempdbDriveTotalSizeMB = 0;
+        dataDriveTotalSizeMB = 0;
+    }
+    value = {
+        ...value,
+        dataDriveTotalSizeMB,
+        tempdbDriveTotalSizeMB
+    };
+
     if (defaultDataDriveLetter === tempdbDriveLetter) {
         status = AssessmentStatus.NOT_APPLICABLE;
 
@@ -562,7 +584,8 @@ async function calculateStorageDrift(
         });
     } catch (error: any) {
         logger.error(
-            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`
+            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`,
+            error
         );
     }
 
