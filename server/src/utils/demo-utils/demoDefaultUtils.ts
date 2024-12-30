@@ -292,7 +292,7 @@ async function createDemoResourcesPerRegion(
         const assessmentJobMockData = await createAssessmentJobMockData(accountId, instances, credentialsId, region);
         await createJobs(accountId, assessmentJobMockData);
     }
-    return 'Demo Data created';
+    return { message: 'Demo Data created' };
 }
 
 async function creadteDemoDBData(accountId: string, credentialsList: any) {
