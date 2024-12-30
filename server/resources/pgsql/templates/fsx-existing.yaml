@@ -120,6 +120,11 @@ Outputs:
         Value: !GetAtt FSxSvmConfiguration.StorageVirtualMachineId
         Export:
             Name: !Sub ${AWS::StackName}-FSxSvmId
+    FSxSvmUuid:
+        Description: System generated UUID of the storage virtual machine
+        Value: !GetAtt FSxSvmConfiguration.UUID
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxSvmUuid
     FSxDataVolumeLogicalId:
         Description: Logical ID of the FSx for ONTAP data volume
         Value: !Ref FSxDataVolumeConfiguration

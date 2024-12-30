@@ -3,7 +3,7 @@ exec > /var/log/netapp_wf/configure-ontap.log 2>&1
 echo "Setting up the ontap environment..."
 
 # Parse command-line arguments
-while getopts "f:r:s:n:a:d:l:p:" opt; do
+while getopts "f:r:s:n:a:d:l:v:p:" opt; do
     case $opt in
         f) filesystemid="$OPTARG" ;;
         r) region="$OPTARG" ;;
@@ -12,6 +12,7 @@ while getopts "f:r:s:n:a:d:l:p:" opt; do
         a) fsxaggrname="$OPTARG" ;;
         d) fsxdatavolumename="$OPTARG" ;;
         l) fsxlogvolumename="$OPTARG" ;;
+        v) svmuuid="$OPTARG" ;;
         p) parentstackname="$OPTARG" ;;
     esac
 done
@@ -112,6 +113,10 @@ check_and_create_ontap_volumes() {
 }
 
 check_and_create_ontap_volumes
+
+# Update NFS transfer size
+ontap_request 'PATCH' "protocols/nfs/services/$svmuuid" '{"transport":{"tcp_max_transfer_size":262144}}'
+check_status "Failed to update NFS transfer size"
 
 # Create directories
 sudo mkdir -p /$fsxdatavolumename /$fsxlogvolumename

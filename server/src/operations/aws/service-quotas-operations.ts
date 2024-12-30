@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { listServiceQuota } from '../../lib/aws/service-quotas';
+import { listServiceQuota, paginatedListServiceQuotas } from '../../lib/aws/service-quotas';
 import { getVpcsList } from './ec2-operations';
 import { currentCfStacksCount } from './cloud-formation-operations';
 import {
@@ -29,7 +29,7 @@ async function getCfQuota(credentialsId: string, region: string) {
     logger.info('Fetching CloudFormation quotas in region ', { credentialsId, region });
 
     const [cfCountQuota] =
-        (await listServiceQuota(credentialsId, region, AWSServiceNames.CLOUDFORMATION)).Quotas?.filter(
+        (await paginatedListServiceQuotas(credentialsId, region, AWSServiceNames.CLOUDFORMATION))?.filter(
             x => x.QuotaCode === CF_STACK_COUNT_QUOTACODE
         ) || [];
 
@@ -49,7 +49,7 @@ async function getCfQuota(credentialsId: string, region: string) {
         );
     }
 
-    return { cfCountQuota: cfCountQuota.Value };
+    return { cfCountQuota: cfCountQuota?.Value };
 }
 
 async function isVpcQuotaReached(credentialsId: string, region: string) {
