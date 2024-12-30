@@ -2061,6 +2061,7 @@ function optimizeStorageJobData(
             name: `Optimized 1/3 volumes ${resourceName}\\${instanceName}`,
             description: `Optimized 1/3 volumes ${resourceName}\\${instanceName}`,
             status: JOBSTATUS.FAILED,
+            error: 'Setting storage parameter failed on volumes  datavol and sqldata',
             resource_name: resourceName,
             parent_job_id: parentJobId,
             type: JOBTYPE.SANDBOX,
