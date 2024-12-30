@@ -222,7 +222,8 @@ async function getStorageDataUsingSSM(
     apiQuery: string,
     activeNodeInstanceId: string
 ) {
-    logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
+    const ssmComment = 'Fetching storage savings details';
+    logger.info(ssmComment, credentialsId, region, activeNodeInstanceId);
 
     let commands;
 
@@ -235,8 +236,7 @@ async function getStorageDataUsingSSM(
             `C:\\SSM\\OntapRestGet.ps1  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     }
-
-    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
+    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, ssmComment);
 
     const cleanResponse = response?.replaceAll('\r\n', '');
     const jsonResponse = JSON.parse(cleanResponse!);
@@ -424,7 +424,8 @@ async function getMappedOntapVolumes(
     includeLogVolumes = false,
     accountId?: string
 ) {
-    logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
+    const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
+    logger.info(ssmComment, {
         credentialsId,
         region,
         fileSystemId,
@@ -453,7 +454,14 @@ async function getMappedOntapVolumes(
             includeLogVolumes
         );
 
-        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!, accountId);
+        const response = await callSsmExecution(
+            credentialsId,
+            region!,
+            [command],
+            activeNodeInstanceId!,
+            ssmComment,
+            accountId
+        );
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -572,7 +580,8 @@ async function getStorageDataFromOntap(
     instanceDetails: DatabaseInstance[],
     isSqlAuthEnabled: boolean
 ) {
-    logger.info('Getting storage data from Ontap:', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
+    const ssmComment = 'Get storage data from ONTAP';
+    logger.info(ssmComment, ':', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
 
     try {
         const managedInstances = instanceDetails.filter(
@@ -589,7 +598,7 @@ async function getStorageDataFromOntap(
             isSqlAuthEnabled,
             'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'
         );
-        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId);
+        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId, ssmComment);
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);

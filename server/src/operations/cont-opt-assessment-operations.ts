@@ -186,12 +186,14 @@ async function initiateStorageAssessmentCollection(
             .flat() || [];
 
     const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
+    const ssmComment = 'Get Storage Configuration Assessment';
 
     const response = await callSsmExecution(
         credentialsId,
         region,
         command,
         instanceRecord.activeNodeInstanceid,
+        ssmComment,
         accountId,
         false,
         CUSTOM_SSM_EXECUTION_TIMEOUT

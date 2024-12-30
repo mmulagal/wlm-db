@@ -69,6 +69,7 @@ async function getDefaultDrives(
     isSqlAuthEnabled: boolean,
     executionTimeout?: string
 ) {
+    const ssmComment = 'Getting MSSQL default data and log drives';
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
     let defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
 
@@ -81,6 +82,7 @@ async function getDefaultDrives(
         region,
         defaultDrivesCommand,
         activeNodeInstanceId,
+        ssmComment,
         undefined,
         false,
         executionTimeout
@@ -124,6 +126,7 @@ async function getDriveInfoFromNodes(
         region,
         activeNodeDriveInfoCommand,
         activeNodeInstanceId,
+        'Get active standby node drive info',
         undefined,
         false,
         executionTimeout
@@ -136,6 +139,7 @@ async function getDriveInfoFromNodes(
                   region,
                   standbyNodeDriveListCommand,
                   standbyNodeInstanceId!,
+                  'Get standby node drive list',
                   undefined,
                   false,
                   executionTimeout
@@ -764,6 +768,7 @@ async function invokeSSMForDatabaseDeployment(
                         region,
                         standbyIqnCommand,
                         standbyNodeInstanceId,
+                        'Get IQN for standby node',
                         accountId,
                         false,
                         CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -987,13 +992,14 @@ async function createDatabase(
     }
 
     // child job creation
+    const jobDescription = `Creating database ${databaseName} with provided data and log file paths.`;
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
         name: 'Creating Database',
         parentJobId,
-        description: `Creating database ${databaseName} with provided data and log file paths.`,
+        description: jobDescription,
         startTime: Date.now()
     });
 
@@ -1005,6 +1011,7 @@ async function createDatabase(
             region,
             createDatabaseCommand,
             activeNodeInstanceId,
+            jobDescription,
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1111,6 +1118,7 @@ async function configureLuns(
             region,
             configureLuncommands,
             activeNodeInstanceId,
+            'Configuring LUNs',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1233,6 +1241,7 @@ async function newDBInitialization(
             region,
             dbInitializecommands,
             activeNodeInstanceId,
+            description,
             accountId,
             false,
             customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1315,13 +1324,14 @@ async function cleanUpDatabaseDeployment(
         isDefaultInstance
     });
 
+    const jobDescription = `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in instance ${serverNameWithHostName}`;
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
         name: 'Cleaning up',
         parentJobId,
-        description: `Database creation failed. Cleaning up resources in FSx for NetApp ONTAP and in instance ${serverNameWithHostName}`,
+        description: jobDescription,
         startTime: Date.now()
     });
 
@@ -1359,6 +1369,7 @@ async function cleanUpDatabaseDeployment(
             region,
             cleaupCommand,
             activeNodeInstanceId,
+            jobDescription,
             accountId,
             false
         );
@@ -1784,7 +1795,8 @@ async function getDefaultCollationAndVersion(
     sqlInstance: SqlInstance,
     executionTimeout?: string
 ) {
-    logger.info('Getting MSSQL default collation', { credentialsId, region, activeNodeInstanceId });
+    const ssmComment = 'Getting MSSQL default collation';
+    logger.info(ssmComment, { credentialsId, region, activeNodeInstanceId });
     const { name: instanceName, executableName, sqlAuthEnabled } = sqlInstance;
 
     let defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
@@ -1798,6 +1810,7 @@ async function getDefaultCollationAndVersion(
         region,
         defaultCollationCommand,
         activeNodeInstanceId,
+        ssmComment,
         undefined,
         false,
         executionTimeout

@@ -199,10 +199,10 @@ async function callSsmExecution(
     region: string,
     commands: Array<string>,
     activeNodeInstanceId: string,
+    comment?: string,
     accountId?: string,
     cacheData: boolean = true,
-    executionTimeout?: string,
-    comment?: string
+    executionTimeout?: string
 ) {
     logger.info('Calling SSM command execution', credentialsId, region, commands, activeNodeInstanceId);
     const cacheHashKey = generateHash(activeNodeInstanceId + commands);
