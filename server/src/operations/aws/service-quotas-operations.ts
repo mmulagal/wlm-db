@@ -1,29 +1,10 @@
 import createError from 'http-errors';
-import { listServiceQuota, paginatedListServiceQuotas } from '../../lib/aws/service-quotas';
-import { getVpcsList } from './ec2-operations';
+import { paginatedListServiceQuotas } from '../../lib/aws/service-quotas';
 import { currentCfStacksCount } from './cloud-formation-operations';
-import {
-    VPC_COUNT_QUOTANAME,
-    AWSServiceNames,
-    STACKS_DEPLOYED,
-    HttpErrorCodes,
-    CF_STACK_COUNT_QUOTACODE
-} from '../../utils/consts';
+import { AWSServiceNames, STACKS_DEPLOYED, HttpErrorCodes, CF_STACK_COUNT_QUOTACODE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
-
-async function getVpcQuota(credentialsId: string, region: string) {
-    logger.info('Fetching Vpc quotas in region ', { credentialsId, region });
-
-    const [vpcCountQuota] =
-        (await listServiceQuota(credentialsId, region, AWSServiceNames.VPC)).Quotas?.filter(
-            x => x.QuotaName === VPC_COUNT_QUOTANAME
-        ) || [];
-    logger.debug('VPC count quota ', vpcCountQuota);
-
-    return { vpcCountQuota: vpcCountQuota.Value! };
-}
 
 async function getCfQuota(credentialsId: string, region: string) {
     logger.info('Fetching CloudFormation quotas in region ', { credentialsId, region });
@@ -52,13 +33,6 @@ async function getCfQuota(credentialsId: string, region: string) {
     return { cfCountQuota: cfCountQuota?.Value };
 }
 
-async function isVpcQuotaReached(credentialsId: string, region: string) {
-    logger.info('Performing vpc quota check in region ', { credentialsId, region });
-    const quotaDetails = await getVpcQuota(credentialsId, region);
-    const currentVpcCount = (await getVpcsList(credentialsId, region)).vpcs.length;
-    return currentVpcCount === quotaDetails.vpcCountQuota;
-}
-
 async function isCfStackQuotaReached(credentialsId: string, region: string) {
     logger.info('Performing cloudformation stacks quota check in region ', region);
     const quotaDetails = await getCfQuota(credentialsId, region);
@@ -78,4 +52,4 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-export { getVpcQuota, getCfQuota, isVpcQuotaReached, isCfStackQuotaReached };
+export { getCfQuota, isCfStackQuotaReached };

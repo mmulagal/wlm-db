@@ -1,9 +1,5 @@
 import { isArray } from 'lodash-es';
-import {
-    ServiceQuotasClient,
-    ListServiceQuotasCommand,
-    paginateListServiceQuotas
-} from '@aws-sdk/client-service-quotas';
+import { ServiceQuotasClient, paginateListServiceQuotas } from '@aws-sdk/client-service-quotas';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 
@@ -17,16 +13,6 @@ async function getServiceQuotasClient(credentialsId: string, region: string) {
     } = await getCredentialsDetails(credentialsId);
 
     return new ServiceQuotasClient({ region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
-}
-
-async function listServiceQuota(credentialsId: string, region: string, serviceCode: string) {
-    logger.info(`List ${serviceCode} quota in region ${region} with credentials ${credentialsId}.`);
-
-    const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
-    const resp = await serviceQuotaClient.send(new ListServiceQuotasCommand({ ServiceCode: serviceCode }));
-    logger.debug(`${serviceCode} quota response ${resp}`);
-
-    return resp;
 }
 
 async function paginatedListServiceQuotas(credentialsId: string, region: string, serviceCode: string) {
@@ -47,4 +33,4 @@ async function paginatedListServiceQuotas(credentialsId: string, region: string,
     return quotas;
 }
 
-export { getServiceQuotasClient, listServiceQuota, paginatedListServiceQuotas };
+export { getServiceQuotasClient, paginatedListServiceQuotas };
