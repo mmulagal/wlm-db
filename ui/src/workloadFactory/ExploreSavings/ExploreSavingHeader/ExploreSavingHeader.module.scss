@@ -5,10 +5,10 @@
     box-shadow: 2px 2px 6px 0px var(--border);
     width: 83.75%;
     max-width: 1607px;
-    height: 252px;
 
     .topPart {
         display: flex;
+        height: 252px;
 
         .contentSection {
             padding: 40px 64px 0 64px;
@@ -59,16 +59,18 @@
 
 @media screen and (min-width: 1621px) and (max-width: 1822px) {
     .exploreSavingsHeader {
-        height: 292px;
+        .topPart {
+            height: 292px;
+        }
     }
 }
 
 @media screen and (min-width: 1471px) and (max-width: 1823px) {
     .exploreSavingsHeader {
-        height: 336px;
         //height: 380px;
 
         .topPart {
+            height: 336px;
             .svgContainer1600 {
                 width: 535px;
                 height: 380px;
@@ -96,10 +98,10 @@
 
 @media screen and (max-width: 1470px) {
     .exploreSavingsHeader {
-        height: 436px;
         width: 1128px;
 
         .topPart {
+            height: 436px;
             .contentSection {
                 padding: 32px 64px;
                 gap: 24px;
@@ -125,9 +127,8 @@
 
 @media screen and (min-width: 1621px) and (max-width: 1822px) {
     .exploreSavingsHeader {
-        height: 292px;
-
         .topPart {
+            height: 292px;
             .svgContainer1600 {
                 width: 535px;
                 height: 292px;
