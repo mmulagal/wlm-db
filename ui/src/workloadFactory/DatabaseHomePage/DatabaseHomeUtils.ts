@@ -16,7 +16,8 @@ import {
     formatSizeOnePrecision,
     formatSizeSplit,
     getByteVal,
-    isAwsBackupEnabled
+    isAwsBackupEnabled,
+    sortListOfDict
 } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 
@@ -607,7 +608,7 @@ export const disableOfflineRows = (data: any) => {
 };
 
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
-    return assessmentData.map((instanceData: any) => {
+    let result = assessmentData.map((instanceData: any) => {
         let updatedAssessmentData = { ...instanceData };
         const host = hostData?.[instanceData.databaseHostId];
         if (!host) {
@@ -625,6 +626,7 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
         }
         return updatedAssessmentData;
     });
+    return sortListOfDict(result, 'status', false);
 };
 
 export const formatAssessmentTableData = (data: any) => {
