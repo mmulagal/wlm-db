@@ -707,6 +707,11 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxSvmId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxSvmId"
+        FSxSvmUuid:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxSvmUuid"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxSvmUuid"
         ONTAPSecurityGroupID:
           Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:

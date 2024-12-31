@@ -55,6 +55,9 @@ Parameters:
     FSxSVMId:
         Description: ID of the FSx Storage Virtual Machine
         Type: String
+    FSxSvmUuid:
+        Description: UUID of the FSx Storage Virtual Machine
+        Type: String
     FSxAggrName:
         Description: Aggregate FSx for ONTAP file system.
         Type: String
@@ -287,6 +290,7 @@ Resources:
                                     -a ${FSxAggrName}
                                     -d ${FSxDataVolumeName}
                                     -l ${FSxLogVolumeName}
+                                    -v ${svmUuid}
                                     -p ${parentStackName}'
                                 -   FSxFileSystemId: !Ref 'FSxFileSystemId'
                                     FSxSVMId: !Ref 'FSxSVMId'
@@ -294,6 +298,7 @@ Resources:
                                     FSxAggrName: !Ref 'FSxAggrName'
                                     FSxDataVolumeName: !Ref 'FSxDataVolumeName'
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                                    svmUuid: !Ref 'FSxSvmUuid'
                                     parentStackName: !Ref 'ParentStackName'
                             waitAfterCompletion: '0'
                         b-configure-pgsql:
