@@ -255,7 +255,7 @@ const GetWell = () => {
             )}
             <div className={styles.getWell} id="export-optimize-pdf">
                 {!optimizePrintState && (
-                    <div className={commonStyles.commonBreadCrumb}>
+                    <div className={commonStyles.commonBreadCrumb} style={{ left: '0%', paddingLeft: '40px' }}>
                         <BreadCrumbs
                             items={[
                                 {
@@ -280,7 +280,7 @@ const GetWell = () => {
                 )}
                 <div className={styles.header}>
                     <div className={styles['header-top-section']}>
-                        <DsTypography className={styles.optimizeHeader} variant="Semibold_20">
+                        <DsTypography className={styles.optimizeHeader} variant="Semibold_16">
                             Optimize instance
                         </DsTypography>
                         {!optimizePrintState &&
@@ -306,7 +306,7 @@ const GetWell = () => {
                             ))}
                     </div>
                     {!optimizePrintState && (
-                        <DsTypography variant="Semibold_16">
+                        <DsTypography variant="Regular_14">
                             {selectedDatabaseInstanceName || 'instance name'}
                         </DsTypography>
                     )}
@@ -366,10 +366,9 @@ const GetWell = () => {
                         )}
                         <div className={styles.filterComponent}>
                             <DsAccordion
-                                id="2"
+                                id="100"
                                 variant="Default"
                                 isDisabled={loading || !isAssessmentAvailable}
-                                onExpandChange={setsAccordionOpen}
                                 title={
                                     <div className={styles.filterHeaderStyle}>
                                         <div className={isDarkTheme ? styles['dark-theme-union'] : ''}>
@@ -396,7 +395,10 @@ const GetWell = () => {
                                     </div>
                                 }
                                 children={
-                                    <div className={styles.mainSection}>
+                                    <div
+                                        className={styles.mainSection}
+                                        style={{ gap: optimizeFilterTags.length > 0 ? '42px' : '0px' }}
+                                    >
                                         <div className={styles.dropdownList}>
                                             <div className={styles.dropDown}>
                                                 <DsSelect
@@ -632,7 +634,10 @@ const GetWell = () => {
                                             </div>
                                         </div>
 
-                                        <div className={styles.filtersOption}>
+                                        <div
+                                            className={styles.filtersOption}
+                                            style={{ marginBottom: optimizeFilterTags.length > 0 ? '18px' : '16px' }}
+                                        >
                                             <div className={styles.tagsContainer}>
                                                 {optimizeFilterTags.map((item: any) => (
                                                     <div className={styles.filterTag}>
