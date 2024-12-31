@@ -699,7 +699,8 @@ async function makeSsmCall(
         Parameters: {
             executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
-        }
+        },
+        Comment: 'Discover SQL Server instances'
     };
 
     let commandId;
