@@ -393,7 +393,7 @@ export const cardDataDefault: GwCardDataInterface = {
                 {
                     title: 'Not optimized: ',
                     description:
-                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An not-optimized license \nmight result in unnecessary costs.'
+                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An unoptimized license \nmight result in unnecessary costs.'
                 },
                 {
                     title: 'Optimized: ',
