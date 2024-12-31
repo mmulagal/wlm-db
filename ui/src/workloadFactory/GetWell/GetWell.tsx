@@ -15,6 +15,7 @@ import TotalOptimizationScore from './TotalOptimizationScore/TotalOptimizationSc
 import OptimizationBreakdown from './OptimizationBreakdown/OptimizationBreakdown';
 import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { ReactComponent as RowArrow } from '../../assets/row arrow-down.svg';
 import { ReactComponent as Light } from '../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../assets/Light-Disabled.svg';
 import { ReactComponent as Error } from '../../assets/error-icon.svg';
@@ -369,6 +370,15 @@ const GetWell = () => {
                                 id="100"
                                 variant="Default"
                                 isDisabled={loading || !isAssessmentAvailable}
+                                expandCollapseIcon={{
+                                    className: styles['expand-collapse-icon'],
+                                    collapsedIcon: <RowArrow />,
+                                    expandedIcon: (
+                                        <div style={{ transform: 'rotate(180deg)' }}>
+                                            <RowArrow />
+                                        </div>
+                                    )
+                                }}
                                 title={
                                     <div className={styles.filterHeaderStyle}>
                                         <div className={isDarkTheme ? styles['dark-theme-union'] : ''}>
