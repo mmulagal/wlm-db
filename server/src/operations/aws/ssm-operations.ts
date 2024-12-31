@@ -224,7 +224,7 @@ async function callSsmExecution(
     const params = {
         ...defaultParams,
         InstanceIds: [activeNodeInstanceId],
-        ...(comment && { Comment: comment })
+        ...(comment && { Comment: comment?.substring(0, 100) })
     };
     try {
         logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
