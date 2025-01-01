@@ -27,21 +27,25 @@ async function triggerHostOsPatchCollection(
     databaseHostId: string,
     metadata: Metadata
 ) {
-    const { node1InstanceId, node2InstanceId } = metadata;
-    const hostOsPatchAssessment = await runOsPatchAssessment(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        node1InstanceId,
-        !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
-    );
-    const existingAssessmentData = metadata.assessment;
-    metadata.assessment = {
-        ...existingAssessmentData,
-        hostOsPatch: hostOsPatchAssessment
-    };
-    updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    try {
+        const { node1InstanceId, node2InstanceId } = metadata;
+        const hostOsPatchAssessment = await runOsPatchAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            node1InstanceId,
+            !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+        );
+        const existingAssessmentData = metadata.assessment;
+        metadata.assessment = {
+            ...existingAssessmentData,
+            hostOsPatch: hostOsPatchAssessment
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+    } catch (error) {
+        logger.error(`Error while triggering host os patch collection. ${error}`);
+    }
 }
 
 async function calculateHostOsPatchDrift(
