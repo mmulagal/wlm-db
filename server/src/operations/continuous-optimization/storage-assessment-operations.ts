@@ -51,16 +51,28 @@ const sizingConfigData = storageGoldenConfigData.sizing;
 
 async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
     logger.info('Checking for missing optimize permissions', { credentialsId, region, permissions });
-
-    const missingPermissions: string[] = [];
-    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
-    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
-    if (combinedDeniedPermissions.length > 0) {
-        combinedDeniedPermissions.forEach(permission => {
-            missingPermissions.push(`${permission.service}:${permission.action}`);
+    try {
+        const missingPermissions: string[] = [];
+        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            permissions
+        );
+        const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
+        if (combinedDeniedPermissions.length > 0) {
+            combinedDeniedPermissions.forEach(permission => {
+                missingPermissions.push(`${permission.service}:${permission.action}`);
+            });
+        }
+        return missingPermissions;
+    } catch (error) {
+        logger.error('Error while checking for missing optimize permissions', {
+            credentialsId,
+            region,
+            permissions,
+            error
         });
     }
-    return missingPermissions;
 }
 
 function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
@@ -200,7 +212,8 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     let missingPermissions: string[] = [];
     let newFsxStorageCapactiyGiB = 0;
     if (status !== AssessmentStatus.OPTIMIZED) {
-        missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem']);
+        missingPermissions =
+            (await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem'])) || [];
         newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
             totalUsed,
             ssdStorageCapacityInBytes
@@ -533,9 +546,8 @@ async function calculateStorageDrift(
                     (key === 'tempdb-drive-size' || key === 'log-drive-size') &&
                     status !== AssessmentStatus.OPTIMIZED
                 ) {
-                    missingPermissions = await checkForMissingOptimizePermissions(credentialsId, region, [
-                        'fsx:UpdateVolume'
-                    ]);
+                    missingPermissions =
+                        (await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateVolume'])) || [];
                 }
 
                 if (currentSizePercentForAllVolumes !== undefined && currentSizePercentForAllVolumes.length > 0) {
