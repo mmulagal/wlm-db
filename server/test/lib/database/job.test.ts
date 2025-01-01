@@ -32,7 +32,7 @@ beforeEach(async () => {
         }
     ]);
 });
-afterAll(async () => {
+afterEach(async () => {
     await deleteJobsOfAccount(ACCOUNT_ID);
 });
 describe('Create jobs', () => {
@@ -185,13 +185,31 @@ describe('Delete jobs', () => {
     });
 });
 
-describe('Modify jobs', () => {
+describe.only('Modify jobs', () => {
     it('should modify a job', async () => {
         const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const [jobIds] = jobs.map(({ id }) => id);
         const endTime = moment(new Date()).valueOf();
         const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, endTime);
         expect(response.description).equal('modified-description');
+        expect(response.status, JOBSTATUS.COMPLETED);
+    });
+
+    it('should assign endtime to complete jobs', async () => {
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const [jobIds] = jobs.map(({ id }) => id);
+        expect(jobs[0].end_time).toBeFalsy();
+        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, undefined);
+        expect(response.end_time).toBeDefined();
+        expect(response.status, JOBSTATUS.COMPLETED);
+    });
+
+    it('should not assign endtime to incomplete jobs', async () => {
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const [jobIds] = jobs.map(({ id }) => id);
+        expect(jobs[0].end_time).toBeFalsy();
+        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.IN_PROGRESS, undefined);
+        expect(response.end_time).toBeFalsy();
         expect(response.status, JOBSTATUS.COMPLETED);
     });
 
