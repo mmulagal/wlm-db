@@ -6,7 +6,7 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import styles from './InventoryTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
     INVENTORY_STATUS,
@@ -52,6 +52,7 @@ import {
     setManagedHostColState
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const InventoryTable = () => {
     const dispatch = useDispatch();
@@ -77,6 +78,34 @@ const InventoryTable = () => {
 
     const [manageInstanceApi] = useManageMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
+
+    const [scrollPos, setScrollPos] = useState(0);
+
+    useRunOnce(() => {
+        const handleOuterScroll = () => {
+            const rowExpanded = document.querySelectorAll("[class^='Table-module_expanded-row-section']");
+            const currentTableUpdated = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+            if (rowExpanded.length > 0) {
+                currentTableUpdated[0].scrollLeft = currentTableUpdated[1].scrollLeft;
+
+                setScrollPos(currentTable[0].scrollLeft);
+            }
+        };
+
+        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+
+        if (currentTable[0]) {
+            //@ts-ignore
+            currentTable[0].addEventListener('scroll', handleOuterScroll);
+        }
+
+        return () => {
+            if (currentTable[0]) {
+                //@ts-ignore
+                currentTable[0].removeEventListener('scroll', handleOuterScroll);
+            }
+        };
+    });
 
     useEffect(() => {
         setLoading(
@@ -272,10 +301,37 @@ const InventoryTable = () => {
         });
     };
 
+    const divRef = useRef<HTMLDivElement>(null);
+    const [divWidth, setDivWidth] = useState(0);
+
+    const updateDivWidth = () => {
+        if (divRef.current) {
+            setDivWidth(divRef.current.offsetWidth);
+        }
+    };
+
+    useEffect(() => {
+        // Set initial width
+        updateDivWidth();
+
+        // Update width on window resize
+        window.addEventListener('resize', updateDivWidth);
+
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('resize', updateDivWidth);
+        };
+    }, []);
+
     const ExpandedRow = useCallback(({ rowData }: any) => {
         if (rowData?.ssmState === INVENTORY_STATUS.ONLINE || rowData?.totalInstance !== 0) {
             dispatch(setInventoryExpandedRowHostData(rowData));
-            return <ManagedHostSubTable handleManageInstances={handleManageInstances} />;
+            return (
+                <ManagedHostSubTable
+                    handleManageInstances={handleManageInstances}
+                    divWidth={divRef.current ? divRef.current.offsetWidth : 0}
+                />
+            );
         }
         return <OfflineComponent />;
     }, []);
@@ -793,6 +849,7 @@ const InventoryTable = () => {
                             ? `${styles.table} ${styles.tableScroll}`
                             : `${styles.table} ${styles.tableScrollRevert}`
                     }
+                    ref={divRef}
                 >
                     <TableTopBar
                         //@ts-ignore
