@@ -518,10 +518,6 @@ const validateMpioSessionsSsm = {
     commands: [MPIO_ISCSI_SESSIONS]
 };
 
-const remediateMpioSessions = {
-    commands: [REMEDIATE_MPIO_ISCSI_SESSIONS]
-};
-
 const validateMpioInstallation = {
     commands: [CHECK_IF_MPIO_INSTALLED]
 };
@@ -543,6 +539,7 @@ const checkNodeStatusRegex = /#Check Node Status/;
 const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
 const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
+const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -716,7 +713,9 @@ ssmMock
     .resolves(listSendCommandCommandResponse.setMpioPolicyCommand)
     .on(SendCommandCommand, { Parameters: validateMpioSessionsSsm })
     .resolves(listSendCommandCommandResponse.validateMpioSessionsCommand)
-    .on(SendCommandCommand, { Parameters: remediateMpioSessions })
+    .on(SendCommandCommand, params => {
+        return remediateMpioSessions.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.remediateMpioSessionsCommand)
     .on(SendCommandCommand, { Parameters: validateMpioInstallation })
     .resolves(listSendCommandCommandResponse.validateMpioInstallationCommand)

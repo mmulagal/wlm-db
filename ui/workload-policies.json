@@ -97,7 +97,7 @@
                     "kms:Describe*",
                     "kms:List*",
                     "kms:GenerateDataKey",
-                    "kms:Decrypt",          
+                    "kms:Decrypt",
                     "logs:CreateLogGroup",
                     "logs:CreateLogStream",
                     "logs:DescribeLog*",
@@ -131,13 +131,8 @@
             {
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
-                "Action": [
-                    "cloudformation:SignalResource"
-                ],
-                "Resource": [
-                    "arn:aws:cloudformation:*:*:stack/WLMDB*", 
-                    "arn:aws:logs:*:*:log-group:WLMDB*"
-                ]
+                "Action": ["cloudformation:SignalResource"],
+                "Resource": ["arn:aws:cloudformation:*:*:stack/WLMDB*", "arn:aws:logs:*:*:log-group:WLMDB*"]
             },
             {
                 "Sid": "IAMGroup",
@@ -183,12 +178,7 @@
             {
                 "Sid": "SSMParameterStore",
                 "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParameter", 
-                    "ssm:GetParameters", 
-                    "ssm:PutParameter",
-                    "ssm:DeleteParameters"
-                ],
+                "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameters"],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
             }
         ]
@@ -232,6 +222,7 @@
                     "ssm:GetCommandInvocation",
                     "ssm:SendCommand",
                     "ssm:GetConnectionStatus",
+                    "ssm:DescribePatchBaselines",
                     "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]

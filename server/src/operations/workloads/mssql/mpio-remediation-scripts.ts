@@ -149,6 +149,7 @@ const MPIO_ISCSI_SESSIONS = (iscsiTargetAddresses: string[]) =>
 `;
 
 const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerIscsiTarget[]) => `
+    #Remediate MPIO iSCSI sessions
     Start-Transcript -Path "C:\\cfn\\log\\mpio-iscsci-sessions-remediation.log.txt" -Append | Out-Null
     $currentMpioSessionsCountPerTarget = '${JSON.stringify(sessionsCountPerTarget)}' | ConvertFrom-Json
     Write-Information "iSCSI Target Addresses: $currentMpioSessionsCountPerTarget"

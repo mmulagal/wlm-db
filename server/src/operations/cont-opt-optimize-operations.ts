@@ -1452,8 +1452,8 @@ async function checkMpioInstallation(
             accountId,
             false
         );
-        const parsedResonse = sqlResponseParsing(response);
-        mpioInstalled = parsedResonse.mpioInstalled;
+        const parsedResponse = sqlResponseParsing(response);
+        mpioInstalled = parsedResponse.mpioInstalled;
         if (!mpioInstalled) {
             const errorMessage = `MPIO is not installed on ${serverNameWithHostName}.`;
             logger.error(errorMessage);

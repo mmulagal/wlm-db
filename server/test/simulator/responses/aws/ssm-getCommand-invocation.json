@@ -1785,7 +1785,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"mpioInstalled\": true}]",
+        "StandardOutputContent": "{\"mpioInstalled\": true}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
