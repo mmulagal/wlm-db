@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
-    addAggregatedPgsqlCosts,
     addAggregatedPgsqlStorageSavings,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
@@ -96,9 +95,6 @@ const DatabaseHomeApis = () => {
         const aggrStorage = getManagedAggrStorageSavings(databaseHostsDataV2, sandboxSavings);
         dispatch(addAggregatedStorageSavings(aggrStorage));
 
-        const aggrCost = getManageAggrCost(databaseHostsDataV2);
-        dispatch(addAggregatedCosts(aggrCost));
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsDataV2, sandboxSavings]);
 
@@ -114,11 +110,25 @@ const DatabaseHomeApis = () => {
         const aggrStorage = getManagedAggrStorageSavings(pgsqlHostData);
         dispatch(addAggregatedPgsqlStorageSavings(aggrStorage));
 
-        const aggrCost = getManageAggrCost(pgsqlHostData);
-        dispatch(addAggregatedPgsqlCosts(aggrCost));
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pgsqlHostData]);
+
+    // To have pgsql and mssql database hosts estimated cost in dashboard
+    useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
+
+        let mergedData = {
+            ...(databaseHostsDataV2 || {}),
+            ...(pgsqlHostData || {})
+        };
+
+        const aggrCost = getManageAggrCost(mergedData);
+        dispatch(addAggregatedCosts(aggrCost));
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pgsqlHostData, databaseHostsDataV2]);
 
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
