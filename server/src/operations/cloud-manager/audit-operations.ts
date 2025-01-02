@@ -100,27 +100,29 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
         const { context } = reply as any;
-        const { schema } = context as unknown as Context;
+        if (context && (context as Context)?.schema) {
+            const { schema } = context as Context;
 
-        const auditGroup: CreateAuditGroupSchemaType = {
-            startTime: Date.now(),
+            const auditGroup: CreateAuditGroupSchemaType = {
+                startTime: Date.now(),
 
-            actionName: schema?.['audit-description']
-                ? schema?.['audit-description']
-                : schema?.description || 'internal',
-            status: AUDIT_PENDING_STATUS,
-            requestId: request.id,
-            serviceName: TIMELINE_SERVICE_NAME,
-            referrer: url && url.length < 180 ? (url as string) : (url?.substring(0, 180) as string), // Here audit service has a limit of 191 characters for referrer
-            version: VERSION,
-            requestData: secureActionParameters,
-            principalId: getSubjectFromBearerToken() as string
-        };
+                actionName: schema?.['audit-description']
+                    ? schema?.['audit-description']
+                    : schema?.description || 'internal',
+                status: AUDIT_PENDING_STATUS,
+                requestId: request.id,
+                serviceName: TIMELINE_SERVICE_NAME,
+                referrer: url && url.length < 180 ? (url as string) : (url?.substring(0, 180) as string), // Here audit service has a limit of 191 characters for referrer
+                version: VERSION,
+                requestData: secureActionParameters,
+                principalId: getSubjectFromBearerToken() as string
+            };
 
-        validateSchema(auditGroup, CreateAuditGroupSchema);
+            validateSchema(auditGroup, CreateAuditGroupSchema);
 
-        setAsyncLocalStorageResource(AUDIT_GROUP, auditGroup);
-        sendAudit({ json: { auditGroup } });
+            setAsyncLocalStorageResource(AUDIT_GROUP, auditGroup);
+            sendAudit({ json: { auditGroup } });
+        }
     }
 }
 
