@@ -32,7 +32,7 @@ beforeEach(async () => {
         }
     ]);
 });
-afterEach(async () => {
+afterAll(async () => {
     await deleteJobsOfAccount(ACCOUNT_ID);
 });
 describe('Create jobs', () => {
@@ -185,23 +185,18 @@ describe('Delete jobs', () => {
     });
 });
 
-describe.only('Modify jobs', () => {
+describe('Modify jobs', () => {
+    afterEach(async () => {
+        await deleteJobsOfAccount(ACCOUNT_ID);
+    });
+
     it('should modify a job', async () => {
         const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const [jobIds] = jobs.map(({ id }) => id);
         const endTime = moment(new Date()).valueOf();
         const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, endTime);
         expect(response.description).equal('modified-description');
-        expect(response.status, JOBSTATUS.COMPLETED);
-    });
-
-    it('should assign endtime to complete jobs', async () => {
-        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        const [jobIds] = jobs.map(({ id }) => id);
-        expect(jobs[0].end_time).toBeFalsy();
-        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, undefined);
-        expect(response.end_time).toBeDefined();
-        expect(response.status, JOBSTATUS.COMPLETED);
+        expect(response.status).toEqual(JOBSTATUS.COMPLETED);
     });
 
     it('should not assign endtime to incomplete jobs', async () => {
@@ -210,7 +205,16 @@ describe.only('Modify jobs', () => {
         expect(jobs[0].end_time).toBeFalsy();
         const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.IN_PROGRESS, undefined);
         expect(response.end_time).toBeFalsy();
-        expect(response.status, JOBSTATUS.COMPLETED);
+        expect(response.status).toEqual(JOBSTATUS.IN_PROGRESS);
+    });
+
+    it('should assign endtime to complete jobs', async () => {
+        const jobs = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const [jobIds] = jobs.map(({ id }) => id);
+        expect(jobs[0].end_time).toBeFalsy();
+        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, undefined);
+        expect(response.end_time).toBeDefined();
+        expect(response.status).toEqual(JOBSTATUS.COMPLETED);
     });
 
     it('should fail to modify a job invalid Job Id', async () => {
@@ -312,19 +316,21 @@ describe('List jobs', () => {
 });
 
 describe('Group jobs', async () => {
-    await createJobs(ACCOUNT_ID, [
-        {
-            account_id: ACCOUNT_ID,
-            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
-            name: 'test-job',
-            resource_name: 'test-resource',
-            start_time: new Date(Date.now() - THIRTY_DAYS),
-            end_time: new Date(),
-            status: JOBSTATUS.COMPLETED,
-            type: JOBTYPE.DEPLOYMENT
-        }
-    ]);
+    beforeEach(async () => {
+        await createJobs(ACCOUNT_ID, [
+            {
+                account_id: ACCOUNT_ID,
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                name: 'test-job',
+                resource_name: 'test-resource',
+                start_time: new Date(Date.now() - THIRTY_DAYS),
+                end_time: new Date(),
+                status: JOBSTATUS.COMPLETED,
+                type: JOBTYPE.DEPLOYMENT
+            }
+        ]);
+    });
 
     it('should group jobs by status', async () => {
         const response = await getJobCountByStatus(
