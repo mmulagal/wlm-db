@@ -131,7 +131,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                 labels: constructLabel(),
                 datasets: [
                     {
-                        label: 'Success',
+                        label: 'Completed',
                         data: constructDataSuccess(),
                         borderColor: '#68C6B3',
 
@@ -148,7 +148,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         borderWidth: 3
                     },
                     {
-                        label: 'Completed with issues',
+                        label: 'Completed with warning',
                         data: constructDataWarning(),
                         borderColor: '#FDC300',
 
@@ -193,12 +193,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         callbacks: {
                             label: function (context) {
                                 let label = '';
-                                if (context.dataset.label === 'Success') {
-                                    label = 'Completed jobs';
-                                } else if (context.dataset.label === 'Completed with issues') {
-                                    label = 'Completed with issues jobs';
+                                if (context.dataset.label === 'Completed') {
+                                    label = 'Completed';
+                                } else if (context.dataset.label === 'Completed with warning') {
+                                    label = 'Completed with warning';
                                 } else {
-                                    label = 'Failed jobs';
+                                    label = 'Failed';
                                 }
 
                                 if (context.parsed.y !== null) {
