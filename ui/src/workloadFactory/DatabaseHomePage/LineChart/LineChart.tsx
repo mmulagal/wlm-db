@@ -148,7 +148,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         borderWidth: 3
                     },
                     {
-                        label: 'Completed with warning',
+                        label: 'Completed with issues',
                         data: constructDataWarning(),
                         borderColor: '#FDC300',
 
@@ -195,8 +195,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                                 let label = '';
                                 if (context.dataset.label === 'Completed') {
                                     label = 'Completed';
-                                } else if (context.dataset.label === 'Completed with warning') {
-                                    label = 'Completed with warning';
+                                } else if (context.dataset.label === 'Completed with issues') {
+                                    label = 'Completed with issues';
                                 } else {
                                     label = 'Failed';
                                 }
@@ -207,7 +207,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                                 if (selectedTimeFrame === 'Last 30 days') {
                                     return label;
                                 } else {
-                                    return `${context.dataset.label}: ${context.parsed.y}`;
+                                    return `${context.dataset.label} ${context.parsed.y}`;
                                 }
                             }
                         }
