@@ -193,7 +193,7 @@ async function createDeploymentMockDataInDB(
                     databaseName: 'RetailBanking_sandbox',
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
-                    source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                    source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                     tag: 'Development',
                     databaseInstanceId: instanceId
                 }
@@ -238,7 +238,7 @@ async function createDeploymentMockDataInDB(
                 databaseName: 'RetailBanking_sandbox',
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                 tag: 'Development'
             }
         ],
@@ -311,7 +311,7 @@ async function createDeploymentMockDataInDB(
             'RetailBanking',
             'RetailBanking_sandbox',
             credentialsId,
-            'SQLServer-Prod-01',
+            'SQL-Managed-Host-Prod',
             resourceName
         );
         await createJobs(accountId, sandboxJobsData);
