@@ -195,7 +195,16 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
 
     const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
 
-    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(region, credentialsId, fileSystemId);
+    const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
+    const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
+
+    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(
+        region,
+        credentialsId,
+        fileSystemId,
+        cwMetricsDataCollectionPeriodSeconds,
+        cwMetricsDataCollectionPeriod
+    );
 
     const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
     const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
