@@ -1037,7 +1037,7 @@ async function getActiveSqlNode(
         fsxDataVolumeName
     });
     try {
-        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId);
+        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node1InstanceId, accountId);
         const resourceError = `Resource ID ${resourceId}`;
         let errorMessage = '';
         // Connection to activenode is successful
@@ -1073,7 +1073,7 @@ async function getActiveSqlNode(
 
         // Check for connection to standby node
         if (node2InstanceId) {
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId, accountId);
             if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
                 const { instanceName, instancesDetails = [] } =
                     (await getActiveSqlInstanceName(credentialsId, region, [node2InstanceId])) || {};
