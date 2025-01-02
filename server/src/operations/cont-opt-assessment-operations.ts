@@ -166,9 +166,13 @@ async function initiateStorageAssessmentCollection(
         [instanceRecord.name],
         instanceRecord.sqlAuthEnabled,
         true
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeUuids: [], volumeDBMap: {}, lunNames: [] }];
+    )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: {}, volumeDBMap: {}, lunNames: [] }];
 
-    if (isEmpty(instanceVolumeMapping)) {
+    if (
+        isEmpty(instanceVolumeMapping) ||
+        isEmpty(instanceVolumeMapping[0]?.volumeRecords) ||
+        isEmpty(instanceVolumeMapping[0]?.lunNames)
+    ) {
         const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name} in the account ${accountId} with ${credentialsId} for resource ${databaseHostId}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
