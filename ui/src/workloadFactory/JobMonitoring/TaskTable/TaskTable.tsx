@@ -2,6 +2,7 @@ import styles from './TaskTable.module.scss';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { Popover, Typography } from '@netapp/design-system';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
@@ -48,6 +49,23 @@ const TaskTable = ({ taskList = [] }: any) => {
                                     />
                                 )}
                                 {task.status === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
+                                {task.status === JOB_MONITORING_STATUS.WARNING &&
+                                    (task?.error ? (
+                                        <Popover
+                                            popoverClass={CommonStyles['popover']}
+                                            children={
+                                                <Typography variant="Regular_14" style={{ wordBreak: 'break-word' }}>
+                                                    {task?.error}
+                                                </Typography>
+                                            }
+                                            trigger="hover"
+                                            delayHide={200}
+                                            interactive={true}
+                                            container={<Warning className={styles.statusIcon} />}
+                                        />
+                                    ) : (
+                                        <Warning />
+                                    ))}
                             </div>
                             <Typography variant="Regular_14" className={styles.statusColor}>
                                 {jobMonitoringStatusMapping(task?.status)}
