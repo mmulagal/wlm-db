@@ -30,6 +30,7 @@ const DatabaseHomeApis = () => {
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
 
     const [getJobsSummaryApi] = useLazyGetJobsSummaryQuery();
 
@@ -67,6 +68,9 @@ const DatabaseHomeApis = () => {
     };
 
     useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
         resetDBHomePageState(dispatch); // reset dahsboard state if cred and region is changed
         if (headerSelectedCred && headerSelectedRegion && refreshTime) {
             dispatch(addJobsSummaryLoading(true));
@@ -79,6 +83,9 @@ const DatabaseHomeApis = () => {
 
     // To have database hosts data in dashboard - V2
     useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
         if (!databaseHostsDataV2) {
             return;
         }
@@ -97,6 +104,9 @@ const DatabaseHomeApis = () => {
 
     // To have pgsql database hosts data in dashboard
     useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
         if (!pgsqlHostData) {
             return;
         }
@@ -112,6 +122,9 @@ const DatabaseHomeApis = () => {
 
     // To have database hosts count data in dashboard - V2
     useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
         if (!databaseHostsDataV2) {
             return;
         }
@@ -122,6 +135,9 @@ const DatabaseHomeApis = () => {
 
     // To have pgsql database hosts count data in dashboard
     useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
         if (!pgsqlHostData) {
             return;
         }

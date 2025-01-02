@@ -878,6 +878,7 @@ const InventoryApisV2 = () => {
         setRunningManagedAssessmentList([]);
         dispatch(setPerfMssqlInstancesData({}));
         dispatch(setManagedAssessmentHostData({}));
+        dispatch(addAllMssqlHostAssessmentData([]));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -1086,7 +1087,9 @@ const InventoryApisV2 = () => {
     }, [inventoryTableData, removeSecNodeDiscoveredList]);
 
     useEffect(() => {
-        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+        if (!refreshBlocked) {
+            dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+        }
     }, [allmssqlHostAssessmentData]);
 };
 

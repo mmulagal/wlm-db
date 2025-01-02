@@ -23,6 +23,10 @@
         [class*='_sandboxChart'] {
             width: 200px;
             height: 200px;
+            [class*='_emptyCircle'] {
+                width: 200px;
+                height: 200px;
+            }
         }
     }
 
