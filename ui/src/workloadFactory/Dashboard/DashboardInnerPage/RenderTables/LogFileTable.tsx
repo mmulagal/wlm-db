@@ -28,7 +28,8 @@ const LogFileTable = ({ lastColDetails }: any) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             userDataFiles: logDataFilesObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            data: instanceData
                         });
                     }
                 }

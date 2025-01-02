@@ -28,7 +28,8 @@ const UserDataFilesTable = ({ lastColDetails }: any) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             userDataFiles: userDataFilesObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            data: instanceData
                         });
                     }
                 }

@@ -32,7 +32,8 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             performanceTier: performanceTierObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            data: instanceData
                         });
                     }
                 }

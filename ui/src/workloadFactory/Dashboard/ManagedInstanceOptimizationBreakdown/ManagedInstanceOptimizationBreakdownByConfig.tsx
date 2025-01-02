@@ -15,6 +15,7 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const dispatch = useDispatch();
     const windowSize = useResize();
     const handleOptimize = (type: string) => {
@@ -95,7 +96,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['Storage tier']?.length || 0) / (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['Storage tier']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -110,7 +115,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
-                                configData?.storageTier === configData?.total
+                                configData?.storageTier === configData?.total ||
+                                inProgressOptimizationData['Storage tier']?.length > 0
                             }
                         >
                             Optimize
@@ -128,7 +134,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['File system headroom']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['File system headroom']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -143,7 +154,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
-                                configData?.fileSystemHeadroom === configData?.total
+                                configData?.fileSystemHeadroom === configData?.total ||
+                                inProgressOptimizationData['File system headroom']?.length > 0
                             }
                         >
                             Optimize
@@ -161,7 +173,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['Log drive size']?.length || 0) / (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['Log drive size']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -176,7 +192,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
-                                configData?.logDriveSize === configData?.total
+                                configData?.logDriveSize === configData?.total ||
+                                inProgressOptimizationData['Log drive size']?.length > 0
                             }
                         >
                             Optimize
@@ -194,7 +211,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['TempDB drive size']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['TempDB drive size']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -209,7 +231,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
-                                configData?.tempdbDriveSize === configData?.total
+                                configData?.tempdbDriveSize === configData?.total ||
+                                inProgressOptimizationData['TempDB drive size']?.length > 0
                             }
                         >
                             Optimize
@@ -227,26 +250,29 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['User data files (.mdf)']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['User data files (.mdf)']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin={true}
-                            onClick={() => {
-                                handleOptimize('User data files (.mdf)');
-                            }}
-                            isDisabled={
-                                allmssqlHostAssessmentLoading ||
-                                configData?.total === 0 ||
-                                configData?.userDataFiles === configData?.total
-                            }
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
                         >
-                            Optimize
-                        </DsButton>
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 </div>
 
@@ -260,26 +286,29 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['Log files (.ldf)']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['Log files (.ldf)']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin={true}
-                            onClick={() => {
-                                handleOptimize('Log files (.ldf)');
-                            }}
-                            isDisabled={
-                                allmssqlHostAssessmentLoading ||
-                                configData?.total === 0 ||
-                                configData?.logFiles === configData?.total
-                            }
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
                         >
-                            Optimize
-                        </DsButton>
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 </div>
 
@@ -293,26 +322,29 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['TempDB placement']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['TempDB placement']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <DsButton
-                            variant="secondary"
-                            isThin={true}
-                            onClick={() => {
-                                handleOptimize('TempDB placement');
-                            }}
-                            isDisabled={
-                                allmssqlHostAssessmentLoading ||
-                                configData?.total === 0 ||
-                                configData?.tempdbPlacement === configData?.total
-                            }
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
                         >
-                            Optimize
-                        </DsButton>
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
                     </div>
                 </div>
 
@@ -326,7 +358,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['ONTAP configuration']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -359,7 +395,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.['Operating system']?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -392,7 +432,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[GENERAL.COMPUTE_RIGHTSIZING]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData['compute-rightsizing']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -427,7 +472,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -460,7 +509,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
-                        optimizePercentage={0}
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[GENERAL.APPLICATION_SQL_SERVER]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />

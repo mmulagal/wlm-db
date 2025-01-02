@@ -24,6 +24,7 @@ export interface GetWellSliceInterface {
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;
+    inProgressOptimizationData: any;
 }
 
 interface CountBreakDown {

@@ -1,4 +1,4 @@
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import styles from './BarComponent.module.scss';
 import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 
@@ -13,6 +13,7 @@ type BarComponentType = {
     progressBarHeight?: string;
     from?: string;
     optimizePercentage?: number | any;
+    loading?: boolean;
 };
 
 const BarComponent = ({
@@ -25,7 +26,8 @@ const BarComponent = ({
     width,
     progressBarHeight,
     from,
-    optimizePercentage
+    optimizePercentage,
+    loading
 }: BarComponentType) => {
     const handleProgressBar = () => {
         if (percentage === 100) {
@@ -62,7 +64,7 @@ const BarComponent = ({
                     <div
                         className={`${styles.progress} ${styles.rightCurveBar}`}
                         style={{
-                            width: `${100 - optimizePercentage + percentage}%`,
+                            width: `${100 - (optimizePercentage + percentage)}%`,
                             backgroundColor: 'var(--border)'
                         }}
                     ></div>
@@ -112,6 +114,7 @@ const BarComponent = ({
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
                         <DsTypography variant="Semibold_14">{headingText}</DsTypography>
+                        {loading && <DsFlashingDotsLoader />}
                     </div>
 
                     <div className={styles.optimizeText}>

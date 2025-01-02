@@ -4,12 +4,14 @@ import {
     setCardData,
     setDriftAssessmentData,
     setGwTimestamp,
+    setInProgressOptimizationData,
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
+import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     GETWELL_CONFIG,
@@ -1080,7 +1082,8 @@ export const handleOptimizeStorageJob = (
     rowData: any,
     failedMsgData: any,
     getJobDetailApi: any,
-    dispatch: any
+    dispatch: any,
+    type?: any
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -1093,12 +1096,24 @@ export const handleOptimizeStorageJob = (
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
                     const state = store.getState();
+                    const { allmssqlHostAssessmentData } = state.inventoryV2;
                     let optimizingData = state.getWellOptimize.optimizingData || {};
+                    let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
+                    let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
                         dispatch(
                             setOptimizingData({
                                 ...optimizingData,
                                 [rowData?.id]: 'optimized'
+                            })
+                        );
+                        dispatch(
+                            setInProgressOptimizationData({
+                                ...inProgressOptimizationData,
+                                [type]: inProgressOptimizationData[type].filter(
+                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                )
                             })
                         );
                         formatGetWellData(dispatch);
@@ -1117,6 +1132,14 @@ export const handleOptimizeStorageJob = (
                                 [rowData?.id]: ''
                             })
                         );
+                        dispatch(
+                            setInProgressOptimizationData({
+                                ...inProgressOptimizationData,
+                                [type]: inProgressOptimizationData[type].filter(
+                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                )
+                            })
+                        );
                         formatGetWellData(dispatch);
                         dispatch(
                             addNotification({
@@ -1130,10 +1153,20 @@ export const handleOptimizeStorageJob = (
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
+            let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
+            let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
             dispatch(
                 setOptimizingData({
                     ...optimizingData,
                     [rowData?.id]: ''
+                })
+            );
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: inProgressOptimizationData[type].filter(
+                        (instanceId: any) => instanceId !== selectedDatabaseInstance
+                    )
                 })
             );
             formatGetWellData(dispatch);

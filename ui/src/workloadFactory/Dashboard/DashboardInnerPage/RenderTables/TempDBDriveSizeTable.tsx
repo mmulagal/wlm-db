@@ -32,7 +32,8 @@ const TempDBDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             percentDataDriveSize: tempdbDriveSizeObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            data: instanceData
                         });
                     }
                 }

@@ -31,7 +31,8 @@ const LogDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             percentDataDriveSize: logDriveSizeObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            data: instanceData
                         });
                     }
                 }

@@ -31,7 +31,8 @@ const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             fileSystemHeadroom: headroomObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            data: instanceData
                         });
                     }
                 }
