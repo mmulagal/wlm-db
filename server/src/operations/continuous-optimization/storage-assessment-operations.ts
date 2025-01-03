@@ -51,28 +51,15 @@ const sizingConfigData = storageGoldenConfigData.sizing;
 
 async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
     logger.info('Checking for missing optimize permissions', { credentialsId, region, permissions });
-    try {
-        const missingPermissions: string[] = [];
-        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
-            credentialsId,
-            region,
-            permissions
-        );
-        const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
-        if (combinedDeniedPermissions.length > 0) {
-            combinedDeniedPermissions.forEach(permission => {
-                missingPermissions.push(`${permission.service}:${permission.action}`);
-            });
-        }
-        return missingPermissions;
-    } catch (error) {
-        logger.error('Error while checking for missing optimize permissions', {
-            credentialsId,
-            region,
-            permissions,
-            error
+    const missingPermissions: string[] = [];
+    const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(credentialsId, region, permissions);
+    const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
+    if (combinedDeniedPermissions.length > 0) {
+        combinedDeniedPermissions.forEach(permission => {
+            missingPermissions.push(`${permission.service}:${permission.action}`);
         });
     }
+    return missingPermissions;
 }
 
 function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
