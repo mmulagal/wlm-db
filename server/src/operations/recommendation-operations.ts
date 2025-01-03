@@ -490,8 +490,7 @@ async function manualModeComputeLicenseDetails(region: string, params: ManualSto
     let existingLicenseType = 'NA';
     if (
         existingSqlServerEditionLowerCase &&
-        ((existingSqlServerEditionLowerCase.includes('enterprise') &&
-            !existingSqlServerEditionLowerCase.includes('evaluation')) ||
+        (isNonFreeEnterpriseEdition(existingSqlServerEditionLowerCase) ||
             existingSqlServerEditionLowerCase.includes('web') ||
             existingSqlServerEditionLowerCase.includes('standard'))
     ) {
@@ -843,8 +842,7 @@ async function getSqlInstanceLicenseRecommendations(
             const processorArchitecture =
                 sqlServerEdition.match(/\((?<architecture>.*?)\)/)?.groups?.architecture || '';
             if (
-                (existingSqlServerEditionLowerCase.includes('enterprise') &&
-                    !existingSqlServerEditionLowerCase.includes('evaluation')) ||
+                isNonFreeEnterpriseEdition(existingSqlServerEditionLowerCase) ||
                 existingSqlServerEditionLowerCase.includes('web') ||
                 existingSqlServerEditionLowerCase.includes('standard')
                 /* CONSIDERING only instances with edition to lower case including
@@ -1096,10 +1094,20 @@ async function getSqlInstanceLicenseRecommendations(
     throw createError('No SQL Server instances found for the provided EC2 instance.');
 }
 
+function isNonFreeEnterpriseEdition(sqlServerEdition: string) {
+    const existingSqlServerEditionLowerCase = sqlServerEdition.toLowerCase();
+    return (
+        existingSqlServerEditionLowerCase.includes('enterprise') &&
+        !existingSqlServerEditionLowerCase.includes('evaluation') &&
+        !existingSqlServerEditionLowerCase.includes('developer')
+    );
+}
+
 export {
     getLicenseRecommendations,
     fetchSqlServerInstanceConfiguration,
     manualModeComputeLicenseDetails,
     getSqlInstanceLicenseRecommendations,
-    checkComputeOptimizerEnrollmentStatus
+    checkComputeOptimizerEnrollmentStatus,
+    isNonFreeEnterpriseEdition
 };

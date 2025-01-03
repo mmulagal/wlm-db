@@ -5,6 +5,7 @@
     box-shadow: 2px 2px 6px 0px var(--border);
     width: 83.75%;
     max-width: 1607px;
+    margin-bottom: 40px;
 
     .topPart {
         display: flex;
@@ -57,10 +58,59 @@
     }
 }
 
+.exploreSavingsHeaderOnPrem {
+    .topPart {
+        height: 358px;
+
+        .contentSection {
+            .leftSide {
+                width: 46.77%;
+            }
+
+            .rightSide {
+                .subTextOnPrem {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+
+                    .level {
+                        display: flex;
+                        gap: 16px;
+                        align-items: baseline;
+                        .subLevel {
+                            display: flex;
+                            gap: 8px;
+                            align-items: center;
+                            [class*='_separatorComponent'] {
+                                div {
+                                    border-right: 1px solid var(--text-primary) !important;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @media screen and (min-width: 1621px) and (max-width: 1822px) {
     .exploreSavingsHeader {
         .topPart {
             height: 292px;
+        }
+    }
+    .exploreSavingsHeaderOnPrem {
+        .topPart {
+            height: auto !important;
+            .svgContainer1600 {
+                width: 535px;
+                height: inherit !important;
+                background-color: #e8eefd;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
         }
     }
 }
@@ -94,6 +144,20 @@
             }
         }
     }
+
+    .exploreSavingsHeaderOnPrem {
+        .topPart {
+            height: auto !important;
+            .svgContainer1600 {
+                width: 535px;
+                height: inherit;
+                background-color: #e8eefd;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        }
+    }
 }
 
 @media screen and (max-width: 1470px) {
@@ -119,6 +183,43 @@
                     .link {
                         margin-top: 8px;
                     }
+                }
+            }
+        }
+    }
+
+    .exploreSavingsHeaderOnPrem {
+        .topPart {
+            height: auto !important;
+            .svgContainer1600 {
+                width: 535px;
+                height: inherit;
+                background-color: #e8eefd;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .contentSection {
+                padding: 40px;
+                display: flex;
+                flex-direction: row;
+                gap: 48px;
+
+                width: 69.47%;
+
+                .leftSide {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    width: 45.77%;
+                }
+
+                .rightSide {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    width: 43.77%;
                 }
             }
         }

@@ -147,29 +147,31 @@ async function updateAuditGroup(request: FastifyRequest, reply: FastifyReply, pa
     if (methods.includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
 
-        try {
-            auditGroup.endTime = Date.now();
+        if (auditGroup) {
+            try {
+                auditGroup.endTime = Date.now();
 
-            const { statusCode } = reply;
-            const { message } = JSON.parse(payload);
-            if (statusCode >= 400) {
-                auditGroup.status = AUDIT_FAILED_STATUS;
-                auditGroup.errors = [message];
+                const { statusCode } = reply;
+                const { message } = JSON.parse(payload);
+                if (statusCode >= 400) {
+                    auditGroup.status = AUDIT_FAILED_STATUS;
+                    auditGroup.errors = [message];
 
-                validateSchema(auditGroup, UpdateAuditGroupSchema);
-                sendAudit({ json: { auditGroup } });
-            } else {
-                auditGroup.responseData = payload;
+                    validateSchema(auditGroup, UpdateAuditGroupSchema);
+                    sendAudit({ json: { auditGroup } });
+                } else {
+                    auditGroup.responseData = payload;
+                    auditGroup.status = AUDIT_SUCCESS_STATUS;
+
+                    validateSchema(auditGroup, UpdateAuditGroupSchema);
+                    sendAudit({ json: { auditGroup } });
+                }
+            } catch (error) {
                 auditGroup.status = AUDIT_SUCCESS_STATUS;
 
                 validateSchema(auditGroup, UpdateAuditGroupSchema);
                 sendAudit({ json: { auditGroup } });
             }
-        } catch (error) {
-            auditGroup.status = AUDIT_SUCCESS_STATUS;
-
-            validateSchema(auditGroup, UpdateAuditGroupSchema);
-            sendAudit({ json: { auditGroup } });
         }
     }
 }
