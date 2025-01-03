@@ -322,7 +322,7 @@ function Test-IscsiSessions {
 
         # Update session counts
         $detailsByTargetAndInitiator[$key].TotalSessions += 1
-        if ($session.IsConnected) {
+        if ($session.IsConnected -and $session.IsPersistent) {
             $detailsByTargetAndInitiator[$key].ActiveSessions += 1
             $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session -ErrorAction SilentlyContinue).TargetPortalAddress
             if([string]::IsNullOrEmpty($targetPortalAddress)) {
