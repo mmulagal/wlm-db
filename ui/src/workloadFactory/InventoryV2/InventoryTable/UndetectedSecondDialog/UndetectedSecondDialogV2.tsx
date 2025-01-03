@@ -30,11 +30,11 @@ const UndetectedSecondDialogV2 = ({ data, apiResult }: { data: any; apiResult: a
                 fsxwType = true;
             }
         });
-    };
+    }
 
     if (data?.storage?.fsxn) {
         fsxType = true;
-    };
+    }
 
     const hostType = fsxType
         ? GENERAL.FSX_FOR_ONTAP
