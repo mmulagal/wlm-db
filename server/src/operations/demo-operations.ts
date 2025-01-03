@@ -201,7 +201,7 @@ async function createDeploymentMockDataInDB(
             userDatabase: [
                 {
                     name: 'RetailBanking_sandbox',
-                    size: 16777216,
+                    size: 17179869184,
                     type: 'User Database',
                     status: 'ONLINE',
                     protection: {
@@ -245,7 +245,7 @@ async function createDeploymentMockDataInDB(
         userDatabase: [
             {
                 name: 'RetailBanking_sandbox',
-                size: 16777216,
+                size: 17179869184,
                 type: 'User Database',
                 status: 'ONLINE',
                 protection: {
@@ -369,7 +369,7 @@ async function updateUserDBIntoResourceData(
     if (!hasExistingDatabase) {
         const databaseDetails = {
             name: databaseName,
-            size: 16777216,
+            size: 17179869184,
             type: MSSQL_DATABASE_TYPES.USER,
             status: ONLINE,
             protection: {
@@ -403,7 +403,7 @@ async function updateUserDBIntoInstanceTable(
     if (!hasExistingDatabase) {
         const databaseDetails = {
             name: databaseName,
-            size: 16777216,
+            size: 17179869184,
             type: MSSQL_DATABASE_TYPES.USER,
             status: ONLINE,
             protection: {
