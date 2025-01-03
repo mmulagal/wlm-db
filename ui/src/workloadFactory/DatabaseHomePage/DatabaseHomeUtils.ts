@@ -599,6 +599,19 @@ export const disableOfflineRows = (data: any) => {
                     }
                 }
             };
+        } else if (item?.configuration === '0 out of 0') {
+            return {
+                ...item,
+                cellProps: {
+                    isDisabled: true,
+                    selectionProps: {
+                        title: GENERAL.NO_CONFIG_AVAILABLE,
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
+                }
+            };
         }
         return item;
     });
@@ -627,12 +640,16 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
 };
 
 export const formatAssessmentTableData = (data: any) => {
-    return data.map((item: any) => {
-        return {
-            ...item,
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[item?.status] || item?.status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-        };
+    let result: any = [];
+    data.map((item: any) => {
+        if (!item?.error && !item?.errorMessage) {
+            result.push({
+                ...item,
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[item?.status] || item?.status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+        }
     });
+    return result;
 };
