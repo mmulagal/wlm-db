@@ -444,7 +444,7 @@ const DashboardInnerPage = () => {
                                 height="30px"
                             >
                                 <div>
-                                    <DsButton variant="secondary" isDisabled={false}>
+                                    <DsButton variant="secondary" isDisabled={true}>
                                         Optimize
                                     </DsButton>
                                 </div>
