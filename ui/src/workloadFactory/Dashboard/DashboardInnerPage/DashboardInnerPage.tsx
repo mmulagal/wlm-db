@@ -211,9 +211,9 @@ const DashboardInnerPage = () => {
                 content={
                     <DialogContent
                         type={type}
-                        recommendationOptions={cardData?.recommendationOptions}
-                        missingPermissions={cardData?.missingPermissions}
-                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                        recommendationOptions={rowData?.recommendationOptions}
+                        missingPermissions={rowData?.missingPermissions}
+                        recommendedSizeInGib={rowData?.recommendedSizeInGib}
                     />
                 }
                 primaryButton={GENERAL.CONTINUE}
@@ -227,8 +227,8 @@ const DashboardInnerPage = () => {
                 customClass={styles.colorSet}
                 hidePrimaryButton={
                     (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
-                    cardData?.missingPermissions &&
-                    cardData?.missingPermissions.length > 0
+                    rowData?.missingPermissions &&
+                    rowData?.missingPermissions.length > 0
                 }
             />
         );

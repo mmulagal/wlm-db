@@ -33,6 +33,7 @@ const LogDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: logDriveSizeObj?.status,
+                            missingPermissions: logDriveSizeObj?.missingPermissions,
                             data: instanceData
                         });
                     }

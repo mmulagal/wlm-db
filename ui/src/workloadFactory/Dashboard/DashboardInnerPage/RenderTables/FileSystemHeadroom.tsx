@@ -33,6 +33,8 @@ const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: headroomObj?.status,
+                            recommendedSizeInGib: headroomObj?.recommendedSizeInGib,
+                            missingPermissions: headroomObj?.missingPermissions,
                             data: instanceData
                         });
                     }

@@ -23,6 +23,13 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
                     const computeRightSizingObj = instanceData?.assessments?.compute;
                     const isStorageTierOptimized = isOptimized(computeRightSizingObj?.status);
                     if (!isStorageTierOptimized) {
+                        let computeMissingPermissions = false;
+                        if (
+                            computeRightSizingObj?.errorMessage &&
+                            computeRightSizingObj?.errorMessage.includes('is not authorized to perform: ')
+                        ) {
+                            computeMissingPermissions = true;
+                        }
                         storageTierAssessmentData.push({
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
@@ -31,6 +38,8 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: computeRightSizingObj?.status,
+                            recommendationOptions: computeRightSizingObj?.recommendationOptions,
+                            isMissingPermissions: computeMissingPermissions,
                             data: instanceData
                         });
                     }

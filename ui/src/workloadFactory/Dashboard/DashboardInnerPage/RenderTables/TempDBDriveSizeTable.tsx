@@ -34,6 +34,7 @@ const TempDBDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: tempdbDriveSizeObj?.status,
+                            missingPermissions: tempdbDriveSizeObj?.missingPermissions,
                             data: instanceData
                         });
                     }
