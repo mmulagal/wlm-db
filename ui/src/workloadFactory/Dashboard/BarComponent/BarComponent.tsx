@@ -107,6 +107,28 @@ const BarComponent = ({
                 </>
             );
         }
+
+        if (percentage === 0 && optimizePercentage !== 0) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${optimizePercentage}%`,
+                            backgroundColor: 'var(--chart-6)'
+                        }}
+                    ></div>
+
+                    <div
+                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100 - optimizePercentage}%`,
+                            backgroundColor: 'var(--border)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
     };
     return (
         <div className={styles.barComponent}>
