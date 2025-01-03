@@ -164,7 +164,7 @@ async function createDemoResourcesPerRegion(
             {
                 resourceId: devOneResourceId,
                 hostName: 'SQL-Managed-Host-STG',
-                protocol: STORAGE_PROTOCOLS.ISCSI,
+                protocol: STORAGE_PROTOCOLS.SMB,
                 sqlInstances: [
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-FinancialAccounts' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-EmployeeDirectory' },
@@ -176,7 +176,7 @@ async function createDemoResourcesPerRegion(
             {
                 resourceId: devFourResourceId,
                 hostName: 'SQL-Managed-Host-DEV',
-                protocol: STORAGE_PROTOCOLS.SMB,
+                protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
                     { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
@@ -289,7 +289,13 @@ async function createDemoResourcesPerRegion(
             );
             await createJobs(accountId, enableMpioJobMockData);
         });
-        const assessmentJobMockData = await createAssessmentJobMockData(accountId, instances, credentialsId, region);
+        const filteredInstances = instances.filter(instance => instance.databaseType !== DatabaseTypes.PG_SQL);
+        const assessmentJobMockData = await createAssessmentJobMockData(
+            accountId,
+            filteredInstances,
+            credentialsId,
+            region
+        );
         await createJobs(accountId, assessmentJobMockData);
     }
     return { message: 'Demo Data created' };

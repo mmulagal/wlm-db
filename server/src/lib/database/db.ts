@@ -675,7 +675,7 @@ async function listAllManagedInstances(accountId?: string) {
 async function listDatabaseInstances(accountId: string, record: any) {
     logger.info('List database instances for given account and record', { accountId, record });
 
-    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId } = record;
+    const { resourceId, sqlInstanceId, sqlInstanceName, isDefault, credentialsId, region } = record;
     accountId = checkAccount(accountId);
 
     return prisma.client.database_instances.findMany({
@@ -685,6 +685,7 @@ async function listDatabaseInstances(accountId: string, record: any) {
             ...(resourceId && { resource_id: resourceId }),
             ...(sqlInstanceId && { database_instance_id: sqlInstanceId }),
             ...(sqlInstanceName && { database_instance_name: sqlInstanceName }),
+            ...(region && { region }),
             ...(isDefault && { is_default: isDefault })
         },
         orderBy: {
