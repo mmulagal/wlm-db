@@ -32,6 +32,7 @@ const LogDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
                             percentDataDriveSize: logDriveSizeObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
+                            assessmentStatus: logDriveSizeObj?.status,
                             data: instanceData
                         });
                     }
@@ -109,7 +110,10 @@ const LogDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
             accessor: 'percentDataDriveSize',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('Log drive size')
     ];

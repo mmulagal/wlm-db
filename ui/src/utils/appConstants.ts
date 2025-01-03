@@ -1101,6 +1101,7 @@ export const GENERAL = {
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
+    NO_ASSESSMENT_DATA: 'assessment not available.',
     ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:

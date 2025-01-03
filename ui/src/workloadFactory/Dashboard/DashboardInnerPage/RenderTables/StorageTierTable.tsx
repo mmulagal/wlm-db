@@ -33,6 +33,7 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
                             performanceTier: performanceTierObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
+                            assessmentStatus: performanceTierObj?.status,
                             data: instanceData
                         });
                     }
@@ -110,7 +111,10 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
             accessor: 'performanceTier',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('Storage tier')
     ];

@@ -32,6 +32,7 @@ const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
                             fileSystemHeadroom: headroomObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
+                            assessmentStatus: headroomObj?.status,
                             data: instanceData
                         });
                     }
@@ -109,7 +110,10 @@ const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
             accessor: 'fileSystemHeadroom',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('File system headroom')
     ];

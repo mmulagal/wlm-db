@@ -160,7 +160,10 @@ const OperatingSystemTable = () => {
             accessor: 'configuration',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails()
     ];

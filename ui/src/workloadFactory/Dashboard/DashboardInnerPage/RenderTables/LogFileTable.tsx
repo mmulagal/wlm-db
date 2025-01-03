@@ -29,6 +29,7 @@ const LogFileTable = ({ lastColDetails }: any) => {
                             userDataFiles: logDataFilesObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
+                            assessmentStatus: logDataFilesObj?.status,
                             data: instanceData
                         });
                     }
@@ -106,7 +107,10 @@ const LogFileTable = ({ lastColDetails }: any) => {
             accessor: 'userDataFiles',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('Log files (.ldf)')
     ];

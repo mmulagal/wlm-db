@@ -4,9 +4,9 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { STATUS_CONST, WLF_TABS } from '../../../utils/consts';
+import { FINDINGS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DsTypography, useDialog, DsButton, Button } from '@netapp/design-system';
+import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
@@ -25,7 +25,7 @@ import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
-import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
@@ -423,9 +423,21 @@ const DashboardInnerPage = () => {
             isSticky: true,
             width: '318px',
             renderCell: (cellData: any, rowData: any) => {
+                let isDisabled = false;
+                let errorMessage = '';
+                if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
+                } else if (
+                    !rowData?.assessmentStatus ||
+                    rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+                }
                 return (
                     <div className={styles.buttonContainer}>
-                        {rowData?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase() ? (
+                        {!isDisabled ? (
                             <DsButton
                                 isThin
                                 variant="secondary"
@@ -437,18 +449,19 @@ const DashboardInnerPage = () => {
                                 Optimize
                             </DsButton>
                         ) : (
-                            <TooltipComponent
-                                title={GENERAL.ONLINE_INSTANCE_ASSESS}
-                                placement="bottom"
-                                width="280px"
-                                height="30px"
-                            >
-                                <div>
+                            <Popover
+                                popoverClass={CommonStyles['popover']}
+                                isAppendedToBody={true}
+                                children={<DsTypography variant="Regular_14">{errorMessage}</DsTypography>}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                container={
                                     <DsButton variant="secondary" isDisabled={true}>
                                         Optimize
                                     </DsButton>
-                                </div>
-                            </TooltipComponent>
+                                }
+                            />
                         )}
                     </div>
                 );
