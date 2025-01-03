@@ -2,7 +2,11 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getHostAndSqlServerInfo } from '../discover-operations';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
-import { fetchSqlServerInstanceConfiguration, getLicenseRecommendations } from '../recommendation-operations';
+import {
+    fetchSqlServerInstanceConfiguration,
+    getLicenseRecommendations,
+    isNonFreeEnterpriseEdition
+} from '../recommendation-operations';
 
 import getLogger from '../../utils/logger';
 import { LicenseAssessment, Metadata } from '../../utils/common-types';
@@ -135,7 +139,12 @@ async function runLicenseAssessment(
         [activeNodeInstanceId]
     );
     const { sqlServerDeploymentType = '' } = fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-    if (sqlServerInstances.some(instance => instance.sqlServerEngineEdition === ENT_ENGINE_EDITION)) {
+    if (
+        sqlServerInstances.some(
+            ({ sqlServerEngineEdition, sqlServerEdition }) =>
+                sqlServerEngineEdition === ENT_ENGINE_EDITION && isNonFreeEnterpriseEdition(sqlServerEdition!)
+        )
+    ) {
         return getLicenseRecommendations(
             accountId,
             credentialsId,
