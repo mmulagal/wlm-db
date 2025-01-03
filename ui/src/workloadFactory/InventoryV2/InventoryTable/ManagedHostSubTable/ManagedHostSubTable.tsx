@@ -310,7 +310,7 @@ const ManagedHostSubTable = ({
                         // store fsx cred in register obj if payload has fsx register
                         let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
 
-                        if (rowData?.storage && rowData?.storage?.length > 0) {
+                        if ((rowData?.storage && rowData?.storage?.length > 0) || rowData?.storage?.fsxn) {
                             setTimeout(() => {
                                 setDialog(
                                     <DialogComponent
