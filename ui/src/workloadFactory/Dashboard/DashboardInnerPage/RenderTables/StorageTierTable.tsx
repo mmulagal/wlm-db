@@ -5,17 +5,25 @@ import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import BulkActionContainer from './BulkActionContainer';
+import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 
 interface StorageTierTableProps {
     lastColDetails: any;
+    handleBulkAction: any;
 }
 
-const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
+const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps) => {
+    const disptach = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { optimizingInstanceData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -34,7 +42,13 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: performanceTierObj?.status,
-                            data: instanceData
+                            data: instanceData,
+                            cellProps: {
+                                isDisabled:
+                                    optimizingInstanceData &&
+                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
+                                selectionProps: undefined
+                            }
                         });
                     }
                 }
@@ -45,7 +59,7 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
             storageTierAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts, optimizingInstanceData]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -55,7 +69,7 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '376px',
+            width: '310px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
@@ -124,12 +138,23 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: true,
+        isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
         rows: tableData || [],
-        pageSize: 50
+        pageSize: 50,
+        selectionType: 'multiple'
     });
+
+    useEffect(() => {
+        const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+
+        disptach(setSelectedRowsForOptimize(rows));
+    }, [tableProps.selectionState]);
+
+    const handleBulkOperation = () => {
+        handleBulkAction('Storage tier', selectedRowsForOptimize);
+    };
     return (
         <div className={styles.renderTable}>
             <TableTopBar
@@ -138,6 +163,7 @@ const StorageTierTable = ({ lastColDetails }: StorageTierTableProps) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

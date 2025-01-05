@@ -73,13 +73,17 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
     sandboxAgeRange: {
         from: '',
         range: ''
-    }
+    },
+    selectedRowsForOptimize: []
 };
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setSelectedRowsForOptimize: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForOptimize = action.payload;
+        },
         setSelectedConfig: (state, action: PayloadAction<any>) => {
             state.selectedConfig = action.payload;
         },
@@ -126,6 +130,7 @@ const databaseHomeSlice = createSlice({
 });
 
 export const {
+    setSelectedRowsForOptimize,
     selectedTabSelection,
     addJobsSummary,
     addJobsSummaryLoading,

@@ -153,6 +153,7 @@ export interface AggregatedCostsRes {
 }
 
 export interface DatabaseHostsEntities {
+    selectedRowsForOptimize: Array<string> | any;
     selectedTab: string;
     getJobsSummary: {
         jobsSummaryData: JobsSummaryRes | null;
