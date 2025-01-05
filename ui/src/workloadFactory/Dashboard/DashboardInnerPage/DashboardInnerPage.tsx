@@ -487,10 +487,15 @@ const DashboardInnerPage = () => {
         };
     };
 
+    const handleBulkAction = (type: string, rowData: any) => {
+        optimizeAction(rowData[0]);
+        handleDialog(type, rowData[0]);
+    };
+
     const renderTable = () => {
         switch (selectedConfig) {
             case 'Storage tier':
-                return <StorageTierTable lastColDetails={lastColDetails} />;
+                return <StorageTierTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'File system headroom':
                 return <FileSystemHeadroomTable lastColDetails={lastColDetails} />;
             case 'Log drive size':
