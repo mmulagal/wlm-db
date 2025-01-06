@@ -9,7 +9,8 @@ import {
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    SEVERITY
+    SEVERITY,
+    TEST_CONNECTION_COMMAND
 } from '../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -17,8 +18,51 @@ import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { HttpErrorCodes, SUCCESS } from '../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../aws/ospatch-ssm-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
+import { callSsmExecution } from '../aws/ssm-operations';
 
 const logger = getLogger();
+
+async function checkIfWindowsUpdateCatalogReachable(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    metadata: Metadata
+) {
+    logger.info('Checking if Windows Update Catalog is reachable', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId
+    });
+    try {
+        const { node1InstanceId, node2InstanceId } = metadata;
+        await callSsmExecution(
+            credentialsId,
+            region,
+            [TEST_CONNECTION_COMMAND],
+            node1InstanceId,
+            'Check if Windows Update Catalog is reachable'
+        );
+
+        if (node2InstanceId) {
+            await callSsmExecution(
+                credentialsId,
+                region,
+                [TEST_CONNECTION_COMMAND],
+                node2InstanceId,
+                'Check if Windows Update Catalog is reachable'
+            );
+        }
+    } catch (error) {
+        const errorMessage = `Error while checking if Windows Update Catalog is reachable. ${error}`;
+        logger.error(errorMessage);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Windows Update Catalog is not reachable from SQL node/s'
+        );
+    }
+}
 
 async function triggerHostOsPatchCollection(
     accountId: string,
@@ -65,6 +109,13 @@ async function calculateHostOsPatchDrift(
         if (!isEmpty(hostOsPatch)) {
             hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
         } else {
+            await checkIfWindowsUpdateCatalogReachable(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                metadataObject
+            ); // Check if Windows Update Catalog is reachable
             triggerHostOsPatchCollection(accountId, credentialsId, region, databaseHostId, metadataObject); // Trigger the collection of host os patch data in the background
             errorMessage = `No ${AssessmentCategories.HOST_OS_PATCH} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
             logger.error(errorMessage);

@@ -287,7 +287,7 @@ const app = fastify({
                     if (xNetappReferer === BXP) {
                         const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                         if (!requestUrl) {
-                            createAuditGroup(request, _reply);
+                            createAuditGroup(request);
                         }
                     }
                     done();
