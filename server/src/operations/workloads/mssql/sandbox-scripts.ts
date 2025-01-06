@@ -1657,7 +1657,7 @@ try {
         $diskpartition = Get-Partition -DiskNumber $disk.Number | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
         $null = $diskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-        $fileLunData = ($FileLunArr | Where-Object { $_.lun -eq $disk.SerialNumber })[0]
+        $fileLunData = ($FileLunArr | Where-Object { $_.lun -ceq $disk.SerialNumber })[0]
 
         Get-Partition -DiskNumber $disk.Number | Get-Volume | Set-Volume -NewFileSystemLabel $fileLunData.label
         
@@ -1746,7 +1746,7 @@ try {
 
                 #     #Rename new cluster disks to user friendly name
 
-                $label = ($FileLunArr | Where-Object { $_.lun -eq $clDiskInfo.SerialNumber } | Select-Object -ExpandProperty label)[0]
+                $label = ($FileLunArr | Where-Object { $_.lun -ceq $clDiskInfo.SerialNumber } | Select-Object -ExpandProperty label)[0]
                 (Get-ClusterResource -Name $($clusterdisk.Name)).name = $label
             }
         }

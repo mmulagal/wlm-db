@@ -626,7 +626,7 @@ Function Rescan-ExtendLUN {
     try {
         # Rescan and extend the LUN
         $null = (echo "RESCAN" | diskpart)
-        $disk = Get-Disk | Where-Object { $_.SerialNumber -eq "$DiskSerialNumber" }
+        $disk = Get-Disk | Where-Object { $_.SerialNumber -ceq "$DiskSerialNumber" }
             
         if ($null -eq $disk) {
             throw "No disk found with SerialNumber $DiskSerialNumber"
