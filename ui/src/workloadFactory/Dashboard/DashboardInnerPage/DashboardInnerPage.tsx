@@ -4,7 +4,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { FINDINGS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
+import { FINDINGS, GETWELL_STATUS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
@@ -433,6 +433,24 @@ const DashboardInnerPage = () => {
                 ) {
                     isDisabled = true;
                     errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+                } else if (
+                    name === 'Log drive size' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+                } else if (
+                    name === 'TempDB drive size' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+                } else if (
+                    name === 'File system headroom' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
                 }
                 return (
                     <div className={styles.buttonContainer}>
