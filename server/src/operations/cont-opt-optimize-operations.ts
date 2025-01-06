@@ -1642,6 +1642,7 @@ async function validateMpioSessions(
     } catch (error) {
         jobError = `Error while validating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
+        throw new Error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
