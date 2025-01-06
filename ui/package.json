@@ -13,7 +13,6 @@
         "@vitejs/plugin-react-swc": "^3.7.1",
         "auth0-js": "^9.24.1",
         "axios": "^1.7.4",
-        "dom-to-pdf": "^0.3.2",
         "eslint-config-react-app": "^7.0.1",
         "jszip": "^3.10.1",
         "lodash": "^4.17.21",

@@ -16,7 +16,7 @@ import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionD
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
 import { useEffect, useState } from 'react';
 //@ts-ignore
-import domToPdf from 'dom-to-pdf';
+//import domToPdf from 'dom-to-pdf';
 import ExportPDF from './ExportPDF/ExportPDF';
 import { GENERAL } from '../../../utils/appConstants';
 import {
@@ -92,15 +92,15 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 filename: `SavingsCalculator.pdf`,
                 compression: 'MEDIUM'
             };
-            domToPdf(elem, options, (pdf: any) => {
-                setPrintState(false);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: GENERAL.PDF_DOWNLOAD_SUCCESS
-                    })
-                );
-            });
+            // domToPdf(elem, options, (pdf: any) => {
+            //     setPrintState(false);
+            //     dispatch(
+            //         addNotification({
+            //             notificationType: NOTIFICATION_TYPES.SUCCESS,
+            //             message: GENERAL.PDF_DOWNLOAD_SUCCESS
+            //         })
+            //     );
+            // });
         }, 10);
     };
 
