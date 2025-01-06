@@ -223,6 +223,7 @@
                     "ssm:SendCommand",
                     "ssm:GetConnectionStatus",
                     "ssm:DescribePatchBaselines",
+                    "ssm:ListCommands",
                     "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]
