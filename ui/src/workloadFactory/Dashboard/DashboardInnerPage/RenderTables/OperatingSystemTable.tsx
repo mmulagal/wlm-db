@@ -23,13 +23,14 @@ const OperatingSystemTable = () => {
     );
     const tableData = useMemo(() => {
         let OSAssessmentData: any = [];
-        let id = 1;
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const notOptimized = instanceData?.assessments?.storage?.configuration?.os?.filter(
-                        (item: any) => item.status !== 'optimized' && !item?.errorMessage
-                    );
+                    const notOptimized = instanceData?.assessments?.storage?.configuration?.os
+                        ?.filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)
+                        .map((item: any) => {
+                            return { ...item, id: item?.name };
+                        });
                     const errorCase = instanceData?.assessments?.storage?.configuration?.os?.[0]?.errorMessage;
 
                     if (notOptimized.length > 0 || errorCase) {
@@ -40,7 +41,6 @@ const OperatingSystemTable = () => {
                             configuration: !errorCase
                                 ? `${notOptimized.length} out of ${instanceData?.assessments?.storage?.configuration?.os?.length}`
                                 : `0 out of 0`,
-                            id: id++,
                             hostName: hostData?.databaseHostName,
                             fullData: formatAssessmentTableData(notOptimized)
                         });
@@ -174,6 +174,8 @@ const OperatingSystemTable = () => {
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}
+                hostId={rowData?.databaseHostId}
+                instanceId={rowData?.instanceId}
             />
         );
     }, []);
