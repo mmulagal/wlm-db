@@ -490,6 +490,13 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
 async function getVpcEndpoints(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get vpc endpoints ', credentialsId, region, vpcId);
 
+    if (!vpcId) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'VPC ID is missing in the request, provide a valid VPC ID to proceed.'
+        );
+    }
+
     const input: DescribeVpcEndpointsCommandInput = {
         Filters: [
             {
