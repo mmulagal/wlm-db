@@ -50,7 +50,6 @@ const DashboardInnerPage = () => {
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -78,7 +77,7 @@ const DashboardInnerPage = () => {
         let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
-        const { selectedDatabaseInstance, landingFrom, cardData } = state.getWellOptimize;
+        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData } = state.getWellOptimize;
         const { headerSelectedCred, headerSelectedRegion } = state.headers;
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
