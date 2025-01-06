@@ -24,6 +24,9 @@ const shouldUseSourceMap = process.env.VITE_APP_ENVIRONMENT !== PRODUCTION;
 
 export default defineConfig({
     base: './',
+    optimizeDeps: {
+        include: ['dom-to-pdf']
+    },
     plugins: [
         react(),
         eslint(),
