@@ -13,7 +13,11 @@ import DialogContent from './DialogContent/DialogContent';
 import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setInProgressOptimizationData,
+    setOptimizingData,
+    setOptimizingInstanceData
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -40,6 +44,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -275,6 +280,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 [cardData?.id]: 'optimizing'
             })
         );
+        dispatch(
+            setInProgressOptimizationData({
+                ...inProgressOptimizationData,
+                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+            })
+        );
         formatGetWellData(dispatch);
         dispatch(
             addNotification({
@@ -319,7 +330,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </Button>
                 </div>
             );
-            handleOptimizeStorageJob(res, { id: cardData?.id, name: type }, failedMsgData, getJobDetailApi, dispatch);
+            handleOptimizeStorageJob(
+                res,
+                { id: cardData?.id, name: type },
+                failedMsgData,
+                getJobDetailApi,
+                dispatch,
+                type
+            );
         });
     };
 

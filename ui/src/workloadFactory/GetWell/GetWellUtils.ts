@@ -692,7 +692,11 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     }
     ontapVolAndLunList?.map(type => {
         type?.map((item: PerConfigInterface) => {
-            if (item?.status === 'optimized') {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            if (status === 'optimized') {
                 ontapOptimizedConfig++;
             } else {
                 ontapNotOptimizedConfig++;
@@ -751,7 +755,11 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
     let osNotOptimizedConfig = 0;
     if (osList && !osList?.[0]?.errorMessage) {
         data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-            if (item?.status === 'optimized') {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            if (status === 'optimized') {
                 osOptimizedConfig++;
             } else {
                 osNotOptimizedConfig++;
@@ -1111,7 +1119,7 @@ export const handleOptimizeStorageJob = (
                         dispatch(
                             setInProgressOptimizationData({
                                 ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData[type].filter(
+                                [type]: inProgressOptimizationData?.[type]?.filter(
                                     (instanceId: any) => instanceId !== selectedDatabaseInstance
                                 )
                             })
@@ -1135,7 +1143,7 @@ export const handleOptimizeStorageJob = (
                         dispatch(
                             setInProgressOptimizationData({
                                 ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData[type].filter(
+                                [type]: inProgressOptimizationData?.[type]?.filter(
                                     (instanceId: any) => instanceId !== selectedDatabaseInstance
                                 )
                             })
@@ -1164,7 +1172,7 @@ export const handleOptimizeStorageJob = (
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: inProgressOptimizationData[type].filter(
+                    [type]: inProgressOptimizationData?.[type]?.filter(
                         (instanceId: any) => instanceId !== selectedDatabaseInstance
                     )
                 })
