@@ -373,6 +373,7 @@ const GetWell = () => {
                                 id="100"
                                 variant="Default"
                                 isDisabled={loading || !isAssessmentAvailable}
+                                onExpandChange={setsAccordionOpen}
                                 expandCollapseIcon={{
                                     className: styles['expand-collapse-icon'],
                                     collapsedIcon: <RowArrow />,
@@ -705,9 +706,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 2
-                                                    ? 'All(2)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/2`}
+                                                defaultFilterOptions['all-catagories']?.length === 3
+                                                    ? 'All(3)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/3`}
                                             </DsTypography>
                                         </div>
 
