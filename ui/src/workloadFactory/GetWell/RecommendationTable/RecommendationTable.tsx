@@ -26,7 +26,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
-const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }: any) => {
+const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
 
@@ -101,8 +101,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
         apiCall({
             credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
             regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
+            databaseHostId: selectedResourceId || hostId,
+            instanceId: selectedDatabaseInstance || instanceId,
             payload: payload
         }).then((res: any) => {
             const failedMsgData = (

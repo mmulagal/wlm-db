@@ -24,13 +24,19 @@ const OntapConfig = () => {
 
     const tableData = useMemo(() => {
         let ontapConfigAssessmentData: any = [];
-        let id = 1;
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
-                    const mergedData = [...lunsData, ...volData];
+                    const mergedData = [
+                        ...lunsData.map((item: any) => {
+                            return { ...item, type: 'lun', id: item?.name };
+                        }),
+                        ...volData.map((item: any) => {
+                            return { ...item, type: 'volume', id: item?.name };
+                        })
+                    ];
                     const notOptimized = mergedData.filter(
                         (item: any) => item.status !== 'optimized' && !item?.errorMessage
                     );
@@ -46,7 +52,6 @@ const OntapConfig = () => {
                             configuration: !errorCase
                                 ? `${notOptimized.length} out of ${mergedData.length}`
                                 : `0 out of 0`,
-                            id: id++,
                             hostName: hostData?.databaseHostName,
                             fullData: formatAssessmentTableData(notOptimized)
                         });
@@ -180,6 +185,8 @@ const OntapConfig = () => {
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}
+                hostId={rowData?.databaseHostId}
+                instanceId={rowData?.instanceId}
             />
         );
     }, []);
