@@ -23,8 +23,6 @@ import { ReactComponent as Union } from '../../assets/Union.svg';
 import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
-//@ts-ignore
-import domToPdf from 'dom-to-pdf';
 
 import { WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
@@ -139,7 +137,7 @@ const GetWell = () => {
             };
 
             //@ts-ignore
-            domToPdf(elem, options, (pdf: any) => {
+            downloadPdf(elem, options, (pdf: any) => {
                 setOptimizePrintState(false);
                 dispatch(
                     addNotification({
