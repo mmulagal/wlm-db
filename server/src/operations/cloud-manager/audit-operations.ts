@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import randomize from 'randomatic';
 import getLogger from '../../utils/logger';
 import { getSubjectFromBearerToken, hideSecretsValues } from '../../utils/utils';
@@ -31,14 +31,6 @@ const logger = getLogger();
 const AUDIT_PENDING_STATUS = 'pending';
 const AUDIT_SUCCESS_STATUS = 'success';
 const AUDIT_FAILED_STATUS = 'failed';
-
-interface Context {
-    schema: {
-        tags: string[];
-        description: string;
-        'audit-description': string;
-    };
-}
 
 interface RequestHeaders {
     host: string;
@@ -73,7 +65,7 @@ function extractAuditHeaders(headers: RequestHeaders) {
     };
 }
 
-async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
+async function createAuditGroup(request: FastifyRequest) {
     logger.debug('Creating audit group');
 
     const {
@@ -99,16 +91,11 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
         logger.debug(clonedData);
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
-        const { context } = reply as any;
-        if (context && (context as Context)?.schema) {
-            const { schema } = context as Context;
-
+        const { schema } = request.routeOptions;
+        if (!isEmpty(schema)) {
             const auditGroup: CreateAuditGroupSchemaType = {
                 startTime: Date.now(),
-
-                actionName: schema?.['audit-description']
-                    ? schema?.['audit-description']
-                    : schema?.description || 'internal',
+                actionName: schema?.description || 'internal',
                 status: AUDIT_PENDING_STATUS,
                 requestId: request.id,
                 serviceName: TIMELINE_SERVICE_NAME,
