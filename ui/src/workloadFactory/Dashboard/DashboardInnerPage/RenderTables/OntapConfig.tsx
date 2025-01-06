@@ -16,8 +16,17 @@ import {
     mapHostStatusToAssessmentData
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import { useDispatch } from 'react-redux';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwHostname,
+    setGwResourceId
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const OntapConfig = () => {
+    const dispatch = useDispatch();
+
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
@@ -179,6 +188,10 @@ const OntapConfig = () => {
         lastColDetails()
     ];
     const ExpandedRow = useCallback(({ rowData }: any) => {
+        dispatch(setGwHostname(rowData?.hostName));
+        dispatch(setGwResourceId(rowData?.databaseHostId));
+        dispatch(setGwDatabaseInstance(rowData?.instanceId));
+        dispatch(setGwDatabaseInstanceName(rowData?.serverInstanceName));
         return (
             <RecommendationTable
                 tableData={rowData?.fullData}
