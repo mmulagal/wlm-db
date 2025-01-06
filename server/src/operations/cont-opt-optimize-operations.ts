@@ -1930,13 +1930,14 @@ async function optimizeOperatingSystemSettings(
     const svmDetailsObject = svmDetails as Record<string, string>;
     const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
 
-    const jobDescription = OptimizeOperatingSystemParams.MPIO_POLICY
-        ? `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
-        : OptimizeOperatingSystemParams.MPIO_SESSIONS
-        ? `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
-        : OptimizeOperatingSystemParams.MPIO_ENABLE
-        ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
-        : '';
+    const jobDescription =
+        configurationName === OptimizeOperatingSystemParams.MPIO_POLICY
+            ? `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
+            : configurationName === OptimizeOperatingSystemParams.MPIO_SESSIONS
+            ? `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
+            : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
+            ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
+            : '';
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
