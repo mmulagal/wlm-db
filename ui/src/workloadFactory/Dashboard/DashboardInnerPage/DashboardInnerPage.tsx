@@ -30,6 +30,7 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
+    useOptimizeStorageSizingMutation,
     useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
 import {
@@ -69,7 +70,7 @@ const DashboardInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
-    const [optimizeStorageSizing] = useOptimizeStorageConfigMutation();
+    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
