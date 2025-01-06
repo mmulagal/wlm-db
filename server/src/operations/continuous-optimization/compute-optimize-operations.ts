@@ -357,6 +357,7 @@ async function handleComputeRemediation(
                 updatedMetadata.isComputeOptimized = true;
                 await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
             }
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             return;
         }
 

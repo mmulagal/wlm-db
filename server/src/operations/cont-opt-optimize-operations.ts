@@ -436,6 +436,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             awsAccountId,
             instanceMetadata
         } as OptimizeStorageOperationParams);
+        await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
@@ -1969,6 +1970,7 @@ async function optimizeOperatingSystemSettings(
                     standbyNodeName,
                     instanceMetadata
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while optimizing operating system settings ${error}`;
                 logger.error(errorMessage);
@@ -2015,6 +2017,7 @@ async function optimizeOperatingSystemSettings(
                     iscsiTargetAddresses,
                     currentMpioSessionsCount: []
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
                 logger.error(errorMessage);
@@ -2058,6 +2061,7 @@ async function optimizeOperatingSystemSettings(
                     iscsiTargetAddresses,
                     currentMpioSessionsCount: []
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while enabling MPIO and configuring MPIO sessions: ${error}`;
                 logger.error(errorMessage);
@@ -2210,6 +2214,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 parentJobId,
                 instanceToAssess
             );
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         }
     }
 }
