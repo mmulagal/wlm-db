@@ -1468,11 +1468,10 @@ async function checkMpioInstallation(
             jobStatus = JOBSTATUS.COMPLETED;
         }
     } catch (error) {
-        const errorMessage = `Error while checking MPIO installation ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while checking MPIO installation ${error}`;
+        logger.error(jobError);
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
+        throw new Error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
