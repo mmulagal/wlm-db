@@ -422,6 +422,33 @@ async function updateLongRunningResourcePrepareJobs() {
     }
 }
 
+async function updateParentJobStatus(accountId: string, parentId: string, errorMsg?: string) {
+    logger.info('Updating parent job', { accountId, parentId });
+
+    const parentJob = await getJobDetails(accountId, parentId);
+    if (parentJob.status !== JOBSTATUS.FAILED) {
+        const allSubJobs = await listJobs(accountId, '', '', parentId);
+
+        const jobStatus: JOBSTATUS = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+            ? JOBSTATUS.IN_PROGRESS
+            : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.FAILED
+            : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+            ? JOBSTATUS.COMPLETED
+            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.WARNING
+            : JOBSTATUS.IN_PROGRESS;
+
+        const modifiedJobData = {
+            status: jobStatus,
+            endTime: Date.now(),
+            ...(errorMsg ? { error: errorMsg } : {})
+        };
+
+        await updateJobDetails(accountId, parentId, modifiedJobData);
+    }
+}
+
 export {
     Job,
     registerJobs,
@@ -433,5 +460,6 @@ export {
     getJobSummaryByTime,
     registerJob,
     updateLongRunningJobs,
-    updateLongRunningResourcePrepareJobs
+    updateLongRunningResourcePrepareJobs,
+    updateParentJobStatus
 };

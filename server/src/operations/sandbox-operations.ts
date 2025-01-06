@@ -52,7 +52,7 @@ import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
-import { registerJob, updateJobDetails } from './database/job-operations';
+import { updateParentJobStatus, registerJob, updateJobDetails } from './database/job-operations';
 import {
     updateSandboxDBIntoInstanceData,
     updateSandboxDBIntoResourceData,
@@ -2108,7 +2108,6 @@ async function performLifecycleUpdate(
     action: string,
     snapshot?: string
 ) {
-    let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     let mappings: undefined | VolumeLunMapping;
     let clonedVolumes;
@@ -2264,11 +2263,9 @@ async function performLifecycleUpdate(
             []
         );
 
-        status = JOBSTATUS.COMPLETED;
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
-        status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
@@ -2302,11 +2299,8 @@ async function performLifecycleUpdate(
             }
         }
     } finally {
-        await updateJobDetails(accountId, parentJobId, {
-            status,
-            error: errorMsg,
-            endTime: Date.now()
-        });
+        // check any of the sub job has failure if so udpate the paraent job as warning which is completed with failure in status shown
+        await updateParentJobStatus(accountId, parentJobId, errorMsg);
     }
 }
 

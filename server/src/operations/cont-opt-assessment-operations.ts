@@ -17,7 +17,7 @@ import {
     WorkloadInstance
 } from '../utils/common-types';
 import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
-import { getJobDetails, registerJob, updateJobDetails } from './database/job-operations';
+import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
 import {
     listAllManagedInstances,
@@ -35,7 +35,6 @@ import {
 } from '../routes/types/continuous-optimization.types';
 import { getInstanceInfo } from './database/database-operations';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
-import { listJobs } from '../lib/database/job';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -254,29 +253,6 @@ async function initiateStorageAssessmentCollection(
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
-}
-
-async function updateMasterAssessment(accountId: string, masterAssessmentJobId: string) {
-    logger.info('Updating master assessment', { accountId, masterAssessmentJobId });
-
-    const masterAssessmentJob = await getJobDetails(accountId, masterAssessmentJobId);
-    if (masterAssessmentJob.status !== JOBSTATUS.FAILED) {
-        const allSubJobs = await listJobs(accountId, '', '', masterAssessmentJobId);
-        const masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
-            ? JOBSTATUS.IN_PROGRESS
-            : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
-            ? JOBSTATUS.FAILED
-            : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
-            ? JOBSTATUS.COMPLETED
-            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
-            ? JOBSTATUS.WARNING
-            : JOBSTATUS.IN_PROGRESS;
-
-        await updateJobDetails(accountId, masterAssessmentJobId, {
-            status: masterJobStatus,
-            endTime: Date.now()
-        });
-    }
 }
 
 async function driftAssessmentDataCollection(
@@ -545,7 +521,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     });
                 } finally {
                     if (parentJobStatus !== JOBSTATUS.FAILED) {
-                        await updateMasterAssessment(accountId, parentJobId);
+                        await updateParentJobStatus(accountId, parentJobId);
                     }
                 }
             }
@@ -898,7 +874,7 @@ async function handleAssessment(
         jobStatus = jobStatus || JOBSTATUS.COMPLETED;
         if (jobStatus !== JOBSTATUS.FAILED) {
             // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
-            await updateMasterAssessment(accountId, masterAssessmentJobId);
+            await updateParentJobStatus(accountId, masterAssessmentJobId);
         }
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
