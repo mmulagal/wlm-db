@@ -143,14 +143,23 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple'
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
         const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
 
         disptach(setSelectedRowsForOptimize(rows));
-    }, [tableProps.selectionState]);
+        if (rows.length === 1 && optimizingInstanceData) {
+            //@ts-ignore
+            tableProps.selectionState.rows['41'] = false;
+            //@ts-ignore
+            tableProps.selectionState.count = 0;
+            //@ts-ignore
+            tableProps.selectionState.allSelected = false;
+        }
+    }, [tableProps.selectionState, optimizingInstanceData]);
 
     const handleBulkOperation = () => {
         handleBulkAction('Storage tier', selectedRowsForOptimize);
@@ -168,6 +177,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                 //@ts-ignore
                 tableProps={tableProps}
                 isDoubleRow={true}
+                key={Date.now()}
             />
         </div>
     );
