@@ -47,7 +47,7 @@ import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
-import domToPdf from 'dom-to-pdf';
+//import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
@@ -134,15 +134,15 @@ const GetWell = () => {
                 filename: `Optimization_Report_MSSQLSERVER_${generateDate()}.pdf`,
                 compression: 'MEDIUM'
             };
-            domToPdf(elem, options, (pdf: any) => {
-                setOptimizePrintState(false);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: GENERAL.REPORT_DOWNLOAD_SUCCESS
-                    })
-                );
-            });
+            // domToPdf(elem, options, (pdf: any) => {
+            //     setOptimizePrintState(false);
+            //     dispatch(
+            //         addNotification({
+            //             notificationType: NOTIFICATION_TYPES.SUCCESS,
+            //             message: GENERAL.REPORT_DOWNLOAD_SUCCESS
+            //         })
+            //     );
+            // });
         }, 100);
     };
 
