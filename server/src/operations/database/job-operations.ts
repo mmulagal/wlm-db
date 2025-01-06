@@ -53,10 +53,6 @@ interface JobGroup {
     };
 }
 
-interface JobSummaryByTime extends JobSummaryByTimeRecordType {
-    [key: string]: number | undefined;
-}
-
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
 
 function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
@@ -349,20 +345,13 @@ async function getJobSummaryByTime(
 
     const groups = (await groupJobsByTimeAndStatus(accountId, credentialsId, region, startTime, endTime)) as JobGroup[];
 
-    return groups.reduce((acc: JobSummaryByTime[], group: JobGroup) => {
+    return groups.map((group: JobGroup) => {
         const status = camelCase(group?.status?.toLowerCase());
         const count = group?._count?._all;
         const endtime = new Date(group.end_time!)?.valueOf();
 
-        const existingObj = acc.find(el => el.endTime === endtime);
-        if (existingObj) {
-            existingObj[status] = count;
-        } else {
-            acc.push({ endTime: endtime, [status]: count });
-        }
-
-        return acc;
-    }, []);
+        return { endTime: endtime, [status]: count };
+    });
 }
 
 async function getLongRunningJobsAndSubjobs() {
