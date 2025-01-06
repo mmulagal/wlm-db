@@ -52,7 +52,7 @@ import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSli
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
-//import downloadPdf from '../../common/pdfGenerator';
+import downloadPdf from '../../common/pdfGenerator';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -137,15 +137,15 @@ const GetWell = () => {
             };
 
             //@ts-ignore
-            // downloadPdf(elem, options, (pdf: any) => {
-            //     setOptimizePrintState(false);
-            //     dispatch(
-            //         addNotification({
-            //             notificationType: NOTIFICATION_TYPES.SUCCESS,
-            //             message: GENERAL.REPORT_DOWNLOAD_SUCCESS
-            //         })
-            //     );
-            // });
+            downloadPdf(elem, options, (pdf: any) => {
+                setOptimizePrintState(false);
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.REPORT_DOWNLOAD_SUCCESS
+                    })
+                );
+            });
         }, 100);
     };
 
