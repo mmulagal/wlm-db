@@ -44,13 +44,16 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
     try {
         $sqlquery = @"
             SET NOCOUNT ON;
-            SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
+            DECLARE @JSON nvarchar(max)
+            SET @JSON = (SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
             vs.total_bytes / 1048576 AS driveTotalSizeMB FROM sys.master_files AS mf
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
             where db.database_id > 4
-            FOR JSON PATH;
+            FOR JSON PATH)
+            SELECT @JSON
+            ;
 "@
 
         $sqlqueryForTempdb = @"
@@ -174,7 +177,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         ${slqcmdExecutionTemplate}
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
         $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
-        $combinedResponse = (($queryResponse | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
+        $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
 
         if([string]::IsNullOrEmpty($combinedResponse)) {
             throw "No user databases found."
@@ -322,7 +325,7 @@ function Test-IscsiSessions {
 
         # Update session counts
         $detailsByTargetAndInitiator[$key].TotalSessions += 1
-        if ($session.IsConnected) {
+        if ($session.IsConnected -and $session.IsPersistent) {
             $detailsByTargetAndInitiator[$key].ActiveSessions += 1
             $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session -ErrorAction SilentlyContinue).TargetPortalAddress
             if([string]::IsNullOrEmpty($targetPortalAddress)) {

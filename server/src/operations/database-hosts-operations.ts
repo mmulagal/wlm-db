@@ -1549,11 +1549,9 @@ async function getDatabaseInstanceTopology(
                 availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
 
                 logger.info('availabilityZones', availabilityZones);
-            } else {
-                logger.error(`FSX ID not found for resource ${databaseInstanceDetails}`);
             }
         } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`);
+            logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
         }
 
         topologyData = {

@@ -32,7 +32,10 @@ const TempDBDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             percentDataDriveSize: tempdbDriveSizeObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            assessmentStatus: tempdbDriveSizeObj?.status,
+                            missingPermissions: tempdbDriveSizeObj?.missingPermissions,
+                            data: instanceData
                         });
                     }
                 }
@@ -109,7 +112,10 @@ const TempDBDriveSizeTable = ({ lastColDetails }: StorageTierTableProps) => {
             accessor: 'percentDataDriveSize',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('TempDB drive size')
     ];

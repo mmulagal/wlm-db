@@ -165,7 +165,6 @@ export interface DatabaseHostsEntities {
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedPgsqlStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
-    aggregatedPgsqlCosts: AggregatedCostsRes | null;
     selectedConfig: string;
     selectedConfigSummary: {
         optimizationScore: string;

@@ -28,7 +28,9 @@ const UserDataFilesTable = ({ lastColDetails }: any) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             userDataFiles: userDataFilesObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            assessmentStatus: userDataFilesObj?.status,
+                            data: instanceData
                         });
                     }
                 }
@@ -105,7 +107,10 @@ const UserDataFilesTable = ({ lastColDetails }: any) => {
             accessor: 'userDataFiles',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('User data files (.mdf)')
     ];

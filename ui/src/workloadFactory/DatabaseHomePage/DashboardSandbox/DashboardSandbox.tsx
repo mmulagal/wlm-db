@@ -28,7 +28,7 @@ const DashboardSandbox = () => {
 
                 <div className={styles.rightSide}>
                     <DsTypography variant="Semibold_14" style={{ marginBottom: '16px' }}>
-                        Sandboxes distribution by age
+                        {GENERAL.SANDBOXES_DISTRIBUTION_BY_AGE}
                     </DsTypography>
                     <div className={styles.individualRow}>
                         <div className={styles.squareSetup}>

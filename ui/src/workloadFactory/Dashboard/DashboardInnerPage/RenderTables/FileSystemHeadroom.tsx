@@ -31,7 +31,11 @@ const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
                             serverInstanceName: instanceData?.databaseInstanceName,
                             fileSystemHeadroom: headroomObj?.current,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            assessmentStatus: headroomObj?.status,
+                            recommendedSizeInGib: headroomObj?.recommendedSizeInGib,
+                            missingPermissions: headroomObj?.missingPermissions,
+                            data: instanceData
                         });
                     }
                 }
@@ -108,7 +112,10 @@ const FileSystemHeadroomTable = ({ lastColDetails }: StorageTierTableProps) => {
             accessor: 'fileSystemHeadroom',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('File system headroom')
     ];

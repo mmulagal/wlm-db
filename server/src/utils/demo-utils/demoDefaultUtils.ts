@@ -153,39 +153,39 @@ async function createDemoResourcesPerRegion(
         const instances = [
             {
                 resourceId: prodOneResourceId,
-                hostName: 'SQLServer-Prod-01',
+                hostName: 'SQL-Managed-Host-Prod',
                 protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-MarketingCampaigns' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Prod-01PROD-SupplierManagement' }
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' }
                 ],
                 databaseType: DatabaseTypes.MS_SQL_SERVER
             },
             {
                 resourceId: devOneResourceId,
-                hostName: 'SQLServer-Dev-01',
-                protocol: STORAGE_PROTOCOLS.ISCSI,
+                hostName: 'SQL-Managed-Host-STG',
+                protocol: STORAGE_PROTOCOLS.SMB,
                 sqlInstances: [
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-FinancialAccounts' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-EmployeeDirectory' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01DEV-InventoryControl' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-01PROD-SupplierManagement' }
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-FinancialAccounts' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-EmployeeDirectory' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGDEV-InventoryControl' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-STGPROD-SupplierManagement' }
                 ],
                 databaseType: DatabaseTypes.MS_SQL_SERVER
             },
             {
                 resourceId: devFourResourceId,
-                hostName: 'SQLServer-Dev-04',
-                protocol: STORAGE_PROTOCOLS.SMB,
+                hostName: 'SQL-Managed-Host-DEV',
+                protocol: STORAGE_PROTOCOLS.ISCSI,
                 sqlInstances: [
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-SalesAnalytics' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQLServer-Dev-04DEV-ProjectManagement' }
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
+                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
                 ],
                 databaseType: DatabaseTypes.MS_SQL_SERVER
             },
             {
                 resourceId: randomUUID(),
-                hostName: 'PGSQLServer-Dev-01',
+                hostName: 'PGSQL-Managed-Host-STG',
                 protocol: STORAGE_PROTOCOLS.NFS,
                 sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
                 databaseType: DatabaseTypes.PG_SQL
@@ -289,7 +289,13 @@ async function createDemoResourcesPerRegion(
             );
             await createJobs(accountId, enableMpioJobMockData);
         });
-        const assessmentJobMockData = await createAssessmentJobMockData(accountId, instances, credentialsId, region);
+        const filteredInstances = instances.filter(instance => instance.databaseType !== DatabaseTypes.PG_SQL);
+        const assessmentJobMockData = await createAssessmentJobMockData(
+            accountId,
+            filteredInstances,
+            credentialsId,
+            region
+        );
         await createJobs(accountId, assessmentJobMockData);
     }
     return { message: 'Demo Data created' };

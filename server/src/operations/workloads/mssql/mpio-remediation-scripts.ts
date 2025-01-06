@@ -131,14 +131,14 @@ const MPIO_ISCSI_SESSIONS = (iscsiTargetAddresses: string[]) =>
     $result = @()
     try{
         Foreach ($address in $iscsiTargetAddresses) {
-            $sessions = Get-IscsiConnection | Where-Object {$_.TargetAddress -eq $address} 
-            $sessionsCount = $sessions.Count 
-            if($sessionsCount -eq $null) {
-                $sessionsCount = 0}
+            $connections = Get-IscsiConnection | Where-Object {$_.TargetAddress -eq $address} 
+            $connectionsCount = $connections.Count 
+            if($connectionsCount -eq $null) {
+                $connectionsCount = 0}
             Write-Information "iSCSI Target Address: $address"
-            Write-Information "Number of iSCSI Sessions: $sessionsCount"
+            Write-Information "Number of iSCSI Connections: $connectionsCount"
             $countPerAddress = @{"address" = $address
-                                "count" = $sessionsCount}
+                                "count" = $connectionsCount}
             $result += $countPerAddress
         }
     }catch{
@@ -154,33 +154,52 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerI
     $currentMpioSessionsCountPerTarget = '${JSON.stringify(sessionsCountPerTarget)}' | ConvertFrom-Json
     Write-Information "iSCSI Target Addresses: $currentMpioSessionsCountPerTarget"
     $result = @()
-    $sessions = Get-IscsiSession
+    $sessions = Get-IscsiSession 
     Foreach ($each in $currentMpioSessionsCountPerTarget) {
         $address = $each.address
-        $sessionsCount = $each.count
+        $connectionsCount = $each.count
         Write-Information "iSCSI Target Address: $address"
-        Write-Information "Number of iSCSI Sessions: $sessionsCount"
+        Write-Information "Number of iSCSI Connections: $connectionsCount"
         $perAddress = @{"address" = $address
                         "status" = "success"
                         "error" = $null}
 
         $sessionsPersistentConnected = $sessions | Where-Object {$_.IsConnected -and $_.IsPersistent}
-        $sessionsPersistentConnectedCount = $sessionsPersistentConnected.Count
-        $sessionsNonPersistentConnected = $sessions | Where-Object {$_.IsConnected -and (-Not($_.IsPersistent))}
-        $sessionsNonPersistentConnectedCount = $sessionsNonPersistentConnected.Count
 
-        Write-Information "Connected and persistent iSCSI sessions: $sessionsPersistentConnected"
+        # Target address is not available straight-forward. Get target address from Get-IscsiTargetPortal and then fetch the count of persistent and connected sessions
+        $sessionsPersistentConnectedCount = 0
+        $sessionsPersistentConnectedTarget = @()
+        Foreach ($session in $sessionsPersistentConnected) {
+            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+            if($targetPortalAddress -eq $address) {
+                $sessionsPersistentConnectedCount = $sessionsPersistentConnectedCount + 1
+                $sessionsPersistentConnectedTarget += $session
+                }
+            }
+
+        $sessionsNonPersistentConnected = $sessions | Where-Object {$_.IsConnected -and (-Not($_.IsPersistent))}
+
+        # Target address is not available straight-forward. Get target address from Get-IscsiTargetPortal and then fetch the count of non-persistent and connected sessions
+        $sessionsNonPersistentConnectedCount = 0
+        $sessionsNonPersistentConnectedTarget = @()
+        Foreach ($session in $sessionsNonPersistentConnected) {
+            $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
+            if($targetPortalAddress -eq $address) {
+                $sessionsNonPersistentConnectedCount = $sessionsNonPersistentConnectedCount + 1
+                $sessionsNonPersistentConnectedTarget += $session
+                }
+            }
+
         Write-Information "Connected and persistent iSCSI sessions Count: $sessionsPersistentConnectedCount"
-        Write-Information "Connected and non-persistent iSCSI sessions: $sessionsNonPersistentConnected"
         Write-Information "Connected and non-persistent iSCSI sessions Count: $sessionsNonPersistentConnectedCount"
 
-        if($sessionsCount -gt 5) {
+        if($connectionsCount -gt 5) {
 
             # Case when persistent sessions are less than 5
             if($sessionsPersistentConnectedCount -lt 5) {
                 $sessionsToConnect = 5 - $sessionsPersistentConnectedCount
                 $count = 0
-                Foreach ($session in $sessionsNonPersistentConnected) {
+                Foreach ($session in $sessionsNonPersistentConnectedTarget) {
                     $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
                     if($targetPortalAddress -eq $address) {
                         try {
@@ -202,11 +221,11 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerI
             } elseif($sessionsPersistentConnectedCount -gt 5) {
                 # Case when persistent sessions are more than 5
                 $count = 0
-                Foreach ($session in $sessionsPersistentConnected) {
+                Foreach ($session in $sessionsPersistentConnectedTarget) {
                     $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session).TargetPortalAddress
                     if($targetPortalAddress -eq $address) {
                         try {
-                            Unregister-IscsiSession -SessionIdentifier $session.SessionIdentifier -ErrorAction SilentlyContinue
+                            Disconnect-IscsiTarget -SessionIdentifier "$($session.SessionIdentifier)" -Confirm:$false -ErrorAction SilentlyContinue
                             $perAddress.status = "success"
                             Write-Information "Successfully unregistered iSCSI session for address $address and session $session.SessionIdentifier"
                             $count++
@@ -225,16 +244,16 @@ const REMEDIATE_MPIO_ISCSI_SESSIONS = (sessionsCountPerTarget: SessionsCountPerI
         }
         
     }
-        elseif($sessionsCount -lt 5) {
-            if($sessionsCount -ne 0 -and $sessionsPersistentConnected.Count -lt 5) {
-                $sessionsCount = 5 - $sessionsPersistentConnected.Count
+        elseif($connectionsCount -lt 5) {
+            if($connectionsCount -ne 0 -and $sessionsPersistentConnectedCount -lt 5) {
+                $connectionsCount = 5 - $sessionsPersistentConnectedCount
             }
             try{
             $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
             $data = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/local-ipv4" -Headers @{"X-aws-ec2-metadata-token" = $token } -ErrorAction Stop -UseBasicParsing
             $LocaliSCSIAddress = $data.Content
             #Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
-            1..(5 - $sessionsCount) | % { $null = Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
+            1..$connectionsCount | % { $null = Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $address -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true }
             $perAddress.status = "success"
             Write-Information "Successfully created iSCSI session for address $address."
             } catch {

@@ -130,8 +130,8 @@ const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData:
                 <TableTopBar
                     //@ts-ignore
                     tableProps={tableProps}
-                    pluralTitle="Non-optimized instances"
-                    singularTitle="Non-optimized instance"
+                    pluralTitle="Not-optimized instances"
+                    singularTitle="Not-optimized instance"
                 />
                 <Table
                     //@ts-ignore

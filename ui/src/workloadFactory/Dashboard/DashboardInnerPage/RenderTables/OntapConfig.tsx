@@ -10,7 +10,12 @@ import { useCallback } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
 import { useMemo } from 'react';
-import { disableOfflineRows, formatAssessmentTableData, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import {
+    disableOfflineRows,
+    formatAssessmentTableData,
+    mapHostStatusToAssessmentData
+} from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 
 const OntapConfig = () => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
@@ -19,24 +24,38 @@ const OntapConfig = () => {
 
     const tableData = useMemo(() => {
         let ontapConfigAssessmentData: any = [];
-        let id = 1;
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
-                    const mergedData = [...lunsData, ...volData];
-                    const notOptimized = mergedData.filter((item: any) => item.status === 'not-optimized');
+                    const mergedData = [
+                        ...lunsData.map((item: any) => {
+                            return { ...item, type: 'lun', id: item?.name };
+                        }),
+                        ...volData.map((item: any) => {
+                            return { ...item, type: 'volume', id: item?.name };
+                        })
+                    ];
+                    const notOptimized = mergedData.filter(
+                        (item: any) => item.status !== 'optimized' && !item?.errorMessage
+                    );
+                    const errorCase =
+                        instanceData?.assessments?.storage?.configuration?.luns?.[0]?.errorMessage &&
+                        instanceData?.assessments?.storage?.configuration?.volumes?.[0]?.errorMessage;
 
-                    ontapConfigAssessmentData.push({
-                        databaseHostId: hostData?.databaseHostId,
-                        instanceId: instanceData?.databaseInstanceId,
-                        serverInstanceName: instanceData?.databaseInstanceName,
-                        configuration: `${notOptimized.length} out of ${mergedData.length}`,
-                        id: id++,
-                        hostName: hostData?.databaseHostName,
-                        fullData: formatAssessmentTableData(notOptimized)
-                    });
+                    if (notOptimized.length > 0 || errorCase) {
+                        ontapConfigAssessmentData.push({
+                            databaseHostId: hostData?.databaseHostId,
+                            instanceId: instanceData?.databaseInstanceId,
+                            serverInstanceName: instanceData?.databaseInstanceName,
+                            configuration: !errorCase
+                                ? `${notOptimized.length} out of ${mergedData.length}`
+                                : `0 out of 0`,
+                            hostName: hostData?.databaseHostName,
+                            fullData: formatAssessmentTableData(notOptimized)
+                        });
+                    }
                 }
             });
         });
@@ -72,7 +91,14 @@ const OntapConfig = () => {
                         )}
                         {rowData?.cellProps?.isDisabled && (
                             <div className={styles.arrow}>
-                                <ArrowIcon className={styles['arrow-disable']}/>
+                                <TooltipComponent
+                                    title={rowData?.cellProps?.selectionProps?.title}
+                                    placement="bottom"
+                                    width="278px"
+                                    height="30px"
+                                >
+                                    <ArrowIcon className={styles['arrow-disable']} />
+                                </TooltipComponent>
                             </div>
                         )}
                     </>
@@ -96,30 +122,39 @@ const OntapConfig = () => {
                         <DsTypography variant="Semibold_14">
                             {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
                         </DsTypography>
-                        <div className={styles.statusContainer}>
-                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
-                            )}
-                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
-                            </DsTypography>
-                        </div>
+                        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
+                        {!rowData?.loadingStatus && (
+                            <div className={styles.statusContainer}>
+                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
+                                    ></div>
+                                )}
+                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
+                                    ></div>
+                                )}
+                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
+                                    ></div>
+                                )}
+                                <DsTypography variant="Regular_13">
+                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                        ? INVENTORY_STATUS.ONLINE
+                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                        ? INVENTORY_STATUS.OFFLINE
+                                        : rowData?.status}
+                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
+                                </DsTypography>
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -136,7 +171,10 @@ const OntapConfig = () => {
             accessor: 'configuration',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails()
     ];
@@ -147,6 +185,8 @@ const OntapConfig = () => {
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}
+                hostId={rowData?.databaseHostId}
+                instanceId={rowData?.instanceId}
             />
         );
     }, []);

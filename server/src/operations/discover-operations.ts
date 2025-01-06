@@ -2031,7 +2031,8 @@ async function manageSqlServerV2(
         }
         const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
             credentialsId,
-            resourceId
+            resourceId,
+            region
         });
 
         const itemsStatus: {

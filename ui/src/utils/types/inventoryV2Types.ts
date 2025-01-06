@@ -82,6 +82,7 @@ export interface InventoryTableInstanceDatInterface {
     isManaged?: boolean;
     fileSystemDeploymentMode?: string;
     fileSystemType?: string;
+    fsxId?: string;
     statusColText?: string;
     storageSavingsText?: string;
     protection?: {

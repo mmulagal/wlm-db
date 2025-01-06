@@ -878,6 +878,7 @@ const InventoryApisV2 = () => {
         setRunningManagedAssessmentList([]);
         dispatch(setPerfMssqlInstancesData({}));
         dispatch(setManagedAssessmentHostData({}));
+        dispatch(addAllMssqlHostAssessmentData([]));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -990,7 +991,9 @@ const InventoryApisV2 = () => {
 
     // This data is coming from discover API
     useEffect(() => {
-        if (!managedHostListLoading && discoveredHostData && discoveredHostData.length) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && !managedHostListLoading && discoveredHostData && discoveredHostData.length) {
             let newDiscoveredHostData: any = [];
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances) {
@@ -1047,7 +1050,9 @@ const InventoryApisV2 = () => {
 
     // This data is coming from database-hosts API
     useEffect(() => {
-        if (databaseHostsData) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && databaseHostsData) {
             const formattedInventoryTableData = formatInventoryTableData(databaseHostsData);
 
             let unmanagedInstanceList = getMhUnmanagedInstances(
@@ -1070,14 +1075,18 @@ const InventoryApisV2 = () => {
     }, [databaseHostsData]);
 
     useEffect(() => {
-        if (mssqlInstancesDataRef.current && inventoryTableData) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && mssqlInstancesDataRef.current && inventoryTableData) {
             const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, inventoryTableData);
             dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
         }
     }, [mssqlInstancesData, perfMssqlInstancesData]);
 
     useEffect(() => {
-        if (inventoryTableData) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && inventoryTableData) {
             const inventoryDataCount = getInventoryDataCount(inventoryTableData);
             dispatch(setInventoryChartData(inventoryDataCount));
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableData);
@@ -1086,7 +1095,9 @@ const InventoryApisV2 = () => {
     }, [inventoryTableData, removeSecNodeDiscoveredList]);
 
     useEffect(() => {
-        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+        if (!refreshBlocked) {
+            dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+        }
     }, [allmssqlHostAssessmentData]);
 };
 

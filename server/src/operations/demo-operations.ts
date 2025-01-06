@@ -193,7 +193,7 @@ async function createDeploymentMockDataInDB(
                     databaseName: 'RetailBanking_sandbox',
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
-                    source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                    source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                     tag: 'Development',
                     databaseInstanceId: instanceId
                 }
@@ -201,7 +201,7 @@ async function createDeploymentMockDataInDB(
             userDatabase: [
                 {
                     name: 'RetailBanking_sandbox',
-                    size: 16777216,
+                    size: 17179869184,
                     type: 'User Database',
                     status: 'ONLINE',
                     protection: {
@@ -238,14 +238,14 @@ async function createDeploymentMockDataInDB(
                 databaseName: 'RetailBanking_sandbox',
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                 tag: 'Development'
             }
         ],
         userDatabase: [
             {
                 name: 'RetailBanking_sandbox',
-                size: 16777216,
+                size: 17179869184,
                 type: 'User Database',
                 status: 'ONLINE',
                 protection: {
@@ -311,7 +311,7 @@ async function createDeploymentMockDataInDB(
             'RetailBanking',
             'RetailBanking_sandbox',
             credentialsId,
-            'SQLServer-Prod-01',
+            'SQL-Managed-Host-Prod',
             resourceName
         );
         await createJobs(accountId, sandboxJobsData);
@@ -369,7 +369,7 @@ async function updateUserDBIntoResourceData(
     if (!hasExistingDatabase) {
         const databaseDetails = {
             name: databaseName,
-            size: 16777216,
+            size: 17179869184,
             type: MSSQL_DATABASE_TYPES.USER,
             status: ONLINE,
             protection: {
@@ -403,7 +403,7 @@ async function updateUserDBIntoInstanceTable(
     if (!hasExistingDatabase) {
         const databaseDetails = {
             name: databaseName,
-            size: 16777216,
+            size: 17179869184,
             type: MSSQL_DATABASE_TYPES.USER,
             status: ONLINE,
             protection: {

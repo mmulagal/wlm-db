@@ -24,6 +24,9 @@ const shouldUseSourceMap = process.env.VITE_APP_ENVIRONMENT !== PRODUCTION;
 
 export default defineConfig({
     base: './',
+    optimizeDeps: {
+        include: ['dom-to-pdf']
+    },
     plugins: [
         react(),
         eslint(),
@@ -46,6 +49,9 @@ export default defineConfig({
     },
     build: {
         outDir: 'build',
-        sourcemap: shouldUseSourceMap
+        sourcemap: shouldUseSourceMap,
+        rollupOptions: {
+            external: ['dom-to-pdf']
+        }
     }
 });

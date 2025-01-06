@@ -1,9 +1,9 @@
-import { Table, useTable, TableTopBar, DsButton, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS, STATUS_CONST } from '../../../../utils/consts';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -23,13 +23,24 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
                     const computeRightSizingObj = instanceData?.assessments?.compute;
                     const isStorageTierOptimized = isOptimized(computeRightSizingObj?.status);
                     if (!isStorageTierOptimized) {
+                        let computeMissingPermissions = false;
+                        if (
+                            computeRightSizingObj?.errorMessage &&
+                            computeRightSizingObj?.errorMessage.includes('is not authorized to perform: ')
+                        ) {
+                            computeMissingPermissions = true;
+                        }
                         storageTierAssessmentData.push({
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             findingReasons: `${computeRightSizingObj?.objectsInViolation?.length || 0} Findings`,
                             id: instanceData?.databaseInstanceId,
-                            hostName: hostData?.databaseHostName
+                            hostName: hostData?.databaseHostName,
+                            assessmentStatus: computeRightSizingObj?.status,
+                            recommendationOptions: computeRightSizingObj?.recommendationOptions,
+                            isMissingPermissions: computeMissingPermissions,
+                            data: instanceData
                         });
                     }
                 }
@@ -106,7 +117,10 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
             accessor: 'findingReasons',
             id: '3',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails('Compute rightsizing')
     ];

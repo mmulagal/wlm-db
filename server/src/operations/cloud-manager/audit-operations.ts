@@ -100,27 +100,29 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
         const { context } = reply as any;
-        const { schema } = context as unknown as Context;
+        if (context && (context as Context)?.schema) {
+            const { schema } = context as Context;
 
-        const auditGroup: CreateAuditGroupSchemaType = {
-            startTime: Date.now(),
+            const auditGroup: CreateAuditGroupSchemaType = {
+                startTime: Date.now(),
 
-            actionName: schema?.['audit-description']
-                ? schema?.['audit-description']
-                : schema?.description || 'internal',
-            status: AUDIT_PENDING_STATUS,
-            requestId: request.id,
-            serviceName: TIMELINE_SERVICE_NAME,
-            referrer: url && url.length < 180 ? (url as string) : (url?.substring(0, 180) as string), // Here audit service has a limit of 191 characters for referrer
-            version: VERSION,
-            requestData: secureActionParameters,
-            principalId: getSubjectFromBearerToken() as string
-        };
+                actionName: schema?.['audit-description']
+                    ? schema?.['audit-description']
+                    : schema?.description || 'internal',
+                status: AUDIT_PENDING_STATUS,
+                requestId: request.id,
+                serviceName: TIMELINE_SERVICE_NAME,
+                referrer: url && url.length < 180 ? (url as string) : (url?.substring(0, 180) as string), // Here audit service has a limit of 191 characters for referrer
+                version: VERSION,
+                requestData: secureActionParameters,
+                principalId: getSubjectFromBearerToken() as string
+            };
 
-        validateSchema(auditGroup, CreateAuditGroupSchema);
+            validateSchema(auditGroup, CreateAuditGroupSchema);
 
-        setAsyncLocalStorageResource(AUDIT_GROUP, auditGroup);
-        sendAudit({ json: { auditGroup } });
+            setAsyncLocalStorageResource(AUDIT_GROUP, auditGroup);
+            sendAudit({ json: { auditGroup } });
+        }
     }
 }
 
@@ -145,29 +147,31 @@ async function updateAuditGroup(request: FastifyRequest, reply: FastifyReply, pa
     if (methods.includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
 
-        try {
-            auditGroup.endTime = Date.now();
+        if (auditGroup) {
+            try {
+                auditGroup.endTime = Date.now();
 
-            const { statusCode } = reply;
-            const { message } = JSON.parse(payload);
-            if (statusCode >= 400) {
-                auditGroup.status = AUDIT_FAILED_STATUS;
-                auditGroup.errors = [message];
+                const { statusCode } = reply;
+                const { message } = JSON.parse(payload);
+                if (statusCode >= 400) {
+                    auditGroup.status = AUDIT_FAILED_STATUS;
+                    auditGroup.errors = [message];
 
-                validateSchema(auditGroup, UpdateAuditGroupSchema);
-                sendAudit({ json: { auditGroup } });
-            } else {
-                auditGroup.responseData = payload;
+                    validateSchema(auditGroup, UpdateAuditGroupSchema);
+                    sendAudit({ json: { auditGroup } });
+                } else {
+                    auditGroup.responseData = payload;
+                    auditGroup.status = AUDIT_SUCCESS_STATUS;
+
+                    validateSchema(auditGroup, UpdateAuditGroupSchema);
+                    sendAudit({ json: { auditGroup } });
+                }
+            } catch (error) {
                 auditGroup.status = AUDIT_SUCCESS_STATUS;
 
                 validateSchema(auditGroup, UpdateAuditGroupSchema);
                 sendAudit({ json: { auditGroup } });
             }
-        } catch (error) {
-            auditGroup.status = AUDIT_SUCCESS_STATUS;
-
-            validateSchema(auditGroup, UpdateAuditGroupSchema);
-            sendAudit({ json: { auditGroup } });
         }
     }
 }

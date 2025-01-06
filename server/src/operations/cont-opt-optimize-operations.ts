@@ -116,73 +116,77 @@ interface OptimizeStorageOperationParams {
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
     logger.info('Optimizing storage for', params);
-    const {
-        accountId,
-        region,
-        credentialsId,
-        awsAccountId,
-        fsxId,
-        activeNodeInstanceId,
-        parentJobId,
-        serverNameWithHostName,
-        instanceId,
-        databaseHostId,
-        databaseType,
-        instanceName,
-        sqlAuthEnabled,
-        svmName,
-        optimizationTargets,
-        instanceMetadata
-    } = params;
-    if (optimizationTargets && optimizationTargets.length > 0) {
-        await optimizeOntapStorage({
+    try {
+        const {
             accountId,
             region,
             credentialsId,
+            awsAccountId,
             fsxId,
-            activeNodeInstanceId: activeNodeInstanceId!,
+            activeNodeInstanceId,
             parentJobId,
-            optimizationTargets,
-            optimizationConfigs: OptimizeStorageConfigs,
-            apiRequestData: OptimizeStorageApiData,
-            svmName,
-            serverNameWithHostName
-        });
-    }
-
-    const instanceToAssess: WorkloadInstance = {
-        id: instanceId,
-        name: instanceName,
-        type: databaseType,
-        region,
-        sqlAuthEnabled: sqlAuthEnabled || false,
-        fsxFileSystem: fsxId,
-        activeNodeInstanceid: activeNodeInstanceId!,
-        cloudProviderAccountId: awsAccountId,
-        resourceName: serverNameWithHostName
-    };
-
-    if (isDemoFlow) {
-        // update metadata in nstances table to mark optimized configuration
-        const configurationNames: string[] = optimizationTargets.map(config => config.configurationName);
-
-        await updateOptimizedConfigNameInInstanceTable(
-            accountId,
+            serverNameWithHostName,
             instanceId,
-            configurationNames,
-            'STORAGE',
-            instanceMetadata || ({} as databaseInstanceMetadata)
+            databaseHostId,
+            databaseType,
+            instanceName,
+            sqlAuthEnabled,
+            svmName,
+            optimizationTargets,
+            instanceMetadata
+        } = params;
+        if (optimizationTargets && optimizationTargets.length > 0) {
+            await optimizeOntapStorage({
+                accountId,
+                region,
+                credentialsId,
+                fsxId,
+                activeNodeInstanceId: activeNodeInstanceId!,
+                parentJobId,
+                optimizationTargets,
+                optimizationConfigs: OptimizeStorageConfigs,
+                apiRequestData: OptimizeStorageApiData,
+                svmName,
+                serverNameWithHostName
+            });
+        }
+
+        const instanceToAssess: WorkloadInstance = {
+            id: instanceId,
+            name: instanceName,
+            type: databaseType,
+            region,
+            sqlAuthEnabled: sqlAuthEnabled || false,
+            fsxFileSystem: fsxId,
+            activeNodeInstanceid: activeNodeInstanceId!,
+            cloudProviderAccountId: awsAccountId,
+            resourceName: serverNameWithHostName
+        };
+
+        if (isDemoFlow) {
+            // update metadata in nstances table to mark optimized configuration
+            const configurationNames: string[] = optimizationTargets.map(config => config.configurationName);
+
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceId,
+                configurationNames,
+                'STORAGE',
+                instanceMetadata || ({} as databaseInstanceMetadata)
+            );
+        }
+        await triggerAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess
         );
+    } catch (error) {
+        logger.error('Failed to optimize storage', { params, error });
     }
-    await triggerAssessmentAfterOptimization(
-        credentialsId,
-        region,
-        accountId,
-        databaseHostId,
-        serverNameWithHostName,
-        parentJobId,
-        instanceToAssess
-    );
 }
 
 async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
@@ -432,6 +436,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             awsAccountId,
             instanceMetadata
         } as OptimizeStorageOperationParams);
+        await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
@@ -1965,6 +1970,7 @@ async function optimizeOperatingSystemSettings(
                     standbyNodeName,
                     instanceMetadata
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while optimizing operating system settings ${error}`;
                 logger.error(errorMessage);
@@ -2011,6 +2017,7 @@ async function optimizeOperatingSystemSettings(
                     iscsiTargetAddresses,
                     currentMpioSessionsCount: []
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
                 logger.error(errorMessage);
@@ -2054,6 +2061,7 @@ async function optimizeOperatingSystemSettings(
                     iscsiTargetAddresses,
                     currentMpioSessionsCount: []
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while enabling MPIO and configuring MPIO sessions: ${error}`;
                 logger.error(errorMessage);
@@ -2206,6 +2214,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 parentJobId,
                 instanceToAssess
             );
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         }
     }
 }

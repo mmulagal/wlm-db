@@ -1016,6 +1016,10 @@ export const GENERAL = {
     ES_COST_SAVINGS: 'Cost savings',
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Detected host cost analysis',
+    ES_HEADING_ONPREM_LEFT_SIDE: 'Migrate your on-premises SQL Server environment',
+    ES_HEADING_ONPREM_RIGHT_SIDE: 'Assessment steps',
+    ES_MIGRATE_SERVER_ENV:
+        'Workload Factory migration advisor simplify and automate SQL Server migration planning by providing you a detailed design for cloud deployment using Amazon FSx for NetApp ONTAP. The migration advisor also allows you to validate the value of the provided design via a detailed cost comparison to alternative configurations and to automate the provisioning of the recommended architecture according to best practices and vendor solution deployment guidelines.',
     ES_HEADER:
         'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
@@ -1096,6 +1100,11 @@ export const GENERAL = {
     SSM_DOWN: 'SSM is not connected.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    NO_CONFIG_AVAILABLE: 'Configurations data not available.',
+    NO_ASSESSMENT_DATA: 'assessment not available.',
+    LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
+    TEMPDB_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned tempDB drive size can not be optimized',
+    HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
     ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:

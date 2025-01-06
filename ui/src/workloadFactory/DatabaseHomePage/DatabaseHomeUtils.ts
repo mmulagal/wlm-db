@@ -219,24 +219,21 @@ export const getManageAggrCost = (data: any) => {
 
     Object.keys(data).map((key: string) => {
         const val = data[key];
-        let fsxVal = '';
-        for (let i = 0; i < data[key]?.databaseInstancesSummary?.length; i++) {
-            const summVal = data[key]?.databaseInstancesSummary[i];
-            if (summVal?.databaseInstanceTopology?.fileSystemId) {
-                fsxVal = summVal?.databaseInstanceTopology?.fileSystemId;
-                break;
-            }
-        }
+
         if (val?.estimatedUsageCost?.compute) {
             computeCost += val.estimatedUsageCost.compute;
         }
 
-        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage?.fsxn) {
-            storageCost += val.estimatedUsageCost.storage?.fsxn;
-            if (fsxVal) {
-                storageList.push(fsxVal);
+        val?.estimatedUsageCost?.storage?.fsxnBreakDownById?.map((item: any) => {
+            let fsxVal = item?.id;
+            if (!fsxVal || !storageList.includes(fsxVal)) {
+                storageCost += item?.capacityCost;
+                storageCost += item?.operationalCost;
+                if (fsxVal) {
+                    storageList.push(fsxVal);
+                }
             }
-        }
+        });
 
         storageCost += val.estimatedUsageCost?.storage?.fsxw || 0;
         storageCost += val.estimatedUsageCost?.storage?.ebs || 0;
@@ -602,6 +599,19 @@ export const disableOfflineRows = (data: any) => {
                     }
                 }
             };
+        } else if (item?.configuration === '0 out of 0') {
+            return {
+                ...item,
+                cellProps: {
+                    isDisabled: true,
+                    selectionProps: {
+                        title: GENERAL.NO_CONFIG_AVAILABLE,
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
+                }
+            };
         }
         return item;
     });
@@ -630,12 +640,16 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
 };
 
 export const formatAssessmentTableData = (data: any) => {
-    return data.map((item: any) => {
-        return {
-            ...item,
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[item?.status] || item?.status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-        };
+    let result: any = [];
+    data.map((item: any) => {
+        if (!item?.error && !item?.errorMessage) {
+            result.push({
+                ...item,
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[item?.status] || item?.status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+        }
     });
+    return result;
 };
