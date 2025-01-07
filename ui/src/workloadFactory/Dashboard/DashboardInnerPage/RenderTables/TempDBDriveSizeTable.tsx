@@ -143,7 +143,9 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
         isSorting: false,
         columns: TableColDefs,
         rows: tableData || [],
-        pageSize: 50
+        pageSize: 50,
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
@@ -171,7 +173,7 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length === 1 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
