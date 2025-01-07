@@ -111,7 +111,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             <div className={styles.tooltipLevel}>
                 {listObj?.map((item: any, index: number) => {
                     return (
-                        <div>
+                        <div key={index}>
                             <div className={styles.row}>
                                 <div className={styles.firstPart}>
                                     <DsTypography variant="Semibold_13">{item.key}</DsTypography>
