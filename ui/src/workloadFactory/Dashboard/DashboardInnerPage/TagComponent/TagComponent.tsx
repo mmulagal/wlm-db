@@ -55,8 +55,10 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
             </div>
 
             <div className={styles.mainSection}>
-                {tagData?.map((tag: string) => (
-                    <Tag text={tag} />
+                {tagData?.map((tag: string, index: number) => (
+                    <div key={index}>
+                        <Tag text={tag} />
+                    </div>
                 ))}
             </div>
         </div>

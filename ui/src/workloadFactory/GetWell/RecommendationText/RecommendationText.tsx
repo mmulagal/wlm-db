@@ -52,9 +52,10 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 </div>
             )}
 
-            {data?.descriptionList?.map(item => {
+            {data?.descriptionList?.map((item: any, index: number) => {
                 return (
                     <div
+                        key={index + Math.random()}
                         style={{
                             //@ts-ignore
                             whiteSpace: from === 'dashboard' ? '' : 'pre-wrap',
@@ -75,7 +76,7 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     <DsTypography variant="Semibold_14">Values</DsTypography>
                     <div className={styles.values}>
                         {data?.values.map((value, index) => (
-                            <>
+                            <div key={index + Math.random()}>
                                 <div className={styles.seperator} />
 
                                 <DsTypography
@@ -91,7 +92,7 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                                 >
                                     {value}
                                 </DsTypography>
-                            </>
+                            </div>
                         ))}
                     </div>
                 </div>

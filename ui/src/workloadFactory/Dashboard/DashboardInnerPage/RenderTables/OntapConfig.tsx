@@ -16,21 +16,36 @@ import {
     mapHostStatusToAssessmentData
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import { useDispatch } from 'react-redux';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwHostname,
+    setGwResourceId
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 
 const OntapConfig = () => {
+    const dispatch = useDispatch();
+
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
 
     const tableData = useMemo(() => {
         let ontapConfigAssessmentData: any = [];
-        let id = 1;
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
-                    const mergedData = [...lunsData, ...volData];
+                    const mergedData = [
+                        ...lunsData.map((item: any) => {
+                            return { ...item, type: 'lun', id: item?.name };
+                        }),
+                        ...volData.map((item: any) => {
+                            return { ...item, type: 'volume', id: item?.name };
+                        })
+                    ];
                     const notOptimized = mergedData.filter(
                         (item: any) => item.status !== 'optimized' && !item?.errorMessage
                     );
@@ -46,7 +61,6 @@ const OntapConfig = () => {
                             configuration: !errorCase
                                 ? `${notOptimized.length} out of ${mergedData.length}`
                                 : `0 out of 0`,
-                            id: id++,
                             hostName: hostData?.databaseHostName,
                             fullData: formatAssessmentTableData(notOptimized)
                         });
@@ -174,12 +188,18 @@ const OntapConfig = () => {
         lastColDetails()
     ];
     const ExpandedRow = useCallback(({ rowData }: any) => {
+        dispatch(setGwHostname(rowData?.hostName));
+        dispatch(setGwResourceId(rowData?.databaseHostId));
+        dispatch(setGwDatabaseInstance(rowData?.instanceId));
+        dispatch(setGwDatabaseInstanceName(rowData?.serverInstanceName));
         return (
             <RecommendationTable
                 tableData={rowData?.fullData}
                 isLoading={false}
                 optimizePrintState={false}
                 from={WLF_TABS.DASHBOARD}
+                hostId={rowData?.databaseHostId}
+                instanceId={rowData?.instanceId}
             />
         );
     }, []);

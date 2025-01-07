@@ -198,7 +198,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         Continue
       }
 
-      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -eq  $item.SerialNumber } 
+      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -ceq  $item.SerialNumber } 
 
       If ($Target.TargetAddress -ne $null) {
         $item.DriveLetters | ForEach-Object {

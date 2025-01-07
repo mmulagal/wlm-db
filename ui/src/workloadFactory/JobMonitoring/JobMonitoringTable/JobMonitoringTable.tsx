@@ -34,8 +34,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 
 const JobMonitoringTable = () => {
     const { setDialog } = useDialog();
@@ -294,11 +293,7 @@ const JobMonitoringTable = () => {
             width: '220px',
             isSticky: true,
             renderCell: (cellData: any) => {
-                return (
-                    <CopyToClipboard text={cellData}>
-                        <div title={cellData}>{cellData}</div>
-                    </CopyToClipboard>
-                );
+                return <CopyToClipboardCommon value={cellData} iconProvided={<div title={cellData}>{cellData}</div>} />;
             }
         },
         {

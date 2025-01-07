@@ -1102,6 +1102,9 @@ export const GENERAL = {
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
+    LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
+    TEMPDB_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned tempDB drive size can not be optimized',
+    HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
     ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:

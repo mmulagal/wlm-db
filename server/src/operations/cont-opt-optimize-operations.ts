@@ -436,6 +436,7 @@ async function optimizeStorage(params: OptimizeStorageParams) {
             awsAccountId,
             instanceMetadata
         } as OptimizeStorageOperationParams);
+        await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
         const errorMessage = `Error while optimizing storage ${error}`;
         logger.error(errorMessage);
@@ -1468,11 +1469,10 @@ async function checkMpioInstallation(
             jobStatus = JOBSTATUS.COMPLETED;
         }
     } catch (error) {
-        const errorMessage = `Error while checking MPIO installation ${error}`;
-        logger.error(errorMessage);
+        jobError = `Error while checking MPIO installation ${error}`;
+        logger.error(jobError);
         jobStatus = JOBSTATUS.FAILED;
-        jobError = errorMessage;
-        throw errorMessage;
+        throw new Error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -1642,6 +1642,7 @@ async function validateMpioSessions(
     } catch (error) {
         jobError = `Error while validating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
+        throw new Error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -1929,13 +1930,14 @@ async function optimizeOperatingSystemSettings(
     const svmDetailsObject = svmDetails as Record<string, string>;
     const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
 
-    const jobDescription = OptimizeOperatingSystemParams.MPIO_POLICY
-        ? `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
-        : OptimizeOperatingSystemParams.MPIO_SESSIONS
-        ? `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
-        : OptimizeOperatingSystemParams.MPIO_ENABLE
-        ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
-        : '';
+    const jobDescription =
+        configurationName === OptimizeOperatingSystemParams.MPIO_POLICY
+            ? `Optimize operating system MPIO load balancing policy for ${serverNameWithHostName}`
+            : configurationName === OptimizeOperatingSystemParams.MPIO_SESSIONS
+            ? `Optimize operating system MPIO iSCSI sessions for ${serverNameWithHostName}`
+            : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
+            ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
+            : '';
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1969,6 +1971,7 @@ async function optimizeOperatingSystemSettings(
                     standbyNodeName,
                     instanceMetadata
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while optimizing operating system settings ${error}`;
                 logger.error(errorMessage);
@@ -2015,6 +2018,7 @@ async function optimizeOperatingSystemSettings(
                     iscsiTargetAddresses,
                     currentMpioSessionsCount: []
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error: any) {
                 const errorMessage = `Error while optimizing iscsi sessions ${error}`;
                 logger.error(errorMessage);
@@ -2058,6 +2062,7 @@ async function optimizeOperatingSystemSettings(
                     iscsiTargetAddresses,
                     currentMpioSessionsCount: []
                 });
+                await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             } catch (error) {
                 const errorMessage = `Error while enabling MPIO and configuring MPIO sessions: ${error}`;
                 logger.error(errorMessage);
@@ -2210,6 +2215,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 parentJobId,
                 instanceToAssess
             );
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         }
     }
 }

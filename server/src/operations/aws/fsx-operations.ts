@@ -25,7 +25,8 @@ import {
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
     AWS_FSX_TYPE,
-    HttpErrorCodes
+    HttpErrorCodes,
+    DEFAULT_INSTANCE_NAME
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
@@ -37,6 +38,8 @@ import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 interface FsxStorage {
     storage: number;
@@ -437,10 +440,6 @@ async function getMappedOntapVolumes(
     });
 
     try {
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            fileSystemId = 'test-fsx';
-            region = 'us-east-1';
-        }
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
@@ -471,11 +470,14 @@ async function getMappedOntapVolumes(
 
         const instancesResponse: { [key: string]: any } = {};
         instanceNames?.forEach((iName: string) => {
+            const originalInstanceName = iName;
+            iName = isDemoFlow ? DEFAULT_INSTANCE_NAME : iName;
             if (
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
+                iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
                     const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
                         name: record.name,

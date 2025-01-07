@@ -1938,5 +1938,30 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "testConnectionCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "84570d00-519d-4bc3-8745-006a6da47df7",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CommandId": "ebb0d06a-3f1b-40e0-a9d1-a614d4cb1e3e",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT0.21S",
+        "ExecutionEndDateTime": "2024-12-19T08:35:03.785Z",
+        "ExecutionStartDateTime": "2024-12-19T08:35:03.785Z",
+        "InstanceId": "i-0571e829274d756c9",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "[    {        \"IsConnected\":  true,        \"Options\":  {                        \"Locale\":  \"\",                        \"Username\":  null,                        \"Authority\":  \"\",                        \"Impersonation\":  3,                        \"Authentication\":  4,                        \"EnablePrivileges\":  true,                        \"Context\":  \"\",                        \"Timeout\":  \"10675199.02:48:05.4775807\"                    },        \"Path\":  {                     \"Path\":  \"\\\\\\\\.\\\\root\\\\cimv2\",                     \"RelativePath\":  \"\",                     \"Server\":  \".\",                     \"NamespacePath\":  \"root\\\\cimv2\",                     \"ClassName\":  \"\",                     \"IsClass\":  false,                     \"IsInstance\":  false,                     \"IsSingleton\":  false                 }    },    {        \"IsConnected\":  true,        \"Options\":  {                        \"Locale\":  \"\",                        \"Username\":  null,                        \"Authority\":  \"\",                        \"Impersonation\":  3,                        \"Authentication\":  4,                        \"EnablePrivileges\":  true,                        \"Context\":  \"\",                        \"Timeout\":  \"10675199.02:48:05.4775807\"                    },        \"Path\":  {                     \"Path\":  \"\\\\\\\\.\\\\root\\\\cimv2\",                     \"RelativePath\":  \"\",                     \"Server\":  \".\",                     \"NamespacePath\":  \"root\\\\cimv2\",                     \"ClassName\":  \"\",                     \"IsClass\":  false,                     \"IsInstance\":  false,                     \"IsSingleton\":  false                 }    },    {        \"IsConnected\":  true,        \"Options\":  {                        \"Locale\":  \"\",                        \"Username\":  null,                        \"Authority\":  \"\",                        \"Impersonation\":  3,                        \"Authentication\":  4,                        \"EnablePrivileges\":  true,                        \"Context\":  \"\",                        \"Timeout\":  \"10675199.02:48:05.4775807\"                    },        \"Path\":  {                     \"Path\":  \"\\\\\\\\.\\\\root\\\\cimv2\",                     \"RelativePath\":  \"\",                     \"Server\":  \".\",                     \"NamespacePath\":  \"root\\\\cimv2\",                     \"ClassName\":  \"\",                     \"IsClass\":  false,                     \"IsInstance\":  false,                     \"IsSingleton\":  false                 }    },    {        \"IsConnected\":  true,        \"Options\":  {                        \"Locale\":  \"\",                        \"Username\":  null,                        \"Authority\":  \"\",                        \"Impersonation\":  3,                        \"Authentication\":  4,                        \"EnablePrivileges\":  true,                        \"Context\":  \"\",                        \"Timeout\":  \"10675199.02:48:05.4775807\"                    },        \"Path\":  {                     \"Path\":  \"\\\\\\\\.\\\\root\\\\cimv2\",                     \"RelativePath\":  \"\",                     \"Server\":  \".\",                     \"NamespacePath\":  \"root\\\\cimv2\",                     \"ClassName\":  \"\",                     \"IsClass\":  false,                     \"IsInstance\":  false,                     \"IsSingleton\":  false                 }    }]",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "3",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

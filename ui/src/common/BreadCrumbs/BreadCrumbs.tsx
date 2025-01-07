@@ -17,7 +17,7 @@ const BreadCrumbs = (props: BreadCrumbsProps) => {
         const length = props.items.length;
         return props.items.map((item, index) => {
             return (
-                <div className={styles['bread-crumbs-item']}>
+                <div className={styles['bread-crumbs-item']} key={index}>
                     <Typography
                         className={`${styles.title} ${item.onClick ? styles.link : ''}`}
                         onClick={item.onClick}

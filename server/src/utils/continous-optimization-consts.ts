@@ -140,6 +140,8 @@ const QUERY_PARAMS = {
 
 const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
+const TEST_CONNECTION_COMMAND =
+    'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -156,5 +158,6 @@ export {
     LUN,
     QUERY_PARAMS,
     REDIS_SCHEMA,
-    OptimizeOperatingSystemParams
+    OptimizeOperatingSystemParams,
+    TEST_CONNECTION_COMMAND
 };

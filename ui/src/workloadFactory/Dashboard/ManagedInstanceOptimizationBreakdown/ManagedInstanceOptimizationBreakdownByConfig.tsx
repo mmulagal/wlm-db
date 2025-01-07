@@ -12,6 +12,7 @@ import { useMemo } from 'react';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
@@ -20,6 +21,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const windowSize = useResize();
     const handleOptimize = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedConfig(type));
         let configKey = '';
         switch (type) {

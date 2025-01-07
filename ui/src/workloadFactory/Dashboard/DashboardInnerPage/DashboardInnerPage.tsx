@@ -4,7 +4,7 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { FINDINGS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
+import { FINDINGS, GETWELL_STATUS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
@@ -30,6 +30,7 @@ import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
+    useOptimizeStorageSizingMutation,
     useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
 import {
@@ -50,7 +51,6 @@ const DashboardInnerPage = () => {
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -70,7 +70,7 @@ const DashboardInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
-    const [optimizeStorageSizing] = useOptimizeStorageConfigMutation();
+    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -78,7 +78,7 @@ const DashboardInnerPage = () => {
         let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
-        const { selectedDatabaseInstance, landingFrom, cardData } = state.getWellOptimize;
+        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData } = state.getWellOptimize;
         const { headerSelectedCred, headerSelectedRegion } = state.headers;
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
@@ -434,6 +434,24 @@ const DashboardInnerPage = () => {
                 ) {
                     isDisabled = true;
                     errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+                } else if (
+                    name === 'Log drive size' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+                } else if (
+                    name === 'TempDB drive size' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+                } else if (
+                    name === 'File system headroom' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
                 }
                 return (
                     <div className={styles.buttonContainer}>

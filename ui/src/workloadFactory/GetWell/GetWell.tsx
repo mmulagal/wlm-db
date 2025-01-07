@@ -47,11 +47,12 @@ import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
-import domToPdf from 'dom-to-pdf';
+//import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
+import downloadPdf from '../../common/pdfGenerator';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -134,7 +135,9 @@ const GetWell = () => {
                 filename: `Optimization_Report_MSSQLSERVER_${generateDate()}.pdf`,
                 compression: 'MEDIUM'
             };
-            domToPdf(elem, options, (pdf: any) => {
+
+            //@ts-ignore
+            downloadPdf(elem, options, (pdf: any) => {
                 setOptimizePrintState(false);
                 dispatch(
                     addNotification({
@@ -370,6 +373,7 @@ const GetWell = () => {
                                 id="100"
                                 variant="Default"
                                 isDisabled={loading || !isAssessmentAvailable}
+                                onExpandChange={setsAccordionOpen}
                                 expandCollapseIcon={{
                                     className: styles['expand-collapse-icon'],
                                     collapsedIcon: <RowArrow />,
@@ -649,8 +653,8 @@ const GetWell = () => {
                                             style={{ marginBottom: optimizeFilterTags.length > 0 ? '18px' : '16px' }}
                                         >
                                             <div className={styles.tagsContainer}>
-                                                {optimizeFilterTags.map((item: any) => (
-                                                    <div className={styles.filterTag}>
+                                                {optimizeFilterTags.map((item: any, index: number) => (
+                                                    <div className={styles.filterTag} key={index}>
                                                         <DsTypography
                                                             style={{ color: 'var(--header-notification-text)' }}
                                                             variant="Semibold_13"
@@ -702,9 +706,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 2
-                                                    ? 'All(2)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/2`}
+                                                defaultFilterOptions['all-catagories']?.length === 3
+                                                    ? 'All(3)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/3`}
                                             </DsTypography>
                                         </div>
 
@@ -863,9 +867,15 @@ const GetWell = () => {
                                             onClick={() => setClickedAccordionId('1')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.storage_tier?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.storage_tier?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -922,8 +932,12 @@ const GetWell = () => {
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.file_system_headroom?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -985,8 +999,12 @@ const GetWell = () => {
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.transaction_log_drive_size?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -1046,8 +1064,12 @@ const GetWell = () => {
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.tempdb_drive_size?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -1125,9 +1147,15 @@ const GetWell = () => {
                                             onClick={() => setClickedAccordionId('5')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.user_data_files?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.user_data_files?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -1177,8 +1205,12 @@ const GetWell = () => {
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.transaction_log_files?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -1243,9 +1275,15 @@ const GetWell = () => {
                                             onClick={() => setClickedAccordionId('7')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.tempdb_files?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.tempdb_files?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -1318,8 +1356,12 @@ const GetWell = () => {
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.ontap_configuration?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -1379,9 +1421,15 @@ const GetWell = () => {
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.os_configuration?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.os_configuration?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -1489,8 +1537,12 @@ const GetWell = () => {
                                                 ) : (
                                                     <div className={styles.tagPlacement}>
                                                         {filteredCardData?.compute_rightsizing?.tags?.map(
-                                                            (perTag: string) => {
-                                                                return <Tag text={perTag} />;
+                                                            (perTag: string, index: number) => {
+                                                                return (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                );
                                                             }
                                                         )}
                                                     </div>
@@ -1543,9 +1595,15 @@ const GetWell = () => {
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.host_os_patch?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.host_os_patch?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             isDisabled={loading || !cardData?.host_os_patch?.block_two?.value}
@@ -1625,9 +1683,15 @@ const GetWell = () => {
                                             onClick={() => setClickedAccordionId('13')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.sql_licenses?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.sql_licenses?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[

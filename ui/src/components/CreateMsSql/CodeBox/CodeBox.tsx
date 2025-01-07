@@ -14,8 +14,7 @@ import {
     handleDownloadTerraform,
     handleDownloadYAML
 } from '../../../utils/utilityFunctions';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { uniq, isEqual } from 'lodash';
 
 import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
@@ -50,6 +49,7 @@ import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import TerraformColor from '../Terraform/TerraformColor';
 import { downloadTerraformZip } from '../MockTerraformZip/MockTerraformZip';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 
 const CodeBox = () => {
     const [copyText, setCopyText] = useState('');
@@ -557,15 +557,21 @@ const CodeBox = () => {
                                         popoverClass={styles['copy-popover']}
                                         children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                         container={
-                                            <CopyToClipboard text={copyResponseData()}>
-                                                <div
-                                                    className={styles.menuItem}
-                                                    id={UI_IDS.WIZARD_CODEBOX_COPY}
-                                                    onClick={handleCopy}
-                                                >
-                                                    <Copy />
-                                                </div>
-                                            </CopyToClipboard>
+                                            <>
+                                                <CopyToClipboardCommon
+                                                    tooltipTitle={'Copied to clipboard'}
+                                                    value={copyResponseData()}
+                                                    iconProvided={
+                                                        <div
+                                                            className={styles.menuItem}
+                                                            id={UI_IDS.WIZARD_CODEBOX_COPY}
+                                                            onClick={handleCopy}
+                                                        >
+                                                            <Copy />
+                                                        </div>
+                                                    }
+                                                />
+                                            </>
                                         }
                                     />
                                 ))}

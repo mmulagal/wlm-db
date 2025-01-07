@@ -23,16 +23,21 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setInProgressOptimizationData,
+    setOptimizingData,
+    setOptimizingInstanceData
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
-const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }: any) => {
+const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
 
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
@@ -51,7 +56,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
         // Only 1 config can be passed at a time
         let payload = {};
         let apiCall = null;
+        let statusType = '';
         if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+            statusType = 'ontap';
             apiCall = optimizeStorageConfig;
             payload = {
                 assessments: [
@@ -62,6 +69,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
                 ]
             };
         } else {
+            statusType = 'os';
             apiCall = optimizeOs;
             payload = {
                 configurationName: rowData?.id
@@ -74,6 +82,12 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
             setOptimizingData({
                 ...optimizingData,
                 [rowData?.id]: 'optimizing'
+            })
+        );
+        dispatch(
+            setInProgressOptimizationData({
+                ...inProgressOptimizationData,
+                [statusType]: [...(inProgressOptimizationData[statusType] || []), selectedDatabaseInstance]
             })
         );
         formatGetWellData(dispatch);
@@ -101,8 +115,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
         apiCall({
             credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
             regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
+            databaseHostId: selectedResourceId || hostId,
+            instanceId: selectedDatabaseInstance || instanceId,
             payload: payload
         }).then((res: any) => {
             const failedMsgData = (
@@ -120,7 +134,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from }:
                     </Button>
                 </div>
             );
-            handleOptimizeStorageJob(res, rowData, failedMsgData, getJobDetailApi, dispatch);
+            handleOptimizeStorageJob(res, rowData, failedMsgData, getJobDetailApi, dispatch, statusType);
         });
     };
 

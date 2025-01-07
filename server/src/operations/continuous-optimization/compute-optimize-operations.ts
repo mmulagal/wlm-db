@@ -357,6 +357,7 @@ async function handleComputeRemediation(
                 updatedMetadata.isComputeOptimized = true;
                 await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
             }
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
             return;
         }
 
@@ -511,7 +512,9 @@ async function getCurrentDnsSettings(credentialsId: string, region: string, inst
         region,
         ['Get-NetAdapter | Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses'],
         instanceId,
-        'Retrieves the DNS server addresses for all network adapters on the system.'
+        'Retrieves the DNS server addresses for all network adapters on the system.',
+        undefined,
+        false
     );
 }
 
