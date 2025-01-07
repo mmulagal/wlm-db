@@ -227,8 +227,8 @@ export const getManageAggrCost = (data: any) => {
         val?.estimatedUsageCost?.storage?.fsxnBreakDownById?.map((item: any) => {
             let fsxVal = item?.id;
             if (!fsxVal || !storageList.includes(fsxVal)) {
-                storageCost += item?.capacityCost;
-                storageCost += item?.operationalCost;
+                storageCost += item?.capacityCost || 0;
+                storageCost += item?.operationalCost || 0;
                 if (fsxVal) {
                     storageList.push(fsxVal);
                 }
@@ -244,14 +244,14 @@ export const getManageAggrCost = (data: any) => {
             vpcVal = val.nodeTopology.vpcId;
         }
         if ((!vpcVal || !vpcList.includes(vpcVal)) && val?.estimatedUsageCost?.connectivity) {
-            connectivityCost += val.estimatedUsageCost.connectivity;
+            connectivityCost += val.estimatedUsageCost.connectivity || 0;
             if (vpcVal) {
                 vpcList.push(vpcVal);
             }
         }
 
         if (val?.estimatedUsageCost?.others) {
-            otherCost += val.estimatedUsageCost.others;
+            otherCost += val.estimatedUsageCost.others || 0;
         }
 
         if (val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING) {
