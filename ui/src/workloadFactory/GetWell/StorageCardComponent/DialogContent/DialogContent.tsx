@@ -9,8 +9,7 @@ import { useDispatch } from 'react-redux';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 
 type DialogType = {
     type: string;
@@ -120,9 +119,14 @@ const DialogContent = ({
                                         ))}
                                     </DsTypography>
                                     <div className={styles['copy']}>
-                                        <CopyToClipboard text={missingPermissions}>
-                                            <CopyIcon />
-                                        </CopyToClipboard>
+                                        <CopyToClipboardCommon
+                                            value={missingPermissions}
+                                            iconProvided={
+                                                <div className={styles.menuItem}>
+                                                    <CopyIcon />
+                                                </div>
+                                            }
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -257,9 +261,14 @@ const DialogContent = ({
                                                 ))}
                                             </DsTypography>
                                             <div className={styles['copy']}>
-                                                <CopyToClipboard text={missingPermissions}>
-                                                    <CopyIcon />
-                                                </CopyToClipboard>
+                                                <CopyToClipboardCommon
+                                                    value={missingPermissions}
+                                                    iconProvided={
+                                                        <div className={styles.menuItem}>
+                                                            <CopyIcon />
+                                                        </div>
+                                                    }
+                                                />
                                             </div>
                                         </div>
                                     </div>

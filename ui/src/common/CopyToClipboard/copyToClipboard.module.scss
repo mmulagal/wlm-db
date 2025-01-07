@@ -1,0 +1,57 @@
+.copyToClipboardContainer {
+    position: relative;
+
+    .contentForCopy {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        border: none;
+        padding: 0;
+        opacity: 0;
+    }
+
+    .tooltipCopyClipShowMessage {
+        [class*='dsBaloonPopup'] {
+            min-width: unset;
+            display: block;
+
+            [class*='tooltipDescription'] {
+                white-space: nowrap;
+            }
+        }
+    }
+
+    .tooltipCopyClipNotShowMessage {
+        [class*='dsBaloonPopup'] {
+            min-width: unset;
+            display: none;
+
+            [class*='tooltipDescription'] {
+                white-space: nowrap;
+            }
+        }
+    }
+
+    [class*='dsTooltipInfo'] {
+        [class*='tooltipContainer'] {
+            [class*='iconTitleContainer'] {
+                div {
+                    svg {
+                        width: auto !important;
+                        height: auto !important;
+                    }
+                }
+            }
+
+            .copyToClipboard {
+                cursor: pointer;
+                width: 24px;
+                height: 24px;
+
+                color: var(--icon-secondary);
+            }
+        }
+    }
+}

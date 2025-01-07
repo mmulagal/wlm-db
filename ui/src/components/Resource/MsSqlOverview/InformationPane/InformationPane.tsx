@@ -1,9 +1,9 @@
 import { Typography, Popover } from '@netapp/design-system';
 import styles from './InformationPane.module.scss';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL } from '../../../../utils/appConstants';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 
 type InformationDataType = {
     label: string;
@@ -75,9 +75,10 @@ const InformationPane = ({ mssqlSummary }: InformationPaneProps) => {
                                         popoverClass={styles['copy-popover']}
                                         children={'Copied to clipboard'}
                                         container={
-                                            <CopyToClipboard text={item.value || ''}>
-                                                <CopyIcon fill={'#c8c8c8'}></CopyIcon>
-                                            </CopyToClipboard>
+                                            <CopyToClipboardCommon
+                                                value={item.value || ''}
+                                                iconProvided={<CopyIcon fill={'#c8c8c8'}></CopyIcon>}
+                                            />
                                         }
                                     />
                                 </div>

@@ -13,8 +13,7 @@ import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import HighlighterWord from '../Highlighter/Highlighter';
 //@ts-ignore
 import Highlighter from 'react-highlight-words';
@@ -70,6 +69,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import TerraformColor from '../../../components/CreateMsSql/Terraform/TerraformColor';
 import { downloadTerraformZip } from '../../../components/CreateMsSql/MockTerraformZip/MockTerraformZip';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 
 type ConfigType = {
     id?: string;
@@ -992,15 +992,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 popoverClass={styles['copy-popover']}
                                                 children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                                 container={
-                                                    <CopyToClipboard text={copyResponseData()}>
-                                                        <div
-                                                            onClick={handleCopy}
-                                                            className={styles.menuItem}
-                                                            id={UI_IDS.DBP_CODEBOX_COPY}
-                                                        >
-                                                            <Copy />
-                                                        </div>
-                                                    </CopyToClipboard>
+                                                    <CopyToClipboardCommon
+                                                        value={copyResponseData()}
+                                                        iconProvided={
+                                                            <div
+                                                                onClick={handleCopy}
+                                                                className={styles.menuItem}
+                                                                id={UI_IDS.DBP_CODEBOX_COPY}
+                                                            >
+                                                                <Copy />
+                                                            </div>
+                                                        }
+                                                    />
                                                 }
                                             />
                                         )}
