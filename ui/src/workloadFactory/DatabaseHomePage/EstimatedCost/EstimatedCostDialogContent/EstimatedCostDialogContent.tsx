@@ -1,11 +1,11 @@
 import { AccordionController, Typography, AccordionCard, AccordionCardContent } from '@netapp/design-system';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import styles from './EstimatedCostDialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { COST_PERMISSION } from '../../../../utils/permissions';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 
 const EstimatedCostDialogContent = () => {
     const data = JSON.stringify(COST_PERMISSION, null, 1);
@@ -47,9 +47,12 @@ const EstimatedCostDialogContent = () => {
                                                                 popoverClass={styles['copy-popover']}
                                                                 children={'Permissions copied'}
                                                                 container={
-                                                                    <CopyToClipboard text={data}>
-                                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                                    </CopyToClipboard>
+                                                                    <CopyToClipboardCommon
+                                                                        value={data}
+                                                                        iconProvided={
+                                                                            <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                                        }
+                                                                    />
                                                                 }
                                                             />
                                                         </div>
