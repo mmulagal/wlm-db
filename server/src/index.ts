@@ -365,6 +365,13 @@ logger.info('Initializing database');
 try {
     initializeDatabase();
     if (isActiveInstance()) {
+        try {
+            await execute(
+                'node_modules/prisma/build/index.js migrate resolve --applied 000000000000_squashed_migrations'
+            ); // TODO: remove this line after the next release
+        } catch (error) {
+            logger.warn('Failed to apply migration squash', error);
+        }
         await execute('node_modules/prisma/build/index.js migrate deploy');
     }
 } catch (error) {
