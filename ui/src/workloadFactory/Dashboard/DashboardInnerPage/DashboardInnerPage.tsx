@@ -497,19 +497,19 @@ const DashboardInnerPage = () => {
             case 'Storage tier':
                 return <StorageTierTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'File system headroom':
-                return <FileSystemHeadroomTable lastColDetails={lastColDetails} />;
+                return <FileSystemHeadroomTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Log drive size':
-                return <LogDriveSizeTable lastColDetails={lastColDetails} />;
+                return <LogDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'TempDB drive size':
-                return <TempDBDriveSizeTable lastColDetails={lastColDetails} />;
+                return <TempDBDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'User data files (.mdf)':
-                return <UserDataFilesTable lastColDetails={lastColDetails} />;
+                return <UserDataFilesTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Log files (.ldf)':
-                return <LogFileTable lastColDetails={lastColDetails} />;
+                return <LogFileTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'TempDB placement':
-                return <TempDBPlacement lastColDetails={lastColDetails} />;
+                return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Compute rightsizing':
-                return <ComputeRightSizingTable lastColDetails={lastColDetails} />;
+                return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'ONTAP configuration':
                 return <OntapConfig />;
             case 'Operating system':
