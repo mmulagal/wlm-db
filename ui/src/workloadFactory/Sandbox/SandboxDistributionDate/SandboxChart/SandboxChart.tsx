@@ -46,7 +46,7 @@ const SandboxChart = () => {
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (myDoughnut) myDoughnut.destroy();
         };
     }, [aggregatedSandboxList]);
 
