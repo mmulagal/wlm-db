@@ -1635,20 +1635,19 @@ async function validateMpioSessions(
             false
         );
         parsedResponse = sqlResponseParsing(validateMpioSessionsResponse);
-        await updateJobDetails(accountId, jobId, {
-            status: JOBSTATUS.COMPLETED,
-            endTime: Date.now()
-        });
+        jobStatus = JOBSTATUS.COMPLETED;
     } catch (error) {
         jobError = `Error while validating MPIO iSCSI sessions  ${error}`;
         jobStatus = JOBSTATUS.FAILED;
-        throw new Error(jobError);
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
             endTime: Date.now(),
             error: jobError
         });
+    }
+    if (jobStatus === JOBSTATUS.FAILED) {
+        throw new Error(jobError);
     }
     return parsedResponse;
 }
@@ -1747,20 +1746,32 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
         `Optimizing MPIO iSCSI sessions for ${accountId}, ${credentialsId}, ${region}, ${parentJobId}, ${fsxId}, ${svmId}, ${instanceId}, ${instanceName}, ${serverNameWithHostName}, ${databaseHostId}, ${awsAccountId}, ${activeNodeInstanceId}, ${sqlDeploymentType}, ${standbyNodeInstanceId}`
     );
 
+    let violationsPrimaryNode = [];
     let violationsStandbyNode = [];
 
     // Run validation on primary node
-    const sessionsPerTargetOnPrimaryNode = await validateMpioSessions(optimizeMpioisSessionsParams);
-    const violationsPrimaryNode = sessionsPerTargetOnPrimaryNode.filter(
-        (address: { count: number }) => address.count !== 5
-    );
-
-    if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
-        // Run validation on standby node
-        const sessionsPerTargetOnStandbyNode = await validateMpioSessions(optimizeMpioisSessionsParams, false);
-        violationsStandbyNode = sessionsPerTargetOnStandbyNode.filter(
+    try {
+        const sessionsPerTargetOnPrimaryNode = await validateMpioSessions(optimizeMpioisSessionsParams);
+        violationsPrimaryNode = sessionsPerTargetOnPrimaryNode.filter(
             (address: { count: number }) => address.count !== 5
         );
+
+        if (sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+            // Run validation on standby node
+            const sessionsPerTargetOnStandbyNode = await validateMpioSessions(optimizeMpioisSessionsParams, false);
+            violationsStandbyNode = sessionsPerTargetOnStandbyNode.filter(
+                (address: { count: number }) => address.count !== 5
+            );
+        }
+    } catch (error) {
+        const errorMessage = `Error while validating MPIO iSCSI sessions ${error}`;
+        await updateJobDetails(accountId, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+        return;
     }
     if (isEmpty(violationsPrimaryNode) && isEmpty(violationsStandbyNode)) {
         const instanceToAssess: WorkloadInstance = {
