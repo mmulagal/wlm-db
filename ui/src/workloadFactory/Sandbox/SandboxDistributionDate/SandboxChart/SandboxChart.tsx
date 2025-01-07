@@ -70,10 +70,10 @@ const SandboxChart = () => {
                 {loading && <DsFlashingDotsLoader />}
             </div>
             {/* @ts-ignore */}
-            {aggregatedSandboxList.length === 0 && <div className={styles.emptyCircle}></div>}
-            {isNA && <div className={styles.emptyCircle}></div>}
 
-            {!isNA && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
+            {(isNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle}></div>}
+
+            {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
         </div>
     );
 };
