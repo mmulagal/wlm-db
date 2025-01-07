@@ -168,7 +168,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length === 1 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
