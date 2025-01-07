@@ -6,15 +6,23 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
+import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import BulkActionContainer from './BulkActionContainer';
 interface StorageTierTableProps {
     lastColDetails: any;
+    handleBulkAction: any;
 }
 
-const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
+const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps) => {
+    const dispatch = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { optimizingInstanceData } = useAppSelector(state => state.getWellOptimize);
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -40,7 +48,13 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
                             assessmentStatus: computeRightSizingObj?.status,
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
                             isMissingPermissions: computeMissingPermissions,
-                            data: instanceData
+                            data: instanceData,
+                            cellProps: {
+                                isDisabled:
+                                    optimizingInstanceData &&
+                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
+                                selectionProps: undefined
+                            }
                         });
                     }
                 }
@@ -61,7 +75,7 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '376px',
+            width: '310px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
@@ -130,12 +144,32 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: true,
+        isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
         rows: tableData || [],
-        pageSize: 50
+        pageSize: 50,
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
+    useEffect(() => {
+        const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+
+        dispatch(setSelectedRowsForOptimize(rows));
+        if (rows.length === 1 && optimizingInstanceData) {
+            //To do here ids will come
+            // //@ts-ignore
+            // tableProps.selectionState.rows['41'] = false;
+            // //@ts-ignore
+            // tableProps.selectionState.count = 0;
+            // //@ts-ignore
+            // tableProps.selectionState.allSelected = false;
+        }
+    }, [tableProps.selectionState, optimizingInstanceData]);
+
+    const handleBulkOperation = () => {
+        handleBulkAction('Compute rightsizing', selectedRowsForOptimize);
+    };
     return (
         <div className={styles.renderTable}>
             <TableTopBar
@@ -144,6 +178,7 @@ const ComputeRightSizingTable = ({ lastColDetails }: StorageTierTableProps) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

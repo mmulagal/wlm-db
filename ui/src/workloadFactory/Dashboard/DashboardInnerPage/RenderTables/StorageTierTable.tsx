@@ -152,12 +152,13 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
 
         disptach(setSelectedRowsForOptimize(rows));
         if (rows.length === 1 && optimizingInstanceData) {
-            //@ts-ignore
-            tableProps.selectionState.rows['41'] = false;
-            //@ts-ignore
-            tableProps.selectionState.count = 0;
-            //@ts-ignore
-            tableProps.selectionState.allSelected = false;
+            //To do here ids will come
+            // //@ts-ignore
+            // tableProps.selectionState.rows['41'] = false;
+            // //@ts-ignore
+            // tableProps.selectionState.count = 0;
+            // //@ts-ignore
+            // tableProps.selectionState.allSelected = false;
         }
     }, [tableProps.selectionState, optimizingInstanceData]);
 

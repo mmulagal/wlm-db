@@ -5,13 +5,20 @@ import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import BulkActionContainer from './BulkActionContainer';
 
-const LogFileTable = ({ lastColDetails }: any) => {
+const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
+    const dispatch = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
+    const { optimizingInstanceData } = useAppSelector(state => state.getWellOptimize);
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -30,7 +37,13 @@ const LogFileTable = ({ lastColDetails }: any) => {
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: logDataFilesObj?.status,
-                            data: instanceData
+                            data: instanceData,
+                            cellProps: {
+                                isDisabled:
+                                    optimizingInstanceData &&
+                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
+                                selectionProps: undefined
+                            }
                         });
                     }
                 }
@@ -51,7 +64,7 @@ const LogFileTable = ({ lastColDetails }: any) => {
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '376px',
+            width: '310px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
@@ -120,12 +133,32 @@ const LogFileTable = ({ lastColDetails }: any) => {
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
-        isHorizontalScroll: true,
+        isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
         rows: tableData || [],
-        pageSize: 50
+        pageSize: 50,
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
+    useEffect(() => {
+        const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+
+        dispatch(setSelectedRowsForOptimize(rows));
+        if (rows.length === 1 && optimizingInstanceData) {
+            //To do here ids will come
+            // //@ts-ignore
+            // tableProps.selectionState.rows['41'] = false;
+            // //@ts-ignore
+            // tableProps.selectionState.count = 0;
+            // //@ts-ignore
+            // tableProps.selectionState.allSelected = false;
+        }
+    }, [tableProps.selectionState, optimizingInstanceData]);
+
+    const handleBulkOperation = () => {
+        handleBulkAction('Log files (.ldf)', selectedRowsForOptimize);
+    };
     return (
         <div className={styles.renderTable}>
             <TableTopBar
@@ -134,6 +167,7 @@ const LogFileTable = ({ lastColDetails }: any) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
