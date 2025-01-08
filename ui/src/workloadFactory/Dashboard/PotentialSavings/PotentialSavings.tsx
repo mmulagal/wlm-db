@@ -51,11 +51,7 @@ const PotentialSavings = () => {
     }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues]);
 
     const hasPotentialValues = () => {
-        return (
-            potentialSavingsValues?.fsxnCost ||
-            potentialSavingsValues?.fsxwCost ||
-            potentialSavingsValues?.ebsCost
-        );
+        return potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.ebsCost;
     };
 
     return (
@@ -84,7 +80,7 @@ const PotentialSavings = () => {
             </div>
 
             {windowSize.width < 1700 && (
-                <DsTypography style={{ margin: '20px 0 20px 40px' }} variant="Regular_13">
+                <DsTypography style={{ margin: '20px 0 -20px 40px' }} variant="Regular_13">
                     (Elastic Block Store (EBS) & FSx for Windows File Server)
                 </DsTypography>
             )}
@@ -182,23 +178,19 @@ const PotentialSavings = () => {
                             loading={loading}
                         />
                     ) : (
-                            <ComparisonChartStack
-                                // chart draws top to bottom, so the order of the data is reversed
-                                data={[[1], [1]]}
-                                yTickFormatter={yValue => '$' + formatNumberWithCustomComma(Number(yValue), true)}
-                                height={120}
-                                colors={['chart-2', 'chart-3', 'chart-2']}
-                                categories={[
-                                    'FSx for ONTAP',
-                                    'Amazon Elastic Block Store',
-                                    'Amazon Elastic Block Store2'
-                                ]}
-                                tooltipHeading={['EBS', 'FSxW']}
-                                tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
-                                loadingWithNoData={true}
-                                loading={loading}
-                            />
-                        )}
+                        <ComparisonChartStack
+                            // chart draws top to bottom, so the order of the data is reversed
+                            data={[[1], [1]]}
+                            yTickFormatter={yValue => '$' + formatNumberWithCustomComma(Number(yValue), true)}
+                            height={120}
+                            colors={['chart-2', 'chart-3', 'chart-2']}
+                            categories={['FSx for ONTAP', 'Amazon Elastic Block Store', 'Amazon Elastic Block Store2']}
+                            tooltipHeading={['EBS', 'FSxW']}
+                            tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
+                            loadingWithNoData={true}
+                            loading={loading}
+                        />
+                    )}
                 </div>
             </div>
         </div>
