@@ -30,7 +30,6 @@ const PotentialSavings = () => {
     };
 
     const windowSize = useResize();
-    const noData = false;
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -150,7 +149,7 @@ const PotentialSavings = () => {
                     <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                {potentialSavingsValues?.savingsPercent || 0}%
+                                {formatNumberWithCustomComma(potentialSavingsValues?.savingsPercent || 0)}%
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>
@@ -158,8 +157,9 @@ const PotentialSavings = () => {
                     </div>
                 </div>
                 <div className={styles.chartSection}>
-                    {noData && (isDarkTheme ? <PotentialSavingsDarkModeImage /> : <PotentialSavingsImage />)}
-                    {!noData && (
+                    {(potentialSavingsValues?.fsxnCost ||
+                        potentialSavingsValues?.fsxwCost ||
+                        potentialSavingsValues?.ebsCost) && (
                         <ComparisonChartStack
                             // chart draws top to bottom, so the order of the data is reversed
                             data={[
@@ -172,8 +172,30 @@ const PotentialSavings = () => {
                             categories={['FSx for ONTAP', 'Amazon Elastic Block Store', 'Amazon Elastic Block Store2']}
                             tooltipHeading={['EBS', 'FSxW']}
                             tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
+                            loadingWithNoData={false}
+                            loading={loading}
                         />
                     )}
+                    {!potentialSavingsValues?.fsxnCost &&
+                        !potentialSavingsValues?.fsxwCost &&
+                        !potentialSavingsValues?.ebsCost && (
+                            <ComparisonChartStack
+                                // chart draws top to bottom, so the order of the data is reversed
+                                data={[[1], [1]]}
+                                yTickFormatter={yValue => '$' + formatNumberWithCustomComma(Number(yValue), true)}
+                                height={120}
+                                colors={['chart-2', 'chart-3', 'chart-2']}
+                                categories={[
+                                    'FSx for ONTAP',
+                                    'Amazon Elastic Block Store',
+                                    'Amazon Elastic Block Store2'
+                                ]}
+                                tooltipHeading={['EBS', 'FSxW']}
+                                tooltipText={['Amazon Elastic Block Store', 'FSx for Windows File Server']}
+                                loadingWithNoData={true}
+                                loading={loading}
+                            />
+                        )}
                 </div>
             </div>
         </div>
