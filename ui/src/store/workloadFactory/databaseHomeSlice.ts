@@ -79,6 +79,7 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         loading: false,
         ebsCount: 0,
         fsxwCount: 0,
+        totalCount: 0,
         ebsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
