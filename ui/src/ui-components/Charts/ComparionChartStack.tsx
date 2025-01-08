@@ -176,11 +176,11 @@ const ComparisonChartStack = React.memo(
                                         <div className={styles.xLabel}>
                                             <div className={styles.xContainer}>
                                                 <div className={styles.xContainerInner}>
-                                                    <div className={styles.squareChart2} />
+                                                    <div className={styles.squareChart3} />
                                                     <DsTypography variant="Semibold_14">EBS</DsTypography>
                                                 </div>
                                                 <div className={styles.xContainerInner}>
-                                                    <div className={styles.squareChart3} />
+                                                    <div className={styles.squareChart2} />
                                                     <DsTypography variant="Semibold_14">FSxW</DsTypography>
                                                 </div>
                                             </div>

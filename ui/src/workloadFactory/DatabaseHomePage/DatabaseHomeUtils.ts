@@ -76,40 +76,29 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
 };
 
 export const getPotentialSavingsValues = (data: any) => {
-    let loading = false;
-    let ebsCount = 0;
-    let fsxwCount = 0;
-    let ebsCost = 0;
-    let fsxwCost = 0;
-    let fsxnCost = 0;
-    let savingsPercent = 0;
+    let result = {
+        loading: false,
+        ebsCost: 0,
+        fsxwCost: 0,
+        fsxnCost: 0,
+        savingsPercent: 0
+    };
     Object.keys(data).map((key: string) => {
         let val = data[key];
         if (val?.loading) {
-            loading = true;
+            result.loading = true;
         }
-        fsxnCost = val?.data?.totalSummary?.recommended;
+        result.fsxnCost += val?.data?.totalSummary?.recommended;
         if (val?.storageType === GENERAL.EBS) {
-            ebsCount += 1;
-            ebsCost = val?.data?.totalSummary?.existing;
+            result.ebsCost += val?.data?.totalSummary?.existing;
         } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-            fsxwCount += 1;
-            fsxwCost = val?.data?.totalSummary?.existing;
+            result.fsxwCost += val?.data?.totalSummary?.existing;
         }
     });
 
-    savingsPercent = 100 * ((ebsCost + fsxwCost - fsxnCost) / (ebsCost + fsxwCost));
-
-    return {
-        loading: loading,
-        ebsCount: ebsCount,
-        fsxwCount: fsxwCount,
-        totalCount: ebsCount + fsxwCount,
-        ebsCost: ebsCost,
-        fsxwCost: fsxwCost,
-        fsxnCost: fsxnCost,
-        savingsPercent: formatFractionalNumber(savingsPercent, 2)
-    };
+    result.savingsPercent =
+        100 * ((result.ebsCost + result.fsxwCost - result.fsxnCost) / (result.ebsCost + result.fsxwCost || 1));
+    return result;
 };
 
 export const getManagedAggrProtection = (data: any) => {
