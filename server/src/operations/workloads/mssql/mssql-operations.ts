@@ -1068,7 +1068,7 @@ async function getActiveSqlNode(
         } else {
             errorMessage = `SSM status of node ${node1InstanceId} is not running :${connectionStatus.Status}`;
             errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-            logger.error(errorMessage, { connectionStatus });
+            logger.warn(errorMessage, { connectionStatus });
         }
 
         // Check for connection to standby node
@@ -1090,7 +1090,7 @@ async function getActiveSqlNode(
             }
             errorMessage = `SSM connection to node and SQL server status check for node ${node2InstanceId} has failed.`;
             errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
-            logger.error(errorMessage, { connectionStatus });
+            logger.warn(errorMessage, { connectionStatus });
         }
         return { isSSMConnected: false, ssmConnectionStatus: connectionStatus.Status };
     } catch (error) {
