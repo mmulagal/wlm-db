@@ -8,7 +8,8 @@ import {
     addAggregateHostsCountData,
     addAggregatePgSqlHostsCountData,
     addJobsSummary,
-    addJobsSummaryLoading
+    addJobsSummaryLoading,
+    setPotentialSavingsValues
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { useLazyGetJobsSummaryQuery } from '../../utils/apiService';
 import { jobStatusPercent, resetDBHomePageState } from '../../utils/utilityFunctions';
@@ -16,7 +17,8 @@ import {
     getManageAggrCost,
     getManagedAggrProtection,
     getManagedAggrStorageSavings,
-    getManagedHostCount
+    getManagedHostCount,
+    getPotentialSavingsValues
 } from './DatabaseHomeUtils';
 import { WIZARD_TYPE } from '../../utils/consts';
 
@@ -28,6 +30,7 @@ const DatabaseHomeApis = () => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
+    const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
 
@@ -155,6 +158,17 @@ const DatabaseHomeApis = () => {
         dispatch(addAggregatePgSqlHostsCountData(hostStatusCount));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pgsqlHostData, inventoryTableData]);
+
+    useEffect(() => {
+        if (refreshBlocked) {
+            return;
+        }
+        if (!potentialSavingsHostData) {
+            return;
+        }
+        const potentialSavingsValues = getPotentialSavingsValues(potentialSavingsHostData);
+        dispatch(setPotentialSavingsValues(potentialSavingsValues));
+    }, [potentialSavingsHostData]);
 
     return <></>;
 };

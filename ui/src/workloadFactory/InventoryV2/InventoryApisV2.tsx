@@ -21,6 +21,7 @@ import {
     setManagedAssessmentHostIdsList,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
+    setPotentialSavingsHostData,
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
     setUnManagedPerfInstanceIdsList
@@ -28,6 +29,7 @@ import {
 import {
     useGetMssqlAssessmentDataForHostMutation,
     useGetMssqlInstanceDataV2Mutation,
+    useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetDatabaseHostsFullDataV2Query,
@@ -51,8 +53,10 @@ import {
 } from './InventoryUtilsV2';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
-import { INSTANCE_API_FIELDS } from '../../utils/consts';
+import { INSTANCE_API_FIELDS, SAVINGS_CALC_MODE } from '../../utils/consts';
 import { all } from 'axios';
+import { GENERAL } from '../../utils/appConstants';
+import { setPotentialSavingsValues } from '../../store/workloadFactory/databaseHomeSlice';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -77,6 +81,7 @@ const InventoryApisV2 = () => {
     const managedAssessmentHostIdsList = useAppSelector(state => state.inventoryV2.managedAssessmentHostIdsList);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
+    const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -102,6 +107,9 @@ const InventoryApisV2 = () => {
     // pgsql database-hosts with fields values
     const [getPgSqlDatabaseHostsFullDataApi] = useLazyGetPgsqlDatabaseHostsFullDataV2Query();
     const [fullPgsqlHostData, setFullPgsqlHostData] = useState<any>({});
+
+    // Potential savings API for EBS and FSxW
+    const [getStorageSavingsApi] = useGetStorageSavingsMutation();
 
     // Discover API
     const [getDiscoveryHostsListApi] = useLazyDiscoverHostsQuery();
@@ -129,6 +137,7 @@ const InventoryApisV2 = () => {
 
     const runningPerfInstanceListRef: any = useRef();
     const runningManagedAssessmentRef: any = useRef();
+    const potentialSavingsHostDataRef: any = useRef();
 
     useEffect(() => {
         runningPerfInstanceListRef.current = runningPerfInstanceList;
@@ -157,6 +166,10 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         managedAssessmentHostDataRef.current = managedAssessmentHostData;
     }, [managedAssessmentHostData]);
+
+    useEffect(() => {
+        potentialSavingsHostDataRef.current = potentialSavingsHostData;
+    }, [potentialSavingsHostData]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -803,6 +816,71 @@ const InventoryApisV2 = () => {
         }
     };
 
+    const getStorageSavingsData = async (savingsCalculatorType: string, selectedInstanceId: string) => {
+        let payload: any = {
+            snapshotFrequency: 'Daily',
+            clonedCopiesCount: 1,
+            monthlyChangeRatePercentage: savingsCalculatorType === SAVINGS_CALC_MODE.AUTO_FSXW ? 3 : 8
+        };
+        if (savingsCalculatorType === GENERAL.EBS) {
+            payload = {
+                ...payload,
+                cloneRefreshFrequency: 'Daily'
+            };
+        }
+        let instanceData: any = {};
+        try {
+            const result: any = await getStorageSavingsApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instanceId: selectedInstanceId,
+                payload: payload,
+                type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
+            });
+            if (result && !result?.error) {
+                instanceData[selectedInstanceId] = {
+                    error: null,
+                    data: result?.data,
+                    loading: false,
+                    storageType: savingsCalculatorType
+                };
+                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+            } else {
+                instanceData[selectedInstanceId] = {
+                    error: result?.error?.data?.message,
+                    data: null,
+                    loading: false,
+                    storageType: savingsCalculatorType
+                };
+                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+            }
+        } catch (error) {
+            instanceData[selectedInstanceId] = {
+                error: error,
+                data: null,
+                loading: false,
+                storageType: savingsCalculatorType
+            };
+            dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+        }
+    };
+
+    const callPotentialSavings = (exploreSavingsRows: any) => {
+        let instanceData: any = {};
+        exploreSavingsRows?.map((row: any) => {
+            if (row?.storageType && !potentialSavingsHostDataRef.current?.[row?.id]) {
+                instanceData[row?.id] = {
+                    error: null,
+                    data: null,
+                    loading: true,
+                    storageType: row?.storageType
+                };
+                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                getStorageSavingsData(row?.storageType, row?.id);
+            }
+        });
+    };
+
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
@@ -879,6 +957,8 @@ const InventoryApisV2 = () => {
         dispatch(setPerfMssqlInstancesData({}));
         dispatch(setManagedAssessmentHostData({}));
         dispatch(addAllMssqlHostAssessmentData([]));
+        dispatch(setPotentialSavingsHostData({}));
+        dispatch(setPotentialSavingsValues(null));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -1091,6 +1171,10 @@ const InventoryApisV2 = () => {
             dispatch(setInventoryChartData(inventoryDataCount));
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableData);
             dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+            // call ES APIs for dashboard potential savings
+            if (exploreSavingsRows && exploreSavingsRows.length > 0) {
+                callPotentialSavings(exploreSavingsRows);
+            }
         }
     }, [inventoryTableData, removeSecNodeDiscoveredList]);
 

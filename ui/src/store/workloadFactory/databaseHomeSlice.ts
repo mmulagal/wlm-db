@@ -74,7 +74,16 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         from: '',
         range: ''
     },
-    selectedRowsForOptimize: []
+    selectedRowsForOptimize: [],
+    potentialSavingsValues: {
+        loading: false,
+        ebsCount: 0,
+        fsxwCount: 0,
+        ebsCost: 0,
+        fsxwCost: 0,
+        fsxnCost: 0,
+        savingsPercent: 0
+    }
 };
 
 const databaseHomeSlice = createSlice({
@@ -125,6 +134,9 @@ const databaseHomeSlice = createSlice({
         },
         setSandboxAgeRange: (state, action: PayloadAction<any>) => {
             state.sandboxAgeRange = action.payload;
+        },
+        setPotentialSavingsValues: (state, action: PayloadAction<any>) => {
+            state.potentialSavingsValues = action.payload;
         }
     }
 });
@@ -144,7 +156,8 @@ export const {
     setSelectedConfig,
     setSelectedAssessmentRow,
     setSandboxAgeRange,
-    setSelectedConfigSummary
+    setSelectedConfigSummary,
+    setPotentialSavingsValues
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
