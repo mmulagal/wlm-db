@@ -778,8 +778,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            {setFlagForNewDashboard && <DatabaseHomePage />}
-                            {!setFlagForNewDashboard && <Dashboard />}
+
+                            <Dashboard />
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import styles from './DatabaseHomePage.module.scss';
-import Sidebar from './Sidebar/Sidebar';
+
 import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
 import ProtectionSection from './ProtectSection/ProtectionSection';
@@ -68,7 +68,7 @@ const DatabaseHomePage = () => {
                 </div>
             </div>
 
-            <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+            {/* <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} /> */}
         </div>
     );
 };

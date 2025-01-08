@@ -6,8 +6,6 @@ import { ReactComponent as Download } from '../../../assets/downloadBlackBackgro
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 
-//@ts-ignore
-import Highlighter from 'react-highlight-words';
 import { useEffect, useMemo, useState } from 'react';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
@@ -44,6 +42,7 @@ import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../.
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { isEqual } from 'lodash';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
+import HighlightText from '../../../common/HighlightText/HighlightText';
 
 const PostgreCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -237,12 +236,12 @@ const PostgreCodebox = () => {
                     className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
                 >
                     {rightPanelTemplateResponse?.cliCommand ? (
-                        <Highlighter
-                            highlightClassName={styles.awsCliHighlightClass}
-                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
-                            autoEscape={true}
-                            textToHighlight={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
-                        />
+                        <>
+                            <HighlightText
+                                text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                            />
+                        </>
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}

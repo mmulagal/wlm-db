@@ -30,8 +30,7 @@ import {
 } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
-//@ts-ignore
-import Highlighter from 'react-highlight-words';
+
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import {
@@ -50,6 +49,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import TerraformColor from '../Terraform/TerraformColor';
 import { downloadTerraformZip } from '../MockTerraformZip/MockTerraformZip';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
+import HighlightText from '../../../common/HighlightText/HighlightText';
 
 const CodeBox = () => {
     const [copyText, setCopyText] = useState('');
@@ -64,7 +64,6 @@ const CodeBox = () => {
     const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
-    const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
 
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
@@ -164,12 +163,12 @@ const CodeBox = () => {
                     className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
                 >
                     {rightPanelTemplateResponse?.cliCommand ? (
-                        <Highlighter
-                            highlightClassName={styles.awsCliHighlightClass}
-                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
-                            autoEscape={true}
-                            textToHighlight={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
-                        />
+                        <>
+                            <HighlightText
+                                text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                            />
+                        </>
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}
@@ -190,7 +189,8 @@ const CodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
-            return rightPanelResponse?.props?.textToHighlight;
+            console.log(rightPanelMaskedResponse);
+            return rightPanelResponse;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return rightPanelTemplateResponse?.cliCommand;
         }
@@ -328,29 +328,18 @@ const CodeBox = () => {
         };
         const resBody = createMssqlPayload(changeObjectForm);
         const res = JSON.stringify(resBody, null, 2);
-        // To set REST API response as deploy API curl request
-        const highlightedString = (
-            <Highlighter
-                highlightClassName={styles.highlightClass}
-                searchWords={[
-                    CRED_PLACEHOLDERS.ACCOUNT_ID,
-                    CRED_PLACEHOLDERS.CRED_ID,
-                    CRED_PLACEHOLDERS.REGION,
-                    CRED_PLACEHOLDERS.TOKEN
-                ]}
-                autoEscape={true}
-                textToHighlight={CURL_REQ_TEMPLATE(
-                    baseUrl,
-                    credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
-                    credDetails.region || CRED_PLACEHOLDERS.REGION,
-                    CRED_PLACEHOLDERS.TOKEN,
-                    res,
-                    isWorkloadFactory
-                )}
-            />
-        );
+
         //@ts-ignore
-        setRightPanelResponse(highlightedString);
+        setRightPanelResponse(
+            CURL_REQ_TEMPLATE(
+                baseUrl,
+                credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                credDetails.region || CRED_PLACEHOLDERS.REGION,
+                CRED_PLACEHOLDERS.TOKEN,
+                res,
+                isWorkloadFactory
+            )
+        );
         getMaskedRestResponse(actualData, credDetails, baseUrl);
         setIsRightPanelDataLoading(false);
     };
@@ -361,31 +350,9 @@ const CodeBox = () => {
             mssqlForm: setMaskedPassword(actualData)
         };
         const resBody = createMssqlPayload(changeObjectForm);
-        const res = JSON.stringify(resBody, null, 2);
-        // To set REST API response as deploy API curl request
-        const highlightedString = (
-            <Highlighter
-                highlightClassName={styles.highlightClass}
-                searchWords={[
-                    CRED_PLACEHOLDERS.ACCOUNT_ID,
-                    CRED_PLACEHOLDERS.CRED_ID,
-                    CRED_PLACEHOLDERS.REGION,
-                    CRED_PLACEHOLDERS.TOKEN
-                ]}
-                autoEscape={true}
-                textToHighlight={CURL_REQ_TEMPLATE(
-                    baseUrl,
-                    credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
-                    credDetails.region || CRED_PLACEHOLDERS.REGION,
-                    CRED_PLACEHOLDERS.TOKEN,
-                    res,
-                    isWorkloadFactory
-                )}
-            />
-        );
+
         //@ts-ignore
         setRightPanelMaskedResponse(resBody);
-        setRightPanelMaskedHidePasswordResponse(highlightedString);
     };
 
     useEffect(() => {
