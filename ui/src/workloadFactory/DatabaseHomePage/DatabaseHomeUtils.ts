@@ -87,13 +87,15 @@ export const getPotentialSavingsValues = (data: any) => {
         let val = data[key];
         if (val?.loading) {
             result.loading = true;
-        }
-        result.fsxnCost += val?.data?.totalSummary?.recommended;
-        if (val?.storageType === GENERAL.EBS) {
-            result.ebsCost += val?.data?.totalSummary?.existing;
-        } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
-            result.fsxwCost += val?.data?.totalSummary?.existing;
-        }
+        };
+        if (val?.data) {
+            result.fsxnCost += val?.data?.totalSummary?.recommended || 0;
+            if (val?.storageType === GENERAL.EBS) {
+                result.ebsCost += val?.data?.totalSummary?.existing || 0;
+            } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                result.fsxwCost += val?.data?.totalSummary?.existing || 0;
+            }
+        };
     });
 
     result.savingsPercent =
