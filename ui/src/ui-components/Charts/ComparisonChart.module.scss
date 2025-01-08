@@ -93,7 +93,9 @@
 .yLabel {
     display: flex;
     justify-content: center;
+    align-items: center;
     position: absolute;
+    gap: 8px;
     width: 100%;
     transform: translateY(calc(-100% - 24px));
     transition: top 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
