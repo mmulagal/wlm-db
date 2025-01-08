@@ -78,7 +78,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     }, [allmssqlHostAssessmentData]);
 
     return (
-        <div className={styles.managedBreakdown} style={{ height: !openAccordion ? '436px' : '992px' }}>
+        <div className={styles.managedBreakdown}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     Managed instances optimization breakdown by configurations
@@ -87,7 +87,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
             </div>
 
-            <div className={styles.mainSection} style={{ maxHeight: !openAccordion ? '316px' : '896px' }}>
+            <div className={styles.mainSection}>
                 <div className={`${styles.tile} ${styles.firstTile}`}>
                     <BarComponent
                         color="#5E8DCD"

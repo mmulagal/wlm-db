@@ -73,7 +73,7 @@ const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData:
         },
         {
             id: '3',
-            Header: `${type} optimization`,
+            Header: `Optimization score`,
             accessor: 'score',
             width: '30%',
             isSortable: true,

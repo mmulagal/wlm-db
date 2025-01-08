@@ -5,7 +5,7 @@ import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComp
 import SquareComponent from '../../DatabaseHomePage/SquareComponent/SquareComponent';
 import useResize from '../../../common/hooks/useResize';
 import { GENERAL } from '../../../utils/appConstants';
-import ManagedInstanceOptimizationBreakdownByCategory from '../ManagedInstanceOptimizationBreakdownByCategory/ManagedInstanceOptimizationBreakdownByCategory';
+
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
 import { getManagedInstanceOptimizationSummary } from '../../DatabaseHomePage/DatabaseHomeUtils';
@@ -32,7 +32,7 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
     }, [instanceOptimizationSummary]);
 
     return (
-        <div className={styles.managedInstance} style={{ height: !openAccordion ? '436px' : '992px' }}>
+        <div className={styles.managedInstance}>
             <div className={styles.headSection}>
                 <div className={styles.ManageInstanceTooltipSection}>
                     <DsTypography variant="Regular_16" className={styles.title}>
@@ -133,8 +133,6 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
                     </div>
                 </div>
             )}
-
-            <ManagedInstanceOptimizationBreakdownByCategory setOpenAccordion={setOpenAccordion} />
         </div>
     );
 };

@@ -11,6 +11,7 @@ import ManagedInstanceOptimizationBreakdownByConfig from './ManagedInstanceOptim
 import PotentialSavings from './PotentialSavings/PotentialSavings';
 import Sandboxes from './Sandboxes/Sandboxes';
 import { getTotalManagedAggrStorageSavings } from '../DatabaseHomePage/DatabaseHomeUtils';
+import OptimizeByCategory from './OptimizeByCategory/OptimizeByCategory';
 
 const Dashboard = () => {
     const mssqlHostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedPgsqlStorageSavings);
@@ -35,7 +36,7 @@ const Dashboard = () => {
             <div className={styles.secondSection}>
                 <div className={styles.subSection}>
                     <ManagedInstanceOptimization openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} />
-                    {/* <ManagedInstanceOptimizationBreakdownByCategory /> */}
+                    <OptimizeByCategory />
                 </div>
 
                 <ManagedInstanceOptimizationBreakdownByConfig openAccordion={openAccordion} />
