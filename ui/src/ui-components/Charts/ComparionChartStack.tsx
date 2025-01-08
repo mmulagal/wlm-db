@@ -4,7 +4,7 @@ import styles from './ComparisonChart.module.scss';
 import { Span } from '../Typography';
 import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from './chartCommon';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
-import { DsTypography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import SeparatorComponent from '../../common/SeparatorComponent/SeparatorComponent';
 
 const ComparisonChartStack = React.memo(
@@ -15,7 +15,9 @@ const ComparisonChartStack = React.memo(
         height = 200,
         yTickFormatter,
         tooltipHeading,
-        tooltipText
+        tooltipText,
+        loading = false,
+        loadingWithNoData = false
     }: {
         colors?: ChartColor[];
         data: number[][];
@@ -24,6 +26,8 @@ const ComparisonChartStack = React.memo(
         yTickFormatter?: YTickFormatter;
         tooltipHeading?: any;
         tooltipText?: any;
+        loading?: boolean;
+        loadingWithNoData?: boolean;
     }) => {
         let max = 0;
         for (const stack of data) {
@@ -34,7 +38,7 @@ const ComparisonChartStack = React.memo(
         const hasData = max > 0;
 
         return (
-            <div className={styles.base} style={{ height }}>
+            <div className={styles.base} style={{ height, marginTop: loadingWithNoData ? '150px' : '0' }}>
                 {data.map((stack, index) => {
                     const total = stack.reduce((acc, val) => acc + val, 0);
                     return (
@@ -46,17 +50,40 @@ const ComparisonChartStack = React.memo(
                             <div className={styles.datumContainer}>
                                 {hasData && (
                                     <div className={styles.yLabel} style={{ top: `${100 - (total / max) * 100}%` }}>
-                                        <Span bold>{yTickFormatter ? yTickFormatter(total, index, data) : total}</Span>
+                                        {!loadingWithNoData && (
+                                            <Span bold>
+                                                {yTickFormatter ? yTickFormatter(total, index, data) : total}
+                                            </Span>
+                                        )}
+                                        {loadingWithNoData && <Span bold>{'$0'}</Span>}
+                                        {loading && (
+                                            <span>
+                                                <DsFlashingDotsLoader />
+                                            </span>
+                                        )}
                                     </div>
                                 )}
                                 {stack.length === 1 && (
-                                    <div
-                                        className={styles.datum}
-                                        style={{
-                                            height: `${(stack[0] / max) * 100}%`,
-                                            backgroundColor: 'var(--chart-9)'
-                                        }}
-                                    />
+                                    <>
+                                        {loadingWithNoData && (
+                                            <div
+                                                className={styles.datum}
+                                                style={{
+                                                    height: `${(stack[0] / max) * 100}%`,
+                                                    backgroundColor: 'var(--chart-disabled)'
+                                                }}
+                                            />
+                                        )}
+                                        {!loadingWithNoData && (
+                                            <div
+                                                className={styles.datum}
+                                                style={{
+                                                    height: `${(stack[0] / max) * 100}%`,
+                                                    backgroundColor: 'var(--chart-9)'
+                                                }}
+                                            />
+                                        )}
+                                    </>
                                 )}
                                 {stack.length > 1 && (
                                     <div className={styles.datum} style={{ height: `${100}%` }}>
@@ -119,16 +146,46 @@ const ComparisonChartStack = React.memo(
                                 )}
                             </div>
                             {stack.length === 1 && (
-                                <div className={styles.xLabel}>
-                                    <Span
-                                        bold
-                                        className={styles.spanStyle}
-                                        title={categories[index]}
-                                        color={hasData ? undefined : 'text-disabled'}
-                                    >
-                                        {categories[index]}
-                                    </Span>
-                                </div>
+                                <>
+                                    {!loadingWithNoData && (
+                                        <div className={styles.xLabel}>
+                                            <Span
+                                                bold
+                                                className={styles.spanStyle}
+                                                title={categories[index]}
+                                                color={hasData ? undefined : 'text-disabled'}
+                                            >
+                                                {categories[index]}
+                                            </Span>
+                                        </div>
+                                    )}
+                                    {loadingWithNoData && index === 0 && (
+                                        <div className={styles.xLabel}>
+                                            <Span
+                                                bold
+                                                className={styles.spanStyle}
+                                                title={categories[index]}
+                                                color={hasData ? undefined : 'text-disabled'}
+                                            >
+                                                {categories[index]}
+                                            </Span>
+                                        </div>
+                                    )}
+                                    {loadingWithNoData && index > 0 && (
+                                        <div className={styles.xLabel}>
+                                            <div className={styles.xContainer}>
+                                                <div className={styles.xContainerInner}>
+                                                    <div className={styles.squareChart2} />
+                                                    <DsTypography variant="Semibold_14">EBS</DsTypography>
+                                                </div>
+                                                <div className={styles.xContainerInner}>
+                                                    <div className={styles.squareChart3} />
+                                                    <DsTypography variant="Semibold_14">FSxW</DsTypography>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                             {stack.length === 2 && (
                                 <div className={styles.xLabel}>
