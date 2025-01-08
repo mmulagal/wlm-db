@@ -729,11 +729,20 @@ $jsonResult = Move-AllClusterGroups -TargetNodeName "${nodeName}"
 Write-Output $jsonResult
 `;
 
+const GET_CLUSTER_NODE_NAMES = () => `
+    #Get cluster node names 
+    $currentNode = hostname
+    $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
+    $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
+    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     CHECK_NODE_STATUS,
     RESCAN_EXTEND_LUN,
-    MOVE_ALL_CLUSTER_GROUPS
+    MOVE_ALL_CLUSTER_GROUPS,
+    GET_CLUSTER_NODE_NAMES
 };

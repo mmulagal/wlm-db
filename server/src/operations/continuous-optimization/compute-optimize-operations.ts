@@ -2,9 +2,13 @@ import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
 import { cloneDeep, compact, isEmpty } from 'lodash-es';
 import { DatabaseInstance, Metadata } from '../../utils/common-types';
-import { HttpErrorCodes, AuditStatus } from '../../utils/consts';
+import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
-import { CHECK_NODE_STATUS, MOVE_ALL_CLUSTER_GROUPS } from '../workloads/mssql/continuous-optimization-scripts';
+import {
+    CHECK_NODE_STATUS,
+    GET_CLUSTER_NODE_NAMES,
+    MOVE_ALL_CLUSTER_GROUPS
+} from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
@@ -54,8 +58,7 @@ async function handleComputeRemediation(
 
     let anySubJobFailed = false;
     try {
-        const [{ id: resourceId, resource_id: databaseHostId, resource_name: resourceName, metadata }] =
-            resourceDetails;
+        const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
@@ -64,7 +67,6 @@ async function handleComputeRemediation(
             node2InstanceId
         );
 
-        let activeNodeInstanceName = resourceName;
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { fsxn_ids: fsxId, fsx_svm_id: svmDetails } = instanceDetail as unknown as DatabaseInstance;
@@ -181,18 +183,18 @@ async function handleComputeRemediation(
                             anySubJobFailed = true;
                             throw error;
                         }
-                        const clusteNodeInstanceNames = compact(
-                            clusterNodeDetails.map(
-                                ({ ec2InstanceId, ec2InstanceName }) =>
-                                    ec2InstanceId !== activeNodeInstanceId && ec2InstanceName
-                            )
+                        const sqlNodeDetails = await callSsmExecution(
+                            credentialsId,
+                            region,
+                            [GET_CLUSTER_NODE_NAMES()],
+                            activeNodeInstanceId,
+                            'Get all node names in the cluster',
+                            accountId
                         );
-                        activeNodeInstanceName =
-                            clusterNodeDetails.find(({ ec2InstanceId }) => ec2InstanceId === activeNodeInstanceId)
-                                ?.ec2InstanceName ?? activeNodeInstanceName;
+                        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
                         // pick one of the nodes in the cluster to transfer primary node ownership
                         let targetNodeName;
-                        for (const nodeName of clusteNodeInstanceNames) {
+                        for (const nodeName of clusterNodes) {
                             const resp = await callSsmExecution(
                                 credentialsId,
                                 region,
@@ -214,7 +216,7 @@ async function handleComputeRemediation(
                             instanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Transfer cluster node ownership from primary to another node in the cluster',
-                            `Transfer cluster node ownership from ${activeNodeInstanceName} to ${targetNodeName} in the cluster. Cluster node ownership transfers to a healthy node in the cluster.`,
+                            `Transfer cluster node ownership from ${ownerNode} to ${targetNodeName} in the cluster. Cluster node ownership transfers to a healthy node in the cluster.`,
                             jobId
                         );
                         try {
@@ -369,8 +371,6 @@ async function handleComputeRemediation(
 
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
-
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     } finally {
         const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {

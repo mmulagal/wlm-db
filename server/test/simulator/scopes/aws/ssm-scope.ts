@@ -86,6 +86,7 @@ import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workl
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
+import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -739,7 +740,11 @@ ssmMock
             params.Parameters.commands?.[0]
         );
     })
-    .resolves(listSendCommandCommandResponse.testConnectionCommandResponse);
+    .resolves(listSendCommandCommandResponse.testConnectionCommandResponse)
+    .on(SendCommandCommand, params => {
+        return /#Get cluster node names/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getClusterNodeNames'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -951,7 +956,16 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-testConnectionCommand'
     })
-    .resolves(getCommandInvocationResponse.testConnectionCommandResponse);
+    .resolves(getCommandInvocationResponse.testConnectionCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getClusterNodeNames'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getClusterNodeNames',
+            '{    "currentNode":  "sqlnode1-44317", "ownerNode":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
+        )
+    );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
