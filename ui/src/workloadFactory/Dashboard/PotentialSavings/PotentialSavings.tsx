@@ -50,6 +50,14 @@ const PotentialSavings = () => {
         setLoading(isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading);
     }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues]);
 
+    const hasPotentialValues = () => {
+        return (
+            potentialSavingsValues?.fsxnCost ||
+            potentialSavingsValues?.fsxwCost ||
+            potentialSavingsValues?.ebsCost
+        );
+    };
+
     return (
         <div className={styles.potentialSavings}>
             <div className={styles.headSection}>
@@ -157,9 +165,7 @@ const PotentialSavings = () => {
                     </div>
                 </div>
                 <div className={styles.chartSection}>
-                    {(potentialSavingsValues?.fsxnCost ||
-                        potentialSavingsValues?.fsxwCost ||
-                        potentialSavingsValues?.ebsCost) && (
+                    {hasPotentialValues() ? (
                         <ComparisonChartStack
                             // chart draws top to bottom, so the order of the data is reversed
                             data={[
@@ -175,10 +181,7 @@ const PotentialSavings = () => {
                             loadingWithNoData={false}
                             loading={loading}
                         />
-                    )}
-                    {!potentialSavingsValues?.fsxnCost &&
-                        !potentialSavingsValues?.fsxwCost &&
-                        !potentialSavingsValues?.ebsCost && (
+                    ) : (
                             <ComparisonChartStack
                                 // chart draws top to bottom, so the order of the data is reversed
                                 data={[[1], [1]]}
