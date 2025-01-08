@@ -18,7 +18,9 @@ const PotentialSavings = () => {
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
+    const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const potentialSavingsValues = useAppSelector(state => state.databaseHome.potentialSavingsValues);
+    const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
     const [loading, setLoading] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -29,6 +31,21 @@ const PotentialSavings = () => {
 
     const windowSize = useResize();
     const noData = false;
+
+    useEffect(() => {
+        if (unManagedHostFormatedList) {
+            let ebsCount = 0;
+            let fsxwCount = 0;
+            unManagedHostFormatedList?.map((perRow: any) => {
+                if (perRow?.storageType === GENERAL.EBS) {
+                    ebsCount += perRow?.sqlServerInstances?.length;
+                } else if (perRow?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                    fsxwCount += perRow?.sqlServerInstances?.length;
+                }
+            });
+            setEsCount({ ebs: ebsCount, fsxw: fsxwCount });
+        }
+    }, [unManagedHostFormatedList]);
 
     useEffect(() => {
         setLoading(isDiscoverInProgress || isManagedHostListLoading || potentialSavingsValues?.loading);
@@ -102,7 +119,7 @@ const PotentialSavings = () => {
                     <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                {potentialSavingsValues?.totalCount}
+                                {esCount?.ebs + esCount?.fsxw}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>
