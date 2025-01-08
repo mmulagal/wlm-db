@@ -86,7 +86,9 @@ async function handleComputeRemediation(
                     CLUSTER_NETWORK_IP_INFO_PS1,
                     node2InstanceId,
                     'Get cluster network IPs',
-                    accountId
+                    accountId,
+                    undefined,
+                    '300'
                 );
                 if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
                     throw createError('Failed to get network interface details during compute optimization.');
@@ -189,7 +191,9 @@ async function handleComputeRemediation(
                             [GET_CLUSTER_NODE_NAMES()],
                             activeNodeInstanceId,
                             'Get all node names in the cluster',
-                            accountId
+                            accountId,
+                            undefined,
+                            '300'
                         );
                         const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
                         // pick one of the nodes in the cluster to transfer primary node ownership
@@ -479,7 +483,10 @@ async function moveClusterGroupOwnership(
         region,
         [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
         activeNodeInstanceId,
-        'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.'
+        'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
+        undefined,
+        undefined,
+        '300'
     );
 
     let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
@@ -546,7 +553,9 @@ async function updateDnsSettings(
             [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
             instanceId,
             'Sets the DNS server addresses for all network adapters to the specified addresses.',
-            accountId
+            accountId,
+            undefined,
+            '300'
         );
     } catch (error) {
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
@@ -620,7 +629,8 @@ async function handleIscsiSessions(
             ec2InstanceId,
             'Enable MPIO and configure ISCSI sessions',
             accountId,
-            false
+            false,
+            '300'
         );
     } catch (error) {
         errorMessage = `Failed to update ISCSI sessions for ${ec2InstanceId}. ${error}`;
