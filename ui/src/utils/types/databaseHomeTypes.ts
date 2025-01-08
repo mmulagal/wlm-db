@@ -178,6 +178,16 @@ export interface DatabaseHostsEntities {
         from: string;
         range: string;
     };
+    potentialSavingsValues: {
+        loading: boolean;
+        ebsCount: number;
+        fsxwCount: number;
+        totalCount: number;
+        ebsCost: number;
+        fsxwCost: number;
+        fsxnCost: number;
+        savingsPercent: number;
+    };
 }
 
 export interface TemplateRes {

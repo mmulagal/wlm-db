@@ -44,6 +44,9 @@ export interface InventorySliceData {
     managedAssessmentHostData: any;
     allmssqlHostAssessmentData: any;
     allmssqlHostAssessmentLoading: boolean;
+    potentialSavingsHostData: {
+        [key: string]: any;
+    };
 }
 
 export interface InventoryTableData {

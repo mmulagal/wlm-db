@@ -13,6 +13,7 @@ import {
 } from '../../utils/consts';
 import {
     formatFractionalNumber,
+    formatNumberWithCustomComma,
     formatSizeOnePrecision,
     formatSizeSplit,
     getByteVal,
@@ -71,6 +72,43 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
         managedDatabases: managedDatabases,
         totalInstances: totalInstances,
         managedInstances: managedInstances
+    };
+};
+
+export const getPotentialSavingsValues = (data: any) => {
+    let loading = false;
+    let ebsCount = 0;
+    let fsxwCount = 0;
+    let ebsCost = 0;
+    let fsxwCost = 0;
+    let fsxnCost = 0;
+    let savingsPercent = 0;
+    Object.keys(data).map((key: string) => {
+        let val = data[key];
+        if (val?.loading) {
+            loading = true;
+        }
+        fsxnCost = val?.data?.totalSummary?.recommended;
+        if (val?.storageType === GENERAL.EBS) {
+            ebsCount += 1;
+            ebsCost = val?.data?.totalSummary?.existing;
+        } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+            fsxwCount += 1;
+            fsxwCost = val?.data?.totalSummary?.existing;
+        }
+    });
+
+    savingsPercent = 100 * ((ebsCost + fsxwCost - fsxnCost) / (ebsCost + fsxwCost));
+
+    return {
+        loading: loading,
+        ebsCount: ebsCount,
+        fsxwCount: fsxwCount,
+        totalCount: ebsCount + fsxwCount,
+        ebsCost: ebsCost,
+        fsxwCost: fsxwCost,
+        fsxnCost: fsxnCost,
+        savingsPercent: formatFractionalNumber(savingsPercent, 2)
     };
 };
 

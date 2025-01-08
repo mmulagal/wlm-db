@@ -6,6 +6,7 @@ import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from
 import { Popover } from '@netapp/design-system/dist/components/Popover';
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import SeparatorComponent from '../../common/SeparatorComponent/SeparatorComponent';
+import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
 const ComparisonChartStack = React.memo(
     ({
@@ -102,20 +103,17 @@ const ComparisonChartStack = React.memo(
                                                         <div className={styles.tooltipContainer}>
                                                             <div className={styles.tooltipContentRowFirst}>
                                                                 {stackIndex === 1 && (
-                                                                    <div className={styles.squareChart3} />
-                                                                )}
-                                                                {stackIndex === 0 && (
                                                                     <div className={styles.squareChart2} />
                                                                 )}
-                                                                <DsTypography variant="Semibold_14">
-                                                                    {stackIndex === 1 ? tooltipHeading[0] : ''}
-                                                                </DsTypography>
-                                                                {stackIndex === 1 && (
-                                                                    <SeparatorComponent
-                                                                        variant="vertical"
-                                                                        height="20px"
-                                                                    />
+                                                                {stackIndex === 0 && (
+                                                                    <div className={styles.squareChart3} />
                                                                 )}
+                                                                <DsTypography variant="Semibold_14">
+                                                                    {stackIndex === 1
+                                                                        ? tooltipHeading[0]
+                                                                        : tooltipHeading[1]}
+                                                                </DsTypography>
+                                                                <SeparatorComponent variant="vertical" height="20px" />
                                                                 <DsTypography variant="Semibold_14">
                                                                     {stackIndex === 1 ? tooltipText[0] : tooltipText[1]}
                                                                 </DsTypography>
@@ -124,7 +122,10 @@ const ComparisonChartStack = React.memo(
                                                                 variant="Semibold_14"
                                                                 style={{ marginBottom: '8px' }}
                                                             >
-                                                                $6,475
+                                                                $
+                                                                {stackIndex === 0
+                                                                    ? formatNumberWithCustomComma(data[1][0])
+                                                                    : formatNumberWithCustomComma(data[1][1])}
                                                             </DsTypography>
                                                         </div>
                                                     }
@@ -191,11 +192,11 @@ const ComparisonChartStack = React.memo(
                                 <div className={styles.xLabel}>
                                     <div className={styles.xContainer}>
                                         <div className={styles.xContainerInner}>
-                                            <div className={styles.squareChart2} />
+                                            <div className={styles.squareChart3} />
                                             <DsTypography variant="Semibold_14">EBS</DsTypography>
                                         </div>
                                         <div className={styles.xContainerInner}>
-                                            <div className={styles.squareChart3} />
+                                            <div className={styles.squareChart2} />
                                             <DsTypography variant="Semibold_14">FSxW</DsTypography>
                                         </div>
                                     </div>
