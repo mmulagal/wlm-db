@@ -60,7 +60,7 @@ const PotentialSavings = () => {
         } else {
             return false;
         }
-    }
+    };
 
     return (
         <div className={styles.potentialSavings}>
