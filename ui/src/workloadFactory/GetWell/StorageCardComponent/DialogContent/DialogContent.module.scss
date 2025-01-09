@@ -71,9 +71,11 @@
     }
 }
 
-// [class*='DialogLayout-module_default-dialog-layout'] {
-//     max-height: unset !important;
-// }
+[class*='Dialog-module_modal'] {
+    max-height: 92% !important;
+    height: 92% !important;
+    background-color: unset !important;
+}
 
 // [class*='DialogLayout-module_dialog-content'] {
 //     max-height: 616px !important;
