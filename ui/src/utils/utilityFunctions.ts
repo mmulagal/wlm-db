@@ -1736,6 +1736,26 @@ export const updateSizeInGib = (data: any): any => {
     return data;
 };
 
+export const compareDataAndCalculateDifference = (arrays: any) => {
+    const firstSum = arrays[0].reduce((sum: number, num: number) => sum + num, 0);
+    const secondSum = arrays[1].reduce((sum: number, num: number) => sum + num, 0);
+
+    if (firstSum > secondSum) {
+        const difference = firstSum - secondSum;
+        const percentage = (difference / firstSum) * 100;
+        return {
+            result: true,
+            difference: difference,
+            percentage: `${percentage.toFixed(2)}%`
+        };
+    } else {
+        return {
+            result: false,
+            message: 'First sum is not greater than second sum.'
+        };
+    }
+};
+
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
     switch (tab) {
         case WLF_TABS.INVENTORY:

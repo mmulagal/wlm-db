@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import classNames from 'classnames';
 import styles from './ComparisonChart.module.scss';
 import { Span } from '../Typography';
@@ -6,7 +6,7 @@ import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from
 import { Popover } from '@netapp/design-system/dist/components/Popover';
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import SeparatorComponent from '../../common/SeparatorComponent/SeparatorComponent';
-import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import { compareDataAndCalculateDifference, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
 const ComparisonChartStack = React.memo(
     ({
@@ -37,6 +37,8 @@ const ComparisonChartStack = React.memo(
         }
 
         const hasData = max > 0;
+
+        const compareArrayValues = compareDataAndCalculateDifference(data);
 
         return (
             <div className={styles.base} style={{ height, marginTop: loadingWithNoData ? '150px' : '0' }}>
@@ -87,12 +89,20 @@ const ComparisonChartStack = React.memo(
                                     </>
                                 )}
                                 {stack.length > 1 && (
-                                    <div className={styles.datum} style={{ height: `${100}%` }}>
+                                    <div
+                                        className={styles.datum}
+                                        style={{
+                                            height: `${100}%`,
+                                            position: 'relative',
+                                            top: compareArrayValues?.result ? compareArrayValues?.percentage : '0%'
+                                        }}
+                                    >
                                         {stack.map((value, stackIndex) => {
                                             const percentage = (value / max) * 100;
                                             const backgroundColor = colors
                                                 ? `var(--${colors[stackIndex]})`
                                                 : fullColors[stackIndex];
+
                                             return (
                                                 <Popover
                                                     popoverClass={styles['popover']}
