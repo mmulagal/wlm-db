@@ -883,6 +883,13 @@ export const exploreSavingsApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
+            getUploadScript: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/onprem/upload`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getStorageSavings: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload, type }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}`,
@@ -1076,6 +1083,7 @@ export const {
 } = sandboxApi;
 
 export const {
+    useGetUploadScriptMutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
     useGetManualStorageSavingsMutation,

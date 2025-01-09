@@ -10,6 +10,9 @@ import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunct
 import { ReactComponent as Download } from '../../../assets/download.svg';
 
 import FileUpload from './FileUpload';
+import { useGetUploadScriptMutation } from '../../../utils/apiService';
+//@ts-ignore
+import pako from 'pako';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
@@ -19,6 +22,7 @@ const ExploreSavingsOnPremiseTable = () => {
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
+    const [getUploadScript] = useGetUploadScriptMutation();
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
@@ -29,19 +33,19 @@ const ExploreSavingsOnPremiseTable = () => {
         if (selectedFile) {
             const reader = new FileReader();
 
-            reader.onload = e => {
+            reader.onload = async e => {
                 try {
                     // Parse the JSON data
-                    const jsonData = JSON.parse(e.target?.result as string);
-                    console.log('JSON Data:', jsonData);
+                    const jsonString = e.target?.result as string;
+                    const base64Encoded = btoa(jsonString);
+                    const compressedData = pako.deflate(base64Encoded, { to: 'string' });
 
                     // Access the data inside the JSON
-                    if (jsonData) {
-                        console.log('Jan Data:', jsonData);
-                        setTimeout(() => {
-                            setIsUploadLoading(false);
-                            setTableData(unManagedHostFormatedList); //This code needs to be removed
-                        }, 1000);
+                    if (compressedData) {
+                        const result = await getUploadScript({ payload: compressedData });
+                        setIsUploadLoading(false);
+                        setTableData(unManagedHostFormatedList);
+                        console.log(result);
                     } else {
                         console.log('No data found in the file.');
                     }
