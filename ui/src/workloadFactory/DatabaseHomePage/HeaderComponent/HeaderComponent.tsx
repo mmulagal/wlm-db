@@ -392,9 +392,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                         isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                     />
                 </div>
@@ -430,11 +430,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                         isDisabled={
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                     />
                 </div>
