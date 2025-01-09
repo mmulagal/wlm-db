@@ -87,7 +87,7 @@ export const getPotentialSavingsValues = (data: any) => {
         let val = data[key];
         if (val?.loading) {
             result.loading = true;
-        };
+        }
         if (val?.data) {
             result.fsxnCost += val?.data?.totalSummary?.recommended || 0;
             if (val?.storageType === GENERAL.EBS) {
@@ -95,7 +95,7 @@ export const getPotentialSavingsValues = (data: any) => {
             } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
                 result.fsxwCost += val?.data?.totalSummary?.existing || 0;
             }
-        };
+        }
     });
 
     result.savingsPercent =
@@ -571,7 +571,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
     return getAssessmentGroupedByConfigurations;
 };
 
-export const getAssessmentHostListGroupedByCategory = (assessmentData: any, type: string) => {
+export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
     let tableData: any = [];
     let id = 1;
 
@@ -584,13 +584,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, type
                 let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instance?.assessments, {});
                 let optBreakDown = formatOptimizationBreakDown(cardsData);
                 let score = '';
-                if (type === 'Storage') {
-                    score = (optBreakDown?.storage?.percent || '0') + '%';
-                } else if (type === 'Compute') {
-                    score = (optBreakDown?.compute?.percent || '0') + '%';
-                } else if (type === 'Application') {
-                    score = (optBreakDown?.application?.percent || '0') + '%';
-                }
+                score = (optBreakDown?.total?.percent || '0') + '%';
                 if (score !== '100%') {
                     let perTableData: any = {
                         id: id++,

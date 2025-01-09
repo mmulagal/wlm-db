@@ -71,7 +71,7 @@ const CategoryComponent = ({
 
     const handleDialog = () => {
         let tableData = sortListOfDict(
-            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, firstBlockText) || [],
+            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData) || [],
             'status',
             false
         );
@@ -79,7 +79,7 @@ const CategoryComponent = ({
         setDialog(
             <DialogComponent
                 header={`${firstBlockText} optimization`}
-                content={<CategoryDialogComponent type={firstBlockText} tableData={tableData} />}
+                content={<CategoryDialogComponent tableData={tableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {

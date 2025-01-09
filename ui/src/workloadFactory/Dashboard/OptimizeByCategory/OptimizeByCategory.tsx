@@ -57,7 +57,7 @@ const OptimizeByCategory = () => {
 
     const handleClick = () => {
         let tableData = sortListOfDict(
-            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData, 'Storage') || [],
+            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData) || [],
             'status',
             false
         );
@@ -65,7 +65,7 @@ const OptimizeByCategory = () => {
         setDialog(
             <DialogComponent
                 header={`Optimization`}
-                content={<CategoryDialogComponent type={'Storage'} tableData={tableData} />}
+                content={<CategoryDialogComponent tableData={tableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {

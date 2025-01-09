@@ -8,7 +8,7 @@ import { useDispatch } from 'react-redux';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
 
-const CategoryDialogComponent = ({ type, tableData }: { type: string; tableData: any }) => {
+const CategoryDialogComponent = ({ tableData }: { tableData: any }) => {
     const dispatch = useDispatch();
     const selectedRow = useAppSelector(state => state.databaseHome.selectedAssessmentRow);
 
