@@ -2,50 +2,8 @@ import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types
 
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
-        count: 13,
+        count: 11,
         items: [
-            // ssm not connected
-            {
-                ec2InstanceId: 'i-1d9i5v18g5392mf1v',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'notconnected',
-                ec2InstanceName: 'app-server-1',
-                vpc: {
-                    id: 'vpc-046f7e26255458373',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '10.0.0.0/16'
-                }
-            },
-            // sql server stopped
-            {
-                ec2InstanceId: 'i-8ct4l5ecneb7jn2oz',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-4',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2022,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        isDefaultInstance: true,
-                        sqlServerState: 'Stopped',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: false,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        storage: [],
-                        deploymentTypes: []
-                    }
-                ]
-            },
             // no windows auth
             {
                 ec2InstanceId: 'i-7h2b6f4e8d1g5i3j',
