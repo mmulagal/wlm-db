@@ -266,8 +266,8 @@ const ExploreSavingsOnPremiseTable = () => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`MsSQL on On-Premises host`}
-                singularTitle={`MsSQL on On-Premises hosts`}
+                pluralTitle={`Microsoft SQL Server hosts on-premises`}
+                singularTitle={`Microsoft SQL Server host on-premises`}
                 subTitle="The table contains the latest script results uploaded."
                 actionsRight={
                     <div className={styles.actions}>

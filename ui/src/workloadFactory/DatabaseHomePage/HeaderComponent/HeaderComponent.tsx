@@ -814,7 +814,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 variant="underline"
                                                 options={generateSelectFieldOptions}
                                                 value={
-                                                    dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]
+                                                    dropDownValue
+                                                        ? [dropDownValue]
+                                                        : isDemoMode
+                                                        ? [generateSelectFieldOptions[1]]
+                                                        : [generateSelectFieldOptions[0]]
                                                 }
                                             />
                                         </div>

@@ -14,6 +14,7 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
     const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
     const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const dispatchTimeInterval = (days: number) => {
         const toDate = Date.now();
@@ -24,8 +25,9 @@ const JobMonitoring = ({ setDropdownValue, generateSelectFieldOptions, dropDownV
     };
 
     useEffect(() => {
-        setDropdownValue(generateSelectFieldOptions[0]);
-        dispatchTimeInterval(1);
+        setDropdownValue(isDemoMode ? generateSelectFieldOptions[1] : generateSelectFieldOptions[0]);
+
+        dispatchTimeInterval(isDemoMode ? 7 : 1);
     }, [refreshTime]);
 
     return (
