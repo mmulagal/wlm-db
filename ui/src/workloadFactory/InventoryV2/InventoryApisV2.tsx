@@ -817,30 +817,6 @@ const InventoryApisV2 = () => {
         }
     };
 
-    const callInstanceProtectionForDashboard = (instanceId: string) => {
-        let fields = ['protection', 'performance'];
-        try {
-            const result: any = getMssqlInstanceDataApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                instances: instanceId,
-                fields: fields.join(','),
-                nextToken: null
-            });
-            if (result && !result?.error) {
-                if (result?.data?.items?.length > 0) {
-                    return checkIfEbsProtected(result?.data?.items?.[0], result?.data?.items?.[0]);
-                } else {
-                    return EBS_PROTECTED_OPTIONS.UNKNOWN;
-                }
-            } else {
-                return EBS_PROTECTED_OPTIONS.UNKNOWN;
-            }
-        } catch (error) {
-            return EBS_PROTECTED_OPTIONS.UNKNOWN;
-        }
-    };
-
     const getStorageSavingsData = async (
         savingsCalculatorType: string,
         selectedInstanceId: string,
