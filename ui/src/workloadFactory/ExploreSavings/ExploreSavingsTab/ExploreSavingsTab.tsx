@@ -71,26 +71,17 @@ const ExploreSavingsTab = () => {
                         : `${styles.headers} ${styles.headerWidthThird}`
                 }
             >
-                <Popover
-                    popoverClass={styles['copy-popover']}
-                    children={GENERAL.COMING_SOON}
-                    trigger="hover"
-                    container={
-                        <DsTypography
-                            variant="Semibold_14"
-                            // className={
-                            //     selectedTab === WLF_TABS.MSSQL_ON_PREMISES
-                            //         ? `${styles.headerPart1} ${styles.activeText}`
-                            //         : `${styles.headerPart1}`
-                            // }
-                            className={styles.headerDisabled}
-                            // onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
-                            onClick={() => {}}
-                        >
-                            SQL Server On-Premises
-                        </DsTypography>
+                <DsTypography
+                    variant="Semibold_14"
+                    className={
+                        selectedTab === WLF_TABS.MSSQL_ON_PREMISES
+                            ? `${styles.headerPart1} ${styles.activeText}`
+                            : `${styles.headerPart1}`
                     }
-                />
+                    onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
+                >
+                    SQL Server On-Premises
+                </DsTypography>
             </div>
         </div>
     );
