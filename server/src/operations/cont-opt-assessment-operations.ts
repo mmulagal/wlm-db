@@ -327,19 +327,8 @@ async function triggerAssessment(
         region,
         resource_id: databaseHostId,
         database_instance_id: databaseInstanceId,
-        database_instance_name: databaseInstanceName,
         resource
     } = managedInstance;
-
-    const { resource_name: resourceName } = resource;
-    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const instanceDetailsForJob = JSON.stringify({
-        hostName: resourceName,
-        resourceId: databaseHostId,
-        databaseInstanceId,
-        databaseInstanceName,
-        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-    });
 
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
@@ -362,17 +351,6 @@ async function triggerAssessment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
-    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: jobName,
-        description: jobDescription,
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId
-    });
     try {
         const {
             database_instance_name: savedInstanceName,
@@ -395,7 +373,7 @@ async function triggerAssessment(
             accountId,
             credentialsId,
             region,
-            jobId,
+            parentJobId,
             databaseHostId,
             instanceRecord,
             fields
@@ -405,7 +383,7 @@ async function triggerAssessment(
         errorMessage = error.message || 'Internal Server Error';
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        await updateJobDetails(accountId, jobId, {
+        await updateJobDetails(accountId, parentJobId, {
             error: errorMessage,
             status: jobStatus,
             endTime: Date.now()
