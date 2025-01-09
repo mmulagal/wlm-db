@@ -13,6 +13,7 @@ import FileUpload from './FileUpload';
 import { useGetUploadScriptMutation } from '../../../utils/apiService';
 //@ts-ignore
 import pako from 'pako';
+import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
@@ -28,6 +29,17 @@ const ExploreSavingsOnPremiseTable = () => {
 
     const handleFileChange = (event: any) => {
         const selectedFile = event.target.files[0];
+        if (!selectedFile) return;
+        // Validate the file type (ensure it's JSON)
+        if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json')) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: 'Invalid file type. Please upload a JSON file.'
+                })
+            );
+            return;
+        }
         setTableData([]); //This code needs to be removed
         setIsUploadLoading(true);
         if (selectedFile) {
@@ -236,6 +248,19 @@ const ExploreSavingsOnPremiseTable = () => {
         lazyLoadingText: lazyLoadComponent()
     };
 
+    const handleDownload = () => {
+        // Path to the script file relative to the `public` directory
+        const filePath = '/script/OnPremTCOCollector 1.ps1';
+
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = filePath; // Set the file URL
+        link.download = 'OnPremTCOCollector 1.ps1'; // Set the file name for the download
+        document.body.appendChild(link); // Append link to the body
+        link.click(); // Programmatically click the link
+        document.body.removeChild(link); // Remove the link after triggering the download
+    };
+
     return (
         <div className={styles['on-premise-table']}>
             <TableTopBar
@@ -247,7 +272,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />
-                        <div className={styles.commonAction}>
+                        <div className={styles.commonAction} onClick={handleDownload}>
                             <Download />
                             <DsTypography variant="Semibold_14" className={styles.text}>
                                 Download script
