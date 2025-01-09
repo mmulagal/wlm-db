@@ -16,6 +16,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { FORM_TO_WLF_NAVIGATE, FORM_TO_WLF_NAVIGATE_BLUEXP, WLF_TABS } from '../../../utils/consts';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { handleURL } from '../../../utils/utilityFunctions';
 
 function PostgressFooter() {
     const state = useAppSelector(state => state);
@@ -57,6 +58,15 @@ function PostgressFooter() {
                 });
         }
     };
+    const handleNavigation = () => {
+        if (isWorkloadFactoryStatus) {
+            navigate(FORM_TO_WLF_NAVIGATE);
+            handleURL('Dashboard', true);
+        } else {
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            handleURL('Dashboard', false);
+        }
+    };
 
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
         let notificationMsg: string | number | NodeJS.Timeout | undefined;
@@ -96,7 +106,7 @@ function PostgressFooter() {
 
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            handleNavigation();
             dispatch(setIsRefreshed(true));
         }, 3000);
     };
