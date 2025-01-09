@@ -4,5 +4,13 @@
         "cloud-manager": "https://api.bluexp.netapp.com",
         "tenancy": "https://api.bluexp.netapp.com",
         "credentials": "https://api.bluexp.netapp.com"
+    },
+    "db": {
+        "jobs": {
+            "purge": {
+                "interval": "24h",
+                "older-than": "15d"
+            }
+        }
     }
 }
