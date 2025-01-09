@@ -81,7 +81,9 @@ export const getPotentialSavingsValues = (data: any) => {
         ebsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
-        savingsPercent: 0
+        savings: 0,
+        savingsPercent: 0,
+        noSavings: false
     };
     Object.keys(data).map((key: string) => {
         let val = data[key];
@@ -98,8 +100,16 @@ export const getPotentialSavingsValues = (data: any) => {
         }
     });
 
+    result.savings = (result?.ebsCost || 0) + (result?.fsxwCost || 0) - (result?.fsxnCost || 0)
+
     result.savingsPercent =
         100 * ((result.ebsCost + result.fsxwCost - result.fsxnCost) / (result.ebsCost + result.fsxwCost || 1));
+
+    if (result.fsxnCost >= result.ebsCost + result.fsxwCost) {
+        result.noSavings = true;
+        result.savingsPercent = 0;
+        result.savings = 0;
+    }
     return result;
 };
 

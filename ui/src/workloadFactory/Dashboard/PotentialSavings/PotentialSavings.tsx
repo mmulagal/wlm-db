@@ -136,11 +136,7 @@ const PotentialSavings = () => {
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                                 $
-                                {formatNumberWithCustomComma(
-                                    (potentialSavingsValues?.ebsCost || 0) +
-                                        (potentialSavingsValues?.fsxwCost || 0) -
-                                        (potentialSavingsValues?.fsxnCost || 0)
-                                )}
+                                {formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>
