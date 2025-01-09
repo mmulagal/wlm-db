@@ -162,7 +162,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '1',
             Header: 'Configuration',
             accessor: 'name',
-            width: from === WLF_TABS.INVENTORY ? '18%' : '280px',
+            width: from === WLF_TABS.INVENTORY ? '260px' : '280px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -172,7 +172,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '14%',
+            width: '220px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -193,7 +193,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '4',
             Header: 'Severity',
             accessor: 'severity',
-            width: from === WLF_TABS.INVENTORY ? '14%' : '200px',
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -203,7 +203,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '5',
             Header: 'Tags',
             accessor: 'tags',
-            width: from === WLF_TABS.INVENTORY ? '14%' : '200px',
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -246,7 +246,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: from === WLF_TABS.INVENTORY ? '40%' : '575px',
+            width: from === WLF_TABS.INVENTORY ? '588px' : '575px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>

@@ -251,16 +251,14 @@ const ExploreSavingsOnPremiseTable = () => {
     const handleDownload = () => {
         // Define the content of the file
         // Path to the PowerShell script in the src/assets folder
-        const scriptPath = `${import.meta.env.VITE_APP_CM_URL}/src/script/OnPremTCOCollector 1.ps1`;
+        const filePath = '/OnPremTCOCollector.ps1';
 
         // Create an anchor element to trigger the download
         const link = document.createElement('a');
-        link.href = scriptPath;
-        link.download = 'script.ps1';
-
-        // Append the link to the document, trigger the download, and remove the link
-        document.body.appendChild(link);
-        link.click();
+        link.href = filePath; // Set the file URL
+        link.download = 'OnPremTCOCollector.ps1'; // Set the file name for the download
+        document.body.appendChild(link); // Append link to the body
+        link.click(); // Programmatically click the link
         document.body.removeChild(link);
     };
 
