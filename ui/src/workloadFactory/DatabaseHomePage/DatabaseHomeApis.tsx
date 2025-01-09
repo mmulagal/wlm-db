@@ -166,6 +166,9 @@ const DatabaseHomeApis = () => {
         if (!potentialSavingsHostData) {
             return;
         }
+        // potentialSavingsHostData is stored in inventoryV2 slice.
+        // Here we are getting the values from it and storing it in databaseHome slice.
+        // This is to show data on dashboard potential card UI.
         const potentialSavingsValues = getPotentialSavingsValues(potentialSavingsHostData);
         dispatch(setPotentialSavingsValues(potentialSavingsValues));
     }, [potentialSavingsHostData]);

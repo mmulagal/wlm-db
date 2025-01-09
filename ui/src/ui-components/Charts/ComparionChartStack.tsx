@@ -102,10 +102,10 @@ const ComparisonChartStack = React.memo(
                                                     children={
                                                         <div className={styles.tooltipContainer}>
                                                             <div className={styles.tooltipContentRowFirst}>
-                                                                {stackIndex === 1 && (
+                                                                {stackIndex === 0 && (
                                                                     <div className={styles.squareChart2} />
                                                                 )}
-                                                                {stackIndex === 0 && (
+                                                                {stackIndex === 1 && (
                                                                     <div className={styles.squareChart3} />
                                                                 )}
                                                                 <DsTypography variant="Semibold_14">
