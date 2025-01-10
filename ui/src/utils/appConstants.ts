@@ -949,6 +949,8 @@ export const GENERAL = {
     ES_CLONE_REFRESH_FREQUENCY: 'Clone refresh frequency',
     ES_TABLE_TITLE: 'Microsoft SQL Server hosts on Elastic Block Store',
     ES_TABLE_FSXW_TITLE: 'Microsoft SQL Server hosts on FSx for Windows',
+    ES_TABLE_TITLE_SINGLE: 'Microsoft SQL Server host on Elastic Block Store',
+    ES_TABLE_FSXW_TITLE_SINGLE: 'Microsoft SQL Server host on FSx for Windows',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
     ES_MSSQL_SERVER: 'Microsoft SQL Server on FSx for ONTAP',
