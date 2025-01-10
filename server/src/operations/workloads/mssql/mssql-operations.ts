@@ -618,7 +618,8 @@ async function getSqlServerDetails(
 
 function getMsSqlResourceId(node1InstanceId: string, node2InstanceId?: string) {
     logger.info('Get MS SQL resource ID:', { node1InstanceId, node2InstanceId });
-    return node2InstanceId ? generateHash(node1InstanceId + node2InstanceId) : generateHash(node1InstanceId);
+    const sortedInstanceIds = [node1InstanceId, node2InstanceId].sort();
+    return node2InstanceId ? generateHash(sortedInstanceIds.join('')) : generateHash(node1InstanceId);
 }
 
 async function discoverMsSqlServer(
