@@ -60,6 +60,7 @@ import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
 import { getPgSqlInstanceInfo } from '../workloads/pgsql/pgsql-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
+import { registerSsmLink } from '../../lib/cloud-manager/link-service';
 
 const logger = getLogger();
 
@@ -577,6 +578,38 @@ async function processCloudFormationMessages() {
                                                         trackdatabaseType === 'Microsoft SQL server'
                                                             ? RESOURCESTYPE.MSSQL
                                                             : RESOURCESTYPE.PGSQL;
+
+                                                    const getArn = (
+                                                        region: string,
+                                                        instanceId: string,
+                                                        accountId: string
+                                                    ): string =>
+                                                        `arn:aws:ec2:${region}:${accountId}:instance/${instanceId}`;
+
+                                                    const ssmLinks = [
+                                                        await registerSsmLink(
+                                                            resourceName,
+                                                            getArn(region, node1InstanceId, cloudProviderAccountId),
+                                                            credentialsId,
+                                                            resourceType === RESOURCESTYPE.MSSQL ? 'windows' : 'linux',
+                                                            accountId
+                                                        )
+                                                    ];
+
+                                                    if (node2InstanceId) {
+                                                        ssmLinks.push(
+                                                            await registerSsmLink(
+                                                                resourceName,
+                                                                getArn(region, node2InstanceId, cloudProviderAccountId),
+                                                                credentialsId,
+                                                                resourceType === RESOURCESTYPE.MSSQL
+                                                                    ? 'windows'
+                                                                    : 'linux',
+                                                                accountId
+                                                            )
+                                                        );
+                                                    }        
+                                                    await Promise.all(ssmLinks);
 
                                                     await createResource(accountId, {
                                                         resourceId,
