@@ -49,6 +49,20 @@ enum OptimizeStorageConfigs {
     SPACE_ALLOCATION = 'space-allocation-allocated'
 }
 
+enum OptimizeStorageConfigsJobNames {
+    THIN_PROVISIONING = 'thin provisioning',
+    AUTOSIZE = 'autosize',
+    AUTOSIZE_MODE = 'autosize-mode',
+    FRACTIONAL_RESERVE = 'fractional reserve',
+    SNAPSHOT_COPY_RESERVE = 'snapshot copy reserve',
+    SNAPSHOT_AUTO_DELETE = 'snapshot autodelete',
+    SPACE_MANAGEMENT = 'space management',
+    TIERING_MINIMUM_COOLING_DAYS = 'tiering minimum cooling days',
+    TIERING_POLICY = 'tiering policy',
+    SPACE_RESERVATION = 'space reservation enabled',
+    SPACE_ALLOCATION = 'space allocation'
+}
+
 enum OptimizeOperatingSystemParams {
     MPIO_POLICY = 'mpio-load-balance-policy',
     MPIO_SESSIONS = 'mpio-iscsi-count',
@@ -138,6 +152,11 @@ const QUERY_PARAMS = {
     lun: 'path'
 };
 
+const STORAGE_OPTIMIZE_JOB_PARAM = {
+    volume: 'volumes',
+    lun: 'LUN paths'
+};
+
 const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
 const TEST_CONNECTION_COMMAND =
@@ -149,6 +168,7 @@ export {
     AwsWellArchitecturedPillars,
     REDIS_URL,
     OptimizeStorageConfigs,
+    OptimizeStorageConfigsJobNames,
     OPTIMIZE_SIZING_CONFIGS,
     SEVERITY,
     OptimizeStorageApiData,
@@ -159,5 +179,6 @@ export {
     QUERY_PARAMS,
     REDIS_SCHEMA,
     OptimizeOperatingSystemParams,
-    TEST_CONNECTION_COMMAND
+    TEST_CONNECTION_COMMAND,
+    STORAGE_OPTIMIZE_JOB_PARAM
 };

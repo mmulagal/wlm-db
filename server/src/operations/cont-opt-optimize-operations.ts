@@ -43,7 +43,9 @@ import {
     AssessmentStatus,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeOperatingSystemParams,
-    AssessmentTriggeredBy
+    AssessmentTriggeredBy,
+    OptimizeStorageConfigsJobNames,
+    STORAGE_OPTIMIZE_JOB_PARAM
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -239,6 +241,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 throw new Error('objectsToOptimize must be an array with non-empty string elements.');
             }
             const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
+            const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
             const apiQueryFilter = `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
             const apiEndpoint = apiData.api;
 
@@ -258,7 +261,11 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             );
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
-            const optimizeMessage = `Optimized ${objectsOptimized}/${objectsToOptimize.length} ${queryParamKey} ${serverNameWithHostName}`;
+            const optimizeMessage = `Optimized ${objectsOptimized}/${
+                objectsToOptimize.length
+            } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
+                OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
+            }'`;
 
             if (objectsOptimized !== objectsToOptimize.length) {
                 if (objectsOptimized === 0) {

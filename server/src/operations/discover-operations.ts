@@ -2009,25 +2009,12 @@ async function manageSqlServerV2(
             isResourceTobeCreated = false;
         } else {
             // A resource ID is a hash generated using available EC2 instance IDs.
-            const [resourceId1, resourceId2] = [
-                getMsSqlResourceId(node1InstanceId, node2InstanceId),
-                getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
-            ];
+            resourceId = getMsSqlResourceId(node1InstanceId, node2InstanceId);
+            const {
+                items: [resourceDetails]
+            } = await getResources(accountId, resourceId, credentialsId, region);
 
-            const [
-                {
-                    items: [resourceDetails1]
-                },
-                {
-                    items: [resourceDetails2]
-                }
-            ] = await Promise.all([
-                getResources(accountId, resourceId1, credentialsId, region),
-                getResources(accountId, resourceId2, credentialsId, region)
-            ]);
-
-            isResourceTobeCreated = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
-            resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
+            isResourceTobeCreated = !resourceDetails;
         }
         const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
             credentialsId,
@@ -2206,7 +2193,6 @@ async function unmanageDatabaseInstance(
 ) {
     logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
-    updateLongRunningAuditGroup(undefined, undefined, databaseInstanceList);
     const databaseInstanceResponse: {
         databaseInstanceId: string;
         status: string;
