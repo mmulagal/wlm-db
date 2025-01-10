@@ -28,7 +28,8 @@ import {
     getArtifactsRegionBucketName,
     derivePropertiesFromARN,
     isDemo,
-    decompressSSMResponse
+    decompressSSMResponse,
+    retryWithDelay
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -1808,15 +1809,20 @@ async function preparePsModulesForManage(
         const bucketname = getArtifactsRegionBucketName(region);
         const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
 
-        const ssmPsModuleInstallResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
-            ec2InstanceId,
-            'Install PowerShell modules',
-            accountId,
-            false,
-            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+        const ssmPsModuleInstallResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
+                ec2InstanceId,
+                'Install PowerShell modules',
+                accountId,
+                false,
+                (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+            ),
+            3,
+            5000
         );
         logger.info(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
 
