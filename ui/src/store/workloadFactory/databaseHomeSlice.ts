@@ -80,7 +80,9 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         ebsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
-        savingsPercent: 0
+        savings: 0,
+        savingsPercent: 0,
+        noSavings: false
     }
 };
 

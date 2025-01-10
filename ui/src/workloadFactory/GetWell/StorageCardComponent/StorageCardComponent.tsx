@@ -32,6 +32,7 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import store from '../../../store/store';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -84,6 +85,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
         }
         return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
+    }, [cardData]);
+
+    const disableOptimizeButtonTooltip = useMemo(() => {
+        if (cardData?.id === 'headroom' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+            return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+        } else if (cardData?.id === 'log-drive-size' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+            return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+        } else if (cardData?.id === 'tempdb-drive-size' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+            return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+        } else {
+            return '';
+        }
     }, [cardData]);
 
     const setImage = (value: string) => {
@@ -453,10 +466,29 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
-                                Optimize
+                                {GENERAL.OPTIMIZE}
                             </DsButton>
                         </div>
                     </TooltipComponent>
+                ) : disableOptimizeButtonTooltip ? (
+                    <Popover
+                        popoverClass={CommonStyles['popover']}
+                        isAppendedToBody={true}
+                        children={<DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>}
+                        trigger="hover"
+                        container={
+                            <div className={
+                                isDarkTheme
+                                    ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                    : styles.buttonSection
+                            }
+                            style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    {GENERAL.OPTIMIZE}
+                                </DsButton>
+                            </div>
+                        }
+                    />
                 ) : (
                     <div
                         className={
@@ -472,7 +504,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             onClick={() => handleDialog()}
                             isDisabled={loading || disableOptimizeButton}
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     </div>
                 ))}

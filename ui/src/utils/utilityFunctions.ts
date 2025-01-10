@@ -404,6 +404,16 @@ export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
+export function roundOffNumber(number: any) {
+    let roundOffNumber;
+    if (Number(number) < 1) {
+        roundOffNumber = number;
+    } else {
+        roundOffNumber = Math.round(Number(number));
+    }
+    return roundOffNumber;
+};
+
 export function formatNumberWithCustomComma(number: any, roundOffRequired: boolean = true) {
     let roundOffNumber;
     if (roundOffRequired) {

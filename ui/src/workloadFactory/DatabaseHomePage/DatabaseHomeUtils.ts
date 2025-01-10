@@ -13,11 +13,11 @@ import {
 } from '../../utils/consts';
 import {
     formatFractionalNumber,
-    formatNumberWithCustomComma,
     formatSizeOnePrecision,
     formatSizeSplit,
     getByteVal,
     isAwsBackupEnabled,
+    roundOffNumber,
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
@@ -246,8 +246,8 @@ export const getTotalManagedAggrStorageSavings = (mssqlSavingsObj: any, pgsqlSav
 };
 
 export const getManageAggrCost = (data: any) => {
-    let storageCost = 0;
-    let computeCost = 0;
+    let storageCost: number = 0;
+    let computeCost: number = 0;
     let connectivityCost = 0;
     let otherCost = 0;
 
@@ -309,7 +309,7 @@ export const getManageAggrCost = (data: any) => {
         }
     });
 
-    const totalCost = storageCost + computeCost + connectivityCost + otherCost;
+    const totalCost = roundOffNumber(storageCost) + roundOffNumber(computeCost) + roundOffNumber(connectivityCost) + roundOffNumber(otherCost);
 
     return {
         storageCost: formatFractionalNumber(storageCost, 2),
