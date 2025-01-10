@@ -10,7 +10,7 @@ import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunct
 import { ReactComponent as Download } from '../../../assets/download.svg';
 
 import FileUpload from './FileUpload';
-import { useGetUploadScriptMutation } from '../../../utils/apiService';
+import { useGetUploadScriptMutation, useGetDownloadScriptMutation } from '../../../utils/apiService';
 //@ts-ignore
 import pako from 'pako';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
@@ -24,6 +24,7 @@ const ExploreSavingsOnPremiseTable = () => {
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const [getUploadScript] = useGetUploadScriptMutation();
+    const [getDownloadScript] = useGetDownloadScriptMutation();
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
@@ -50,11 +51,12 @@ const ExploreSavingsOnPremiseTable = () => {
                     // Parse the JSON data
                     const jsonString = e.target?.result as string;
                     const base64Encoded = btoa(jsonString);
-                    const compressedData = pako.deflate(base64Encoded, { to: 'string' });
+                    const compressedData = pako.deflate(base64Encoded);
+                    const compressedBase64 = btoa(String.fromCharCode(...compressedData));
 
                     // Access the data inside the JSON
-                    if (compressedData) {
-                        const result = await getUploadScript({ payload: compressedData });
+                    if (compressedBase64) {
+                        const result = await getUploadScript({ payload: compressedBase64 });
                         setIsUploadLoading(false);
                         setTableData(unManagedHostFormatedList);
                         console.log(result);
@@ -248,18 +250,9 @@ const ExploreSavingsOnPremiseTable = () => {
         lazyLoadingText: lazyLoadComponent()
     };
 
-    const handleDownload = () => {
-        // Define the content of the file
-        // Path to the PowerShell script in the src/assets folder
-        const filePath = '/OnPremTCOCollector.ps1';
-
-        // Create an anchor element to trigger the download
-        const link = document.createElement('a');
-        link.href = filePath; // Set the file URL
-        link.download = 'OnPremTCOCollector.ps1'; // Set the file name for the download
-        document.body.appendChild(link); // Append link to the body
-        link.click(); // Programmatically click the link
-        document.body.removeChild(link);
+    const handleDownload = async () => {
+        const result: any = await getDownloadScript({});
+        console.log(result);
     };
 
     return (
