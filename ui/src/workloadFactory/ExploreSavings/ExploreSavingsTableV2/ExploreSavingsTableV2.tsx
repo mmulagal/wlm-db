@@ -239,13 +239,13 @@ const ExploreSavingsTableV2 = () => {
                 tableProps={tableProps}
                 pluralTitle={
                     selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
-                        ? `${GENERAL.ES_TABLE_TITLE}s`
-                        : `${GENERAL.ES_TABLE_FSXW_TITLE}s`
+                        ? `${GENERAL.ES_TABLE_TITLE}`
+                        : `${GENERAL.ES_TABLE_FSXW_TITLE}`
                 }
                 singularTitle={
                     selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
-                        ? `${GENERAL.ES_TABLE_TITLE}`
-                        : `${GENERAL.ES_TABLE_FSXW_TITLE}`
+                        ? `${GENERAL.ES_TABLE_TITLE_SINGLE}`
+                        : `${GENERAL.ES_TABLE_FSXW_TITLE_SINGLE}`
                 }
             />
             <Table
