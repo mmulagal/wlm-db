@@ -361,7 +361,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={styles.colorSet}
+                customClass={'innerPage'}
                 hidePrimaryButton={
                     (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
                     cardData?.missingPermissions &&

@@ -151,7 +151,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={styles.colorSet}
+                customClass={'innerPage'}
                 primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
                 primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
             />
