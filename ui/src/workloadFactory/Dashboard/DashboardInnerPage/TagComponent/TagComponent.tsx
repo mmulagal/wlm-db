@@ -32,7 +32,7 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Performance efficiency', 'Operational excellence']);
                 break;
 
-            case 'ONTAP configuration':
+            case 'ONTAP':
             case 'Operating system':
             case 'Compute rightsizing':
                 setTagData([

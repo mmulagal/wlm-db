@@ -221,7 +221,7 @@ export const cardDataDefault: GwCardDataInterface = {
     ontap_configuration: {
         category: 'storage',
         block_one: {
-            value: 'ONTAP configuration',
+            value: 'ONTAP',
             type: 'Configuration'
         },
         block_two: {

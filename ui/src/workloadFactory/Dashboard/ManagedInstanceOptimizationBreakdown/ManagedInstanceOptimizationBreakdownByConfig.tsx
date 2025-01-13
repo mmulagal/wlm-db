@@ -46,7 +46,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             case 'TempDB placement':
                 configKey = 'tempdbPlacement';
                 break;
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 configKey = 'ontapConfiguration';
                 break;
             case 'Operating system':
@@ -353,7 +353,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="ONTAP configuration"
+                        headingText="ONTAP"
                         percentage={Math.round(((configData.ontapConfiguration || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.ontapConfiguration}
                         afterOutOf={configData.total}
@@ -361,9 +361,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['ONTAP configuration']?.length || 0) /
-                                (configData.total || 1)) *
-                                100
+                            ((inProgressOptimizationData?.['ONTAP']?.length || 0) / (configData.total || 1)) * 100
                         )}
                     />
 
@@ -374,7 +372,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('ONTAP configuration');
+                                handleOptimize('ONTAP');
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||

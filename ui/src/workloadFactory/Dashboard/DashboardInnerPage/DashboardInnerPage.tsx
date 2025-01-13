@@ -340,7 +340,7 @@ const DashboardInnerPage = () => {
                 });
                 break;
 
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -510,7 +510,7 @@ const DashboardInnerPage = () => {
                 return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Compute rightsizing':
                 return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 return <OntapConfig />;
             case 'Operating system':
                 return <OperatingSystemTable />;
