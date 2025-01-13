@@ -157,6 +157,7 @@
             {
                 "name": "performance-tier",
                 "recommended": "100%",
+                "current": "100%",
                 "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
@@ -170,6 +171,7 @@
             {
                 "name": "log-drive-size",
                 "recommended": "20-30%",
+                "current": "5%",
                 "status": "not-optimized",
                 "severity": "warning",
                 "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
@@ -210,7 +212,8 @@
             {
                 "name": "tempdb-drive-size",
                 "recommended": "10-20%",
-                "status": "not-optimized",
+                "current": "5%",
+                "status": "under-provisioned",
                 "severity": "warning",
                 "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                 "tags": ["Operational excellence"],
@@ -223,8 +226,9 @@
             },
             {
                 "name": "headroom",
+                "current": "110%",
                 "recommended": "36-100%",
-                "status": "not-optimized",
+                "status": "over-provisioned",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": ["Performance efficiency"],

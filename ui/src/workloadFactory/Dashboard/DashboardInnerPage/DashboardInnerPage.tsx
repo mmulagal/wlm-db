@@ -453,6 +453,12 @@ const DashboardInnerPage = () => {
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+                } else if (
+                    (name === 'Log drive size' || name === 'TempDB drive size' || name === 'File system headroom') &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
                 }
                 const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (
