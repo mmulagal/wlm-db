@@ -5,7 +5,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
@@ -21,44 +21,55 @@ import pako from 'pako';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { isSet } from 'lodash';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
 
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
+    const { onPremiseData } = useAppSelector(state => state.exploreSavings);
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getOnPremSavings] = useGetOnPremSavingsMutation();
     const [setLoading, isSetLoading] = useState(false);
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const isUploadRef = useRef(false);
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
-    useEffect(() => {
-        async function getData() {
-            try {
-                isSetLoading(true);
-                const apiResult = await getOnPremSavings({});
-                let result: any = [];
-                apiResult?.data?.items?.map((perRow: any) => {
-                    const rowData = {
-                        ...perRow,
-                        onPremNode: perRow?.onPremisesNode[0],
-                        totalInstance: perRow?.sqlServerInstances?.length,
-                        nameForSorting: perRow?.databaseHostName?.toLowerCase()
-                    };
-                    result.push(rowData);
-                });
+    const getData = async () => {
+        if (onPremiseData && isUploadRef.current === false) return;
+        try {
+            isSetLoading(true);
+            const apiResult = await getOnPremSavings({});
+            let result: any = [];
+            apiResult?.data?.items?.map((perRow: any) => {
+                const rowData = {
+                    ...perRow,
+                    onPremNode: perRow?.onPremisesNode[0],
+                    totalInstance: perRow?.sqlServerInstances?.length,
+                    nameForSorting: perRow?.databaseHostName?.toLowerCase()
+                };
+                result.push(rowData);
+            });
 
-                setTableData(result);
-                isSetLoading(false);
-            } catch {
-                console.error('Error fetching data');
-                isSetLoading(false);
-            }
+            setTableData(result);
+            dispatch(setOnPremiseData(result));
+            isSetLoading(false);
+            setIsUploadLoading(false);
+            isUploadRef.current = false;
+        } catch {
+            console.error('Error fetching data');
+            isSetLoading(false);
         }
+    };
 
-        getData();
+    useEffect(() => {
+        if (!onPremiseData) {
+            getData();
+        } else {
+            setTableData(onPremiseData);
+        }
     }, []);
 
     const handleFileChange = (event: any) => {
@@ -76,6 +87,7 @@ const ExploreSavingsOnPremiseTable = () => {
         }
         setTableData([]); //This code needs to be removed
         setIsUploadLoading(true);
+
         if (selectedFile) {
             const reader = new FileReader();
 
@@ -95,15 +107,17 @@ const ExploreSavingsOnPremiseTable = () => {
                                 const status = jobRes?.data?.status;
 
                                 if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                    isUploadRef.current = true;
+
+                                    getData();
+
                                     clearInterval(jobInterval);
                                 } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                    setIsUploadLoading(false);
                                     clearInterval(jobInterval);
                                 }
                             });
                         }, 5000);
-                        setIsUploadLoading(false);
-
-                        console.log(result);
                     } else {
                         console.log('No data found in the file.');
                     }
