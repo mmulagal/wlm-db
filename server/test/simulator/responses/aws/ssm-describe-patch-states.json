@@ -1,0 +1,32 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "0fb64269-a902-40b3-a9a2-c0451ed872b6",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "InstancePatchStates": [
+        {
+            "BaselineId": "pb-0da914616003c89f1",
+            "CriticalNonCompliantCount": 0,
+            "FailedCount": 0,
+            "InstalledCount": 3,
+            "InstalledOtherCount": 4,
+            "InstalledPendingRebootCount": 0,
+            "InstalledRejectedCount": 0,
+            "InstanceId": "i-07e76a4b916548dc0",
+            "MissingCount": 1,
+            "NotApplicableCount": 2557,
+            "Operation": "Scan",
+            "OperationEndTime": "2024-12-12T04:33:37.115Z",
+            "OperationStartTime": "2024-12-12T04:33:09.551Z",
+            "OtherNonCompliantCount": 0,
+            "OwnerInformation": "",
+            "PatchGroup": "",
+            "RebootOption": "RebootIfNeeded",
+            "SecurityNonCompliantCount": 1,
+            "SnapshotId": "e9383295-8e8c-4807-bbd5-2a9d1f228498",
+            "UnreportedNotApplicableCount": 0
+        }
+    ]
+}

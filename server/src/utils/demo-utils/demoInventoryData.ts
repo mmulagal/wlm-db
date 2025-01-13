@@ -1,94 +1,9 @@
-import randomize from 'randomatic';
 import { DiscoverMsSqlResponseBodyType } from '../../routes/types/discover.types';
 
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
-        count: 16,
+        count: 11,
         items: [
-            // ssm not connected
-            {
-                ec2InstanceId: 'i-1d9i5v18g5392mf1v',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'notconnected',
-                ec2InstanceName: 'app-server-1',
-                vpc: {
-                    id: 'vpc-046f7e26255458373',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '10.0.0.0/16'
-                }
-            },
-            // ssm not connected
-            {
-                ec2InstanceId: `i-${randomize('a0', 17)}`,
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'notconnected',
-                ec2InstanceName: 'app-server-2',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                }
-            },
-            // sql server stopped
-            {
-                ec2InstanceId: 'i-57efw8txsh9rxvxe9',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-3',
-                vpc: {
-                    id: 'vpc-046f7e26255458373',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '10.0.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2019,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        isDefaultInstance: true,
-                        sqlServerState: 'Stopped',
-                        sqlServerVersion: '15.0.4298.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        storage: [],
-                        deploymentTypes: []
-                    }
-                ]
-            },
-            // sql server stopped
-            {
-                ec2InstanceId: 'i-8ct4l5ecneb7jn2oz',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-4',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2022,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        isDefaultInstance: true,
-                        sqlServerState: 'Stopped',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: false,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        storage: [],
-                        deploymentTypes: []
-                    }
-                ]
-            },
             // no windows auth
             {
                 ec2InstanceId: 'i-7h2b6f4e8d1g5i3j',
@@ -475,7 +390,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             },
             {
                 ec2InstanceId: 'i-0ab2e12971d543c14',
-                ec2InstanceType: 'm5.2xlarge',
+                ec2InstanceType: 'm5.xlarge',
                 ec2InstanceName: 'app-server-19',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
@@ -601,48 +516,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-r6t8y1u2i3o5p7a',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-13',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2019,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5j',
-                        sqlServerState: 'Running',
-                        isDefaultInstance: false,
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-Training-01',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 ec2InstanceId: 'i-4s6d8f2g1h0j3k5',
                 ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0102',
@@ -680,52 +553,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 type: 'MULTI_AZ_1',
                                 zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                ec2InstanceId: 'i-c5x3z1a7s9d2f4g',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-15',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Standard Edition (64-bit)',
-                        sqlServerEngineEdition: 2,
-                        sqlServerProductYear: 2019,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5l',
-                        isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLserver-Finance-01',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'EBS',
-                                id: ebsVolId
-                            },
-                            {
-                                type: 'EBS',
-                                id: 'vol-0a1b2c3d4e5f6g7h'
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
                             }
                         ]
                     }
@@ -809,90 +636,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         ]
                     }
                 ]
-            },
-            {
-                ec2InstanceId: 'i-e7r9t1y2u4i6o8p',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0102',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-16',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Enterprise Edition (64-bit)',
-                        sqlServerEngineEdition: 3,
-                        sqlServerProductYear: 2022,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5m',
-                        isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-CRMDB-Test',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                ec2InstanceId: 'i-3q5w7e9r1t2y4u6i',
-                ec2InstanceType: 'm5.large',
-                ec2UsageOperation: 'RunInstances:0102',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-17',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Enterprise Edition (64-bit)',
-                        sqlServerEngineEdition: 3,
-                        sqlServerProductYear: 2022,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5n',
-                        isDefaultInstance: true,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLServer-Prod-2',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
-                        sqlServerDeploymentType: 'Standalone',
-                        storage: [
-                            {
-                                type: 'FSXN',
-                                id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-3', 'availability-zone-2']
-                            }
-                        ]
-                    }
-                ]
             }
         ]
     };
@@ -936,7 +679,7 @@ const ASSESMENT_CONFIG_DATA = {
         'default-data-files-location': 'separate-drive'
     },
     sizing: {
-        'performance-tier': false,
+        'performance-tier': [94, 95, 100],
         'data-log-drive-details': [
             {
                 databaseName: 'msdb',

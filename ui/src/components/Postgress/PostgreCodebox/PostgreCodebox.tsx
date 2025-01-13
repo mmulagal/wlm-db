@@ -5,10 +5,7 @@ import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg'
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
-//@ts-ignore
-import Highlighter from 'react-highlight-words';
+
 import { useEffect, useMemo, useState } from 'react';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
@@ -43,8 +40,9 @@ import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-
-const _ = require('lodash');
+import { isEqual } from 'lodash';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
+import HighlightText from '../../../common/HighlightText/HighlightText';
 
 const PostgreCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -104,7 +102,7 @@ const PostgreCodebox = () => {
             openDemoInfoDialog();
         } else {
             const updatedFormData = { mssqlFormData, pgsqlFormData };
-            if (!formData || !_.isEqual(updatedFormData, formData)) {
+            if (!formData || !isEqual(updatedFormData, formData)) {
                 // If form changed so template API will get called again to get latest CF url
                 dispatch(setIsLoading(true));
                 setFormData(updatedFormData);
@@ -135,7 +133,7 @@ const PostgreCodebox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
             // If user is switching between CF and CLI than no need to call template APi again
             const updatedFormData = { mssqlFormData, pgsqlFormData };
-            if (!formData || !_.isEqual(updatedFormData, formData)) {
+            if (!formData || !isEqual(updatedFormData, formData)) {
                 setFormData(updatedFormData);
                 getTemplateResponse();
             }
@@ -238,12 +236,12 @@ const PostgreCodebox = () => {
                     className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
                 >
                     {rightPanelTemplateResponse?.cliCommand ? (
-                        <Highlighter
-                            highlightClassName={styles.awsCliHighlightClass}
-                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
-                            autoEscape={true}
-                            textToHighlight={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
-                        />
+                        <>
+                            <HighlightText
+                                text={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                            />
+                        </>
                     ) : (
                         <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
                     )}
@@ -360,15 +358,18 @@ const PostgreCodebox = () => {
                                             popoverClass={styles['copy-popover']}
                                             children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                             container={
-                                                <CopyToClipboard text={copyResponseData()}>
-                                                    <div
-                                                        className={styles.menuItem}
-                                                        id={UI_IDS.WIZARD_CODEBOX_COPY}
-                                                        onClick={handleCopy}
-                                                    >
-                                                        <Copy />
-                                                    </div>
-                                                </CopyToClipboard>
+                                                <CopyToClipboardCommon
+                                                    value={copyResponseData()}
+                                                    iconProvided={
+                                                        <div
+                                                            className={styles.menuItem}
+                                                            id={UI_IDS.WIZARD_CODEBOX_COPY}
+                                                            onClick={handleCopy}
+                                                        >
+                                                            <Copy />
+                                                        </div>
+                                                    }
+                                                />
                                             }
                                         />
                                     ))}

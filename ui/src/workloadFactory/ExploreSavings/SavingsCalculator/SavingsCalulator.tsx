@@ -15,9 +15,9 @@ import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
 import { useEffect, useState } from 'react';
-//@ts-ignore
-import domToPdf from 'dom-to-pdf';
+
 import ExportPDF from './ExportPDF/ExportPDF';
+import downloadPdf from '../../../common/pdfGenerator';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     addExploreSavingsInitialData,
@@ -36,6 +36,9 @@ import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import ComputeInformation from './ComputeInformation/ComputeInformation';
+import StoragePerformance from './StoragePerformance/StoragePerformance';
+import OnPremRegion from './OnPremRegion/OnPremRegion';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
@@ -53,7 +56,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         storageSavingsResponse,
         viewCalculationsApiResponse,
         viewCalculationsResponse,
-        disableState
+        disableState,
+        selectedExploreSavingsTab
     } = useAppSelector(state => state.exploreSavings);
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
@@ -88,7 +92,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 filename: `SavingsCalculator.pdf`,
                 compression: 'MEDIUM'
             };
-            domToPdf(elem, options, (pdf: any) => {
+             //@ts-ignore
+             downloadPdf(elem, options, (pdf: any) => {
                 setPrintState(false);
                 dispatch(
                     addNotification({
@@ -97,6 +102,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     })
                 );
             });
+           
         }, 10);
     };
 
@@ -105,6 +111,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             return 'Custom configuration for EBS';
         } else {
             return 'Custom configuration for FSx for Windows';
+        }
+    };
+
+    const setCSSForTextArea = () => {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            return `${styles.selectionArea} ${styles.selectionAreaOnPrem}`;
+        } else {
+            return styles.selectionArea;
         }
     };
     return (
@@ -152,51 +166,73 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <div />
                     </div>
 
-                    <div className={styles.contentArea}>
+                    <div
+                        className={styles.contentArea}
+                        style={{
+                            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '1607px' : '1336px'
+                        }}
+                    >
                         {/* Left side code here */}
-                        <div
-                            className={
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                    ? `${styles.firstContainer} ${styles.classForManualFsx}`
-                                    : styles.firstContainer
-                            }
-                        >
-                            {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
+                        {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+                            <div
+                                className={
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+                                        ? `${styles.firstContainer} ${styles.classForManualFsx}`
+                                        : styles.firstContainer
+                                }
+                            >
+                                {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
+                                    <>
+                                        <SavingsHeader />
+                                        <SavingsSelection printState={printState} />
+                                        <SavingsSelectedHost />
+                                        <InstanceInformation />
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                                            <SelectedVolumeSummary />
+                                        )}
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && <WindowFileServer />}
+                                    </>
+                                )}
+                                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
+                                    <>
+                                        <SavingsHeader />
+                                        <div style={{ padding: '40px' }}>
+                                            <ManualTCOFields />
+                                            <ManualEC2 />
+                                            <ManualVolumeTypes />
+                                            {selectedManualDeploymentModel?.label ===
+                                                'Always on availability group' && <ManualTCOAccordion />}
+                                        </div>
+                                    </>
+                                )}
+
+                                {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
+                                    <>
+                                        <SavingsHeader />
+                                        <div style={{ padding: '40px' }}>
+                                            <ManualTCOFields />
+                                            <ManualTCOFSXFields />
+                                            <ManualFSXEC2 />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                            <div className={`${styles.onPremiseContainer} `}>
                                 <>
                                     <SavingsHeader />
-                                    <SavingsSelection printState={printState} />
+                                    <OnPremRegion />
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
-                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <SelectedVolumeSummary />}
-                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && <WindowFileServer />}
+                                    <ComputeInformation />
+                                    <StoragePerformance />
+                                    <SavingsSelection printState={printState} />
                                 </>
-                            )}
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
-                                <>
-                                    <SavingsHeader />
-                                    <div style={{ padding: '40px' }}>
-                                        <ManualTCOFields />
-                                        <ManualEC2 />
-                                        <ManualVolumeTypes />
-                                        {selectedManualDeploymentModel?.label === 'Always on availability group' && (
-                                            <ManualTCOAccordion />
-                                        )}
-                                    </div>
-                                </>
-                            )}
-
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
-                                <>
-                                    <SavingsHeader />
-                                    <div style={{ padding: '40px' }}>
-                                        <ManualTCOFields />
-                                        <ManualTCOFSXFields />
-                                        <ManualFSXEC2 />
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Right side code here */}
                         <div className={styles.secondContainer}>
@@ -214,7 +250,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     {/* Text Area */}
 
-                    <div className={styles.selectionArea}>
+                    <div className={setCSSForTextArea()}>
                         <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
                             <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>

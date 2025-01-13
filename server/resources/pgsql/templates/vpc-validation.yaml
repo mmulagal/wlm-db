@@ -145,14 +145,73 @@ Resources:
             AWS::CloudFormation::Init:
                 configSets:
                     config:
-                        - CreateTempFolder
+                        - InstallSSMAgent
+                        - CreateDeploymentFolders
+                        - ConfigureCWLogs
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
-                        - Finalize       
-                CreateTempFolder:
+                        - Finalize
+                InstallSSMAgent:
                     commands:
-                        a-create-temp-folder:
+                        a-install-ssm-agent:
+                            command: !Sub
+                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            waitAfterCompletion: '0'
+                        b-install-cloudwatch-agent:
+                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            waitAfterCompletion: '0'
+                CreateDeploymentFolders:
+                    commands:
+                        a-create-scripts-folder:
                             command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                            waitAfterCompletion: '0'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
+                            waitAfterCompletion: '0'
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {
+                                    "agent": {
+                                        "metrics_collection_interval": 5,
+                                        "run_as_user": "cwagent",
+                                        "region": "${AWS::Region}"
+                                    },
+                                    "logs": {
+                                        "logs_collected": {
+                                            "files": {
+                                                "collect_list": [
+                                                    {
+                                                        "file_path": "/var/log/cfn-*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/var/log/netapp_wf/*.log",
+                                                        "log_group_name": "${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
+                            waitAfterCompletion: '0'
                 FetchResources:
                     files:
                         /home/ec2-user/cfn/scripts/verify-signature.sh:
@@ -167,6 +226,11 @@ Resources:
                             group: ec2-user
                         /home/ec2-user/cfn/scripts/validation.zip:
                             source: {{{ ScriptValidation }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/fsx_certs.zip:
+                            source: {{{ FsxCertificates }}}
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
@@ -194,6 +258,9 @@ Resources:
                         d-unpack-validation-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
                             waitAfterCompletion: 0
+                        e-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                            waitAfterCompletion: 0
                 Finalize:
                     commands:
                         a-validate-vpc:
@@ -201,7 +268,29 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/validation/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
                                 - subnetId: !Ref 'SubnetID'
                             waitAfterCompletion: '0'
-                        b-signal-resource:
+                        b-store-credentials-in-parameter-store:
+                            command: !Sub 
+                                - aws ssm put-parameter
+                                    --name "/netapp/wlmdb/${parentStackName}"
+                                    --type "SecureString"
+                                    --value "$(aws ssm get-parameter --name "/netapp/wlmdb/${ParentStackName}" --with-decryption --query "Parameter.Value" --output text)"
+                                    --overwrite
+                                - parentStackName: !Ref 'ParentStackName'
+                            waitAfterCompletion: '0'
+                        c-validate-fsx-connectivity:
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/validation/validate-fsx.sh
+                                    -e ${PerformFSxCheck}
+                                    -f ${FSxFileSystemId}
+                                    -r ${AWS::Region}
+                                    -n ${AWS::StackName}
+                                    -p ${ParentStackName}
+                                    -s ValidationNode1'
+                                -   PerformFSxCheck: !Ref 'PerformFSxCheck'
+                                    FSxFileSystemId: !Ref 'FSxFileSystemId'
+                                    ParentStackName: !Ref 'ParentStackName'
+                            waitAfterCompletion: '0'
+                        d-signal-resource:
                             command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'

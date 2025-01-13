@@ -4,7 +4,6 @@ import { ReactComponent as NoData } from '../../../assets/empty table message.sv
 import styles from './LineChart.module.scss';
 import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
-const moment = require('moment');
 
 Chart.register(...registerables);
 
@@ -132,7 +131,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                 labels: constructLabel(),
                 datasets: [
                     {
-                        label: 'Success',
+                        label: 'Completed',
                         data: constructDataSuccess(),
                         borderColor: '#68C6B3',
 
@@ -149,7 +148,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         borderWidth: 3
                     },
                     {
-                        label: 'Completed with warnings',
+                        label: 'Completed with issues',
                         data: constructDataWarning(),
                         borderColor: '#FDC300',
 
@@ -191,26 +190,67 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                         propagate: false
                     },
                     tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                let label = '';
-                                if (context.dataset.label === 'Success') {
-                                    label = 'Completed jobs';
-                                } else if (context.dataset.label === 'Completed with warnings') {
-                                    label = 'Completed with warnings jobs';
-                                } else {
-                                    label = 'Failed jobs';
-                                }
+                        enabled: false, // Disable the default tooltip
+                        external: function (context) {
+                            // Tooltip Element
+                            let tooltipEl = document.getElementById('chartjs-tooltip');
 
-                                if (context.parsed.y !== null) {
-                                    label = `${context.label} | ${context.parsed.y} ${label}`;
-                                }
-                                if (selectedTimeFrame === 'Last 30 days') {
-                                    return label;
-                                } else {
-                                    return `${context.dataset.label}: ${context.parsed.y}`;
-                                }
+                            // Create an element if it doesn't exist
+                            if (!tooltipEl) {
+                                tooltipEl = document.createElement('div');
+                                tooltipEl.id = 'chartjs-tooltip';
+                                tooltipEl.style.position = 'absolute';
+                                tooltipEl.style.background = 'var(--content-background)';
+                                tooltipEl.style.border = 'none';
+                                tooltipEl.style.padding = '8px 12px';
+                                tooltipEl.style.pointerEvents = 'none';
+                                tooltipEl.style.borderRadius = '5px';
+                                tooltipEl.style.fontSize = '13px';
+                                tooltipEl.style.zIndex = '10';
+                                tooltipEl.style.boxShadow = '4px 4px 12px 0px #E0E0E0';
+                                document.body.appendChild(tooltipEl);
                             }
+
+                            // Hide tooltip if no data
+                            const tooltipModel = context.tooltip;
+                            if (tooltipModel.opacity === 0) {
+                                //@ts-ignore
+                                tooltipEl.style.opacity = 0;
+                                return;
+                            }
+
+                            // Set position
+                            const position = context.chart.canvas.getBoundingClientRect();
+                            tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                            tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
+                            //@ts-ignore
+                            tooltipEl.style.opacity = 1;
+
+                            // Build custom HTML content
+                            const body = tooltipModel.body
+                                .map(item => {
+                                    let label = item.lines[0]; // Tooltip content
+                                    let color = 'black';
+                                    if (label.includes('issues')) {
+                                        color = '#FDC300';
+                                    } else if (label.includes('Completed')) {
+                                        color = '#68C6B3';
+                                    } else if (label.includes('Failed')) {
+                                        color = '#FE5502';
+                                    }
+
+                                    if (selectedTimeFrame === 'Last 30 days') {
+                                        label = context.tooltip.title[0] + ' | ' + label;
+                                    }
+
+                                    return `<div style="color: ${color}; display: flex; align-items: center; ">
+                                            <span style="width: 8px; height: 8px; background: ${color}; border-radius: 50%; margin-right: 10px;"></span>
+                                            <span style="font-size: 13px; color: var(--text-primary)">${label}</span>
+                                        </div>`;
+                                })
+                                .join('');
+
+                            tooltipEl.innerHTML = `<div style=" display: flex; flex-direction: column; gap: 16px; justify-content: center; border: none  ">${body}</div>`;
                         }
                     }
                 },

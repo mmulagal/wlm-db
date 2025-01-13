@@ -190,15 +190,19 @@ const HOST_AND_SQL_INFO_PS1 = [
       $DriveLetteriScsiTargetAddress += $object
     }
 
+    $IscsciTargets = $DriveLetteriScsiTargetAddress | Where-Object { (-not([string]::IsNullOrEmpty($_.TargetAddress)))  } 
+   
     $DriveTargetMap = @{}
     ForEach ($item in $DriveLetteriScsiTargetAddress) {
       If ($item.DriveLetters -eq $null) {
         Continue
       }
 
-      If ($item.TargetAddress -ne $null) {
+      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -ceq  $item.SerialNumber } 
+
+      If ($Target.TargetAddress -ne $null) {
         $item.DriveLetters | ForEach-Object {
-          $DriveTargetMap.Add($_, $item.TargetAddress)
+          $DriveTargetMap.Add($_, $Target.TargetAddress)
         }
       } ElseIf ($item.SerialNumber -ne $null) {
         $item.DriveLetters | ForEach-Object {
@@ -598,6 +602,7 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
   try {
     $requiredModuleList = @(${requiredModules})
     $s3SignedUrl = '${s3SignedURL}'
+    $PSToolkitRequiredVersion = '9.15.1.2407'
     $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
     $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
 
@@ -630,7 +635,12 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           }
 
           ForEach ($moduleName in $unavailableModuleList) {
-              Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+              if($moduleName -eq 'NetApp.ONTAP') {
+                Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+              }
+              else {
+                Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+              }
           }
       }Else{
           $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"

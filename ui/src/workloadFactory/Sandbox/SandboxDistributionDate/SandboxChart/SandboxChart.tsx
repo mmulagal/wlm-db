@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
@@ -12,6 +12,7 @@ Chart.register(...registerables);
 
 const SandboxChart = () => {
     const ref = useRef<HTMLCanvasElement>(null);
+    const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const { isNA } = useAppSelector(state => state.sandbox);
     const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
@@ -30,7 +31,7 @@ const SandboxChart = () => {
             datasets: [
                 {
                     data: Object.values(getSandboxDistributionByAge(aggregatedSandboxList)),
-                    backgroundColor: ['#68C6B3', '#0BAFFC', '#A815F3', '#FDC300']
+                    backgroundColor: ['#68C6B3', '#A815F3', '#FDC300']
                 }
             ]
             //   labels: label,
@@ -45,7 +46,7 @@ const SandboxChart = () => {
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (myDoughnut) myDoughnut.destroy();
         };
     }, [aggregatedSandboxList]);
 
@@ -66,12 +67,13 @@ const SandboxChart = () => {
                 <Typography variant="Regular_14" className={isNA ? ` ${CommonStyles.notAvailable}` : ''}>
                     {GENERAL.SANDBOXES}
                 </Typography>
+                {loading && <DsFlashingDotsLoader />}
             </div>
             {/* @ts-ignore */}
-            {aggregatedSandboxList.length === 0 && <div className={styles.emptyCircle}></div>}
-            {isNA && <div className={styles.emptyCircle}></div>}
 
-            {!isNA && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
+            {(isNA || aggregatedSandboxList.length === 0) && <div className={styles.emptyCircle}></div>}
+
+            {aggregatedSandboxList.length !== 0 && <canvas ref={ref} id="chart-area" width={184} height={184}></canvas>}
         </div>
     );
 };

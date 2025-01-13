@@ -49,7 +49,6 @@ Metadata:
           - FSxDataVolumeSize
           - FSxLogVolumeName
           - FSxLogVolumeSize
-          - FSxDataLunSize
           - FSxVolumeThroughputCapacity
           - ONTAPSecurityGroupID
           - FileSystemEncryptionKeyId
@@ -192,8 +191,6 @@ Parameters:
   {{{FSxLogVolumeName}}}
   
   {{{FSxLogVolumeSize}}}
-
-  {{{FSxDataLunSize}}}
 
   {{{FSxAdminUsername}}}
          
@@ -710,12 +707,15 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxSvmId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxSvmId"
+        FSxSvmUuid:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxSvmUuid"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxSvmUuid"
         ONTAPSecurityGroupID:
           Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
-        FSxDataLunSize:
-          Ref: FSxDataLunSize
         NumberOfNodes: "1"
         FSxLogVolumeName:
           Ref: FSxLogVolumeName
@@ -725,6 +725,10 @@ Resources:
           Ref: SqlServerName
         SQLServiceAccountPassword:
           Ref: SQLServiceAccountPassword
+        ParentStackName:
+          Ref: AWS::StackName
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -770,3 +774,4 @@ Resources:
             - 'Standalone'
       FileSystemType: 'FSXN'
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'
+      FSxDataVolumeName: !Ref 'FSxDataVolumeName'

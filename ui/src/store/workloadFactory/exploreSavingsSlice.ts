@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { ExploreSavingsSliceEntities } from '../../utils/types/exploreSavingsType';
+import { WLF_TABS } from '../../utils/consts';
 
 export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedSnapshotFrequency: null,
@@ -120,13 +121,34 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualStorageCapacityUnit: null,
     selectedManualFSXIOPS: 6000,
     selectedManualFSXThroughput: 128,
-    snapshotLoading: false
+    snapshotLoading: false,
+    selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
+    computeInformation: {
+        SQL_ins1: { vCPUsInUse: '', memory: '', networkPerformance: '' },
+        SQL_ins2: { vCPUsInUse: '', memory: '', networkPerformance: '' },
+        SQL_ins3: { vCPUsInUse: '', memory: '', networkPerformance: '' }
+    },
+    storagePerformance: {
+        primaryData: { totalStorageAmount: '', iops: '', throughput: '' },
+        primaryLog: { totalStorageAmount: '', iops: '', throughput: '' },
+        secondaryData: { totalStorageAmount: '', iops: '', throughput: '' },
+        secondaryLog: { totalStorageAmount: '', iops: '', throughput: '' }
+    }
 };
 
 const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setStoragePerformance(state, action: PayloadAction<any>) {
+            state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
+        },
+        setComputeInformation(state, action: PayloadAction<any>) {
+            state.computeInformation[action.payload.type][action.payload.mode] = action.payload.value;
+        },
+        setSelectedExploreSavingsTab: (state, action: PayloadAction<any>) => {
+            state.selectedExploreSavingsTab = action.payload;
+        },
         setSelectedManualFSXThroughput: (state, action: PayloadAction<any>) => {
             state.selectedManualFSXThroughput = action.payload;
         },
@@ -407,6 +429,9 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setStoragePerformance,
+    setComputeInformation,
+    setSelectedExploreSavingsTab,
     setRequestedRegion,
     addManualRegionsList,
     setManualRegionsLoading,

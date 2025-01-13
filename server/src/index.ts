@@ -68,12 +68,14 @@ import {
     scheduledAssessment,
     updateManagedInstanceRecommendationPreferences
 } from './operations/cron-operations';
-import { isActiveInstance } from './utils/utils';
+import { isActiveInstance, isDemo } from './utils/utils';
 import { resetCache } from './utils/cache';
 import { REDIS_URL } from './utils/continous-optimization-consts';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+const isDemoFlow = isDemo();
 
 logger.info(`Redis URL ${REDIS_URL}.`);
 
@@ -285,7 +287,7 @@ const app = fastify({
                     if (xNetappReferer === BXP) {
                         const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                         if (!requestUrl) {
-                            createAuditGroup(request, _reply);
+                            createAuditGroup(request);
                         }
                     }
                     done();
@@ -375,11 +377,13 @@ logger.info('Initializing cron jobs');
 try {
     if (isActiveInstance()) {
         purgeOlderJobs();
-        failLongRunningDeploymentJobs();
-        failLongRunningResourcePrepareJobs();
-        updateTcoInstanceRecommendationPreferences();
-        updateManagedInstanceRecommendationPreferences();
-        scheduledAssessment();
+        if (!isDemoFlow) {
+            failLongRunningDeploymentJobs();
+            failLongRunningResourcePrepareJobs();
+            updateTcoInstanceRecommendationPreferences();
+            updateManagedInstanceRecommendationPreferences();
+            scheduledAssessment();
+        }
     }
 } catch (error) {
     logger.error('Failed to initialize cron jobs', error);

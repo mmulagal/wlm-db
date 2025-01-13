@@ -1,0 +1,25 @@
+.tagComponent {
+    padding: 24px 40px;
+    background-color: var(--content-background);
+    box-shadow: 1px 0px 0px 0px var(--border-drop-shadow, #e0e0e0) inset;
+
+    width: 408px;
+
+    .topSection {
+        display: flex;
+        gap: 8px;
+    }
+
+    .mainSection {
+        margin-top: 16px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        [class*='tag'] {
+            border: none !important;
+            font-weight: 500;
+            font-size: 13px;
+        }
+    }
+}

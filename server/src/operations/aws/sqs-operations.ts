@@ -33,7 +33,8 @@ import {
     derivePropertiesFromARN,
     getDatabaseInstanceName,
     getDescriptionForMatchingName,
-    getQueueUrl
+    getQueueUrl,
+    parsePgSqlInstanceInfo
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -57,7 +58,7 @@ import { decryptString } from './kms-operations';
 import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
-import { getPgSqlInstanceId } from '../workloads/pgsql/pgsql-operations';
+import { getPgSqlInstanceInfo } from '../workloads/pgsql/pgsql-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 const logger = getLogger();
@@ -230,7 +231,7 @@ async function modifyMasterJobStatus(
 
     let combinedErrors: string[] = [];
     if (jobStatus === JOBSTATUS.FAILED) {
-        const childJobs = await getJobDetails(accountId, credentialsId, region, masterJob.id);
+        const childJobs = await getJobDetails(accountId, masterJob.id, credentialsId, region);
         combinedErrors = (childJobs.subJobs as job[])
             .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
             .map(jobObject => jobObject.error!);
@@ -328,7 +329,7 @@ async function createOrUpdateChildJobs(
 
         let combinedErrors: string[] = [];
         if (jobStatus === JOBSTATUS.FAILED) {
-            const childJobs = await getJobDetails(accountId, credentialsId, region, childJob.id);
+            const childJobs = await getJobDetails(accountId, childJob.id, credentialsId, region);
             combinedErrors = (childJobs.subJobs as job[])
                 .filter(jobObject => jobObject.status === JOBSTATUS.FAILED)
                 .map(jobObject => jobObject.error!);
@@ -527,7 +528,8 @@ async function processCloudFormationMessages() {
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
                                                         EncryptedFsxPassword: encryptedFsxPassword,
-                                                        FSxSvmId: fsxSvmId
+                                                        FSxSvmId: fsxSvmId,
+                                                        FSxDataVolumeName: fsxDataVolumeName
                                                     } = resourceProperties;
 
                                                     if (encryptedFsxPassword) {
@@ -599,6 +601,7 @@ async function processCloudFormationMessages() {
                                                                 activeDirectoryAddress
                                                             }),
                                                             fsxSvmId,
+                                                            fsxDataVolumeName,
                                                             source: RESOURCE_SOURCE.DEPLOY,
                                                             storageProtocol:
                                                                 resourceType === RESOURCESTYPE.MSSQL
@@ -629,7 +632,7 @@ async function processCloudFormationMessages() {
                                                                       nodeIds,
                                                                       accountId
                                                                   )
-                                                                : [{ instanceName: 'DEFAULT' }];
+                                                                : [{ instanceName: 'postgresql' }];
 
                                                         const instanceNames = deployedInstances.map(
                                                             (instance: { instanceName: string }) =>
@@ -682,14 +685,18 @@ async function processCloudFormationMessages() {
                                                                         modifiedInstanceName;
                                                                     instanceDetails.isDefault = isDefaultInstance;
                                                                 } else if (resourceType === RESOURCESTYPE.PGSQL) {
-                                                                    instanceDetails.databaseInstanceId =
-                                                                        await getPgSqlInstanceId(
-                                                                            accountId,
-                                                                            credentialsId,
-                                                                            region,
-                                                                            instanceName,
-                                                                            nodeIds
-                                                                        );
+                                                                    const instanceInfo = await getPgSqlInstanceInfo(
+                                                                        accountId,
+                                                                        credentialsId,
+                                                                        region,
+                                                                        instanceName,
+                                                                        nodeIds,
+                                                                        fsxDataVolumeName
+                                                                    );
+                                                                    const { dbInstanceId } = parsePgSqlInstanceInfo(
+                                                                        instanceInfo!
+                                                                    );
+                                                                    instanceDetails.databaseInstanceId = dbInstanceId;
                                                                     instanceDetails.databaseInstanceName = instanceName;
                                                                 }
 

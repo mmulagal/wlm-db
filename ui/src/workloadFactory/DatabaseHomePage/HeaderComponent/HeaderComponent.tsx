@@ -23,6 +23,7 @@ import {
     handleURL,
     regionsSort,
     resetDBHomePageState,
+    setExploreSavingsSubTab,
     setTabValue
 } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -82,8 +83,15 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
-import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import {
+    addAllMssqlHostAssessmentData,
+    setIsRefreshed,
+    setSelectedHeaderTab
+} from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
+import Dashboard from '../../Dashboard/Dashboard';
+import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
+import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 
 type Tab = {
     tab: string;
@@ -108,6 +116,9 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const newDashboardItem = localStorage.getItem('newDashboard');
+    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
+    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -124,13 +135,24 @@ const HeaderComponent = ({ tab }: Tab) => {
 
         setTabInfo(tabValue);
         dispatch(setSelectedHeaderTab(tabValue));
+        if (
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+        ) {
+            setExploreSavingsSubTab(tabValue, dispatch);
+        }
     }, [tab]);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+            if (
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+            ) {
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
@@ -145,7 +167,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-                } else {
+                } else if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
                         payload: {
@@ -157,6 +179,21 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                } else {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=onprem&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=onprem&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
+                    //This logic yet to decide
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 }
@@ -351,7 +388,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                        }
+                        isDisabled={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                     />
                 </div>
@@ -387,7 +430,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                        }
+                        isDisabled={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                     />
                 </div>
@@ -499,7 +548,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     <Typography
                                         variant="Regular_14"
                                         className={
-                                            selectedHeaderTab === WLF_TABS.DASHBOARD
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD ||
+                                            selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart1
@@ -571,6 +621,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                   }`
                                         }
                                         onClick={() => {
+                                            dispatch(setSandboxAgeRange({ range: '', from: 'Header' }));
                                             handleClick(WLF_TABS.SANDBOXES);
                                         }}
                                         id="sandboxes"
@@ -585,7 +636,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
                                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
+                                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
+                                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                                                 ? `${
                                                       isWorkloadFactory
                                                           ? styles.headerPart5
@@ -651,13 +703,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={styles.spaceArea}>
-                                <div className={styles.contentArea}>
+                            <div className={!setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
+                                <div className={!setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
                                     {selectComponents()}
                                     <div className={styles.content}>
                                         <>
                                             <DsButton
-                                                children="Deploy database host"
+                                                children="Deploy host"
                                                 variant="Default"
                                                 dropDown={{
                                                     trigger: 'click',
@@ -696,6 +748,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             id: '2',
                                                             label: 'PostgreSQL Server',
                                                             onClick: () => {
+                                                                dispatch(setDatabaseHostEntryPoint('database'));
                                                                 dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
                                                                 if (isWorkloadFactory) {
                                                                     navigate(WLF_TO_PROTECT_NAVIGATE);
@@ -729,7 +782,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     </div>
                                 </div>
                             </div>
-                            <DatabaseHomePage />
+
+                            <Dashboard />
                         </div>
                     )}
                     {selectedHeaderTab === WLF_TABS.INVENTORY && (
@@ -760,7 +814,11 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                 variant="underline"
                                                 options={generateSelectFieldOptions}
                                                 value={
-                                                    dropDownValue ? [dropDownValue] : [generateSelectFieldOptions[0]]
+                                                    dropDownValue
+                                                        ? [dropDownValue]
+                                                        : isDemoMode
+                                                        ? [generateSelectFieldOptions[1]]
+                                                        : [generateSelectFieldOptions[0]]
                                                 }
                                             />
                                         </div>
@@ -783,6 +841,8 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                     {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
 
+                    {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
+
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>
                             <div className={styles.sandboxSection}>
@@ -796,7 +856,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                     {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) && (
                         <>
                             <div className={styles.exploreSavingSection}>
                                 <div className={styles.contentArea}>

@@ -2025,10 +2025,16 @@ export const checkIfByolFieldRequired = (
  * @param data
  * @returns Protected/Unprotected/Unknown
  */
-export const checkIfEbsProtected = () => {
+export const checkIfEbsProtected = (selectedHostDetailsD?: any, perfMssqlInstancesDataD?: any) => {
     const state = store.getState();
-    const { selectedHostDetails } = state.exploreSavings;
-    const perfMssqlInstancesData = state.inventoryV2.perfMssqlInstancesData;
+    let selectedHostDetails = selectedHostDetailsD;
+    let perfMssqlInstancesData = perfMssqlInstancesDataD;
+    if (!selectedHostDetails) {
+        selectedHostDetails = state.exploreSavings.selectedHostDetails;
+    }
+    if (!perfMssqlInstancesData) {
+        perfMssqlInstancesData = state.inventoryV2.perfMssqlInstancesData;
+    }
     if (selectedHostDetails?.sqlServerInstances?.length > 0) {
         let unprotected: boolean = false;
         let protectedVal: boolean = false;

@@ -462,23 +462,19 @@ async function startInstance(credentialsId: string, region: string, instanceId: 
 async function waitForInstanceOk(credentialsId: string, region: string, instanceId: string) {
     logger.info('Wait for instance status to be OK', { credentialsId, region, instanceId });
 
-    try {
-        const params: DescribeInstanceStatusCommandInput = {
-            InstanceIds: [instanceId]
-        };
-        const ec2 = await getEC2Client(region);
+    const params: DescribeInstanceStatusCommandInput = {
+        InstanceIds: [instanceId]
+    };
+    const ec2 = await getEC2Client(region, credentialsId);
 
-        // Wait until the instance status is OK
-        const response = await waitUntilInstanceStatusOk(
-            { client: ec2, maxWaitTime: 300 }, // maxWaitTime is in seconds
-            params
-        );
-        logger.debug('Wait for instance status to be OK response:', response);
+    // Wait until the instance status is OK
+    const response = await waitUntilInstanceStatusOk(
+        { client: ec2, maxWaitTime: 300 }, // maxWaitTime is in seconds
+        params
+    );
+    logger.debug('Wait for instance status to be OK response:', response);
 
-        return response;
-    } catch (error) {
-        logger.error('Error waiting for instance status to be OK:', error);
-    }
+    return response;
 }
 
 async function describeAddresses(credentialsId: string, region: string, params: DescribeAddressesCommandInput) {

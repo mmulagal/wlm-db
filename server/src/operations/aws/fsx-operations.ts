@@ -25,7 +25,8 @@ import {
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
     AWS_FSX_TYPE,
-    HttpErrorCodes
+    HttpErrorCodes,
+    DEFAULT_INSTANCE_NAME
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
@@ -37,6 +38,8 @@ import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 interface FsxStorage {
     storage: number;
@@ -222,7 +225,8 @@ async function getStorageDataUsingSSM(
     apiQuery: string,
     activeNodeInstanceId: string
 ) {
-    logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
+    const ssmComment = 'Fetching storage savings details';
+    logger.info(ssmComment, credentialsId, region, activeNodeInstanceId);
 
     let commands;
 
@@ -235,8 +239,7 @@ async function getStorageDataUsingSSM(
             `C:\\SSM\\OntapRestGet.ps1  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     }
-
-    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId);
+    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, ssmComment);
 
     const cleanResponse = response?.replaceAll('\r\n', '');
     const jsonResponse = JSON.parse(cleanResponse!);
@@ -424,7 +427,8 @@ async function getMappedOntapVolumes(
     includeLogVolumes = false,
     accountId?: string
 ) {
-    logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
+    const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
+    logger.info(ssmComment, {
         credentialsId,
         region,
         fileSystemId,
@@ -436,10 +440,6 @@ async function getMappedOntapVolumes(
     });
 
     try {
-        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-            fileSystemId = 'test-fsx';
-            region = 'us-east-1';
-        }
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
@@ -453,7 +453,14 @@ async function getMappedOntapVolumes(
             includeLogVolumes
         );
 
-        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId!, accountId);
+        const response = await callSsmExecution(
+            credentialsId,
+            region!,
+            [command],
+            activeNodeInstanceId!,
+            ssmComment,
+            accountId
+        );
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -463,11 +470,14 @@ async function getMappedOntapVolumes(
 
         const instancesResponse: { [key: string]: any } = {};
         instanceNames?.forEach((iName: string) => {
+            const originalInstanceName = iName;
+            iName = isDemoFlow ? DEFAULT_INSTANCE_NAME : iName;
             if (
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
                 const { volumeDBMap, volumes, lunNames } = parsedResponse?.[iName] ?? {};
+                iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
                     const volumeRecords = volumes.records.map((record: Record<string, string | number>) => ({
                         name: record.name,
@@ -572,7 +582,8 @@ async function getStorageDataFromOntap(
     instanceDetails: DatabaseInstance[],
     isSqlAuthEnabled: boolean
 ) {
-    logger.info('Getting storage data from Ontap:', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
+    const ssmComment = 'Get storage data from ONTAP';
+    logger.info(ssmComment, ':', { activeNodeInstanceId, instanceDetails, isSqlAuthEnabled });
 
     try {
         const managedInstances = instanceDetails.filter(
@@ -589,7 +600,7 @@ async function getStorageDataFromOntap(
             isSqlAuthEnabled,
             'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'
         );
-        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId);
+        const response = await callSsmExecution(credentialsId, region!, [command], activeNodeInstanceId, ssmComment);
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -701,6 +712,22 @@ async function updateVolumeSizeAndWaitForUpdate(
     throw createError(errMsg);
 }
 
+async function getIscsiTargetAddresses(credentialsId: string, region: string, fsxId: string, svmId: string) {
+    // Fetch iSCSCI target addresses
+    logger.info('Fetching iSCSI target addresses', { credentialsId, region, fsxId, svmId });
+    const { StorageVirtualMachines: fsxSVMs } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        fsxId as string
+    );
+    const {
+        Endpoints: { Iscsi: { IpAddresses: iscsiTargetAddresses = [] as string[] } = { IpAddresses: [] } } = {
+            Iscsi: { IpAddresses: [] }
+        }
+    } = fsxSVMs?.find(svm => svm.StorageVirtualMachineId === svmId) || {};
+    return iscsiTargetAddresses;
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -717,5 +744,6 @@ export {
     getFsxStorageDetails,
     getFsxVolumeDetails,
     getFsxnVolIdsFromOntapVolIds,
-    updateVolumeSizeAndWaitForUpdate
+    updateVolumeSizeAndWaitForUpdate,
+    getIscsiTargetAddresses
 };

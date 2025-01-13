@@ -15,6 +15,7 @@ import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
 import { setIsRefreshed, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { handleURL } from '../../../../utils/utilityFunctions';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
@@ -57,6 +58,16 @@ const MSSqlFooter = () => {
         }
     };
 
+    const handleNavigation = () => {
+        if (isWorkloadFactoryStatus) {
+            navigate(FORM_TO_WLF_NAVIGATE);
+            handleURL('Dashboard', true);
+        } else {
+            navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            handleURL('Dashboard', false);
+        }
+    };
+
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
         let notificationMsg: string | number | NodeJS.Timeout | undefined;
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
@@ -95,7 +106,7 @@ const MSSqlFooter = () => {
 
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         notificationMsg = setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigate(FORM_TO_WLF_NAVIGATE_BLUEXP);
+            handleNavigation();
             dispatch(setIsRefreshed(true));
         }, 3000);
     };

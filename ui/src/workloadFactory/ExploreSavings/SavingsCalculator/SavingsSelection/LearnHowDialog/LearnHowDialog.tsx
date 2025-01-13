@@ -1,10 +1,10 @@
 import { AccordionCard, AccordionCardContent, AccordionController, DsTypography, Popover } from '@netapp/design-system';
 import styles from './LearnHowDialog.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
 import { useEffect, useState } from 'react';
+import CopyToClipboardCommon from '../../../../../common/CopyToClipboard/copyToClipboard';
 
 const LearnHowDialog = ({ type }: { type: string }) => {
     const [headerText, setHeaderText] = useState<string>('');
@@ -66,15 +66,16 @@ const LearnHowDialog = ({ type }: { type: string }) => {
                                                                 popoverClass={styles['copy-popover']}
                                                                 children={'Permissions copied'}
                                                                 container={
-                                                                    <CopyToClipboard
-                                                                        text={JSON.stringify(
+                                                                    <CopyToClipboardCommon
+                                                                        value={JSON.stringify(
                                                                             GENERAL.LEARN_HOW_DIALOG.PERMISSIONS,
                                                                             null,
                                                                             1
                                                                         )}
-                                                                    >
-                                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                                    </CopyToClipboard>
+                                                                        iconProvided={
+                                                                            <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                                        }
+                                                                    />
                                                                 }
                                                             />
                                                         </div>

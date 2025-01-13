@@ -28,6 +28,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
     MICROSOFT_SQL: 'Microsoft SQL',
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
@@ -440,7 +441,7 @@ export const GENERAL = {
         "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
-    NOT_AVAILABLE: 'N/A',
+    NOT_AVAILABLE: 'n/a',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -460,6 +461,9 @@ export const GENERAL = {
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
+    DB_HOST_PROTECTION_TYPE: 'Protection type',
+    APPLICATION_CONSISTENT: 'Application-consistent',
+    CRASH_CONSISTENT: 'Crash-consistent',
     DB_OVERVIEW_INFO: 'Information',
     DB_HOST_PERFORMANCE: 'Performance',
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
@@ -569,14 +573,14 @@ export const GENERAL = {
     STEP2POINT2CONTINUE: 'Cost allocation tags',
     STEP2POINT4: 'Select',
     STEP2POINT4ACTIVATE: 'Activate.',
-    JOBS_STATUS_OVER_TIME: 'Jobs status over time',
+    JOBS_STATUS_OVER_TIME: 'Job status over time',
     JOB_MONITORING: 'Job monitoring',
     POLICY_MANAGEMENT: 'Policy management',
     //Job Monitoring constants
     JM_COMPLETED: 'Completed',
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
-    JM_WARNING: 'Completed with warnings',
+    JM_WARNING: 'Completed with issues',
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
     JM_TYPE_DEPLOYMENT: 'Deployment',
@@ -585,8 +589,8 @@ export const GENERAL = {
     JM_TYPE_SANDBOX: 'Sandbox',
     JM_TYPE_ASSESSMENT: 'Assessment',
     JM_TYPE_OPTIMIZE: 'Optimization',
-    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
-    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
+    JM_DOWNLOAD_PROGRESS: 'Download in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table was downloaded',
     DEMO_TITLE: 'Redirect to CloudFormation',
     DEMO_CONTENT: `When using a Demo account you won't be redirected to the AWS CloudFormation service.`,
     FSXN_SVM_ERROR: [
@@ -664,6 +668,7 @@ export const GENERAL = {
     DB_CREATE_HOST: 'Host:',
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
+    CREATE_TEMPLATE: 'Create template',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
@@ -875,6 +880,7 @@ export const GENERAL = {
     SSM_CONNECTION_DOWN: 'SSM is not connected',
     STORAGE_NOT_PRESENT: 'Storage could not be identified',
     //Sandbox constants
+    SANDBOX: 'Sandbox',
     SANDBOXES: 'Sandboxes',
     SANDBOX_HEADER_CONTENT:
         'Sandbox is an on-demand, isolated database environment that can be used for testing, integration, diagnostics, and training, without affecting production data. It streamlines the development lifecycle while ensuring data integrity and security.',
@@ -909,10 +915,9 @@ export const GENERAL = {
     ANALYTICS: 'Analytics',
     SANDBOX_OTHER: 'Other',
     SANDBOXES_DISTRIBUTION_BY_AGE: 'Sandboxes distribution by age',
-    ONE_SEVEN_DAYS: '0-7 days',
-    SEVEN_FOURTEEN_DAYS: ' 8-14 days',
-    FOURTEEN_THIRTY_DAYS: '15-30 days',
-    THIRTY_PLUS_DAYS: '30+ days',
+    ONE_THIRTY_DAYS: '0-30 days',
+    THIRTY_SIXTY_DAYS: '31-60 days',
+    SIXTY_PLUS_DAYS: '61+ days',
     CREATE_SANDBOX: 'Create sandbox',
     TARGET_HOST: 'Target database host',
     TARGET_INSTANCE: 'Target database instance',
@@ -945,7 +950,10 @@ export const GENERAL = {
     ES_SNAPSHOT_FREQUENCY: 'Snapshot frequency',
     ES_NO_SNAPSHOT_STORAGE: 'No snapshot storage',
     ES_CLONE_REFRESH_FREQUENCY: 'Clone refresh frequency',
-    ES_TABLE_TITLE: 'Microsoft SQL Server host',
+    ES_TABLE_TITLE: 'Microsoft SQL Server hosts on Elastic Block Store',
+    ES_TABLE_FSXW_TITLE: 'Microsoft SQL Server hosts on FSx for Windows',
+    ES_TABLE_TITLE_SINGLE: 'Microsoft SQL Server host on Elastic Block Store',
+    ES_TABLE_FSXW_TITLE_SINGLE: 'Microsoft SQL Server host on FSx for Windows',
     ES_SERVER_NAME: 'Server name',
     ES_TYPE: 'Type',
     ES_MSSQL_SERVER: 'Microsoft SQL Server on FSx for ONTAP',
@@ -1001,9 +1009,9 @@ export const GENERAL = {
         OPTIMIZED: 'Optimized',
         NOT_OPTIMIZED: 'Not optimized',
         OVER_PROVISIONED: 'Over-provisioned',
-        INSUFFICIENT_DATA: 'N/A',
+        INSUFFICIENT_DATA: 'n/a',
         UNDER_PROVISIONED: 'Under-provisioned',
-        INSUFFICIENT_PERMISSIONS: 'N/A'
+        INSUFFICIENT_PERMISSIONS: 'n/a'
     },
     INSTANCE_TYPE_FINDINGS_TOOLTIP:
         'Displays findings (over-provisioned, under-provisioned, or optimized) based on analysis of Amazon CloudWatch metrics (CPU, bandwidth, network, and more) of the current instance and on the current memory of the instance. No finding appears when Workload Factory has insufficient permissions or unavailable metrics.',
@@ -1014,6 +1022,10 @@ export const GENERAL = {
     ES_COST_SAVINGS: 'Cost savings',
     ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Detected host cost analysis',
+    ES_HEADING_ONPREM_LEFT_SIDE: 'Migrate your on-premises SQL Server environment',
+    ES_HEADING_ONPREM_RIGHT_SIDE: 'Assessment steps',
+    ES_MIGRATE_SERVER_ENV:
+        'Workload Factory migration advisor simplify and automate SQL Server migration planning by providing you a detailed design for cloud deployment using Amazon FSx for NetApp ONTAP. The migration advisor also allows you to validate the value of the provided design via a detailed cost comparison to alternative configurations and to automate the provisioning of the recommended architecture according to best practices and vendor solution deployment guidelines.',
     ES_HEADER:
         'You can identify potential savings by automatically comparing your database workloads to SQL Server using FSx for ONTAP file systems. Choose a SQL Server host and explore savings.',
     ES_SAVINGS: 'Explore savings',
@@ -1031,6 +1043,7 @@ export const GENERAL = {
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
     SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
+    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on On-Premises configuration',
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
@@ -1091,6 +1104,23 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    // Otimization status n/a messages
+    ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    NO_CONFIG_AVAILABLE: 'Configurations data not available.',
+    NO_ASSESSMENT_DATA: 'assessment not available.',
+    LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
+    TEMPDB_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned tempDB drive size can not be optimized',
+    HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
+    ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
+    ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
+    FSXN_OPTIMIZE_SUPPORTED:
+        'Optimization assessment is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
+    ASSESSMENT_FOR_UNDETECTED_FSXN: 'Optimization assessment is only supported for detected and managed instances.',
+    ASSESSMENT_STORAGE_TYPE_UNKNOWN:
+        'Optimization assessment is only supported for detected and managed FSx for ONTAP instances.',
+    ASSESSMENT_AOAG_DETECTED: 'Optimization assessment is only supported for managed instances.',
+    ASSESSMENT_AOAG_UNDETECTED: 'Optimization assessment is only supported for detected and managed instances.',
+
     SQL_SERVER_INSTANCE_DOWN: 'SQL Server instance is down.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
@@ -1188,8 +1218,12 @@ export const GENERAL = {
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    OPERATING_SYSTEM_PATCH: 'Operating system patch',
     RIGHTSIZING_TOOLTIP:
-        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.'
+        'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
+    APPLICATION_SQL_SERVER: 'Application (SQL Server)',
+    MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
+        'Total managed instances include only those whose assessment has been completed and are currently online.'
 };
 
 export const CODE_VIEWER = {

@@ -8,7 +8,8 @@ import {
     updateJobDetails,
     deleteJobsWithAllSubJobs,
     getJobSummary,
-    getJobSummaryByTime
+    getJobSummaryByTime,
+    updateLongRunningJobs
 } from '../../../src/operations/database/job-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, THIRTY_DAYS } from '../../utils/consts';
 import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
@@ -263,5 +264,64 @@ describe('getJobSummaryByTime', async () => {
         });
 
         expect(result.length).toEqual(0);
+    });
+});
+
+describe('updateLongRunningJobs', async () => {
+    const startTime = Date.now() - 6 * 60 * 60 * 1000;
+    beforeEach(async () => {
+        await deleteJobsOfAccount(ACCOUNT_ID);
+        await deleteJobsOfAccount(ACCOUNT_ID);
+        await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
+            {
+                name: 'test-job-ops-1',
+                description: 'test-masterjob-description',
+                resourceName: 'test-resource',
+                initiator: 'test-user',
+                startTime,
+                status: JOBSTATUS.IN_PROGRESS,
+                type: JOBTYPE.DEPLOYMENT,
+                endTime: undefined
+            }
+        ]);
+        const jobs = await getJobs(ACCOUNT_ID);
+        const masterJob = jobs.items[0];
+        await registerJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
+            {
+                parentJobId: masterJob.id,
+                name: 'test-subjob-ops-1',
+                description: 'test-job-description',
+                resourceName: 'test-resource',
+                initiator: 'test-user',
+                startTime,
+                status: JOBSTATUS.IN_PROGRESS,
+                type: JOBTYPE.DEPLOYMENT,
+                endTime: undefined
+            },
+            {
+                parentJobId: masterJob.id,
+                name: 'test-subjob-ops-2',
+                description: 'test-job-description',
+                resourceName: 'test-resource',
+                initiator: 'test-user',
+                startTime,
+                status: JOBSTATUS.FAILED,
+                type: JOBTYPE.DEPLOYMENT,
+                endTime: Date.now()
+            }
+        ]);
+    });
+
+    it('should fail longrunning jobs and subjobs', async () => {
+        await updateLongRunningJobs();
+        const masterJob = (await getJobs(ACCOUNT_ID)).items[0];
+        const subjobs = (await getJobDetails(ACCOUNT_ID, masterJob.id, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION))
+            .subJobs;
+        expect(masterJob.endTime).toBeDefined();
+        expect(masterJob.status).toBe(JOBSTATUS.FAILED);
+        expect(subjobs[0].endTime).toBeDefined();
+        expect(subjobs[0].status).toBe(JOBSTATUS.FAILED);
+        expect(subjobs[1].endTime).toBeDefined();
+        expect(subjobs[1].status).toBe(JOBSTATUS.FAILED);
     });
 });

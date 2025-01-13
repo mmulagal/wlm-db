@@ -5,7 +5,7 @@ import svgr from '@svgr/rollup';
 import svgr2 from 'vite-plugin-svgr';
 import eslint from 'vite-plugin-eslint';
 import { vitePluginVersionMark } from 'vite-plugin-version-mark';
-import commonjs from 'vite-plugin-commonjs';
+import { PRODUCTION } from './src/utils/consts';
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 
 // https://vitejs.dev/config/
@@ -20,13 +20,14 @@ const versionPlugin: () => Plugin = () => ({
 })
 */
 
+const shouldUseSourceMap = process.env.VITE_APP_ENVIRONMENT !== PRODUCTION;
+
 export default defineConfig({
     base: './',
     plugins: [
         react(),
         eslint(),
         cssInjectedByJsPlugin(),
-        commonjs(),
         viteTsconfigPaths(),
         //@ts-ignore
         svgr({ plugins: ['@svgr/plugin-jsx'] }),
@@ -44,6 +45,7 @@ export default defineConfig({
         port: 4300
     },
     build: {
-        outDir: 'build'
+        outDir: 'build',
+        sourcemap: shouldUseSourceMap
     }
 });

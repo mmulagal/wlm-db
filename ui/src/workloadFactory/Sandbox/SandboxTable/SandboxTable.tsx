@@ -44,7 +44,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import store from '../../../store/store';
 import RefreshContent from './RefreshContent/RefreshContent';
 import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
-import { formatDateWithTime } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, getFilterOptions, getTimeDifferenceInDays } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 
@@ -54,6 +54,7 @@ const SandboxTable = () => {
     const { aggregatedSandboxList, selectedRollbackSnapshot, isRollbackSelected } = useAppSelector(
         state => state.sandbox
     );
+    const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
@@ -111,6 +112,31 @@ const SandboxTable = () => {
                 displayName: 'Delete'
             }
         ];
+    };
+
+    //To set initial filter when navigate from Dashboard
+    const getInitialFilter = () => {
+        if (sandboxAgeRange?.from === 'Dashboard') {
+            return {
+                textFilter: '',
+                count: 1,
+                columns: {
+                    '6': {
+                        activeCount: 1,
+                        values: {
+                            [sandboxAgeRange?.range === GENERAL.ONE_THIRTY_DAYS
+                                ? GENERAL.ONE_THIRTY_DAYS
+                                : sandboxAgeRange?.range === GENERAL.THIRTY_SIXTY_DAYS
+                                ? GENERAL.THIRTY_SIXTY_DAYS
+                                : GENERAL.SIXTY_PLUS_DAYS]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else {
+            return undefined;
+        }
     };
 
     const showJobInProgressNotification = (action: SandboxActions, resourceName: string) => {
@@ -662,10 +688,15 @@ const SandboxTable = () => {
         },
         {
             Header: GENERAL.AGE,
-            accessor: 'ageForSorting',
+            accessor: 'ageByRange',
             id: '6',
             width: '128px',
-            isSortable: true,
+            isSortable: false,
+            filterOptions: [
+                { label: GENERAL.ONE_THIRTY_DAYS, value: GENERAL.ONE_THIRTY_DAYS },
+                { label: GENERAL.THIRTY_SIXTY_DAYS, value: GENERAL.THIRTY_SIXTY_DAYS },
+                { label: GENERAL.SIXTY_PLUS_DAYS, value: GENERAL.SIXTY_PLUS_DAYS }
+            ],
             renderCell: (cellData: any, rowData: any) => {
                 return <DsTypography variant="Regular_14">{rowData?.age}</DsTypography>;
             }
@@ -739,7 +770,8 @@ const SandboxTable = () => {
         isSorting: false,
         columns: SandboxColDefs,
         rows: data ? data.filter((item: any) => !deletedSandboxes.includes(item?.id)) : [],
-        pageSize: 50
+        pageSize: 50,
+        initialFilterState: getInitialFilter()
     });
     return (
         <div className={styles.sandboxTable}>

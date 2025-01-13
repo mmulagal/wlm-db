@@ -1,6 +1,4 @@
 import React, { useRef, useEffect } from 'react';
-//@ts-ignore
-import Popover from 'react-popover';
 import { Popover as DesignPopover } from '@netapp/design-system';
 import CustomContentInfo from '../CustomContentInfo/CustomContentInfo';
 import { ReactComponent as ArrowRight } from '@netapp/icons/ic_arrow_right.svg';
@@ -25,7 +23,7 @@ type MenuPopoverType = {
     isDisabled?: boolean;
     CustomMenu?: JSX.Element;
     disabledText?: string | boolean | any;
-    prefferedLocation?: Popover.PopoverPlace;
+    prefferedLocation?: any;
     isSubmenu?: boolean;
     isBlackLayout?: boolean;
     customColor?: string;
@@ -128,12 +126,22 @@ function MenuPopover({
         }
     };
 
+    const handleVisibleChange = (visible: boolean) => {
+        if (!visible) {
+            toggleMenu('close', '');
+        }
+    };
+
     return (
         <>
-            <Popover
-                className={styles.popover}
-                isOpen={isMenuOpen}
-                body={
+            <DesignPopover
+                containerClass={styles.popover}
+                popoverClass={styles.subMenuContainer}
+                placement="left"
+                isAppendedToBody={true}
+                trigger="click"
+                onVisibleChange={handleVisibleChange}
+                children={
                     isMenuOpen && (
                         <div className={styles.menuPopoverContainer}>
                             <div className={`${styles.reactPopover} ${styles.infoTooltip}`}>
@@ -149,7 +157,7 @@ function MenuPopover({
                                             } = menuItem;
 
                                             return (
-                                                <>
+                                                <div key={index}>
                                                     {infoText ? (
                                                         <CustomContentInfo
                                                             tooltipText={infoText}
@@ -168,6 +176,7 @@ function MenuPopover({
                                                                     toggleMenu('selectedOption', id);
                                                                 }
                                                             }}
+                                                            key={index}
                                                         >
                                                             <CustomContentInfo
                                                                 tooltipText={onlyInfoText}
@@ -177,7 +186,7 @@ function MenuPopover({
                                                     ) : (
                                                         renderMenuItem(menuItem, index)
                                                     )}
-                                                </>
+                                                </div>
                                             );
                                         })}
                                     </ul>
@@ -186,36 +195,40 @@ function MenuPopover({
                         </div>
                     )
                 }
-                preferPlace={prefferedLocation ?? 'below'}
-            >
-                {CustomMenu ? (
-                    <div ref={refParent}>{CustomMenu}</div>
-                ) : isDisabled ? (
-                    <CustomContentInfo
-                        tooltipText={disabledText}
-                        CustomContent={
-                            <div className={styles.menuPointerDisabled}>
-                                <span className={styles.menuPointer}>...</span>
-                            </div>
-                        }
-                    />
-                ) : (
-                    <div>
-                        {!isSubmenu && (
-                            <div
-                                onClick={() => {
-                                    toggleMenu(isMenuOpen ? 'close' : 'open', '');
-                                }}
-                                ref={refParent}
-                                className={isMenuOpen ? `${styles.menuIcon} ${styles.selected}` : styles.menuIcon}
-                                style={{ color: customColor }}
-                            >
-                                <span className={styles.menuPointer}>...</span>
+                container={
+                    <>
+                        {CustomMenu ? (
+                            <div ref={refParent}>{CustomMenu}</div>
+                        ) : isDisabled ? (
+                            <CustomContentInfo
+                                tooltipText={disabledText}
+                                CustomContent={
+                                    <div className={styles.menuPointerDisabled}>
+                                        <span className={styles.menuPointer}>...</span>
+                                    </div>
+                                }
+                            />
+                        ) : (
+                            <div>
+                                {!isSubmenu && (
+                                    <div
+                                        onClick={() => {
+                                            toggleMenu(isMenuOpen ? 'close' : 'open', '');
+                                        }}
+                                        ref={refParent}
+                                        className={
+                                            isMenuOpen ? `${styles.menuIcon} ${styles.selected}` : styles.menuIcon
+                                        }
+                                        style={{ color: customColor }}
+                                    >
+                                        <span className={styles.menuPointer}>...</span>
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
-                )}
-            </Popover>
+                    </>
+                }
+            />
         </>
     );
 }

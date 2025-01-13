@@ -140,8 +140,7 @@ const TotalOptimizationScore = () => {
                                 Total configurations
                             </DsTypography>
 
-                            <div className={styles.separator} />
-
+                            <div className={styles.separator} style={{ visibility: 'hidden' }} />
                             {loading && <DsFlashingDotsLoader />}
                             {!loading &&
                                 (isAssessmentAvailable ? (
@@ -168,7 +167,7 @@ const TotalOptimizationScore = () => {
                                 </DsTypography>
                             </div>
 
-                            <div className={styles.separator} />
+                            <div className={styles.separator} style={{ visibility: 'hidden' }} />
 
                             {loading && <DsFlashingDotsLoader />}
                             {!loading &&
@@ -196,7 +195,7 @@ const TotalOptimizationScore = () => {
                                 </DsTypography>
                             </div>
 
-                            <div className={styles.separator} />
+                            <div className={styles.separator} style={{ visibility: 'hidden' }} />
 
                             {loading && <DsFlashingDotsLoader />}
                             {!loading &&

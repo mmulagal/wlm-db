@@ -39,7 +39,8 @@ const ParameterDriftResponse = Type.Object({
     ),
     tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
     missingPermissions: Type.Optional(Type.Array(Type.String())),
-    recommendedSizeInGib: Type.Optional(Type.Number())
+    recommendedSizeInGib: Type.Optional(Type.Number()),
+    current: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
@@ -49,38 +50,110 @@ const AdditionalComputeParameterDriftResponse = Type.Optional(
             Type.Object({
                 instanceType: Type.String(),
                 rank: Type.Number(),
-                savingsOpportunity: Type.Object({
-                    savingsOpportunityPercentage: Type.Optional(Type.Number()),
-                    estimatedMonthlySavings: Type.Optional(
-                        Type.Object({
-                            currency: Type.Optional(Type.String()),
-                            value: Type.Optional(Type.Number())
-                        })
+                savingsOpportunity: Type.Optional(
+                    Type.Object({
+                        savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                        estimatedMonthlySavings: Type.Optional(
+                            Type.Object({
+                                currency: Type.Optional(Type.String()),
+                                value: Type.Optional(Type.Number())
+                            })
+                        )
+                    })
+                )
+            })
+        )
+    })
+);
+
+const AdditionalLicenseParameterDriftResponse = Type.Optional(
+    Type.Object({
+        sqlServerInstances: Type.Array(
+            Type.Object({
+                sqlServerInstance: Type.String(),
+                sqlServerState: Type.String(),
+                sqlServerVersion: Type.String(),
+                sqlServerProductYear: Type.Number(),
+                sqlServerEdition: Type.Optional(Type.String()),
+                sqlServerEngineEdition: Type.Optional(Type.Number()),
+                sqlServerName: Type.Optional(Type.String())
+            })
+        )
+    })
+);
+
+const AdditionalHostOsParameterDriftResponse = Type.Optional(
+    Type.Object({
+        ec2InstancesToPatch: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    baselineId: Type.String(),
+                    criticalNonCompliantCount: Type.Number(),
+                    ec2InstanceId: Type.String(),
+                    operationStartTime: Type.Number(),
+                    operationEndTime: Type.Number(),
+                    securityNonCompliantCount: Type.Number(),
+                    missingPatchDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                classification: Type.String(),
+                                kbId: Type.String(),
+                                severity: Type.String(),
+                                state: Type.String(),
+                                title: Type.String()
+                            })
+                        )
                     )
                 })
-            })
+            )
         )
     })
 );
 
 const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
 type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
+
+const LicenseDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalLicenseParameterDriftResponse]);
+type LicenseDriftResponseType = Static<typeof LicenseDriftResponse>;
+
+const HostOsPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalHostOsParameterDriftResponse]);
+type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
+
+const StorageParameterErrorResponse = Type.Object({
+    name: Type.String(),
+    errorMessage: Type.String()
+});
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
     configuration: Type.Object({
         volumes: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
         luns: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
-        os: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
+        os: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
     }),
-    sizing: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    layout: Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
+    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
 });
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
-    compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse]))
+    compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
+    license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
+    hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
+
+const DriftAssessmentResponsePerInstance = Type.Object({
+    databaseInstanceId: Type.String({ minLength: 1 }),
+    databaseInstanceName: Type.String(),
+    assessments: Type.Optional(DriftAssessmentResponse),
+    error: Type.Optional(Type.String())
+});
+
+const DriftAssessmentResponsePerHost = Type.Object({
+    databaseHostId: Type.String({ minLength: 1 }),
+    databaseHostName: Type.String(),
+    instancesAssessment: Type.Array(DriftAssessmentResponsePerInstance)
+});
 
 const OptimizeStorageRequestParams = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
@@ -110,11 +183,19 @@ const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
 });
 
+const DriftAssessmentResponsePerAccount = Type.Object({
+    count: Type.Number(),
+    assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
+    nextToken: Type.Optional(Type.String())
+});
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
     ParameterDriftResponseType,
     ComputeDriftResponseType,
+    LicenseDriftResponseType,
+    HostOsPatchDriftResponseType,
     StorageParameterDriftResponseType,
     SizingViolationResponseType,
     OptimizeStorageRequestBody,
@@ -124,5 +205,7 @@ export {
     OptimizeComputeRequestBodyType,
     OptimizeSizingRequestBody,
     OptimizeSizingRequestBodyType,
-    OptimizeOperatingSystemRequestBody
+    OptimizeOperatingSystemRequestBody,
+    DriftAssessmentResponsePerHost,
+    DriftAssessmentResponsePerAccount
 };

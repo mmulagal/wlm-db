@@ -34,53 +34,19 @@ const SandboxDistributionDate = () => {
                             variant="Regular_14"
                             className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                         >
-                            {GENERAL.ONE_SEVEN_DAYS}
+                            {GENERAL.ONE_THIRTY_DAYS}
                         </DsTypography>
                         {windowSize.width > 1428 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['0-7']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['0-30']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
                         {windowSize.width <= 1428 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
-                                getSandboxDistributionByAge(aggregatedSandboxList)['0-7']
-                            })`}</DsTypography>
-                        )}
-                        {isNA && (
-                            <>
-                                <div className={styles.separator} />
-                                <DsTypography variant="Regular_14" className={`${CommonStyles.notAvailable} `}>
-                                    {GENERAL.NOT_AVAILABLE}
-                                </DsTypography>
-                            </>
-                        )}
-                    </div>
-
-                    <div className={styles.individualRow}>
-                        <div
-                            className={styles.square}
-                            style={{ backgroundColor: isNA ? 'var(--chart-disabled)' : '#0BAFFC' }}
-                        />
-                        <DsTypography
-                            variant="Regular_14"
-                            className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
-                        >
-                            {GENERAL.SEVEN_FOURTEEN_DAYS}
-                        </DsTypography>
-                        {windowSize.width > 1428 && !isNA && (
-                            <>
-                                <div className={styles.separator} />
-                                <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['8-14']
-                                } ${GENERAL.SANDBOXES}`}</DsTypography>
-                            </>
-                        )}
-                        {windowSize.width <= 1428 && !isNA && (
-                            <DsTypography variant="Regular_14">{`(${
-                                getSandboxDistributionByAge(aggregatedSandboxList)['8-14']
+                                getSandboxDistributionByAge(aggregatedSandboxList)['0-30']
                             })`}</DsTypography>
                         )}
                         {isNA && (
@@ -102,21 +68,19 @@ const SandboxDistributionDate = () => {
                             variant="Regular_14"
                             className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                         >
-                            {GENERAL.FOURTEEN_THIRTY_DAYS}
+                            {GENERAL.THIRTY_SIXTY_DAYS}
                         </DsTypography>
-
                         {windowSize.width > 1428 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['15-30']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
-
                         {windowSize.width <= 1428 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
-                                getSandboxDistributionByAge(aggregatedSandboxList)['15-30']
+                                getSandboxDistributionByAge(aggregatedSandboxList)['31-60']
                             })`}</DsTypography>
                         )}
                         {isNA && (
@@ -138,20 +102,21 @@ const SandboxDistributionDate = () => {
                             variant="Regular_14"
                             className={isNA ? `${styles.days} ${CommonStyles.notAvailable}` : styles.days}
                         >
-                            {GENERAL.THIRTY_PLUS_DAYS}
+                            {GENERAL.SIXTY_PLUS_DAYS}
                         </DsTypography>
+
                         {windowSize.width > 1428 && !isNA && (
                             <>
                                 <div className={styles.separator} />
                                 <DsTypography variant="Semibold_14">{`${
-                                    getSandboxDistributionByAge(aggregatedSandboxList)['30+']
+                                    getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                                 } ${GENERAL.SANDBOXES}`}</DsTypography>
                             </>
                         )}
 
                         {windowSize.width <= 1428 && !isNA && (
                             <DsTypography variant="Regular_14">{`(${
-                                getSandboxDistributionByAge(aggregatedSandboxList)['30+']
+                                getSandboxDistributionByAge(aggregatedSandboxList)['61+']
                             })`}</DsTypography>
                         )}
                         {isNA && (

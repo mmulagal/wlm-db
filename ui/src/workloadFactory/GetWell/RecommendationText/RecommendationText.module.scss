@@ -2,11 +2,12 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
-    padding: 32px 0px 16px 0px;
+    gap: 8px;
 
-    .desc {
-        width: 1400px;
+    .dashboardHeading {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
     .values {
@@ -20,4 +21,21 @@
         border-right: 1px solid var(--border);
         position: relative;
     }
-} 
+
+    .info {
+        display: flex;
+        gap: 8px;
+        position: relative;
+
+        .setSVG {
+            svg {
+                width: 16px;
+                height: 16px;
+                margin-top: 3px;
+                path {
+                    fill: #518bec;
+                }
+            }
+        }
+    }
+}

@@ -21,7 +21,8 @@ import {
     splitSandbox,
     checkDatabaseIntegrity,
     getSandboxSnapshots,
-    getSandboxConnectionString
+    getSandboxConnectionString,
+    getSandboxSplitEstimate
 } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 
@@ -257,6 +258,18 @@ describe('sandbox operations ', () => {
 
     it('Get sandbox connection string', async () => {
         const resp = await getSandboxConnectionString(
+            ACCOUNT_ID,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'default',
+            'testdb1'
+        );
+        expect(resp).toBeDefined();
+    });
+
+    it('Get sandbox split estimate', async () => {
+        const resp = await getSandboxSplitEstimate(
             ACCOUNT_ID,
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
             'ap-southeast-1',

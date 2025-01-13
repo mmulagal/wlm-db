@@ -23,16 +23,21 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setInProgressOptimizationData,
+    setOptimizingData,
+    setOptimizingInstanceData
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
-const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) => {
+const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
 
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
@@ -43,13 +48,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const isDialogPrimaryBtnDisabled = (rowData: any) => {
-        return (
-            rowData?.name === 'OS type' ||
-            rowData?.name === 'NTFS allocation unit size' ||
-            rowData?.name === 'Operating system patch' ||
-            (!isDemoMode && rowData?.id === 'mpio-iscsi-count') ||
-            (!isDemoMode && rowData?.id === 'mpio-enabled')
-        );
+        return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
     };
 
     // This is the function that will be called when the user clicks on the optimize button from sub menus
@@ -57,7 +56,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         // Only 1 config can be passed at a time
         let payload = {};
         let apiCall = null;
+        let statusType = '';
         if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+            statusType = 'ontap';
             apiCall = optimizeStorageConfig;
             payload = {
                 assessments: [
@@ -68,6 +69,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 ]
             };
         } else {
+            statusType = 'os';
             apiCall = optimizeOs;
             payload = {
                 configurationName: rowData?.id
@@ -80,6 +82,12 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             setOptimizingData({
                 ...optimizingData,
                 [rowData?.id]: 'optimizing'
+            })
+        );
+        dispatch(
+            setInProgressOptimizationData({
+                ...inProgressOptimizationData,
+                [statusType]: [...(inProgressOptimizationData[statusType] || []), selectedDatabaseInstance]
             })
         );
         formatGetWellData(dispatch);
@@ -107,8 +115,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         apiCall({
             credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
             regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
+            databaseHostId: selectedResourceId || hostId,
+            instanceId: selectedDatabaseInstance || instanceId,
             payload: payload
         }).then((res: any) => {
             const failedMsgData = (
@@ -126,7 +134,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                     </Button>
                 </div>
             );
-            handleOptimizeStorageJob(res, rowData, failedMsgData, getJobDetailApi, dispatch);
+            handleOptimizeStorageJob(res, rowData, failedMsgData, getJobDetailApi, dispatch, statusType);
         });
     };
 
@@ -143,7 +151,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={styles.colorSet}
+                customClass={'innerPage'}
                 primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
                 primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
             />
@@ -154,14 +162,17 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             id: '1',
             Header: 'Configuration',
             accessor: 'name',
-            width: '18%',
-            isSortable: true
+            width: from === WLF_TABS.INVENTORY ? '260px' : '280px',
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '14%',
+            width: '220px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -173,7 +184,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
                                 <InProgress className={styles.statusIcon} />
                             )}
                         </div>
-                        <div>{cellData}</div>
+                        <div>{cellData || GENERAL.NOT_AVAILABLE}</div>
                     </div>
                 );
             }
@@ -182,14 +193,17 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             id: '4',
             Header: 'Severity',
             accessor: 'severity',
-            width: '14%',
-            isSortable: true
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            isSortable: true,
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '5',
             Header: 'Tags',
             accessor: 'tags',
-            width: '14%',
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -232,24 +246,31 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: '40%',
+            width: from === WLF_TABS.INVENTORY ? '588px' : '575px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
                         <div className={styles.recommendation}>
                             <div className={styles.tooltipContainer}>
-                                <div className={styles.tooltip}>
-                                    <Popover
-                                        popoverClass={''}
-                                        children={cellData && <RecommendationTooltip data={cellData} />}
-                                        trigger="hover"
-                                        delayHide={200}
-                                        interactive={true}
-                                        isAppendedToBody={false}
-                                        container={<TooltipIcon />}
-                                        placement="bottom"
-                                    />
-                                </div>
+                                {cellData?.length === 0 && (
+                                    <div>
+                                        <DisabledTooltipIcon />
+                                    </div>
+                                )}
+                                {cellData?.length > 0 && (
+                                    <div className={styles.tooltip}>
+                                        <Popover
+                                            popoverClass={''}
+                                            children={cellData && <RecommendationTooltip data={cellData} />}
+                                            trigger="hover"
+                                            delayHide={200}
+                                            interactive={true}
+                                            isAppendedToBody={false}
+                                            container={<TooltipIcon />}
+                                            placement="bottom"
+                                        />
+                                    </div>
+                                )}
                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
                                     {'View recommendation'}
                                 </DsTypography>
@@ -302,9 +323,11 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
         }
     ];
 
+    const colDefsForDashboard = ColDefs.filter((item: any) => item.id !== '3');
+
     const tableProps = useTable({
         isSorting: false,
-        columns: ColDefs,
+        columns: from === WLF_TABS.INVENTORY ? ColDefs : colDefsForDashboard,
         rows: tableData,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -312,7 +335,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState }: any) 
     });
 
     return (
-        <div className={styles.recommendationTable}>
+        <div className={from === WLF_TABS.INVENTORY ? styles.recommendationTable : styles.recommendationTableDashboard}>
             {/* <div className={styles.table}> */}
             <Table
                 //@ts-ignore

@@ -1,0 +1,10 @@
+{
+    "db": {
+        "jobs": {
+            "purge": {
+                "interval": "24h",
+                "older-than": "15d"
+            }
+        }
+    }
+}

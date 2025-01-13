@@ -1,0 +1,230 @@
+import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+
+import styles from './RenderTables.module.scss';
+import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
+import { GENERAL } from '../../../../utils/appConstants';
+import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { expandTableRow } from '../../../../utils/utilityFunctions';
+import { useCallback } from 'react';
+import { useAppSelector } from '../../../../store/storeHooks';
+import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
+import { useMemo } from 'react';
+import {
+    disableOfflineRows,
+    formatAssessmentTableData,
+    mapHostStatusToAssessmentData
+} from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import { useDispatch } from 'react-redux';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwHostname,
+    setGwResourceId
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+
+const OperatingSystemTable = () => {
+    const dispatch = useDispatch();
+
+    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
+        state => state.inventoryV2
+    );
+    const tableData = useMemo(() => {
+        let OSAssessmentData: any = [];
+        allmssqlHostAssessmentData.map((hostData: any) => {
+            hostData?.instancesAssessment?.map((instanceData: any) => {
+                if (!instanceData?.error) {
+                    const notOptimized = instanceData?.assessments?.storage?.configuration?.os
+                        ?.filter((item: any) => item.status !== 'optimized' && !item?.errorMessage)
+                        .map((item: any) => {
+                            return { ...item, id: item?.name };
+                        });
+                    const errorCase = instanceData?.assessments?.storage?.configuration?.os?.[0]?.errorMessage;
+
+                    if (notOptimized.length > 0 || errorCase) {
+                        OSAssessmentData.push({
+                            databaseHostId: hostData?.databaseHostId,
+                            instanceId: instanceData?.databaseInstanceId,
+                            serverInstanceName: instanceData?.databaseInstanceName,
+                            configuration: !errorCase
+                                ? `${notOptimized.length} out of ${instanceData?.assessments?.storage?.configuration?.os?.length}`
+                                : `0 out of 0`,
+                            hostName: hostData?.databaseHostName,
+                            fullData: formatAssessmentTableData(notOptimized)
+                        });
+                    }
+                }
+            });
+        });
+        let tableRows = mapHostStatusToAssessmentData(
+            inventoryTableData,
+            OSAssessmentData,
+            getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
+        );
+        return disableOfflineRows(tableRows);
+    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+
+    const lastColDetails = () => {
+        return {
+            id: '4',
+            Header: '',
+            accessor: '',
+            isSticky: true,
+            width: '318px',
+            renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
+                const currentRowState = rowsState[rowData.id];
+                return (
+                    <>
+                        {!rowData?.cellProps?.isDisabled && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div>
+                        )}
+                        {rowData?.cellProps?.isDisabled && (
+                            <div className={styles.arrow}>
+                                <TooltipComponent
+                                    title={rowData?.cellProps?.selectionProps?.title}
+                                    placement="bottom"
+                                    width="278px"
+                                    height="30px"
+                                >
+                                    <ArrowIcon className={styles['arrow-disable']} />
+                                </TooltipComponent>
+                            </div>
+                        )}
+                    </>
+                );
+            }
+        };
+    };
+
+    const TableColDefs: ColumnProps[] = [
+        {
+            Header: 'SQL Server instance name ',
+            accessor: 'serverInstanceName',
+            id: '1',
+            isSortable: false,
+            filterOptions: 'auto',
+            isSticky: true,
+            width: '376px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">
+                            {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
+                        {!rowData?.loadingStatus && (
+                            <div className={styles.statusContainer}>
+                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
+                                    ></div>
+                                )}
+                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
+                                    ></div>
+                                )}
+                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                    <div
+                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
+                                    ></div>
+                                )}
+                                <DsTypography variant="Regular_13">
+                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                        ? INVENTORY_STATUS.ONLINE
+                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                        ? INVENTORY_STATUS.OFFLINE
+                                        : rowData?.status}
+                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
+                                </DsTypography>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+        },
+        {
+            Header: 'Host name',
+            accessor: 'hostName',
+            id: '2',
+            width: '320px',
+            filterOptions: 'auto'
+        },
+        {
+            Header: 'Not-optimizes configuration',
+            accessor: 'configuration',
+            id: '3',
+            width: '320px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        lastColDetails()
+    ];
+    const ExpandedRow = useCallback(({ rowData }: any) => {
+        dispatch(setGwHostname(rowData?.hostName));
+        dispatch(setGwResourceId(rowData?.databaseHostId));
+        dispatch(setGwDatabaseInstance(rowData?.instanceId));
+        dispatch(setGwDatabaseInstanceName(rowData?.serverInstanceName));
+        return (
+            <RecommendationTable
+                tableData={rowData?.fullData}
+                isLoading={false}
+                optimizePrintState={false}
+                from={WLF_TABS.DASHBOARD}
+                hostId={rowData?.databaseHostId}
+                instanceId={rowData?.instanceId}
+            />
+        );
+    }, []);
+
+    const tableComponentProps = {
+        ExpandedRow,
+        lazyLoadingText: 'Loading'
+    };
+
+    const tableProps = useTable({
+        //@ts-ignore
+        selectAllProps: false,
+        //@ts-ignore
+        manageColumnsProps: false,
+        isHorizontalScroll: true,
+        isSorting: false,
+        columns: TableColDefs,
+        rows: tableData || [],
+        pageSize: 50
+    });
+    return (
+        <div className={styles.renderTable}>
+            <TableTopBar
+                //@ts-ignore
+                tableProps={tableProps}
+                pluralTitle={`Not-optimized instances`}
+                singularTitle={'Not-optimized instance'}
+            />
+            <Table
+                //@ts-ignore
+                tableProps={tableProps}
+                {...tableComponentProps}
+                isDoubleRow={true}
+            />
+        </div>
+    );
+};
+
+export default OperatingSystemTable;

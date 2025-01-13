@@ -90,13 +90,10 @@ const Home = () => {
                         <Route path={'/databases/dashboard'} element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                         <Route path={'/databases/inventory'} element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                         <Route path={'/databases/sandboxes'} element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
+                        {/* Routes For Explore savings */}
                         <Route
                             path={'/databases/explore-savings'}
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
-                        />
-                        <Route
-                            path={'/databases/job-monitoring'}
-                            element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
                         <Route
                             path={'/databases/explore-savings-ebs'}
@@ -106,6 +103,15 @@ const Home = () => {
                             path={'/databases/explore-savings-fsxw'}
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                         />
+                        <Route
+                            path={'/databases/explore-savings-on-premise'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
+                        />
+                        <Route
+                            path={'/databases/job-monitoring'}
+                            element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                        />
+
                         <Route path={'/create-new-user'} element={<WizardComponent />} />
                         <Route path={'/job-monitor'} element={<JobMonitoring />} />
                         <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />
@@ -161,7 +167,10 @@ const Home = () => {
                                 path={'/fsxdb/explore-savings-fsxw'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                             />
-
+                            <Route
+                                path={'/fsxdb/explore-savings-on-premise'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
+                            />
                             <Route path={'/create-new-user'} element={<WizardComponent />} />
                             <Route path={'/job-monitor'} element={<JobMonitoring />} />
                             <Route path={'/create-new-sandbox'} element={<CreateNewSandbox />} />

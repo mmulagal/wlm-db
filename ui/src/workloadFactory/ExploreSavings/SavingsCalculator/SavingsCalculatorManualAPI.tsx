@@ -24,7 +24,7 @@ import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../Expl
 import { generateManualStorageSavingsPayload } from './savingsUtil';
 import { SAVINGS_CALC_MODE } from '../../../utils/consts';
 
-const _ = require('lodash');
+import { isEqual } from 'lodash';
 
 const SavingsCalculatorManualApi = () => {
     const dispatch = useAppDispatch();
@@ -153,7 +153,7 @@ const SavingsCalculatorManualApi = () => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues =
-                _.isEqual(payload, requestedPayload) &&
+                isEqual(payload, requestedPayload) &&
                 selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             if (
@@ -192,7 +192,7 @@ const SavingsCalculatorManualApi = () => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
             const payload = generateManualStorageSavingsPayload();
             const comparedPayloadValues =
-                _.isEqual(payload, requestedPayload) &&
+                isEqual(payload, requestedPayload) &&
                 selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
             const storageCapCHeck = () => {

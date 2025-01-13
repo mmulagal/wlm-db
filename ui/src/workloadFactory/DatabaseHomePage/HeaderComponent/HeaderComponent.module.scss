@@ -1,5 +1,7 @@
 .headerComponent {
     height: 100%;
+    overflow-y: auto;
+    background-color: var(--main-background);
     .exploreSavingHeader {
         height: 56px;
         width: 100%;
@@ -24,6 +26,9 @@
     .firstSection {
         height: 56px;
         width: 100%;
+        position: sticky;
+        top: 0;
+        z-index: 8;
         display: flex;
         justify-content: space-between;
         background-color: var(--content-background);
@@ -238,8 +243,8 @@
     }
 
     .selectedTabSection {
-        height: 100vh;
-        overflow-y: auto;
+        height: calc(100vh - 56px);
+        // overflow-y: auto;
         .dashboardSection {
             background-color: var(--main-background);
 
@@ -250,10 +255,41 @@
                 width: 67vw;
             }
 
+            .spaceAreaTemp {
+                display: flex;
+                padding: 40px 0;
+                justify-content: center;
+            }
+
             .contentArea {
                 display: flex;
                 justify-content: space-between;
                 width: 86%;
+                max-width: 1607px;
+                align-items: center;
+                [class*='Select-module_base'] {
+                    div {
+                        div {
+                            outline: none !important;
+                        }
+                    }
+                }
+
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                    div {
+                        div:hover {
+                            outline: none !important;
+                        }
+                    }
+                }
+            }
+
+            .contentAreaTemp {
+                display: flex;
+                justify-content: space-between;
+                width: 86%;
+                max-width: 1607px;
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -466,6 +502,16 @@
     height: 100vh;
 }
 
+@media screen and (min-width: 1429px) and (max-width: 1700px) {
+    .headerComponent {
+        .dashboardSection {
+            .contentAreaTemp {
+                width: 1318px !important;
+            }
+        }
+    }
+}
+
 @media screen and (min-width: 1429px) and (max-width: 1818px) {
     .headerComponent {
         .dashboardSection {
@@ -481,6 +527,10 @@
         .dashboardSection {
             .contentArea {
                 width: 744px !important;
+            }
+
+            .contentAreaTemp {
+                width: 1318px !important;
             }
         }
     }

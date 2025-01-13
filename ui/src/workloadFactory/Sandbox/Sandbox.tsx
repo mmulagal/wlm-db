@@ -28,7 +28,7 @@ const Sandbox = () => {
                 <SandboxStorageSaving />
             </div>
 
-            <div className={styles.sandboxSecondLevel}>
+            <div className={styles.sandboxSecondLevel} style={{ marginTop: '24px' }}>
                 <SandboxDistributionDate />
                 <SandboxDistributionType />
             </div>

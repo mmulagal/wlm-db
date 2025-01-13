@@ -34,8 +34,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 
 const JobMonitoringTable = () => {
     const { setDialog } = useDialog();
@@ -294,11 +293,7 @@ const JobMonitoringTable = () => {
             width: '220px',
             isSticky: true,
             renderCell: (cellData: any) => {
-                return (
-                    <CopyToClipboard text={cellData}>
-                        <div title={cellData}>{cellData}</div>
-                    </CopyToClipboard>
-                );
+                return <CopyToClipboardCommon value={cellData} iconProvided={<div title={cellData}>{cellData}</div>} />;
             }
         },
         {
@@ -401,7 +396,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}
@@ -416,7 +411,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '196px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                const formatDate = cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE;
                 return (
                     <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
                         {formatDate}

@@ -40,7 +40,10 @@ import {
     assessmentJobData,
     optimizeStorageJobData,
     optimizeOperatingSystemJobData,
-    mockPGSqlStandaloneDeploymentStack
+    mockPGSqlStandaloneDeploymentStack,
+    optimizeMpioSessionsJobData,
+    optimizeStorageTierJobData,
+    enableMPIOJobData
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -190,7 +193,7 @@ async function createDeploymentMockDataInDB(
                     databaseName: 'RetailBanking_sandbox',
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
-                    source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                    source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                     tag: 'Development',
                     databaseInstanceId: instanceId
                 }
@@ -198,7 +201,7 @@ async function createDeploymentMockDataInDB(
             userDatabase: [
                 {
                     name: 'RetailBanking_sandbox',
-                    size: 16777216,
+                    size: 17179869184,
                     type: 'User Database',
                     status: 'ONLINE',
                     protection: {
@@ -235,14 +238,14 @@ async function createDeploymentMockDataInDB(
                 databaseName: 'RetailBanking_sandbox',
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                source: `SQLServer-Dev-04|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
+                source: `SQL-Managed-Host-DEV|${DEFAULT_INSTANCE_NAME}|RetailBanking`,
                 tag: 'Development'
             }
         ],
         userDatabase: [
             {
                 name: 'RetailBanking_sandbox',
-                size: 16777216,
+                size: 17179869184,
                 type: 'User Database',
                 status: 'ONLINE',
                 protection: {
@@ -308,7 +311,7 @@ async function createDeploymentMockDataInDB(
             'RetailBanking',
             'RetailBanking_sandbox',
             credentialsId,
-            'SQLServer-Prod-01',
+            'SQL-Managed-Host-Prod',
             resourceName
         );
         await createJobs(accountId, sandboxJobsData);
@@ -366,7 +369,7 @@ async function updateUserDBIntoResourceData(
     if (!hasExistingDatabase) {
         const databaseDetails = {
             name: databaseName,
-            size: 16777216,
+            size: 17179869184,
             type: MSSQL_DATABASE_TYPES.USER,
             status: ONLINE,
             protection: {
@@ -400,7 +403,7 @@ async function updateUserDBIntoInstanceTable(
     if (!hasExistingDatabase) {
         const databaseDetails = {
             name: databaseName,
-            size: 16777216,
+            size: 17179869184,
             type: MSSQL_DATABASE_TYPES.USER,
             status: ONLINE,
             protection: {
@@ -655,6 +658,37 @@ async function createOperatingSystemOptimizeJobMockData(
     );
 }
 
+async function createOperatingSystemMpioSessionsOptimizeJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate operating system optimize mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeMpioSessionsJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 async function createDeploymentMockDataInDBForPgSql(
     accountId: string,
     stackId: string,
@@ -705,7 +739,7 @@ async function createDeploymentMockDataInDBForPgSql(
         }
     });
 
-    const instanceId = randomUUID();
+    const instanceId = '7450008296037943418';
 
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('0', 8)}`;
@@ -716,7 +750,8 @@ async function createDeploymentMockDataInDBForPgSql(
         creationDate: new Date().getTime().toString(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
-        storageProtocol
+        storageProtocol,
+        fsxDataVolumeName: 'wlmdb-data-1234'
     };
 
     await createResource(accountId, {
@@ -804,6 +839,69 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
         uuidVolumeIdMap
     };
 }
+
+async function createStorageTierJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate storage-tier optimize mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return optimizeStorageTierJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
+async function createEnableMpioJobMockData(
+    accountId: string,
+    resourceName: string,
+    instanceName: string,
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    resourceId: string
+) {
+    logger.debug('Generate enable mpio mock data for job table', {
+        accountId,
+        resourceName,
+        credentialsId,
+        region,
+        instanceId,
+        resourceId
+    });
+    accountId = checkAccount(accountId);
+    const parentJobId = randomUUID();
+    return enableMPIOJobData(
+        accountId,
+        resourceName,
+        instanceName,
+        credentialsId,
+        region,
+        parentJobId,
+        instanceId,
+        resourceId
+    );
+}
+
 export {
     createFileSystemForDemo,
     createDeploymentMockDataInDB,
@@ -819,5 +917,8 @@ export {
     updateOptimizedConfigNameInInstanceTable,
     createDeploymentMockDataInDBForPgSql,
     createOperatingSystemOptimizeJobMockData,
-    demoGetFsxnVolIdsFromOntapVolIds
+    demoGetFsxnVolIdsFromOntapVolIds,
+    createOperatingSystemMpioSessionsOptimizeJobMockData,
+    createStorageTierJobMockData,
+    createEnableMpioJobMockData
 };

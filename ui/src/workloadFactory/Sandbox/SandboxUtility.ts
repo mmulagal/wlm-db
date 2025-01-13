@@ -24,6 +24,16 @@ export const generateCreateSandboxPayload = (state: any): CreateSandboxPayloadEn
     return payload;
 };
 
+const formatAge = (val: any) => {
+    if (Number(val) >= 0 && Number(val) <= 30) {
+        return '0-30 days';
+    } else if (Number(val) >= 31 && Number(val) <= 60) {
+        return '31-60 days';
+    } else {
+        return '61+ days';
+    }
+};
+
 export const formatSandboxListData = (data: SandboxListEntities) => {
     const retData = data
         .filter(item => !item?.error)
@@ -41,6 +51,7 @@ export const formatSandboxListData = (data: SandboxListEntities) => {
                 actualUpdated: item?.updatedAt || '',
                 updatedAt: formatDateWithTime(item?.updatedAt || ''),
                 age: `${getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt))} days`,
+                ageByRange: `${formatAge(getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt)))}`,
                 tag: item?.tag,
                 status: 'active',
                 baseSnapshot: item?.baseSnapshot,
@@ -63,24 +74,31 @@ export const getUniqueSourceDatabasesCount = (sandBoxList: SandboxListEntities) 
 
 export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) => {
     let distribution = {
-        '0-7': 0,
-        '8-14': 0,
-        '15-30': 0,
-        '30+': 0
+        '0-30': 0,
+        '31-60': 0,
+        '61+': 0
     };
     sandBoxList.map(item => {
         const age = getTimeDifferenceInDays(new Date().getTime(), parseInt(item?.createdAt));
-        if (age < 8) {
-            distribution['0-7']++;
-        } else if (age < 15) {
-            distribution['8-14']++;
-        } else if (age < 31) {
-            distribution['15-30']++;
+        if (age <= 30) {
+            distribution['0-30']++;
+        } else if (age <= 60) {
+            distribution['31-60']++;
         } else {
-            distribution['30+']++;
+            distribution['61+']++;
         }
     });
     return distribution;
+};
+
+export const getSandboxDistributionByAgeValue = (sandBoxList: SandboxListEntities) => {
+    let distribution = getSandboxDistributionByAge(sandBoxList);
+    let distributionUiValue = {
+        '0-30': distribution['0-30'] + ' ' + (distribution['0-30'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES),
+        '31-60': distribution['31-60'] + ' ' + (distribution['31-60'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES),
+        '61+': distribution['61+'] + ' ' + (distribution['61+'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES)
+    };
+    return distributionUiValue;
 };
 
 export const getSandboxDistributionByTag = (sandBoxList: SandboxListEntities) => {

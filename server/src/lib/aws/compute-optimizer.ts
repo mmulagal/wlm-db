@@ -6,10 +6,14 @@ import {
     PutRecommendationPreferencesRequest,
     GetEffectiveRecommendationPreferencesCommand,
     GetEffectiveRecommendationPreferencesRequest,
-    GetEnrollmentStatusCommand
+    GetEnrollmentStatusCommand,
+    GetEnrollmentStatusCommandOutput
 } from '@aws-sdk/client-compute-optimizer';
+import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { AWS_CO_TYPE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -23,13 +27,27 @@ async function getComputeOptimizerClient(region: string, credentialsId: string, 
     return new ComputeOptimizerClient({ credentials, region });
 }
 
-async function getEnrollmentStatus(region: string, credentialsId: string, accountId: string) {
+async function getEnrollmentStatus(
+    region: string,
+    credentialsId: string,
+    accountId: string
+): Promise<GetEnrollmentStatusCommandOutput> {
     logger.info('Getting compute optimizer enrollment status', { region, credentialsId, accountId });
     const computeOptimizer = await getComputeOptimizerClient(region, credentialsId, accountId);
 
-    const resp = await computeOptimizer.send(new GetEnrollmentStatusCommand({}));
-    logger.info('getEnrollmentStatus response:', resp);
+    const uniqueKey = `${region}|${credentialsId}|${accountId}`;
+    if (hasCache(AWS_CO_TYPE, uniqueKey)) {
+        logger.debug('Found compute optimizer entollment information in cache');
 
+        return readFromCacheByKey(AWS_CO_TYPE, uniqueKey) as GetEnrollmentStatusCommandOutput;
+    }
+    const resp = await computeOptimizer.send(new GetEnrollmentStatusCommand({}));
+    logger.debug('getEnrollmentStatus response:', resp);
+    if (!isEmpty(resp)) {
+        logger.debug('Writing enrollment status information to cache', { AWS_CO_TYPE, uniqueKey, resp });
+
+        writeToCache(AWS_CO_TYPE, uniqueKey, resp);
+    }
     return resp;
 }
 

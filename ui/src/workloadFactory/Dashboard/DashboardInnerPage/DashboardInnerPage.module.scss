@@ -1,0 +1,43 @@
+.dashboardInnerPage {
+    height: inherit;
+    overflow: auto;
+    background-color: var(--main-background);
+
+    .innerPage {
+        .headingSection {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mainSection {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+
+            .leftSection {
+                display: flex;
+                gap: 1px;
+                flex-direction: column;
+
+                .recommendation {
+                    background-color: var(--content-background);
+                    width: 926px;
+                }
+            }
+        }
+
+        .tableSection {
+            margin-top: 44px;
+            display: flex;
+            justify-content: center;
+        }
+    }
+
+    .buttonContainer {
+        width: 90%;
+        display: flex;
+        justify-content: end;
+    }
+}

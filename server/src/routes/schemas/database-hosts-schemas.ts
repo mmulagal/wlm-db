@@ -26,7 +26,9 @@ import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostInstanceSummaryResponse,
     DatabaseHostOptionalInstanceSummaryParams,
-    DatabaseQueryString
+    DatabaseQueryString,
+    PgSqlDbHostSummaryListResponse,
+    PgSqlDbHostsSummaryResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
 
@@ -118,9 +120,9 @@ const CreateSandboxSchema = {
     description: 'Create sandbox in same or alternate host',
     body: CreateSandboxBody,
     response: {
-        202: {
+        202: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -194,11 +196,11 @@ const GetSandboxConnectionStringSchema = {
     summary: 'Get Sandbox connection string',
     description: 'Get sandbox connection string for sql server connection',
     response: {
-        200: {
+        200: Type.Object({
             server: Type.String(),
             database: Type.String(),
             userId: Type.Optional(Type.String())
-        }
+        })
     }
 };
 
@@ -218,9 +220,9 @@ const DeleteSandboxSchema = {
     summary: 'Delete sandbox',
     description: 'Delete sandbox within a database host',
     response: {
-        202: {
+        202: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -231,9 +233,9 @@ const SandboxLifeCycleSchema = {
     description: 'Sandbox lifecycle operations',
     body: SandboxLifeCycleBody,
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -247,6 +249,16 @@ const DatabaseHostsSummarySchemaV2 = {
     }
 };
 
+const PgSqlDbHostsSummarySchema = {
+    ...resourceRequest,
+    summary: 'Get Postgresql database hosts details',
+    description: 'Get Postgresql database hosts summary details',
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: PgSqlDbHostSummaryListResponse
+    }
+};
+
 const DatabaseHostDetailsSchemaV2 = {
     ...resourceRequest,
     summary: 'Fetch database server details',
@@ -256,6 +268,18 @@ const DatabaseHostDetailsSchemaV2 = {
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryForMultiInstanceResponse
+    }
+};
+
+const PgSqlDbHostDetailsSchema = {
+    ...resourceRequest,
+    summary: 'Fetch Postgresql database server details',
+    description:
+        'Fetch Postgresql database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network), storage savings, usage cost and databases in the server.',
+    params: DatabaseHostSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: PgSqlDbHostsSummaryResponse
     }
 };
 
@@ -277,9 +301,9 @@ const SandboxSplitSchema = {
     summary: 'Sandbox split',
     description: 'Sandbox split operation',
     response: {
-        200: {
+        200: Type.Object({
             jobId: Type.String()
-        }
+        })
     }
 };
 
@@ -332,5 +356,7 @@ export {
     DatabasesListSchemaV2,
     GetSandboxSnapshotsSchema,
     GetDriveInfoSchemaV2,
-    GetCollationDetailsSchemaV2
+    GetCollationDetailsSchemaV2,
+    PgSqlDbHostsSummarySchema,
+    PgSqlDbHostDetailsSchema
 };

@@ -332,7 +332,7 @@ const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         SELECT 
             DISTINCT (LEFT(mf.physical_name, 2)) AS dataDriveLetter,
             mf.physical_name AS dataDrivePath,
-            vs.total_bytes / 1048576 AS dataDriveTotalSizeMB
+            ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
         FROM 
             sys.master_files mf
        
@@ -362,7 +362,7 @@ const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
             SELECT 
                 LEFT(d.filename, 2) AS tempdbDriveLetter,
                 mf.physical_name AS tempdbDrivePath,
-                vs.total_bytes / 1048576 AS tempdbDriveTotalSizeMB
+                ISNULL(vs.total_bytes / 1048576, 0) AS tempdbDriveTotalSizeMB
             FROM 
                 tempDB.sys.sysfiles d
             JOIN
@@ -388,7 +388,7 @@ const INSTANCE_USER_DB_DRIVE_SIZES = `
             d.name AS databaseName,
             LEFT(mf.physical_name, 2) AS dataDriveLetter,
             mf.physical_name AS dataDrivePath,
-            vs.total_bytes / 1048576 AS dataDriveTotalSizeMB
+            ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
         FROM 
             sys.databases d
         JOIN 
@@ -406,7 +406,7 @@ const INSTANCE_LOG_DB_DRIVE_SIZES = `
                 d.name AS databaseName,
                 LEFT(mf.physical_name, 2) AS logDriveLetter,
                 mf.physical_name AS logDrivePath,
-                vs.total_bytes / 1048576 AS logDriveTotalSizeMB
+                ISNULL(vs.total_bytes / 1048576, 0) AS logDriveTotalSizeMB
             FROM 
                 sys.databases d
             JOIN 

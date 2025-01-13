@@ -1,7 +1,9 @@
 import { DsTypography } from '@netapp/design-system';
-import { ReactComponent as ExploreSaving } from '../../../assets/explore-saving.svg';
+import { ReactComponent as ExploreSaving } from '../../../assets/ES_252.svg';
 import { ReactComponent as ExploreSaving1600 } from '../../../assets/exploreSaving1600.svg';
+import { ReactComponent as ExploreSavingCommon } from '../../../assets/exploreSavingsCommon.svg';
 import { ReactComponent as ExploreSaving1440 } from '../../../assets/exploreSaving1440.svg';
+import { ReactComponent as ExploreSavingOnPrem } from '../../../assets/explore-saving-onprem.svg';
 import styles from './ExploreSavingHeader.module.scss';
 
 import { GENERAL } from '../../../utils/appConstants';
@@ -12,166 +14,519 @@ import { useDispatch } from 'react-redux';
 import useResize from '../../../common/hooks/useResize';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../../store/storeHooks';
+import { WLF_TABS } from '../../../utils/consts';
+import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable/ExploreSavingsOnPremiseTable';
+import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const ExploreSavingHeader = () => {
     const dispatch = useDispatch();
     const windowSize = useResize();
     const navigate = useNavigate();
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
 
     return (
         <>
             {windowSize.width > 1823 && (
-                <div className={styles.exploreSavingsHeader}>
-                    <div className={styles.topPart}>
-                        <div className={styles.svgContainer}>
-                            <ExploreSaving />
-                        </div>
-                        <div className={styles.contentSection}>
-                            <div className={styles.leftSide}>
-                                <div className={styles.headingPart}>
-                                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                        {GENERAL.ES_HEADING}
-                                    </DsTypography>
+                <>
+                    {/* For on-premise */}
+                    {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                        <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
+                            <div className={styles.topPart}>
+                                <div className={styles.svgContainer}>
+                                    <ExploreSavingOnPrem />
                                 </div>
+                                <div className={styles.contentSection}>
+                                    <div className={styles.leftSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING_ONPREM_LEFT_SIDE}
+                                            </DsTypography>
+                                        </div>
 
-                                <DsTypography variant="Regular_16" className={styles.subText}>
-                                    {GENERAL.ES_HEADER}
-                                </DsTypography>
-                            </div>
+                                        <DsTypography variant="Regular_16" className={styles.subText}>
+                                            {GENERAL.ES_MIGRATE_SERVER_ENV}
+                                        </DsTypography>
+                                    </div>
 
-                            <div className={styles.rightSide}>
-                                <div className={styles.headingPart}>
-                                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                        {GENERAL.MANUAL_EXLORE_SAVINGS}
-                                    </DsTypography>
+                                    <div className={styles.rightSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING_ONPREM_RIGHT_SIDE}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={`${styles.subText} ${styles.subTextOnPrem}`}>
+                                            <DsTypography variant="Regular_16">
+                                                Follow these steps to assess your on-premises SQL Server:
+                                            </DsTypography>
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">1</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Download the assessment script.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">2</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Run the script on the SQL Server host.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">3</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Upload the script results in Workload Factory.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">4</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Select the on-premises SQL Server host to explore savings.
+                                                </DsTypography>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <span className={styles.subText}>
-                                    <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span
-                                        className={styles.link}
-                                        id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
-                                        style={{ marginTop: '12px' }}
-                                    >
-                                        {GENERAL.EXPLORE_SAVING_MANUALLY}
-                                    </span>
-                                    <span
-                                        className={styles.link}
-                                        id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)}
-                                        style={{ marginTop: '4px' }}
-                                    >
-                                        {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
-                                    </span>
-                                </span>
                             </div>
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                                <ExploreSavingsOnPremiseTable />
+                            )}
                         </div>
-                    </div>
-                    <ExploreSavingsTableV2 />
-                </div>
+                    )}
+                    {/* For non - on premise */}
+                    {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+                        <div className={styles.exploreSavingsHeader}>
+                            <div className={styles.topPart}>
+                                <div className={styles.svgContainer}>
+                                    <ExploreSaving />
+                                </div>
+                                <div className={styles.contentSection}>
+                                    <div className={styles.leftSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING}
+                                            </DsTypography>
+                                        </div>
+
+                                        <DsTypography variant="Regular_16" className={styles.subText}>
+                                            {GENERAL.ES_HEADER}
+                                        </DsTypography>
+                                    </div>
+
+                                    <div className={styles.rightSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.MANUAL_EXLORE_SAVINGS}
+                                            </DsTypography>
+                                        </div>
+
+                                        <span className={styles.subText}>
+                                            <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
+                                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE && (
+                                                <span
+                                                    className={styles.link}
+                                                    id="explore-savings-manually-ebs"
+                                                    onClick={() =>
+                                                        handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)
+                                                    }
+                                                    style={{ marginTop: '12px' }}
+                                                >
+                                                    {GENERAL.EXPLORE_SAVING_MANUALLY}
+                                                </span>
+                                            )}
+                                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_FSX_FOR_WINDOWS && (
+                                                <span
+                                                    className={styles.link}
+                                                    id="explore-savings-manually-fsxW"
+                                                    onClick={() =>
+                                                        handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)
+                                                    }
+                                                    style={{ marginTop: '12px' }}
+                                                >
+                                                    {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                                <ExploreSavingsOnPremiseTable />
+                            )}
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && <ExploreSavingsTableV2 />}
+                        </div>
+                    )}
+                </>
             )}
             {windowSize.width > 1471 && windowSize.width <= 1823 && (
-                <div className={styles.exploreSavingsHeader}>
-                    <div className={styles.topPart}>
-                        <div className={styles.svgContainer}>
-                            <ExploreSaving1600 />
-                        </div>
-                        <div className={styles.contentSection}>
-                            <div className={styles.leftSide}>
-                                <div className={styles.headingPart}>
-                                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                        {GENERAL.ES_HEADING}
-                                    </DsTypography>
+                <>
+                    {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                        <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
+                            <div className={styles.topPart}>
+                                <div className={styles.svgContainer1600}>
+                                    <ExploreSavingCommon />
                                 </div>
+                                <div className={styles.contentSection}>
+                                    <div className={styles.leftSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING_ONPREM_LEFT_SIDE}
+                                            </DsTypography>
+                                        </div>
 
-                                <DsTypography variant="Regular_16" className={styles.subText}>
-                                    {GENERAL.ES_HEADER}
-                                </DsTypography>
-                            </div>
+                                        <DsTypography variant="Regular_16" className={styles.subText}>
+                                            {GENERAL.ES_MIGRATE_SERVER_ENV}
+                                        </DsTypography>
+                                    </div>
 
-                            <div className={styles.rightSide}>
-                                <div className={styles.headingPart}>
-                                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                        {GENERAL.MANUAL_EXLORE_SAVINGS}
-                                    </DsTypography>
+                                    <div className={styles.rightSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING_ONPREM_RIGHT_SIDE}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={`${styles.subText} ${styles.subTextOnPrem}`}>
+                                            <DsTypography variant="Regular_16">
+                                                Follow these steps to assess your on-premises SQL Server:
+                                            </DsTypography>
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">1</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Download the assessment script.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">2</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Run the script on the SQL Server host.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">3</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Upload the script results in Workload Factory.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">4</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Select the on-premises SQL Server host to explore savings.
+                                                </DsTypography>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <span className={styles.subText}>
-                                    <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span
-                                        className={styles.link}
-                                        id="explore-savings-manually-ebs"
-                                        style={{whiteSpace: 'unset'}}
-                                        onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
-                                    >
-                                        {GENERAL.EXPLORE_SAVING_MANUALLY}
-                                    </span>
-                                    <span
-                                        className={styles.link}
-                                        id="explore-savings-manually-fsxW"
-                                        style={{ whiteSpace: 'unset' }}
-                                        onClick={() => handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)}
-                                    >
-                                        {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
-                                    </span>
-                                </span>
                             </div>
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                                <ExploreSavingsOnPremiseTable />
+                            )}
                         </div>
-                    </div>
-                    <ExploreSavingsTableV2 />
-                </div>
+                    )}
+                    {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+                        <div className={styles.exploreSavingsHeader}>
+                            <div className={styles.topPart}>
+                                {windowSize.width > 1621 && windowSize.width <= 1822 ? (
+                                    <div className={styles.svgContainer1600}>
+                                        <ExploreSavingCommon />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <ExploreSaving1600 />
+                                        {/* <ExploreSavingCommon /> */}
+                                    </div>
+                                )}
+
+                                <div className={styles.contentSection}>
+                                    <div className={styles.leftSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING}
+                                            </DsTypography>
+                                        </div>
+
+                                        <DsTypography variant="Regular_16" className={styles.subText}>
+                                            {GENERAL.ES_HEADER}
+                                        </DsTypography>
+                                    </div>
+
+                                    <div className={styles.rightSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.MANUAL_EXLORE_SAVINGS}
+                                            </DsTypography>
+                                        </div>
+
+                                        <span className={styles.subText}>
+                                            <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
+                                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE && (
+                                                <span
+                                                    className={styles.link}
+                                                    id="explore-savings-manually-ebs"
+                                                    style={{ whiteSpace: 'unset' }}
+                                                    onClick={() =>
+                                                        handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)
+                                                    }
+                                                >
+                                                    {GENERAL.EXPLORE_SAVING_MANUALLY}
+                                                </span>
+                                            )}
+                                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_FSX_FOR_WINDOWS && (
+                                                <span
+                                                    className={styles.link}
+                                                    id="explore-savings-manually-fsxW"
+                                                    style={{ whiteSpace: 'unset' }}
+                                                    onClick={() =>
+                                                        handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)
+                                                    }
+                                                >
+                                                    {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                                <ExploreSavingsOnPremiseTable />
+                            )}
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && <ExploreSavingsTableV2 />}
+                        </div>
+                    )}
+                </>
             )}
             {windowSize.width <= 1470 && (
-                <div className={styles.exploreSavingsHeader}>
-                    <div className={styles.topPart}>
-                        <div className={styles.svgContainer}>
-                            <ExploreSaving1440 />
-                        </div>
-                        <div className={styles.contentSection}>
-                            <div className={styles.leftSide}>
-                                <div className={styles.headingPart}>
-                                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                        {GENERAL.ES_HEADING}
-                                    </DsTypography>
+                <>
+                    {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                        <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
+                            <div className={styles.topPart}>
+                                <div className={styles.svgContainer1600}>
+                                    <ExploreSavingCommon />
                                 </div>
+                                <div className={styles.contentSection}>
+                                    <div className={styles.leftSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING_ONPREM_LEFT_SIDE}
+                                            </DsTypography>
+                                        </div>
 
-                                <DsTypography variant="Regular_16" className={styles.subText}>
-                                    {GENERAL.ES_HEADER}
-                                </DsTypography>
+                                        <DsTypography variant="Regular_16" className={styles.subText}>
+                                            {GENERAL.ES_MIGRATE_SERVER_ENV}
+                                        </DsTypography>
+                                    </div>
+
+                                    <div className={styles.rightSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING_ONPREM_RIGHT_SIDE}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={`${styles.subText} ${styles.subTextOnPrem}`}>
+                                            <DsTypography variant="Regular_16">
+                                                Follow these steps to assess your on-premises SQL Server:
+                                            </DsTypography>
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">1</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Download the assessment script.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">2</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Run the script on the SQL Server host.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">3</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Upload the script results in Workload Factory.
+                                                </DsTypography>
+                                            </div>
+
+                                            <div className={styles.level}>
+                                                <div className={styles.subLevel}>
+                                                    <DsTypography variant="Semibold_16">4</DsTypography>
+                                                    <DsTypography
+                                                        variant="Semibold_16"
+                                                        style={{ position: 'relative', top: '-1px' }}
+                                                    >
+                                                        |
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Regular_16">
+                                                    Select the on-premises SQL Server host to explore savings.
+                                                </DsTypography>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                                <ExploreSavingsOnPremiseTable />
+                            )}
+                        </div>
+                    )}
+                    {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+                        <div className={styles.exploreSavingsHeader}>
+                            <div className={styles.topPart}>
+                                <div className={styles.svgContainer}>
+                                    <ExploreSaving1440 />
+                                </div>
+                                <div className={styles.contentSection}>
+                                    <div className={styles.leftSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.ES_HEADING}
+                                            </DsTypography>
+                                        </div>
+
+                                        <DsTypography variant="Regular_16" className={styles.subText}>
+                                            {GENERAL.ES_HEADER}
+                                        </DsTypography>
+                                    </div>
+
+                                    <div className={styles.rightSide}>
+                                        <div className={styles.headingPart}>
+                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
+                                                {GENERAL.MANUAL_EXLORE_SAVINGS}
+                                            </DsTypography>
+                                        </div>
+
+                                        <span className={styles.subText}>
+                                            <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
+                                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE && (
+                                                <span
+                                                    className={styles.link}
+                                                    id="explore-savings-manually-ebs"
+                                                    onClick={() =>
+                                                        handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)
+                                                    }
+                                                >
+                                                    {GENERAL.EXPLORE_SAVING_MANUALLY}
+                                                </span>
+                                            )}
+                                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_FSX_FOR_WINDOWS && (
+                                                <span
+                                                    className={styles.link}
+                                                    id="explore-savings-manually-fsxW"
+                                                    onClick={() =>
+                                                        handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)
+                                                    }
+                                                >
+                                                    {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className={styles.rightSide}>
-                                <div className={styles.headingPart}>
-                                    <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                        {GENERAL.MANUAL_EXLORE_SAVINGS}
-                                    </DsTypography>
-                                </div>
-
-                                <span className={styles.subText}>
-                                    <span>{GENERAL.MANUAL_EXPLORE_SAVINGS_CONTENT}</span>
-                                    <span
-                                        className={styles.link}
-                                        id="explore-savings-manually-ebs"
-                                        onClick={() => handleManualTCOEBS(dispatch, navigate, isWorkloadFactory)}
-                                    >
-                                        {GENERAL.EXPLORE_SAVING_MANUALLY}
-                                    </span>
-                                    <span
-                                        className={styles.link}
-                                        id="explore-savings-manually-fsxW"
-                                        onClick={() => handleManualTCOFSXW(dispatch, navigate, isWorkloadFactory)}
-                                    >
-                                        {GENERAL.EXPLORE_SAVING_MANUALLY_FSX}
-                                    </span>
-                                </span>
-                            </div>
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                                <ExploreSavingsOnPremiseTable />
+                            )}
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && <ExploreSavingsTableV2 />}
                         </div>
-                    </div>
-
-                    <ExploreSavingsTableV2 />
-                </div>
+                    )}
+                </>
             )}
         </>
     );

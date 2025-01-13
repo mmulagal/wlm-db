@@ -7,6 +7,10 @@
         position: relative !important;
         top: 0 !important;
         z-index: 0 !important;
+
+        [class*='Table-module_header-cell'] {
+            position: unset !important;
+        }
     }
 
     .loadingTable {
