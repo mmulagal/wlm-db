@@ -374,7 +374,7 @@ export const cardDataDefault: GwCardDataInterface = {
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION_SQL_SERVER,
-            value: 'Licenses'
+            value: 'License'
         },
         block_two: {
             type: 'Status',
