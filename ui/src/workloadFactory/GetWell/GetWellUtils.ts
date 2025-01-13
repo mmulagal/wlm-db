@@ -457,6 +457,7 @@ export const formatApplicationCardMainConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
             category: categoryVal
@@ -481,10 +482,13 @@ export const formatOsPatchCardConfig = (
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
     let totalViolations = 0;
-
+    let criticalViolations = 0;
+    let securityViolations = 0;
     data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
+        criticalViolations += perInstance?.criticalNonCompliantCount || 0;
+        securityViolations += perInstance?.securityNonCompliantCount || 0;
     });
 
     cardsData = {
@@ -505,7 +509,12 @@ export const formatOsPatchCardConfig = (
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
             id: item?.name,
-            category: categoryVal
+            category: categoryVal,
+            errorMessage: item?.errorMessage,
+            osPatchMissingPatches: {
+                critical: criticalViolations,
+                security: securityViolations,
+            }
         }
     };
     return cardsData;
@@ -605,6 +614,7 @@ export const formatIndividualCardMainConfig = (
                         ...(cardDataDefault?.[itemName]?.block_four || {}),
                         value: GETWELL_VALUES?.[severity] || severity
                     },
+                    errorMessage: item?.errorMessage,
                     tags: item?.tags,
                     id: item?.name,
                     category: categoryVal,

@@ -89,7 +89,7 @@ const OptimizeByCategory = () => {
 
                 <div className={styles.rightSection}>
                     {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
-                    <DsButton variant="secondary" isThin={true} onClick={() => handleClick()}>
+                    <DsButton variant="secondary" isThin={true} onClick={() => handleClick()} isDisabled={allmssqlHostAssessmentLoading}>
                         Optimize
                     </DsButton>
                 </div>
