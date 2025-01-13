@@ -1,4 +1,13 @@
-import { Table, useTable, Typography, TableTopBar, DsTypography, Popover, DsSpinner } from '@netapp/design-system';
+import {
+    Table,
+    useTable,
+    Typography,
+    TableTopBar,
+    DsTypography,
+    Popover,
+    DsSpinner,
+    TooltipInfo
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
@@ -325,11 +334,14 @@ const ExploreSavingsOnPremiseTable = () => {
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />
-                        <div className={styles.commonAction} onClick={handleDownload}>
+                        <div className={styles.commonAction}>
                             <Download />
-                            <DsTypography variant="Semibold_14" className={styles.text}>
+                            <DsTypography onClick={handleDownload} variant="Semibold_14" className={styles.text}>
                                 Download script
                             </DsTypography>
+                            <TooltipInfo placement="bottom" isAppendedToBody={true}>
+                                {GENERAL.ONPREM_TOOLTIP}
+                            </TooltipInfo>
                         </div>
                     </div>
                 }
