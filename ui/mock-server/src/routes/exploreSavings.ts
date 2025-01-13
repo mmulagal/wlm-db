@@ -4,7 +4,6 @@ import StorageSavingsFsxw from '../data/storageSavingsFsxw.json';
 import ViewCalculations from '../data/viewCalculations.json';
 import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 import UploadScript from '../data/uploadScript.json';
-import DownloadScript from '../data/DownloadScript.json';
 
 const router = require('express').Router();
 
@@ -26,12 +25,6 @@ router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/ebs`, a
 router.post(`${BASE_URL}/v1/mssql/onprem/upload`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, UploadScript);
-    }, 5000);
-});
-
-router.get(`${BASE_URL}/v1/mssql/onprem-tco/script`, async (req: {}, res: any) => {
-    setTimeout(() => {
-        generateResponse(res, 200, DownloadScript);
     }, 5000);
 });
 

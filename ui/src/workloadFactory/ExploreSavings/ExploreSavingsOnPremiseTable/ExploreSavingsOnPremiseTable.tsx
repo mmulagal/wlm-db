@@ -6,12 +6,12 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
-import { getFilterOptions, getTruncatedItems, getDownloadFn } from '../../../utils/utilityFunctions';
+import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
 import FileUpload from './FileUpload';
-import { useGetUploadScriptMutation, useGetDownloadScriptMutation } from '../../../utils/apiService';
+import { useGetUploadScriptMutation } from '../../../utils/apiService';
 //@ts-ignore
 import pako from 'pako';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
@@ -25,7 +25,6 @@ const ExploreSavingsOnPremiseTable = () => {
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const [getUploadScript] = useGetUploadScriptMutation();
-    const [getDownloadScript] = useGetDownloadScriptMutation();
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
