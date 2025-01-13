@@ -689,14 +689,14 @@ export const GETWELL_STATUS = {
     UNDER_PROVISIONED: 'Under-provisioned',
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
-    NOT_APPLICABLE: 'n/a',
+    NOT_APPLICABLE: GENERAL.UNAVAILABLE,
     ANALYZING: 'Analyzing'
 };
 
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
-    'not-applicable': 'n/a',
+    'not-applicable': GENERAL.UNAVAILABLE,
     'not-optimized': 'Not optimized',
     analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',
