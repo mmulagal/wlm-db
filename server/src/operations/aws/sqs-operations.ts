@@ -591,6 +591,7 @@ async function processCloudFormationMessages() {
                                                         resourceName,
                                                         resourceType,
                                                         fsxName,
+                                                        credentialsId,
                                                         cloudProviderAccountId,
                                                         region,
                                                         nodeIds
@@ -1216,6 +1217,7 @@ async function registerWithWFServices(
     resourceName: string,
     resourceType: string,
     fsxName: string,
+    credentialsId: string,
     cloudProviderAccountId: string,
     region: string,
     nodeIds: string[]
