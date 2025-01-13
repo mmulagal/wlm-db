@@ -743,7 +743,7 @@ export const GETWELL_CONFIG: any = {
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
-    'User data files (.mdf) placement',
+    'Data files (.mdf) placement',
     'Log files (.ldf) placement',
     'TempDB placement',
     'Licenses', // Licenses is for Application (SQL Server)

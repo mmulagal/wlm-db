@@ -37,7 +37,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             case 'TempDB drive size':
                 configKey = 'tempdbDriveSize';
                 break;
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
                 configKey = 'userDataFiles';
                 break;
             case 'Log files (.ldf)':
@@ -245,7 +245,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="User data files (.mdf)"
+                        headingText="Data files (.mdf)"
                         percentage={Math.round(((configData.userDataFiles || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.userDataFiles}
                         afterOutOf={configData.total}
@@ -253,11 +253,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['User data files (.mdf)']?.length || 0) /
+                            ((inProgressOptimizationData?.['Data files (.mdf)']?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['User data files (.mdf)']?.length > 0}
+                        loading={inProgressOptimizationData['Data files (.mdf)']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />

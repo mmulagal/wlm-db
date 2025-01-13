@@ -26,7 +26,7 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Operational excellence']);
                 break;
 
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
             case 'Log files (.ldf)':
             case 'TempDB placement':
                 setTagData(['Performance efficiency', 'Operational excellence']);

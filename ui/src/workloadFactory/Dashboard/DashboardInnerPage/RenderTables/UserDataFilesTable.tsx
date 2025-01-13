@@ -116,7 +116,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
             filterOptions: 'auto'
         },
         {
-            Header: 'User data files',
+            Header: 'Data files',
             accessor: 'userDataFiles',
             id: '3',
             width: '320px',
@@ -125,7 +125,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('User data files (.mdf)')
+        lastColDetails('Data files (.mdf)')
     ];
 
     const tableProps = useTable({
@@ -158,7 +158,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
     }, [tableProps.selectionState, optimizingInstanceData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction('User data files (.mdf)', selectedRowsForOptimize);
+        handleBulkAction('Data files (.mdf)', selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>
