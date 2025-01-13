@@ -141,7 +141,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'default-data-files-location',
         category: 'storage',
         block_one: {
-            value: 'User data files (.mdf) placement',
+            value: 'Data files (.mdf) placement',
             type: 'Storage layout'
         },
         block_two: {
@@ -149,7 +149,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_three: {
-            type: 'User data files',
+            type: 'Data files',
             value: '',
             smallFont: true
         },
@@ -158,7 +158,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'User data files (.mdf) placement recommendation',
+            title: 'Data files (.mdf) placement recommendation',
             description:
                 'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
         },
@@ -221,7 +221,7 @@ export const cardDataDefault: GwCardDataInterface = {
     ontap_configuration: {
         category: 'storage',
         block_one: {
-            value: 'ONTAP configuration',
+            value: 'ONTAP',
             type: 'Configuration'
         },
         block_two: {
@@ -374,7 +374,7 @@ export const cardDataDefault: GwCardDataInterface = {
         category: 'application',
         block_one: {
             type: GENERAL.APPLICATION_SQL_SERVER,
-            value: 'Licenses'
+            value: 'License'
         },
         block_two: {
             type: 'Status',

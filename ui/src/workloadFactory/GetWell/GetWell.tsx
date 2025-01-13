@@ -1134,7 +1134,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.user_data_files}
                                             optimizePrintState={optimizePrintState}
-                                            type="User data files"
+                                            type="Data files"
                                         />
                                         <DsAccordion
                                             id="5"

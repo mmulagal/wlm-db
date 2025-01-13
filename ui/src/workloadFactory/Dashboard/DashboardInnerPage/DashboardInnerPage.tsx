@@ -297,7 +297,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -340,7 +340,7 @@ const DashboardInnerPage = () => {
                 });
                 break;
 
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -502,7 +502,7 @@ const DashboardInnerPage = () => {
                 return <LogDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'TempDB drive size':
                 return <TempDBDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
                 return <UserDataFilesTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Log files (.ldf)':
                 return <LogFileTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
@@ -510,7 +510,7 @@ const DashboardInnerPage = () => {
                 return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Compute rightsizing':
                 return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 return <OntapConfig />;
             case 'Operating system':
                 return <OperatingSystemTable />;

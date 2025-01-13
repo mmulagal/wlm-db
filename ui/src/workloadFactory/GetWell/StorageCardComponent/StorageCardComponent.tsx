@@ -90,9 +90,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const disableOptimizeButtonTooltip = useMemo(() => {
         if (cardData?.id === 'headroom' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
             return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
-        } else if (cardData?.id === 'log-drive-size' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+        } else if (
+            cardData?.id === 'log-drive-size' &&
+            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+        ) {
             return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
-        } else if (cardData?.id === 'tempdb-drive-size' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+        } else if (
+            cardData?.id === 'tempdb-drive-size' &&
+            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+        ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else {
             return '';
@@ -437,7 +443,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
             {/* 6 section */}
             {!optimizePrintState &&
-                cardData?.block_one?.value !== 'ONTAP configuration' &&
+                cardData?.block_one?.value !== 'ONTAP' &&
                 cardData?.block_one?.value !== 'Operating system' &&
                 (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                 cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
@@ -477,12 +483,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         children={<DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>}
                         trigger="hover"
                         container={
-                            <div className={
-                                isDarkTheme
-                                    ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                    : styles.buttonSection
-                            }
-                            style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
+                            <div
+                                className={
+                                    isDarkTheme
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
+                                style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
+                            >
                                 <DsButton variant="secondary" isDisabled={true}>
                                     {GENERAL.OPTIMIZE}
                                 </DsButton>

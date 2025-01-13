@@ -37,7 +37,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             case 'TempDB drive size':
                 configKey = 'tempdbDriveSize';
                 break;
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
                 configKey = 'userDataFiles';
                 break;
             case 'Log files (.ldf)':
@@ -46,7 +46,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             case 'TempDB placement':
                 configKey = 'tempdbPlacement';
                 break;
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 configKey = 'ontapConfiguration';
                 break;
             case 'Operating system':
@@ -245,7 +245,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="User data files (.mdf)"
+                        headingText="Data files (.mdf)"
                         percentage={Math.round(((configData.userDataFiles || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.userDataFiles}
                         afterOutOf={configData.total}
@@ -253,11 +253,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['User data files (.mdf)']?.length || 0) /
+                            ((inProgressOptimizationData?.['Data files (.mdf)']?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['User data files (.mdf)']?.length > 0}
+                        loading={inProgressOptimizationData['Data files (.mdf)']?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -353,7 +353,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="ONTAP configuration"
+                        headingText="ONTAP"
                         percentage={Math.round(((configData.ontapConfiguration || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.ontapConfiguration}
                         afterOutOf={configData.total}
@@ -361,9 +361,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['ONTAP configuration']?.length || 0) /
-                                (configData.total || 1)) *
-                                100
+                            ((inProgressOptimizationData?.['ONTAP']?.length || 0) / (configData.total || 1)) * 100
                         )}
                     />
 
@@ -374,7 +372,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('ONTAP configuration');
+                                handleOptimize('ONTAP');
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
