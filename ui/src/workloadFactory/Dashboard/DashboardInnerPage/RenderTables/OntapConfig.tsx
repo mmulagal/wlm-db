@@ -39,12 +39,12 @@ const OntapConfig = () => {
                     const lunsData = instanceData?.assessments?.storage?.configuration?.luns;
                     const volData = instanceData?.assessments?.storage?.configuration?.volumes;
                     const mergedData = [
-                        ...lunsData.map((item: any) => {
+                        ...(lunsData?.map((item: any) => {
                             return { ...item, type: 'lun', id: item?.name };
-                        }),
-                        ...volData.map((item: any) => {
+                        }) || []),
+                        ...(volData?.map((item: any) => {
                             return { ...item, type: 'volume', id: item?.name };
-                        })
+                        }) || [])
                     ];
                     const notOptimized = mergedData.filter(
                         (item: any) => item.status !== 'optimized' && !item?.errorMessage

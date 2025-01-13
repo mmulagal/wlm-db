@@ -21,7 +21,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData } = useAppSelector(state => state.getWellOptimize);
+    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -130,7 +130,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Log drive size')
+        lastColDetails('Log drive size', {}, inProgressOptimizationData)
     ];
 
     const tableProps = useTable({

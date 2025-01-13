@@ -1124,6 +1124,7 @@ export const handleOptimizeStorageJob = (
                                 )
                             })
                         );
+                        updateOptimizationStatus(rowData, dispatch);
                         formatGetWellData(dispatch);
                         dispatch(
                             addNotification({
@@ -1182,4 +1183,98 @@ export const handleOptimizeStorageJob = (
             // Error message for failed optimization API will be returned here
         }
     }, 10);
+};
+
+export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
+    const state = store.getState();
+    const updatedAsessmentData = state.inventoryV2.allmssqlHostAssessmentData?.map((hostData: any) => {
+        if (hostData?.databaseHostId === rowData?.hostId) {
+            const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
+                if (instance?.databaseInstanceId === rowData?.instanceId) {
+                    const storageSizingMap: any = {
+                        'Log drive size': 'log-drive-size',
+                        'Storage tier': 'performance-tier',
+                        'File system headroom': 'headroom',
+                        'TempDB drive size': 'tempdb-drive-size'
+                    };
+                    const storageConfigurationMap: any = {
+                        'os-type': 'luns',
+                        'space-reservation-enabled': 'luns',
+                        'space-allocation-allocated': 'luns',
+                        'mpio-enabled': 'os',
+                        'mpio-iscsi-count': 'os',
+                        'ntfs-allocation-unit-size': 'os',
+                        'mpio-load-balance-policy': 'os',
+                        'thin-provision': 'volumes',
+                        autosize: 'volumes',
+                        'autosize-mode': 'volumes',
+                        'fractional-reserve': 'volumes',
+                        'snapshot-copy-reserve': 'volumes',
+                        'snapshot-autodelete': 'volumes',
+                        'space-mgmt-try-first': 'volumes',
+                        'tiering-policy': 'volumes',
+                        'tiering-min-cooling-days': 'volumes'
+                    };
+                    if (storageSizingMap[rowData?.name]) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                storage: {
+                                    ...instance?.assessments?.storage,
+                                    sizing: instance?.assessments?.storage?.sizing.map((item: any) => {
+                                        if (item?.name === storageSizingMap[rowData?.name]) {
+                                            return {
+                                                ...item,
+                                                status: 'optimized'
+                                            };
+                                        } else {
+                                            return item;
+                                        }
+                                    })
+                                }
+                            }
+                        };
+                    } else if (rowData?.name === 'Compute rightsizing') {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                compute: { ...instance.assessments.compute, status: 'optimized' }
+                            }
+                        };
+                    } else if (storageConfigurationMap[rowData?.id]) {
+                        const key = storageConfigurationMap[rowData?.id];
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                storage: {
+                                    ...instance?.assessments?.storage,
+                                    configuration: {
+                                        ...instance?.assessments?.storage?.configuration,
+                                        [key]: instance?.assessments?.storage?.configuration[key].map((item: any) => {
+                                            if (item.name === rowData?.id) {
+                                                return { ...item, status: 'optimized' };
+                                            } else {
+                                                return item;
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+                        };
+                    } else {
+                        return instance;
+                    }
+                } else {
+                    return instance;
+                }
+            });
+            return { ...hostData, instancesAssessment: updatedInstancesAssessment };
+        } else {
+            return hostData;
+        }
+    });
+    dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
