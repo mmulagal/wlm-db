@@ -513,7 +513,7 @@ export const formatOsPatchCardConfig = (
             errorMessage: item?.errorMessage,
             osPatchMissingPatches: {
                 critical: criticalViolations,
-                security: securityViolations,
+                security: securityViolations
             }
         }
     };

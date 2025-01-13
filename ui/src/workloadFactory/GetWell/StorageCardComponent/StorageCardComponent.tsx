@@ -101,7 +101,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
-            (cardData?.id === 'tempdb-drive-size' || cardData?.id === 'log-drive-size' || cardData?.id === 'headroom') &&
+            (cardData?.id === 'tempdb-drive-size' ||
+                cardData?.id === 'log-drive-size' ||
+                cardData?.id === 'headroom') &&
             cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED
         ) {
             return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
@@ -141,7 +143,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                     <DsTypography variant="Semibold_13">{item.key}</DsTypography>
                                 </div>
 
-                                <div className={styles.secondPart} style={{width: valWidth}}>
+                                <div className={styles.secondPart} style={{ width: valWidth }}>
                                     <DsTypography variant="Regular_13">
                                         {GETWELL_VALUES?.[item.value || ''] || item?.value}
                                     </DsTypography>
@@ -275,8 +277,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
             let listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
-            ]
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security }
+            ];
             return (
                 <div className={styles.tooltipContainer}>
                     {cardData?.block_three?.value > 0 && (

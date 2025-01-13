@@ -458,7 +458,7 @@ const DashboardInnerPage = () => {
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
-                } 
+                }
                 return (
                     <div className={styles.buttonContainer}>
                         {!isDisabled ? (
