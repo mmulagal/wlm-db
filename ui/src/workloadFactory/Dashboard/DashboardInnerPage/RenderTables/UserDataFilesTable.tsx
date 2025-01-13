@@ -125,7 +125,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('User data files (.mdf)', {}, inProgressOptimizationData)
+        lastColDetails('Data files (.mdf)', {}, inProgressOptimizationData)
     ];
 
     const tableProps = useTable({
