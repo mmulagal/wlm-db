@@ -33,6 +33,7 @@ import {
     derivePropertiesFromARN,
     getDatabaseInstanceName,
     getDescriptionForMatchingName,
+    getEc2Arn,
     getQueueUrl,
     parsePgSqlInstanceInfo
 } from '../../utils/utils';
@@ -60,7 +61,8 @@ import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
 import { getPgSqlInstanceInfo } from '../workloads/pgsql/pgsql-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { registerSsmLink } from '../../lib/cloud-manager/link-service';
+import registerSsmLink from '../../lib/cloud-manager/link-service';
+import { DeploymentDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -533,42 +535,6 @@ async function processCloudFormationMessages() {
                                                         FSxDataVolumeName: fsxDataVolumeName
                                                     } = resourceProperties;
 
-                                                    if (encryptedFsxPassword) {
-                                                        const {
-                                                            credentials_id: deploymentCredentialId,
-                                                            region: deploymentRegion
-                                                        } = masterStackDeployment;
-                                                        try {
-                                                            const decryptedPassword = await decryptString(
-                                                                encryptedFsxPassword
-                                                            );
-
-                                                            if (decryptedPassword) {
-                                                                await registerFsxOntapCredentials(
-                                                                    accountId,
-                                                                    deploymentCredentialId,
-                                                                    deploymentRegion,
-                                                                    fsxId,
-                                                                    decryptedPassword
-                                                                );
-                                                            } else {
-                                                                logger.error(
-                                                                    'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
-                                                                    { encryptedFsxPassword, decryptedPassword }
-                                                                );
-                                                            }
-                                                        } catch (error) {
-                                                            logger.error(
-                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Something went wrong while processing the encrypted FSX password',
-                                                                { encryptedFsxPassword, error }
-                                                            );
-                                                        }
-                                                    } else {
-                                                        logger.error(
-                                                            'Failed to register FSx for ONTAP credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
-                                                        );
-                                                    }
-
                                                     const resourceId = getMsSqlResourceId(
                                                         node1InstanceId,
                                                         node2InstanceId
@@ -578,38 +544,6 @@ async function processCloudFormationMessages() {
                                                         trackdatabaseType === 'Microsoft SQL server'
                                                             ? RESOURCESTYPE.MSSQL
                                                             : RESOURCESTYPE.PGSQL;
-
-                                                    const getArn = (
-                                                        region: string,
-                                                        instanceId: string,
-                                                        accountId: string
-                                                    ): string =>
-                                                        `arn:aws:ec2:${region}:${accountId}:instance/${instanceId}`;
-
-                                                    const ssmLinks = [
-                                                        await registerSsmLink(
-                                                            resourceName,
-                                                            getArn(region, node1InstanceId, cloudProviderAccountId),
-                                                            credentialsId,
-                                                            resourceType === RESOURCESTYPE.MSSQL ? 'windows' : 'linux',
-                                                            accountId
-                                                        )
-                                                    ];
-
-                                                    if (node2InstanceId) {
-                                                        ssmLinks.push(
-                                                            await registerSsmLink(
-                                                                resourceName,
-                                                                getArn(region, node2InstanceId, cloudProviderAccountId),
-                                                                credentialsId,
-                                                                resourceType === RESOURCESTYPE.MSSQL
-                                                                    ? 'windows'
-                                                                    : 'linux',
-                                                                accountId
-                                                            )
-                                                        );
-                                                    }        
-                                                    await Promise.all(ssmLinks);
 
                                                     await createResource(accountId, {
                                                         resourceId,
@@ -643,19 +577,25 @@ async function processCloudFormationMessages() {
                                                         }
                                                     });
 
-                                                    await handleResourceAssociation(
-                                                        accountId,
-                                                        credentialsId,
-                                                        resourceId,
-                                                        resourceName,
-                                                        resourceType,
-                                                        fsxId,
-                                                        fsxName
-                                                    );
                                                     const nodeIds = [node1InstanceId];
                                                     if (node2InstanceId) {
                                                         nodeIds.push(node2InstanceId);
                                                     }
+
+                                                    await registerWithWFServices(
+                                                        encryptedFsxPassword,
+                                                        masterStackDeployment,
+                                                        accountId,
+                                                        fsxId,
+                                                        resourceId,
+                                                        resourceName,
+                                                        resourceType,
+                                                        fsxName,
+                                                        cloudProviderAccountId,
+                                                        region,
+                                                        nodeIds
+                                                    );
+
                                                     try {
                                                         const deployedInstances =
                                                             resourceType === RESOURCESTYPE.MSSQL
@@ -1265,6 +1205,64 @@ function modifyStackAck(
         LogicalResourceId,
         PhysicalResourceId
     };
+}
+
+async function registerWithWFServices(
+    encryptedFsxPassword: string,
+    masterStackDeployment: DeploymentDetails,
+    accountId: string,
+    fsxId: string,
+    resourceId: string,
+    resourceName: string,
+    resourceType: string,
+    fsxName: string,
+    cloudProviderAccountId: string,
+    region: string,
+    nodeIds: string[]
+) {
+    if (encryptedFsxPassword) {
+        const { credentials_id: deploymentCredentialId, region: deploymentRegion } = masterStackDeployment;
+        try {
+            const decryptedPassword = await decryptString(encryptedFsxPassword);
+
+            if (decryptedPassword) {
+                await registerFsxOntapCredentials(
+                    accountId,
+                    deploymentCredentialId,
+                    deploymentRegion,
+                    fsxId,
+                    decryptedPassword
+                );
+            } else {
+                logger.error(
+                    'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                    { encryptedFsxPassword, decryptedPassword }
+                );
+            }
+        } catch (error) {
+            logger.error(
+                'Failed to register FSx for ONTAP credentials with FSX core module. Something went wrong while processing the encrypted FSX password',
+                { encryptedFsxPassword, error }
+            );
+        }
+    } else {
+        logger.error(
+            'Failed to register FSx for ONTAP credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
+        );
+    }
+
+    await handleResourceAssociation(accountId, credentialsId, resourceId, resourceName, resourceType, fsxId, fsxName);
+
+    const ssmLinks = nodeIds.map(nodeId =>
+        registerSsmLink(
+            resourceName,
+            getEc2Arn(cloudProviderAccountId, region, nodeId),
+            credentialsId,
+            resourceType === RESOURCESTYPE.MSSQL ? 'windows' : 'linux',
+            accountId
+        )
+    );
+    await Promise.all(ssmLinks);
 }
 
 export { processCloudFormationMessages, tagResources };

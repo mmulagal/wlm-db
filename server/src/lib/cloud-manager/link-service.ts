@@ -15,12 +15,14 @@ async function registerSsmLink(
     arn: string,
     credentialsId: string,
     osType: 'windows' | 'linux',
-    tenancyAccId: string,
+    accountId: string,
     tags?: string[]
 ) {
-    let url = `${CLOUD_MANAGER_ENDPOINT}/accounts/${tenancyAccId}/links/v1/links`;
+    logger.info('Creating SSM link for accountId', { accountId, credentialsId, arn, name, osType, tags });
 
+    const url = `${CLOUD_MANAGER_ENDPOINT}/accounts/${accountId}/links/v1/links`;
     const { token } = await getWfServiceToken();
+
     const response = await gotInstanceForInternalRequest
         .post(url, {
             headers: {
@@ -43,5 +45,4 @@ async function registerSsmLink(
     return response;
 }
 
-export { registerSsmLink };
-
+export default registerSsmLink;

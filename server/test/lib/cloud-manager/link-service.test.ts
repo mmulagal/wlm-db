@@ -1,17 +1,11 @@
-import nock from 'nock';
-import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts';
-import { faker } from '@faker-js/faker';
+import registerSsmLink from '../../../src/lib/cloud-manager/link-service';
+import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/cloud-manager/link-service-scope';
 
-nock(`${CLOUD_MANAGER_ENDPOINT}`, {
-    allowUnmocked: process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
-})
-    .persist(true)
-    .post(/^\/accounts\/[a-zA-Z0-9-]+\/links\/v1\/links$/)
-    .reply(() => [
-        200,
-        {
-            id: faker.string.uuid(),
-            name: faker.string.alphanumeric(10)
-        }
-    ]);
-
+describe('SSM link service', () => {
+    it('Register SSM link', async () => {
+        const response = await registerSsmLink('name', 'arn', 'credentialsId', 'linux', 'tenancyAccId');
+        expect(response.id).toBeDefined();
+        expect(response.name).toBeDefined();
+    });
+});
