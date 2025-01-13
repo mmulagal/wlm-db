@@ -1,0 +1,102 @@
+.optimizeByCategory {
+    background-color: var(--content-background);
+    width: 928px;
+    height: 291px;
+    box-shadow: 2px 2px 6px 0px #e0e0e0;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+
+        .rightSection {
+            display: flex;
+            gap: 8px;
+        }
+    }
+
+    .mainSection {
+        padding: 24px 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+
+        .topSection {
+            display: flex;
+            gap: 40px;
+
+            .tile1 {
+                width: 264px;
+                height: 60px;
+                display: flex;
+                gap: 24px;
+
+                .section1 {
+                    width: 56px;
+                }
+                .section2 {
+                    width: 160px;
+                    display: flex;
+                    flex-direction: column;
+
+                    .valueArea {
+                        display: flex;
+                        gap: 8px;
+                        align-items: center;
+                    }
+                }
+                .section3 {
+                    border-right: 1px solid var(--border);
+                }
+            }
+
+            .tile2 {
+                width: 240px;
+                display: flex;
+                gap: 24px;
+                .section1 {
+                    width: 56px;
+                }
+                .section2 {
+                    width: 160px;
+                    display: flex;
+                    flex-direction: column;
+                    .valueArea {
+                        display: flex;
+                        gap: 8px;
+                        align-items: center;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1700px) {
+    .optimizeByCategory {
+        width: 760px;
+        .topSection {
+            display: flex;
+            gap: 16px !important;
+
+            .tile1 {
+                width: 223px !important;
+
+                .section2 {
+                    width: 119px !important;
+                }
+            }
+
+            .tile2 {
+                width: 199px !important;
+
+                .section2 {
+                    width: 119px;
+                }
+            }
+        }
+    }
+}

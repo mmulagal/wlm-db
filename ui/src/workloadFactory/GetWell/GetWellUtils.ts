@@ -4,12 +4,14 @@ import {
     setCardData,
     setDriftAssessmentData,
     setGwTimestamp,
+    setInProgressOptimizationData,
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
+import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     GETWELL_CONFIG,
@@ -29,6 +31,8 @@ import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: GwCardDataInterface = {
     storage_tier: {
+        id: 'performance-tier',
+        category: 'storage',
         block_one: {
             type: 'Storage sizing',
             value: 'Storage tier'
@@ -48,11 +52,13 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Storage tier recommendation',
             description:
-                'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity tier may result in slower performance and higher latency.'
+                'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity pool tier may result in slower performance and higher latency.'
         },
         tags: ['Performance efficiency']
     },
     file_system_headroom: {
+        id: 'headroom',
+        category: 'storage',
         block_one: {
             value: 'File system headroom',
             type: 'Storage sizing'
@@ -73,11 +79,13 @@ export const cardDataDefault: GwCardDataInterface = {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
-            values: ['Under-provisioned: 0-35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
+            values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
     },
     transaction_log_drive_size: {
+        id: 'log-drive-size',
+        category: 'storage',
         block_one: {
             value: 'Log drive size',
             type: 'Storage sizing'
@@ -97,12 +105,14 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Log drive size recommendation',
             description:
-                'Ensure proper sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-            values: ['Under-provisioned: 0-20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
+                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
+            values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
     },
     tempdb_drive_size: {
+        id: 'tempdb-drive-size',
+        category: 'storage',
         block_one: {
             value: 'TempDB drive size',
             type: 'Storage sizing'
@@ -122,14 +132,16 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
-                'Ensure proper sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-            values: ['Under-provisioned: 0-10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
+                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+            values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
     },
     user_data_files: {
+        id: 'default-data-files-location',
+        category: 'storage',
         block_one: {
-            value: 'User data files (.mdf) placement',
+            value: 'Data files (.mdf) placement',
             type: 'Storage layout'
         },
         block_two: {
@@ -137,7 +149,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_three: {
-            type: 'User data files',
+            type: 'Data files',
             value: '',
             smallFont: true
         },
@@ -146,13 +158,15 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'User data files (.mdf) placement recommendation',
+            title: 'Data files (.mdf) placement recommendation',
             description:
                 'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
     transaction_log_files: {
+        id: 'default-log-files-location',
+        category: 'storage',
         block_one: {
             value: 'Log files (.ldf) placement',
             type: 'Storage layout'
@@ -178,6 +192,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Performance efficiency', 'Operational excellence']
     },
     tempdb_files: {
+        id: 'tempdb-files-location',
+        category: 'storage',
         block_one: {
             value: 'TempDB placement',
             type: 'Storage layout'
@@ -198,13 +214,14 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'TempDB placement recommendation',
             description:
-                'Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
+                'Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
     ontap_configuration: {
+        category: 'storage',
         block_one: {
-            value: 'ONTAP configuration',
+            value: 'ONTAP',
             type: 'Configuration'
         },
         block_two: {
@@ -222,6 +239,7 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
+        category: 'storage',
         block_one: {
             value: 'Operating system',
             type: 'Configuration'
@@ -298,6 +316,8 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: []
     },
     compute_rightsizing: {
+        id: 'compute-rightsizing',
+        category: 'compute',
         block_one: {
             type: 'Compute',
             value: 'Compute rightsizing'
@@ -318,14 +338,16 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
-                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Optimize to compare costs between your current and recommended instance types and identify potential savings.'
+                'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, we recommend rightsizing based on your workload demands.\nIf your current instance is under-provisioned, upgrading will enhance CPU, memory, and I/O capacity.\nIf it is over-provisioned, downgrading will maintain performance while reducing costs.\nClick Optimize to compare costs between your current and recommended instance types and to identify potential savings.'
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },
-    operating_system_patch: {
+    host_os_patch: {
+        id: 'host-os-patch',
+        category: 'compute',
         block_one: {
             type: 'Compute',
-            value: 'Operating system patch'
+            value: GENERAL.OPERATING_SYSTEM_PATCH
         },
         block_two: {
             type: 'Status',
@@ -333,7 +355,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_three: {
             type: 'Missing patches',
-            value: ''
+            value: '',
+            smallFont: true
         },
         block_four: {
             type: 'Severity',
@@ -342,14 +365,16 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
-                'Whenever possible, it is highly recommended to apply the latest patches to ensure security and stability.\nDoing so will help protect your SQL Server DB from vulnerabilities and significantly improve overall system reliability.'
+                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities and significantly improves overall system reliability.'
         },
-        tags: ['Security']
+        tags: ['Security', 'Reliability']
     },
     sql_licenses: {
+        id: 'sql-license',
+        category: 'application',
         block_one: {
             type: GENERAL.APPLICATION_SQL_SERVER,
-            value: 'Licenses'
+            value: 'License'
         },
         block_two: {
             type: 'Status',
@@ -365,20 +390,20 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'Application recommendation',
+            title: 'License recommendation',
             descriptionList: [
                 {
                     title: 'Not optimized: ',
                     description:
-                        "When Workload Factory detects that your database infrastructure isn't using any of the commercial \nsoftware license features you're paying for, a license is considered not optimized. A license that isn't optimized might \nresult in unnecessary additional costs."
+                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An unoptimized license \nmight result in unnecessary costs.'
                 },
                 {
                     title: 'Optimized: ',
                     description:
-                        'When the license for your commercial software database meets your performance requirements, the license is \nconsidered optimized"'
+                        'A license is considered "optimized" when the commercial software license for your databases meets your \nperformance requirements.'
                 }
             ],
-            info: 'The SQL Server license assessment and recommendation are performed at the host level.'
+            info: 'The SQL Server license assessment and recommendation are provided at the host level.'
         },
         tags: ['Cost optimization']
     }
@@ -440,6 +465,52 @@ export const formatApplicationCardMainConfig = (
     return cardsData;
 };
 
+export const formatOsPatchCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.hostOsPatch;
+    let categoryVal = 'compute';
+    let itemName = item?.name || 'host-os-patch';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let totalViolations = 0;
+
+    data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
+        totalViolations += perInstance?.criticalNonCompliantCount || 0;
+        totalViolations += perInstance?.securityNonCompliantCount || 0;
+    });
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: String(totalViolations)
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            tags: item?.tags || cardDataDefault?.[itemName]?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
+};
+
 // This function is used to format the data for the individual card main config.
 export const formatIndividualCardMainConfig = (
     data: AssessmentResponseInterface,
@@ -459,7 +530,16 @@ export const formatIndividualCardMainConfig = (
                 errorMessage: data?.compute?.errorMessage
             }
         ]);
+    } else {
+        cardMainConfig?.push([
+            {
+                ...data?.compute,
+                name: 'compute-rightsizing',
+                errorMessage: data?.compute?.errorMessage
+            }
+        ]);
     }
+
     cardMainConfig?.map((category, index) => {
         let categoryVal = '';
         if (index === 0 || index === 1) {
@@ -501,6 +581,13 @@ export const formatIndividualCardMainConfig = (
 
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
+            let blockThreeValue = '';
+            if (categoryVal === 'storage') {
+                blockThreeValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else {
+                blockThreeValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
+            }
+
             cardsData = {
                 ...cardsData,
                 [itemName]: {
@@ -511,7 +598,7 @@ export const formatIndividualCardMainConfig = (
                     },
                     block_three: {
                         ...(cardDataDefault?.[itemName]?.block_three || {}),
-                        value: GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended,
+                        value: blockThreeValue,
                         list: item?.objectsInViolation ? item?.objectsInViolation : null
                     },
                     block_four: {
@@ -539,47 +626,53 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
     let formatOntapConfigList: PerConfigInterface[] = [];
     let ontapCritical = 0;
     let ontapWarning = 0;
-    data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        formatOntapConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'volume',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    let volumesList = data?.storage?.configuration?.volumes;
+    if (volumesList && !volumesList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.volumes?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            formatOntapConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'volume',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+            if (item?.severity === 'critical') {
+                ontapCritical = 1;
+            } else if (item?.severity === 'warning') {
+                ontapWarning = 1;
+            }
+            ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
         });
-        if (item?.severity === 'critical') {
-            ontapCritical = 1;
-        } else if (item?.severity === 'warning') {
-            ontapWarning = 1;
-        }
-        ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
-    });
+    }
 
-    data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        formatOntapConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'lun',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    let lunsList = data?.storage?.configuration?.luns;
+    if (lunsList && !lunsList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.luns?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            formatOntapConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'lun',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+            if (item?.severity === 'critical') {
+                ontapCritical = 1;
+            } else if (item?.severity === 'warning') {
+                ontapWarning = 1;
+            }
+            ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
         });
-        if (item?.severity === 'critical') {
-            ontapCritical = 1;
-        } else if (item?.severity === 'warning') {
-            ontapWarning = 1;
-        }
-        ontapTagsList = [...ontapTagsList, ...(item?.tags || [])];
-    });
+    }
 
     if (ontapCritical === 1) {
         highestOntapSeverity = 'Critical';
@@ -589,10 +682,21 @@ export const formatOntapConfig = (data: AssessmentResponseInterface, optimizingD
 
     let ontapOptimizedConfig = 0;
     let ontapNotOptimizedConfig = 0;
-    let ontapVolAndLunList = [data?.storage?.configuration?.volumes, data?.storage?.configuration?.luns];
+
+    let ontapVolAndLunList = [];
+    if (volumesList && !volumesList?.[0]?.errorMessage) {
+        ontapVolAndLunList.push(data?.storage?.configuration?.volumes);
+    }
+    if (lunsList && !lunsList?.[0]?.errorMessage) {
+        ontapVolAndLunList.push(data?.storage?.configuration?.luns);
+    }
     ontapVolAndLunList?.map(type => {
         type?.map((item: PerConfigInterface) => {
-            if (item?.status === 'optimized') {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            if (status === 'optimized') {
                 ontapOptimizedConfig++;
             } else {
                 ontapNotOptimizedConfig++;
@@ -615,26 +719,29 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
     let formatOsConfigList: PerConfigInterface[] = [];
     let osCritical = 0;
     let osWarning = 0;
-    data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-        let status = item?.status || '';
-        if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
-            status = optimizingData?.[item?.name || ''];
-        }
-        formatOsConfigList.push({
-            ...item,
-            id: item?.name,
-            type: 'os',
-            name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
-            status: GETWELL_VALUES?.[status] || status,
-            severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+    let osList = data?.storage?.configuration?.os;
+    if (osList && !osList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            formatOsConfigList.push({
+                ...item,
+                id: item?.name,
+                type: 'os',
+                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                status: GETWELL_VALUES?.[status] || status,
+                severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
+            });
+            if (item?.severity === 'critical') {
+                osCritical = 1;
+            } else if (item?.severity === 'warning') {
+                osWarning = 1;
+            }
+            osTagsList = [...osTagsList, ...(item?.tags || [])];
         });
-        if (item?.severity === 'critical') {
-            osCritical = 1;
-        } else if (item?.severity === 'warning') {
-            osWarning = 1;
-        }
-        osTagsList = [...osTagsList, ...(item?.tags || [])];
-    });
+    }
 
     formatOsConfigList = sortListOfDict(formatOsConfigList, 'name');
 
@@ -646,13 +753,19 @@ export const formatOsConfig = (data: AssessmentResponseInterface, optimizingData
 
     let osOptimizedConfig = 0;
     let osNotOptimizedConfig = 0;
-    data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
-        if (item?.status === 'optimized') {
-            osOptimizedConfig++;
-        } else {
-            osNotOptimizedConfig++;
-        }
-    });
+    if (osList && !osList?.[0]?.errorMessage) {
+        data?.storage?.configuration?.os?.map((item: PerConfigInterface) => {
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+            if (status === 'optimized') {
+                osOptimizedConfig++;
+            } else {
+                osNotOptimizedConfig++;
+            }
+        });
+    }
     return { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity };
 };
 
@@ -674,7 +787,10 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 notOptimizedStorage++;
             }
         } else if (nestedObject?.category === 'compute') {
-            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+            if (
+                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
+                nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING
+            ) {
                 optimizedCompute++;
             } else {
                 notOptimizedCompute++;
@@ -750,13 +866,20 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
 
+    cardsData = formatOsPatchCardConfig(data, optimizingData, cardsData);
+
     cardsData = {
         ...cardsData,
         ['ontap_configuration']: {
             ...cardDataDefault?.ontap_configuration,
             block_two: {
                 ...cardDataDefault?.ontap_configuration?.block_two,
-                value: ontapNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized'
+                value:
+                    (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0) !== 0
+                        ? ontapNotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
             },
             block_three: {
                 ...cardDataDefault?.ontap_configuration?.block_three,
@@ -785,7 +908,12 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             ...cardDataDefault?.os_configuration,
             block_two: {
                 ...cardDataDefault?.os_configuration?.block_two,
-                value: osNotOptimizedConfig > 0 ? 'Not optimized' : 'Optimized'
+                value:
+                    (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0) !== 0
+                        ? osNotOptimizedConfig > 0
+                            ? 'Not optimized'
+                            : 'Optimized'
+                        : ''
             },
             block_three: {
                 ...cardDataDefault?.os_configuration?.block_three,
@@ -917,6 +1045,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
+        host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
         sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
     };
     Object.keys(cardData).map((key: any) => {
@@ -961,7 +1090,8 @@ export const handleOptimizeStorageJob = (
     rowData: any,
     failedMsgData: any,
     getJobDetailApi: any,
-    dispatch: any
+    dispatch: any,
+    type?: any
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -974,12 +1104,24 @@ export const handleOptimizeStorageJob = (
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
                     const state = store.getState();
+                    const { allmssqlHostAssessmentData } = state.inventoryV2;
                     let optimizingData = state.getWellOptimize.optimizingData || {};
+                    let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
+                    let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
                         dispatch(
                             setOptimizingData({
                                 ...optimizingData,
                                 [rowData?.id]: 'optimized'
+                            })
+                        );
+                        dispatch(
+                            setInProgressOptimizationData({
+                                ...inProgressOptimizationData,
+                                [type]: inProgressOptimizationData?.[type]?.filter(
+                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                )
                             })
                         );
                         formatGetWellData(dispatch);
@@ -998,6 +1140,14 @@ export const handleOptimizeStorageJob = (
                                 [rowData?.id]: ''
                             })
                         );
+                        dispatch(
+                            setInProgressOptimizationData({
+                                ...inProgressOptimizationData,
+                                [type]: inProgressOptimizationData?.[type]?.filter(
+                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                )
+                            })
+                        );
                         formatGetWellData(dispatch);
                         dispatch(
                             addNotification({
@@ -1011,10 +1161,20 @@ export const handleOptimizeStorageJob = (
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
+            let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
+            let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
             dispatch(
                 setOptimizingData({
                     ...optimizingData,
                     [rowData?.id]: ''
+                })
+            );
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: inProgressOptimizationData?.[type]?.filter(
+                        (instanceId: any) => instanceId !== selectedDatabaseInstance
+                    )
                 })
             );
             formatGetWellData(dispatch);

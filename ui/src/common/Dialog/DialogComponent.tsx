@@ -98,8 +98,16 @@ const DialogComponent = ({
         );
     };
 
+    const setClassName = () => {
+        if (customClass?.includes('innerPage')) {
+            return styles.innerPageClass;
+        } else {
+            return customClass;
+        }
+    };
+
     return (
-        <DialogLayout className={customClass}>
+        <DialogLayout className={setClassName()}>
             <DialogHeader>{header}</DialogHeader>
             <DialogContent>{content}</DialogContent>
             <DialogFooter>

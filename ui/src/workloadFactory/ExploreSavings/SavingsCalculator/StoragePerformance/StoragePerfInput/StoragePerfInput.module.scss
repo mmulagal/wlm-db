@@ -1,0 +1,17 @@
+.computeInputComponent {
+    display: flex;
+    gap: 24px;
+
+    .col2,
+    .col3,
+    .col4 {
+        width: 191px;
+
+        [class*='FieldWrapper-module_bottom-margin'] {
+            margin-bottom: 0 !important;
+        }
+        [class*='Select-module_bottom-margin'] {
+            margin-bottom: 0 !important;
+        }
+    }
+}

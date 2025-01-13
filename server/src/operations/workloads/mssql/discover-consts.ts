@@ -198,7 +198,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         Continue
       }
 
-      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -eq  $item.SerialNumber } 
+      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -ceq  $item.SerialNumber } 
 
       If ($Target.TargetAddress -ne $null) {
         $item.DriveLetters | ForEach-Object {
@@ -602,6 +602,7 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
   try {
     $requiredModuleList = @(${requiredModules})
     $s3SignedUrl = '${s3SignedURL}'
+    $PSToolkitRequiredVersion = '9.15.1.2407'
     $availableModuleList = (Get-Module -ListAvailable -Name $requiredModuleList).Name
     $unavailableModuleList = $requiredModuleList | ? { $_ -NotIn $availableModuleList}
 
@@ -634,7 +635,12 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           }
 
           ForEach ($moduleName in $unavailableModuleList) {
-              Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+              if($moduleName -eq 'NetApp.ONTAP') {
+                Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+              }
+              else {
+                Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+              }
           }
       }Else{
           $Null = Invoke-WebRequest -Uri $s3SignedUrl -OutFile "$Env:Temp\\dependent-packages.zip"

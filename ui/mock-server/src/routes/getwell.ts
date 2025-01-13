@@ -1,8 +1,18 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import GetWellJson from '../data/getWell.json';
 import GetWellHostJson from '../data/getWellHost.json';
+import GetWellAccJson from '../data/getWellAcc.json';
 
 const router = require('express').Router();
+
+router.get(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, GetWellAccJson);
+        }, 20);
+    }
+);
 
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/assessment`,

@@ -1,8 +1,9 @@
 .managedInstance {
     background-color: var(--content-background);
     width: 928px;
-    height: 436px;
-    box-shadow: 0px -1px 0px 0px #e0e0e0 inset;
+    height: 352px;
+
+    box-shadow: 2px 2px 6px 0px #e0e0e0;
 
     .headSection {
         display: flex;

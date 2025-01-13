@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
-import { compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty, mergeWith } from 'lodash-es';
 import numeral from 'numeral';
 import {
     FsxnCostBreakdownType,
@@ -10,7 +10,7 @@ import {
     PricingServiceResponseType
 } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { calculateFsxnStorageCapacity } from '../../utils/utils';
+import { calculateFsxnStorageCapacity, isDemo } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -25,6 +25,7 @@ import {
     HOURS_IN_MONTH,
     EBS_ROOT_VOLUME
 } from '../../utils/consts';
+import { DEMO_PRODUCT_RATE } from '../../utils/demo-utils/demoMockdata';
 import getProducts from '../../lib/aws/pricing';
 
 const logger = getLogger();
@@ -503,8 +504,16 @@ async function calculatePrice(
     }
 
     const inputList: ProductInput[] = compact(getInputs(compute, fsxnStorage, ebsStorage, vpc, fsxwStorage, osType));
-    const productRates = await getProductRates(inputList);
+    let productRates = await getProductRates(inputList);
 
+    if (isDemo()) {
+        productRates = mergeWith(productRates, DEMO_PRODUCT_RATE, (objValue, srcValue) => {
+            if (isEmpty(objValue)) {
+                return srcValue;
+            }
+            return objValue;
+        });
+    }
     const {
         ec2Instance: { compute: { pricePerUnit: ec2InstanceRate = 0 } = {} },
         vpc: { vpc: { pricePerUnit: vpcRate = undefined } = {} } = {}

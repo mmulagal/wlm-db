@@ -172,7 +172,8 @@ async function updateJob(
 
     // When failed deployment is retried, endtime must be reset to null.
     // https://www.prisma.io/docs/orm/prisma-client/special-fields-and-types/null-and-undefined
-    const newEndTime = endTime && endTime !== undefined ? new Date(endTime) : null;
+    const newEndTime =
+        (endTime && endTime !== undefined) || status === JOBSTATUS.COMPLETED ? new Date(endTime ?? Date.now()) : null;
 
     return prisma.client.job.update({
         where: {

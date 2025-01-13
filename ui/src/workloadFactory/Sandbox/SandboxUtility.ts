@@ -91,6 +91,16 @@ export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) =>
     return distribution;
 };
 
+export const getSandboxDistributionByAgeValue = (sandBoxList: SandboxListEntities) => {
+    let distribution = getSandboxDistributionByAge(sandBoxList);
+    let distributionUiValue = {
+        '0-30': distribution['0-30'] + ' ' + (distribution['0-30'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES),
+        '31-60': distribution['31-60'] + ' ' + (distribution['31-60'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES),
+        '61+': distribution['61+'] + ' ' + (distribution['61+'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES)
+    };
+    return distributionUiValue;
+};
+
 export const getSandboxDistributionByTag = (sandBoxList: SandboxListEntities) => {
     let distribution: any = {
         Development: 0,

@@ -55,9 +55,18 @@ function initialize() {
                     traceId: () => getTraceData()?.traceId || 'unknown',
                     message: loggingEvent =>
                         format(
-                            ...loggingEvent.data.map(log =>
-                                isObject(log) ? stringifyObject(hideSecretsValues(structuredClone(log))) : log
-                            )
+                            ...loggingEvent.data.map(log => {
+                                try {
+                                    return isObject(log)
+                                        ? stringifyObject(hideSecretsValues(structuredClone(log)))
+                                        : log;
+                                } catch (error) {
+                                    // TODO: Remove me: Temporary catch to identify #<Promise> could not be cloned
+                                    // eslint-disable-next-line no-console
+                                    console.log('ERROR in LOG MESSAGING', error);
+                                }
+                                return log;
+                            })
                         )
                 };
             }

@@ -2,14 +2,15 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
+import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../utils/consts';
+import { FINDINGS, GETWELL_STATUS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DsTypography, useDialog } from '@netapp/design-system';
+import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
-import { cardDataDefault } from '../../GetWell/GetWellUtils';
+import { cardDataDefault, formatGetWellData, handleOptimizeStorageJob } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import StorageTierTable from './RenderTables/StorageTierTable';
 import FileSystemHeadroomTable from './RenderTables/FileSystemHeadroom';
@@ -24,11 +25,32 @@ import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
 import { GENERAL } from '../../../utils/appConstants';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import {
+    useLazyGetSubTaskListQuery,
+    useOptimizeComputeConfigMutation,
+    useOptimizeStorageConfigMutation,
+    useOptimizeStorageSizingMutation,
+    useOptimizeStorageTierMutation
+} from '../../../utils/apiService';
+import {
+    setGwDatabaseInstance,
+    setGwDatabaseInstanceName,
+    setGwDatabaseStorageType,
+    setGwHostname,
+    setGwResourceId,
+    setInProgressOptimizationData,
+    setLandingFrom,
+    setOptimizingData,
+    setOptimizingInstanceData
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
-    const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    const { cardData } = useAppSelector(state => state.getWellOptimize);
+    const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
+    const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -45,31 +67,168 @@ const DashboardInnerPage = () => {
         cardName: ''
     });
 
-    const handleDialog = (type: string) => {
+    const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
+    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
+    const callOptimizeApi = (type: any, rowData?: any) => {
+        let payload: null | object = {};
+        let apiCall = null;
+        const state = store.getState();
+        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData } = state.getWellOptimize;
+        const { headerSelectedCred, headerSelectedRegion } = state.headers;
+        if (type === GENERAL.COMPUTE_RIGHTSIZING) {
+            apiCall = optimizeComputeConfig;
+            const { selectedRecommendedInstance } = state.getWellOptimize;
+            payload = {
+                instanceType: selectedRecommendedInstance?.value
+            };
+        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+            apiCall = optimizeStorageSizing;
+            payload = {
+                type:
+                    type === 'Log drive size'
+                        ? 'log-drive-size'
+                        : type === 'File system headroom'
+                        ? 'headroom'
+                        : 'tempdb-drive-size'
+            };
+        } else if (type === 'Storage tier') {
+            apiCall = optimizeStorageTier;
+            payload = null;
+        } else {
+            // ToDo - More type will come like optimize for sizing and layout here
+            apiCall = optimizeStorageConfig;
+            payload = {
+                assessments: [
+                    {
+                        configurationName: type,
+                        objectsToOptimize: []
+                    }
+                ]
+            };
+        }
+
+        // call optimize api
+        dispatch(setOptimizingInstanceData(true));
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [type === 'Log drive size'
+                    ? 'log-drive-size'
+                    : type === 'File system headroom'
+                    ? 'headroom'
+                    : type === 'TempDB drive size'
+                    ? 'tempdb-drive-size'
+                    : type === 'Storage tier'
+                    ? 'performance-tier'
+                    : 'compute-rightsizing']: 'optimizing'
+            })
+        );
+        dispatch(
+            setInProgressOptimizationData({
+                ...inProgressOptimizationData,
+                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+            })
+        );
+        formatGetWellData(dispatch, rowData?.assessments);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: (
+                    <div>
+                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.JOB_MONITORING}.
+                        </Button>
+                    </div>
+                )
+            })
+        );
+
+        apiCall({
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            payload: payload
+        }).then((res: any) => {
+            const failedMsgData = (
+                <div className={styles.notification}>
+                    {type} failed to optimize.
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.VIEW_JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            handleOptimizeStorageJob(
+                res,
+                { id: cardData?.id, name: type },
+                failedMsgData,
+                getJobDetailApi,
+                dispatch,
+                type
+            );
+        });
+    };
+
+    const optimizeAction = (rowData: any) => {
+        const updatedState = store.getState();
+        const { inventoryTableData }: any = updatedState.inventoryV2;
+        const targettedHost = inventoryTableData[rowData?.databaseHostId];
+        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
+            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
+        );
+        dispatch(setGwHostname(rowData?.hostName));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setGwResourceId(targettedHost?.resourceId));
+        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+        dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
+    };
+
+    const handleDialog = (type: string, rowData: any) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
                 content={
                     <DialogContent
                         type={type}
-                        recommendationOptions={cardData?.recommendationOptions}
-                        missingPermissions={cardData?.missingPermissions}
-                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                        recommendationOptions={rowData?.recommendationOptions}
+                        missingPermissions={rowData?.missingPermissions}
+                        recommendedSizeInGib={rowData?.recommendedSizeInGib}
                     />
                 }
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    // callOptimizeApi(type);
+                    callOptimizeApi(type, rowData);
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={styles.colorSet}
+                customClass={'innerPage'}
                 hidePrimaryButton={
                     (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
-                    cardData?.missingPermissions &&
-                    cardData?.missingPermissions.length > 0
+                    rowData?.missingPermissions &&
+                    rowData?.missingPermissions.length > 0
                 }
             />
         );
@@ -79,10 +238,10 @@ const DashboardInnerPage = () => {
         switch (selectedConfig) {
             case 'Storage tier':
                 setValueCardData({
-                    optimizationScore: '55%',
-                    optimizedInstances: '55',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -94,10 +253,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'File system headroom':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '144px',
                     tagHeight: '241px',
                     data: {
@@ -109,10 +268,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'Log drive size':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '168px',
                     tagHeight: '265px',
                     data: {
@@ -125,10 +284,10 @@ const DashboardInnerPage = () => {
 
             case 'TempDB drive size':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '192px',
                     tagHeight: '289px',
                     data: {
@@ -138,12 +297,12 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -154,10 +313,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'Log files (.ldf)':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '136px',
                     tagHeight: '233px',
                     data: {
@@ -168,10 +327,10 @@ const DashboardInnerPage = () => {
                 break;
             case 'TempDB placement':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '160px',
                     tagHeight: '257px',
                     data: {
@@ -181,41 +340,41 @@ const DashboardInnerPage = () => {
                 });
                 break;
 
-            case 'ONTAP configuration':
+            case 'ONTAP':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'View recommendation per configuration in the expand collapse view'
+                        description: 'Expand instances to view recommendations.'
                     }
                 });
                 break;
 
             case 'Operating system':
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '112px',
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: 'View recommendation per configuration in the expand collapse view'
+                        description: 'Expand instances to view recommendations.'
                     }
                 });
                 break;
-            case 'Compute rightsizing':
+            case GENERAL.COMPUTE_RIGHTSIZING:
                 setValueCardData({
-                    optimizationScore: '65%',
-                    optimizedInstances: '75',
-                    notOptimizedInstances: '65',
-                    severity: 'Critical',
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
                     cardHeight: '184px',
                     tagHeight: '281px',
                     data: {
@@ -225,28 +384,133 @@ const DashboardInnerPage = () => {
                     cardName: 'compute_right_sizing'
                 });
                 break;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.host_os_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.APPLICATION_SQL_SERVER:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.sql_licenses?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig]);
+
+    const lastColDetails = (name: string, data?: any) => {
+        return {
+            id: '4',
+            Header: '',
+            accessor: '',
+            isSticky: true,
+            width: '318px',
+            renderCell: (cellData: any, rowData: any) => {
+                let isDisabled = false;
+                let errorMessage = '';
+                if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
+                } else if (
+                    !rowData?.assessmentStatus ||
+                    rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+                } else if (
+                    name === 'Log drive size' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+                } else if (
+                    name === 'TempDB drive size' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+                } else if (
+                    name === 'File system headroom' &&
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                ) {
+                    isDisabled = true;
+                    errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+                }
+                return (
+                    <div className={styles.buttonContainer}>
+                        {!isDisabled ? (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                onClick={() => {
+                                    optimizeAction(rowData);
+                                    handleDialog(name, rowData);
+                                }}
+                            >
+                                Optimize
+                            </DsButton>
+                        ) : (
+                            <Popover
+                                popoverClass={CommonStyles['popover']}
+                                isAppendedToBody={true}
+                                children={<DsTypography variant="Regular_14">{errorMessage}</DsTypography>}
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                container={
+                                    <DsButton variant="secondary" isDisabled={true}>
+                                        Optimize
+                                    </DsButton>
+                                }
+                            />
+                        )}
+                    </div>
+                );
+            }
+        };
+    };
+
+    const handleBulkAction = (type: string, rowData: any) => {
+        optimizeAction(rowData[0]);
+        handleDialog(type, rowData[0]);
+    };
 
     const renderTable = () => {
         switch (selectedConfig) {
             case 'Storage tier':
-                return <StorageTierTable handleDialog={handleDialog} />;
+                return <StorageTierTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'File system headroom':
-                return <FileSystemHeadroomTable handleDialog={handleDialog} />;
+                return <FileSystemHeadroomTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Log drive size':
-                return <LogDriveSizeTable handleDialog={handleDialog} />;
+                return <LogDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'TempDB drive size':
-                return <TempDBDriveSizeTable handleDialog={handleDialog} />;
-            case 'User data files (.mdf)':
-                return <UserDataFilesTable />;
+                return <TempDBDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case 'Data files (.mdf)':
+                return <UserDataFilesTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Log files (.ldf)':
-                return <LogFileTable />;
+                return <LogFileTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'TempDB placement':
-                return <TempDBPlacement />;
+                return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'Compute rightsizing':
-                return <ComputeRightSizingTable handleDialog={handleDialog} />;
-            case 'ONTAP configuration':
+                return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case 'ONTAP':
                 return <OntapConfig />;
             case 'Operating system':
                 return <OperatingSystemTable />;

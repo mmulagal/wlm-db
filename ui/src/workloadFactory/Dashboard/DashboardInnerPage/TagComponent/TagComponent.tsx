@@ -26,13 +26,13 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Operational excellence']);
                 break;
 
-            case 'User data files (.mdf)':
+            case 'Data files (.mdf)':
             case 'Log files (.ldf)':
             case 'TempDB placement':
                 setTagData(['Performance efficiency', 'Operational excellence']);
                 break;
 
-            case 'ONTAP configuration':
+            case 'ONTAP':
             case 'Operating system':
             case 'Compute rightsizing':
                 setTagData([
@@ -55,8 +55,10 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
             </div>
 
             <div className={styles.mainSection}>
-                {tagData?.map((tag: string) => (
-                    <Tag text={tag} />
+                {tagData?.map((tag: string, index: number) => (
+                    <div key={index}>
+                        <Tag text={tag} />
+                    </div>
                 ))}
             </div>
         </div>

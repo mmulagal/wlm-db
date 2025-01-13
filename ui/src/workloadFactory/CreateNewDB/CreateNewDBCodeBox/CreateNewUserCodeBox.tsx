@@ -1,6 +1,5 @@
 import { DsTypography, Popover } from '@netapp/design-system';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { useEffect, useMemo, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -14,6 +13,7 @@ import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import { CREATE_DB_CURL_REQ_TEMPLATE, CREATE_DB_ENDPOINT, CRED_PLACEHOLDERS, UI_IDS } from '../../../utils/consts';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { getBaseUrl } from '../../../utils/apiService';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 
 const CreateNewUserCodeBox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -94,11 +94,14 @@ const CreateNewUserCodeBox = () => {
                                 popoverClass={styles['copy-popover']}
                                 children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                 container={
-                                    <CopyToClipboard text={copyResponseData()}>
-                                        <div className={styles.menuItem} id={UI_IDS.WIZARD_CODEBOX_COPY}>
-                                            <Copy />
-                                        </div>
-                                    </CopyToClipboard>
+                                    <CopyToClipboardCommon
+                                        value={copyResponseData()}
+                                        iconProvided={
+                                            <div className={styles.menuItem} id={UI_IDS.WIZARD_CODEBOX_COPY}>
+                                                <Copy />
+                                            </div>
+                                        }
+                                    />
                                 }
                             />
                         </div>

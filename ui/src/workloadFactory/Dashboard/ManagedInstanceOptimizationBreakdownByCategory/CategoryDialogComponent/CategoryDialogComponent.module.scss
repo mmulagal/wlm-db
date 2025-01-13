@@ -46,6 +46,16 @@
         top: -39px !important;
     }
 
+    [class*='TableTopBar-module_title'] {
+        span:nth-child(4) {
+            display: none;
+        }
+    }
+    
+    [class*='PaginationPanel-module_pagination-panel'] {
+        bottom: -40px !important;
+    }
+
     // [class*='DialogLayout-module_dialog-content'] {
     //     padding: 40px 40px 0px 40px !important;
     //     overflow-y: unset !important;

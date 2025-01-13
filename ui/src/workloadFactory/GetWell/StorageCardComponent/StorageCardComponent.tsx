@@ -13,7 +13,11 @@ import DialogContent from './DialogContent/DialogContent';
 import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setOptimizingData, setOptimizingInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setInProgressOptimizationData,
+    setOptimizingData,
+    setOptimizingInstanceData
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -28,10 +32,12 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import store from '../../../store/store';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
@@ -39,6 +45,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -80,6 +87,24 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
     }, [cardData]);
 
+    const disableOptimizeButtonTooltip = useMemo(() => {
+        if (cardData?.id === 'headroom' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+            return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+        } else if (
+            cardData?.id === 'log-drive-size' &&
+            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+        ) {
+            return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+        } else if (
+            cardData?.id === 'tempdb-drive-size' &&
+            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+        ) {
+            return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+        } else {
+            return '';
+        }
+    }, [cardData]);
+
     const setImage = (value: string) => {
         if (value === GETWELL_STATUS.OPTIMIZED) {
             return <Optimized />;
@@ -105,7 +130,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             <div className={styles.tooltipLevel}>
                 {listObj?.map((item: any, index: number) => {
                     return (
-                        <div>
+                        <div key={index}>
                             <div className={styles.row}>
                                 <div className={styles.firstPart}>
                                     <DsTypography variant="Semibold_13">{item.key}</DsTypography>
@@ -274,6 +299,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 [cardData?.id]: 'optimizing'
             })
         );
+        dispatch(
+            setInProgressOptimizationData({
+                ...inProgressOptimizationData,
+                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+            })
+        );
         formatGetWellData(dispatch);
         dispatch(
             addNotification({
@@ -318,7 +349,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </Button>
                 </div>
             );
-            handleOptimizeStorageJob(res, { id: cardData?.id, name: type }, failedMsgData, getJobDetailApi, dispatch);
+            handleOptimizeStorageJob(
+                res,
+                { id: cardData?.id, name: type },
+                failedMsgData,
+                getJobDetailApi,
+                dispatch,
+                type
+            );
         });
     };
 
@@ -342,7 +380,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={styles.colorSet}
+                customClass={'innerPage'}
                 hidePrimaryButton={
                     (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
                     cardData?.missingPermissions &&
@@ -405,7 +443,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
             {/* 6 section */}
             {!optimizePrintState &&
-                cardData?.block_one?.value !== 'ONTAP configuration' &&
+                cardData?.block_one?.value !== 'ONTAP' &&
                 cardData?.block_one?.value !== 'Operating system' &&
                 (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                 cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
@@ -416,7 +454,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             width="120px"
                             height="30px"
                         >
-                            <div>
+                            <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                                 <DsButton variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
@@ -432,15 +470,40 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         width="310px"
                         height="50px"
                     >
-                        <div>
+                        <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
-                                Optimize
+                                {GENERAL.OPTIMIZE}
                             </DsButton>
                         </div>
                     </TooltipComponent>
+                ) : disableOptimizeButtonTooltip ? (
+                    <Popover
+                        popoverClass={CommonStyles['popover']}
+                        isAppendedToBody={true}
+                        children={<DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>}
+                        trigger="hover"
+                        container={
+                            <div
+                                className={
+                                    isDarkTheme
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
+                                style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
+                            >
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    {GENERAL.OPTIMIZE}
+                                </DsButton>
+                            </div>
+                        }
+                    />
                 ) : (
                     <div
-                        className={styles.buttonSection}
+                        className={
+                            isDarkTheme && (loading || disableOptimizeButton)
+                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                : styles.buttonSection
+                        }
                         style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
                         id={`${cardData?.id}-optimize`}
                     >
@@ -449,7 +512,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             onClick={() => handleDialog()}
                             isDisabled={loading || disableOptimizeButton}
                         >
-                            Optimize
+                            {GENERAL.OPTIMIZE}
                         </DsButton>
                     </div>
                 ))}

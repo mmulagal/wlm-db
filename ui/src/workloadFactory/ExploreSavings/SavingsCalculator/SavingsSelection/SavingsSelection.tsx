@@ -16,7 +16,7 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-import { FINDINGS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { FINDINGS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
 import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
@@ -36,7 +36,8 @@ const SavingsSelection = ({ printState }: any) => {
         monthlyBYOLCost,
         selectedHostDetails,
         savingsCalculatorFrom,
-        snapshotLoading
+        snapshotLoading,
+        selectedExploreSavingsTab
     } = useAppSelector(state => state.exploreSavings);
 
     const [isByolField, setIsByolField] = useState<boolean>(false);
@@ -219,195 +220,269 @@ const SavingsSelection = ({ printState }: any) => {
     };
 
     return (
-        <div className={styles.savingsSelection} id="savings-calculator-input-group">
-            <DsTypography variant="Regular_14">{GENERAL.ES_SAVINGS_SELECTION_TEXT}</DsTypography>
+        <>
+            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                <div
+                    className={styles.savingsSelection}
+                    id="savings-calculator-input-group"
+                    style={{ marginBottom: '20px' }}
+                >
+                    <DsTypography variant="Regular_14">Snapshot & clones</DsTypography>
 
-            <div className={styles.firstRow}>
-                <SelectField
-                    label={GENERAL.ES_SNAPSHOT_FREQUENCY}
-                    isDisabled={loading}
-                    isClearable={false}
-                    value={selectedSnapshotFrequency}
-                    onChange={(selectedOptions: any): void => {
-                        dispatch(setSelectedSnapshotFrequency(selectedOptions));
-                    }}
-                    info={
-                        selectedSnapshotFrequency &&
-                        selectedSnapshotFrequency?.label === GENERAL.ES_NO_SNAPSHOT_STORAGE &&
-                        GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
-                    }
-                    isLoading={snapshotLoading}
-                    isSearchable={generateSnapshotFrequency.length > 5}
-                    options={generateSnapshotFrequency}
-                    className={`${styles.widthSet} savings-calculator-input-fields`}
-                />
-                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ? (
-                    printState ? (
-                        <div className={styles.mockInput}>
-                            <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                                {GENERAL.NUMBER_OF_CLONED_COPIES}
-                            </DsTypography>
-                            <div className={styles.inputField}>{noOfClonedCopies}</div>
-                        </div>
-                    ) : (
-                        <TextField
-                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
-                            isDisabled={loading}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                setNoOfClonedCopies(numVal);
-                            }}
-                            value={noOfClonedCopies}
-                            className={`${styles.widthSet} savings-calculator-input-fields`}
-                            error={errorForClonedCopiesCount()}
-                        />
-                    )
-                ) : (
-                    ''
-                )}
-            </div>
-
-            <div className={styles.secondRow}>
-                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
-                    (printState ? (
-                        <div className={styles.mockInput}>
-                            <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                                {GENERAL.NUMBER_OF_CLONED_COPIES}
-                            </DsTypography>
-                            <div className={styles.inputField}>{noOfClonedCopies}</div>
-                        </div>
-                    ) : (
-                        <TextField
-                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
-                            isDisabled={loading}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                setNoOfClonedCopies(numVal);
-                            }}
-                            value={noOfClonedCopies}
-                            className={`${styles.widthSet} savings-calculator-input-fields`}
-                            error={errorForClonedCopiesCount()}
-                        />
-                    ))}
-                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                    <SelectField
-                        label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
-                        isClearable={false}
-                        isDisabled={loading}
-                        defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
-                        onChange={(selectedOptions: any): void => {
-                            dispatch(setSelectedCloneRefresh(selectedOptions));
-                        }}
-                        isSearchable={generateCloneRefresh.length > 5}
-                        options={generateCloneRefresh}
-                        className={`${styles.widthSet} savings-calculator-input-fields`}
-                    />
-                )}
-            </div>
-
-            <div className={`${styles.secondRow} ${styles.infoCenter}`}>
-                {printState && (
-                    <div className={styles.mockInput}>
-                        <DsTypography variant="Regular_14" className={styles.mockLabel}>
-                            {GENERAL.MONTHLY_CHANGE_RATE}
-                        </DsTypography>
-                        <div className={styles.inputField}>{monthlyChangeRateNo}</div>
-                    </div>
-                )}
-                {!printState && (
-                    <TextField
-                        label={GENERAL.MONTHLY_CHANGE_RATE}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setMonthlyChangeRateNo(numVal);
-                        }}
-                        isDisabled={loading}
-                        value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
-                        className={`${styles.widthSet} savings-calculator-input-fields`}
-                        info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
-                        error={errorForChangeRate()}
-                    />
-                )}
-                <div className={styles.notice}>
-                    <div className={styles.setSVG}>
-                        <InfoIcon />
-                    </div>
-                    <DsTypography variant="Regular_14" className={styles.contentWidth}>
-                        {GENERAL.REFER_SNAPSHOTS}
-                    </DsTypography>
-                </div>
-            </div>
-            <div className={styles.secondRow}>
-                {isByolField && (
-                    <TextField
-                        label={GENERAL.BYOL_TEXT}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                            setByolValue(numVal);
-                        }}
-                        isOptional={true}
-                        value={byolValue}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                    />
-                )}
-                {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                    <div className={styles.instanceTypeContainer}>
+                    <div className={styles.firstRow}>
                         <SelectField
-                            label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
-                            info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
+                            label={GENERAL.ES_SNAPSHOT_FREQUENCY}
+                            isDisabled={loading}
                             isClearable={false}
-                            isDisabled={
-                                instanceTypeData?.missingPermissions || generateRecommendedInstanceTypes.length === 1
-                            }
-                            variant="two-lines"
-                            isLoading={storageSavingsLoading}
-                            value={generateOptionType(
-                                recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                generateLabel2ForInstanceType(
-                                    instanceTypeData?.options,
-                                    recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                    storageSavingsResponse?.compute?.existing
-                                ),
-                                false,
-                                ''
-                            )}
+                            value={selectedSnapshotFrequency}
                             onChange={(selectedOptions: any): void => {
-                                const selectedVal = selectedOptions.value;
-                                dispatch(
-                                    setRecommendedTargetInstance(
-                                        selectedVal === instanceTypeData?.existingInstanceType ? '' : selectedVal
-                                    )
-                                );
+                                dispatch(setSelectedSnapshotFrequency(selectedOptions));
                             }}
-                            isSearchable={generateRecommendedInstanceTypes?.length > 5}
-                            options={generateRecommendedInstanceTypes}
+                            info={
+                                selectedSnapshotFrequency &&
+                                selectedSnapshotFrequency?.label === GENERAL.ES_NO_SNAPSHOT_STORAGE &&
+                                GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
+                            }
+                            isLoading={snapshotLoading}
+                            isSearchable={generateSnapshotFrequency.length > 5}
+                            options={generateSnapshotFrequency}
+                            className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
+                        />
+
+                        <TextField
+                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                            isDisabled={loading}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                setNoOfClonedCopies(numVal);
+                            }}
+                            value={noOfClonedCopies}
+                            className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
+                            error={errorForClonedCopiesCount()}
+                        />
+                    </div>
+
+                    <div className={`${styles.secondRow} ${styles.infoCenter}`}>
+                        {printState && (
+                            <div className={styles.mockInput}>
+                                <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                    {GENERAL.MONTHLY_CHANGE_RATE}
+                                </DsTypography>
+                                <div className={styles.inputField}>{monthlyChangeRateNo}</div>
+                            </div>
+                        )}
+                        {!printState && (
+                            <TextField
+                                label={GENERAL.MONTHLY_CHANGE_RATE}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    setMonthlyChangeRateNo(numVal);
+                                }}
+                                isDisabled={loading}
+                                value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
+                                className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
+                                info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
+                                error={errorForChangeRate()}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+                <div className={styles.savingsSelection} id="savings-calculator-input-group">
+                    <DsTypography variant="Regular_14">{GENERAL.ES_SAVINGS_SELECTION_TEXT}</DsTypography>
+
+                    <div className={styles.firstRow}>
+                        <SelectField
+                            label={GENERAL.ES_SNAPSHOT_FREQUENCY}
+                            isDisabled={loading}
+                            isClearable={false}
+                            value={selectedSnapshotFrequency}
+                            onChange={(selectedOptions: any): void => {
+                                dispatch(setSelectedSnapshotFrequency(selectedOptions));
+                            }}
+                            info={
+                                selectedSnapshotFrequency &&
+                                selectedSnapshotFrequency?.label === GENERAL.ES_NO_SNAPSHOT_STORAGE &&
+                                GENERAL.TOOLTIP_MESSAGE_SNAPSHOT_FREQ
+                            }
+                            isLoading={snapshotLoading}
+                            isSearchable={generateSnapshotFrequency.length > 5}
+                            options={generateSnapshotFrequency}
                             className={`${styles.widthSet} savings-calculator-input-fields`}
                         />
-                        {(instanceTypeData?.missingPermissions ||
-                            (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
-                            <div className={styles.errorContainer}>
-                                <InfoIcon />
-                                <DsTypography variant="Regular_13">
-                                    {instanceTypeData?.missingPermissions
-                                        ? GENERAL.MISSING_PERMISSIONS_NOTICE
-                                        : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ? (
+                            printState ? (
+                                <div className={styles.mockInput}>
+                                    <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                        {GENERAL.NUMBER_OF_CLONED_COPIES}
+                                    </DsTypography>
+                                    <div className={styles.inputField}>{noOfClonedCopies}</div>
+                                </div>
+                            ) : (
+                                <TextField
+                                    label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                                    isDisabled={loading}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                        setNoOfClonedCopies(numVal);
+                                    }}
+                                    value={noOfClonedCopies}
+                                    className={`${styles.widthSet} savings-calculator-input-fields`}
+                                    error={errorForClonedCopiesCount()}
+                                />
+                            )
+                        ) : (
+                            ''
+                        )}
+                    </div>
+
+                    <div className={styles.secondRow}>
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                            (printState ? (
+                                <div className={styles.mockInput}>
+                                    <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                        {GENERAL.NUMBER_OF_CLONED_COPIES}
+                                    </DsTypography>
+                                    <div className={styles.inputField}>{noOfClonedCopies}</div>
+                                </div>
+                            ) : (
+                                <TextField
+                                    label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                                    isDisabled={loading}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                        setNoOfClonedCopies(numVal);
+                                    }}
+                                    value={noOfClonedCopies}
+                                    className={`${styles.widthSet} savings-calculator-input-fields`}
+                                    error={errorForClonedCopiesCount()}
+                                />
+                            ))}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                            <SelectField
+                                label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
+                                isClearable={false}
+                                isDisabled={loading}
+                                defaultValue={selectedCloneRefresh ? selectedCloneRefresh : [generateCloneRefresh[0]]}
+                                onChange={(selectedOptions: any): void => {
+                                    dispatch(setSelectedCloneRefresh(selectedOptions));
+                                }}
+                                isSearchable={generateCloneRefresh.length > 5}
+                                options={generateCloneRefresh}
+                                className={`${styles.widthSet} savings-calculator-input-fields`}
+                            />
+                        )}
+                    </div>
+
+                    <div className={`${styles.secondRow} ${styles.infoCenter}`}>
+                        {printState && (
+                            <div className={styles.mockInput}>
+                                <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                    {GENERAL.MONTHLY_CHANGE_RATE}
                                 </DsTypography>
-                                {instanceTypeData?.missingPermissions ? (
-                                    <Button variant="text" onClick={handleLearnHowClick}>
-                                        {GENERAL.LEARN_HOW}
-                                    </Button>
-                                ) : (
-                                    <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                        {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
-                                    </DsTooltipInfo>
+                                <div className={styles.inputField}>{monthlyChangeRateNo}</div>
+                            </div>
+                        )}
+                        {!printState && (
+                            <TextField
+                                label={GENERAL.MONTHLY_CHANGE_RATE}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    setMonthlyChangeRateNo(numVal);
+                                }}
+                                isDisabled={loading}
+                                value={monthlyChangeRateNo ? monthlyChangeRateNo : ''}
+                                className={`${styles.widthSet} savings-calculator-input-fields`}
+                                info={GENERAL.MONTHLY_CHANGE_RATE_TOOLTIP}
+                                error={errorForChangeRate()}
+                            />
+                        )}
+                        <div className={styles.notice}>
+                            <div className={styles.setSVG}>
+                                <InfoIcon />
+                            </div>
+                            <DsTypography variant="Regular_14" className={styles.contentWidth}>
+                                {GENERAL.REFER_SNAPSHOTS}
+                            </DsTypography>
+                        </div>
+                    </div>
+                    <div className={styles.secondRow}>
+                        {isByolField && (
+                            <TextField
+                                label={GENERAL.BYOL_TEXT}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    setByolValue(numVal);
+                                }}
+                                isOptional={true}
+                                value={byolValue}
+                                className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                            />
+                        )}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                            <div className={styles.instanceTypeContainer}>
+                                <SelectField
+                                    label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
+                                    info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
+                                    isClearable={false}
+                                    isDisabled={
+                                        instanceTypeData?.missingPermissions ||
+                                        generateRecommendedInstanceTypes.length === 1
+                                    }
+                                    variant="two-lines"
+                                    isLoading={storageSavingsLoading}
+                                    value={generateOptionType(
+                                        recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                        recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                        generateLabel2ForInstanceType(
+                                            instanceTypeData?.options,
+                                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
+                                            storageSavingsResponse?.compute?.existing
+                                        ),
+                                        false,
+                                        ''
+                                    )}
+                                    onChange={(selectedOptions: any): void => {
+                                        const selectedVal = selectedOptions.value;
+                                        dispatch(
+                                            setRecommendedTargetInstance(
+                                                selectedVal === instanceTypeData?.existingInstanceType
+                                                    ? ''
+                                                    : selectedVal
+                                            )
+                                        );
+                                    }}
+                                    isSearchable={generateRecommendedInstanceTypes?.length > 5}
+                                    options={generateRecommendedInstanceTypes}
+                                    className={`${styles.widthSet} savings-calculator-input-fields`}
+                                />
+                                {(instanceTypeData?.missingPermissions ||
+                                    (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
+                                    <div className={styles.errorContainer}>
+                                        <InfoIcon />
+                                        <DsTypography variant="Regular_13">
+                                            {instanceTypeData?.missingPermissions
+                                                ? GENERAL.MISSING_PERMISSIONS_NOTICE
+                                                : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
+                                        </DsTypography>
+                                        {instanceTypeData?.missingPermissions ? (
+                                            <Button variant="text" onClick={handleLearnHowClick}>
+                                                {GENERAL.LEARN_HOW}
+                                            </Button>
+                                        ) : (
+                                            <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                                {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
+                                            </DsTooltipInfo>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         )}
                     </div>
-                )}
-            </div>
-        </div>
+                </div>
+            )}
+        </>
     );
 };
 

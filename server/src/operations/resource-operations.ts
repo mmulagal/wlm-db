@@ -106,7 +106,15 @@ async function getManagedResources(
 async function checkScriptNeedsUpdate(accountId: string, credentialsId: string, region: string, nodeId: string) {
     logger.info('Check script version at database host', { accountId, credentialsId, region, nodeId });
     try {
-        const resp = await callSsmExecution(credentialsId, region, [READ_SCRIPT_VERSION], nodeId, accountId, false);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            [READ_SCRIPT_VERSION],
+            nodeId,
+            'Get script version',
+            accountId,
+            false
+        );
         if (resp) {
             const newresp = sqlResponseParsing(resp);
             if (newresp.scriptVersion === CURRENT_SCRIPT_VERSION) {
@@ -133,6 +141,7 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
             region,
             COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
             ec2InstanceId,
+            'Copy scripts to host',
             accountId,
             false,
             (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()

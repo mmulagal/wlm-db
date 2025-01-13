@@ -153,6 +153,7 @@ async function updateTemplateUrls(
             ScriptValidation: `"${decodeURI(signedUrls.get('ScriptValidation')?.url || '')}"`,
             ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
             ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
+            FsxCertificates: decodeURI(signedUrls.get('FsxCertificates')?.url || ''),
             OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || '')
         });
 

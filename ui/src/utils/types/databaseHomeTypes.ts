@@ -153,6 +153,7 @@ export interface AggregatedCostsRes {
 }
 
 export interface DatabaseHostsEntities {
+    selectedRowsForOptimize: Array<string> | any;
     selectedTab: string;
     getJobsSummary: {
         jobsSummaryData: JobsSummaryRes | null;
@@ -165,12 +166,26 @@ export interface DatabaseHostsEntities {
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedPgsqlStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
-    aggregatedPgsqlCosts: AggregatedCostsRes | null;
     selectedConfig: string;
+    selectedConfigSummary: {
+        optimizationScore: string;
+        optimizedInstances: number;
+        notOptimizedInstances: number;
+        severity: string;
+    };
     selectedAssessmentRow: any;
     sandboxAgeRange: {
         from: string;
         range: string;
+    };
+    potentialSavingsValues: {
+        loading: boolean;
+        ebsCost: number;
+        fsxwCost: number;
+        fsxnCost: number;
+        savings: number,
+        savingsPercent: any;
+        noSavings: boolean;
     };
 }
 

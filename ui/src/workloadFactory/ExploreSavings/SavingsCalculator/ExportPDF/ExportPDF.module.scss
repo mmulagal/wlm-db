@@ -42,8 +42,16 @@
     }
 }
 
+.exportPdfOnPrem {
+    width: 1607px;
+}
+
 @media screen and (max-width: 1500px) {
     .exportPdf {
+        width: 1128px;
+    }
+
+    .exportPdfOnPrem {
         width: 1128px;
     }
 }

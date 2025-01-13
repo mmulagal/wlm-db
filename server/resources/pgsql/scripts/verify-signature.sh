@@ -1,9 +1,9 @@
 #!/bin/bash
-exec > /var/log/netapp_wf_verify_signature.log 2>&1
+exec > /var/log/netapp_wf/verify_signature.log 2>&1
 
 # Function to print usage
 usage() {
-    echo "Usage: $0 -f <FilePath> -s <SignatureFilePath> -p <PubFilePath> -r <ResourceID> -n <Stackname> [-t <IsTerraform>]"
+    echo "Usage: $0 -f <FilePath> -s <SignatureFilePath> -p <PubFilePath> -r <ResourceID> -n <Stackname>"
     exit 1
 }
 
@@ -15,7 +15,6 @@ while getopts "f:s:p:r:n:t:" opt; do
         p) PubFilePath="$OPTARG" ;;
         r) ResourceID="$OPTARG" ;;
         n) Stackname="$OPTARG" ;;
-        t) IsTerraform="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -42,6 +41,6 @@ if grep -q "Verified OK" "$logfilename"; then
     echo "Signature verified successfully."
 else
     echo "Signature verification failed."
-    aws cloudformation signal-resource --stack-name "$Stackname" --logical-resource-id "$ResourceID" --status "FAILED" --unique-id "$instanceID" --reason "Verifying the signature of comprssed files failed"
+    cfn-signal --exit-code 1 --stack "$Stackname" --resource "$ResourceID" --reason "Verifying the signature of compressed files failed" --id "$instanceID"
     exit 1
 fi

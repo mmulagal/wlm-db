@@ -66,7 +66,6 @@ import {
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedHostDialogContentV2 from '../UndetectedHostDialogContent/UndetectedHostDialogContentV2';
 import UndetectedSecondDialogV2 from '../UndetectedSecondDialog/UndetectedSecondDialogV2';
-import useResize from '../../../../common/hooks/useResize';
 import {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
@@ -78,11 +77,12 @@ import {
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 
 const ManagedHostSubTable = ({
-    handleManageInstances
+    handleManageInstances,
+    divWidth
 }: {
     handleManageInstances: (rowData: any, instances: any, isDetected?: boolean) => void;
+    divWidth: any;
 }) => {
-    const windowSize = useResize();
     const {
         inventoryTableData,
         inProgressInstances,
@@ -91,7 +91,7 @@ const ManagedHostSubTable = ({
 
     const rowId = hostData?.id;
     const hostname = hostData?.name;
-    const resourceId = hostData?.resourceId;
+
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
@@ -310,7 +310,7 @@ const ManagedHostSubTable = ({
                         // store fsx cred in register obj if payload has fsx register
                         let isFsxRegister = saveFsxInCredRegisteredObj(fsxId, dispatch);
 
-                        if (rowData?.storage && rowData?.storage?.length > 0) {
+                        if ((rowData?.storage && rowData?.storage?.length > 0) || rowData?.storage?.fsxn) {
                             setTimeout(() => {
                                 setDialog(
                                     <DialogComponent
@@ -716,7 +716,6 @@ const ManagedHostSubTable = ({
                         (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
                             rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
                         (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
-
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
                         return true;
@@ -756,9 +755,10 @@ const ManagedHostSubTable = ({
                     }
 
                     if (
-                        !cellData &&
-                        rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
-                        !rowData?.optimizationStatusLoading
+                        (!cellData &&
+                            rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
+                            !rowData?.optimizationStatusLoading) ||
+                        cellData === INVENTORY_STATUS.IN_PROGRESS
                     ) {
                         disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
                         return true;
@@ -839,14 +839,14 @@ const ManagedHostSubTable = ({
             renderCell: (cellData: string | number, rowData: any) => {
                 return renderAllocatedCapacity(cellData, rowData);
             }
-        }
+        },
+        lastColDetails()
     ];
 
-    managedHostSubTableColDefs.unshift(lastColDetails());
+    // managedHostSubTableColDefs.unshift(lastColDetails());
 
     const tableProps = useTable({
         isSorting: false,
-
         columns: managedHostSubTableColDefs,
         rows: data,
         pageSize: 10,
@@ -854,11 +854,14 @@ const ManagedHostSubTable = ({
         isHorizontalScroll: true
     });
     return (
-        <div className={styles.managedHostSubTable}>
-            {/* <div className={styles.topDiv} /> */}
-            <div className={styles.extraDiv2} />
-
-            <span className={styles.managedSubTable}>
+        <div
+            className={styles.managedHostSubTable}
+            style={{ width: `${divWidth - 140}px`, maxWidth: `${divWidth - 140}px` }}
+        >
+            <span
+                className={styles.managedSubTable}
+                style={{ width: `${divWidth - 140}px`, maxWidth: `${divWidth - 140}px` }}
+            >
                 <Table
                     //@ts-ignore
 
@@ -867,10 +870,6 @@ const ManagedHostSubTable = ({
                     isDoubleRow={true}
                 />
             </span>
-
-            <div className={styles.extraDivRight} />
-
-            {/* <div className={styles.topDiv} /> */}
         </div>
     );
 };

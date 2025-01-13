@@ -481,6 +481,7 @@ const getMappedOntapVolumesScript = (
     fields: string = '',
     includeLogVolumes: boolean = false
 ) => `
+    #Get Mapped Ontap Volumes
     $WarningPreference = 'SilentlyContinue';
     $ProgressPreference = 'SilentlyContinue'
     if ($responseObject -eq $null) {
@@ -523,17 +524,20 @@ const getMappedOntapVolumesScript = (
                 if (${isSystemDatabase}) {
                     $sqlquery = @"
                         SET NOCOUNT ON;
-                        SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                        DECLARE @JSONData nvarchar(max)
+                        SET @JSONData = (SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                         INNER JOIN sys.databases d ON mf.database_id = d.database_id
                         CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE vs.volume_mount_point != 'C:\\'
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
                         AND d.name IN ('master', 'model', 'msdb', 'tempdb')
-                        FOR JSON PATH;
+                        FOR JSON PATH)
+                        SELECT @JSONData;
 "@
                     $sqlqueryfordatabaseandvolumelist = @"
                         SET NOCOUNT ON;
-                        SELECT DISTINCT 
+                        DECLARE @JSONData nvarchar(max)
+                        SET @JSONData = (SELECT DISTINCT 
                             DB_NAME(mf.database_id) AS DatabaseName,
                             vs.logical_volume_name as VolumeName,
                             vs.volume_id as VolumeId
@@ -547,33 +551,39 @@ const getMappedOntapVolumesScript = (
                             vs.volume_mount_point != 'C:\\'
                             AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
                             AND d.name IN ('master', 'model', 'msdb', 'tempdb')
-                        FOR JSON PATH;
+                        FOR JSON PATH)
+                        SELECT @JSONData;
 "@
                 } else {
                     $sqlquery = @"
                         SET NOCOUNT ON;
-                        SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                        DECLARE @JSONData nvarchar(max)
+                        SET @JSONData = (SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                         CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE vs.volume_mount_point != 'C:\\'
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
-                        FOR JSON PATH;
+                        FOR JSON PATH)
+                        SELECT @JSONData;
 "@
 
                     if($includeLogVolumes) {
                         $sqlquery = @"
                             SET NOCOUNT ON;
-                            SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
+                            DECLARE @JSONData nvarchar(max)
+                            SET @JSONData = (SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                             WHERE vs.volume_mount_point != 'C:\\'
                             AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
-                            FOR JSON PATH;
+                            FOR JSON PATH)
+                            SELECT @JSONData;
 "@
                     }
                     # Get the windows volumes of the databases with the mdf file volume name
                     $sqlqueryfordatabaseandvolumelist = @"
                         SET NOCOUNT ON;
-                        SELECT DISTINCT 
+                        DECLARE @JSONData nvarchar(max)
+                        SET @JSONData = (SELECT DISTINCT 
                             DB_NAME(mf.database_id) AS DatabaseName,
                             vs.logical_volume_name as VolumeName,
                             vs.volume_id as VolumeId
@@ -584,13 +594,15 @@ const getMappedOntapVolumesScript = (
                         WHERE 
                             vs.volume_mount_point != 'C:\\'
                             AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-                        FOR JSON PATH;
+                        FOR JSON PATH)
+                        SELECT @JSONData;
 "@
 
                 if($includeLogVolumes) {
                         $sqlqueryfordatabaseandvolumelist = @"
                         SET NOCOUNT ON;
-                        SELECT DISTINCT 
+                        DECLARE @JSONData nvarchar(max)
+                        SET @JSONData = (SELECT DISTINCT 
                             DB_NAME(mf.database_id) AS DatabaseName,
                             vs.logical_volume_name as VolumeName,
                             vs.volume_id as VolumeId
@@ -600,7 +612,8 @@ const getMappedOntapVolumesScript = (
                             sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE 
                             vs.volume_mount_point != 'C:\\'
-                        FOR JSON PATH;
+                        FOR JSON PATH)
+                        SELECT @JSONData;
 "@
                     }
                 }
@@ -1045,13 +1058,14 @@ const readSsmParameter = (instance: string) =>
         $serverInstanceName = "${instance}"
 
         $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-        $instanceType = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
+        $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
+        $instanceType = (Invoke-WebRequest -Headers @{"X-aws-ec2-metadata-token" = $token} -Uri "http://169.254.169.254/latest/meta-data/instance-type" -ErrorAction Stop -UseBasicParsing).Content
         $isT3orT2 = (($instanceType.StartsWith("t3")) -or  ($instanceType.StartsWith("t2")))
         $ssmInstallationPath = (Get-Module -Name AWS.Tools.SimpleSystemsManagement -ListAvailable).Path
         
         if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
             try {
-            $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+            $ec2InstanceId = (Invoke-WebRequest -Headers @{"X-aws-ec2-metadata-token" = $token} -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
             $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
             if ($connection -eq $False) {
                 # Set the registry key to disable certificate revocation check in case of private subnet
@@ -1197,7 +1211,7 @@ const getSqlCredentials = (sqlAuthEnabled: boolean) => `
 
         if (($vcpus -ge 2) -and (-Not $isT3orT2) -and (-Not [string]::IsNullOrEmpty($ssmInstallationPath))) {
             try {
-                $ec2InstanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
+                $ec2InstanceId = (Invoke-WebRequest -Headers @{"X-aws-ec2-metadata-token" = $token} -Uri "http://169.254.169.254/latest/meta-data/instance-id" -ErrorAction Stop -UseBasicParsing).Content
                 $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
                 if ($connection -eq $False) {
                     # Set the registry key to disable certificate revocation check in case of private subnet

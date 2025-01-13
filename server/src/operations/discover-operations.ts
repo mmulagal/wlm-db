@@ -427,7 +427,7 @@ async function getHostAndSqlInfoFromPsOutput(
         ].map((p, index) =>
             p.catch(error => {
                 if (index === 0) {
-                    const errorMessage = `Error fetching command status ${error}, on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+                    const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
                     logger.error(errorMessage);
                     throw createError(errorMessage);
                 }
@@ -699,7 +699,8 @@ async function makeSsmCall(
         Parameters: {
             executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
-        }
+        },
+        Comment: 'Discover SQL Server instances'
     };
 
     let commandId;
@@ -1427,7 +1428,15 @@ async function validateCredentials(
 
         command += '$responseObject | ConvertTo-Json -Compress';
 
-        const ssmresponse = await callSsmExecution(credentialsId, region, [command], instanceId, undefined, false);
+        const ssmresponse = await callSsmExecution(
+            credentialsId,
+            region,
+            [command],
+            instanceId,
+            'Validate credentials',
+            undefined,
+            false
+        );
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -1633,7 +1642,14 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         );
     }
 
-    const hostname = await callSsmExecution(credentialsId, region, ['hostname'], ec2InstanceId, accountId);
+    const hostname = await callSsmExecution(
+        credentialsId,
+        region,
+        ['hostname'],
+        ec2InstanceId,
+        'Get hostname',
+        accountId
+    );
     const hostnameMessage: string = isEmpty(hostname) ? '' : `with hostname '${hostname?.trim()}' `;
 
     // Check if any job is already running for the same purpose.
@@ -1797,6 +1813,7 @@ async function preparePsModulesForManage(
             region,
             INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
             ec2InstanceId,
+            'Install PowerShell modules',
             accountId,
             false,
             (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
@@ -1862,9 +1879,30 @@ async function manageSqlServerV2(
             await Promise.all([
                 describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }),
                 getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-                callSsmExecution(credentialsId, region, CLUSTER_NETWORK_IP_INFO_PS1, ec2InstanceId, accountId),
-                callSsmExecution(credentialsId, region, GET_ACTIVE_DIRECTORY_DETAILS, ec2InstanceId, accountId),
-                callSsmExecution(credentialsId, region, GET_MISSING_RESOURCE_DETAILS, ec2InstanceId, accountId)
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    CLUSTER_NETWORK_IP_INFO_PS1,
+                    ec2InstanceId,
+                    'Get cluster network info',
+                    accountId
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    GET_ACTIVE_DIRECTORY_DETAILS,
+                    ec2InstanceId,
+                    'Get AD details',
+                    accountId
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    GET_MISSING_RESOURCE_DETAILS,
+                    ec2InstanceId,
+                    'Get missing resources',
+                    accountId
+                )
             ]);
 
         const node1InstanceId = ec2InstanceId;
@@ -1921,6 +1959,7 @@ async function manageSqlServerV2(
                             region,
                             GET_MISSING_RESOURCE_DETAILS,
                             node2InstanceId!,
+                            'Get missing resources',
                             accountId
                         );
 
@@ -1970,29 +2009,17 @@ async function manageSqlServerV2(
             isResourceTobeCreated = false;
         } else {
             // A resource ID is a hash generated using available EC2 instance IDs.
-            const [resourceId1, resourceId2] = [
-                getMsSqlResourceId(node1InstanceId, node2InstanceId),
-                getMsSqlResourceId(node2InstanceId || '', node1InstanceId)
-            ];
+            resourceId = getMsSqlResourceId(node1InstanceId, node2InstanceId);
+            const {
+                items: [resourceDetails]
+            } = await getResources(accountId, resourceId, credentialsId, region);
 
-            const [
-                {
-                    items: [resourceDetails1]
-                },
-                {
-                    items: [resourceDetails2]
-                }
-            ] = await Promise.all([
-                getResources(accountId, resourceId1, credentialsId, region),
-                getResources(accountId, resourceId2, credentialsId, region)
-            ]);
-
-            isResourceTobeCreated = isEmpty(resourceDetails1) && isEmpty(resourceDetails2);
-            resourceId = !isEmpty(resourceDetails1) ? resourceId1 : resourceId2;
+            isResourceTobeCreated = !resourceDetails;
         }
         const alreadyManagedDatabaseInstances = await listDatabaseInstances(accountId, {
             credentialsId,
-            resourceId
+            resourceId,
+            region
         });
 
         const itemsStatus: {
@@ -2166,7 +2193,6 @@ async function unmanageDatabaseInstance(
 ) {
     logger.info('Unmanaging SQL Server instances', { accountId, credentialsId, resourceId, databaseInstanceList });
 
-    updateLongRunningAuditGroup(undefined, undefined, databaseInstanceList);
     const databaseInstanceResponse: {
         databaseInstanceId: string;
         status: string;

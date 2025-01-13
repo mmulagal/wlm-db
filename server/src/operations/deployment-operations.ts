@@ -25,7 +25,6 @@ import {
 import {
     CLOUD_FORMATION_STACK_URL,
     MISSING_PERMISSIONS,
-    CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
@@ -88,7 +87,8 @@ import {
     AuditStatus,
     FCI,
     PGSQL_MASTER_TEMPLATE_PATH,
-    AL2023_AMI_NAME
+    AL2023_AMI_NAME,
+    CF_QUOTA_REACHED
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -106,7 +106,6 @@ import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getServicesWithNoEndpoint, enableVpcDnsAttributes } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
-import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
@@ -128,9 +127,15 @@ import {
     createRootModuleFile
 } from './terraform-operations';
 import { getParametersByPath } from '../lib/aws/ssm';
+import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
+
+interface InitializationScript {
+    name: string;
+    url: string;
+}
 
 async function getSubnetsCidr(
     credentialsId: string,
@@ -774,8 +779,7 @@ async function getTerraformSetup(
             tfDeploymentName,
             customTerraformModulesPath,
             templateParameters,
-            initializationScriptURLs,
-            metrics
+            initializationScriptURLs as InitializationScript[]
         );
 
         const contents = await createRootModuleFile(
@@ -1463,6 +1467,8 @@ async function deployPgSql(
         tags
     });
 
+    updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
+
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
@@ -1492,7 +1498,7 @@ async function deployPgSql(
                 fsxConfiguration,
                 sqlConfiguration,
                 topicArn,
-                false,
+                enableCloudWatch,
                 metrics,
                 tags
             );
@@ -1518,7 +1524,7 @@ async function deployPgSql(
             fsxConfiguration,
             sqlConfiguration,
             topicArn,
-            false,
+            enableCloudWatch,
             metrics,
             tags
         );
@@ -1534,7 +1540,7 @@ async function deployPgSql(
                 fsxConfiguration,
                 sqlConfiguration,
                 topicArn,
-                false,
+                enableCloudWatch,
                 metrics,
                 tags
             );
@@ -1820,7 +1826,8 @@ async function formatPgSqlTemplateParameters(
         ...fsxConfiguration,
         ...sqlConfiguration,
         ...ec2Configuration,
-        topicArn
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {

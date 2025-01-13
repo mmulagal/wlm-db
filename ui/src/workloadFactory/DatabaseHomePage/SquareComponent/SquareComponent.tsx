@@ -30,7 +30,10 @@ const SquareComponent = ({ value, color, text, boldValue, loadingInFirstRow = fa
             {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
             <div className={styles.bottomRow}>
                 <div className={styles.square} style={{ backgroundColor: color }} />
-                <Typography variant="Regular_14" style={{ lineHeight: 'unset', width: 'max-content' }}>
+                <Typography
+                    variant="Regular_14"
+                    style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}
+                >
                     {text}
                 </Typography>
                 {isLoading && <DsFlashingDotsLoader />}

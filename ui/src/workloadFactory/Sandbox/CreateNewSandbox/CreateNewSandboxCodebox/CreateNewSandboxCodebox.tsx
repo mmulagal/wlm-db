@@ -1,6 +1,5 @@
 import { DsTypography, Popover } from '@netapp/design-system';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { useState } from 'react';
 import CodeBoxHeading from '../../../../common/CodeBoxHeading/CodeBoxHeading';
 import { ReactComponent as Copy } from '../../../../assets/copyBlackBackground.svg';
@@ -12,6 +11,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { CREATE_SANDBOX_CURL_REQ_TEMPLATE, CREATE_SANDBOX_ENDPOINT, CRED_PLACEHOLDERS } from '../../../../utils/consts';
 import { generateCreateSandboxPayload } from '../../SandboxUtility';
 import { getBaseUrl } from '../../../../utils/apiService';
+import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 
 const CreateNewSandboxCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -73,11 +73,14 @@ const CreateNewSandboxCodebox = () => {
                                 popoverClass={styles['copy-popover']}
                                 children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                 container={
-                                    <CopyToClipboard text={copyResponseData()}>
-                                        <div className={styles.menuItem}>
-                                            <Copy />
-                                        </div>
-                                    </CopyToClipboard>
+                                    <CopyToClipboardCommon
+                                        value={copyResponseData()}
+                                        iconProvided={
+                                            <div className={styles.menuItem}>
+                                                <Copy />
+                                            </div>
+                                        }
+                                    />
                                 }
                             />
                         </div>

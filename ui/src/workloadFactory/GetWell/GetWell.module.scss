@@ -20,7 +20,7 @@
 
             .optimizeHeader {
                 position: relative;
-                left: 45%;
+                left: 45.5%;
             }
 
             .refreshIcon {
@@ -135,7 +135,7 @@
 
             .filterHeader {
                 display: flex;
-                gap: 24px;
+                gap: 48px;
 
                 .items {
                     display: flex;
@@ -184,7 +184,7 @@
                     .tagsContainer {
                         display: flex;
                         flex-wrap: wrap;
-                        width: calc(100% - 100px);
+                        width: calc(100% - 56px);
                         gap: 24px;
                     }
                 }
@@ -268,5 +268,23 @@
     [class*='isExpanded'] {
         max-height: 2500px !important;
         overflow: hidden;
+    }
+}
+
+@media screen and (max-width: 1600px) {
+    .getWell {
+        .mainSection {
+            .dropdownList {
+                gap: 38px !important;
+                .dropDown {
+                    width: 216px !important;
+
+                    [class*='dsTextFieldFrame'] {
+                        max-width: 216px !important;
+                        width: 216px !important;
+                    }
+                }
+            }
+        }
     }
 }

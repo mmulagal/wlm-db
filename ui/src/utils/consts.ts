@@ -349,6 +349,7 @@ export const WLF_TABS = {
     EXPLORE_SAVINGS: 'Explore savings',
     EXPLORE_SAVINGS_EBS: 'Explore savings EBS',
     EXPLORE_SAVINGS_FsxW: 'Explore savings FsxW',
+    EXPLORE_SAVINGS_ONPREM: 'Explore savings OnPrem',
     SAVINGS_CALCULATOR: 'Savings Calculator',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     JOB_MONITORING: 'Job monitoring',
@@ -357,7 +358,10 @@ export const WLF_TABS = {
     UNMANAGED_HOSTS: 'Unmanaged hosts',
     UNDETECTED_HOSTS: 'Undetected hosts',
     REDIRECT_COMPONENT: 'Redirect Component',
-    OPTIMIZE: 'Optimize'
+    OPTIMIZE: 'Optimize',
+    MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
+    MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
+    MSSQL_ON_PREMISES: 'SQL Server On-Premises'
 };
 
 export const DRIVE_LETTER_TYPE = {
@@ -642,7 +646,8 @@ export const SAVINGS_CALC_MODE = {
     MANUAL_EBS: 'Manual_EBS',
     AUTO_EBS: 'Auto_EBS',
     AUTO_FSXW: 'Auto_FSXW',
-    MANUAL_FSXW: 'Manual_FSXW'
+    MANUAL_FSXW: 'Manual_FSXW',
+    ONPREM: 'OnPrem'
 };
 
 export const PARTNER_NODE = 'partner node';
@@ -652,7 +657,9 @@ export const FINDINGS = {
     NOT_OPTIMIZED: 'NOT_OPTIMIZED',
     INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
     UNDER_PROVISIONED: 'UNDER_PROVISIONED',
-    INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
+    INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS',
+    NOT_APPLICABLE: 'not-applicable',
+    ANALYZING: 'ANALYZING'
 };
 
 export const TCO_MANUAL_DEPLOYMENT_TYPE = {
@@ -700,7 +707,9 @@ export const GETWELL_VALUES: any = {
     same_drive: 'Same drive',
     critical: 'Critical',
     warning: 'Warning',
-    none: 'None'
+    none: 'None',
+    'separate drive': 'Separate drive',
+    'same drive': 'Same drive'
 };
 
 export const GETWELL_CONFIG: any = {
@@ -729,13 +738,14 @@ export const GETWELL_CONFIG: any = {
     'default-log-files-location': 'transaction_log_files',
     'default-data-files-location': 'user_data_files',
     'compute-rightsizing': 'compute_rightsizing',
-    'operating-system-patch': 'operating_system_patch',
-    'sql-license': 'sql_licenses'
+    'sql-license': 'sql_licenses',
+    'host-os-patch': 'host_os_patch'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
-    'User data files (.mdf) placement',
+    'Data files (.mdf) placement',
     'Log files (.ldf) placement',
     'TempDB placement',
-    'Licenses' // Licenses is for Application (SQL Server)
+    'Licenses', // Licenses is for Application (SQL Server)
+    GENERAL.OPERATING_SYSTEM_PATCH
 ];

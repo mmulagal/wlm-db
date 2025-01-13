@@ -18,7 +18,7 @@ const UndetectedSecondDialogV2 = ({ data, apiResult }: { data: any; apiResult: a
     let ebsType = false;
     let fsxwType = false;
     // To check is SQL server has FSx and EBS storage
-    if (data?.storage) {
+    if (data?.storage && data?.storage.length > 0) {
         data?.storage?.map((storageObj: any) => {
             if (storageObj.type === DETECT_HOST_VAR.FSXN) {
                 fsxType = true;
@@ -31,6 +31,11 @@ const UndetectedSecondDialogV2 = ({ data, apiResult }: { data: any; apiResult: a
             }
         });
     }
+
+    if (data?.storage?.fsxn) {
+        fsxType = true;
+    }
+
     const hostType = fsxType
         ? GENERAL.FSX_FOR_ONTAP
         : ebsType

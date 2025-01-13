@@ -3,7 +3,8 @@ import config from 'config';
 enum AssessmentCategories {
     STORAGE = 'storage',
     COMPUTE = 'compute',
-    LICENSE = 'license'
+    LICENSE = 'license',
+    HOST_OS_PATCH = 'host-os-patch'
 }
 
 enum AssessmentTriggeredBy {
@@ -46,6 +47,20 @@ enum OptimizeStorageConfigs {
     TIERING_POLICY = 'tiering-policy',
     SPACE_RESERVATION = 'space-reservation-enabled',
     SPACE_ALLOCATION = 'space-allocation-allocated'
+}
+
+enum OptimizeStorageConfigsJobNames {
+    THIN_PROVISIONING = 'thin provisioning',
+    AUTOSIZE = 'autosize',
+    AUTOSIZE_MODE = 'autosize-mode',
+    FRACTIONAL_RESERVE = 'fractional reserve',
+    SNAPSHOT_COPY_RESERVE = 'snapshot copy reserve',
+    SNAPSHOT_AUTO_DELETE = 'snapshot autodelete',
+    SPACE_MANAGEMENT = 'space management',
+    TIERING_MINIMUM_COOLING_DAYS = 'tiering minimum cooling days',
+    TIERING_POLICY = 'tiering policy',
+    SPACE_RESERVATION = 'space reservation enabled',
+    SPACE_ALLOCATION = 'space allocation'
 }
 
 enum OptimizeOperatingSystemParams {
@@ -137,8 +152,15 @@ const QUERY_PARAMS = {
     lun: 'path'
 };
 
+const STORAGE_OPTIMIZE_JOB_PARAM = {
+    volume: 'volumes',
+    lun: 'LUN paths'
+};
+
 const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
+const TEST_CONNECTION_COMMAND =
+    'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -146,6 +168,7 @@ export {
     AwsWellArchitecturedPillars,
     REDIS_URL,
     OptimizeStorageConfigs,
+    OptimizeStorageConfigsJobNames,
     OPTIMIZE_SIZING_CONFIGS,
     SEVERITY,
     OptimizeStorageApiData,
@@ -155,5 +178,7 @@ export {
     LUN,
     QUERY_PARAMS,
     REDIS_SCHEMA,
-    OptimizeOperatingSystemParams
+    OptimizeOperatingSystemParams,
+    TEST_CONNECTION_COMMAND,
+    STORAGE_OPTIMIZE_JOB_PARAM
 };

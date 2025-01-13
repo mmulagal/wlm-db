@@ -1543,7 +1543,8 @@ if($sqlAuthEnabled) {
 $responseObject = @{}
 
 try {
-    $ip = (Invoke-WebRequest -URI http://169.254.169.254/latest/meta-data/local-ipv4 -UseBasicParsing).Content;
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+    $ip = (Invoke-WebRequest -Headers @{"X-aws-ec2-metadata-token" = $token} -URI http://169.254.169.254/latest/meta-data/local-ipv4 -UseBasicParsing).Content;
     $query = "SET NOCOUNT ON; SELECT DISTINCT local_tcp_port FROM sys.dm_exec_connections  WHERE local_tcp_port IS NOT NULL"
     $port = Call-SqlCmd -SqlCredential $sqlCredential -Query "$query" -InstanceName "$ip\\${instanceName}"
     $responseObject['server'] = "$($ip):$($port)${instanceName ? `\\${instanceName}` : ''}"
@@ -1657,7 +1658,7 @@ try {
         $diskpartition = Get-Partition -DiskNumber $disk.Number | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
         $null = $diskpartition | Set-Partition -NoDefaultDriveLetter $true -ErrorAction stop
 
-        $fileLunData = ($FileLunArr | Where-Object { $_.lun -eq $disk.SerialNumber })[0]
+        $fileLunData = ($FileLunArr | Where-Object { $_.lun -ceq $disk.SerialNumber })[0]
 
         Get-Partition -DiskNumber $disk.Number | Get-Volume | Set-Volume -NewFileSystemLabel $fileLunData.label
         
@@ -1746,7 +1747,7 @@ try {
 
                 #     #Rename new cluster disks to user friendly name
 
-                $label = ($FileLunArr | Where-Object { $_.lun -eq $clDiskInfo.SerialNumber } | Select-Object -ExpandProperty label)[0]
+                $label = ($FileLunArr | Where-Object { $_.lun -ceq $clDiskInfo.SerialNumber } | Select-Object -ExpandProperty label)[0]
                 (Get-ClusterResource -Name $($clusterdisk.Name)).name = $label
             }
         }

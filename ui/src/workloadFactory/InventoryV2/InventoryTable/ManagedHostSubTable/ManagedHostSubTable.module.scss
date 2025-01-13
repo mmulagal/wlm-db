@@ -3,6 +3,10 @@
     z-index: 1 !important;
     display: flex;
     border-bottom: 1px solid var(--border);
+    position: sticky;
+    left: 0;
+
+    padding: 48px 70px;
 
     .menuPointerDisabled {
         font-weight: 600;
@@ -102,8 +106,8 @@
     }
 
     .managedSubTable {
-        width: 1670px;
-        padding: 48px 12px 48px 0;
+        max-width: 1402px;
+        // padding: 48px 12px 48px 0;
     }
 
     [class*='Table-module_row'] {
@@ -139,6 +143,10 @@
     [class*='Table-module_row'] {
         span {
             background-color: var(--main-background) !important;
+        }
+
+        [class*='_menuPointer'] {
+            background-color: unset !important;
         }
     }
 }

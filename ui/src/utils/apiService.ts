@@ -883,6 +883,14 @@ export const exploreSavingsApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
+            getUploadScript: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/mssql/onprem/upload`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+
             getStorageSavings: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload, type }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}`,
@@ -923,12 +931,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch`
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -1076,6 +1084,7 @@ export const {
 } = sandboxApi;
 
 export const {
+    useGetUploadScriptMutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
     useGetManualStorageSavingsMutation,

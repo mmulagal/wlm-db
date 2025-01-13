@@ -62,23 +62,27 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         otherCostPercent: 0,
         requireBillingPerm: false
     },
-    aggregatedPgsqlCosts: {
-        storageCost: 0,
-        computeCost: 0,
-        connectivityCost: 0,
-        otherCost: 0,
-        totalCost: 0,
-        storageCostPercent: 0,
-        computeCostPercent: 0,
-        connectivityCostPercent: 0,
-        otherCostPercent: 0,
-        requireBillingPerm: false
-    },
     selectedConfig: '',
+    selectedConfigSummary: {
+        optimizationScore: '',
+        optimizedInstances: 0,
+        notOptimizedInstances: 0,
+        severity: ''
+    },
     selectedAssessmentRow: null,
     sandboxAgeRange: {
         from: '',
         range: ''
+    },
+    selectedRowsForOptimize: [],
+    potentialSavingsValues: {
+        loading: false,
+        ebsCost: 0,
+        fsxwCost: 0,
+        fsxnCost: 0,
+        savings: 0,
+        savingsPercent: 0,
+        noSavings: false
     }
 };
 
@@ -86,8 +90,14 @@ const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setSelectedRowsForOptimize: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForOptimize = action.payload;
+        },
         setSelectedConfig: (state, action: PayloadAction<any>) => {
             state.selectedConfig = action.payload;
+        },
+        setSelectedConfigSummary: (state, action: PayloadAction<any>) => {
+            state.selectedConfigSummary = action.payload;
         },
         selectedTabSelection: (state, action: PayloadAction<any>) => {
             state.selectedTab = action.payload;
@@ -116,9 +126,6 @@ const databaseHomeSlice = createSlice({
         addAggregatedCosts: (state, action: PayloadAction<any>) => {
             state.aggregatedCosts = action.payload;
         },
-        addAggregatedPgsqlCosts: (state, action: PayloadAction<any>) => {
-            state.aggregatedPgsqlCosts = action.payload;
-        },
         addInitialData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
         },
@@ -127,11 +134,15 @@ const databaseHomeSlice = createSlice({
         },
         setSandboxAgeRange: (state, action: PayloadAction<any>) => {
             state.sandboxAgeRange = action.payload;
+        },
+        setPotentialSavingsValues: (state, action: PayloadAction<any>) => {
+            state.potentialSavingsValues = action.payload;
         }
     }
 });
 
 export const {
+    setSelectedRowsForOptimize,
     selectedTabSelection,
     addJobsSummary,
     addJobsSummaryLoading,
@@ -141,11 +152,12 @@ export const {
     addAggregatedStorageSavings,
     addAggregatedPgsqlStorageSavings,
     addAggregatedCosts,
-    addAggregatedPgsqlCosts,
     addInitialData,
     setSelectedConfig,
     setSelectedAssessmentRow,
-    setSandboxAgeRange
+    setSandboxAgeRange,
+    setSelectedConfigSummary,
+    setPotentialSavingsValues
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;

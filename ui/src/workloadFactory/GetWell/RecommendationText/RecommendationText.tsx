@@ -30,6 +30,15 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 </div>
             )}
 
+            {data?.info && (
+                <div className={styles.info}>
+                    <div className={styles.setSVG}>
+                        <InfoIcon />
+                    </div>
+                    <DsTypography variant="Regular_14">{data?.info}</DsTypography>
+                </div>
+            )}
+
             {data?.description && (
                 <div
                     className={styles.desc}
@@ -43,9 +52,10 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 </div>
             )}
 
-            {data?.descriptionList?.map(item => {
+            {data?.descriptionList?.map((item: any, index: number) => {
                 return (
                     <div
+                        key={index + Math.random()}
                         style={{
                             //@ts-ignore
                             whiteSpace: from === 'dashboard' ? '' : 'pre-wrap',
@@ -66,7 +76,10 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     <DsTypography variant="Semibold_14">Values</DsTypography>
                     <div className={styles.values}>
                         {data?.values.map((value, index) => (
-                            <>
+                            <div
+                                key={index + Math.random()}
+                                style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
+                            >
                                 <div className={styles.seperator} />
 
                                 <DsTypography
@@ -82,18 +95,9 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                                 >
                                     {value}
                                 </DsTypography>
-                            </>
+                            </div>
                         ))}
                     </div>
-                </div>
-            )}
-
-            {data?.info && (
-                <div className={styles.info}>
-                    <div className={styles.setSVG}>
-                        <InfoIcon />
-                    </div>
-                    <DsTypography variant="Regular_14">{data?.info}</DsTypography>
                 </div>
             )}
         </div>

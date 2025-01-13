@@ -27,6 +27,7 @@ import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
 import { getFsxKmsKeysList } from '../operations/aws/kms-operations';
 import { getFSxOntapRegionsList, getGenericFSxOntapRegionsList } from '../operations/aws/ssm-operations';
+import castRequest from './utils';
 
 const REGION_AGNOSTIC_PREFIX_PATH = '/v1/credentials/:credentialsId';
 const FSX_PREFIX_PATH = `${REGION_AGNOSTIC_PREFIX_PATH}/fsx`;
@@ -39,7 +40,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const {
             params: { credentialsId, region },
             query: { fields }
-        } = request;
+        } = castRequest(request);
         const response = await getVpcsList(credentialsId, region, fields);
         return reply.send(response);
     });
@@ -50,7 +51,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { credentialsId, region, vpcId }
-            } = request;
+            } = castRequest(request);
             const response = await getVpcSecurityGroups(credentialsId, region, vpcId);
             return reply.send(response);
         }
@@ -60,7 +61,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const {
             params: { credentialsId, region },
             query: { osType, databaseType, osVersion, databaseEdition, databaseVersion, customAmi }
-        } = request;
+        } = castRequest(request);
         const response = await getAmiList(
             credentialsId,
             region,
@@ -77,7 +78,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${API_PREFIX_PATH}/sns-topics`, { schema: GetSnsTopicsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
-        } = request;
+        } = castRequest(request);
         const response = await getSnsTopics(region, credentialsId);
         return reply.send(response);
     });
@@ -85,7 +86,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${API_PREFIX_PATH}/ads`, { schema: GetAdsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
-        } = request;
+        } = castRequest(request);
         const response = await getAdsList(credentialsId, region);
         return reply.send(response);
     });
@@ -96,7 +97,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { region }
-            } = request;
+            } = castRequest(request);
             const response = await getInstanceTypes(region);
             return reply.send(response);
         }
@@ -105,7 +106,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${API_PREFIX_PATH}/instance-types`, { schema: GetInstanceTypesSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
-        } = request;
+        } = castRequest(request);
         const response = await getInstanceTypes(region, credentialsId);
         return reply.send(response);
     });
@@ -118,7 +119,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${FSX_PREFIX_PATH}/regions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
         const {
             params: { credentialsId }
-        } = request;
+        } = castRequest(request);
 
         const response = await getFSxOntapRegionsList(credentialsId);
         return reply.send(response);
@@ -130,7 +131,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const {
                 params: { credentialsId, region, vpcId }
-            } = request;
+            } = castRequest(request);
             const response = await getFSxFileSystemsList(credentialsId, region, vpcId);
 
             return reply.send(response);
@@ -140,7 +141,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${API_PREFIX_PATH}/kms-keys`, { schema: GetFsxKmsKeysListSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
-        } = request;
+        } = castRequest(request);
         const response = await getFsxKmsKeysList(credentialsId, region);
         return reply.send(response);
     });
@@ -148,7 +149,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     server.get(`${API_PREFIX_PATH}/key-pairs`, { schema: GetKeyPairsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
-        } = request;
+        } = castRequest(request);
 
         const response = await getKeyPairsList(credentialsId, region);
         return reply.send(response);

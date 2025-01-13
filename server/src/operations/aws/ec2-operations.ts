@@ -490,6 +490,13 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
 async function getVpcEndpoints(credentialsId: string, region: string, vpcId: string) {
     logger.info('Get vpc endpoints ', credentialsId, region, vpcId);
 
+    if (!vpcId) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'VPC ID is missing in the request, provide a valid VPC ID to proceed.'
+        );
+    }
+
     const input: DescribeVpcEndpointsCommandInput = {
         Filters: [
             {
@@ -916,10 +923,7 @@ async function instanceTypeChangePreReqs(
                     'Elastic IP address not found. On instance type change, Amazon EC2 releases the address and give your instance a new public IPv4 address'
                 );
             }
-            if (process.env.NODE_ENV !== 'development') {
-                // In development, we don't want to throw the error as our test setups dont have elastic IPs
-                throw error;
-            }
+            throw error;
         }
 
         // spot instance check

@@ -53,10 +53,6 @@ interface JobGroup {
     };
 }
 
-interface JobSummaryByTime extends JobSummaryByTimeRecordType {
-    [key: string]: number | undefined;
-}
-
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
 
 function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
@@ -349,20 +345,13 @@ async function getJobSummaryByTime(
 
     const groups = (await groupJobsByTimeAndStatus(accountId, credentialsId, region, startTime, endTime)) as JobGroup[];
 
-    return groups.reduce((acc: JobSummaryByTime[], group: JobGroup) => {
+    return groups.map((group: JobGroup) => {
         const status = camelCase(group?.status?.toLowerCase());
         const count = group?._count?._all;
         const endtime = new Date(group.end_time!)?.valueOf();
 
-        const existingObj = acc.find(el => el.endTime === endtime);
-        if (existingObj) {
-            existingObj[status] = count;
-        } else {
-            acc.push({ endTime: endtime, [status]: count });
-        }
-
-        return acc;
-    }, []);
+        return { endTime: endtime, [status]: count };
+    });
 }
 
 async function getLongRunningJobsAndSubjobs() {
@@ -422,6 +411,33 @@ async function updateLongRunningResourcePrepareJobs() {
     }
 }
 
+async function updateParentJobStatus(accountId: string, parentId: string, errorMsg?: string) {
+    logger.info('Updating parent job', { accountId, parentId });
+
+    const parentJob = await getJobDetails(accountId, parentId);
+    if (parentJob.status !== JOBSTATUS.FAILED) {
+        const allSubJobs = await listJobs(accountId, '', '', parentId);
+
+        const jobStatus: JOBSTATUS = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+            ? JOBSTATUS.IN_PROGRESS
+            : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.FAILED
+            : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+            ? JOBSTATUS.COMPLETED
+            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.WARNING
+            : JOBSTATUS.IN_PROGRESS;
+
+        const modifiedJobData = {
+            status: jobStatus,
+            endTime: Date.now(),
+            ...(errorMsg ? { error: errorMsg } : {})
+        };
+
+        await updateJobDetails(accountId, parentId, modifiedJobData);
+    }
+}
+
 export {
     Job,
     registerJobs,
@@ -433,5 +449,6 @@ export {
     getJobSummaryByTime,
     registerJob,
     updateLongRunningJobs,
-    updateLongRunningResourcePrepareJobs
+    updateLongRunningResourcePrepareJobs,
+    updateParentJobStatus
 };

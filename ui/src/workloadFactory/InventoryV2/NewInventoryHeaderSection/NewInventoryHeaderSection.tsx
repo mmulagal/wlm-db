@@ -95,7 +95,7 @@ const NewInventoryHeaderSection = () => {
                                 <div className={styles.thirdBlock}>
                                     <SquareComponent
                                         value={String(inventoryChartData?.managedInstance || 0)}
-                                        color="var(--chart-9)"
+                                        color="#A815F3"
                                         text={GENERAL.MANAGED_INSTANCES}
                                         isLoading={false}
                                         loadingInFirstRow={loading}

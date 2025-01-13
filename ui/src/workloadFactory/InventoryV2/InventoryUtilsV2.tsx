@@ -41,11 +41,11 @@ import {
 } from '../../utils/utilityFunctions';
 import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
 import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
+import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -371,6 +371,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                         : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
                     fileSystemDeploymentMode: getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType,
+                    fsxId: perRow?.databaseInstanceTopology?.fileSystemId,
                     protection: perRow?.protection,
                     performance: perRow?.performance,
                     storage: perRow?.storage,
@@ -1376,6 +1377,7 @@ export const updateSqlServerInstancesForBothNodes = (
                 ...instRow,
                 loading: perfData?.loading,
                 fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
+                fsxId: perRow?.databaseInstanceTopology?.fileSystemId || instRow?.fsxId,
                 protection: perfData?.protection || instRow?.protection || perRow?.protection,
                 performance: perfData?.performance || instRow?.performance || perRow?.performance,
                 storage: instRow?.storage || perRow?.storage,
@@ -1432,6 +1434,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                     ...instRow,
                     databaseCount: perRow?.databaseCount,
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
+                    fsxId: perRow?.databaseInstanceTopology?.fileSystemId || instRow?.fsxId,
                     loading: perfData?.loading,
                     protection: instRow?.protection || perfData?.protection,
                     performance: instRow?.performance || perfData?.performance,
@@ -1898,7 +1901,7 @@ export const getOptimizationStatus = (
     }
     let instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
-    if (instanceRow) {
+    if (instanceRow && instanceRow?.assessments) {
         let { cardsData, formatOntapConfigList, formatOsConfigList } = getCardsData(instanceRow?.assessments, {});
         let optBreakDown = formatOptimizationBreakDown(cardsData);
         optimizationStatus =
@@ -1907,6 +1910,8 @@ export const getOptimizationStatus = (
                     ? optBreakDown?.total?.notOptimized + ' recommendation'
                     : optBreakDown?.total?.notOptimized + ' recommendations'
                 : 'Optimized';
+    } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
+        optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     }
     return optimizationStatus;
 };
@@ -2006,9 +2011,10 @@ export const renderVpcText = (cellData: any, rowData: any, styles: any) => {
                                             popoverClass={styles['copy-popover']}
                                             children={'Copied'}
                                             container={
-                                                <CopyToClipboard text={rowData?.vpcIdAndNameText}>
-                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                </CopyToClipboard>
+                                                <CopyToClipboardCommon
+                                                    value={rowData?.vpcIdAndNameText}
+                                                    iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                                />
                                             }
                                         />
                                     </div>
@@ -2047,9 +2053,10 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                                             popoverClass={styles['copy-popover']}
                                             children={'Copied'}
                                             container={
-                                                <CopyToClipboard text={instanceList[0]}>
-                                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                </CopyToClipboard>
+                                                <CopyToClipboardCommon
+                                                    value={instanceList[0]}
+                                                    iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                                />
                                             }
                                         />
                                     </div>
@@ -2063,9 +2070,10 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
                                                 popoverClass={styles['copy-popover']}
                                                 children={'Copied'}
                                                 container={
-                                                    <CopyToClipboard text={instanceList[1]}>
-                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                                    </CopyToClipboard>
+                                                    <CopyToClipboardCommon
+                                                        value={instanceList[1]}
+                                                        iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                                    />
                                                 }
                                             />
                                         </div>

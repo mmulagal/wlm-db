@@ -1,11 +1,11 @@
 import { Typography } from '@netapp/design-system';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
-//@ts-ignore
-import CopyToClipboard from 'react-copy-to-clipboard';
+
 import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
 import { ReactComponent as DownloadIcon } from '@netapp/icons/ic_download.svg';
 import styles from './ViewDialog.module.scss';
 import { downloadObjectAsJson } from '../../utils/utilityFunctions';
+import CopyToClipboardCommon from '../CopyToClipboard/copyToClipboard';
 
 const ViewDialog = ({
     data,
@@ -30,9 +30,10 @@ const ViewDialog = ({
                             popoverClass={styles['copy-popover']}
                             children={'Copied to clipboard'}
                             container={
-                                <CopyToClipboard text={copyResponseData ? copyResponseData() : data}>
-                                    <CopyIcon fill={'#A7A7A7'}></CopyIcon>
-                                </CopyToClipboard>
+                                <CopyToClipboardCommon
+                                    value={copyResponseData ? copyResponseData() : data}
+                                    iconProvided={<CopyIcon fill={'#A7A7A7'}></CopyIcon>}
+                                />
                             }
                         />
 

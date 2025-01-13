@@ -1,12 +1,6 @@
 .renderTable {
     width: 1334px;
 
-    .buttonContainer {
-        width: 90%;
-        display: flex;
-        justify-content: end;
-    }
-
     .statusContainer {
         display: flex;
         gap: 8px;
@@ -43,6 +37,11 @@
             &.arrow-down {
                 transform: rotate(270deg);
                 -webkit-transform: rotate(270deg);
+            }
+            &.arrow-disable {
+                path {
+                    fill: var(--text-disabled);
+                }
             }
         }
     }

@@ -20,13 +20,23 @@
     ],
     "homepage": {
         "description": "Detect your existing database estate on AWS, assess potential cost savings by moving to FSx for ONTAP, deploy databases end-to-end with built-in best practices for optimization, and automate thin cloning for CI/CD pipelines.",
-        "primaryCtaLabel": "Deploy database host",
-        "primaryCtaTo": "/databases/mssql-deploy-wizard",
-        "primaryCtaBluexpTo": "/fsxdb/mssql-deploy-wizard",
+        "mainPrimaryCtaDropdownLabel": "Deploy host",
         "secondaryCtaLabel": "Go to Databases inventory",
         "secondaryCtaTo": "/databases/inventory",
         "secondaryCtaBluexpTo": "/fsxdb/inventory",
         "primaryCtaDropdownLabel": "Explore savings",
+        "mainPrimaryCtaDropdownTo": [
+            {
+                "label": "Microsoft SQL Server",
+                "to": "/databases/mssql-deploy-wizard",
+                "bluexpTo": "/fsxdb/mssql-deploy-wizard"
+            },
+            {
+                "label": "PostgreSQL Server",
+                "to": "/databases/postgreSQL-deploy-wizard",
+                "bluexpTo": "/fsxdb/postgreSQL-deploy-wizard"
+            }
+        ],
         "primaryCtaDropdownTo": [
             {
                 "label": "Microsoft SQL Server on EBS",
@@ -37,6 +47,11 @@
                 "label": "Microsoft SQL Server on FSx for Windows",
                 "to": "/databases/explore-savings-fsxw",
                 "bluexpTo": "/fsxdb/explore-savings-fsxw"
+            },
+            {
+                "label": "Microsoft SQL Server on On-Premises",
+                "to": "/databases/explore-savings-on-premise",
+                "bluexpTo": "/fsxdb/explore-savings-on-premise"
             }
         ],
         "isComingSoon": false,

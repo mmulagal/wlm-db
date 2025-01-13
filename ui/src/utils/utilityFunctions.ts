@@ -39,6 +39,7 @@ import { databaseHomeApi } from './apiService';
 import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
+import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -88,6 +89,38 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
 
     return rows;
 }
+
+export const getTruncatedItems = (items: any) => {
+    let totalWidth = 0;
+
+    const maxItemsToShow = [];
+    const remaining = [];
+
+    // Dynamically calculate the width
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    //@ts-ignore
+    context.font = '14px'; // Adjust font-size and family as per your table
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        //@ts-ignore
+        const itemWidth = context.measureText(item + ', ').width;
+        //@ts-ignore
+        if (totalWidth + itemWidth <= 261 || maxItemsToShow.length === 0) {
+            maxItemsToShow.push(item);
+            totalWidth += itemWidth;
+        } else {
+            remaining.push(...items.slice(i));
+            break;
+        }
+    }
+
+    return {
+        maxItemsToShow: maxItemsToShow,
+        remaining: remaining
+    };
+};
 
 export const getFilterOptions = (data: any[], propName: string, renderLabel?: (val: any) => any) => {
     return !data
@@ -369,6 +402,16 @@ export const displayFormattedValue = (value: number, msg: string) => {
 
 export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
+};
+
+export function roundOffNumber(number: any) {
+    let roundOffNumber;
+    if (Number(number) < 1) {
+        roundOffNumber = number;
+    } else {
+        roundOffNumber = Math.round(Number(number));
+    }
+    return roundOffNumber;
 };
 
 export function formatNumberWithCustomComma(number: any, roundOffRequired: boolean = true) {
@@ -1595,6 +1638,42 @@ export const apiDOCURL = () => {
     }
 };
 
+export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolean) => {
+    let path = '';
+    if (isWorkloadFactory) {
+        switch (value) {
+            case WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE:
+                path = './explore-savings-ebs';
+                break;
+            case WLF_TABS.MSSQL_FSX_FOR_WINDOWS:
+                path = './explore-savings-fsxw';
+                break;
+            case WLF_TABS.MSSQL_ON_PREMISES:
+                path = './explore-savings-on-premise';
+                break;
+        }
+    } else {
+        switch (value) {
+            case WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE:
+                path = '../../fsxdb/explore-savings-ebs';
+                break;
+            case WLF_TABS.MSSQL_FSX_FOR_WINDOWS:
+                path = '../../fsxdb/explore-savings-fsxw';
+                break;
+            case WLF_TABS.MSSQL_ON_PREMISES:
+                path = '../../fsxdb/explore-savings-on-premise';
+                break;
+        }
+    }
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${path}`,
+            replace: true
+        }
+    });
+};
+
 export const handleURL = (value: string, isWorkloadFactory: boolean) => {
     let path = '';
     if (isWorkloadFactory) {
@@ -1667,6 +1746,26 @@ export const updateSizeInGib = (data: any): any => {
     return data;
 };
 
+export const compareDataAndCalculateDifference = (arrays: any) => {
+    const firstSum = arrays[0].reduce((sum: number, num: number) => sum + num, 0);
+    const secondSum = arrays[1].reduce((sum: number, num: number) => sum + num, 0);
+
+    if (firstSum > secondSum) {
+        const difference = firstSum - secondSum;
+        const percentage = (difference / firstSum) * 100;
+        return {
+            result: true,
+            difference: difference,
+            percentage: `${percentage.toFixed(2)}%`
+        };
+    } else {
+        return {
+            result: false,
+            message: 'First sum is not greater than second sum.'
+        };
+    }
+};
+
 export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
     switch (tab) {
         case WLF_TABS.INVENTORY:
@@ -1675,6 +1774,8 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case WLF_TABS.EXPLORE_SAVINGS_FsxW:
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case WLF_TABS.EXPLORE_SAVINGS_ONPREM:
+            return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case WLF_TABS.SANDBOXES:
             return WLF_TABS.SANDBOXES;
         case WLF_TABS.EXPLORE_SAVINGS:
@@ -1683,5 +1784,19 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.JOB_MONITORING;
         default:
             return selectedHeaderTab;
+    }
+};
+
+interface Dispatch {
+    (action: any): void;
+}
+
+export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): void => {
+    if (tabValue === WLF_TABS.EXPLORE_SAVINGS_EBS) {
+        dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE));
+    } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
+        dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_FSX_FOR_WINDOWS));
+    } else {
+        dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
     }
 };

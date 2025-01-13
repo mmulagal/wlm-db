@@ -7,10 +7,10 @@ import useResize from '../../../../common/hooks/useResize';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import CategoryDialogComponent from '../CategoryDialogComponent/CategoryDialogComponent';
-import { WLF_TABS } from '../../../../utils/consts';
+import { INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import { useDispatch } from 'react-redux';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
+import { selectedTabSelection, setSelectedAssessmentRow } from '../../../../store/workloadFactory/databaseHomeSlice';
 import store from '../../../../store/store';
 import {
     setGwDatabaseInstance,
@@ -20,6 +20,9 @@ import {
     setGwResourceId,
     setLandingFrom
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { getAssessmentHostListGroupedByCategory } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { sortListOfDict } from '../../../../utils/utilityFunctions';
 
 type CategoryComponentProps = {
     image: React.ReactNode;
@@ -29,6 +32,7 @@ type CategoryComponentProps = {
     totalOptimizationInstances: number;
     isComingSoon: boolean;
     isBorderRequired?: boolean;
+    isLoading: boolean;
 };
 const CategoryComponent = ({
     image,
@@ -37,12 +41,14 @@ const CategoryComponent = ({
     optimizationInstances,
     totalOptimizationInstances,
     isComingSoon,
-    isBorderRequired
+    isBorderRequired,
+    isLoading
 }: CategoryComponentProps) => {
     const windowSize = useResize();
-    const isLoading = false;
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
+
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
 
     const redirectToGetWellPage = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
@@ -54,17 +60,26 @@ const CategoryComponent = ({
 
         dispatch(setGwHostname(selectedAssessmentRow?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(selectedAssessmentRow?.resourceId));
-        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.databaseInstanceId));
+        dispatch(setGwResourceId(selectedAssessmentRow?.databaseHostId));
+        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.instanceId));
         dispatch(setGwDatabaseInstanceName(selectedAssessmentRow?.databaseInstanceName));
         dispatch(setGwDatabaseStorageType(selectedAssessmentRow?.sqlServerDeploymentType));
+        setTimeout(() => {
+            dispatch(setSelectedAssessmentRow(null));
+        }, 5);
     };
 
     const handleDialog = () => {
+        let tableData = sortListOfDict(
+            getAssessmentHostListGroupedByCategory(allmssqlHostAssessmentData) || [],
+            'status',
+            false
+        );
+        let isOnlineInstance = tableData.some((item: any) => item?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP);
         setDialog(
             <DialogComponent
                 header={`${firstBlockText} optimization`}
-                content={<CategoryDialogComponent type={firstBlockText} />}
+                content={<CategoryDialogComponent tableData={tableData} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -72,8 +87,10 @@ const CategoryComponent = ({
                 }}
                 closeCallback={() => {
                     closeDialog();
+                    dispatch(setSelectedAssessmentRow(null));
                 }}
                 customClass={styles.dialog}
+                primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
             />
         );
     };
@@ -129,7 +146,7 @@ const CategoryComponent = ({
                         <DsFlashingDotsLoader />
                     </div>
                 )}
-                <DsTypography variant="Regular_14">Optimization instances</DsTypography>
+                <DsTypography variant="Regular_14">Optimized instances</DsTypography>
             </div>
 
             <SeparatorComponent variant="vertical" height="60px" />
@@ -138,7 +155,12 @@ const CategoryComponent = ({
                 {isComingSoon && windowSize.width > 1700 && <ComingSoon />}
                 {isComingSoon && windowSize.width < 1700 && <ComingSoon2 />}
                 {!isComingSoon && (
-                    <DsButton variant="secondary" isThin onClick={() => handleDialog()}>
+                    <DsButton
+                        variant="secondary"
+                        isThin
+                        onClick={() => handleDialog()}
+                        isDisabled={isLoading || optimizationScore === 100 || totalOptimizationInstances === 0}
+                    >
                         Optimize
                     </DsButton>
                 )}

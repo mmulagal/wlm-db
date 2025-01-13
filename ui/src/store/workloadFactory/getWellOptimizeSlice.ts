@@ -22,7 +22,8 @@ const initialState: GetWellSliceInterface = {
     selectedRecommendedInstance: null,
     credIdFromJM: '',
     regionFromJM: '',
-    landingFrom: ''
+    landingFrom: '',
+    inProgressOptimizationData: {}
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -105,6 +106,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setLandingFrom: (state, action: PayloadAction<any>) => {
             state.landingFrom = action.payload;
+        },
+        setInProgressOptimizationData: (state, action: PayloadAction<any>) => {
+            state.inProgressOptimizationData = action.payload;
         }
     }
 });
@@ -130,7 +134,8 @@ export const {
     resetGwData,
     setOptimizingData,
     setOptimizingInstanceData,
-    setSelectedRecommendedInstance
+    setSelectedRecommendedInstance,
+    setInProgressOptimizationData
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

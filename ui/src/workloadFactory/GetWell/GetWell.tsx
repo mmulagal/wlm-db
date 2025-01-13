@@ -15,6 +15,7 @@ import TotalOptimizationScore from './TotalOptimizationScore/TotalOptimizationSc
 import OptimizationBreakdown from './OptimizationBreakdown/OptimizationBreakdown';
 import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import { ReactComponent as RowArrow } from '../../assets/row arrow-down.svg';
 import { ReactComponent as Light } from '../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../assets/Light-Disabled.svg';
 import { ReactComponent as Error } from '../../assets/error-icon.svg';
@@ -46,11 +47,12 @@ import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
 import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
-import domToPdf from 'dom-to-pdf';
+//import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
+import downloadPdf from '../../common/pdfGenerator';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -133,7 +135,9 @@ const GetWell = () => {
                 filename: `Optimization_Report_MSSQLSERVER_${generateDate()}.pdf`,
                 compression: 'MEDIUM'
             };
-            domToPdf(elem, options, (pdf: any) => {
+
+            //@ts-ignore
+            downloadPdf(elem, options, (pdf: any) => {
                 setOptimizePrintState(false);
                 dispatch(
                     addNotification({
@@ -228,6 +232,21 @@ const GetWell = () => {
         );
     };
 
+    const [expandedValue, setExpandedValue] = useState(undefined);
+    const [clickedAccordionId, setClickedAccordionId] = useState<string | undefined>(undefined);
+
+    const isAccordionExpanded = (id: string, optimizePrintState: any): boolean | undefined => {
+        if (optimizePrintState) {
+            return true;
+        }
+
+        return clickedAccordionId === expandedValue && expandedValue === id;
+    };
+
+    const handleAccordionExpanded = (id: any, isExpanded: boolean) => {
+        isExpanded && clickedAccordionId === id && setExpandedValue(id);
+    };
+
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             {optimizePrintState && (
@@ -240,7 +259,7 @@ const GetWell = () => {
             )}
             <div className={styles.getWell} id="export-optimize-pdf">
                 {!optimizePrintState && (
-                    <div className={commonStyles.commonBreadCrumb}>
+                    <div className={commonStyles.commonBreadCrumb} style={{ left: '0%', paddingLeft: '40px' }}>
                         <BreadCrumbs
                             items={[
                                 {
@@ -265,7 +284,7 @@ const GetWell = () => {
                 )}
                 <div className={styles.header}>
                     <div className={styles['header-top-section']}>
-                        <DsTypography className={styles.optimizeHeader} variant="Semibold_20">
+                        <DsTypography className={styles.optimizeHeader} variant="Semibold_16">
                             Optimize instance
                         </DsTypography>
                         {!optimizePrintState &&
@@ -291,7 +310,7 @@ const GetWell = () => {
                             ))}
                     </div>
                     {!optimizePrintState && (
-                        <DsTypography variant="Semibold_16">
+                        <DsTypography variant="Regular_14">
                             {selectedDatabaseInstanceName || 'instance name'}
                         </DsTypography>
                     )}
@@ -351,10 +370,19 @@ const GetWell = () => {
                         )}
                         <div className={styles.filterComponent}>
                             <DsAccordion
-                                id="2"
+                                id="100"
                                 variant="Default"
                                 isDisabled={loading || !isAssessmentAvailable}
                                 onExpandChange={setsAccordionOpen}
+                                expandCollapseIcon={{
+                                    className: styles['expand-collapse-icon'],
+                                    collapsedIcon: <RowArrow />,
+                                    expandedIcon: (
+                                        <div style={{ transform: 'rotate(180deg)' }}>
+                                            <RowArrow />
+                                        </div>
+                                    )
+                                }}
                                 title={
                                     <div className={styles.filterHeaderStyle}>
                                         <div className={isDarkTheme ? styles['dark-theme-union'] : ''}>
@@ -381,7 +409,10 @@ const GetWell = () => {
                                     </div>
                                 }
                                 children={
-                                    <div className={styles.mainSection}>
+                                    <div
+                                        className={styles.mainSection}
+                                        style={{ gap: optimizeFilterTags.length > 0 ? '42px' : '0px' }}
+                                    >
                                         <div className={styles.dropdownList}>
                                             <div className={styles.dropDown}>
                                                 <DsSelect
@@ -617,10 +648,13 @@ const GetWell = () => {
                                             </div>
                                         </div>
 
-                                        <div className={styles.filtersOption}>
+                                        <div
+                                            className={styles.filtersOption}
+                                            style={{ marginBottom: optimizeFilterTags.length > 0 ? '18px' : '16px' }}
+                                        >
                                             <div className={styles.tagsContainer}>
-                                                {optimizeFilterTags.map((item: any) => (
-                                                    <div className={styles.filterTag}>
+                                                {optimizeFilterTags.map((item: any, index: number) => (
+                                                    <div className={styles.filterTag} key={index}>
                                                         <DsTypography
                                                             style={{ color: 'var(--header-notification-text)' }}
                                                             variant="Semibold_13"
@@ -672,9 +706,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 2
-                                                    ? 'All(2)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/2`}
+                                                defaultFilterOptions['all-catagories']?.length === 3
+                                                    ? 'All(3)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/3`}
                                             </DsTypography>
                                         </div>
 
@@ -825,12 +859,23 @@ const GetWell = () => {
                                             id="1"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.storage_tier?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('1', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('1', isExpanded);
+                                                // accordion.onExpandChange && accordion.onExpandChange(isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('1')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.storage_tier?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.storage_tier?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -878,12 +923,21 @@ const GetWell = () => {
                                             id="2"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.file_system_headroom?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('2', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('2', isExpanded);
+                                                // accordion.onExpandChange && accordion.onExpandChange(isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('2')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.file_system_headroom?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -937,12 +991,20 @@ const GetWell = () => {
                                             isDisabled={
                                                 loading || !cardData?.transaction_log_drive_size?.block_two?.value
                                             }
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('3', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('3', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('3')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.transaction_log_drive_size?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -994,12 +1056,20 @@ const GetWell = () => {
                                             id="4"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.tempdb_drive_size?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('4', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('4', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('4')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.tempdb_drive_size?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -1064,18 +1134,28 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.user_data_files}
                                             optimizePrintState={optimizePrintState}
-                                            type="User data files"
+                                            type="Data files"
                                         />
                                         <DsAccordion
                                             id="5"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.user_data_files?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('5', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('5', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('5')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.user_data_files?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.user_data_files?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -1125,14 +1205,22 @@ const GetWell = () => {
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.transaction_log_files?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
                                             }
                                             isDisabled={loading || !cardData?.transaction_log_files?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('6', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('6', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('6')}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
                                                     <div
@@ -1180,12 +1268,22 @@ const GetWell = () => {
                                             id="7"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.tempdb_files?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('7', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('7', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('7')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.tempdb_files?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.tempdb_files?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -1250,12 +1348,20 @@ const GetWell = () => {
                                             id="9"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.ontap_configuration?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('9', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('9', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('9')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.ontap_configuration?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
@@ -1307,13 +1413,23 @@ const GetWell = () => {
                                         <DsAccordion
                                             id="10"
                                             isDisabled={loading || !cardData?.os_configuration?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('10', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('10', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('10')}
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.os_configuration?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.os_configuration?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[
@@ -1358,7 +1474,7 @@ const GetWell = () => {
                     )}
 
                     {/* Section four */}
-                    {(filteredCardData?.compute_rightsizing || filteredCardData?.operating_system_patch) && (
+                    {(filteredCardData?.compute_rightsizing || filteredCardData?.host_os_patch) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -1387,7 +1503,11 @@ const GetWell = () => {
                                                 !cardData?.compute_rightsizing?.block_two?.value ||
                                                 filteredCardData?.compute_rightsizing?.isMissingPermissions
                                             }
-                                            isExpanded={optimizePrintState}
+                                            onClick={() => setClickedAccordionId('11')}
+                                            isExpanded={isAccordionExpanded('11', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('11', isExpanded);
+                                            }}
                                             title={
                                                 filteredCardData?.compute_rightsizing?.isMissingPermissions ? (
                                                     <div className={styles.missingPermissionText}>
@@ -1417,8 +1537,12 @@ const GetWell = () => {
                                                 ) : (
                                                     <div className={styles.tagPlacement}>
                                                         {filteredCardData?.compute_rightsizing?.tags?.map(
-                                                            (perTag: string) => {
-                                                                return <Tag text={perTag} />;
+                                                            (perTag: string, index: number) => {
+                                                                return (
+                                                                    <div key={index}>
+                                                                        <Tag text={perTag} />
+                                                                    </div>
+                                                                );
                                                             }
                                                         )}
                                                     </div>
@@ -1455,32 +1579,39 @@ const GetWell = () => {
                                                     data={filteredCardData?.compute_rightsizing?.recommendation}
                                                 />
                                             }
-                                            style={{ marginBottom: '40px' }}
                                         />
                                     </div>
                                 )}
 
-                                {/* {filteredCardData?.operating_system_patch && (
+                                {filteredCardData?.host_os_patch && (
                                     <div className={styles.combineComponent}>
                                         <StorageCardComponent
-                                            cardData={filteredCardData?.operating_system_patch}
+                                            cardData={filteredCardData?.host_os_patch}
                                             optimizePrintState={optimizePrintState}
-                                            type="Operating system patch"
+                                            type={GENERAL.OPERATING_SYSTEM_PATCH}
                                         />
                                         <DsAccordion
                                             id="12"
                                             variant="Default"
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.operating_system_patch?.tags?.map(
-                                                        (perTag: string) => {
-                                                            return <Tag text={perTag} />;
+                                                    {filteredCardData?.host_os_patch?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
                                                         }
                                                     )}
                                                 </div>
                                             }
-                                            isDisabled={loading || !cardData?.operating_system_patch?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isDisabled={loading || !cardData?.host_os_patch?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('12', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('12', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('12')}
                                             headerActions={[
                                                 <div className={styles.headerAction}>
                                                     <div
@@ -1488,8 +1619,7 @@ const GetWell = () => {
                                                             isDarkTheme && !loading ? styles['dark-theme-light'] : ''
                                                         }
                                                     >
-                                                        {loading ||
-                                                        !cardData?.operating_system_patch?.block_two?.value ? (
+                                                        {loading || !cardData?.host_os_patch?.block_two?.value ? (
                                                             <LightDisabled />
                                                         ) : (
                                                             <Light />
@@ -1498,8 +1628,7 @@ const GetWell = () => {
                                                     <div
                                                         style={{
                                                             color:
-                                                                loading ||
-                                                                !cardData?.operating_system_patch?.block_two?.value
+                                                                loading || !cardData?.host_os_patch?.block_two?.value
                                                                     ? 'var(--text-disabled)'
                                                                     : 'var(--text-button-primary)'
                                                         }}
@@ -1510,12 +1639,13 @@ const GetWell = () => {
                                             ]}
                                             children={
                                                 <RecommendationText
-                                                    data={filteredCardData?.operating_system_patch?.recommendation}
+                                                    data={filteredCardData?.host_os_patch?.recommendation}
                                                 />
                                             }
+                                            style={{ marginBottom: '40px' }}
                                         />
                                     </div>
-                                )} */}
+                                )}
                             </div>
                         </div>
                     )}
@@ -1546,12 +1676,22 @@ const GetWell = () => {
                                             id="13"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.sql_licenses?.block_two?.value}
-                                            isExpanded={optimizePrintState}
+                                            isExpanded={isAccordionExpanded('13', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('13', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('13')}
                                             title={
                                                 <div className={styles.tagPlacement}>
-                                                    {filteredCardData?.sql_licenses?.tags?.map((perTag: string) => {
-                                                        return <Tag text={perTag} />;
-                                                    })}
+                                                    {filteredCardData?.sql_licenses?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             }
                                             headerActions={[

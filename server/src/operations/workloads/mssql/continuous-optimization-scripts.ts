@@ -44,13 +44,16 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
     try {
         $sqlquery = @"
             SET NOCOUNT ON;
-            SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
+            DECLARE @JSON nvarchar(max)
+            SET @JSON = (SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
             vs.total_bytes / 1048576 AS driveTotalSizeMB FROM sys.master_files AS mf
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
             where db.database_id > 4
-            FOR JSON PATH;
+            FOR JSON PATH)
+            SELECT @JSON
+            ;
 "@
 
         $sqlqueryForTempdb = @"
@@ -174,7 +177,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         ${slqcmdExecutionTemplate}
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
         $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
-        $combinedResponse = (($queryResponse | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
+        $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
 
         if([string]::IsNullOrEmpty($combinedResponse)) {
             throw "No user databases found."
@@ -322,7 +325,7 @@ function Test-IscsiSessions {
 
         # Update session counts
         $detailsByTargetAndInitiator[$key].TotalSessions += 1
-        if ($session.IsConnected) {
+        if ($session.IsConnected -and $session.IsPersistent) {
             $detailsByTargetAndInitiator[$key].ActiveSessions += 1
             $targetPortalAddress = (Get-IscsiTargetPortal -iSCSISession $session -ErrorAction SilentlyContinue).TargetPortalAddress
             if([string]::IsNullOrEmpty($targetPortalAddress)) {
@@ -363,13 +366,15 @@ function Test-IscsiSessions {
 `;
 
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
-    `
+    `#Get Storage Configuration Assessment
     $DriftAssessmentData = @{}
     $DriftAssessmentData['errors'] = @{}
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
     $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
+    $MappedVolumeUuids = '${JSON.stringify(instanceRecord.mappedVolumesUuids)}' | ConvertFrom-Json
+    $MappedLunNames = '${JSON.stringify(instanceRecord.mappedLunNames)}' | ConvertFrom-Json
   
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
@@ -392,6 +397,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     # Volume details
     try{
+        if([string]::IsNullOrEmpty($MappedVolumeUuids)) {
+            throw "Unable to fetch ONTAP volumes details as the mapped volume UUIDs are either null or empty."
+        }
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
         $Volumes = $Response.records
 
@@ -430,18 +438,22 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
 
     try{
+        if([string]::IsNullOrEmpty($MappedVolumeNames)) {
+            throw "Unable to fetch ONTAP volumes details as the mapped volume names are either null or empty."
+        }
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
         $Volumes = $Response.records
 
         $isPerformanceTier100Percent = $true
         # loop through each volume and get data
+        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent
         foreach ($perVolumeData in $Volumes) {
         if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
                 $isPerformanceTier100Percent = $false
                 break
         }
         }
-    } catch {$DriftAssessmentData['errors']['volumes-footprint'] = $_.Exception.Message}
+    } catch {$DriftAssessmentData['errors']['sizing'] = $_.Exception.Message}
     
    
     # Lun details
@@ -450,6 +462,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
     
     try{
+        if([string]::IsNullOrEmpty($MappedLunNames)) {
+            throw "Unable to fetch ONTAP lun details as the mapped lun names are either null or empty."
+        }
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
         $Luns = $Response.records
     
@@ -515,9 +530,10 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                                         'user-database-layout' = $($responseObject);}
         
         $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = $isPerformanceTier100Percent;
+                                        'performance-tier' = @($PerformanceTierPercent);
                                         'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);}
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
+                                        }
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
         $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
@@ -610,7 +626,7 @@ Function Rescan-ExtendLUN {
     try {
         # Rescan and extend the LUN
         $null = (echo "RESCAN" | diskpart)
-        $disk = Get-Disk | Where-Object { $_.SerialNumber -eq "$DiskSerialNumber" }
+        $disk = Get-Disk | Where-Object { $_.SerialNumber -ceq "$DiskSerialNumber" }
             
         if ($null -eq $disk) {
             throw "No disk found with SerialNumber $DiskSerialNumber"
@@ -713,11 +729,20 @@ $jsonResult = Move-AllClusterGroups -TargetNodeName "${nodeName}"
 Write-Output $jsonResult
 `;
 
+const GET_CLUSTER_NODE_NAMES = () => `
+    #Get cluster node names 
+    $currentNode = hostname
+    $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
+    $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
+    @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     CHECK_NODE_STATUS,
     RESCAN_EXTEND_LUN,
-    MOVE_ALL_CLUSTER_GROUPS
+    MOVE_ALL_CLUSTER_GROUPS,
+    GET_CLUSTER_NODE_NAMES
 };

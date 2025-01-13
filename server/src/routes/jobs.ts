@@ -18,7 +18,8 @@ import {
     getJobSummary,
     getJobSummaryByTime
 } from '../operations/database/job-operations';
-import { JobRecordType } from './types/jobs.types';
+import { JobRecordType, UpdateJobRecordType } from './types/jobs.types';
+import castRequest from './utils';
 
 const JOBS_API_PATH: string = '/v1/jobs';
 
@@ -29,7 +30,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId },
             query
-        } = request;
+        } = castRequest(request);
         const response = await getJobs(accountId, query);
         return reply.send(response);
     });
@@ -37,7 +38,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId, jobId },
             query: { credentialsId, region }
-        } = request;
+        } = castRequest(request);
         const response = await getJobDetails(accountId, jobId, credentialsId, region);
         return reply.send(response);
     });
@@ -46,7 +47,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId },
             query
-        } = request;
+        } = castRequest(request);
         const response = await getJobSummary(accountId, query);
         return reply.send(response);
     });
@@ -55,7 +56,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
         const {
             params: { accountId },
             query
-        } = request;
+        } = castRequest(request);
         const response = await getJobSummaryByTime(accountId, query);
         return reply.send(response);
     });
@@ -64,7 +65,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
         server.delete(`${JOBS_API_PATH}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
             const {
                 params: { accountId, jobId }
-            } = request;
+            } = castRequest(request);
             const response = await deleteJobsWithAllSubJobs(accountId, jobId);
             return reply.send(response);
         });
@@ -73,17 +74,18 @@ export default function jobsRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, jobId },
                 body
-            } = request;
-            const response = await updateJobDetails(accountId, jobId, body);
+            } = castRequest(request);
+            const response = await updateJobDetails(accountId, jobId, body as UpdateJobRecordType);
             return reply.send(response);
         });
 
         server.post(`${JOBS_API_PATH}`, { schema: CreateJobSchema }, async (request, reply) => {
             const {
-                params: { accountId }
-            } = request;
+                params: { accountId },
+                body
+            } = castRequest(request);
 
-            const { credentialsId, region, items } = request.body;
+            const { credentialsId, region, items } = body;
             const response = await registerJobs(accountId, credentialsId, region, items as JobRecordType[]);
             return reply.send(response);
         });

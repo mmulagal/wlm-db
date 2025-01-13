@@ -11,8 +11,13 @@ import { useEffect, useState } from 'react';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 const ExportPDF = ({ printDocument, disableState }: any) => {
-    const { storageSavingsLoading, selectedHostDetails, viewCalculationsLoading, viewCalculationsResponse } =
-        useAppSelector(state => state.exploreSavings);
+    const {
+        storageSavingsLoading,
+        selectedHostDetails,
+        viewCalculationsLoading,
+        viewCalculationsResponse,
+        selectedExploreSavingsTab
+    } = useAppSelector(state => state.exploreSavings);
 
     const dispatch = useDispatch();
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -32,8 +37,16 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
         printDocument();
     };
 
+    const setCSSForExportPDF = () => {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            return `${styles.exportPdf} ${styles.exportPdfOnPrem}`;
+        } else {
+            return styles.exportPdf;
+        }
+    };
+
     return (
-        <div className={styles.exportPdf}>
+        <div className={setCSSForExportPDF()}>
             <div
                 className={
                     loading || disableState || !viewCalculationsResponse

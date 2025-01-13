@@ -1,0 +1,100 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "ab2428cd-92bb-492e-b8bc-d60296d607d7",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Commands": [
+        {
+            "AlarmConfiguration": {
+                "Alarms": [],
+                "IgnorePollAlarmFailure": false
+            },
+            "CloudWatchOutputConfig": {
+                "CloudWatchLogGroupName": "",
+                "CloudWatchOutputEnabled": false
+            },
+            "CommandId": "5a85daf3-db7d-4358-90b2-1ad9fc256694",
+            "Comment": "",
+            "CompletedCount": 0,
+            "DeliveryTimedOutCount": 0,
+            "DocumentName": "AWS-RunPatchBaseline",
+            "DocumentVersion": "$DEFAULT",
+            "ErrorCount": 0,
+            "ExpiresAfter": "2024-12-20T05:31:41.479Z",
+            "InstanceIds": [
+                "i-000472edbfc134651",
+                "i-0cd1c5b00d42de424"
+            ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "NotificationConfig": {
+                "NotificationArn": "",
+                "NotificationEvents": [],
+                "NotificationType": ""
+            },
+            "OutputS3BucketName": "",
+            "OutputS3KeyPrefix": "",
+            "OutputS3Region": "ap-northeast-1",
+            "Parameters": {
+                "Operation": [
+                    "Scan"
+                ]
+            },
+            "RequestedDateTime": "2024-12-19T22:31:41.479Z",
+            "ServiceRole": "",
+            "Status": "InProgress",
+            "StatusDetails": "InProgress",
+            "TargetCount": 2,
+            "Targets": [],
+            "TimeoutSeconds": 3600,
+            "TriggeredAlarms": []
+        },
+        {
+            "AlarmConfiguration": {
+                "Alarms": [],
+                "IgnorePollAlarmFailure": false
+            },
+            "CloudWatchOutputConfig": {
+                "CloudWatchLogGroupName": "",
+                "CloudWatchOutputEnabled": false
+            },
+            "CommandId": "8cf7f16f-1ae9-4b9e-8c9a-e17ab319eea3",
+            "Comment": "",
+            "CompletedCount": 0,
+            "DeliveryTimedOutCount": 0,
+            "DocumentName": "AWS-RunPatchBaseline",
+            "DocumentVersion": "$DEFAULT",
+            "ErrorCount": 0,
+            "ExpiresAfter": "2024-12-20T05:30:41.120Z",
+            "InstanceIds": [
+                "i-000472edbfc134651",
+                "i-0cd1c5b00d42de424"
+            ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "NotificationConfig": {
+                "NotificationArn": "",
+                "NotificationEvents": [],
+                "NotificationType": ""
+            },
+            "OutputS3BucketName": "",
+            "OutputS3KeyPrefix": "",
+            "OutputS3Region": "ap-northeast-1",
+            "Parameters": {
+                "Operation": [
+                    "Scan"
+                ]
+            },
+            "RequestedDateTime": "2024-12-19T22:30:41.120Z",
+            "ServiceRole": "",
+            "Status": "InProgress",
+            "StatusDetails": "InProgress",
+            "TargetCount": 2,
+            "Targets": [],
+            "TimeoutSeconds": 3600,
+            "TriggeredAlarms": []
+        }
+    ]
+}

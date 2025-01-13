@@ -52,7 +52,7 @@ import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
 import { getDatabaseInstanceName, isDemo, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/database-hosts.types';
 import { getResources } from './database/database-operations';
-import { registerJob, updateJobDetails } from './database/job-operations';
+import { updateParentJobStatus, registerJob, updateJobDetails } from './database/job-operations';
 import {
     updateSandboxDBIntoInstanceData,
     updateSandboxDBIntoResourceData,
@@ -164,7 +164,13 @@ async function getSandboxDetails(
         command = [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES)];
     }
 
-    const response = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        command,
+        activeNodeInstanceId!,
+        'Get sandbox details'
+    );
 
     try {
         const parsedResponse = response ? sqlResponseParsing(response) : {};
@@ -385,6 +391,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     (ssmStatus1.Status === ConnectionStatus.CONNECTED
                                         ? node1InstanceId
                                         : node2InstanceId) as string,
+                                    'Get storage savings',
                                     accountId
                                 );
 
@@ -904,6 +911,7 @@ async function getMappings(
             region,
             command,
             activeNodeInstanceId,
+            'Get volume mappings',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1020,10 +1028,10 @@ async function createVolumeClone(
             region,
             command,
             destDetails.activeNodeInstanceId,
+            'SandBox: Create Volume Clone',
             accountId,
             false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT,
-            'SandBox: Create Volume Clone'
+            CUSTOM_SSM_EXECUTION_TIMEOUT
         );
 
         if (!clonedVolumes) {
@@ -1176,6 +1184,7 @@ async function invokeVirtualMount(
                 region,
                 command,
                 destDetails.activeNodeInstanceId,
+                'Discover LUN and add virtual mount points',
                 accountId,
                 false,
                 CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1286,6 +1295,7 @@ async function createCloneDb(
             region,
             command,
             destDetails.activeNodeInstanceId,
+            'Clone Database for sandbox',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1375,7 +1385,13 @@ async function createExtendedProperties(
                 )
             ];
         }
-        const resp = await callSsmExecution(credentialsId, region, command, destDetails.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            destDetails.activeNodeInstanceId,
+            'Add extended properties to sandbox database'
+        );
 
         // We only get a response in case of error from query
         if (resp) {
@@ -1518,6 +1534,7 @@ async function startCleanup(
                 region,
                 command,
                 destDetails.activeNodeInstanceId,
+                'Cleanup sandbox resources',
                 accountId,
                 false,
                 CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -1679,7 +1696,13 @@ async function getSandboxConnectionString(
             command = [getConnectionInfo('MSSQLSERVER', false)];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            activeNodeInstanceId!,
+            'Get sandbox database connection info'
+        );
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
@@ -1741,7 +1764,13 @@ async function getDatabaseMountPointInfo(
             command = [sqlQueryExecution('MSSQLSERVER', '$env:computername', mountPointQuery('test-database'), true)];
         }
 
-        const mountPoints = await callSsmExecution(credentialsId, region, command, srcDetails.activeNodeInstanceId);
+        const mountPoints = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            srcDetails.activeNodeInstanceId,
+            'Get database mount points'
+        );
         if (!mountPoints) {
             throw createError('No mount points found.');
         }
@@ -1971,7 +2000,15 @@ async function getSandboxSplitEstimate(
         command = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId, accountId, false);
+    const mappings = await callSsmExecution(
+        credentialsId,
+        region,
+        command,
+        activeNodeInstanceId,
+        'Get volume mappings',
+        accountId,
+        false
+    );
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -2071,7 +2108,6 @@ async function performLifecycleUpdate(
     action: string,
     snapshot?: string
 ) {
-    let status: string = JOBSTATUS.IN_PROGRESS;
     let errorMsg;
     let mappings: undefined | VolumeLunMapping;
     let clonedVolumes;
@@ -2227,11 +2263,9 @@ async function performLifecycleUpdate(
             []
         );
 
-        status = JOBSTATUS.COMPLETED;
         updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (e: any) {
         logger.error(`Failed to perform lifecycle update for sandbox ${resourceDetails.database}`, e);
-        status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMsg);
 
@@ -2265,11 +2299,8 @@ async function performLifecycleUpdate(
             }
         }
     } finally {
-        await updateJobDetails(accountId, parentJobId, {
-            status,
-            error: errorMsg,
-            endTime: Date.now()
-        });
+        // check any of the sub job has failure if so udpate the paraent job as warning which is completed with failure in status shown
+        await updateParentJobStatus(accountId, parentJobId, errorMsg);
     }
 }
 
@@ -2414,6 +2445,7 @@ async function detachSandboxAndAccessPath(
             region,
             command,
             resourceDetails.activeNodeInstanceId,
+            'Detach sandbox and access path',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -2524,6 +2556,7 @@ async function reAttachSandboxAndAccessPath(
             region,
             command,
             resourceDetails.activeNodeInstanceId,
+            'Discover LUN and add virtual mount points',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -2573,6 +2606,7 @@ async function reAttachSandboxAndAccessPath(
             region,
             command,
             resourceDetails.activeNodeInstanceId,
+            'Attach sandbox and add access path',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -2798,6 +2832,7 @@ async function splitVolumes(
             region,
             command,
             resourceDetail.activeNodeInstanceId,
+            'Split volume for creating sandbox',
             accountId,
             false,
             CUSTOM_SSM_EXECUTION_TIMEOUT
@@ -2873,7 +2908,13 @@ async function deleteExtendedProperties(
             ];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, resourceDetail.activeNodeInstanceId);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            resourceDetail.activeNodeInstanceId,
+            'Remove extended properties'
+        );
 
         if (resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to delete the extended properties');
@@ -2992,7 +3033,13 @@ async function performIntegrityCheck(
             command = [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)];
         }
 
-        const resp = await callSsmExecution(credentialsId, region, command, activeNodeInstanceId!);
+        const resp = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            activeNodeInstanceId!,
+            'Check database integrity'
+        );
 
         if (resp) {
             throw createError(
@@ -3056,7 +3103,13 @@ async function getSandboxSnapshots(
         mappingsCommand = [getDbMappedOntapVolumes('test-fsx', 'us-east-1', 'testdb')];
     }
 
-    const mappings = await callSsmExecution(credentialsId, region, mappingsCommand, activeNodeInstanceId);
+    const mappings = await callSsmExecution(
+        credentialsId,
+        region,
+        mappingsCommand,
+        activeNodeInstanceId,
+        'Get volume mappings'
+    );
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -3106,6 +3159,7 @@ async function getSandboxSnapshots(
         region,
         snapshotsCommand,
         srcDetails.activeNodeInstanceId,
+        'Get snapshots to clone for sandbox',
         accountId,
         false
     );

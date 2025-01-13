@@ -69,7 +69,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                             }
                             if (LinkComp) {
                                 newNotObj.children = (
-                                    <div style={{ display: 'flex' }}>
+                                    <div style={{ display: 'flex' }} key={idx}>
                                         {notification.message}
                                         {LinkComp && (
                                             <LinkComp data={compData} onClose={() => onClose()} label={label} />
@@ -99,6 +99,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                                     onClose={() => {
                                         onClose(idx, totalCount);
                                     }}
+                                    key={idx}
                                     type="info"
                                     variant="primary"
                                 >
@@ -125,6 +126,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                                     moreInfo={notification.additionalText}
                                     type={notification?.notificationType?.toLowerCase()}
                                     variant="primary"
+                                    key={idx}
                                 >
                                     {notification.message}
                                 </Notification>
@@ -137,6 +139,7 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                                 type={notification?.notificationType?.toLowerCase()}
                                 variant="primary"
                                 className={styles['adjust-notifiction-height']}
+                                key={idx}
                             >
                                 <div>
                                     {notification.message}

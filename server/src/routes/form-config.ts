@@ -14,6 +14,7 @@ import {
     modifyConfig,
     saveConfig
 } from '../operations/database/database-operations';
+import castRequest from './utils';
 
 const API_PATH_CONFIG: string = '/v1/configs';
 
@@ -28,7 +29,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
         async request => {
             const {
                 params: { accountId }
-            } = request;
+            } = castRequest(request);
             return getAllSavedConfig(accountId);
         }
     );
@@ -41,7 +42,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
         async request => {
             const {
                 params: { accountId, id }
-            } = request;
+            } = castRequest(request);
             return getSavedConfig(accountId, id);
         }
     );
@@ -54,7 +55,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
         async request => {
             const {
                 params: { accountId, id }
-            } = request;
+            } = castRequest(request);
             return deleteSavedConfig(accountId, id);
         }
     );
@@ -68,7 +69,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId },
                 body: { name, data, databaseType }
-            } = request;
+            } = castRequest(request);
             const { user } = request.headers;
             return saveConfig(accountId, user as string, name, data, databaseType);
         }
@@ -83,7 +84,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, id },
                 body: { name, data }
-            } = request;
+            } = castRequest(request);
             return modifyConfig(accountId, id, name, data);
         }
     );

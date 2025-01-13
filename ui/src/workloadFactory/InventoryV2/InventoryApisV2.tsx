@@ -21,6 +21,7 @@ import {
     setManagedAssessmentHostIdsList,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
+    setPotentialSavingsHostData,
     setRemoveSecNodeDiscoveredList,
     setResetManagedData,
     setUnManagedPerfInstanceIdsList
@@ -28,6 +29,7 @@ import {
 import {
     useGetMssqlAssessmentDataForHostMutation,
     useGetMssqlInstanceDataV2Mutation,
+    useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetDatabaseHostsFullDataV2Query,
@@ -38,6 +40,7 @@ import {
     useLazyGetPgSqlDatabaseHostsListQuery
 } from '../../utils/apiService';
 import {
+    addInstanceIdToGetPerf,
     formatDiscoveredInventoryData,
     formatInventoryTableData,
     getExploreSavingsRows,
@@ -51,8 +54,10 @@ import {
 } from './InventoryUtilsV2';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
-import { INSTANCE_API_FIELDS } from '../../utils/consts';
-import { all } from 'axios';
+import { EBS_PROTECTED_OPTIONS, INSTANCE_API_FIELDS, SNAPSHOT_FREQUENCY } from '../../utils/consts';
+import { GENERAL } from '../../utils/appConstants';
+import { setPotentialSavingsValues } from '../../store/workloadFactory/databaseHomeSlice';
+import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -77,6 +82,7 @@ const InventoryApisV2 = () => {
     const managedAssessmentHostIdsList = useAppSelector(state => state.inventoryV2.managedAssessmentHostIdsList);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
+    const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.label2 || '');
@@ -102,6 +108,9 @@ const InventoryApisV2 = () => {
     // pgsql database-hosts with fields values
     const [getPgSqlDatabaseHostsFullDataApi] = useLazyGetPgsqlDatabaseHostsFullDataV2Query();
     const [fullPgsqlHostData, setFullPgsqlHostData] = useState<any>({});
+
+    // Potential savings API for EBS and FSxW
+    const [getStorageSavingsApi] = useGetStorageSavingsMutation();
 
     // Discover API
     const [getDiscoveryHostsListApi] = useLazyDiscoverHostsQuery();
@@ -129,6 +138,7 @@ const InventoryApisV2 = () => {
 
     const runningPerfInstanceListRef: any = useRef();
     const runningManagedAssessmentRef: any = useRef();
+    const potentialSavingsHostDataRef: any = useRef();
 
     useEffect(() => {
         runningPerfInstanceListRef.current = runningPerfInstanceList;
@@ -157,6 +167,10 @@ const InventoryApisV2 = () => {
     useEffect(() => {
         managedAssessmentHostDataRef.current = managedAssessmentHostData;
     }, [managedAssessmentHostData]);
+
+    useEffect(() => {
+        potentialSavingsHostDataRef.current = potentialSavingsHostData;
+    }, [potentialSavingsHostData]);
 
     useEffect(() => {
         credIdRef.current = credId;
@@ -803,6 +817,147 @@ const InventoryApisV2 = () => {
         }
     };
 
+    const getStorageSavingsData = async (
+        savingsCalculatorType: string,
+        selectedInstanceId: string,
+        runningCredId: string,
+        runningRegionId: string,
+        isEbsProtected: string
+    ) => {
+        let snapshotFrequency = '';
+        if (savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS) {
+            // For FSXW it is default set to Daily
+            snapshotFrequency = SNAPSHOT_FREQUENCY[2]?.value;
+        } else if (savingsCalculatorType === GENERAL.EBS) {
+            // For EBS snapshotfrequency set is based on whether EBS is protected or not
+            if (isEbsProtected === EBS_PROTECTED_OPTIONS.PROTECTED) {
+                snapshotFrequency = SNAPSHOT_FREQUENCY[2]?.value;
+            } else if (isEbsProtected === EBS_PROTECTED_OPTIONS.UNPROTECTED) {
+                snapshotFrequency = SNAPSHOT_FREQUENCY[0]?.value;
+            } else if (isEbsProtected === EBS_PROTECTED_OPTIONS.UNKNOWN) {
+                snapshotFrequency = SNAPSHOT_FREQUENCY[1]?.value;
+            } else {
+                snapshotFrequency = SNAPSHOT_FREQUENCY[0]?.value;
+            }
+        }
+        let payload: any = {
+            snapshotFrequency: snapshotFrequency,
+            clonedCopiesCount: 1, // clonedCopiesCount default to 1 for dashboard potential
+            monthlyChangeRatePercentage: savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS ? 3 : 8 // monthlyChangeRatePercentage default to 3 for FSxW and 8 for EBS
+        };
+        if (savingsCalculatorType === GENERAL.EBS) {
+            payload = {
+                ...payload,
+                cloneRefreshFrequency: 'Daily' // cloneRefreshFrequency default to Daily for dashboard potential EBS
+            };
+        }
+        let instanceData: any = {};
+        try {
+            const result: any = await getStorageSavingsApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.label2,
+                instanceId: selectedInstanceId,
+                payload: payload,
+                type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
+            });
+            if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                if (result && !result?.error) {
+                    instanceData[selectedInstanceId] = {
+                        error: null,
+                        data: result?.data,
+                        loading: false,
+                        storageType: savingsCalculatorType
+                    };
+                    // Potential savings data is stored in inventoryV2 slice and
+                    // it will be used in DatabaseHomeApis to format data for dashboard potential card UI.
+                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                } else {
+                    instanceData[selectedInstanceId] = {
+                        error: result?.error?.data?.message,
+                        data: null,
+                        loading: false,
+                        storageType: savingsCalculatorType
+                    };
+                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                }
+            }
+        } catch (error) {
+            instanceData[selectedInstanceId] = {
+                error: error,
+                data: null,
+                loading: false,
+                storageType: savingsCalculatorType
+            };
+            dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+        }
+    };
+
+    const callPotentialSavings = (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
+        let instanceData: any = {};
+        // This will loop all unamanged EBS/FSXW rows
+        exploreSavingsRows?.map((row: any) => {
+            if (row?.storageType && !potentialSavingsHostDataRef.current?.[row?.id]) {
+                if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    let isEbsProtected = null;
+                    // For EBS first checking is it is protected or not.
+                    // If not that first we need to call instance protection API to get protection.
+                    if (row?.storageType === GENERAL.EBS) {
+                        isEbsProtected = checkIfEbsProtected(row, null);
+                    }
+                    instanceData[row?.id] = {
+                        error: null,
+                        data: null,
+                        loading: true,
+                        storageType: row?.storageType,
+                        isProtected: isEbsProtected // If already protected that set protection info along with loading true
+                    };
+                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                    if (row?.storageType === GENERAL.EBS) {
+                        // Protection check is required to set snapshotFrequency in storage savings API.
+                        if (isEbsProtected) {
+                            // If protected than directly we can call storage savings API.
+                            getStorageSavingsData(
+                                row?.storageType,
+                                row?.id,
+                                runningCredId,
+                                runningRegionId,
+                                isEbsProtected
+                            );
+                        } else {
+                            // If not protected than first we need to call instance protection API to get protection.
+                            // This same flow is used to call instance API to get perf and protection data as well as in ES page.
+                            addInstanceIdToGetPerf(row, dispatch);
+                        }
+                    } else if (row?.storageType === GENERAL.FSX_FOR_WINDOWS) {
+                        // For FSxW snapshotFrequency in default Daily in storage savings API.
+                        getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, '');
+                    }
+                }
+            } else if (
+                row?.storageType === GENERAL.EBS &&
+                potentialSavingsHostDataRef.current?.[row?.id]?.loading &&
+                !potentialSavingsHostDataRef.current?.[row?.id]?.isProtected
+            ) {
+                // In above if we protection data is missing for EBS than we trigger instance API.
+                // This else is used to capture response once instance API is loaded for protection.
+                let isEbsProtected = checkIfEbsProtected(row, null);
+                // Again check if instance EBS is protected or not.
+                instanceData[row?.id] = {
+                    error: null,
+                    data: null,
+                    loading: true,
+                    storageType: row?.storageType,
+                    isProtected: isEbsProtected
+                };
+                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+                if (isEbsProtected) {
+                    // If protection data available after instance API call in EBS than call storage savings API.
+                    getStorageSavingsData(row?.storageType, row?.id, runningCredId, runningRegionId, isEbsProtected);
+                }
+            }
+        });
+    };
+
     useEffect(() => {
         // if fsx register is false and only db cred is added than call instance API
         if (detectedInstanceId) {
@@ -842,6 +997,7 @@ const InventoryApisV2 = () => {
         dispatch(setIsDatabaseHostsLoading(true));
         dispatch(setIsPgSqlDatabaseHostsLoading(true));
         setTopologyHostData({});
+        setPgsqlTopologyHostData({});
         // reset for getDatabaseHostsFullData
         dispatch(setIsFullHostDataLoading(true));
         dispatch(setIsFullPgSqlHostDataLoading(true));
@@ -849,6 +1005,7 @@ const InventoryApisV2 = () => {
         dispatch(addDatabaseHostsDataV2(null));
         dispatch(addPgSqlDatabaseHostsData(null));
         setFullHostData({});
+        setFullPgsqlHostData({});
         // reset for discovery
         dispatch(setIsDiscoveredHostData(null));
         dispatch(setIsDiscoverHostLoading(true));
@@ -876,6 +1033,9 @@ const InventoryApisV2 = () => {
         setRunningManagedAssessmentList([]);
         dispatch(setPerfMssqlInstancesData({}));
         dispatch(setManagedAssessmentHostData({}));
+        dispatch(addAllMssqlHostAssessmentData([]));
+        dispatch(setPotentialSavingsHostData({}));
+        dispatch(setPotentialSavingsValues(null));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -885,6 +1045,7 @@ const InventoryApisV2 = () => {
             let fullHostData: any = {};
             let fullPgsqlHostData: any = {};
             let topologyHostData: any = {};
+            let pgsqlTopologyHostData: any = {};
             let discoveredList: any = [];
             let allmssqlHostAssessmentData: any = [];
             if (credId && regionId) {
@@ -909,6 +1070,7 @@ const InventoryApisV2 = () => {
             let fullHostData: any = {};
             let fullPgsqlHostData: any = {};
             let topologyHostData: any = {};
+            let pgsqlTopologyHostData: any = {};
             let discoveredList: any = [];
             let allmssqlHostAssessmentData: any = [];
             if (credId && regionId && isRefreshed) {
@@ -986,7 +1148,9 @@ const InventoryApisV2 = () => {
 
     // This data is coming from discover API
     useEffect(() => {
-        if (!managedHostListLoading && discoveredHostData && discoveredHostData.length) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && !managedHostListLoading && discoveredHostData && discoveredHostData.length) {
             let newDiscoveredHostData: any = [];
             discoveredHostData.map((host: any) => {
                 if (host?.sqlServerInstances) {
@@ -1043,7 +1207,9 @@ const InventoryApisV2 = () => {
 
     // This data is coming from database-hosts API
     useEffect(() => {
-        if (databaseHostsData) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && databaseHostsData) {
             const formattedInventoryTableData = formatInventoryTableData(databaseHostsData);
 
             let unmanagedInstanceList = getMhUnmanagedInstances(
@@ -1066,23 +1232,33 @@ const InventoryApisV2 = () => {
     }, [databaseHostsData]);
 
     useEffect(() => {
-        if (mssqlInstancesDataRef.current && inventoryTableData) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && mssqlInstancesDataRef.current && inventoryTableData) {
             const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, inventoryTableData);
             dispatch(setInventoryTableData({ ...inventoryTableData, ...updatedInventoryData }));
         }
     }, [mssqlInstancesData, perfMssqlInstancesData]);
 
     useEffect(() => {
-        if (inventoryTableData) {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && inventoryTableData) {
             const inventoryDataCount = getInventoryDataCount(inventoryTableData);
             dispatch(setInventoryChartData(inventoryDataCount));
             const exploreSavingsRows = getExploreSavingsRows(inventoryTableData);
             dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+            // call ES APIs for dashboard potential savings
+            if (exploreSavingsRows && exploreSavingsRows.length > 0) {
+                callPotentialSavings(exploreSavingsRows, credId, regionId);
+            }
         }
     }, [inventoryTableData, removeSecNodeDiscoveredList]);
 
     useEffect(() => {
-        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+        if (!refreshBlocked) {
+            dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+        }
     }, [allmssqlHostAssessmentData]);
 };
 

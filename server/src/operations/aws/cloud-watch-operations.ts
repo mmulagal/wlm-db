@@ -9,7 +9,9 @@ const logger = getLogger();
 async function calculateFsxnStorageEfficiencyUsingCloudwatch(
     region: string,
     credentialsId: string,
-    fileSystemId: string
+    fileSystemId: string,
+    cwMetricsDataCollectionPeriodSeconds: number = 24 * 60 * 60, // 1 day
+    cwMetricsDataCollectionPeriod: string = '1d'
 ) {
     logger.info('Calculating storage efficiency for FSx for NetApp ONTAP:', { region, credentialsId, fileSystemId });
 
@@ -21,8 +23,8 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
         EndTime: new Date(),
         MetricName: 'StorageEfficiencySavings',
         Namespace: 'AWS/FSx',
-        Period: 24 * 60 * 60, // 1 day
-        StartTime: new Date(Date.now() - ms('1d')),
+        Period: cwMetricsDataCollectionPeriodSeconds,
+        StartTime: new Date(Date.now() - ms(cwMetricsDataCollectionPeriod)),
         Statistics: ['Average'],
         Dimensions: [
             {
@@ -36,8 +38,8 @@ async function calculateFsxnStorageEfficiencyUsingCloudwatch(
         EndTime: new Date(),
         MetricName: 'StorageUsed',
         Namespace: 'AWS/FSx',
-        Period: 24 * 60 * 60, // 1 day
-        StartTime: new Date(Date.now() - ms('1d')),
+        Period: cwMetricsDataCollectionPeriodSeconds,
+        StartTime: new Date(Date.now() - ms(cwMetricsDataCollectionPeriod)),
         Statistics: ['Average'],
         Dimensions: [
             {

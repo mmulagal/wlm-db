@@ -12,7 +12,10 @@ import {
     GetConnectionStatusCommand,
     PutParameterCommand,
     GetParameterCommand,
-    DeleteParametersCommand
+    DeleteParametersCommand,
+    DescribeInstancePatchStatesCommand,
+    DescribeInstancePatchesCommand,
+    ListCommandsCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import {
@@ -27,9 +30,11 @@ import getConnectionStatusResponse from '../../responses/aws/ssm-connection-stat
 import putParameterResponse from '../../responses/aws/ssm-put-parameter.json';
 import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
+import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-states.json';
+import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
+import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
-    getMappedOntapVolumesScript,
     restGetUtilForOntap,
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -78,6 +83,10 @@ import {
     ENABLE_MPIO_AND_CONFIGURE
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
+import { clone, cloneDeep } from 'lodash-es';
+import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
+import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
+import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -217,10 +226,6 @@ const getOntapSnapshotCountParams = {
             'fields=snapshot_count'
         )
     ]
-};
-
-const getOntapMappedVolumesParams = {
-    commands: [getMappedOntapVolumesScript('test-fsx', DEFAULT_AWS_REGION, '$false', [DEFAULT_INSTANCE_NAME])]
 };
 
 const getStorageParams = {
@@ -514,10 +519,6 @@ const validateMpioSessionsSsm = {
     commands: [MPIO_ISCSI_SESSIONS]
 };
 
-const remediateMpioSessions = {
-    commands: [REMEDIATE_MPIO_ISCSI_SESSIONS]
-};
-
 const validateMpioInstallation = {
     commands: [CHECK_IF_MPIO_INSTALLED]
 };
@@ -526,10 +527,21 @@ const enableMpioAndConfigure = {
     commands: [ENABLE_MPIO_AND_CONFIGURE]
 };
 
+const pgsqlInstanceInfo = {
+    commands: [getPgsqlInstanceData('wlmdb-data-1234')]
+};
+
+const pgsqldbCount = { commands: [DATABASES_COUNT] };
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
 const checkNodeStatusRegex = /#Check Node Status/;
+const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
+const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
+const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
+const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -581,8 +593,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.nativeSqlBackupDatabasesCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
-    .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
-    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
     .resolves(listSendCommandCommandResponse.storageCommandResponse)
     .on(SendCommandCommand, { Parameters: getPerformanceWithLatencyMetrics })
@@ -663,27 +673,39 @@ ssmMock
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
+    .on(SendCommandCommand, { Parameters: pgsqlInstanceInfo })
+    .resolves(listSendCommandCommandResponse.getPgsqlInstanceInfoCommand)
+    .on(SendCommandCommand, params => {
+        return getPgsqlStorageSavingsRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getPgsqlStorageSavingsCommand)
+    .on(SendCommandCommand, { Parameters: pgsqldbCount })
+    .resolves(listSendCommandCommandResponse.getPgsqldbCountCommand)
+    .on(SendCommandCommand, params => {
+        return params.DocumentName === 'AWS-RunPatchBaseline';
+    })
+    .resolves(listSendCommandCommandResponse.getPatchBaselineCommand)
     .on(SendCommandCommand, params => {
         const newOptimizeRegex = optimizeRegex;
-        const newOptimizeParams = params.Parameters.commands[0];
+        const newOptimizeParams = params.Parameters.commands?.[0];
         return newOptimizeParams && newOptimizeRegex.test(newOptimizeParams);
     })
     .resolves(listSendCommandCommandResponse.optimizeStorageCommand)
     .on(SendCommandCommand, params => {
-        return rescanExtendRegex.test(params.Parameters.commands[0]);
+        return rescanExtendRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.rescanAndExtendLogLunCommand)
     .on(SendCommandCommand, params => {
-        return checkNodeStatusRegex.test(params.Parameters.commands[0]);
+        return checkNodeStatusRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.checkNodeStatusCommand)
     .on(SendCommandCommand, params => {
-        return moveClusterGroupsRegex.test(params.Parameters.commands[0]);
+        return moveClusterGroupsRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.moveClusterGroupsCommand)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ONTAP LUN details Script/;
-        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+        return getLunDetailsRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getLunDetailsCommand)
     .on(SendCommandCommand, { Parameters: validateMpio })
@@ -692,7 +714,9 @@ ssmMock
     .resolves(listSendCommandCommandResponse.setMpioPolicyCommand)
     .on(SendCommandCommand, { Parameters: validateMpioSessionsSsm })
     .resolves(listSendCommandCommandResponse.validateMpioSessionsCommand)
-    .on(SendCommandCommand, { Parameters: remediateMpioSessions })
+    .on(SendCommandCommand, params => {
+        return remediateMpioSessions.test(params.Parameters.commands?.[0]);
+    })
     .resolves(listSendCommandCommandResponse.remediateMpioSessionsCommand)
     .on(SendCommandCommand, { Parameters: validateMpioInstallation })
     .resolves(listSendCommandCommandResponse.validateMpioInstallationCommand)
@@ -700,9 +724,27 @@ ssmMock
     .resolves(listSendCommandCommandResponse.enableMpioAndConfigureCommand)
     .on(SendCommandCommand, params => {
         const getLunDetailsRegex = /#Get ACTIVE NODE DRIVE INFO/;
-        return getLunDetailsRegex.test(params.Parameters.commands[0]);
+        return getLunDetailsRegex.test(params.Parameters.commands?.[0]);
     })
-    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails);
+    .resolves(listSendCommandCommandResponse.getActiveNodeDriveDetails)
+    .on(SendCommandCommand, params => {
+        return getMappedOntapVolumesRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
+    .on(SendCommandCommand, params => {
+        return getStorageAssessmentDataRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getStorageAssessmentCommandResponse)
+    .on(SendCommandCommand, params => {
+        return /'Test-Connection -ComputerName "www.catalog.update.microsoft.com"/.test(
+            params.Parameters.commands?.[0]
+        );
+    })
+    .resolves(listSendCommandCommandResponse.testConnectionCommandResponse)
+    .on(SendCommandCommand, params => {
+        return /#Get cluster node names/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getClusterNodeNames'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -890,10 +932,65 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand'
     })
-    .resolves(getCommandInvocationResponse.getLunDetailsResponse);
-
+    .resolves(getCommandInvocationResponse.getLunDetailsResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData'
+    })
+    .resolves(getCommandInvocationResponse.assessmentConfigData)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPatchBaselineCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPatchBaselineCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlInstanceInfoCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlInstanceInfoCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlStorageSavingsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlStorageSavingsCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldbCountCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqldbCountCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-testConnectionCommand'
+    })
+    .resolves(getCommandInvocationResponse.testConnectionCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getClusterNodeNames'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getClusterNodeNames',
+            '{    "currentNode":  "sqlnode1-44317", "ownerNode":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
+        )
+    );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
 ssmMock.on(GetParameterCommand).resolves(getParameerResponse);
 ssmMock.on(DeleteParametersCommand).resolves(deleteParametersResponse);
+ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: DescribeInstancePatchStatesCommand) => {
+    const instanceIds = command.InstanceIds;
+    const response = cloneDeep(describePatchStatesResponse);
+    const instancePatchStates = [];
+    instanceIds.forEach(instanceId => {
+        const sampleinstancePatchState = describePatchStatesResponse.InstancePatchStates[0];
+        sampleinstancePatchState.InstanceId = instanceId;
+        instancePatchStates.push(sampleinstancePatchState);
+    });
+
+    response.InstancePatchStates = instancePatchStates;
+    return response;
+});
+ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse);
+ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) => {
+    const instanceId = command.InstanceId;
+    if (instanceId?.includes('inProgress')) {
+        return listCommandsCommandResponse;
+    }
+    const response = cloneDeep(listCommandsCommandResponse);
+    response.Commands = [];
+    return response;
+});
