@@ -185,8 +185,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                             popoverClass={''}
                                             children={cardData?.errorMessage}
                                             trigger="hover"
-                                            delayHide={200}
-                                            interactive={true}
                                             isAppendedToBody={false}
                                             container={<TooltipIcon />}
                                             placement="bottom"
@@ -212,8 +210,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                         </div>
                                     }
                                     trigger="hover"
-                                    delayHide={200}
-                                    interactive={true}
                                     isAppendedToBody={false}
                                     container={<TooltipIcon />}
                                     placement="bottom"
@@ -248,8 +244,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 popoverClass={''}
                                 children={tooltipListSection(listObj, '120px')}
                                 trigger="hover"
-                                delayHide={200}
-                                interactive={true}
                                 isAppendedToBody={false}
                                 container={<TooltipIcon />}
                                 placement="bottom"
@@ -287,8 +281,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 popoverClass={''}
                                 children={tooltipListSection(listObj, '30px')}
                                 trigger="hover"
-                                delayHide={200}
-                                interactive={true}
                                 isAppendedToBody={false}
                                 container={<TooltipIcon />}
                                 placement="bottom"
