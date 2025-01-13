@@ -76,7 +76,10 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     <DsTypography variant="Semibold_14">Values</DsTypography>
                     <div className={styles.values}>
                         {data?.values.map((value, index) => (
-                            <div key={index + Math.random()}>
+                            <div
+                                key={index + Math.random()}
+                                style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
+                            >
                                 <div className={styles.seperator} />
 
                                 <DsTypography
