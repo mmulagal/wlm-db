@@ -45,6 +45,7 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -180,7 +181,7 @@ const DashboardInnerPage = () => {
             );
             handleOptimizeStorageJob(
                 res,
-                { id: cardData?.id, name: type },
+                { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
@@ -415,7 +416,7 @@ const DashboardInnerPage = () => {
         }
     }, [selectedConfig]);
 
-    const lastColDetails = (name: string, data?: any) => {
+    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any) => {
         return {
             id: '4',
             Header: '',
@@ -459,9 +460,15 @@ const DashboardInnerPage = () => {
                     isDisabled = true;
                     errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
                 }
+                const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (
                     <div className={styles.buttonContainer}>
-                        {!isDisabled ? (
+                        {isInProgress ? (
+                            <div className={styles['optimize-in-progress']}>
+                                <OptimizeInProgressIcon />
+                                <DsTypography variant="Semibold_14">Optimizing</DsTypography>
+                            </div>
+                        ) : !isDisabled ? (
                             <DsButton
                                 isThin
                                 variant="secondary"
