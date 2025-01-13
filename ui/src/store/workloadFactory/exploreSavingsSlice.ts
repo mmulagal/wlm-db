@@ -44,6 +44,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         manualRegionsLoading: false,
         manualRegionsError: null
     },
+    onPremiseData: null,
     volumeFilledStatus: false,
     secondaryVolumeFilledStatus: false,
     manualTCOVolumeTypes: {
@@ -140,6 +141,9 @@ const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setOnPremiseData(state, action: PayloadAction<any>) {
+            state.onPremiseData = action.payload;
+        },
         setStoragePerformance(state, action: PayloadAction<any>) {
             state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
         },
@@ -429,6 +433,7 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setOnPremiseData,
     setStoragePerformance,
     setComputeInformation,
     setSelectedExploreSavingsTab,
