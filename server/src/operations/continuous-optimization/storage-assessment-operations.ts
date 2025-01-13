@@ -121,7 +121,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             : isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
             ? AssessmentStatus.UNDER_PROVISIONED
             : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
-            ? AssessmentStatus.NOT_APPLICABLE
+            ? AssessmentStatus.NOT_OPTIMIZED
             : AssessmentStatus.OPTIMIZED;
 
     return {
@@ -158,7 +158,7 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     };
 
     if (defaultDataDriveLetter === tempdbDriveLetter) {
-        status = AssessmentStatus.NOT_APPLICABLE;
+        status = AssessmentStatus.NOT_OPTIMIZED;
 
         ignoredDrives.push(value);
     } else {
