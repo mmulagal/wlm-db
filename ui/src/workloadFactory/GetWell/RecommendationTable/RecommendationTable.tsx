@@ -134,7 +134,18 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                     </Button>
                 </div>
             );
-            handleOptimizeStorageJob(res, rowData, failedMsgData, getJobDetailApi, dispatch, statusType);
+            handleOptimizeStorageJob(
+                res,
+                {
+                    ...rowData,
+                    hostId: selectedResourceId || hostId,
+                    instanceId: selectedDatabaseInstance || instanceId
+                },
+                failedMsgData,
+                getJobDetailApi,
+                dispatch,
+                statusType
+            );
         });
     };
 
