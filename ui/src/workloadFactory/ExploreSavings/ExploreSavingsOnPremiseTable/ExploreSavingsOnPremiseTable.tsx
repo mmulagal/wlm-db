@@ -11,10 +11,11 @@ import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
 import FileUpload from './FileUpload';
-import { useGetUploadScriptMutation } from '../../../utils/apiService';
+import { useGetUploadScriptMutation, useGetOnPremSavingsMutation } from '../../../utils/apiService';
 //@ts-ignore
 import pako from 'pako';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { isSet } from 'lodash';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
@@ -25,8 +26,37 @@ const ExploreSavingsOnPremiseTable = () => {
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const [getUploadScript] = useGetUploadScriptMutation();
+    const [getOnPremSavings] = useGetOnPremSavingsMutation();
+    const [setLoading, isSetLoading] = useState(false);
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+
+    useEffect(() => {
+        async function getData() {
+            try {
+                isSetLoading(true);
+                const apiResult = await getOnPremSavings({});
+                let result: any = [];
+                apiResult?.data?.items?.map((perRow: any) => {
+                    const rowData = {
+                        ...perRow,
+                        onPremNode: perRow?.onPremisesNode[0],
+                        totalInstance: perRow?.sqlServerInstances?.length,
+                        nameForSorting: perRow?.databaseHostName?.toLowerCase()
+                    };
+                    result.push(rowData);
+                });
+
+                setTableData(result);
+                isSetLoading(false);
+            } catch {
+                console.error('Error fetching data');
+                isSetLoading(false);
+            }
+        }
+
+        getData();
+    }, []);
 
     const handleFileChange = (event: any) => {
         const selectedFile = event.target.files[0];
@@ -76,36 +106,6 @@ const ExploreSavingsOnPremiseTable = () => {
         }
     };
 
-    useEffect(() => {
-        if (unManagedHostFormatedList) {
-            let result: any = [];
-            unManagedHostFormatedList?.map((perRow: any) => {
-                let instanceList: any = [];
-                let instanceNameList: any = [];
-                perRow?.ec2Details?.map((row: any) => {
-                    if (row?.name) {
-                        instanceNameList.push(row?.name);
-                    }
-                    if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ID: ' + row?.id);
-                    } else if (row?.id) {
-                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
-                    }
-                });
-                const rowData = {
-                    ...perRow,
-                    instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', '),
-                    nameForSorting: perRow?.name?.toLowerCase()
-                };
-                result.push(rowData);
-            });
-            setTableData(result);
-        } else {
-            setTableData([]);
-        }
-    }, [unManagedHostFormatedList]);
-
     const lastColDetails = () => {
         return {
             id: '9',
@@ -140,7 +140,7 @@ const ExploreSavingsOnPremiseTable = () => {
             isSticky: true,
             width: '345px',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.name;
+                const name = rowData?.databaseHostName;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -150,7 +150,7 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
+            accessor: 'deploymentModel',
             id: '2',
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
@@ -208,11 +208,11 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: 'OnPrem nodes',
-            accessor: 'instanceListText',
+            accessor: 'onPremNode',
             id: '5',
             width: '347px',
             isSortable: true,
-            accessorForTextFilter: 'instanceListText',
+            accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
                 return 'xxx';
             }
@@ -223,13 +223,25 @@ const ExploreSavingsOnPremiseTable = () => {
 
     const lazyLoadComponent = () => {
         return (
-            <div className={styles.lazyLoadContainer}>
-                <DsSpinner />
-                <div className={styles.textArea}>
-                    <DsTypography variant="Semibold_16">Uploading script</DsTypography>
-                    <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
-                </div>
-            </div>
+            <>
+                {isUploadLoading && (
+                    <div className={styles.lazyLoadContainer}>
+                        <DsSpinner />
+                        <div className={styles.textArea}>
+                            <DsTypography variant="Semibold_16">Uploading script</DsTypography>
+                            <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
+                        </div>
+                    </div>
+                )}
+                {!isUploadLoading && (
+                    <div className={styles.lazyLoadContainer}>
+                        <DsSpinner />
+                        <div className={styles.textArea}>
+                            <DsTypography variant="Regular_14">Loading</DsTypography>
+                        </div>
+                    </div>
+                )}
+            </>
         );
     };
 
@@ -243,7 +255,7 @@ const ExploreSavingsOnPremiseTable = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || isUploadLoading
+        isLazyLoading: setLoading || isUploadLoading
     });
 
     const tableComponentProps = {
