@@ -6,8 +6,9 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
-import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
+import { getFilterOptions, getTruncatedItems, getDownloadFn } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
+import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
 import FileUpload from './FileUpload';
 import { useGetUploadScriptMutation, useGetDownloadScriptMutation } from '../../../utils/apiService';
@@ -251,8 +252,28 @@ const ExploreSavingsOnPremiseTable = () => {
     };
 
     const handleDownload = async () => {
-        const result: any = await getDownloadScript({});
-        console.log(result);
+        // getDownloadFn([{ input: tcoScript, name: 'list-vms.ps1' }]);
+
+        const fileProps = [{ input: tcoScript, name: 'tco-script.ps1' }];
+
+        const files = fileProps.map(
+            ({ name, input }) =>
+                new File([input], name, {
+                    type: 'text/plain'
+                })
+        );
+        const { name } = files[0];
+        const obj = files[0];
+
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(obj);
+
+        link.href = url;
+        link.download = name;
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(url);
     };
 
     return (
