@@ -1334,5 +1334,6 @@ export const GETWELL_DIALOG_CONTENT = {
     COMPUTE_RS_DTW_NOTES_STANDALONE: [
         'This process will require a temporary downtime of your SQL Server EC2 instance. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
-    ]
+    ],
+    COMPUTE_RS_LAST_POINT: 'This action will impact all SQL instances and any other application running on the host.'
 };
