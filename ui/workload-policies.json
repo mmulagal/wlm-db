@@ -239,6 +239,14 @@
                     "ssm:DeleteParameters"
                 ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
+            },
+            {
+                "Sid": "IAMGroup",
+                "Effect": "Allow",
+                "Action": [
+                    "iam:SimulatePrincipalPolicy"
+                ],
+                "Resource": "*"
             }
         ]
     }
