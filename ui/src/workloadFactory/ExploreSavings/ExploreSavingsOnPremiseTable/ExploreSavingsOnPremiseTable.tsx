@@ -11,23 +11,26 @@ import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
 import FileUpload from './FileUpload';
-import { useGetUploadScriptMutation, useGetOnPremSavingsMutation } from '../../../utils/apiService';
+import {
+    useGetUploadScriptMutation,
+    useGetOnPremSavingsMutation,
+    useLazyGetSubTaskListQuery
+} from '../../../utils/apiService';
 //@ts-ignore
 import pako from 'pako';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { isSet } from 'lodash';
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
 
-    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
-    const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
-    const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getOnPremSavings] = useGetOnPremSavingsMutation();
     const [setLoading, isSetLoading] = useState(false);
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
@@ -87,8 +90,19 @@ const ExploreSavingsOnPremiseTable = () => {
                     // Access the data inside the JSON
                     if (compressedBase64) {
                         const result = await getUploadScript({ payload: compressedBase64 });
+                        const jobInterval = setInterval(() => {
+                            getJobDetailApi(result.data.jobId).then((jobRes: any) => {
+                                const status = jobRes?.data?.status;
+
+                                if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                    clearInterval(jobInterval);
+                                } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                    clearInterval(jobInterval);
+                                }
+                            });
+                        }, 5000);
                         setIsUploadLoading(false);
-                        setTableData(unManagedHostFormatedList);
+
                         console.log(result);
                     } else {
                         console.log('No data found in the file.');
@@ -166,8 +180,7 @@ const ExploreSavingsOnPremiseTable = () => {
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'totalInstance'),
             renderCell: (cellData: string, rowData: any) => {
-                const instanceData = rowData?.sqlServerInstances;
-                const instanceNames = instanceData?.map((instance: any) => instance?.sqlServerInstance);
+                const instanceNames = rowData?.sqlServerInstances;
                 const truncatedItems = getTruncatedItems(instanceNames);
 
                 return (
