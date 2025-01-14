@@ -42,10 +42,30 @@ interface HostOsPatchAssessmentObject {
         title?: string;
     }[];
 }
+
+interface RssAdapter {
+    adapterName: string;
+    rssEnabled: boolean;
+    rssProfile: string;
+    baseProcessorNumber: number;
+    numberOfReceiveQueues: number;
+}
+
+interface RssConfigAssesment {
+    rssConfigFinding: string;
+    recommendedAdapterSettings?: {
+        recommendedReceiveQueues: number;
+        recommendedRssProfile: string;
+        recommendedBaseProcessorNumber: number;
+    };
+    rssAdapters?: RssAdapter[];
+    tcpOffloadState: string;
+}
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
+    rssConfig?: RssConfigAssesment;
 }
 interface Metadata {
     node1InstanceId: string;
@@ -457,5 +477,6 @@ export {
     HostOsPatchAssessmentObject,
     OptimizeMpioIscsiSessionsParams,
     SessionsCountPerIscsiTarget,
-    PgSqlInstanceDetails
+    PgSqlInstanceDetails,
+    RssConfigAssesment
 };

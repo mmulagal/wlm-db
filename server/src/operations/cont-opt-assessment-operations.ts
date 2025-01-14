@@ -31,7 +31,8 @@ import {
     DriftAssessmentResponseType,
     HostOsPatchDriftResponseType,
     LicenseDriftResponseType,
-    ParameterDriftResponseType
+    ParameterDriftResponseType,
+    RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
 import { getInstanceInfo } from './database/database-operations';
 import { createDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -50,6 +51,10 @@ import {
     managedHostOsPatchAssessment
 } from './continuous-optimization/hostOsPatch-assessment-operations';
 import { calculateStorageDrift } from './continuous-optimization/storage-assessment-operations';
+import {
+    calculateRssConfigDrift,
+    managedHostsRssConfigAssessment
+} from './continuous-optimization/rssConfig-assessment-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -93,6 +98,7 @@ async function initiateComputeLicenseAssessmentCollection(
         let licenseAssessment;
         let computeAssessment;
         let hostOsPatchAssessment;
+        let rssConfigAssessment;
         if (fields?.includes(AssessmentCategories.LICENSE)) {
             licenseAssessment = await managedHostsLicenseAssessment(
                 accountId,
@@ -126,11 +132,28 @@ async function initiateComputeLicenseAssessmentCollection(
                 jobId
             );
         }
-        if (!isEmpty(licenseAssessment) || !isEmpty(computeAssessment) || !isEmpty(hostOsPatchAssessment)) {
+        if (fields?.includes(AssessmentCategories.RSS_CONFIG)) {
+            rssConfigAssessment = await managedHostsRssConfigAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName,
+                jobId
+            );
+        }
+
+        if (
+            !isEmpty(licenseAssessment) ||
+            !isEmpty(computeAssessment) ||
+            !isEmpty(hostOsPatchAssessment) ||
+            !isEmpty(rssConfigAssessment)
+        ) {
             (metadata as unknown as Metadata).assessment = {
                 license: licenseAssessment || undefined,
                 compute: computeAssessment || undefined,
-                hostOsPatch: hostOsPatchAssessment || undefined
+                hostOsPatch: hostOsPatchAssessment || undefined,
+                rssConfig: rssConfigAssessment || undefined
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -482,7 +505,8 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                         [
                                             AssessmentCategories.LICENSE,
                                             AssessmentCategories.COMPUTE,
-                                            AssessmentCategories.HOST_OS_PATCH
+                                            AssessmentCategories.HOST_OS_PATCH,
+                                            AssessmentCategories.RSS_CONFIG
                                         ]
                                     );
                                 }
@@ -530,19 +554,26 @@ async function hostLevelDriftData(
     const shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
         AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
     );
-    const [computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse] = await Promise.all([
-        shouldCalculateComputeAssessment
-            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-            : Promise.resolve({}),
-        shouldCalculateLicenseAssessment
-            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-            : Promise.resolve({}),
-        shouldCalculateHostOsPatchAssessment
-            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
-            : Promise.resolve({})
-    ]);
+    const shouldCalculateRssConfigAssessment = fieldsValues?.includes(
+        AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
+    );
+    const [computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse] =
+        await Promise.all([
+            shouldCalculateComputeAssessment
+                ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                : Promise.resolve({}),
+            shouldCalculateLicenseAssessment
+                ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+                : Promise.resolve({}),
+            shouldCalculateHostOsPatchAssessment
+                ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
+                : Promise.resolve({}),
+            shouldCalculateRssConfigAssessment
+                ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId)
+                : Promise.resolve({})
+        ]);
 
-    return { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse };
+    return { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse };
 }
 
 async function fetchDriftAssessment(
@@ -566,6 +597,7 @@ async function fetchDriftAssessment(
     let shouldCalculateComputeAssessment = false;
     let shouldCalculateLicenseAssessment = false;
     let shouldCalculateHostOsPatchAssessment = false;
+    let shouldCalculateRssConfigAssessment = false;
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
@@ -575,22 +607,29 @@ async function fetchDriftAssessment(
         shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
             AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
         );
+        shouldCalculateRssConfigAssessment = fieldsValues?.includes(
+            AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
+        );
     } else {
         shouldCalculateStorageAssessment = true;
         shouldCalculateComputeAssessment = true;
         shouldCalculateLicenseAssessment = true;
         shouldCalculateHostOsPatchAssessment = true;
+        shouldCalculateRssConfigAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
 
     const [
         storageAssessmentResponse,
-        { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse }
+        { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse }
     ] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({}),
-        shouldCalculateComputeAssessment || shouldCalculateLicenseAssessment || shouldCalculateHostOsPatchAssessment
+        shouldCalculateComputeAssessment ||
+        shouldCalculateLicenseAssessment ||
+        shouldCalculateHostOsPatchAssessment ||
+        shouldCalculateRssConfigAssessment
             ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({})
     ]);
@@ -689,6 +728,10 @@ async function fetchDriftAssessment(
             }
         }
     }
+
+    if (!isEmpty(rssConfigResponse)) {
+        driftAssessmentData.rssConfig = rssConfigResponse as RssConfigDriftResponseType;
+    }
     return driftAssessmentData;
 }
 
@@ -737,18 +780,21 @@ async function fetchDriftAssessmentPerHost(
     let computeAssessmentResponse: ComputeDriftResponseType;
     let licenseAssessmentResponse: LicenseDriftResponseType;
     let hostOsPatchAssessmentResponse: HostOsPatchDriftResponseType;
+    let hostRssConfigAssessmentResponse: RssConfigDriftResponseType;
     const isHostLevelMetrics =
         isEmpty(fieldsList) ||
         fieldsList?.includes(AssessmentCategories.COMPUTE) ||
         fieldsList?.includes(AssessmentCategories.LICENSE) ||
-        fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH); // if fields are not provided or if any of the fields are provided then fetch respective fields or all fields metrics
+        fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH) ||
+        fieldsList?.includes(AssessmentCategories.RSS_CONFIG); // if fields are not provided or if any of the fields are provided then fetch respective fields or all fields metrics
     if (isHostLevelMetrics) {
         let hostFieldsToQuery = [];
         if (isEmpty(fieldsList)) {
             hostFieldsToQuery = [
                 AssessmentCategories.COMPUTE,
                 AssessmentCategories.LICENSE,
-                AssessmentCategories.HOST_OS_PATCH
+                AssessmentCategories.HOST_OS_PATCH,
+                AssessmentCategories.RSS_CONFIG
             ];
         } else {
             if (fieldsList?.includes(AssessmentCategories.COMPUTE)) {
@@ -759,6 +805,9 @@ async function fetchDriftAssessmentPerHost(
             }
             if (fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH)) {
                 hostFieldsToQuery.push(AssessmentCategories.HOST_OS_PATCH);
+            }
+            if (fieldsList?.includes(AssessmentCategories.RSS_CONFIG)) {
+                hostFieldsToQuery.push(AssessmentCategories.RSS_CONFIG);
             }
         }
 
@@ -774,6 +823,7 @@ async function fetchDriftAssessmentPerHost(
         computeAssessmentResponse = hostLevelData.computeAssessmentResponse as ComputeDriftResponseType;
         licenseAssessmentResponse = hostLevelData.licenseAssessmentResponse as LicenseDriftResponseType;
         hostOsPatchAssessmentResponse = hostLevelData.hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType;
+        hostRssConfigAssessmentResponse = hostLevelData.rssConfigResponse as RssConfigDriftResponseType;
     }
     await Promise.all(
         instancesManaged.map(async managedInstance => {
@@ -808,6 +858,9 @@ async function fetchDriftAssessmentPerHost(
                     }
                     if (!isEmpty(hostOsPatchAssessmentResponse)) {
                         driftAssessment.hostOsPatch = hostOsPatchAssessmentResponse;
+                    }
+                    if (!isEmpty(hostRssConfigAssessmentResponse)) {
+                        driftAssessment.rssConfig = hostRssConfigAssessmentResponse;
                     }
                 }
 

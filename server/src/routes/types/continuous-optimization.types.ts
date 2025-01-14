@@ -110,6 +110,28 @@ const AdditionalHostOsParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalRssConfigParameterDriftResponse = Type.Optional(
+    Type.Object({
+        rssAdapters: Type.Array(
+            Type.Object({
+                adapterName: Type.String(),
+                rssEnabled: Type.Boolean(),
+                rssProfile: Type.String(),
+                baseProcessorNumber: Type.Number(),
+                numberOfReceiveQueues: Type.Number()
+            })
+        ),
+        recommendedAdapterSettings: Type.Optional(
+            Type.Object({
+                recommendedRssProfile: Type.String(),
+                recommendedBaseProcessorNumber: Type.Number(),
+                recommendedReceiveQueues: Type.Number()
+            })
+        ),
+        tcpOffloadState: Type.String()
+    })
+);
+
 const ComputeDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalComputeParameterDriftResponse]);
 type ComputeDriftResponseType = Static<typeof ComputeDriftResponse>;
 
@@ -118,6 +140,9 @@ type LicenseDriftResponseType = Static<typeof LicenseDriftResponse>;
 
 const HostOsPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalHostOsParameterDriftResponse]);
 type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
+
+const RssConfigDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalRssConfigParameterDriftResponse]);
+type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
 
 const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
@@ -138,7 +163,8 @@ const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
-    hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse]))
+    hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
+    rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -196,6 +222,7 @@ export {
     ComputeDriftResponseType,
     LicenseDriftResponseType,
     HostOsPatchDriftResponseType,
+    RssConfigDriftResponseType,
     StorageParameterDriftResponseType,
     SizingViolationResponseType,
     OptimizeStorageRequestBody,
