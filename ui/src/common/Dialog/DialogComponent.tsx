@@ -93,7 +93,7 @@ const DialogComponent = ({
         if (primaryButtonDisabled) {
             return true;
         }
-        if (manageHostSelectedRows.length === 0) {
+        if (manageHostSelectedRows.length === 0 && dialogFrom === 'managedHost') {
             return true;
         }
         return (
