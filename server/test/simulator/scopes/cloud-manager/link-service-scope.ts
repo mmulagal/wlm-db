@@ -14,4 +14,3 @@ nock(`${CLOUD_MANAGER_ENDPOINT}`, {
             name: faker.string.alphanumeric(10)
         }
     ]);
-

@@ -1,10 +1,4 @@
-import {
-    S3Client,
-    GetObjectCommand,
-    PutObjectCommand,
-    PutBucketLifecycleConfigurationCommand,
-    GetBucketLifecycleConfigurationCommand
-} from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createReadStream } from 'fs';
 import getLogger from '../../utils/logger';
@@ -72,40 +66,8 @@ async function getObjectBucket(region: string, bucketName: string, objectName: s
     return response;
 }
 
-async function putBucketLifecycleConfiguration(region: string, config: any) {
-    logger.info('Creating bucket lifcycle configuration', { region, config });
-    const s3 = new S3Client({ region });
-    const command = new PutBucketLifecycleConfigurationCommand(config);
-    try {
-        const response = await s3.send(command);
-        logger.debug('Put Bucket Lifecycle Configuration response:', response);
-        return response;
-    } catch (error) {
-        logger.debug('Error configuring lifecycle:', error);
-    }
-}
-
-async function getBucketLifecycleConfiguration(region: string, bucketName: string) {
-    logger.info('Fetching bucket lifcycle configuration', { region, bucketName });
-    const s3 = new S3Client({ region });
-    try {
-        const command = new GetBucketLifecycleConfigurationCommand({ Bucket: bucketName });
-        const response = await s3.send(command);
-        logger.debug('Get Bucket Lifecycle Configuration response:', response);
-        return response;
-    } catch (error) {
-        logger.debug(error);
-    }
-}
-
 // Mock for getPresignedUrl from s3 sdk is not working as expected, because of that using stub to fake the presigned url
 // To mock using stub it needs to be named export, so only the presigned url function is wrapped in different object
 const preSignedUrl = { getPreSignedUrl };
 
-export {
-    preSignedUrl,
-    putObjectBucket,
-    putBucketLifecycleConfiguration,
-    getBucketLifecycleConfiguration,
-    getObjectBucket
-};
+export { preSignedUrl, putObjectBucket, getObjectBucket };
