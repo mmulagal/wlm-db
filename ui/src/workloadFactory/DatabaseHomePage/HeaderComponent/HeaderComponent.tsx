@@ -92,6 +92,7 @@ import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
+import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
 
 type Tab = {
     tab: string;
@@ -101,6 +102,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
+    const { fetchOnPremData } = useOnPremData();
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -347,6 +349,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else if (selectedHeaderTab === WLF_TABS.SANDBOXES) {
             dispatch(setIsRefreshed(true));
         }
+        fetchOnPremData(true);
     };
 
     const refreshComponent = () => {
