@@ -558,7 +558,7 @@ export const formatRssConfigCardConfig = (
     let itemName = item?.name || 'rss-config';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
