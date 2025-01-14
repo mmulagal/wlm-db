@@ -907,6 +907,16 @@ const DialogContent = ({
                                         </DsTypography>
                                     )}
                                 </div>
+
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+
+                                    <DsTypography variant="Regular_14">
+                                        {GETWELL_DIALOG_CONTENT.COMPUTE_RS_LAST_POINT}
+                                    </DsTypography>
+                                </div>
                             </div>
                         </div>
                     </div>

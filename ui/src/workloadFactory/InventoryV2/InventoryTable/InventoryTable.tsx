@@ -354,6 +354,7 @@ const InventoryTable = () => {
                 }}
                 customClass={styles.setWidth}
                 primaryButtonDisabled={false}
+                dialogFrom="managedHost"
             />
         );
     };

@@ -17,7 +17,8 @@ paths = [
 
 ]
 regexes = [
-
+    '''12345-f57b-487c-a0fc-12345''',
+    '''Netapp123''',
     '''3Sdstv1J0nIBIFinhic2uOF6Yr6qRMj7''',
     '''0a96542a-f57b-487c-a0fc-4db5d74c0a89''',
     '''AKIA2OPDPEVT4HHFDECD''',

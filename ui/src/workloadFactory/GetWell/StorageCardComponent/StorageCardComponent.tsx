@@ -100,6 +100,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+        } else if (
+            (cardData?.id === 'tempdb-drive-size' ||
+                cardData?.id === 'log-drive-size' ||
+                cardData?.id === 'headroom') &&
+            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED
+        ) {
+            return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
         } else {
             return '';
         }
@@ -125,7 +132,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         }
     };
 
-    const tooltipListSection = (listObj: { key: string; value: string }[]) => {
+    const tooltipListSection = (listObj: { key: string; value: string }[], valWidth: string) => {
         return (
             <div className={styles.tooltipLevel}>
                 {listObj?.map((item: any, index: number) => {
@@ -136,7 +143,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                     <DsTypography variant="Semibold_13">{item.key}</DsTypography>
                                 </div>
 
-                                <div className={styles.secondPart}>
+                                <div className={styles.secondPart} style={{ width: valWidth }}>
                                     <DsTypography variant="Regular_13">
                                         {GETWELL_VALUES?.[item.value || ''] || item?.value}
                                     </DsTypography>
@@ -161,15 +168,37 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return (
                 <div className={styles.tooltipContainer}>
                     <div className={styles.statusTopSection}>
-                        <div className={styles.svgSection}>
-                            {setImage(cardData?.block_two?.value || GENERAL.NOT_AVAILABLE)}
-                        </div>
-                        <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                            {cardData?.block_two?.value || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
+                        {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
+                            <>
+                                <div className={styles.svgSection}>
+                                    {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
+                                </div>
+                                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                                    {cardData?.block_two?.value || GENERAL.UNAVAILABLE}
+                                </DsTypography>
+                            </>
+                        ) : (
+                            <div className={styles.tooltipContainer}>
+                                <div className={styles.tooltip}>
+                                    {cardData?.errorMessage && (
+                                        <Popover
+                                            popoverClass={''}
+                                            children={cardData?.errorMessage}
+                                            trigger="hover"
+                                            isAppendedToBody={false}
+                                            container={<TooltipIcon />}
+                                            placement="bottom"
+                                        />
+                                    )}
+                                </div>
+                                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                                    {GENERAL.UNAVAILABLE}
+                                </DsTypography>
+                            </div>
+                        )}
                     </div>
                     {cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
-                        cardData?.block_one?.value === 'Compute rightsizing' && (
+                        cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING && (
                             <div className={styles.tooltip}>
                                 <Popover
                                     popoverClass={''}
@@ -181,8 +210,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                         </div>
                                     }
                                     trigger="hover"
-                                    delayHide={200}
-                                    interactive={true}
                                     isAppendedToBody={false}
                                     container={<TooltipIcon />}
                                     placement="bottom"
@@ -215,10 +242,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <div className={styles.tooltip}>
                             <Popover
                                 popoverClass={''}
-                                children={tooltipListSection(listObj)}
+                                children={tooltipListSection(listObj, '120px')}
                                 trigger="hover"
-                                delayHide={200}
-                                interactive={true}
                                 isAppendedToBody={false}
                                 container={<TooltipIcon />}
                                 placement="bottom"
@@ -240,6 +265,30 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 <div className={styles.warningMsg}>
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
+            let listObj = [
+                { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security }
+            ];
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '30px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 </div>
             );
@@ -351,7 +400,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             );
             handleOptimizeStorageJob(
                 res,
-                { id: cardData?.id, name: type },
+                { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,

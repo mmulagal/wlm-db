@@ -1,32 +1,60 @@
-import { Table, useTable, Typography, TableTopBar, DsTypography, Popover, DsSpinner } from '@netapp/design-system';
+import {
+    Table,
+    useTable,
+    Typography,
+    TableTopBar,
+    DsTypography,
+    Popover,
+    DsSpinner,
+    TooltipInfo
+} from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
 import FileUpload from './FileUpload';
-import { useGetUploadScriptMutation } from '../../../utils/apiService';
+import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 //@ts-ignore
 import pako from 'pako';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+
+import { useOnPremData } from './useOnPremData';
+
 const ExploreSavingsOnPremiseTable = () => {
     const dispatch = useDispatch();
-
-    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
-    const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
-    const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
+    const { fetchOnPremData, error } = useOnPremData();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
+    const { onPremiseData } = useAppSelector(state => state.exploreSavings);
     const [getUploadScript] = useGetUploadScriptMutation();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
+
+    useEffect(() => {
+        if (onPremiseData) {
+            setIsLoading(false);
+            setTableData(onPremiseData);
+        } else {
+            setTableData([]);
+            setIsLoading(true);
+        }
+    }, onPremiseData);
+
+    useEffect(() => {
+        fetchOnPremData();
+    }, []);
 
     const handleFileChange = (event: any) => {
         const selectedFile = event.target.files[0];
@@ -43,6 +71,7 @@ const ExploreSavingsOnPremiseTable = () => {
         }
         setTableData([]); //This code needs to be removed
         setIsUploadLoading(true);
+
         if (selectedFile) {
             const reader = new FileReader();
 
@@ -57,54 +86,51 @@ const ExploreSavingsOnPremiseTable = () => {
                     // Access the data inside the JSON
                     if (compressedBase64) {
                         const result = await getUploadScript({ payload: compressedBase64 });
-                        setIsUploadLoading(false);
-                        setTableData(unManagedHostFormatedList);
-                        console.log(result);
+                        const jobInterval = setInterval(() => {
+                            getJobDetailApi(result.data.jobId).then((jobRes: any) => {
+                                const status = jobRes?.data?.status;
+
+                                if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                    fetchOnPremData(true);
+                                    setIsUploadLoading(false);
+
+                                    clearInterval(jobInterval);
+                                } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                    setIsUploadLoading(false);
+                                    clearInterval(jobInterval);
+                                }
+                            });
+                        }, 5000);
                     } else {
-                        console.log('No data found in the file.');
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: 'No data found in the file.'
+                            })
+                        );
                     }
                 } catch (error) {
-                    console.error('Error parsing JSON:', error);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: 'Error parsing JSON: ' + error
+                        })
+                    );
                 }
             };
 
             reader.onerror = () => {
-                console.error('File could not be read.');
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'File could not be read.'
+                    })
+                );
             };
 
             reader.readAsText(selectedFile); // Read file as text
         }
     };
-
-    useEffect(() => {
-        if (unManagedHostFormatedList) {
-            let result: any = [];
-            unManagedHostFormatedList?.map((perRow: any) => {
-                let instanceList: any = [];
-                let instanceNameList: any = [];
-                perRow?.ec2Details?.map((row: any) => {
-                    if (row?.name) {
-                        instanceNameList.push(row?.name);
-                    }
-                    if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ID: ' + row?.id);
-                    } else if (row?.id) {
-                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
-                    }
-                });
-                const rowData = {
-                    ...perRow,
-                    instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', '),
-                    nameForSorting: perRow?.name?.toLowerCase()
-                };
-                result.push(rowData);
-            });
-            setTableData(result);
-        } else {
-            setTableData([]);
-        }
-    }, [unManagedHostFormatedList]);
 
     const lastColDetails = () => {
         return {
@@ -140,7 +166,7 @@ const ExploreSavingsOnPremiseTable = () => {
             isSticky: true,
             width: '345px',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.name;
+                const name = rowData?.databaseHostName;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -150,7 +176,7 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
+            accessor: 'deploymentModel',
             id: '2',
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
@@ -166,8 +192,7 @@ const ExploreSavingsOnPremiseTable = () => {
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'totalInstance'),
             renderCell: (cellData: string, rowData: any) => {
-                const instanceData = rowData?.sqlServerInstances;
-                const instanceNames = instanceData?.map((instance: any) => instance?.sqlServerInstance);
+                const instanceNames = rowData?.sqlServerInstances;
                 const truncatedItems = getTruncatedItems(instanceNames);
 
                 return (
@@ -208,11 +233,11 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: 'OnPrem nodes',
-            accessor: 'instanceListText',
+            accessor: 'onPremNode',
             id: '5',
             width: '347px',
             isSortable: true,
-            accessorForTextFilter: 'instanceListText',
+            accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
                 return 'xxx';
             }
@@ -223,13 +248,25 @@ const ExploreSavingsOnPremiseTable = () => {
 
     const lazyLoadComponent = () => {
         return (
-            <div className={styles.lazyLoadContainer}>
-                <DsSpinner />
-                <div className={styles.textArea}>
-                    <DsTypography variant="Semibold_16">Uploading script</DsTypography>
-                    <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
-                </div>
-            </div>
+            <>
+                {isUploadLoading && (
+                    <div className={styles.lazyLoadContainer}>
+                        <DsSpinner />
+                        <div className={styles.textArea}>
+                            <DsTypography variant="Semibold_16">Uploading script</DsTypography>
+                            <DsTypography variant="Regular_14">This process can take several minutes</DsTypography>
+                        </div>
+                    </div>
+                )}
+                {!isUploadLoading && (
+                    <div className={styles.lazyLoadContainer}>
+                        <DsSpinner />
+                        <div className={styles.textArea}>
+                            <DsTypography variant="Regular_14">Loading</DsTypography>
+                        </div>
+                    </div>
+                )}
+            </>
         );
     };
 
@@ -243,7 +280,7 @@ const ExploreSavingsOnPremiseTable = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || isUploadLoading
+        isLazyLoading: isLoading || isUploadLoading
     });
 
     const tableComponentProps = {
@@ -286,11 +323,14 @@ const ExploreSavingsOnPremiseTable = () => {
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />
-                        <div className={styles.commonAction} onClick={handleDownload}>
+                        <div className={styles.commonAction}>
                             <Download />
-                            <DsTypography variant="Semibold_14" className={styles.text}>
+                            <DsTypography onClick={handleDownload} variant="Semibold_14" className={styles.text}>
                                 Download script
                             </DsTypography>
+                            <TooltipInfo placement="bottom" isAppendedToBody={true}>
+                                {GENERAL.ONPREM_TOOLTIP}
+                            </TooltipInfo>
                         </div>
                     </div>
                 }

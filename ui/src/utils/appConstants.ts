@@ -442,6 +442,7 @@ export const GENERAL = {
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
     NOT_AVAILABLE: 'n/a',
+    UNAVAILABLE: 'Unavailable',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -1111,6 +1112,7 @@ export const GENERAL = {
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
     TEMPDB_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned tempDB drive size can not be optimized',
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
+    NOT_OPTIMIZED_SHARED_DRIVES: 'System is using shared drives for data and log files',
     ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:
@@ -1216,6 +1218,8 @@ export const GENERAL = {
     NOTE: 'Note',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
+    ONPREM_TOOLTIP:
+        'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
@@ -1330,5 +1334,6 @@ export const GETWELL_DIALOG_CONTENT = {
     COMPUTE_RS_DTW_NOTES_STANDALONE: [
         'This process will require a temporary downtime of your SQL Server EC2 instance. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
-    ]
+    ],
+    COMPUTE_RS_LAST_POINT: 'This action will impact all SQL instances and any other application running on the host.'
 };

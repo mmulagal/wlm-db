@@ -54,6 +54,9 @@ const DialogComponent = ({
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
 
+    //Managed Host table button disable
+    const { manageHostSelectedRows } = useAppSelector(state => state.inventoryV2);
+
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() => {
         return (
@@ -88,6 +91,9 @@ const DialogComponent = ({
 
     const disabledCheck = () => {
         if (primaryButtonDisabled) {
+            return true;
+        }
+        if (manageHostSelectedRows.length === 0 && dialogFrom === 'managedHost') {
             return true;
         }
         return (
