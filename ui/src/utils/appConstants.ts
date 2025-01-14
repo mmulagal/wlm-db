@@ -1222,6 +1222,7 @@ export const GENERAL = {
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    RSS_CONFIGURATION: 'RSS configuration',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',

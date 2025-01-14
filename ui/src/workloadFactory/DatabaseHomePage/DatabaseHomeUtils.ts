@@ -100,7 +100,7 @@ export const getPotentialSavingsValues = (data: any) => {
         }
     });
 
-    result.savings = (result?.ebsCost || 0) + (result?.fsxwCost || 0) - (result?.fsxnCost || 0)
+    result.savings = (result?.ebsCost || 0) + (result?.fsxwCost || 0) - (result?.fsxnCost || 0);
 
     result.savingsPercent =
         100 * ((result.ebsCost + result.fsxwCost - result.fsxnCost) / (result.ebsCost + result.fsxwCost || 1));
@@ -309,7 +309,11 @@ export const getManageAggrCost = (data: any) => {
         }
     });
 
-    const totalCost = roundOffNumber(storageCost) + roundOffNumber(computeCost) + roundOffNumber(connectivityCost) + roundOffNumber(otherCost);
+    const totalCost =
+        roundOffNumber(storageCost) +
+        roundOffNumber(computeCost) +
+        roundOffNumber(connectivityCost) +
+        roundOffNumber(otherCost);
 
     return {
         storageCost: formatFractionalNumber(storageCost, 2),
@@ -434,6 +438,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized = isOptimized(instanceAssessmentData?.compute?.status);
                 const isOperatingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
+                const isRssConfigurationOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
                     isOptimized(item?.status)
                 );
@@ -451,7 +456,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
                 const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                if (isComputeOptimized && isOperatingSystemPatchOptimized) {
+                if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
                     assessmentGroupedByCategory.compute++;
                 }
                 if (
@@ -484,6 +489,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         operatingSystem: 0,
         computeRightsizing: 0,
         operatingSystemPatch: 0,
+        rssConfiguration: 0,
         applicationSqlServer: 0,
         total: 0,
         severityObj: {}
@@ -541,6 +547,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 );
                 const isComputeRightsizingOptimized = isOptimized(instanceAssessmentData?.compute?.status);
                 const isOpearingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
+                const isRssConfigurationOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
                 const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
@@ -572,6 +579,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.operatingSystemPatch += isOpearingSystemPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystemPatch =
                     GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity];
+                getAssessmentGroupedByConfigurations.rssConfiguration += isRssConfigurationOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.rssConfiguration =
+                    GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity];
                 getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
                     GETWELL_VALUES[instanceAssessmentData?.license?.severity];

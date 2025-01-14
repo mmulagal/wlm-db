@@ -399,6 +399,20 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case GENERAL.RSS_CONFIGURATION:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.rss_config?.recommendation?.description
+                    }
+                });
+                break;
             case GENERAL.APPLICATION_SQL_SERVER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,

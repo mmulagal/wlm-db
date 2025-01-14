@@ -320,6 +320,31 @@
             "Network PPS over-provisioned"
         ]
     },
+    "rssConfig": {
+        "name": "rss-config",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "warning",
+        "recommendation": "When Workload Factory detects that your database infrastructure is not meeting the best practices for RSS Config Settings, the database instance is considered not optimized. A database instance that is not optimized might result in sub-optimal network performances.",
+        "tags": [
+            "Cost optimization"
+        ],
+        "rssAdapters": [
+            {
+                "adapterName": "Ethernet 3",
+                "rssProfile": "NUMStatic",
+                "rssEnabled": false,
+                "baseProcessorNumber": 0,
+                "numberOfReceiveQueues": 2
+            }
+        ],
+        "tcpOffloadState": "Disabled",
+        "recommendedAdapterSettings": {
+            "recommendedRssProfile": "NUMStatic",
+            "recommendedBaseProcessorNumber": 2,
+            "recommendedReceiveQueues": 2
+        }
+    },
     "license": {
         "name": "sql-license",
         "status": "not-optimized",

@@ -1474,7 +1474,9 @@ const GetWell = () => {
                     )}
 
                     {/* Section four */}
-                    {(filteredCardData?.compute_rightsizing || filteredCardData?.host_os_patch) && (
+                    {(filteredCardData?.compute_rightsizing ||
+                        filteredCardData?.host_os_patch ||
+                        filteredCardData?.rss_config) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -1642,6 +1644,69 @@ const GetWell = () => {
                                                     data={filteredCardData?.host_os_patch?.recommendation}
                                                 />
                                             }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.rss_config && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.rss_config}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.RSS_CONFIGURATION}
+                                        />
+                                        <DsAccordion
+                                            id="13"
+                                            variant="Default"
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.rss_config?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            isDisabled={loading || !cardData?.rss_config?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('13', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('13', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('13')}
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.rss_config?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.rss_config?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.rss_config?.recommendation}
+                                                />
+                                            }
                                             style={{ marginBottom: '40px' }}
                                         />
                                     </div>
@@ -1673,14 +1738,14 @@ const GetWell = () => {
                                             type={GENERAL.APPLICATION_SQL_SERVER}
                                         />
                                         <DsAccordion
-                                            id="13"
+                                            id="14"
                                             variant="Default"
                                             isDisabled={loading || !cardData?.sql_licenses?.block_two?.value}
-                                            isExpanded={isAccordionExpanded('13', optimizePrintState)}
+                                            isExpanded={isAccordionExpanded('14', optimizePrintState)}
                                             onExpandChange={isExpanded => {
-                                                handleAccordionExpanded('13', isExpanded);
+                                                handleAccordionExpanded('14', isExpanded);
                                             }}
-                                            onClick={() => setClickedAccordionId('13')}
+                                            onClick={() => setClickedAccordionId('14')}
                                             title={
                                                 <div className={styles.tagPlacement}>
                                                     {filteredCardData?.sql_licenses?.tags?.map(

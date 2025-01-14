@@ -50,6 +50,7 @@ export interface AssessmentResponseInterface {
         layout?: PerConfigInterface[];
     };
     compute?: PerConfigInterface;
+    rssConfig?: PerConfigInterface;
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
 }
@@ -58,6 +59,14 @@ export interface HostAssessmentResponseInterface {
     databaseInstanceId: string;
     assessments?: AssessmentResponseInterface;
     error?: string;
+}
+
+export interface RSSConfigAdapterInterface {
+    adapterName?: string;
+    rssProfile?: string;
+    rssEnabled?: boolean;
+    baseProcessorNumber?: string;
+    numberOfReceiveQueues?: string;
 }
 
 export interface PerConfigInterface {
@@ -83,6 +92,13 @@ export interface PerConfigInterface {
         operationEndTime?: number;
         securityNonCompliantCount?: number;
     }>;
+    rssAdapters?: Array<RSSConfigAdapterInterface>;
+    tcpOffloadState?: string;
+    recommendedAdapterSettings?: {
+        recommendedRssProfile?: string;
+        recommendedBaseProcessorNumber?: string;
+        recommendedReceiveQueues?: string;
+    };
 }
 
 export interface GwCardDataInterface {

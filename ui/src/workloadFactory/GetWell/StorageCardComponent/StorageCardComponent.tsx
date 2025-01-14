@@ -292,6 +292,38 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </DsTypography>
                 </div>
             );
+        } else if (cardData?.block_one?.value === GENERAL.RSS_CONFIGURATION) {
+            let listObj = [
+                { key: 'TCP Offloading features', value: cardData?.tcpOffloadState },
+                { key: 'Receive Queues', value: cardData?.rssAdapters?.[0]?.numberOfReceiveQueues },
+                { key: 'RSS profile', value: cardData?.rssAdapters?.[0]?.rssProfile },
+                { key: 'Base processor number', value: cardData?.rssAdapters?.[0]?.baseProcessorNumber }
+            ];
+            let value = '';
+            if (cardData?.block_three?.value && cardData?.block_three?.value === 1) {
+                value = '1 Finding';
+            } else {
+                value = (cardData?.block_three?.value || 0) + ' Findings';
+            }
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '70px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {value}
+                    </DsTypography>
+                </div>
+            );
         } else if (cardData?.block_three?.smallFont || !cardData?.block_three?.value) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>

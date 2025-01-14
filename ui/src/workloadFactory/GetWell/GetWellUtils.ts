@@ -24,7 +24,8 @@ import {
     AssessmentResponseInterface,
     GwCardDataInterface,
     GwSqlServerInstanceInterface,
-    PerConfigInterface
+    PerConfigInterface,
+    RSSConfigAdapterInterface
 } from '../../utils/types/getWellTypes';
 import { formatDateWithTime, formatNumberWithCustomComma, sortListOfDict } from '../../utils/utilityFunctions';
 
@@ -342,6 +343,33 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         tags: ['Cost optimization', 'Performance efficiency']
     },
+    rss_config: {
+        id: 'rss-config',
+        category: 'compute',
+        block_one: {
+            type: 'Compute',
+            value: GENERAL.RSS_CONFIGURATION
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Finding reasons',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'RSS configuration recommendation',
+            description:
+                'To enhance network performance and system efficiency for SQL Server EC2 instance, we recommend optimizing \n your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple \n processors, reducing latency and improving application responsiveness. \n \n Adhering to the best practices ensures efficient handling of network traffic, leading to better stability and reliability. \n Click optimize to apply the recommended RSS stting for your instance.'
+        },
+        tags: ['Cost optimization']
+    },
     host_os_patch: {
         id: 'host-os-patch',
         category: 'compute',
@@ -515,6 +543,69 @@ export const formatOsPatchCardConfig = (
                 critical: criticalViolations,
                 security: securityViolations
             }
+        }
+    };
+    return cardsData;
+};
+
+export const formatRssConfigCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.rssConfig;
+    let categoryVal = 'compute';
+    let itemName = item?.name || 'rss-config';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let findingReasons = 0;
+    item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
+        if (!adapter?.rssEnabled) {
+            findingReasons++;
+        } else {
+            if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
+                findingReasons++;
+            }
+            if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
+                findingReasons++;
+            }
+            if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
+                findingReasons++;
+            }
+        }
+    });
+
+    if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
+        findingReasons++;
+    }
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: findingReasons
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            tags: item?.tags || cardDataDefault?.[itemName]?.tags,
+            id: item?.name,
+            category: categoryVal,
+            errorMessage: item?.errorMessage,
+            rssAdapters: item?.rssAdapters,
+            tcpOffloadState: item?.tcpOffloadState
         }
     };
     return cardsData;
@@ -878,6 +969,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatOsPatchCardConfig(data, optimizingData, cardsData);
 
+    cardsData = formatRssConfigCardConfig(data, optimizingData, cardsData);
+
     cardsData = {
         ...cardsData,
         ['ontap_configuration']: {
@@ -1056,6 +1149,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
         compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
         host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
+        rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
         sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
     };
     Object.keys(cardData).map((key: any) => {

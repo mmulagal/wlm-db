@@ -58,6 +58,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 configKey = 'operatingSystemPatch';
                 break;
+            case GENERAL.RSS_CONFIGURATION:
+                configKey = 'rssConfiguration';
+                break;
             case GENERAL.APPLICATION_SQL_SERVER:
                 configKey = 'applicationSqlServer';
                 break;
@@ -474,6 +477,41 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         from="dashboard"
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.RSS_CONFIGURATION}
+                        percentage={Math.round(((configData.rssConfiguration || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.rssConfiguration}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[GENERAL.RSS_CONFIGURATION]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
