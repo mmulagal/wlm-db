@@ -739,6 +739,35 @@ const GET_CLUSTER_NODE_NAMES = () => `
     @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
 `;
 
+const GET_RSS_CONFIG_DETAILS = () => `
+    #Get RSS Configuration Details
+
+    $rssAdapters = Get-NetAdapterRss
+    $result = @()
+
+    foreach ($rssAdapter in $rssAdapters) {
+        $result += [PSCustomObject]@{
+            adapterName = $rssAdapter.Name
+            rssEnabled = $rssAdapter.Enabled
+            rssProfile = $rssAdapter.Profile -as [string]
+            baseProcessorNumber = $rssAdapter.BaseProcessorNumber
+            numberOfReceiveQueues = $rssAdapter.NumberOfReceiveQueues
+        }
+    }
+
+    $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+    $tcpOffloadState = (Get-NetOffloadGlobalSetting).Chimney
+
+    # Combine the results
+    $result = [PSCustomObject]@{
+        adapters = $result
+        vpuCount = $vcpus
+        tcpOffloadState = $tcpOffloadState -as [string]
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -746,5 +775,6 @@ export {
     CHECK_NODE_STATUS,
     RESCAN_EXTEND_LUN,
     MOVE_ALL_CLUSTER_GROUPS,
-    GET_CLUSTER_NODE_NAMES
+    GET_CLUSTER_NODE_NAMES,
+    GET_RSS_CONFIG_DETAILS
 };

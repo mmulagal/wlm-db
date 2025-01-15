@@ -4,7 +4,8 @@ enum AssessmentCategories {
     STORAGE = 'storage',
     COMPUTE = 'compute',
     LICENSE = 'license',
-    HOST_OS_PATCH = 'host-os-patch'
+    HOST_OS_PATCH = 'host-os-patch',
+    RSS_CONFIG = 'rss-config'
 }
 
 enum AssessmentTriggeredBy {
@@ -30,6 +31,8 @@ enum AwsWellArchitecturedPillars {
 
 const VOLUME = 'volume';
 const LUN = 'lun';
+
+const NUMASTATIC = 'NUMAStatic';
 
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
@@ -179,5 +182,6 @@ export {
     REDIS_SCHEMA,
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
-    STORAGE_OPTIMIZE_JOB_PARAM
+    STORAGE_OPTIMIZE_JOB_PARAM,
+    NUMASTATIC
 };
