@@ -165,7 +165,7 @@ const OperatingSystemTable = () => {
             filterOptions: 'auto'
         },
         {
-            Header: 'Not-optimizes configuration',
+            Header: 'Not-optimized configuration',
             accessor: 'configuration',
             id: '3',
             width: '320px',
