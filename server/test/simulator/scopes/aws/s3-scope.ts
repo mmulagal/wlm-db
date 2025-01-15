@@ -1,13 +1,7 @@
 // workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import {
-    S3Client,
-    PutObjectCommand,
-    GetBucketLifecycleConfigurationCommand,
-    PutBucketLifecycleConfigurationCommand,
-    GetObjectCommand
-} from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import sinon from 'sinon';
 import { mockClient } from 'aws-sdk-client-mock';
 import { faker } from '@faker-js/faker';
@@ -21,8 +15,6 @@ SECRETS.SIGNURL_ACCESS_KEY = faker.random.alpha(24);
 SECRETS.SIGNURL_SECRET_KEY = faker.random.alpha(24);
 
 s3Mock.on(PutObjectCommand).resolves({});
-s3Mock.on(GetBucketLifecycleConfigurationCommand).resolves({});
-s3Mock.on(PutBucketLifecycleConfigurationCommand).resolves({});
 s3Mock.on(GetObjectCommand).resolves({});
 s3Mock.on(GetObjectCommand).resolves(s3GetObjectCommandResponse);
 

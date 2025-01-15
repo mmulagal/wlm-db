@@ -5,13 +5,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION, SECRETS } from '../../../src/utils/consts';
-import {
-    preSignedUrl,
-    putObjectBucket,
-    getBucketLifecycleConfiguration,
-    putBucketLifecycleConfiguration,
-    getObjectBucket
-} from '../../../src/lib/aws/s3';
+import { preSignedUrl, putObjectBucket, getObjectBucket } from '../../../src/lib/aws/s3';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -26,14 +20,6 @@ describe('S3 Lib', () => {
     });
     it('Put object to bucket', async () => {
         const response = await putObjectBucket(DEFAULT_AWS_REGION, 'sample', 'sample.yaml', 'sample');
-        expect(response).toBeDefined();
-    });
-    it('Get Bucket Lifecycle Configuration', async () => {
-        const response = await getBucketLifecycleConfiguration(DEFAULT_AWS_REGION, 'sample');
-        expect(response).toBeDefined();
-    });
-    it('Get Bucket Lifecycle Configuration', async () => {
-        const response = await putBucketLifecycleConfiguration(DEFAULT_AWS_REGION, 'sample');
         expect(response).toBeDefined();
     });
     it('Get Bucket object', async () => {
