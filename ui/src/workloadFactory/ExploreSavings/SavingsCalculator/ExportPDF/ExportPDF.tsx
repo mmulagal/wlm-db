@@ -10,7 +10,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-const ExportPDF = ({ printDocument, disableState }: any) => {
+const ExportPDF = ({ printDocument, disableState, sendEmail }: any) => {
     const {
         storageSavingsLoading,
         selectedHostDetails,
@@ -35,6 +35,10 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
 
     const handleExport = () => {
         printDocument();
+    };
+
+    const handleSendEmail = () => {
+        sendEmail();
     };
 
     const setCSSForExportPDF = () => {
@@ -124,6 +128,29 @@ const ExportPDF = ({ printDocument, disableState }: any) => {
                     </div>
                 </>
             )}
+
+            {/* <div
+                className={
+                    loading || disableState || !viewCalculationsResponse
+                        ? `${styles.insideContainer} ${styles.disabled}`
+                        : styles.insideContainer
+                }
+            >
+                <div>
+                    <Download />
+                </div>
+                <DsTypography
+                    variant="Semibold_14"
+                    className={styles.text}
+                    style={{ width: '180px' }}
+                    onClick={() =>
+                        loading || disableState || !viewCalculationsResponse ? () => {} : handleSendEmail()
+                    }
+                    id="es-export-pdf"
+                >
+                    Send by Email
+                </DsTypography>
+            </div> */}
         </div>
     );
 };

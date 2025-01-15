@@ -39,6 +39,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import ComputeInformation from './ComputeInformation/ComputeInformation';
 import StoragePerformance from './StoragePerformance/StoragePerformance';
 import OnPremRegion from './OnPremRegion/OnPremRegion';
+import downloadPdfEmail from '../../../common/emailPDF';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
@@ -84,6 +85,24 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         }
     }, [viewCalculationsResponse]);
 
+    const sendEmail = async () => {
+        const elem = document.getElementById('export-pdf') as HTMLElement;
+        var options = {
+            filename: `SavingsCalculator.pdf`,
+            compression: 'MEDIUM'
+        };
+        const report = await downloadPdfEmail(elem, options, true, () => {});
+        const formData = new FormData();
+        formData.append('file', report, 'document.pdf');
+        formData.append('userEmail', 'userMetadata?.email'); //Email info need to fetch
+        formData.append('emailSubject', 'FSXw');
+        // uploadFile(formData).then((resp) => {
+        //     console.log(‘succes’)
+        // }).catch(err => notificationContext({
+
+        // }))
+    };
+
     const printDocument = () => {
         setPrintState(true);
         setTimeout(() => {
@@ -92,8 +111,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 filename: `SavingsCalculator.pdf`,
                 compression: 'MEDIUM'
             };
-             //@ts-ignore
-             downloadPdf(elem, options, (pdf: any) => {
+            //@ts-ignore
+            downloadPdf(elem, options, (pdf: any) => {
                 setPrintState(false);
                 dispatch(
                     addNotification({
@@ -102,7 +121,6 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     })
                 );
             });
-           
         }, 10);
     };
 
@@ -272,7 +290,12 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 </div>
 
                 {/* last section */}
-                <ExportPDF printDocument={printDocument} disableState={disableState} isMutliFsx={isMutliFsx} />
+                <ExportPDF
+                    printDocument={printDocument}
+                    disableState={disableState}
+                    isMutliFsx={isMutliFsx}
+                    sendEmail={sendEmail}
+                />
             </div>
         </div>
     );
