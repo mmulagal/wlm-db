@@ -46,7 +46,6 @@ async function registerSsmLink(
         return response;
     } catch (error) {
         logger.error('Failed to register SSM link', { error, arn });
-        return null;
     }
 }
 

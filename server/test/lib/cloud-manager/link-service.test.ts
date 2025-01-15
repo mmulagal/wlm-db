@@ -13,6 +13,6 @@ describe('SSM link service', () => {
 
     it('Register SSM link with invalid ARN', async () => {
         const response = await registerSsmLink('name', 'invalid arn', 'credentialsId', 'linux', 'accId');
-        expect(response).toBeNull();
+        expect(response).toBeUndefined();
     });
 });
