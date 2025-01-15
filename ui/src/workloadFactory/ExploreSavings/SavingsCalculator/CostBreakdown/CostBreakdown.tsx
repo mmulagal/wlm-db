@@ -60,7 +60,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                     <div>{data?.type}</div>
                                 </div>
                             ) : (
-                                data?.type
+                                <div style={{ whiteSpace: 'nowrap' }}>{data?.type}</div>
                             )}
                         </Text>
                     </GridItem>
