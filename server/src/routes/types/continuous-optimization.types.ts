@@ -89,6 +89,7 @@ const AdditionalHostOsParameterDriftResponse = Type.Optional(
                 Type.Object({
                     baselineId: Type.String(),
                     criticalNonCompliantCount: Type.Number(),
+                    otherNonCompliantCount: Type.Number(),
                     ec2InstanceId: Type.String(),
                     operationStartTime: Type.Number(),
                     operationEndTime: Type.Number(),

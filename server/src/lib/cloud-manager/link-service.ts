@@ -1,4 +1,4 @@
-import { CLOUD_MANAGER_ENDPOINT } from '../../utils/consts';
+import { WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
@@ -20,29 +20,34 @@ async function registerSsmLink(
 ) {
     logger.info('Creating SSM link for accountId', { accountId, credentialsId, arn, name, osType, tags });
 
-    const url = `${CLOUD_MANAGER_ENDPOINT}/accounts/${accountId}/links/v1/links`;
+    const url = `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/links/v1/links`;
     const { token } = await getWfServiceToken();
 
-    const response = await gotInstanceForInternalRequest
-        .post(url, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            json: {
-                type: 'ssm',
-                name,
-                arn,
-                tags,
-                ssmAgentInfo: {
-                    credentialsId,
-                    osType
+    try {
+        const response = await gotInstanceForInternalRequest
+            .post(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                json: {
+                    type: 'ssm',
+                    name,
+                    arn,
+                    tags,
+                    ssmAgentInfo: {
+                        credentialsId,
+                        osType
+                    }
                 }
-            }
-        })
-        .json<SsmLinkResponse>();
+            })
+            .json<SsmLinkResponse>();
 
-    logger.debug('SSM link registered successfully');
-    return response;
+        logger.debug('SSM link registered successfully', { arn });
+        return response;
+    } catch (error) {
+        logger.error('Failed to register SSM link', { error, arn });
+        return null;
+    }
 }
 
 export default registerSsmLink;
