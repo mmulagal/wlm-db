@@ -21,8 +21,8 @@ import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
 import FileUpload from './FileUpload';
 import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
-//@ts-ignore
-import pako from 'pako';
+
+import { compressSync } from 'fflate';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
@@ -50,7 +50,7 @@ const ExploreSavingsOnPremiseTable = () => {
             setTableData([]);
             setIsLoading(true);
         }
-    }, onPremiseData);
+    }, [onPremiseData]);
 
     useEffect(() => {
         fetchOnPremData();
@@ -79,8 +79,17 @@ const ExploreSavingsOnPremiseTable = () => {
                 try {
                     // Parse the JSON data
                     const jsonString = e.target?.result as string;
+
+                    // Encode JSON to Base64
                     const base64Encoded = btoa(jsonString);
-                    const compressedData = pako.deflate(base64Encoded);
+
+                    // Convert Base64 string to Uint8Array
+                    const base64Bytes = new TextEncoder().encode(base64Encoded);
+
+                    // Compress the Base64 data using fflate
+                    const compressedData = compressSync(base64Bytes);
+
+                    // Convert the compressed data to Base64
                     const compressedBase64 = btoa(String.fromCharCode(...compressedData));
 
                     // Access the data inside the JSON
