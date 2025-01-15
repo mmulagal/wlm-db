@@ -149,7 +149,8 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'Continuous Optimization'
+    ASSESSMENT = 'Continuous Optimization',
+    ONPREM_TCO = 'OnPremises TCO'
 }
 
 enum HttpErrorCodes {

@@ -963,7 +963,10 @@ function getPricingByLicenseType(
         { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
     >
 ): number | undefined {
-    logger.info('Getting pricing by license type', { licenseType, existingInstanceTypesPricingDetails });
+    logger.info('Getting pricing by license type', {
+        licenseType,
+        existingInstanceTypesPricingDetails: existingInstanceTypesPricingDetails.entries()
+    });
     let instanceHourlyPrice: number | undefined;
     for (const [, { count, pricingDetails }] of existingInstanceTypesPricingDetails) {
         if (pricingDetails[licenseType]?.pricePerUnit) {

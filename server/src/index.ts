@@ -46,6 +46,7 @@ import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
 import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
+import onpremTcoRoutes from './routes/onprem-tco';
 import continuousOptimizationRoutes from './routes/continuous-optimization';
 
 import {
@@ -220,6 +221,7 @@ const app = fastify({
             resourceRoutes(instance);
             storageSavingsRoutes(instance);
             continuousOptimizationRoutes(instance);
+            onpremTcoRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

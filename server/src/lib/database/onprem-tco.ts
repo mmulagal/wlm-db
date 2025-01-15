@@ -1,0 +1,131 @@
+import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
+import getLogger from '../../utils/logger';
+import { prisma } from '../../utils/prisma-utils';
+import { checkAccount } from './db';
+
+const logger = getLogger();
+
+interface OnPremTcoReportObject {
+    account_id: string;
+    resource_id: string;
+    database_type: DATABASE_TYPE;
+    database_deployment_type: DATABASE_DEPLOYMENT_TYPE;
+    creation_time: Date;
+    version: string;
+    host_config?: object;
+    database_instances_data: object;
+    assessment_data?: object;
+}
+async function createOnPremTcoReportData(records: OnPremTcoReportObject[]) {
+    logger.info('Creating onpremises TCO report', { records: records.length });
+    records.forEach(record => {
+        record.account_id = checkAccount(record.account_id);
+    });
+    return prisma.client.onprem_tco_reports.createMany({
+        data: records
+    });
+}
+
+async function listOnPremTcoReportData(
+    accountId?: string,
+    resourceId?: string,
+    databaseInstanceId?: string,
+    databaseType?: DATABASE_TYPE,
+    sort: string = 'creation_time',
+    sortOrder: string = 'desc'
+) {
+    logger.info('Listing onpremises TCO report', {
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        databaseType
+    });
+    accountId = checkAccount(accountId!);
+
+    return prisma.client.onprem_tco_reports.findMany({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(databaseType && { database_type: databaseType }),
+            ...(resourceId && { resource_id: resourceId })
+        },
+        orderBy: [
+            {
+                [sort]: `${sortOrder}`
+            }
+        ]
+    });
+}
+
+async function removeOnPremTcoReportData(
+    id?: string[],
+    accountId?: string,
+    resourceId?: string,
+    databaseType?: DATABASE_TYPE
+) {
+    logger.info('Removing onpremises TCO report', {
+        id,
+        accountId,
+        resourceId,
+        databaseType
+    });
+
+    return prisma.client.onprem_tco_reports.deleteMany({
+        where: {
+            OR: [
+                ...(id ? [{ id: { in: id } }] : []),
+                ...(accountId ? [{ account_id: accountId }] : []),
+                ...(resourceId ? [{ resource_id: resourceId }] : []),
+                ...(databaseType ? [{ database_type: databaseType }] : [])
+            ]
+        }
+    });
+}
+
+async function updateOnPremTcoReportRecord(
+    accountId: string,
+    resourceId: string,
+    databaseType: string,
+    data: {
+        assessmentData: object;
+    }
+) {
+    logger.info('Updating onprem TCO report', { accountId, resourceId, databaseType, data });
+
+    return prisma.client.onprem_tco_reports.updateMany({
+        where: {
+            account_id: accountId,
+            resource_id: resourceId
+        },
+        data
+    });
+}
+
+async function listOnPremDatabaseResources(
+    accountId: string,
+    databaseType: DATABASE_TYPE,
+    pageSize?: number,
+    nextToken?: string
+) {
+    logger.info('Listing on-prem database resources', { accountId, databaseType, pageSize, nextToken });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.onprem_tco_reports.findMany({
+        where: {
+            account_id: accountId,
+            database_type: databaseType
+        },
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
+    });
+}
+export {
+    createOnPremTcoReportData,
+    listOnPremTcoReportData,
+    removeOnPremTcoReportData,
+    updateOnPremTcoReportRecord,
+    listOnPremDatabaseResources
+};

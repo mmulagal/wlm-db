@@ -89,5 +89,8 @@
     "redis": {
         "endpoint": "127.0.0.1:6379",
         "cron-job-interval": "24h"
+    },
+    "reporting":{
+        "bucket-name": "s3://staging.reports.data-services.tlveng.netapp.com/wlmdb/"
     }
 }

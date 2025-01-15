@@ -378,9 +378,9 @@ async function describeSnapshots(credentialsId: string, region: string, params: 
 }
 
 async function getInstanceTypesFromInstanceRequirementsCommand(
-    credentialsId: string,
     region: string,
-    params: GetInstanceTypesFromInstanceRequirementsCommandInput
+    params: GetInstanceTypesFromInstanceRequirementsCommandInput,
+    credentialsId?: string
 ) {
     logger.info('Get instance types from instance requirements', { region, params });
 

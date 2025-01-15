@@ -30,5 +30,8 @@
         "tco": {
             "update-recommendation-preference": "7d"
         }
+    },
+    "reporting":{
+        "bucket-name": "s3://prod.reports.data-services.tlveng.netapp.com/wlmdb/"
     }
 }

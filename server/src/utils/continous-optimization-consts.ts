@@ -1,4 +1,5 @@
 import config from 'config';
+import { WLMDB } from './consts';
 
 enum AssessmentCategories {
     STORAGE = 'storage',
@@ -163,6 +164,11 @@ const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
 const TEST_CONNECTION_COMMAND =
     'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
+
+// ONPREM CONTINUOUS OPTIMIZATION
+const OP_TCO_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/OnPremTCOCollector_v1.ps1`;
+const REPORTING_BUCKET = config.get('reporting.bucket-name') as string;
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -182,6 +188,8 @@ export {
     REDIS_SCHEMA,
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
+    OP_TCO_COLLECTOR_SCRIPT_PATH,
+    REPORTING_BUCKET,
     STORAGE_OPTIMIZE_JOB_PARAM,
     NUMASTATIC
 };
