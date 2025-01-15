@@ -33,7 +33,6 @@ import {
     derivePropertiesFromARN,
     getDatabaseInstanceName,
     getDescriptionForMatchingName,
-    getEc2Arn,
     getQueueUrl,
     parsePgSqlInstanceInfo
 } from '../../utils/utils';
@@ -61,7 +60,6 @@ import { createJobs, listJobs } from '../../lib/database/job';
 import { getJobDetails, updateJobDetails } from '../database/job-operations';
 import { getPgSqlInstanceInfo } from '../workloads/pgsql/pgsql-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import registerSsmLink from '../../lib/cloud-manager/link-service';
 import { DeploymentDetails } from '../../utils/common-types';
 
 const logger = getLogger();
@@ -591,10 +589,10 @@ async function processCloudFormationMessages() {
                                                         resourceName,
                                                         resourceType,
                                                         fsxName,
-                                                        credentialsId,
-                                                        cloudProviderAccountId,
-                                                        region,
-                                                        nodeIds
+                                                        credentialsId
+                                                        // cloudProviderAccountId,
+                                                        // region,
+                                                        // nodeIds
                                                     );
 
                                                     try {
@@ -1217,10 +1215,10 @@ async function registerWithWFServices(
     resourceName: string,
     resourceType: string,
     fsxName: string,
-    credentialsId: string,
-    cloudProviderAccountId: string,
-    region: string,
-    nodeIds: string[]
+    credentialsId: string
+    // cloudProviderAccountId: string,
+    // region: string,
+    // nodeIds: string[]
 ) {
     if (encryptedFsxPassword) {
         const { credentials_id: deploymentCredentialId, region: deploymentRegion } = masterStackDeployment;
@@ -1255,16 +1253,17 @@ async function registerWithWFServices(
 
     await handleResourceAssociation(accountId, credentialsId, resourceId, resourceName, resourceType, fsxId, fsxName);
 
-    const ssmLinks = nodeIds.map(nodeId =>
-        registerSsmLink(
-            resourceName,
-            getEc2Arn(cloudProviderAccountId, region, nodeId),
-            credentialsId,
-            resourceType === RESOURCESTYPE.MSSQL ? 'windows' : 'linux',
-            accountId
-        )
-    );
-    await Promise.all(ssmLinks);
+    // For now
+    // const ssmLinks = nodeIds.map(nodeId =>
+    //     registerSsmLink(
+    //         resourceName,
+    //         getEc2Arn(cloudProviderAccountId, region, nodeId),
+    //         credentialsId,
+    //         resourceType === RESOURCESTYPE.MSSQL ? 'windows' : 'linux',
+    //         accountId
+    //     )
+    // );
+    // await Promise.all(ssmLinks);
 }
 
 export { processCloudFormationMessages, tagResources };
