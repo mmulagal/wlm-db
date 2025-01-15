@@ -9,7 +9,7 @@ import { generateHash, getArtifactsRegionBucketName } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
-import { OP_TCO_COLLECTOR_SCRIPT_PATH, REPORTING_BUCKET } from '../utils/continous-optimization-consts';
+import { OP_TCO_COLLECTOR_SCRIPT_PATH, REPORTING_BUCKET, NETWORK_PERF } from '../utils/continous-optimization-consts';
 import {
     OnPremCollectionObjectV1,
     SqlInstanceDetails,
@@ -538,7 +538,7 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
     let maxVCpuCount = 0;
     let maxMemoryMiB = 0;
 
-    let networkPerformance = 'Up10';
+    let networkPerformance = NETWORK_PERF.UP_TO_10;
     sqlInstancesDetails.forEach(sqlInstance => {
         const { cpuUtilization, memUtilization } = sqlInstance;
         const vcpuCount = parseCpuUtilization(cpuUtilization);
@@ -549,7 +549,8 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
 
         maxVCpuCount = Math.max(maxVCpuCount, vcpuCount!);
         maxMemoryMiB = Math.max(maxMemoryMiB, memoryMiB);
-        networkPerformance = sqlInstance.networkPerformance === 'Above10' ? 'Above10' : 'Up10';
+        networkPerformance =
+            sqlInstance.networkPerformance === NETWORK_PERF.ABOVE_10 ? NETWORK_PERF.ABOVE_10 : NETWORK_PERF.UP_TO_10;
     });
 
     return {
@@ -561,7 +562,7 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
             AllowedInstanceTypes: ['m*', 'c*', 'r*'],
             NetworkBandwidthGbps:
-                networkPerformance === 'Up10'
+                networkPerformance === NETWORK_PERF.UP_TO_10
                     ? {
                           Max: 10
                       }

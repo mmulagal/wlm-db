@@ -169,6 +169,11 @@ const TEST_CONNECTION_COMMAND =
 const OP_TCO_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/OnPremTCOCollector_v1.ps1`;
 const REPORTING_BUCKET = config.get('reporting.bucket-name') as string;
 
+const NETWORK_PERF = {
+    UP_TO_10: 'upTo10',
+    ABOVE_10: 'above10'
+};
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -191,5 +196,6 @@ export {
     OP_TCO_COLLECTOR_SCRIPT_PATH,
     REPORTING_BUCKET,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    NUMASTATIC
+    NUMASTATIC,
+    NETWORK_PERF
 };
