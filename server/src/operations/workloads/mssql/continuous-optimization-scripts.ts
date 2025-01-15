@@ -739,19 +739,17 @@ const GET_CLUSTER_NODE_NAMES = () => `
 
 const GET_RSS_CONFIG_DETAILS = () => `
     #Get RSS Configuration Details
-    $adapters = Get-NetAdapter
+
+    $rssAdapters = Get-NetAdapterRss
     $result = @()
 
-    foreach ($adapter in $adapters) {
-        $adapterName = $adapter.Name
-        $rssConfig = Get-NetAdapterRss -Name $adapterName
-
+    foreach ($rssAdapter in $rssAdapters) {
         $result += [PSCustomObject]@{
-            adapterName = $adapterName
-            rssEnabled = $rssConfig.Enabled
-            rssProfile = $rssConfig.Profile -as [string]
-            baseProcessorNumber = $rssConfig.BaseProcessorNumber
-            numberOfReceiveQueues = $rssConfig.NumberOfReceiveQueues
+            adapterName = $rssAdapter.Name
+            rssEnabled = $rssAdapter.Enabled
+            rssProfile = $rssAdapter.Profile -as [string]
+            baseProcessorNumber = $rssAdapter.BaseProcessorNumber
+            numberOfReceiveQueues = $rssAdapter.NumberOfReceiveQueues
         }
     }
 
