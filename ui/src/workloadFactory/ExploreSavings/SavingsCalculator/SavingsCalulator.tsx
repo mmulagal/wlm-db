@@ -44,7 +44,6 @@ import downloadPdfEmail from '../../../common/emailPDF';
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
-    // const [disableState, setDisableState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
 
     const {
@@ -61,7 +60,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         selectedExploreSavingsTab
     } = useAppSelector(state => state.exploreSavings);
 
-    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
@@ -94,7 +93,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         const report = await downloadPdfEmail(elem, options, true, () => {});
         const formData = new FormData();
         formData.append('file', report, 'document.pdf');
-        formData.append('userEmail', 'userMetadata?.email'); //Email info need to fetch
+        formData.append('userEmail', userMetadata?.email);
         formData.append('emailSubject', 'FSXw');
         // uploadFile(formData).then((resp) => {
         //     console.log(‘succes’)

@@ -1,6 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AuthState {
+    userMetadata: {
+        email: string;
+    };
     accountId: string;
     accessToken: string;
     resourceId: string | (string | null)[] | null;
@@ -33,13 +36,19 @@ const initialState: AuthState = {
         }
     },
     isWorkloadFactory: false,
-    refreshBlocked: false
+    refreshBlocked: false,
+    userMetadata: {
+        email: ''
+    }
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        updateUserMetaData: (state, action: PayloadAction<{ email: string }>) => {
+            state.userMetadata = action.payload;
+        },
         updateFeatures: (state, action: PayloadAction<string>) => {
             state.features = action.payload;
         },
@@ -79,6 +88,7 @@ const authSlice = createSlice({
 });
 
 export const {
+    updateUserMetaData,
     updateAccountId,
     updateAuthSuccess,
     updateResourceId,
