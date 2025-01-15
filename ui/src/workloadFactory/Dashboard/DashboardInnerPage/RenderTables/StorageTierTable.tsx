@@ -8,7 +8,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import BulkActionContainer from './BulkActionContainer';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 
@@ -148,17 +148,11 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
     });
 
     useEffect(() => {
-        const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
 
-        disptach(setSelectedRowsForOptimize(rows));
-        if (rows.length === 1 && optimizingInstanceData) {
-            //To do here ids will come
-            // //@ts-ignore
-            // tableProps.selectionState.rows['41'] = false;
-            // //@ts-ignore
-            // tableProps.selectionState.count = 0;
-            // //@ts-ignore
-            // tableProps.selectionState.allSelected = false;
+        disptach(setSelectedRowsForOptimize(rowsData));
+        if (rowsData.length === 1 && optimizingInstanceData) {
+            checkBoxHandle(tableProps.selectionState, rowsData);
         }
     }, [tableProps.selectionState, optimizingInstanceData]);
 

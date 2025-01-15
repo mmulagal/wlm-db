@@ -412,7 +412,7 @@ export function roundOffNumber(number: any) {
         roundOffNumber = Math.round(Number(number));
     }
     return roundOffNumber;
-};
+}
 
 export function formatNumberWithCustomComma(number: any, roundOffRequired: boolean = true) {
     let roundOffNumber;
@@ -1048,6 +1048,15 @@ function getLastXDays(val: number) {
     }
     return dates;
 }
+
+export const checkBoxHandle = (tableData: any, rowsData: any) => {
+    //@ts-ignore
+    tableData.rows[rowsData[0]?.id] = false;
+    //@ts-ignore
+    tableData.count = 0;
+    //@ts-ignore
+    tableData.allSelected = false;
+};
 
 // Getting the last 7 days
 export const lastSevenDays = getLastXDays(7).reverse();
