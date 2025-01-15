@@ -65,13 +65,9 @@ try {
     Write-Output "Sql server name $ServerInstanceName."
     
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-    if ($vcpus -le 8) {
-        $dop = "4"
-    }
-    elseif ($vcpus -le 16) {
+    if ($vcpus -gt 8 -and $vcpus -le 16) {
         $dop = "8"
-    }
-    else {
+    } elseif ($vcpus -gt 16) {
         $dop = "16"
     }
 
