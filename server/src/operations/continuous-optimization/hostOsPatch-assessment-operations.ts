@@ -282,6 +282,7 @@ async function runOsPatchAssessment(
                 ({
                     BaselineId: baselineId,
                     CriticalNonCompliantCount: criticalNonCompliantCount,
+                    OtherNonCompliantCount: otherNonCompliantCount,
                     InstanceId: ec2InstanceId,
                     OperationStartTime: operationStartTime,
                     OperationEndTime: operationEndTime,
@@ -290,6 +291,7 @@ async function runOsPatchAssessment(
                 }) => ({
                     baselineId: baselineId ?? '',
                     criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
+                    otherNonCompliantCount: otherNonCompliantCount ?? 0,
                     ec2InstanceId: ec2InstanceId ?? '',
                     operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
                     operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
