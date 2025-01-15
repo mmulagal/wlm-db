@@ -30,7 +30,8 @@ import {
     convertToBytes,
     getResourceNameFromTags,
     calculateFsxStorageCapacityForHeadroomOptimization,
-    sleep
+    sleep,
+    retryWithDelay
 } from '../utils/utils';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -252,12 +253,10 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 apiQueryFilter,
                 apiBody
             });
-            const resp = await callSsmExecution(
-                credentialsId,
-                region,
-                [ssmCommand],
-                activeNodeInstanceId!,
-                jobDescription
+            const resp = await retryWithDelay(
+                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+                3,
+                5000
             );
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
@@ -710,12 +709,17 @@ async function resizeLun(
     const ssmComment = 'Optimizing storage';
     const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
     try {
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand, rescanExtendLunSsmCommand],
-            activeNodeInstanceId,
-            ssmComment
+        await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand, rescanExtendLunSsmCommand],
+                activeNodeInstanceId,
+                ssmComment
+            ),
+            3,
+            5000
         );
     } catch (error) {
         throw createError(400, `Error while resizing LUN ${error}`);
@@ -1215,12 +1219,17 @@ async function setMpioPolicyToRoundRobin(
         // Set MPIO policy to Round Robin
         const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams, runningOnPrimaryNode);
         const ssmComment = 'Remediate MPIO policy';
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            ssmComment
+        await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                ssmComment
+            ),
+            3,
+            5000
         );
     } catch (error) {
         const errorMessage = `Error while setting MPIO policy to Round Robin ${error}`;
@@ -1385,14 +1394,19 @@ async function configureMpio(
     );
 
     try {
-        const response = await callSsmExecution(
-            credentialsId,
-            region,
-            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            jobDescription,
-            accountId,
-            false
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                jobDescription,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
         const { status, error } = sqlResponseParsing(response);
         if (status === 'failed') {
@@ -1632,14 +1646,19 @@ async function validateMpioSessions(
     try {
         const ssmCommand = MPIO_ISCSI_SESSIONS(iscsiTargetAddresses);
         const ssmComment = 'Remediate MPIO ICSI session';
-        const validateMpioSessionsResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            ssmComment,
-            accountId,
-            false
+        const validateMpioSessionsResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                ssmComment,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
         parsedResponse = sqlResponseParsing(validateMpioSessionsResponse);
         jobStatus = JOBSTATUS.COMPLETED;
@@ -1700,14 +1719,19 @@ async function remediateMpioSessions(
     let parsedResponse;
     try {
         const ssmCommand = REMEDIATE_MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams.currentMpioSessionsCount);
-        const remediateResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            jobDescription,
-            accountId,
-            false
+        const remediateResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                jobDescription,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
         parsedResponse = sqlResponseParsing(remediateResponse);
         jobStatus = parsedResponse.every((address: { status: string }) => address.status === 'success')
@@ -2167,7 +2191,11 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
             apiQueryFilter,
             apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
         });
-        const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription);
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+            3,
+            5000
+        );
         const parsedResp = sqlResponseParsing(resp);
         const objectsOptimized = parsedResp.num_records || 0;
 

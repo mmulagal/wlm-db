@@ -11,7 +11,7 @@ import {
 } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
-import { isDemo, sqlResponseParsing } from '../../utils/utils';
+import { isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 import getLogger from '../../utils/logger';
@@ -478,15 +478,20 @@ async function moveClusterGroupOwnership(
         targetNodeName,
         activeNodeInstanceId
     });
-    const resp = await callSsmExecution(
-        credentialsId,
-        region,
-        [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
-        activeNodeInstanceId,
-        'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
-        undefined,
-        undefined,
-        '300'
+    const resp = await retryWithDelay(
+        callSsmExecution.bind(
+            null,
+            credentialsId,
+            region,
+            [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
+            activeNodeInstanceId,
+            'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
+            undefined,
+            undefined,
+            '300'
+        ),
+        3,
+        5000
     );
 
     let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
@@ -547,15 +552,20 @@ async function updateDnsSettings(
         jobId
     );
     try {
-        return await callSsmExecution(
-            credentialsId,
-            region,
-            [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
-            instanceId,
-            'Sets the DNS server addresses for all network adapters to the specified addresses.',
-            accountId,
-            undefined,
-            '300'
+        return await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
+                instanceId,
+                'Sets the DNS server addresses for all network adapters to the specified addresses.',
+                accountId,
+                undefined,
+                '300'
+            ),
+            3,
+            5000
         );
     } catch (error) {
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
@@ -622,15 +632,20 @@ async function handleIscsiSessions(
     let errorMessage = '';
     try {
         const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
-            ec2InstanceId,
-            'Enable MPIO and configure ISCSI sessions',
-            accountId,
-            false,
-            '300'
+        await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
+                ec2InstanceId,
+                'Enable MPIO and configure ISCSI sessions',
+                accountId,
+                false,
+                '300'
+            ),
+            3,
+            5000
         );
     } catch (error) {
         errorMessage = `Failed to update ISCSI sessions for ${ec2InstanceId}. ${error}`;

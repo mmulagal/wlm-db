@@ -1023,15 +1023,20 @@ async function createVolumeClone(
             ];
         }
 
-        const clonedVolumes = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            destDetails.activeNodeInstanceId,
-            'SandBox: Create Volume Clone',
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const clonedVolumes = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                destDetails.activeNodeInstanceId,
+                'SandBox: Create Volume Clone',
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         if (!clonedVolumes) {
@@ -1290,15 +1295,20 @@ async function createCloneDb(
             ];
         }
 
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            destDetails.activeNodeInstanceId,
-            'Clone Database for sandbox',
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                destDetails.activeNodeInstanceId,
+                'Clone Database for sandbox',
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         // We only get a response for  different server version or in case of error from query
@@ -1385,12 +1395,17 @@ async function createExtendedProperties(
                 )
             ];
         }
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            destDetails.activeNodeInstanceId,
-            'Add extended properties to sandbox database'
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                destDetails.activeNodeInstanceId,
+                'Add extended properties to sandbox database'
+            ),
+            3,
+            5000
         );
 
         // We only get a response in case of error from query
@@ -2440,15 +2455,20 @@ async function detachSandboxAndAccessPath(
             ];
         }
 
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            resourceDetails.activeNodeInstanceId,
-            'Detach sandbox and access path',
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                resourceDetails.activeNodeInstanceId,
+                'Detach sandbox and access path',
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         if (!resp) {
@@ -2601,15 +2621,20 @@ async function reAttachSandboxAndAccessPath(
             )
         ];
 
-        resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            resourceDetails.activeNodeInstanceId,
-            'Attach sandbox and add access path',
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                resourceDetails.activeNodeInstanceId,
+                'Attach sandbox and add access path',
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         // We only get a response for  different server version or in case of error from query
@@ -2827,15 +2852,20 @@ async function splitVolumes(
             )
         ];
 
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            resourceDetail.activeNodeInstanceId,
-            'Split volume for creating sandbox',
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                resourceDetail.activeNodeInstanceId,
+                'Split volume for creating sandbox',
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         if (!resp) {
@@ -2908,12 +2938,17 @@ async function deleteExtendedProperties(
             ];
         }
 
-        const resp = await callSsmExecution(
-            credentialsId,
-            region,
-            command,
-            resourceDetail.activeNodeInstanceId,
-            'Remove extended properties'
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                command,
+                resourceDetail.activeNodeInstanceId,
+                'Remove extended properties'
+            ),
+            3,
+            5000
         );
 
         if (resp) {

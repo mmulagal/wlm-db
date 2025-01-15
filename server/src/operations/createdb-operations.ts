@@ -16,7 +16,8 @@ import {
     getCollationForMSSQLVersion,
     getDatabaseInstanceName,
     isDemo,
-    getOriginalDatabaseInstanceName
+    getOriginalDatabaseInstanceName,
+    retryWithDelay
 } from '../utils/utils';
 import {
     ACCOUNT_ID,
@@ -1006,15 +1007,20 @@ async function createDatabase(
     let status;
     let errMsg;
     try {
-        const createDatabaseResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            createDatabaseCommand,
-            activeNodeInstanceId,
-            jobDescription,
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const createDatabaseResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                createDatabaseCommand,
+                activeNodeInstanceId,
+                jobDescription,
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
 
         logger.debug('Create database is done', createDatabaseResponse);
@@ -1113,15 +1119,20 @@ async function configureLuns(
     let status;
     let errMsg;
     try {
-        const configureLunresponse = await callSsmExecution(
-            credentialsId,
-            region,
-            configureLuncommands,
-            activeNodeInstanceId,
-            'Configuring LUNs',
-            accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
+        const configureLunresponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                configureLuncommands,
+                activeNodeInstanceId,
+                'Configuring LUNs',
+                accountId,
+                false,
+                CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
         logger.debug('Configure luns is done', configureLunresponse);
         const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
@@ -1236,15 +1247,20 @@ async function newDBInitialization(
     let status;
     let errMsg;
     try {
-        const newDBInitializeresponse = await callSsmExecution(
-            credentialsId,
-            region,
-            dbInitializecommands,
-            activeNodeInstanceId,
-            description,
-            accountId,
-            false,
-            customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
+        const newDBInitializeresponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                dbInitializecommands,
+                activeNodeInstanceId,
+                description,
+                accountId,
+                false,
+                customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
+            ),
+            3,
+            5000
         );
         logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
 
@@ -1364,14 +1380,19 @@ async function cleanUpDatabaseDeployment(
             ];
         }
 
-        const cleanUpResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            cleaupCommand,
-            activeNodeInstanceId,
-            jobDescription,
-            accountId,
-            false
+        const cleanUpResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                cleaupCommand,
+                activeNodeInstanceId,
+                jobDescription,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
 
         const parsedCleanUpResponse = cleanUpResponse ? sqlResponseParsing(cleanUpResponse) : {};

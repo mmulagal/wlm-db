@@ -15,7 +15,7 @@ import { ManageResourcesResponseType } from '../routes/types/resource.types';
 import { getResources } from './database/database-operations';
 import { Metadata } from '../utils/common-types';
 import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-consts';
-import { getArtifactsRegionBucketName, isDemo, sqlResponseParsing } from '../utils/utils';
+import { getArtifactsRegionBucketName, isDemo, retryWithDelay, sqlResponseParsing } from '../utils/utils';
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
 import { READ_SCRIPT_VERSION } from './workloads/mssql/ssm-script-utils';
@@ -136,15 +136,20 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
 
     try {
         // Copy scripts to the EC2 instance
-        const ssmScriptsCopyResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
-            ec2InstanceId,
-            'Copy scripts to host',
-            accountId,
-            false,
-            (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+        const ssmScriptsCopyResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
+                ec2InstanceId,
+                'Copy scripts to host',
+                accountId,
+                false,
+                (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+            ),
+            3,
+            5000
         );
 
         logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);
