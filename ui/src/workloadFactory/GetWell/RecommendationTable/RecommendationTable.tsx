@@ -24,11 +24,14 @@ import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
+    setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
+import store from '../../../store/store';
 
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
     const dispatch = useDispatch();
@@ -37,7 +40,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
@@ -54,6 +57,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     // This is the function that will be called when the user clicks on the optimize button from sub menus
     const callOptimizeApi = (rowData: any) => {
         // Only 1 config can be passed at a time
+        const state = store.getState();
         let payload = {};
         let apiCall = null;
         let statusType = '';
@@ -88,6 +92,12 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
                 [statusType]: [...(inProgressOptimizationData[statusType] || []), selectedDatabaseInstance]
+            })
+        );
+        dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [statusType]: [...(inProgressHostData[statusType] || []), selectedResourceId]
             })
         );
         formatGetWellData(dispatch);
@@ -134,6 +144,14 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 {

@@ -25,6 +25,8 @@ export interface GetWellSliceInterface {
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressHostData: any;
+    jobToInstanceMap: any;
 }
 
 interface CountBreakDown {

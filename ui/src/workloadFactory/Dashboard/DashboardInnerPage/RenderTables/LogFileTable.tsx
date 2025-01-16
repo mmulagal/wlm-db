@@ -17,7 +17,9 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -125,7 +127,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Log files (.ldf)', {}, inProgressOptimizationData)
+        lastColDetails('Log files (.ldf)', {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({

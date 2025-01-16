@@ -4,6 +4,7 @@ import {
     setCardData,
     setDriftAssessmentData,
     setGwTimestamp,
+    setInProgressHostData,
     setInProgressOptimizationData,
     setOntapConfigTableData,
     setOptimizationBreakDown,
@@ -1207,11 +1208,12 @@ export const handleOptimizeStorageJob = (
                     id: res?.data?.jobId
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
+                    const jobId = jobRes?.data?.id;
                     const state = store.getState();
                     const { allmssqlHostAssessmentData } = state.inventoryV2;
+                    const { jobToInstanceMap } = state.getWellOptimize;
                     let optimizingData = state.getWellOptimize.optimizingData || {};
-                    let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
-                    let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
+                    let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
                         dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
                         dispatch(
@@ -1224,7 +1226,15 @@ export const handleOptimizeStorageJob = (
                             setInProgressOptimizationData({
                                 ...inProgressOptimizationData,
                                 [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                                )
+                            })
+                        );
+                        dispatch(
+                            setInProgressHostData({
+                                ...inProgressHostData,
+                                [type]: inProgressHostData?.[type]?.filter(
+                                    (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
                                 )
                             })
                         );
@@ -1249,7 +1259,15 @@ export const handleOptimizeStorageJob = (
                             setInProgressOptimizationData({
                                 ...inProgressOptimizationData,
                                 [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                                )
+                            })
+                        );
+                        dispatch(
+                            setInProgressHostData({
+                                ...inProgressOptimizationData,
+                                [type]: inProgressOptimizationData?.[type]?.filter(
+                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.hostId
                                 )
                             })
                         );
@@ -1266,7 +1284,7 @@ export const handleOptimizeStorageJob = (
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
-            let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
+            let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
             let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
             dispatch(
                 setOptimizingData({
@@ -1280,6 +1298,12 @@ export const handleOptimizeStorageJob = (
                     [type]: inProgressOptimizationData?.[type]?.filter(
                         (instanceId: any) => instanceId !== selectedDatabaseInstance
                     )
+                })
+            );
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedDatabaseInstance)
                 })
             );
             formatGetWellData(dispatch);

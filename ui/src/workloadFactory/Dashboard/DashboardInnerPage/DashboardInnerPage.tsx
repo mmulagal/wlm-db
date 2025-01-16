@@ -39,7 +39,9 @@ import {
     setGwDatabaseStorageType,
     setGwHostname,
     setGwResourceId,
+    setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
@@ -50,7 +52,7 @@ import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimi
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
-    const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
@@ -130,6 +132,12 @@ const DashboardInnerPage = () => {
             })
         );
         dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+            })
+        );
+        dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
                 [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
@@ -179,6 +187,14 @@ const DashboardInnerPage = () => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
@@ -430,7 +446,7 @@ const DashboardInnerPage = () => {
         }
     }, [selectedConfig]);
 
-    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any) => {
+    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
             id: '4',
             Header: '',
@@ -440,7 +456,10 @@ const DashboardInnerPage = () => {
             renderCell: (cellData: any, rowData: any) => {
                 let isDisabled = false;
                 let errorMessage = '';
-                if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+                if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+                    isDisabled = true;
+                    errorMessage = 'Optimization in progress for this host';
+                } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
                     isDisabled = true;
                     errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
                 } else if (

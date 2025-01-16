@@ -14,6 +14,7 @@ import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from 
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
+    setInProgressHostData,
     setInProgressOptimizationData,
     setOptimizingData,
     setOptimizingInstanceData
@@ -45,7 +46,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
-    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -384,6 +385,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
                 [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+            })
+        );
+        dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
         formatGetWellData(dispatch);
