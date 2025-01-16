@@ -100,7 +100,7 @@ async function saveReportInWlmdbDatabase(
     );
 }
 
-async function getStorageSavingsReponse(
+async function getStorageSavingsResponse(
     accountId: string,
     clonedCopiesCount: number = 1,
     sqlServerDeploymentType: string,
@@ -298,7 +298,7 @@ async function analyzeOnpremData(accountId: string, data: OnPremCollectionObject
                 fsx,
                 multi,
                 totalSummary: { existing: existingTotalSummary } = {}
-            } = await getStorageSavingsReponse(
+            } = await getStorageSavingsResponse(
                 accountId,
                 1,
                 deploymentType,
@@ -312,7 +312,7 @@ async function analyzeOnpremData(accountId: string, data: OnPremCollectionObject
                 compute: { recommended: recommendedCompute } = {},
                 license: { recommended: recommendedLicense } = {},
                 totalSummary: { recommended: recommendedTotalSummary } = {}
-            } = await getStorageSavingsReponse(
+            } = await getStorageSavingsResponse(
                 accountId,
                 1,
                 deploymentType,

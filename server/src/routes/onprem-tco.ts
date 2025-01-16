@@ -20,7 +20,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
     const API_PATH_ON_PREM_TCO = '/v1/mssql/onprem-tco';
 
     server.get(
-        `${API_PATH_ON_PREM_TCO}/script`,
+        `${API_PATH_ON_PREM_TCO}/collector`,
         { schema: DownloadOnPremTcoCollectorScriptSchema },
         async (request: FastifyRequest, reply) => {
             const {

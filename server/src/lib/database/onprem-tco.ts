@@ -12,7 +12,7 @@ interface OnPremTcoReportObject {
     database_deployment_type: DATABASE_DEPLOYMENT_TYPE;
     creation_time: Date;
     version: string;
-    host_config?: object;
+    host_config: object;
     database_instances_data: object;
     assessment_data?: object;
 }
