@@ -35,7 +35,7 @@ function Set-RSSBestPractices {
         Write-Output "Setting RSS best practices values on adapter: $AdapterName"
         $parameters['Name'] = $AdapterName
         Set-NetAdapterRss @parameters
-        Write-Host "RSS best practices values have been set on adapter: $AdapterName"
+        Write-Output "RSS best practices values have been set on adapter: $AdapterName"
     }
 }
 
