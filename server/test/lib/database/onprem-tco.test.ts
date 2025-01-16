@@ -133,7 +133,54 @@ it('should list on-prem database resources', async () => {
 it('should update on-prem database report', async () => {
     const accountId = ACCOUNT_ID;
     const [response] = await listOnPremDatabaseResources(accountId, MSSQL as DATABASE_TYPE);
-    const assessmentData =  { "compute": { "existing": { "instanceType": "m2.xlarge", "hoursInMonth": 730, "machineDetails": [{ "instanceType": "m2.xlarge", "hoursInMonth": 730, "licenseIncluded": false }] }, "recommended": { "instanceType": "m2.xlarge", "hoursInMonth": 730, "machineDetails": [{ "instanceType": "m2.xlarge", "hoursInMonth": 730, "licenseIncluded": false }] } }, "license": { "existing": { "licenseIncluded": false, "hoursInMonth": 730, "sqlServerEdition": "Enterprise Edition" }, "recommended": { "licenseIncluded": false, "hoursInMonth": 730, "sqlServerEdition": "Enterprise Edition" } }, "ebs": { "capacity": 5120, "iops": 9776, "throughput": 0, "snapshots": 1064.96, "total": 23408.96, "clones": 7448 }, "fsx": { "capacity": 2560, "iops": 315.52, "throughput": 1228.8, "total": 4361.89, "snapshots": 52.77, "clones": 204.8 }, "multi": { "fsxCalculation": { "deploymentType": "Multi", "numberOfVolumes": 1, "throughput": 128, "totalStorageCapacity": 10995116277760, "percentageSsd": 100, "savings": 0, "effectiveCapacity": 10995116277760, "ssdTierReqCapacity": 10995116277760, "capacityPoolTier": 0, "ssdIop": 40000, "throughputCapacity": 1024, "useCase": "Low-latency", "regionName": "US East (N. Virginia)", "monthlySnapshotCapacity": 879609302220.7999 }, "fsxBreakdown": { "fsxDataLunSize": 4804596350535, "fsxDataVolumeSize": 5285055985589, "fsxLogVolumeSize": 1321263996398, "fsxTempDbVolumeSize": 528505598559, "fsxQuorumVolumeSize": 12000000000, "fsxBufferVolumeSize": 3848290697216, "fsxStorageCapacity": 10995116277760 } }, "totalSummary": { "existing": 23408.96, "recommended": 4361.89 } }
+    const assessmentData = {
+        compute: {
+            existing: {
+                instanceType: 'm2.xlarge',
+                hoursInMonth: 730,
+                machineDetails: [{ instanceType: 'm2.xlarge', hoursInMonth: 730, licenseIncluded: false }]
+            },
+            recommended: {
+                instanceType: 'm2.xlarge',
+                hoursInMonth: 730,
+                machineDetails: [{ instanceType: 'm2.xlarge', hoursInMonth: 730, licenseIncluded: false }]
+            }
+        },
+        license: {
+            existing: { licenseIncluded: false, hoursInMonth: 730, sqlServerEdition: 'Enterprise Edition' },
+            recommended: { licenseIncluded: false, hoursInMonth: 730, sqlServerEdition: 'Enterprise Edition' }
+        },
+        ebs: { capacity: 5120, iops: 9776, throughput: 0, snapshots: 1064.96, total: 23408.96, clones: 7448 },
+        fsx: { capacity: 2560, iops: 315.52, throughput: 1228.8, total: 4361.89, snapshots: 52.77, clones: 204.8 },
+        multi: {
+            fsxCalculation: {
+                deploymentType: 'Multi',
+                numberOfVolumes: 1,
+                throughput: 128,
+                totalStorageCapacity: 10995116277760,
+                percentageSsd: 100,
+                savings: 0,
+                effectiveCapacity: 10995116277760,
+                ssdTierReqCapacity: 10995116277760,
+                capacityPoolTier: 0,
+                ssdIop: 40000,
+                throughputCapacity: 1024,
+                useCase: 'Low-latency',
+                regionName: 'US East (N. Virginia)',
+                monthlySnapshotCapacity: 879609302220.7999
+            },
+            fsxBreakdown: {
+                fsxDataLunSize: 4804596350535,
+                fsxDataVolumeSize: 5285055985589,
+                fsxLogVolumeSize: 1321263996398,
+                fsxTempDbVolumeSize: 528505598559,
+                fsxQuorumVolumeSize: 12000000000,
+                fsxBufferVolumeSize: 3848290697216,
+                fsxStorageCapacity: 10995116277760
+            }
+        },
+        totalSummary: { existing: 23408.96, recommended: 4361.89 }
+    };
 
     const updateResponse = await updateOnPremTcoReportRecord(accountId, response.resource_id, MSSQL, {
         assessment_data: assessmentData
@@ -142,7 +189,7 @@ it('should update on-prem database report', async () => {
 
     expect(updateResponse.count).toBeGreaterThanOrEqual(0);
     expect(response.creation_time).toEqual(responseAfter.creation_time);
-    expect(responseAfter.assessment_data).toEqual(assessmentData)
+    expect(responseAfter.assessment_data).toEqual(assessmentData);
 });
 
 it('should remove on-prem database resources', async () => {
@@ -152,7 +199,6 @@ it('should remove on-prem database resources', async () => {
 
     expect(deleteResponse.count).toBeGreaterThanOrEqual(0);
 });
-
 
 it('should list on-prem database resources', async () => {
     const accountId = ACCOUNT_ID;

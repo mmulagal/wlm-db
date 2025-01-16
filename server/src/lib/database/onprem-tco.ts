@@ -26,36 +26,6 @@ async function createOnPremTcoReportData(records: OnPremTcoReportObject[]) {
     });
 }
 
-async function listOnPremTcoReportData(
-    accountId?: string,
-    resourceId?: string,
-    databaseInstanceId?: string,
-    databaseType?: DATABASE_TYPE,
-    sort: string = 'creation_time',
-    sortOrder: string = 'desc'
-) {
-    logger.info('Listing onpremises TCO report', {
-        accountId,
-        resourceId,
-        databaseInstanceId,
-        databaseType
-    });
-    accountId = checkAccount(accountId!);
-
-    return prisma.client.onprem_tco_reports.findMany({
-        where: {
-            ...(accountId && { account_id: accountId }),
-            ...(databaseType && { database_type: databaseType }),
-            ...(resourceId && { resource_id: resourceId })
-        },
-        orderBy: [
-            {
-                [sort]: `${sortOrder}`
-            }
-        ]
-    });
-}
-
 async function removeOnPremTcoReportData(
     id?: string[],
     accountId?: string,
@@ -104,7 +74,9 @@ async function listOnPremDatabaseResources(
     accountId: string,
     databaseType: DATABASE_TYPE,
     pageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    sort: string = 'creation_time',
+    sortOrder: string = 'desc'
 ) {
     logger.info('Listing on-prem database resources', { accountId, databaseType, pageSize, nextToken });
 
@@ -115,6 +87,11 @@ async function listOnPremDatabaseResources(
             account_id: accountId,
             database_type: databaseType
         },
+        orderBy: [
+            {
+                [sort]: `${sortOrder}`
+            }
+        ],
         ...(pageSize && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
@@ -124,7 +101,6 @@ async function listOnPremDatabaseResources(
 }
 export {
     createOnPremTcoReportData,
-    listOnPremTcoReportData,
     removeOnPremTcoReportData,
     updateOnPremTcoReportRecord,
     listOnPremDatabaseResources
