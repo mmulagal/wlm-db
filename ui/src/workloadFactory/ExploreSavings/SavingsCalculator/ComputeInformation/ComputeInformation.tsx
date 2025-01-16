@@ -7,9 +7,7 @@ import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const ComputeInformation = () => {
     const [instanceData, setInstanceData] = useState([]);
-    const { savingsCalculatorFrom, selectedOnPremHostDetails }: any = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { savingsCalculatorFrom, selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {

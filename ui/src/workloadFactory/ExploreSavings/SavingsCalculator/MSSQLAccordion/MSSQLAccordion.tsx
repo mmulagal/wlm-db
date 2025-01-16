@@ -123,8 +123,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
         }
 
-        let mssqlInstanceData = {} 
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) { 
+        let mssqlInstanceData = {};
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             mssqlInstanceData = {
                 serverInstallationMode: selectedOnPremHostDetails?.recommendedInstance?.serverInstallationMode,
                 serverEdition: serverEdition,
@@ -140,7 +140,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 instanceType: instanceType,
                 windowsServer: windowsServer
             };
-        };
+        }
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                 savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) &&

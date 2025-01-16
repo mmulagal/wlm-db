@@ -130,8 +130,8 @@ const SavingsCalculatorApi = () => {
                 ...payload,
                 regionCode: selectedOnPremRegion?.data?.regionCode
             };
-        };
-        
+        }
+
         if (computeInformation) {
             let computeInfo: any = [];
             Object.keys(computeInformation).forEach(key => {
@@ -151,7 +151,7 @@ const SavingsCalculatorApi = () => {
                 ...payload,
                 sqlInstances: computeInfo
             };
-        };
+        }
 
         if (storagePerformance) {
             let storagePerf: any = [];
@@ -159,8 +159,12 @@ const SavingsCalculatorApi = () => {
                 nodeType: 'primary',
                 dataIops: storagePerformance?.primaryData?.iops,
                 logIops: storagePerformance?.primaryLog?.iops,
-                dataTotalStorage: storagePerformance?.primaryData?.totalStorageAmount ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE : 0,
-                logTotalStorage: storagePerformance?.primaryLog?.totalStorageAmount ? Number(storagePerformance?.primaryLog?.totalStorageAmount) * GIB_IN_BYTE : 0,
+                dataTotalStorage: storagePerformance?.primaryData?.totalStorageAmount
+                    ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE
+                    : 0,
+                logTotalStorage: storagePerformance?.primaryLog?.totalStorageAmount
+                    ? Number(storagePerformance?.primaryLog?.totalStorageAmount) * GIB_IN_BYTE
+                    : 0,
                 dataThroughput: storagePerformance?.primaryData?.throughput,
                 logThroughput: storagePerformance?.primaryLog?.throughput
             });
@@ -168,8 +172,12 @@ const SavingsCalculatorApi = () => {
                 nodeType: 'secondary',
                 dataIops: storagePerformance?.secondaryData?.iops,
                 logIops: storagePerformance?.secondaryLog?.iops,
-                dataTotalStorage: storagePerformance?.secondaryData?.totalStorageAmount ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE : 0,
-                logTotalStorage: storagePerformance?.secondaryLog?.totalStorageAmount ? Number(storagePerformance?.secondaryLog?.totalStorageAmount) * GIB_IN_BYTE : 0,
+                dataTotalStorage: storagePerformance?.secondaryData?.totalStorageAmount
+                    ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
+                    : 0,
+                logTotalStorage: storagePerformance?.secondaryLog?.totalStorageAmount
+                    ? Number(storagePerformance?.secondaryLog?.totalStorageAmount) * GIB_IN_BYTE
+                    : 0,
                 dataThroughput: storagePerformance?.secondaryData?.throughput,
                 logThroughput: storagePerformance?.secondaryLog?.throughput
             });
@@ -178,8 +186,8 @@ const SavingsCalculatorApi = () => {
                 ...payload,
                 nodeUsage: storagePerf
             };
-        };
-        
+        }
+
         return payload;
     };
 
