@@ -79,7 +79,6 @@ export interface ExploreSavingsSliceEntities {
     snapshotLoading: boolean;
     storageSavingsOnPremResponse: any;
     storageSavingsOnPremLoading: boolean;
-    onPremFirstLoad: boolean;
 }
 
 export interface StorageSavingsInterface {

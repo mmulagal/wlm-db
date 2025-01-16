@@ -47,11 +47,13 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         storageSavingsLoading,
         storageSavingsResponse,
         selectedHostDetails,
+        selectedOnPremHostDetails,
         viewCalculationsLoading,
         selectedManualDeploymentModel,
         savingsCalculatorFrom,
         selectedManualRegion,
-        selectedExploreSavingsTab
+        selectedExploreSavingsTab,
+        selectedOnPremRegion
     } = useAppSelector(state => state.exploreSavings);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { setDialog, closeDialog } = useDialog();
@@ -86,6 +88,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
         ) {
             selectedRegion = headerSelectedRegion?.data?.regionName + ' | ' + headerSelectedRegion?.data?.regionCode;
+        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            selectedRegion = selectedOnPremRegion?.data?.regionName + ' | ' + selectedOnPremRegion?.data?.regionCode;
         } else {
             selectedRegion = selectedManualRegion?.data?.regionName + ' | ' + selectedManualRegion?.data?.regionCode;
         }
@@ -118,12 +122,24 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
             windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
         }
-        let mssqlInstanceData = {
-            serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
-            serverEdition: serverEdition,
-            serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
-            instanceType: instanceType,
-            windowsServer: windowsServer
+
+        let mssqlInstanceData = {} 
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) { 
+            mssqlInstanceData = {
+                serverInstallationMode: selectedOnPremHostDetails?.recommendedInstance?.serverInstallationMode,
+                serverEdition: serverEdition,
+                serverVersion: selectedOnPremHostDetails?.recommendedInstance?.serverVersion,
+                instanceType: instanceType,
+                windowsServer: windowsServer
+            };
+        } else {
+            mssqlInstanceData = {
+                serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
+                serverEdition: serverEdition,
+                serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
+                instanceType: instanceType,
+                windowsServer: windowsServer
+            };
         };
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
@@ -139,7 +155,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             };
         }
         setMsSqlInstance(mssqlInstanceData);
-    }, [selectedHostDetails, storageSavingsResponse, selectedManualDeploymentModel]);
+    }, [selectedHostDetails, storageSavingsResponse, selectedManualDeploymentModel, selectedOnPremHostDetails]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         setDialog(

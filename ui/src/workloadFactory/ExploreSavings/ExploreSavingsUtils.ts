@@ -2,7 +2,6 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../store/store';
 import {
     setDisableState,
-    setOnPremFirstLoad,
     setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
@@ -38,7 +37,6 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(''));
-    dispatch(setOnPremFirstLoad(true));
     dispatch(setSelectedOnPremHostId(rowData?.databaseHostId));
     dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
     dispatch(setSelectedServerName(rowData?.databaseHostName || GENERAL.ES_SERVER_NAME));

@@ -9,7 +9,7 @@ import { GIB_IN_BYTE } from '../../../../../utils/consts';
 
 const StoragePerfInput = ({ type }: any) => {
     const dispatch = useDispatch();
-    const { selectedOnPremHostDetails, onPremFirstLoad }: any = useAppSelector(state => state.exploreSavings);
+    const { selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
 
     useEffect(() => {
         if (selectedOnPremHostDetails?.nodeUsage) {
@@ -115,7 +115,6 @@ const StoragePerfInput = ({ type }: any) => {
                     placeholder={''}
                     value={iops}
                     className={styles.keyField}
-                    isDisabled={onPremFirstLoad}
                 />
             </div>
             <div className={styles.col4}>
@@ -127,7 +126,6 @@ const StoragePerfInput = ({ type }: any) => {
                     placeholder={''}
                     value={throughput}
                     className={styles.keyField}
-                    isDisabled={onPremFirstLoad}
                 />
             </div>
         </div>

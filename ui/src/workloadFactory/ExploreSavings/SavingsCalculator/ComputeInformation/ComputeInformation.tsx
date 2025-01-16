@@ -7,8 +7,7 @@ import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const ComputeInformation = () => {
     const [instanceData, setInstanceData] = useState([]);
-    const [instanceResLoading, setInstanceResLoading] = useState([]);
-    const { savingsCalculatorFrom, selectedOnPremHostDetails, onPremFirstLoad }: any = useAppSelector(
+    const { savingsCalculatorFrom, selectedOnPremHostDetails }: any = useAppSelector(
         state => state.exploreSavings
     );
 
@@ -28,7 +27,6 @@ const ComputeInformation = () => {
                 });
                 setInstanceData(instanceList);
             }
-            setInstanceResLoading(onPremFirstLoad);
         }
     }, [selectedOnPremHostDetails]);
 
@@ -52,11 +50,11 @@ const ComputeInformation = () => {
                     </div>
                 </div>
                 {instanceData?.map((instance: any, index: number) => (
-                    <div className={styles.row1} style={{ marginTop: '-8px' }}>
+                    <div key={index} className={styles.row1} style={{ marginTop: '-8px' }}>
                         <div className={styles.col1}>
                             <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
                         </div>
-                        <ComputeInputComponent data={instance} loading={instanceResLoading} />
+                        <ComputeInputComponent data={instance} />
                     </div>
                 ))}
             </div>

@@ -12,7 +12,6 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: '',
     selectedOnPremHostId: '',
-    onPremFirstLoad: false, // First On prem Savings calculator load will provide data for left panel also
     selectedPartnerInstanceId: '',
     selectedServerName: '',
     selectedHostDetails: {},
@@ -284,9 +283,6 @@ const exploreSavingsSlice = createSlice({
         setSelectedOnPremHostId(state, action: PayloadAction<any>) {
             state.selectedOnPremHostId = action.payload;
         },
-        setOnPremFirstLoad(state, action: PayloadAction<any>) {
-            state.onPremFirstLoad = action.payload;
-        },
         setSelectedPartnerInstanceId(state, action: PayloadAction<any>) {
             state.selectedPartnerInstanceId = action.payload;
         },
@@ -347,7 +343,6 @@ const exploreSavingsSlice = createSlice({
             state.monthlyChangeRate = 8;
             state.selectedInstanceId = '';
             state.selectedOnPremHostId = '';
-            state.onPremFirstLoad = false;
             state.selectedPartnerInstanceId = '';
             state.selectedServerName = '';
             state.selectedHostDetails = {};
@@ -514,7 +509,6 @@ export const {
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
     setSelectedOnPremHostId,
-    setOnPremFirstLoad,
     setSelectedPartnerInstanceId,
     setSelectedServerName,
     setSelectedHostDetails,

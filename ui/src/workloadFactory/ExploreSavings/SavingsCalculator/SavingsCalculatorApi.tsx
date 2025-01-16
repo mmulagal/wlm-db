@@ -11,13 +11,11 @@ import {
     addOnPremRegionsList,
     setDisableState,
     setGetPartnerHostDetailsLoading,
-    setOnPremFirstLoad,
     setOnPremRegionsLoading,
     setRequestedPayload,
     setRequestedRegion,
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
-    setSelectedOnPremHostDetails,
     setSelectedPartnerHostDetails,
     setSelectedPartnerInstanceId,
     setSelectedSnapshotFrequency,
@@ -62,7 +60,6 @@ const SavingsCalculatorApi = () => {
         selectedOnPremHostId,
         selectedOnPremRegion,
         selectedOnPremHostDetails,
-        onPremFirstLoad,
         computeInformation,
         storagePerformance,
         requestedPayload,
@@ -128,11 +125,14 @@ const SavingsCalculatorApi = () => {
             }
         };
 
-        if (!onPremFirstLoad) {
+        if (selectedOnPremRegion?.data?.regionCode) {
             payload = {
                 ...payload,
                 regionCode: selectedOnPremRegion?.data?.regionCode
             };
+        };
+        
+        if (computeInformation) {
             let computeInfo: any = [];
             Object.keys(computeInformation).forEach(key => {
                 const value = computeInformation[key];
@@ -144,15 +144,16 @@ const SavingsCalculatorApi = () => {
                     sqlEdition: perInst?.sqlEdition,
                     noOfVcpusInUse: value?.noOfVcpusInUse,
                     memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
-                    networkPerformance: value?.networkPerformance
+                    networkPerformance: value?.networkPerformance?.value
                 });
             });
-
             payload = {
                 ...payload,
                 sqlInstances: computeInfo
             };
+        };
 
+        if (storagePerformance) {
             let storagePerf: any = [];
             storagePerf.push({
                 nodeType: 'primary',
@@ -177,7 +178,8 @@ const SavingsCalculatorApi = () => {
                 ...payload,
                 nodeUsage: storagePerf
             };
-        }
+        };
+        
         return payload;
     };
 
@@ -192,15 +194,6 @@ const SavingsCalculatorApi = () => {
             if (result && !result?.error) {
                 // Store full API response
                 dispatch(setStorageSavingsOnPremResponse(result?.data));
-                if (onPremFirstLoad) {
-                    dispatch(
-                        setSelectedOnPremHostDetails({
-                            ...selectedOnPremHostDetails,
-                            nodeUsage: result?.data?.nodeUsage,
-                            sqlInstances: result?.data?.sqlInstances
-                        })
-                    );
-                }
 
                 // Based on the response, format the savings calculator page data and store it in the store
                 dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data?.storageSavings)));
@@ -212,25 +205,22 @@ const SavingsCalculatorApi = () => {
                         formatViewCalcData(result?.data?.calculations, selectedDeploymentModel, monthlyChangeRate)
                     )
                 );
-
                 // Set loading to false
+                dispatch(setDisableState(false));
                 dispatch(setStorageSavingsOnPremLoading(false));
                 dispatch(setStorageSavingsLoading(false));
                 dispatch(setViewCalculationsLoading(false));
-
-                // Set first load to false
-                dispatch(setOnPremFirstLoad(false));
             } else {
+                dispatch(setDisableState(true));
                 dispatch(setStorageSavingsOnPremLoading(false));
                 dispatch(setStorageSavingsOnPremResponse(null));
-                dispatch(setOnPremFirstLoad(false));
                 dispatch(setStorageSavingsLoading(false));
                 dispatch(setViewCalculationsLoading(false));
             }
         } catch (error) {
+            dispatch(setDisableState(true));
             dispatch(setStorageSavingsOnPremResponse(null));
             dispatch(setStorageSavingsOnPremLoading(false));
-            dispatch(setOnPremFirstLoad(false));
             dispatch(setStorageSavingsLoading(false));
             dispatch(setViewCalculationsLoading(false));
         }
@@ -495,26 +485,6 @@ const SavingsCalculatorApi = () => {
     }, [headerSelectedCred, headerSelectedRegion]);
 
     useEffect(() => {
-        // This is to call OnPrem Savings calculator API for very first time when user selects ES for any host in OnPrem
-        let newPayload = createOnPremPayload();
-        const comparedPayloadValues =
-            isEqual(newPayload, requestedPayload) &&
-            selectedOnPremRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
-        if (!comparedPayloadValues && selectedOnPremHostId && savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            dispatch(setRequestedPayload(newPayload));
-            dispatch(setRequestedRegion(selectedOnPremRegion));
-            dispatch(setStorageSavingsResponse({}));
-            dispatch(setStorageSavingsLoading(true));
-            dispatch(setViewCalculationsApiResponse({}));
-            dispatch(setViewCalculationsLoading(true));
-            dispatch(setStorageSavingsOnPremLoading(true));
-            setTimeout(() => {
-                getStorageSavingsOnPremData(newPayload);
-            }, 1);
-        }
-    }, [selectedOnPremHostId]);
-
-    useEffect(() => {
         // This is to call OnPrem Savings calculator API when user changes the values in the Savings calculator page
         let newPayload = createOnPremPayload();
         const comparedPayloadValues =
@@ -527,8 +497,7 @@ const SavingsCalculatorApi = () => {
             selectedSnapshotFrequency &&
             numberOfClonedCopies &&
             monthlyChangeRate &&
-            selectedOnPremRegion &&
-            !onPremFirstLoad
+            selectedOnPremRegion
         ) {
             dispatch(setRequestedPayload(newPayload));
             dispatch(setRequestedRegion(selectedOnPremRegion));
@@ -542,6 +511,7 @@ const SavingsCalculatorApi = () => {
             }, 1);
         }
     }, [
+        selectedOnPremHostId,
         selectedSnapshotFrequency,
         numberOfClonedCopies,
         monthlyChangeRate,

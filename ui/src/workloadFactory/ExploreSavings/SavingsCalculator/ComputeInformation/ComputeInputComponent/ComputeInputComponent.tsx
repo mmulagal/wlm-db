@@ -8,7 +8,7 @@ import { setComputeInformation } from '../../../../../store/workloadFactory/expl
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 
-const ComputeInputComponent = ({ data, loading }: any) => {
+const ComputeInputComponent = ({ data }: any) => {
     const dispatch = useDispatch();
 
     const [numberOfCpu, setNumberOfCpu] = useState<any>(data?.noOfVcpusInUse);
@@ -90,7 +90,6 @@ const ComputeInputComponent = ({ data, loading }: any) => {
                     placeholder={''}
                     value={numberOfCpu}
                     className={styles.keyField}
-                    isDisabled={loading}
                 />
             </div>
             <div className={styles.col3}>
@@ -102,7 +101,6 @@ const ComputeInputComponent = ({ data, loading }: any) => {
                     placeholder={''}
                     value={memory}
                     className={styles.keyField}
-                    isDisabled={loading}
                 />
             </div>
             <div className={styles.col4}>
@@ -121,10 +119,7 @@ const ComputeInputComponent = ({ data, loading }: any) => {
                     }}
                     isSearchable={false}
                     options={generateNetworkPerfOptions}
-                    defaultValue={
-                        data?.networkPerformance ? [data?.networkPerformance] : [generateNetworkPerfOptions[0]]
-                    }
-                    isLoading={loading}
+                    defaultValue={[generateNetworkPerfOptions[0]]}
                 />
             </div>
         </div>
