@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
-    useGetMssqlInstanceDataMutation,
     useGetMssqlInstanceDataV2Mutation,
     useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
@@ -9,11 +8,9 @@ import {
     useLazyGetRegionsWithoutCredQuery
 } from '../../../utils/apiService';
 import {
-    addManualRegionsList,
     addOnPremRegionsList,
     setDisableState,
     setGetPartnerHostDetailsLoading,
-    setManualRegionsLoading,
     setOnPremFirstLoad,
     setOnPremRegionsLoading,
     setRequestedPayload,
@@ -39,6 +36,7 @@ import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceD
 import { GENERAL } from '../../../utils/appConstants';
 import {
     EBS_PROTECTED_OPTIONS,
+    GIB_IN_BYTE,
     INSTANCE_API_FIELDS,
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY
@@ -76,7 +74,6 @@ const SavingsCalculatorApi = () => {
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
-    const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
     const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
     const [getStorageSavingsOnPremDataApi] = useGetOnPremCalculationsMutation();
 
@@ -122,6 +119,7 @@ const SavingsCalculatorApi = () => {
     }, [unManagedHostFormatedList, selectedInstanceId]);
 
     const createOnPremPayload = () => {
+        // To create payload for OnPrem Savings calculator API call
         let payload: any = {
             snapshotInfo: {
                 snapshotFrequency: selectedSnapshotFrequency?.value || 'daily',
@@ -145,7 +143,7 @@ const SavingsCalculatorApi = () => {
                     noOfDatabases: perInst?.noOfDatabases,
                     sqlEdition: perInst?.sqlEdition,
                     noOfVcpusInUse: value?.noOfVcpusInUse,
-                    memory: value?.memory,
+                    memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
                     networkPerformance: value?.networkPerformance
                 });
             });
@@ -160,8 +158,8 @@ const SavingsCalculatorApi = () => {
                 nodeType: 'primary',
                 dataIops: storagePerformance?.primaryData?.iops,
                 logIops: storagePerformance?.primaryLog?.iops,
-                dataTotalStorage: storagePerformance?.primaryData?.totalStorageAmount,
-                logTotalStorage: storagePerformance?.primaryLog?.totalStorageAmount,
+                dataTotalStorage: storagePerformance?.primaryData?.totalStorageAmount ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE : 0,
+                logTotalStorage: storagePerformance?.primaryLog?.totalStorageAmount ? Number(storagePerformance?.primaryLog?.totalStorageAmount) * GIB_IN_BYTE : 0,
                 dataThroughput: storagePerformance?.primaryData?.throughput,
                 logThroughput: storagePerformance?.primaryLog?.throughput
             });
@@ -169,8 +167,8 @@ const SavingsCalculatorApi = () => {
                 nodeType: 'secondary',
                 dataIops: storagePerformance?.secondaryData?.iops,
                 logIops: storagePerformance?.secondaryLog?.iops,
-                dataTotalStorage: storagePerformance?.secondaryData?.totalStorageAmount,
-                logTotalStorage: storagePerformance?.secondaryLog?.totalStorageAmount,
+                dataTotalStorage: storagePerformance?.secondaryData?.totalStorageAmount ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE : 0,
+                logTotalStorage: storagePerformance?.secondaryLog?.totalStorageAmount ? Number(storagePerformance?.secondaryLog?.totalStorageAmount) * GIB_IN_BYTE : 0,
                 dataThroughput: storagePerformance?.secondaryData?.throughput,
                 logThroughput: storagePerformance?.secondaryLog?.throughput
             });
@@ -185,13 +183,14 @@ const SavingsCalculatorApi = () => {
 
     const getStorageSavingsOnPremData = async (payload: any) => {
         try {
-            // let payload = createOnPremPayload();
+            // On Prem savings calculator API call
             dispatch(setDisableState(false));
             const result: any = await getStorageSavingsOnPremDataApi({
                 databaseHostId: selectedOnPremHostId,
                 payload: payload
             });
             if (result && !result?.error) {
+                // Store full API response
                 dispatch(setStorageSavingsOnPremResponse(result?.data));
                 if (onPremFirstLoad) {
                     dispatch(
@@ -202,17 +201,25 @@ const SavingsCalculatorApi = () => {
                         })
                     );
                 }
+
+                // Based on the response, format the savings calculator page data and store it in the store
                 dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data?.storageSavings)));
+
+                // Based on the response, format the view calculations page data and store it in the store
                 dispatch(setViewCalculationsApiResponse(result?.data?.calculations));
                 dispatch(
                     setViewCalculationsResponse(
                         formatViewCalcData(result?.data?.calculations, selectedDeploymentModel, monthlyChangeRate)
                     )
                 );
+
+                // Set loading to false
                 dispatch(setStorageSavingsOnPremLoading(false));
-                dispatch(setOnPremFirstLoad(false));
                 dispatch(setStorageSavingsLoading(false));
                 dispatch(setViewCalculationsLoading(false));
+
+                // Set first load to false
+                dispatch(setOnPremFirstLoad(false));
             } else {
                 dispatch(setStorageSavingsOnPremLoading(false));
                 dispatch(setStorageSavingsOnPremResponse(null));
@@ -488,6 +495,7 @@ const SavingsCalculatorApi = () => {
     }, [headerSelectedCred, headerSelectedRegion]);
 
     useEffect(() => {
+        // This is to call OnPrem Savings calculator API for very first time when user selects ES for any host in OnPrem
         let newPayload = createOnPremPayload();
         const comparedPayloadValues =
             isEqual(newPayload, requestedPayload) &&
@@ -507,6 +515,7 @@ const SavingsCalculatorApi = () => {
     }, [selectedOnPremHostId]);
 
     useEffect(() => {
+        // This is to call OnPrem Savings calculator API when user changes the values in the Savings calculator page
         let newPayload = createOnPremPayload();
         const comparedPayloadValues =
             isEqual(newPayload, requestedPayload) &&

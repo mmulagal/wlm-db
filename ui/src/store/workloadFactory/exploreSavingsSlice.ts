@@ -12,7 +12,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: '',
     selectedOnPremHostId: '',
-    onPremFirstLoad: false,
+    onPremFirstLoad: false, // First On prem Savings calculator load will provide data for left panel also
     selectedPartnerInstanceId: '',
     selectedServerName: '',
     selectedHostDetails: {},
