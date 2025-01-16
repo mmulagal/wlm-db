@@ -101,7 +101,7 @@ const StoragePerfInput = ({ type }: any) => {
                         setTotalStorageAmount(numVal);
                     }}
                     placeholder={''}
-                    value={totalStorageAmount}
+                    value={totalStorageAmount || ''}
                     className={styles.keyField}
                     isDisabled={true}
                 />
@@ -113,7 +113,7 @@ const StoragePerfInput = ({ type }: any) => {
                         setIOPS(numVal);
                     }}
                     placeholder={''}
-                    value={iops}
+                    value={iops || ''} 
                     className={styles.keyField}
                 />
             </div>
@@ -124,7 +124,7 @@ const StoragePerfInput = ({ type }: any) => {
                         setThroughput(numVal);
                     }}
                     placeholder={''}
-                    value={throughput}
+                    value={throughput || ''}
                     className={styles.keyField}
                 />
             </div>
