@@ -521,12 +521,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status);
 
                 const userDataFilesObj = instanceAssessmentData?.storage?.layout?.find(
-                    (item: any) => item.name === 'default-data-files-location'
+                    (item: any) => item.name === 'data-files-location'
                 );
                 const isUserDataFilesOptimized = isOptimized(userDataFilesObj?.status);
 
                 const logFilesObj = instanceAssessmentData?.storage?.layout?.find(
-                    (item: any) => item.name === 'default-log-files-location'
+                    (item: any) => item.name === 'log-files-location'
                 );
                 const isLogFilesOptimized = isOptimized(logFilesObj?.status);
 

@@ -235,14 +235,6 @@
                     ],
                     "layout": [
                         {
-                            "name": "user-database-layout",
-                            "status": "optimized",
-                            "recommended": "",
-                            "severity": "warning",
-                            "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                            "tags": ["Performance efficiency", "Operational excellence"]
-                        },
-                        {
                             "name": "tempdb-files-location",
                             "recommended": "separate-drive",
                             "status": "not-optimized",
@@ -251,7 +243,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-log-files-location",
+                            "name": "log-files-location",
                             "recommended": "separate-drive",
                             "status": "not-optimized",
                             "severity": "critical",
@@ -259,7 +251,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-data-files-location",
+                            "name": "data-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -625,14 +617,6 @@
                     ],
                     "layout": [
                         {
-                            "name": "user-database-layout",
-                            "status": "optimized",
-                            "recommended": "",
-                            "severity": "warning",
-                            "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                            "tags": ["Performance efficiency", "Operational excellence"]
-                        },
-                        {
                             "name": "tempdb-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
@@ -641,7 +625,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-log-files-location",
+                            "name": "log-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -649,7 +633,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-data-files-location",
+                            "name": "data-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -1015,14 +999,6 @@
                     ],
                     "layout": [
                         {
-                            "name": "user-database-layout",
-                            "status": "optimized",
-                            "recommended": "",
-                            "severity": "warning",
-                            "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                            "tags": ["Performance efficiency", "Operational excellence"]
-                        },
-                        {
                             "name": "tempdb-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
@@ -1031,7 +1007,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-log-files-location",
+                            "name": "log-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -1039,7 +1015,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-data-files-location",
+                            "name": "data-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",

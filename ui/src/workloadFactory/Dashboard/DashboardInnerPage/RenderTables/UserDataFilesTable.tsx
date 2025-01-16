@@ -27,7 +27,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const userDataFilesObj = instanceData?.assessments?.storage?.layout?.find(
-                        (item: any) => item.name === 'default-data-files-location'
+                        (item: any) => item.name === 'data-files-location'
                     );
                     const isStorageTierOptimized = isOptimized(userDataFilesObj?.status);
                     if (!isStorageTierOptimized) {

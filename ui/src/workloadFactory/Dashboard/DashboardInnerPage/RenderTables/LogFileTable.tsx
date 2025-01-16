@@ -27,7 +27,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
                     const logDataFilesObj = instanceData?.assessments?.storage?.layout?.find(
-                        (item: any) => item.name === 'default-log-files-location'
+                        (item: any) => item.name === 'log-files-location'
                     );
                     const isStorageTierOptimized = isOptimized(logDataFilesObj?.status);
                     if (!isStorageTierOptimized) {

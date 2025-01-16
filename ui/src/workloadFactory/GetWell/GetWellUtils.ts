@@ -140,7 +140,7 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Operational excellence']
     },
     user_data_files: {
-        id: 'default-data-files-location',
+        id: 'data-files-location',
         category: 'storage',
         block_one: {
             value: 'Data files (.mdf) placement',
@@ -167,7 +167,7 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Performance efficiency', 'Operational excellence']
     },
     transaction_log_files: {
-        id: 'default-log-files-location',
+        id: 'log-files-location',
         category: 'storage',
         block_one: {
             value: 'Log files (.ldf) placement',
@@ -649,35 +649,12 @@ export const formatIndividualCardMainConfig = (
             categoryVal = 'compute';
         }
 
-        // user-database-layout is newly added and to check status for User data files (.mdf) placement we need to check status of user-database-layout also along with default-data-files-location
-        let userDataStatus: string = '';
-        let userDataSeverity: string = '';
         category?.map((item: PerConfigInterface) => {
-            if (item?.name === 'user-database-layout') {
-                userDataStatus = item?.status || '';
-                userDataSeverity = item?.severity || '';
-            }
-        });
-        category?.map((item: PerConfigInterface) => {
-            if (item?.name === 'user-database-layout') {
-                return;
-            }
             let itemName = item?.name || '';
             let status = item?.status || '';
             let severity = item?.severity || '';
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
-            }
-
-            if (itemName === 'default-data-files-location' && userDataStatus === 'not-optimized') {
-                if (status === 'optimized') {
-                    severity = userDataSeverity;
-                } else if (status === 'not-optimized') {
-                    if (userDataSeverity === 'critical') {
-                        severity = 'critical';
-                    }
-                }
-                status = 'not-optimized';
             }
 
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
