@@ -15,7 +15,7 @@ import {
     SqlInstanceDetails,
     WindowsConfig,
     OnPremDatabaseResourcesParamsType
-} from '../routes/types/onprem-tco.types';
+} from '../utils/onprem-tco/onprem-tco.types';
 import {
     createOnPremTcoReportData,
     listOnPremDatabaseResources,
@@ -25,13 +25,13 @@ import { getInstanceTypesFromInstanceRequirementsCommand } from '../lib/aws/ec2'
 import { performManualModeStorageSavingsCalculations } from './storage-savings-operations';
 import {
     parseCpuUtilization,
-    parseMemUtilization,
+    parseMemoryUtilization,
     parseLicenceUsageDetails,
     parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
     convertToDate
-} from '../utils/onprem-tco-utils';
+} from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
@@ -339,7 +339,7 @@ async function analyzeOnpremData(accountId: string, data: OnPremCollectionObject
                     recommended: recommendedTotalSummary
                 }
             };
-            await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, { assessmentData: tcoData }); // TODO: Add resource id in collector script
+            await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, { assessment_data: tcoData }); // TODO: Add resource id in collector script
 
             // {"accountId":"account-test","resourceId":"","databaseType":"mssql","data":{"assessmentData":{"compute":{"existing":{"instanceType":"m2.xlarge","hoursInMonth":730,"machineDetails":[{"instanceType":"m2.xlarge","hoursInMonth":730,"licenseIncluded":false}]},"recommended":{"instanceType":"m2.xlarge","hoursInMonth":730,"machineDetails":[{"instanceType":"m2.xlarge","hoursInMonth":730,"licenseIncluded":false}]}},"license":{"existing":{"licenseIncluded":false,"hoursInMonth":730,"sqlServerEdition":"Enterprise Edition"},"recommended":{"licenseIncluded":false,"hoursInMonth":730,"sqlServerEdition":"Enterprise Edition"}},"ebs":{"capacity":5120,"iops":9776,"throughput":0,"snapshots":1064.96,"total":23408.96,"clones":7448},"fsx":{"capacity":2560,"iops":315.52,"throughput":1228.8,"total":4361.89,"snapshots":52.77,"clones":204.8},"multi":{"fsxCalculation":{"deploymentType":"Multi","numberOfVolumes":1,"throughput":128,"totalStorageCapacity":10995116277760,"percentageSsd":100,"savings":0,"effectiveCapacity":10995116277760,"ssdTierReqCapacity":10995116277760,"capacityPoolTier":0,"ssdIop":40000,"throughputCapacity":1024,"useCase":"Low-latency","regionName":"US East (N. Virginia)","monthlySnapshotCapacity":879609302220.7999},"fsxBreakdown":{"fsxDataLunSize":4804596350535,"fsxDataVolumeSize":5285055985589,"fsxLogVolumeSize":1321263996398,"fsxTempDbVolumeSize":528505598559,"fsxQuorumVolumeSize":12000000000,"fsxBufferVolumeSize":3848290697216,"fsxStorageCapacity":10995116277760}},"totalSummary":{"existing":23408.96,"recommended":4361.89}}}}
         } else {
@@ -402,8 +402,10 @@ async function handleOnpremTcoDataUpload(
     let uploadJobStatus;
     let uploadJobError;
     try {
-        await saveReportInReportingRegistry(accountId, fileName, data);
-        await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
+        await Promise.all([
+            saveReportInReportingRegistry(accountId, fileName, data),
+            saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data)
+        ]);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error handling OnPrem TCO data upload. ${error}`;
@@ -544,7 +546,7 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
         const vcpuCount = parseCpuUtilization(cpuUtilization);
 
         // Assuming memUtilization is a JSON string with memory details
-        const [memoryDetails] = parseMemUtilization(memUtilization) || [];
+        const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
         const memoryMiB = memoryDetails?.used ? memoryDetails.used / (1024 * 1024) : 0; // Convert bytes to MiB
 
         maxVCpuCount = Math.max(maxVCpuCount, vcpuCount!);

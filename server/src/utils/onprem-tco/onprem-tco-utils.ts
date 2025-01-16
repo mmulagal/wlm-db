@@ -1,9 +1,9 @@
 import moment from 'moment';
-import getLogger from './logger';
+import getLogger from '../logger';
 
 const logger = getLogger();
 
-function parseCpuUtilization(value: string): number | null {
+function parseCpuUtilization(value: string) {
     try {
         const parsedValue = JSON.parse(value);
         if (typeof parsedValue === 'number') {
@@ -11,19 +11,15 @@ function parseCpuUtilization(value: string): number | null {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
-            return null;
         }
     } catch (error) {
         if (typeof value === 'string' && !Number.isNaN(Number(value))) {
             return Number(value);
         }
     }
-    return null;
 }
 
-function parseMemUtilization(
-    value: string
-): { used: number; total: number; remaining: number; percentUsed: number }[] | null {
+function parseMemoryUtilization(value: string) {
     try {
         const parsedValue = JSON.parse(value);
         if (
@@ -34,15 +30,13 @@ function parseMemUtilization(
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
-            return null;
         }
     } catch (error) {
         logger.error(`Error parsing memUtilization: ${error}`);
     }
-    return null;
 }
 
-function parseLicenceUsageDetails(value: string): { IsUsingFeature: number; FeatureDescription: string }[] | null {
+function parseLicenceUsageDetails(value: string) {
     try {
         const parsedValue = JSON.parse(value);
         if (
@@ -53,15 +47,13 @@ function parseLicenceUsageDetails(value: string): { IsUsingFeature: number; Feat
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
-            return null;
         }
     } catch (error) {
         logger.error(`Error parsing licenceUsageDetails: ${error}`);
     }
-    return null;
 }
 
-function parseSqlVersion(value: string | string[]): string | null {
+function parseSqlVersion(value: string | string[]) {
     if (Array.isArray(value)) {
         return value.join(',');
     }
@@ -73,17 +65,13 @@ function parseSqlVersion(value: string | string[]): string | null {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
-            return null;
         }
     } catch (error) {
         logger.error(`Error parsing sqlVersion: ${error}`);
     }
-    return null;
 }
 
-function parseIops(
-    value: string
-): { writeIops: string; readIops: string; writeBytesPerSec: string; readBytesPerSec: string }[] | null {
+function parseIops(value: string) {
     try {
         const parsedValue = JSON.parse(value);
         if (
@@ -97,25 +85,13 @@ function parseIops(
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
-            return null;
         }
     } catch (error) {
         logger.error(`Error parsing iops: ${error}`);
     }
-    return null;
 }
 
-function parseStorageDetailsByDb(value: string):
-    | {
-          databaseName: string;
-          allocatedSizeMb: number;
-          dataSizeMb: number;
-          logSizeMb: number;
-          driveLetter: string;
-          driveTotalSizeMb: number;
-          driveAvailableSizeMb: number;
-      }[]
-    | null {
+function parseStorageDetailsByDb(value: string) {
     try {
         const parsedValue = JSON.parse(value);
         if (
@@ -135,12 +111,10 @@ function parseStorageDetailsByDb(value: string):
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
-            return null;
         }
     } catch (error) {
         logger.error(`Error parsing storageDetailsByDb: ${error}`);
     }
-    return null;
 }
 
 function convertToDate(dateString: string): Date {
@@ -149,7 +123,7 @@ function convertToDate(dateString: string): Date {
 
 export {
     parseCpuUtilization,
-    parseMemUtilization,
+    parseMemoryUtilization,
     parseLicenceUsageDetails,
     parseSqlVersion,
     parseIops,

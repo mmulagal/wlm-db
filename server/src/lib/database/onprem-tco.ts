@@ -86,7 +86,7 @@ async function updateOnPremTcoReportRecord(
     resourceId: string,
     databaseType: string,
     data: {
-        assessmentData: object;
+        assessment_data: object;
     }
 ) {
     logger.info('Updating onprem TCO report', { accountId, resourceId, databaseType, data });
