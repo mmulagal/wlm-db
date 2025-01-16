@@ -357,130 +357,185 @@ async function calculateStorageDrift(
 
     if (errors && errors.layout) {
         driftAssessmentData.layout.push(
-            { name: 'user-database-layout', errorMessage: errors.layout },
-            { name: 'default-data-files-location', errorMessage: errors.layout },
-            { name: 'default-log-files-location', errorMessage: errors.layout },
+            { name: 'data-files-location', errorMessage: errors.layout },
+            { name: 'log-files-location', errorMessage: errors.layout },
             { name: 'tempdb-files-location', errorMessage: errors.layout }
         );
     } else {
+        let defaultLogFilesAssessment;
+        let defaultDataFilesAssessment;
+        let userDatabaseLayoutAssessment = { data: [], log: [] };
+        let tempdbFilesLocationAssessment;
         Object.entries(layout).forEach(([key, value]) => {
-            const goldenData = layoutConfigData.find(data => data.parameter === key);
-            if (!isEmpty(goldenData)) {
-                const status =
-                    goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-
-                driftAssessmentData.layout.push({
-                    name: key,
-                    recommended: goldenData.value.toString(),
-                    status,
-                    severity: goldenData.severity,
-                    recommendation: goldenData.recommendation,
-                    tags: goldenData.tags,
-                    current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
-                });
-            }
-            if (key === 'user-database-layout') {
-                const dataVolumes = value.data;
-                const logVolumes = value.log;
-                const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
-                dataVolumes.map((data: DatabaseVolumeRecord) =>
-                    logVolumes.forEach((log: DatabaseVolumeRecord) => {
-                        if (data.name === log.name) {
-                            const volDetails = data as DatabaseVolumeRecord;
-                            volDetails.logVolume = log.volumeName;
-                            volDetails.logLunPath = log.lunPath;
-                            volDetails.logFileName = log.fileName;
-                            volDetails.logSizeInMb = log.sizeInMb;
-                            volDetails.logVolumeUuid = log.ontapVolumeUuid;
-                            volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
-                            dataLogVolumeDetails.push(volDetails);
-                        }
-                    })
-                );
-
-                // start user database layout assessment
-                // each database is on separate data and log lun
-                const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                    (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
-                );
-
-                // each database is on separate data and log volume
-                const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                    (data: DatabaseVolumeRecord) => data.ontapVolumeUuid === data.logVolumeUuid
-                );
-
-                const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
-                    (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
-                );
-
-                const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
-                const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
-                const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
-                const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
-
-                const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
-                const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
-                const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
-                const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
-
-                let recommended = '';
-                let status = AssessmentStatus.OPTIMIZED;
-                let recommendationString = '';
-                let severity = 'critical';
-
-                if (!isEmpty(databasesOnSameDataLogLun)) {
-                    recommended = 'separate-data-log-lun-per-database';
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    severity = 'critical';
-                    recommendationString =
-                        'Separate system databases from user databases to different drives/luns and different volumes';
-                } else if (!isEmpty(databasesOnSameDataLogVolume)) {
-                    recommended = 'separate-data-log-volume-per-database';
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    severity = 'warning';
-                    recommendationString =
-                        'Separate system databases from user databases to different drives/luns and different volumes';
-                } else if (databasesAbove500Gb.length > 1) {
-                    if (
-                        !isEmpty(databasesSharingDataVolumes) ||
-                        !isEmpty(databasesSharingLogVolumes) ||
-                        !isEmpty(databasesSharingDataLuns) ||
-                        !isEmpty(databasesSharingLogLuns)
-                    ) {
-                        recommended = 'separate-data-log-lun-volume-for-large-database';
-                        status = AssessmentStatus.NOT_OPTIMIZED;
-                        severity = 'critical';
-                        recommendationString =
-                            'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
-                    }
-                } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
-                    recommended = 'separate-data-log-lun-for-large-database';
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    severity = 'critical';
-                    recommendationString =
-                        'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
-                } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
-                    recommended = 'separate-data-log-volume-for-large-database';
-                    status = AssessmentStatus.NOT_OPTIMIZED;
-                    severity = 'warning';
-                    recommendationString =
-                        'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
-                }
-
-                driftAssessmentData.layout.push({
-                    name: 'user-database-layout',
-                    recommended,
-                    status,
-                    severity,
-                    recommendation: recommendationString,
-                    tags: [
-                        AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                        AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                    ],
-                    current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
-                });
+            if (key === 'default-log-files-location') {
+                defaultLogFilesAssessment = value;
+            } else if (key === 'default-data-files-location') {
+                defaultDataFilesAssessment = value;
+            } else if (key === 'user-database-layout') {
+                userDatabaseLayoutAssessment = value;
+            } else if (key === 'tempdb-files-location') {
+                tempdbFilesLocationAssessment = value;
             }
         });
+
+        let goldenData = layoutConfigData.find(data => data.parameter === 'tempdb-files-location');
+        if (!isEmpty(goldenData)) {
+            const status =
+                goldenData?.value === tempdbFilesLocationAssessment
+                    ? AssessmentStatus.OPTIMIZED
+                    : AssessmentStatus.NOT_OPTIMIZED;
+            driftAssessmentData.layout.push({
+                name: 'tempdb-files-location',
+                recommended: goldenData.value.toString(),
+                status,
+                severity: goldenData.severity,
+                recommendation: goldenData.recommendation,
+                tags: goldenData.tags,
+                current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+            });
+        }
+
+        let dataFilesLayoutStatus = AssessmentStatus.OPTIMIZED;
+        let logFilesLayoutStatus = AssessmentStatus.OPTIMIZED;
+        let recommended = 'separate drive';
+        let recommendationString =
+            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality';
+        let severity = 'critical';
+        goldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
+        if (!isEmpty(goldenData)) {
+            dataFilesLayoutStatus =
+                goldenData?.value === defaultDataFilesAssessment
+                    ? AssessmentStatus.OPTIMIZED
+                    : AssessmentStatus.NOT_OPTIMIZED;
+        }
+        goldenData = layoutConfigData.find(data => data.parameter === 'default-log-files-location');
+        if (!isEmpty(goldenData)) {
+            logFilesLayoutStatus =
+                goldenData?.value === defaultLogFilesAssessment
+                    ? AssessmentStatus.OPTIMIZED
+                    : AssessmentStatus.NOT_OPTIMIZED;
+        }
+
+        const dataVolumes = userDatabaseLayoutAssessment?.data;
+        const logVolumes = userDatabaseLayoutAssessment?.log;
+        const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
+        dataVolumes.map((data: DatabaseVolumeRecord) =>
+            logVolumes.forEach((log: DatabaseVolumeRecord) => {
+                if (data.name === log.name) {
+                    const volDetails = data as DatabaseVolumeRecord;
+                    volDetails.logVolume = log.volumeName;
+                    volDetails.logLunPath = log.lunPath;
+                    volDetails.logFileName = log.fileName;
+                    volDetails.logSizeInMb = log.sizeInMb;
+                    volDetails.logVolumeUuid = log.ontapVolumeUuid;
+                    volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
+                    dataLogVolumeDetails.push(volDetails);
+                }
+            })
+        );
+
+        // start user database layout assessment
+        // each database is on separate data and log lun
+        const databasesOnSameDataLogLun: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+            (data: DatabaseVolumeRecord) => data.lunPath === data.logLunPath
+        );
+
+        // each database is on separate data and log volume
+        const databasesOnSameDataLogVolume: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+            (data: DatabaseVolumeRecord) => data.ontapVolumeUuid === data.logVolumeUuid
+        );
+
+        const databasesAbove500Gb: DatabaseVolumeRecord[] = dataLogVolumeDetails.filter(
+            (data: DatabaseVolumeRecord) => data.databaseSizeInGb! >= 500
+        );
+
+        const groupByDataVolume = countBy(databasesAbove500Gb, 'volumeUuid');
+        const groupByLogVolume = countBy(databasesAbove500Gb, 'logVolumeUuid');
+        const groupByDataLun = countBy(databasesAbove500Gb, 'lunPath');
+        const groupByLogLun = countBy(databasesAbove500Gb, 'logLunPath');
+
+        const databasesSharingDataVolumes = Object.values(groupByDataVolume).filter(count => count > 1);
+        const databasesSharingLogVolumes = Object.values(groupByLogVolume).filter(count => count > 1);
+        const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
+        const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
+
+        if (!isEmpty(databasesOnSameDataLogLun)) {
+            recommended = 'separate-data-log-lun-per-database';
+            dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            severity = 'critical';
+            recommendationString =
+                'Separate system databases from user databases to different drives/luns and different volumes';
+        } else if (!isEmpty(databasesOnSameDataLogVolume)) {
+            recommended = 'separate-data-log-volume-per-database';
+            dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            severity = 'warning';
+            recommendationString =
+                'Separate system databases from user databases to different drives/luns and different volumes';
+        } else if (databasesAbove500Gb.length > 1) {
+            if (
+                !isEmpty(databasesSharingDataVolumes) ||
+                !isEmpty(databasesSharingLogVolumes) ||
+                !isEmpty(databasesSharingDataLuns) ||
+                !isEmpty(databasesSharingLogLuns)
+            ) {
+                recommended = 'separate-data-log-lun-volume-for-large-database';
+                dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                severity = 'critical';
+                recommendationString =
+                    'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+            }
+        } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
+            if (!isEmpty(databasesSharingDataLuns)) {
+                dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            } else {
+                logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            }
+            recommended = 'separate-data-log-lun-for-large-database';
+            severity = 'critical';
+            recommendationString =
+                'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+        } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
+            if (!isEmpty(databasesSharingDataVolumes)) {
+                dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            } else {
+                logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            }
+            recommended = 'separate-data-log-volume-for-large-database';
+            severity = 'warning';
+            recommendationString =
+                'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
+        }
+
+        driftAssessmentData.layout.push(
+            {
+                name: 'data-files-location',
+                recommended,
+                status: dataFilesLayoutStatus,
+                severity,
+                recommendation: recommendationString,
+                tags: [
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                ],
+                current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+            },
+
+            {
+                name: 'log-files-location',
+                recommended,
+                status: logFilesLayoutStatus,
+                severity,
+                recommendation: recommendationString,
+                tags: [
+                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+                ],
+                current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+            }
+        );
     }
 
     if (errors && (errors.sizing || errors['volumes-footprint'])) {
