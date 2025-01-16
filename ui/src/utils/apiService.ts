@@ -895,6 +895,13 @@ export const exploreSavingsApi = createApi({
                     url: `v1/mssql/onprem-tco`
                 })
             }),
+            getOnPremCalculations: builder.mutation({
+                query: ({ databaseHostId, payload }) => ({
+                    url: `v1/mssql/onprem-tco/database-hosts/${databaseHostId}/explore-savings`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getStorageSavings: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload, type }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/instances/${instanceId}/storage-savings/${type}`,
@@ -1090,6 +1097,7 @@ export const {
 export const {
     useGetUploadScriptMutation,
     useGetOnPremSavingsMutation,
+    useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
     useGetManualStorageSavingsMutation,

@@ -11,9 +11,12 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     loading: false,
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: '',
+    selectedOnPremHostId: '',
+    onPremFirstLoad: false,
     selectedPartnerInstanceId: '',
     selectedServerName: '',
     selectedHostDetails: {},
+    selectedOnPremHostDetails: {},
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
@@ -25,6 +28,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     viewCalculationsLoading: false,
     savingsCalculatorFrom: null,
     selectedManualRegion: null,
+    selectedOnPremRegion: null,
     selectedManualDeploymentModel: null,
     monthlyBYOLCost: '',
     manualMonthlyDescription: '',
@@ -43,6 +47,11 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         manualRegionsData: null,
         manualRegionsLoading: false,
         manualRegionsError: null
+    },
+    getOnPremRegionList: {
+        onPremRegionsData: null,
+        onPremRegionsLoading: false,
+        onPremRegionsError: null
     },
     onPremiseData: null,
     volumeFilledStatus: false,
@@ -124,17 +133,15 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualFSXThroughput: 128,
     snapshotLoading: false,
     selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
-    computeInformation: {
-        SQL_ins1: { vCPUsInUse: '', memory: '', networkPerformance: '' },
-        SQL_ins2: { vCPUsInUse: '', memory: '', networkPerformance: '' },
-        SQL_ins3: { vCPUsInUse: '', memory: '', networkPerformance: '' }
-    },
+    computeInformation: {},
     storagePerformance: {
         primaryData: { totalStorageAmount: '', iops: '', throughput: '' },
         primaryLog: { totalStorageAmount: '', iops: '', throughput: '' },
         secondaryData: { totalStorageAmount: '', iops: '', throughput: '' },
         secondaryLog: { totalStorageAmount: '', iops: '', throughput: '' }
-    }
+    },
+    storageSavingsOnPremResponse: {},
+    storageSavingsOnPremLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -148,6 +155,12 @@ const exploreSavingsSlice = createSlice({
             state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
         },
         setComputeInformation(state, action: PayloadAction<any>) {
+            if (!state.computeInformation[action.payload.type]) {
+                state.computeInformation[action.payload.type] = {};
+            }
+            if (!state.computeInformation[action.payload.type][action.payload.mode]) {
+                state.computeInformation[action.payload.type][action.payload.mode] = {};
+            }
             state.computeInformation[action.payload.type][action.payload.mode] = action.payload.value;
         },
         setSelectedExploreSavingsTab: (state, action: PayloadAction<any>) => {
@@ -178,7 +191,7 @@ const exploreSavingsSlice = createSlice({
             state.requestedPayload = action.payload;
         },
         setRequestedRegion: (state, action: PayloadAction<any>) => {
-            state.requestedPayload = action.payload;
+            state.requestedRegion = action.payload;
         },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
             state.volumeFilledStatus = action.payload;
@@ -197,6 +210,12 @@ const exploreSavingsSlice = createSlice({
         },
         setManualRegionsLoading: (state, action: PayloadAction<any>) => {
             state.getManualRegionsList.manualRegionsLoading = action.payload;
+        },
+        addOnPremRegionsList: (state, action: PayloadAction<any>) => {
+            state.getOnPremRegionList.onPremRegionsData = action.payload;
+        },
+        setOnPremRegionsLoading: (state, action: PayloadAction<any>) => {
+            state.getOnPremRegionList.onPremRegionsLoading = action.payload;
         },
         setVolumeTypeOperation(state, action: PayloadAction<any>) {
             state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
@@ -235,6 +254,9 @@ const exploreSavingsSlice = createSlice({
         setSelectedRegionFromManualTCO(state, action: PayloadAction<any>) {
             state.selectedManualRegion = action.payload;
         },
+        setSelectedOnPremRegion(state, action: PayloadAction<any>) {
+            state.selectedOnPremRegion = action.payload;
+        },
         setSavingsCalculatorFrom(state, action: PayloadAction<any>) {
             state.savingsCalculatorFrom = action.payload;
         },
@@ -259,6 +281,12 @@ const exploreSavingsSlice = createSlice({
         setSelectedInstanceId(state, action: PayloadAction<any>) {
             state.selectedInstanceId = action.payload;
         },
+        setSelectedOnPremHostId(state, action: PayloadAction<any>) {
+            state.selectedOnPremHostId = action.payload;
+        },
+        setOnPremFirstLoad(state, action: PayloadAction<any>) {
+            state.onPremFirstLoad = action.payload;
+        },
         setSelectedPartnerInstanceId(state, action: PayloadAction<any>) {
             state.selectedPartnerInstanceId = action.payload;
         },
@@ -267,6 +295,9 @@ const exploreSavingsSlice = createSlice({
         },
         setSelectedHostDetails(state, action: PayloadAction<any>) {
             state.selectedHostDetails = action.payload;
+        },
+        setSelectedOnPremHostDetails(state, action: PayloadAction<any>) {
+            state.selectedOnPremHostDetails = action.payload;
         },
         setSelectedPartnerHostDetails(state, action: PayloadAction<any>) {
             state.selectedPartnerHostDetails = action.payload;
@@ -315,6 +346,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedCloneRefresh = null;
             state.monthlyChangeRate = 8;
             state.selectedInstanceId = '';
+            state.selectedOnPremHostId = '';
+            state.onPremFirstLoad = false;
             state.selectedPartnerInstanceId = '';
             state.selectedServerName = '';
             state.selectedHostDetails = {};
@@ -393,6 +426,7 @@ const exploreSavingsSlice = createSlice({
                 }
             };
             state.selectedManualRegion = null;
+            state.selectedOnPremRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
             state.getManualInstanceTypeList = {
@@ -428,6 +462,12 @@ const exploreSavingsSlice = createSlice({
         },
         setSnapshotLoading(state, action: PayloadAction<any>) {
             state.snapshotLoading = action.payload;
+        },
+        setStorageSavingsOnPremResponse(state, action: PayloadAction<any>) {
+            state.storageSavingsOnPremResponse = action.payload;
+        },
+        setStorageSavingsOnPremLoading(state, action: PayloadAction<any>) {
+            state.storageSavingsOnPremLoading = action.payload;
         }
     }
 });
@@ -464,6 +504,7 @@ export const {
     setSelectedMonthlyBYOLCost,
     setSelectedDeploymentModelForManualTCO,
     setSelectedRegionFromManualTCO,
+    setSelectedOnPremRegion,
     setSelectedSnapshotFrequency,
     setNumberOfClonedCopies,
     setSelectedCloneRefresh,
@@ -472,9 +513,12 @@ export const {
     setSelectedVolumeTabForSecondary,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
+    setSelectedOnPremHostId,
+    setOnPremFirstLoad,
     setSelectedPartnerInstanceId,
     setSelectedServerName,
     setSelectedHostDetails,
+    setSelectedOnPremHostDetails,
     setSelectedPartnerHostDetails,
     setGetPartnerHostDetailsLoading,
     setStorageSavingsResponse,
@@ -487,7 +531,11 @@ export const {
     setViewCalculationsLoading,
     setSavingsCalculatorFrom,
     setRecommendedTargetInstance,
-    setSnapshotLoading
+    setSnapshotLoading,
+    setStorageSavingsOnPremResponse,
+    setStorageSavingsOnPremLoading,
+    addOnPremRegionsList,
+    setOnPremRegionsLoading
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

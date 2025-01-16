@@ -3,16 +3,23 @@
         {
             "databaseHostName": "SQLServer-Prod-01",
             "databaseHostId": "64de4daa-3405-47c6-8689-58f4987b6ad8",
-            "deploymentModel": "Always On (FCI)",
+            "deploymentModel": "Failover Cluster Instances",
             "onPremisesNode": ["node1"],
-            "sqlServerInstances": ["MSSQLSERVER"]
+            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER2", "MSSQLSERVER3"]
         },
         {
             "databaseHostName": "SQLServer-Prod-02",
             "databaseHostId": "64de4daa-3405-47c6-8689-58f4987b6ad9",
-            "deploymentModel": "Always On (FCI)",
+            "deploymentModel": "Standalone",
             "onPremisesNode": ["node1"],
-            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER3", "MSSQLSERVER4", "MSSQLSERVER5"]
+            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER2", "MSSQLSERVER3"]
+        },
+        {
+            "databaseHostName": "SQLServer-Prod-02",
+            "databaseHostId": "64de4daa-3405-47c6-8689-58f4987b6ad9",
+            "deploymentModel": "Always on availability group",
+            "onPremisesNode": ["node1"],
+            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER2", "MSSQLSERVER3"]
         }
     ]
 }

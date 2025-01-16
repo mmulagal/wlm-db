@@ -3,19 +3,31 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetMssqlInstanceDataMutation,
     useGetMssqlInstanceDataV2Mutation,
+    useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
-    useGetViewCalculationsMutation
+    useGetViewCalculationsMutation,
+    useLazyGetRegionsWithoutCredQuery
 } from '../../../utils/apiService';
 import {
+    addManualRegionsList,
+    addOnPremRegionsList,
     setDisableState,
     setGetPartnerHostDetailsLoading,
+    setManualRegionsLoading,
+    setOnPremFirstLoad,
+    setOnPremRegionsLoading,
+    setRequestedPayload,
+    setRequestedRegion,
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
+    setSelectedOnPremHostDetails,
     setSelectedPartnerHostDetails,
     setSelectedPartnerInstanceId,
     setSelectedSnapshotFrequency,
     setSnapshotLoading,
     setStorageSavingsLoading,
+    setStorageSavingsOnPremLoading,
+    setStorageSavingsOnPremResponse,
     setStorageSavingsResponse,
     setViewCalculationsApiResponse,
     setViewCalculationsLoading,
@@ -33,6 +45,7 @@ import {
 } from '../../../utils/consts';
 import { addInstanceIdToGetPerf } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected } from './savingsUtil';
+import { isEqual } from 'lodash';
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -47,7 +60,15 @@ const SavingsCalculatorApi = () => {
         selectedPartnerInstanceId,
         monthlyBYOLCost,
         savingsCalculatorFrom,
-        selectedHostDetails
+        selectedHostDetails,
+        selectedOnPremHostId,
+        selectedOnPremRegion,
+        selectedOnPremHostDetails,
+        onPremFirstLoad,
+        computeInformation,
+        storagePerformance,
+        requestedPayload,
+        requestedRegion
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -57,6 +78,23 @@ const SavingsCalculatorApi = () => {
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataMutation();
     const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
+    const [getStorageSavingsOnPremDataApi] = useGetOnPremCalculationsMutation();
+
+    const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            dispatch(setOnPremRegionsLoading(true));
+            getRegionsWithoutCred({})
+                .then((res: any) => {
+                    dispatch(addOnPremRegionsList(res?.data));
+                    dispatch(setOnPremRegionsLoading(false));
+                })
+                .catch((error: any) => {
+                    dispatch(setOnPremRegionsLoading(false));
+                });
+        }
+    }, [savingsCalculatorFrom]);
 
     useEffect(() => {
         const selectedRow = unManagedHostFormatedList.filter((item: any) => item?.id === selectedInstanceId);
@@ -82,6 +120,114 @@ const SavingsCalculatorApi = () => {
             dispatch(setSelectedHostDetails({}));
         }
     }, [unManagedHostFormatedList, selectedInstanceId]);
+
+    const createOnPremPayload = () => {
+        let payload: any = {
+            snapshotInfo: {
+                snapshotFrequency: selectedSnapshotFrequency?.value || 'daily',
+                clonedCopiesCount: numberOfClonedCopies || 1,
+                monthlyChangeRatePercentage: monthlyChangeRate || 3
+            }
+        };
+
+        if (!onPremFirstLoad) {
+            payload = {
+                ...payload,
+                regionCode: selectedOnPremRegion?.data?.regionCode
+            };
+            let computeInfo: any = [];
+            Object.keys(computeInformation).forEach(key => {
+                const value = computeInformation[key];
+                let perInst = selectedOnPremHostDetails?.sqlInstances?.find((inst: any) => inst?.sqlInstanceId === key);
+                computeInfo.push({
+                    sqlInstanceId: perInst?.sqlInstanceId,
+                    sqlInstanceName: key,
+                    noOfDatabases: perInst?.noOfDatabases,
+                    sqlEdition: perInst?.sqlEdition,
+                    noOfVcpusInUse: value?.noOfVcpusInUse,
+                    memory: value?.memory,
+                    networkPerformance: value?.networkPerformance
+                });
+            });
+
+            payload = {
+                ...payload,
+                sqlInstances: computeInfo
+            };
+
+            let storagePerf: any = [];
+            storagePerf.push({
+                nodeType: 'primary',
+                dataIops: storagePerformance?.primaryData?.iops,
+                logIops: storagePerformance?.primaryLog?.iops,
+                dataTotalStorage: storagePerformance?.primaryData?.totalStorageAmount,
+                logTotalStorage: storagePerformance?.primaryLog?.totalStorageAmount,
+                dataThroughput: storagePerformance?.primaryData?.throughput,
+                logThroughput: storagePerformance?.primaryLog?.throughput
+            });
+            storagePerf.push({
+                nodeType: 'secondary',
+                dataIops: storagePerformance?.secondaryData?.iops,
+                logIops: storagePerformance?.secondaryLog?.iops,
+                dataTotalStorage: storagePerformance?.secondaryData?.totalStorageAmount,
+                logTotalStorage: storagePerformance?.secondaryLog?.totalStorageAmount,
+                dataThroughput: storagePerformance?.secondaryData?.throughput,
+                logThroughput: storagePerformance?.secondaryLog?.throughput
+            });
+
+            payload = {
+                ...payload,
+                nodeUsage: storagePerf
+            };
+        }
+        return payload;
+    };
+
+    const getStorageSavingsOnPremData = async (payload: any) => {
+        try {
+            // let payload = createOnPremPayload();
+            dispatch(setDisableState(false));
+            const result: any = await getStorageSavingsOnPremDataApi({
+                databaseHostId: selectedOnPremHostId,
+                payload: payload
+            });
+            if (result && !result?.error) {
+                dispatch(setStorageSavingsOnPremResponse(result?.data));
+                if (onPremFirstLoad) {
+                    dispatch(
+                        setSelectedOnPremHostDetails({
+                            ...selectedOnPremHostDetails,
+                            nodeUsage: result?.data?.nodeUsage,
+                            sqlInstances: result?.data?.sqlInstances
+                        })
+                    );
+                }
+                dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data?.storageSavings)));
+                dispatch(setViewCalculationsApiResponse(result?.data?.calculations));
+                dispatch(
+                    setViewCalculationsResponse(
+                        formatViewCalcData(result?.data?.calculations, selectedDeploymentModel, monthlyChangeRate)
+                    )
+                );
+                dispatch(setStorageSavingsOnPremLoading(false));
+                dispatch(setOnPremFirstLoad(false));
+                dispatch(setStorageSavingsLoading(false));
+                dispatch(setViewCalculationsLoading(false));
+            } else {
+                dispatch(setStorageSavingsOnPremLoading(false));
+                dispatch(setStorageSavingsOnPremResponse(null));
+                dispatch(setOnPremFirstLoad(false));
+                dispatch(setStorageSavingsLoading(false));
+                dispatch(setViewCalculationsLoading(false));
+            }
+        } catch (error) {
+            dispatch(setStorageSavingsOnPremResponse(null));
+            dispatch(setStorageSavingsOnPremLoading(false));
+            dispatch(setOnPremFirstLoad(false));
+            dispatch(setStorageSavingsLoading(false));
+            dispatch(setViewCalculationsLoading(false));
+        }
+    };
 
     const getStorageSavingsData = async () => {
         let payload: any = {
@@ -340,6 +486,60 @@ const SavingsCalculatorApi = () => {
         dispatch(setStorageSavingsResponse({}));
         dispatch(setStorageSavingsLoading(false));
     }, [headerSelectedCred, headerSelectedRegion]);
+
+    useEffect(() => {
+        let newPayload = createOnPremPayload();
+        const comparedPayloadValues =
+            isEqual(newPayload, requestedPayload) &&
+            selectedOnPremRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
+        if (!comparedPayloadValues && selectedOnPremHostId && savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            dispatch(setRequestedPayload(newPayload));
+            dispatch(setRequestedRegion(selectedOnPremRegion));
+            dispatch(setStorageSavingsResponse({}));
+            dispatch(setStorageSavingsLoading(true));
+            dispatch(setViewCalculationsApiResponse({}));
+            dispatch(setViewCalculationsLoading(true));
+            dispatch(setStorageSavingsOnPremLoading(true));
+            setTimeout(() => {
+                getStorageSavingsOnPremData(newPayload);
+            }, 1);
+        }
+    }, [selectedOnPremHostId]);
+
+    useEffect(() => {
+        let newPayload = createOnPremPayload();
+        const comparedPayloadValues =
+            isEqual(newPayload, requestedPayload) &&
+            selectedOnPremRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
+        if (
+            !comparedPayloadValues &&
+            selectedOnPremHostId &&
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
+            selectedSnapshotFrequency &&
+            numberOfClonedCopies &&
+            monthlyChangeRate &&
+            selectedOnPremRegion &&
+            !onPremFirstLoad
+        ) {
+            dispatch(setRequestedPayload(newPayload));
+            dispatch(setRequestedRegion(selectedOnPremRegion));
+            dispatch(setStorageSavingsResponse({}));
+            dispatch(setStorageSavingsLoading(true));
+            dispatch(setViewCalculationsApiResponse({}));
+            dispatch(setViewCalculationsLoading(true));
+            dispatch(setStorageSavingsOnPremLoading(true));
+            setTimeout(() => {
+                getStorageSavingsOnPremData(newPayload);
+            }, 1);
+        }
+    }, [
+        selectedSnapshotFrequency,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        computeInformation,
+        storagePerformance,
+        selectedOnPremRegion
+    ]);
 
     return <></>;
 };

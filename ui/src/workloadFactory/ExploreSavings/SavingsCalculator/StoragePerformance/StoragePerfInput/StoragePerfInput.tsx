@@ -4,9 +4,36 @@ import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
 import { setStoragePerformance } from '../../../../../store/workloadFactory/exploreSavingsSlice';
+import { useAppSelector } from '../../../../../store/storeHooks';
+import { GIB_IN_BYTE } from '../../../../../utils/consts';
 
 const StoragePerfInput = ({ type }: any) => {
     const dispatch = useDispatch();
+    const { selectedOnPremHostDetails, onPremFirstLoad }: any = useAppSelector(state => state.exploreSavings);
+
+    useEffect(() => {
+        if (selectedOnPremHostDetails?.nodeUsage) {
+            let nodeRow = null;
+            if (type === 'primaryData' || type === 'primaryLog') {
+                nodeRow = selectedOnPremHostDetails?.nodeUsage?.find(
+                    (node: any) => node?.nodeType?.toLowerCase() === 'primary'
+                );
+            } else {
+                nodeRow = selectedOnPremHostDetails?.nodeUsage?.find(
+                    (node: any) => node?.nodeType?.toLowerCase() === 'secondary'
+                );
+            }
+            if (type === 'primaryData' || type === 'secondaryData') {
+                setTotalStorageAmount(Number(nodeRow?.dataTotalStorage || 0) / GIB_IN_BYTE);
+                setIOPS(nodeRow?.dataIops);
+                setThroughput(nodeRow?.dataThroughput);
+            } else if (type === 'primaryLog' || type === 'secondaryLog') {
+                setTotalStorageAmount(Number(nodeRow?.logTotalStorage || 0) / GIB_IN_BYTE);
+                setIOPS(nodeRow?.logIops);
+                setThroughput(nodeRow?.logThroughput);
+            }
+        }
+    }, [selectedOnPremHostDetails]);
 
     const [totalStorageAmount, setTotalStorageAmount] = useState<any>(null);
 
@@ -76,6 +103,7 @@ const StoragePerfInput = ({ type }: any) => {
                     placeholder={''}
                     value={totalStorageAmount}
                     className={styles.keyField}
+                    isDisabled={true}
                 />
             </div>
             <div className={styles.col3}>
@@ -87,6 +115,7 @@ const StoragePerfInput = ({ type }: any) => {
                     placeholder={''}
                     value={iops}
                     className={styles.keyField}
+                    isDisabled={onPremFirstLoad}
                 />
             </div>
             <div className={styles.col4}>
@@ -98,6 +127,7 @@ const StoragePerfInput = ({ type }: any) => {
                     placeholder={''}
                     value={throughput}
                     className={styles.keyField}
+                    isDisabled={onPremFirstLoad}
                 />
             </div>
         </div>

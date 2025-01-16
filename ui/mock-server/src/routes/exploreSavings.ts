@@ -5,6 +5,7 @@ import ViewCalculations from '../data/viewCalculations.json';
 import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 import UploadScript from '../data/uploadScript.json';
 import ExploreSavingsOnPrem from '../data/exploreSavingsOnPrem.json';
+import OnPremCalculations from '../data/onPremCalculations.json';
 
 const router = require('express').Router();
 
@@ -20,6 +21,12 @@ router.post(
 router.get(`${BASE_URL}/v1/mssql/onprem-tco`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, ExploreSavingsOnPrem);
+    }, 1000);
+});
+
+router.post(`${BASE_URL}/v1/mssql/onprem-tco/database-hosts/:databaseHostId/explore-savings`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, OnPremCalculations);
     }, 5000);
 });
 

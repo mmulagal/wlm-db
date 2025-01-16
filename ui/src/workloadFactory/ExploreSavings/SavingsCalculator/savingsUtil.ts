@@ -309,7 +309,10 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
         storageType = GENERAL.EBS;
-    } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+    } else if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+    ) {
         storageType = GENERAL.EBS;
     } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
         storageType = GENERAL.FSX_FOR_WINDOWS;

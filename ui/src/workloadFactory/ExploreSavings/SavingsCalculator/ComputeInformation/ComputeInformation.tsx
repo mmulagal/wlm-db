@@ -1,8 +1,37 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './ComputeInformation.module.scss';
 import ComputeInputComponent from './ComputeInputComponent/ComputeInputComponent';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
+import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const ComputeInformation = () => {
+    const [instanceData, setInstanceData] = useState([]);
+    const [instanceResLoading, setInstanceResLoading] = useState([]);
+    const { savingsCalculatorFrom, selectedOnPremHostDetails, onPremFirstLoad }: any = useAppSelector(
+        state => state.exploreSavings
+    );
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            if (selectedOnPremHostDetails?.sqlInstances) {
+                setInstanceData(selectedOnPremHostDetails?.sqlInstances);
+            } else {
+                let instanceList: any = [];
+                selectedOnPremHostDetails?.sqlServerInstances?.map((host: any) => {
+                    instanceList.push({
+                        sqlInstanceName: host,
+                        noOfVcpusInUse: '',
+                        memory: '',
+                        networkPerformance: ''
+                    });
+                });
+                setInstanceData(instanceList);
+            }
+            setInstanceResLoading(onPremFirstLoad);
+        }
+    }, [selectedOnPremHostDetails]);
+
     return (
         <div className={styles.computeInformation}>
             <DsTypography style={{ marginBottom: '8px' }} variant="Regular_14">
@@ -22,27 +51,14 @@ const ComputeInformation = () => {
                         <DsTypography variant="Semibold_14">Network performance</DsTypography>
                     </div>
                 </div>
-
-                <div className={styles.row1} style={{ marginTop: '-8px' }}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">SQL_ins1</DsTypography>
+                {instanceData?.map((instance: any, index: number) => (
+                    <div className={styles.row1} style={{ marginTop: '-8px' }}>
+                        <div className={styles.col1}>
+                            <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
+                        </div>
+                        <ComputeInputComponent data={instance} loading={instanceResLoading} />
                     </div>
-                    <ComputeInputComponent type="SQL_ins1" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">SQL_ins12</DsTypography>
-                    </div>
-                    <ComputeInputComponent type="SQL_ins2" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">SQL_ins3</DsTypography>
-                    </div>
-                    <ComputeInputComponent type="SQL_ins3" />
-                </div>
+                ))}
             </div>
         </div>
     );
