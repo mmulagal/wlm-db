@@ -120,7 +120,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             ? AssessmentStatus.OVER_PROVISIONED
             : isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
             ? AssessmentStatus.UNDER_PROVISIONED
-            : isEmpty(optimisedDrives) && !isEmpty(ignoredDrives)
+            : !isEmpty(ignoredDrives)
             ? AssessmentStatus.NOT_OPTIMIZED
             : AssessmentStatus.OPTIMIZED;
 
