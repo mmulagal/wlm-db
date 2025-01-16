@@ -18,13 +18,13 @@ router.post(
     }
 );
 
-router.get(`${BASE_URL}/v1/mssql/onprem-tco`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/onprem-tco/resources`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, ExploreSavingsOnPrem);
     }, 1000);
 });
 
-router.post(`${BASE_URL}/v1/mssql/onprem-tco/database-hosts/:databaseHostId/explore-savings`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId/explore-savings`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, OnPremCalculations);
     }, 5000);

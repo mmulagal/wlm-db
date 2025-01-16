@@ -885,19 +885,19 @@ export const exploreSavingsApi = createApi({
         return {
             getUploadScript: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/mssql/onprem/upload`,
+                    url: `v1/mssql/onprem-tco/upload`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getOnPremSavings: builder.mutation({
                 query: () => ({
-                    url: `v1/mssql/onprem-tco`
+                    url: `v1/mssql/onprem-tco/resources`
                 })
             }),
             getOnPremCalculations: builder.mutation({
                 query: ({ databaseHostId, payload }) => ({
-                    url: `v1/mssql/onprem-tco/database-hosts/${databaseHostId}/explore-savings`,
+                    url: `v1/mssql/onprem-tco/resources/${databaseHostId}/explore-savings`,
                     method: 'POST',
                     body: payload
                 })
