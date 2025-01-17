@@ -214,7 +214,7 @@ function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetail
                 ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
                     volumeType,
                     volumeNumber,
-                    storageAmount,
+                    storageAmount: Math.max(storageAmount, 1), // Minimum volume size is 1 GiB
                     ...(volumeType !== 'gp2' && { volumeIops, throughput }) // AWS pricing doesnt accept iops and throughout for gp2; marketing API also doesn't accept it
                 })
             );
@@ -496,11 +496,7 @@ function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClass
                 const totalVolumeSizeGiB = storageDetailsByDb.reduce((acc, db) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
                 const avgVolumeSizePerDb = totalVolumeSizeGiB / numDatabases;
 
-                if (
-                    avgVolumeSizePerDb > 16 * avgVolumeSizePerDb * 1024 ||
-                    avgIopsPerDb > 256000 ||
-                    avgThroughputPerDb > 4000
-                ) {
+                if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
                     logger.warn(
                         'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
                     );
