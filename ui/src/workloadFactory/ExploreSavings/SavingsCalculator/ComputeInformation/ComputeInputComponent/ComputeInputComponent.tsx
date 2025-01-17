@@ -6,13 +6,12 @@ import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce
 import { useDispatch } from 'react-redux';
 import { setComputeInformation } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
-import { useAppSelector } from '../../../../../store/storeHooks';
+import { GIB_IN_BYTE } from '../../../../../utils/consts';
 
-const ComputeInputComponent = ({ type }: any) => {
-    const { computeInformation } = useAppSelector(state => state.exploreSavings);
+const ComputeInputComponent = ({ data }: any) => {
     const dispatch = useDispatch();
 
-    const [numberOfCpu, setNumberOfCpu] = useState<any>(null);
+    const [numberOfCpu, setNumberOfCpu] = useState<any>(data?.noOfVcpusInUse);
 
     const [numberOfCpuSearch, setNumberOfCpuSearch] = useSearchDebounce(300);
 
@@ -24,14 +23,14 @@ const ComputeInputComponent = ({ type }: any) => {
     useEffect(() => {
         dispatch(
             setComputeInformation({
-                type: type,
-                mode: 'vCPUsInUse',
+                type: data?.sqlInstanceName,
+                mode: 'noOfVcpusInUse',
                 value: numberOfCpuSearch
             })
         );
     }, [numberOfCpuSearch]);
 
-    const [memory, setMemory] = useState<any>(null);
+    const [memory, setMemory] = useState<any>(Number(data?.memory || 0) / GIB_IN_BYTE);
 
     const [memorySearch, setMemorySearch] = useSearchDebounce(300);
 
@@ -43,7 +42,7 @@ const ComputeInputComponent = ({ type }: any) => {
     useEffect(() => {
         dispatch(
             setComputeInformation({
-                type: type,
+                type: data?.sqlInstanceName,
                 mode: 'memory',
                 value: memorySearch
             })
@@ -63,16 +62,23 @@ const ComputeInputComponent = ({ type }: any) => {
     }, []);
 
     useEffect(() => {
-        if (!computeInformation?.type?.networkPerformance) {
+        if (!data?.networkPerformance) {
             dispatch(
                 setComputeInformation({
-                    type: type,
+                    type: data?.sqlInstanceName,
                     mode: 'networkPerformance',
                     value: generateNetworkPerfOptions[0]
                 })
             );
         }
     }, [generateNetworkPerfOptions]);
+
+    useEffect(() => {
+        setNumberOfCpu(data?.noOfVcpusInUse);
+        setMemory(Number(data?.memory || 0) / GIB_IN_BYTE);
+        setDropdownValue(generateNetworkPerfOptions[0]);
+    }, [data]);
+
     return (
         <div className={styles.computeInputComponent}>
             <div className={styles.col2}>
@@ -105,7 +111,7 @@ const ComputeInputComponent = ({ type }: any) => {
                         setDropdownValue(selectedOptions);
                         dispatch(
                             setComputeInformation({
-                                type: type,
+                                type: data?.sqlInstanceName,
                                 mode: 'networkPerformance',
                                 value: selectedOptions
                             })
@@ -113,11 +119,7 @@ const ComputeInputComponent = ({ type }: any) => {
                     }}
                     isSearchable={false}
                     options={generateNetworkPerfOptions}
-                    defaultValue={
-                        computeInformation?.type?.networkPerformance
-                            ? [computeInformation?.type?.networkPerformance]
-                            : [generateNetworkPerfOptions[0]]
-                    }
+                    defaultValue={[generateNetworkPerfOptions[0]]}
                 />
             </div>
         </div>

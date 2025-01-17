@@ -4,26 +4,43 @@ import styles from './OnPremRegion.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
-import { setSelectedRegionFromManualTCO } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedOnPremRegion } from '../../../../store/workloadFactory/exploreSavingsSlice';
 
 const OnPremRegion = () => {
     const dispatch = useDispatch();
-    const { selectedManualRegion, getManualRegionsList } = useAppSelector(state => state.exploreSavings);
+    const { selectedOnPremRegion, getOnPremRegionList } = useAppSelector(state => state.exploreSavings);
+    const { headerSelectedRegion } = useAppSelector(state => state.headers);
 
     //Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         //@ts-ignore
-        const sortedRegionsData = regionsSort(getManualRegionsList?.manualRegionsData?.regions || []);
+        const sortedRegionsData = regionsSort(getOnPremRegionList?.onPremRegionsData?.regions || []);
         sortedRegionsData?.map((val: any, idx: number) => {
             const regionValue = val.regionCode + ' | ' + val.regionName;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
         return options;
-    }, [getManualRegionsList]);
+    }, [getOnPremRegionList]);
+
+    useEffect(() => {
+        if (!selectedOnPremRegion) {
+            //@ts-ignore
+            const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
+
+            const foundRegion = simplifiedRegions.indexOf(headerSelectedRegion?.data?.regionCode);
+
+            if (foundRegion === -1) {
+                dispatch(setSelectedOnPremRegion(generateRegionList[0]));
+            } else {
+                dispatch(setSelectedOnPremRegion(generateRegionList[foundRegion]));
+            }
+        }
+    }, [generateRegionList]);
+
     return (
         <div className={styles.onPremRegion}>
             <DsTypography variant="Regular_14">
@@ -34,13 +51,14 @@ const OnPremRegion = () => {
                 <SelectField
                     label={GENERAL.REGION}
                     isClearable={false}
-                    value={selectedManualRegion}
+                    value={selectedOnPremRegion}
                     onChange={(selectedOptions: any): void => {
-                        dispatch(setSelectedRegionFromManualTCO(selectedOptions));
+                        dispatch(setSelectedOnPremRegion(selectedOptions));
                     }}
                     isSearchable={generateRegionList.length > 5}
                     options={generateRegionList}
                     className={`${styles.widthRegionSet} savings-calculator-input-fields`}
+                    isLoading={getOnPremRegionList?.onPremRegionsLoading}
                 />
             </div>
         </div>

@@ -69,6 +69,30 @@ const ExploreSavingsOnPremiseTable = () => {
             );
             return;
         }
+        // Validate the file size (should be <= 2 MB)
+        const maxSizeInMB = 2;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024; // 2 MB in bytes
+        if (selectedFile.size > maxSizeInBytes) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: `File size exceeds ${maxSizeInMB} MB. Please upload a smaller file.`
+                })
+            );
+            return;
+        }
+
+        // Validate the file name (should start with "TCOResponse-")
+        if (!selectedFile.name.startsWith('TCOResponse-')) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: 'Invalid file name. File name must start with "TCOResponse-".'
+                })
+            );
+            return;
+        }
+
         setTableData([]); //This code needs to be removed
         setIsUploadLoading(true);
 

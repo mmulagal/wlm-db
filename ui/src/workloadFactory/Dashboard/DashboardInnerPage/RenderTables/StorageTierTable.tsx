@@ -23,7 +23,9 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         state => state.inventoryV2
     );
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -130,7 +132,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Storage tier', {}, inProgressOptimizationData)
+        lastColDetails('Storage tier', {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({

@@ -6,6 +6,8 @@ import {
     setSelectedDeploymentModel,
     setSelectedHostDetails,
     setSelectedInstanceId,
+    setSelectedOnPremHostDetails,
+    setSelectedOnPremHostId,
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
@@ -19,10 +21,6 @@ import {
 import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
-    const deploymentModel = (() => {
-        return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
-    })();
-
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
@@ -38,10 +36,11 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
 
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-    dispatch(setSelectedInstanceId(rowData?.id));
-    dispatch(setSelectedDeploymentModel(deploymentModel));
-    dispatch(setSelectedServerName(rowData?.name || GENERAL.ES_SERVER_NAME));
-    setESInstanceData(rowData, dispatch);
+    dispatch(setSelectedInstanceId(''));
+    dispatch(setSelectedOnPremHostId(rowData?.databaseHostId));
+    dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
+    dispatch(setSelectedServerName(rowData?.databaseHostName || GENERAL.ES_SERVER_NAME));
+    setESInstanceOnPremData(rowData, dispatch);
 };
 
 export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
@@ -116,6 +115,24 @@ export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFact
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+};
+
+export const setESInstanceOnPremData = (data: any, dispatch: any) => {
+    let serverInstallationMode = data?.deploymentModel;
+    if (data?.deploymentModel === GENERAL.AOAG) {
+        serverInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    }
+
+    dispatch(
+        setSelectedOnPremHostDetails({
+            ...data,
+            totalInstance: data?.sqlServerInstances?.length || 0,
+            recommendedInstance: {
+                serverInstallationMode: serverInstallationMode,
+                serverVersion: ''
+            }
+        })
+    );
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {

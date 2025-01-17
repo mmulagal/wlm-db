@@ -735,19 +735,30 @@ export const GETWELL_CONFIG: any = {
     'tempdb-drive-size': 'tempdb_drive_size',
     headroom: 'file_system_headroom',
     'tempdb-files-location': 'tempdb_files',
-    'default-log-files-location': 'transaction_log_files',
-    'default-data-files-location': 'user_data_files',
+    'log-files-location': 'transaction_log_files',
+    'data-files-location': 'user_data_files',
     'compute-rightsizing': 'compute_rightsizing',
     'rss-config': 'rss_config',
     'sql-license': 'sql_licenses',
-    'host-os-patch': 'host_os_patch'
+    'host-os-patch': 'host_os_patch',
+    'microsoft-sql-patch': 'microsoft_sql_patch',
+    maxdop: 'maxdop'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
     'Data files (.mdf) placement',
     'Log files (.ldf) placement',
     'TempDB placement',
-    'Licenses', // Licenses is for Application (SQL Server)
+    GENERAL.LICENSE_SQL_SERVER,
     GENERAL.OPERATING_SYSTEM_PATCH,
-    GENERAL.RSS_CONFIGURATION
+    GENERAL.RSS_CONFIGURATION,
+    GENERAL.MICROSOFT_SQL_PATCH,
+    GENERAL.MAXDOP_PATCH
 ];
+
+export const GW_TOOLTIP_KEYS_MAPPING: any = {
+    rssProfile: 'RSS profile',
+    baseProcessorNumber: 'Base processor number',
+    receiveQueues: 'Receive Queues',
+    tcpOffloading: 'TCP Offloading Features'
+};

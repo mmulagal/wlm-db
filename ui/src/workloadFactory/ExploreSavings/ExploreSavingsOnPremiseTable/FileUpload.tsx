@@ -19,7 +19,7 @@ const FileUpload = ({
                 </DsTypography>
             </label>
             {/* Hidden file input */}
-            <input type="file" id="file-input" style={{ display: 'none' }} onChange={handleFileChange} />
+            <input type="file" id="file-input" accept=".json" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
     );
 };

@@ -39,7 +39,9 @@ import {
     setGwDatabaseStorageType,
     setGwHostname,
     setGwResourceId,
+    setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
@@ -50,7 +52,7 @@ import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimi
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
-    const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
@@ -130,6 +132,12 @@ const DashboardInnerPage = () => {
             })
         );
         dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+            })
+        );
+        dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
                 [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
@@ -179,6 +187,14 @@ const DashboardInnerPage = () => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
@@ -413,7 +429,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.APPLICATION_SQL_SERVER:
+            case GENERAL.LICENSE_SQL_SERVER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -427,10 +443,38 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.MAXDOP_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.maxdop?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig]);
 
-    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any) => {
+    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
             id: '4',
             Header: '',
@@ -440,7 +484,10 @@ const DashboardInnerPage = () => {
             renderCell: (cellData: any, rowData: any) => {
                 let isDisabled = false;
                 let errorMessage = '';
-                if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+                if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+                    isDisabled = true;
+                    errorMessage = 'Optimization in progress for this host';
+                } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
                     isDisabled = true;
                     errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
                 } else if (

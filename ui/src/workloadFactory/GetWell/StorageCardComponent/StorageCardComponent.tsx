@@ -10,10 +10,17 @@ import { useAppSelector } from '../../../store/storeHooks';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
-import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
+import {
+    GETWELL_STATUS,
+    GETWELL_VALUES,
+    GW_CONFIG_OPTIMIZE_NA,
+    GW_TOOLTIP_KEYS_MAPPING,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
+    setInProgressHostData,
     setInProgressOptimizationData,
     setOptimizingData,
     setOptimizingInstanceData
@@ -45,7 +52,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
-    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -130,6 +137,47 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return;
         }
+    };
+
+    const tooltipRssListSection = (
+        listObj: { key: string; value: string }[],
+        secListObj: { key: string; value: string }[]
+    ) => {
+        return (
+            <div className={styles.tooltipLevel}>
+                {listObj?.map((item: any, index: number) => {
+                    return (
+                        <div key={index}>
+                            <div className={styles.rowrss}>
+                                <div className={styles.firstPart}>
+                                    <DsTypography variant="Semibold_13">{item.key}</DsTypography>
+                                </div>
+
+                                <div className={styles.secondPart}>
+                                    <div className={styles.secSubPart}>
+                                        <DsTypography variant="Regular_13">
+                                            {GETWELL_VALUES?.[item.value || ''] || item?.value}
+                                        </DsTypography>
+                                    </div>
+
+                                    {secListObj && secListObj[index]?.value && (
+                                        <>
+                                            <div className={styles.seperator} />
+                                            <div className={styles.secSubPart}>
+                                                <DsTypography variant="Regular_13">
+                                                    {`${secListObj[index]?.value}`}
+                                                </DsTypography>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            {index !== listObj.length - 1 && <div className={styles.tooltipSeparator} />}
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
     const tooltipListSection = (listObj: { key: string; value: string }[], valWidth: string) => {
@@ -293,12 +341,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 </div>
             );
         } else if (cardData?.block_one?.value === GENERAL.RSS_CONFIGURATION) {
-            let listObj = [
-                { key: 'TCP Offloading features', value: cardData?.tcpOffloadState },
-                { key: 'Receive Queues', value: cardData?.rssAdapters?.[0]?.numberOfReceiveQueues },
-                { key: 'RSS profile', value: cardData?.rssAdapters?.[0]?.rssProfile },
-                { key: 'Base processor number', value: cardData?.rssAdapters?.[0]?.baseProcessorNumber }
-            ];
+            let listObj: any = [];
+            let secListObj: any = [];
+            Object.keys(cardData?.rssOptimizedRows).forEach((key: any) => {
+                listObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedRows?.[key] });
+                secListObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedValues?.[key] });
+            });
             let value = '';
             if (cardData?.block_three?.value && cardData?.block_three?.value === 1) {
                 value = '1 Finding';
@@ -311,7 +359,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         <div className={styles.tooltip}>
                             <Popover
                                 popoverClass={''}
-                                children={tooltipListSection(listObj, '70px')}
+                                children={tooltipRssListSection(listObj, secListObj)}
                                 trigger="hover"
                                 isAppendedToBody={false}
                                 container={<TooltipIcon />}
@@ -384,6 +432,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
                 [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+            })
+        );
+        dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
         formatGetWellData(dispatch);

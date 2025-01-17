@@ -21,7 +21,9 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -136,7 +138,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Compute rightsizing', {}, inProgressOptimizationData)
+        lastColDetails('Compute rightsizing', {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({

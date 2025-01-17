@@ -25,6 +25,8 @@ export interface GetWellSliceInterface {
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressHostData: any;
+    jobToInstanceMap: any;
 }
 
 interface CountBreakDown {
@@ -53,6 +55,8 @@ export interface AssessmentResponseInterface {
     rssConfig?: PerConfigInterface;
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
+    microsoftSqlPatch?: PerConfigInterface;
+    maxdop?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
@@ -132,11 +136,23 @@ export interface GwPerConfigCardInterface {
         description?: string;
         values?: string[] | undefined;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
+        descriptionRssConfig?: {
+            first?: string;
+            second?: string;
+            points?: string[];
+            last?: string;
+        };
         info?: string;
     };
     tags: string[];
     category?: string;
     id?: string;
+    rssOptimizedRows?: {
+        [key: string]: string;
+    };
+    rssOptimizedValues?: {
+        [key: string]: string;
+    };
 }
 
 export interface GwSqlServerInstanceInterface {

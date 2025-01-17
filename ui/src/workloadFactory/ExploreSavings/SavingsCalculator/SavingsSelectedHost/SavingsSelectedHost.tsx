@@ -9,6 +9,7 @@ const SavingsSelectedHost = () => {
     const isDisabled = false;
     const {
         selectedHostDetails,
+        selectedOnPremHostDetails,
         selectedPartnerHostDetails,
         getPartnerHostDetailsLoading,
         savingsCalculatorFrom,
@@ -20,17 +21,23 @@ const SavingsSelectedHost = () => {
     const [noOfInstances, setNoOfInstances] = useState('');
 
     useEffect(() => {
-        let volumeCount = 0;
-        if (selectedHostDetails?.ebsResourceInfo?.length) {
-            volumeCount += selectedHostDetails?.ebsResourceInfo?.length;
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            setTotalVolume(0);
+            setHostname(selectedOnPremHostDetails?.databaseHostName);
+            setNoOfInstances(selectedOnPremHostDetails?.totalInstance);
+        } else {
+            let volumeCount = 0;
+            if (selectedHostDetails?.ebsResourceInfo?.length) {
+                volumeCount += selectedHostDetails?.ebsResourceInfo?.length;
+            }
+            if (selectedPartnerHostDetails?.ebsResourceInfo?.length) {
+                volumeCount += selectedPartnerHostDetails?.ebsResourceInfo?.length;
+            }
+            setTotalVolume(volumeCount);
+            setHostname(selectedHostDetails?.name);
+            setNoOfInstances(selectedHostDetails?.totalInstance);
         }
-        if (selectedPartnerHostDetails?.ebsResourceInfo?.length) {
-            volumeCount += selectedPartnerHostDetails?.ebsResourceInfo?.length;
-        }
-        setTotalVolume(volumeCount);
-        setHostname(selectedHostDetails?.name);
-        setNoOfInstances(selectedHostDetails?.totalInstance);
-    }, [selectedHostDetails, selectedPartnerHostDetails]);
+    }, [selectedHostDetails, selectedPartnerHostDetails, selectedOnPremHostDetails]);
 
     return (
         <div className={styles.selectedHosts}>

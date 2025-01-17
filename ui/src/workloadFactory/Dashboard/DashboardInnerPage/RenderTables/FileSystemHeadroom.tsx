@@ -21,7 +21,9 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -131,7 +133,7 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('File system headroom', {}, inProgressOptimizationData)
+        lastColDetails('File system headroom', {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({

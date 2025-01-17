@@ -1,9 +1,13 @@
 import { DsTypography } from '@netapp/design-system';
 import styles from './StoragePerformance.module.scss';
 import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 // import ComputeInputComponent from './StoragePerformance.moodule.scss';
 
 const StoragePerformance = () => {
+    const { selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
+
     return (
         <div className={styles.storagePerf}>
             <DsTypography style={{ marginBottom: '8px' }} variant="Regular_14">
@@ -38,19 +42,23 @@ const StoragePerformance = () => {
                     <StoragePerfInput type="primaryLog" />
                 </div>
 
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Secondary - data</DsTypography>
-                    </div>
-                    <StoragePerfInput type="secondaryData" />
-                </div>
+                {selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG && (
+                    <>
+                        <div className={styles.row1}>
+                            <div className={styles.col1}>
+                                <DsTypography variant="Regular_14">Secondary - data</DsTypography>
+                            </div>
+                            <StoragePerfInput type="secondaryData" />
+                        </div>
 
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Secondary - log</DsTypography>
-                    </div>
-                    <StoragePerfInput type="secondaryLog" />
-                </div>
+                        <div className={styles.row1}>
+                            <div className={styles.col1}>
+                                <DsTypography variant="Regular_14">Secondary - log</DsTypography>
+                            </div>
+                            <StoragePerfInput type="secondaryLog" />
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

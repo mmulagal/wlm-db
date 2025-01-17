@@ -197,9 +197,9 @@ const GetWell = () => {
             },
             {
                 id: 4,
-                label: GENERAL.APPLICATION_SQL_SERVER,
+                label: GENERAL.APPLICATION,
                 value: 'Application_sub',
-                category: GENERAL.APPLICATION_SQL_SERVER
+                category: GENERAL.APPLICATION
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -450,7 +450,7 @@ const GetWell = () => {
                                                         },
                                                         {
                                                             id: 2,
-                                                            label: GENERAL.APPLICATION_SQL_SERVER,
+                                                            label: GENERAL.APPLICATION,
                                                             value: 'Application'
                                                         }
                                                     ]}
@@ -1716,7 +1716,9 @@ const GetWell = () => {
                     )}
 
                     {/* Section five */}
-                    {filteredCardData?.sql_licenses && (
+                    {(filteredCardData?.sql_licenses ||
+                        filteredCardData?.microsoft_sql_patch ||
+                        filteredCardData?.maxdop) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -1725,7 +1727,7 @@ const GetWell = () => {
                                     }}
                                     variant="Semibold_16"
                                 >
-                                    {GENERAL.APPLICATION_SQL_SERVER}
+                                    {GENERAL.APPLICATION}
                                 </DsTypography>
                             </div>
 
@@ -1735,7 +1737,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.sql_licenses}
                                             optimizePrintState={optimizePrintState}
-                                            type={GENERAL.APPLICATION_SQL_SERVER}
+                                            type={GENERAL.LICENSE_SQL_SERVER}
                                         />
                                         <DsAccordion
                                             id="14"
@@ -1788,6 +1790,131 @@ const GetWell = () => {
                                                 <RecommendationText
                                                     data={filteredCardData?.sql_licenses?.recommendation}
                                                 />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.microsoft_sql_patch && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.microsoft_sql_patch}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.MICROSOFT_SQL_PATCH}
+                                        />
+                                        <DsAccordion
+                                            id="15"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.microsoft_sql_patch?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('15', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('15', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('15')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.microsoft_sql_patch?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.microsoft_sql_patch?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.microsoft_sql_patch?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.microsoft_sql_patch?.recommendation}
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.maxdop && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.maxdop}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.MAXDOP_PATCH}
+                                        />
+                                        <DsAccordion
+                                            id="16"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.maxdop?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('16', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('16', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('16')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.maxdop?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.maxdop?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.maxdop?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText data={filteredCardData?.maxdop?.recommendation} />
                                             }
                                         />
                                     </div>

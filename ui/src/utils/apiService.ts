@@ -885,14 +885,21 @@ export const exploreSavingsApi = createApi({
         return {
             getUploadScript: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/mssql/onprem/upload`,
+                    url: `v1/mssql/onprem-tco/upload`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getOnPremSavings: builder.mutation({
                 query: () => ({
-                    url: `v1/mssql/onprem-tco`
+                    url: `v1/mssql/onprem-tco/resources`
+                })
+            }),
+            getOnPremCalculations: builder.mutation({
+                query: ({ databaseHostId, payload }) => ({
+                    url: `v1/mssql/onprem-tco/resources/${databaseHostId}/explore-savings`,
+                    method: 'POST',
+                    body: payload
                 })
             }),
             getStorageSavings: builder.mutation({
@@ -935,12 +942,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop`
                 })
             }),
             optimizeStorageSizing: builder.mutation({
@@ -1090,6 +1097,7 @@ export const {
 export const {
     useGetUploadScriptMutation,
     useGetOnPremSavingsMutation,
+    useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
     useGetManualStorageSavingsMutation,

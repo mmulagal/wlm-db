@@ -14,7 +14,8 @@ const InstanceInformation = () => {
         storageSavingsResponse,
         storageSavingsLoading,
         snapshotLoading,
-        selectedExploreSavingsTab
+        selectedExploreSavingsTab,
+        selectedOnPremHostDetails
     }: any = useAppSelector(state => state.exploreSavings);
 
     const [tableData, setTableData] = useState([]);
@@ -22,58 +23,94 @@ const InstanceInformation = () => {
     const [noOfInstances, setNoOfInstances] = useState(0);
 
     useEffect(() => {
-        setLoading(selectedHostDetails?.loading);
-        const findingsComputeData =
-            storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
-        const findingsLicenseData =
-            storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
-        const findingsDbModel =
-            selectedHostDetails?.serverInstallationMode?.length &&
-            selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)
+        if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES) {
+            setLoading(selectedHostDetails?.loading);
+            const findingsComputeData =
+                storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
+            const findingsLicenseData =
+                storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
+            const findingsDbModel =
+                selectedHostDetails?.serverInstallationMode?.length &&
+                selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)
+                    ? FINDINGS.NOT_OPTIMIZED
+                    : FINDINGS.OPTIMIZED;
+
+            setNoOfInstances(selectedHostDetails?.totalInstance || 0);
+
+            let instanceTypelist = [];
+            if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
+                instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+            } else {
+                instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
+            }
+            let serverEdition: any = [];
+            selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+                if (
+                    perRow?.databaseServer?.serverEdition &&
+                    !serverEdition.includes(perRow?.databaseServer?.serverEdition)
+                ) {
+                    serverEdition.push(perRow?.databaseServer?.serverEdition);
+                }
+            });
+            let data: any = [
+                {
+                    details: 'Instance type',
+                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
+                    id: '1',
+                    findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
+                },
+                {
+                    details: 'SQL Edition',
+                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
+                    id: '2',
+                    findings: findingsLicenseData
+                },
+                {
+                    details: 'Deployment model',
+                    value: selectedHostDetails?.serverAllInstallationMode
+                        ? selectedHostDetails?.serverAllInstallationMode.join(', ')
+                        : selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                    id: '3',
+                    findings: findingsDbModel
+                }
+            ];
+            setTableData(data);
+        }
+    }, [selectedHostDetails, storageSavingsResponse]);
+
+    useEffect(() => {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+            const findingsLicenseData =
+                storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
+            const findingsDbModel = selectedOnPremHostDetails?.deploymentModel?.includes(GENERAL.AOAG)
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
 
-        setNoOfInstances(selectedHostDetails?.totalInstance || 0);
+            setNoOfInstances(selectedOnPremHostDetails?.totalInstance || 0);
 
-        let instanceTypelist = [];
-        if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
-            instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
-        } else {
-            instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
+            let serverEdition: any = [];
+            selectedOnPremHostDetails?.sqlInstances?.map((perRow: any) => {
+                if (perRow?.sqlEdition && !serverEdition.includes(perRow?.sqlEdition)) {
+                    serverEdition.push(perRow?.sqlEdition);
+                }
+            });
+            let data: any = [
+                {
+                    details: 'SQL Edition',
+                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
+                    id: '2',
+                    findings: findingsLicenseData
+                },
+                {
+                    details: 'Deployment model',
+                    value: selectedOnPremHostDetails?.deploymentModel || GENERAL.NOT_AVAILABLE,
+                    id: '3',
+                    findings: findingsDbModel
+                }
+            ];
+            setTableData(data);
         }
-        let serverEdition: any = [];
-        selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
-            if (
-                perRow?.databaseServer?.serverEdition &&
-                !serverEdition.includes(perRow?.databaseServer?.serverEdition)
-            ) {
-                serverEdition.push(perRow?.databaseServer?.serverEdition);
-            }
-        });
-        let data: any = [
-            {
-                details: 'Instance type',
-                value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
-                id: '1',
-                findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
-            },
-            {
-                details: 'SQL Edition',
-                value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
-                id: '2',
-                findings: findingsLicenseData
-            },
-            {
-                details: 'Deployment model',
-                value: selectedHostDetails?.serverAllInstallationMode
-                    ? selectedHostDetails?.serverAllInstallationMode.join(', ')
-                    : selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
-                id: '3',
-                findings: findingsDbModel
-            }
-        ];
-        setTableData(data);
-    }, [selectedHostDetails, storageSavingsResponse]);
+    }, [selectedOnPremHostDetails, storageSavingsResponse]);
 
     const InstanceColDefs: ColumnProps[] = [
         {
@@ -162,8 +199,6 @@ const InstanceInformation = () => {
         }
     ];
 
-    const tableDataForOnprem = tableData.filter((row: any) => row.details !== 'Instance type');
-
     const tableProps = useTable({
         //@ts-ignore
         selectAllProps: false,
@@ -171,7 +206,7 @@ const InstanceInformation = () => {
         manageColumnsProps: false,
 
         columns: InstanceColDefs,
-        rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? tableDataForOnprem : tableData,
+        rows: tableData,
         pageSize: 10
     });
     return (

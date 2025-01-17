@@ -1224,9 +1224,12 @@ export const GENERAL = {
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RSS_CONFIGURATION: 'RSS configuration',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
+    MICROSOFT_SQL_PATCH: 'Microsoft SQL patch',
+    MAXDOP_PATCH: 'MAXDOP patch',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
-    APPLICATION_SQL_SERVER: 'Application (SQL Server)',
+    LICENSE_SQL_SERVER: 'License (SQL Server)',
+    APPLICATION: 'Application',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         'Total managed instances include only those whose assessment has been completed and are currently online.'
 };
