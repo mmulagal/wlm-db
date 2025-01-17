@@ -952,9 +952,9 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        m-set-rssconfig:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
-                            waitAfterCompletion: forever
+                        # m-set-rssconfig:
+                        #     command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                        #     waitAfterCompletion: forever
                         n-update-sqltag:
                             command: !Join
                                 - ''
@@ -1521,9 +1521,9 @@ Resources:
                         g-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
-                        h-set-rssconfig:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
-                            waitAfterCompletion: forever
+                        # h-set-rssconfig:
+                        #     command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                        #     waitAfterCompletion: forever
                         i-update-sqltag:
                             command: !Join
                                 - ''
