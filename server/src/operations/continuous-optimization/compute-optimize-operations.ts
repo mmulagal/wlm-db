@@ -451,7 +451,13 @@ async function checkRunningStatus(
             endTime: Date.now(),
             error: statusResponse.error
         });
+        return { running: false, error: statusResponse.error };
     }
+
+    await updateJobDetails(accountId, checkRunningJob.id, {
+        status: JOBSTATUS.COMPLETED,
+        endTime: Date.now()
+    });
 
     return { running: true, error: 'Error parsing SSM query response' };
 }
