@@ -311,6 +311,8 @@ async function driftAssessmentDataCollection(
         AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
     );
 
+    const shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
+
     if (shouldRunStorageAssessment) {
         await initiateStorageAssessmentCollection(
             accountId,
@@ -322,7 +324,12 @@ async function driftAssessmentDataCollection(
         );
     }
 
-    if (shouldRunComputeAssessment || shouldRunLicenseAssessment || shouldRunHostOsPatchAssessment) {
+    if (
+        shouldRunComputeAssessment ||
+        shouldRunLicenseAssessment ||
+        shouldRunHostOsPatchAssessment ||
+        shouldRunRssConfigAssessment
+    ) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
             credentialsId,
