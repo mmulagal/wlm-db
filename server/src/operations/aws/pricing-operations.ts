@@ -964,8 +964,7 @@ function getPricingByLicenseType(
     >
 ): number | undefined {
     logger.info('Getting pricing by license type', {
-        licenseType,
-        existingInstanceTypesPricingDetails: existingInstanceTypesPricingDetails.entries()
+        licenseType
     });
     let instanceHourlyPrice: number | undefined;
     for (const [, { count, pricingDetails }] of existingInstanceTypesPricingDetails) {

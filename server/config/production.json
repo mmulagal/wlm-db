@@ -32,6 +32,6 @@
         }
     },
     "reporting":{
-        "bucket-name": "s3://prod.reports.data-services.tlveng.netapp.com/wlmdb/"
+        "bucket-name": "prod.reports.data-services.tlveng.netapp.com"
     }
 }

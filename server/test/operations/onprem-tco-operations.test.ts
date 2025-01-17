@@ -1,7 +1,7 @@
 import { listOnPremDatabaseResources } from '../../src/lib/database/onprem-tco';
 import {
     checkEnterpriseUsage,
-    deriveEbsVolumesList,
+    deriveEbsVolumesListForMarketing,
     deriveHostConfigBasedInstanceType,
     deriveInstanceRequirements,
     deriveSqlUsageBasedInstanceType,
@@ -233,7 +233,7 @@ describe('onPrem TCO operations', () => {
             }
         ];
 
-        const ebsVolumes = deriveEbsVolumesList(reportData.sqlServerInfo);
+        const ebsVolumes = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo);
         expect(ebsVolumes).toEqual(expectedEbsVolumes);
     });
 
