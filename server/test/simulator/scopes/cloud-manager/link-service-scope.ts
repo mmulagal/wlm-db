@@ -1,6 +1,6 @@
 import nock from 'nock';
-import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts';
 import { faker } from '@faker-js/faker';
+import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts';
 
 nock(`${CLOUD_MANAGER_ENDPOINT}`, {
     allowUnmocked: process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
