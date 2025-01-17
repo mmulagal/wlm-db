@@ -1716,7 +1716,9 @@ const GetWell = () => {
                     )}
 
                     {/* Section five */}
-                    {(filteredCardData?.sql_licenses || filteredCardData?.microsoft_sql_patch || filteredCardData?.maxdop) && (
+                    {(filteredCardData?.sql_licenses ||
+                        filteredCardData?.microsoft_sql_patch ||
+                        filteredCardData?.maxdop) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -1792,7 +1794,7 @@ const GetWell = () => {
                                         />
                                     </div>
                                 )}
-                                
+
                                 {filteredCardData?.microsoft_sql_patch && (
                                     <div className={styles.combineComponent}>
                                         <StorageCardComponent
@@ -1838,7 +1840,8 @@ const GetWell = () => {
                                                     <div
                                                         style={{
                                                             color:
-                                                                loading || !cardData?.microsoft_sql_patch?.block_two?.value
+                                                                loading ||
+                                                                !cardData?.microsoft_sql_patch?.block_two?.value
                                                                     ? 'var(--text-disabled)'
                                                                     : 'var(--text-button-primary)'
                                                         }}
@@ -1855,7 +1858,7 @@ const GetWell = () => {
                                         />
                                     </div>
                                 )}
-                                
+
                                 {filteredCardData?.maxdop && (
                                     <div className={styles.combineComponent}>
                                         <StorageCardComponent
@@ -1911,9 +1914,7 @@ const GetWell = () => {
                                                 </div>
                                             ]}
                                             children={
-                                                <RecommendationText
-                                                    data={filteredCardData?.maxdop?.recommendation}
-                                                />
+                                                <RecommendationText data={filteredCardData?.maxdop?.recommendation} />
                                             }
                                         />
                                     </div>

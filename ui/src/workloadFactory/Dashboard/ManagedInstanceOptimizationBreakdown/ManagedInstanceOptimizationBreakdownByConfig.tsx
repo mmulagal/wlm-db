@@ -582,9 +582,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.MICROSOFT_SQL_PATCH}
-                        percentage={Math.round(
-                            ((configData.microsoftSqlPatch || 0) / (configData.total || 1)) * 100
-                        )}
+                        percentage={Math.round(((configData.microsoftSqlPatch || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.microsoftSqlPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
@@ -619,9 +617,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.MAXDOP_PATCH}
-                        percentage={Math.round(
-                            ((configData.maxdopPatch || 0) / (configData.total || 1)) * 100
-                        )}
+                        percentage={Math.round(((configData.maxdopPatch || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.maxdopPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"

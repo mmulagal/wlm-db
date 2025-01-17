@@ -742,7 +742,7 @@ export const GETWELL_CONFIG: any = {
     'sql-license': 'sql_licenses',
     'host-os-patch': 'host_os_patch',
     'microsoft-sql-patch': 'microsoft_sql_patch',
-    'maxdop': 'maxdop',
+    maxdop: 'maxdop'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
@@ -761,4 +761,4 @@ export const GW_TOOLTIP_KEYS_MAPPING: any = {
     baseProcessorNumber: 'Base processor number',
     receiveQueues: 'Receive Queues',
     tcpOffloading: 'TCP Offloading Features'
-}
+};

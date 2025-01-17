@@ -149,10 +149,10 @@ export interface GwPerConfigCardInterface {
     id?: string;
     rssOptimizedRows?: {
         [key: string]: string;
-    },
+    };
     rssOptimizedValues?: {
         [key: string]: string;
-    },
+    };
 }
 
 export interface GwSqlServerInstanceInterface {

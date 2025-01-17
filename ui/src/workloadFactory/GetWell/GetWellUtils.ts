@@ -378,7 +378,7 @@ export const cardDataDefault: GwCardDataInterface = {
                 last: 'Following these settings will improve the performance and reliability of your MSSQL instances.'
             }
         },
-        tags: ["Performance efficiency"],
+        tags: ['Performance efficiency'],
         rssOptimizedRows: {},
         rssOptimizedValues: {}
     },
@@ -469,7 +469,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         recommendation: {
             title: 'Microsoft SQL assessment recommendation',
-            description: 'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities \nand significantly improves overall system reliability.'
+            description:
+                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities \nand significantly improves overall system reliability.'
         },
         tags: ['Security', 'Reliability']
     },
@@ -495,9 +496,10 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         recommendation: {
             title: 'MAXDOP patch assessment recommendation',
-            description: 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nFor OLTP workloads, set MAXDOP to 8 or fewer. \nFor OLAP workloads, adjust accordingly but avoid setting it to 0 to prevent excessive parallelism and contention. \nProper MAXDOP configuration enhances performance and efficiency.'
+            description:
+                'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nFor OLTP workloads, set MAXDOP to 8 or fewer. \nFor OLAP workloads, adjust accordingly but avoid setting it to 0 to prevent excessive parallelism and contention. \nProper MAXDOP configuration enhances performance and efficiency.'
         },
-        tags: ["Performance efficiency"]
+        tags: ['Performance efficiency']
     }
 };
 
@@ -709,16 +711,16 @@ export const formatRssConfigCardConfig = (
 
     let findingReasons = 0;
     let optimizedRows: any = {
-        'tcpOffloading': GENERAL.FINDINGS.OPTIMIZED,
-        'receiveQueues': GENERAL.FINDINGS.OPTIMIZED,
-        'rssProfile': GENERAL.FINDINGS.OPTIMIZED,
-        'baseProcessorNumber': GENERAL.FINDINGS.OPTIMIZED,
+        tcpOffloading: GENERAL.FINDINGS.OPTIMIZED,
+        receiveQueues: GENERAL.FINDINGS.OPTIMIZED,
+        rssProfile: GENERAL.FINDINGS.OPTIMIZED,
+        baseProcessorNumber: GENERAL.FINDINGS.OPTIMIZED
     };
     let optimizedValue: any = {
-        'tcpOffloading': item?.tcpOffloadState,
-        'receiveQueues': item?.recommendedAdapterSettings?.recommendedReceiveQueues,
-        'rssProfile': item?.recommendedAdapterSettings?.recommendedRssProfile,
-        'baseProcessorNumber': item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+        tcpOffloading: item?.tcpOffloadState,
+        receiveQueues: item?.recommendedAdapterSettings?.recommendedReceiveQueues,
+        rssProfile: item?.recommendedAdapterSettings?.recommendedRssProfile,
+        baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
     };
 
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
@@ -733,7 +735,8 @@ export const formatRssConfigCardConfig = (
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
                 optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['baseProcessorNumber'] = item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber;
+                optimizedValue['baseProcessorNumber'] =
+                    item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber;
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;

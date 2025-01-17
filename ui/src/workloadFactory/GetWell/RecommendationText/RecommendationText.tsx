@@ -15,7 +15,7 @@ type RecommendationTextProps = {
             second?: string;
             points?: string[];
             last?: string;
-        }
+        };
         info?: string;
     };
     from?: string;
