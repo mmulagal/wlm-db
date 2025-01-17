@@ -5,7 +5,7 @@ function Set-RSSBestPractices {
 
     # Get current RSS settings
     $currentRssSettings = Get-NetAdapterRss -Name $AdapterName
-
+    $parameters = @{}
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $DesiredRssReceiveQueues = $vcpus
     $DesiredBaseProcessorNumber = 2
