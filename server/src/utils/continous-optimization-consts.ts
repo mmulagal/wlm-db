@@ -174,6 +174,8 @@ const NETWORK_PERF = {
     ABOVE_10: 'above10'
 };
 
+const ONPREM_TCO_CREDENTIALS_ID = 'ONPREM_TCO_CREDENTIALS_ID';
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -197,5 +199,6 @@ export {
     REPORTING_BUCKET,
     STORAGE_OPTIMIZE_JOB_PARAM,
     NUMASTATIC,
-    NETWORK_PERF
+    NETWORK_PERF,
+    ONPREM_TCO_CREDENTIALS_ID
 };

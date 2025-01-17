@@ -232,8 +232,8 @@ describe('onPrem TCO operations', () => {
         ];
 
         const ebsVolumes = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo);
-        expect(ebsVolumes?.find((ebsVolume) => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
-        expect(ebsVolumes?.find((ebsVolume) => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
+        expect(ebsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
+        expect(ebsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
         expect(ebsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 

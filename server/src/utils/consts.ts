@@ -74,7 +74,8 @@ const AUDIT_EXCLUDE_LIST = [
     '/calculations',
     '/sandboxes-meta-update',
     '/resource-credentials',
-    '/create-demo-resource'
+    '/create-demo-resource',
+    '/onprem-tco'
 ];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 

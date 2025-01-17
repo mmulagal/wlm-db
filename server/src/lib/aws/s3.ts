@@ -56,7 +56,7 @@ async function putObjectBucket(
         Bucket: bucketName,
         Key: objectName,
         Body: body,
-        ContentEncoding: contentEncoding
+        ...(contentEncoding && { ContentEncoding: contentEncoding })
     });
 
     const response = await s3.send(command);

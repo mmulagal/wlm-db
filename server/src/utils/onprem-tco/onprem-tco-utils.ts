@@ -1,5 +1,6 @@
 import moment from 'moment';
 import getLogger from '../logger';
+import { generateHash } from '../utils';
 
 const logger = getLogger();
 
@@ -16,6 +17,7 @@ function parseCpuUtilization(value: string) {
         if (typeof value === 'string' && !Number.isNaN(Number(value))) {
             return Number(value);
         }
+        logger.error(`Error parsing cpuUtilization: ${error}`);
     }
 }
 
@@ -121,6 +123,12 @@ function convertToDate(dateString: string): Date {
     return moment(dateString, 'YYYYMMDDHHmmss').toDate();
 }
 
+function generateUniqueId(accountId: string, instanceIds: string[], hostIds: string[]): string {
+    const combinedIds = [accountId, ...instanceIds, ...hostIds].sort();
+    const combinedString = combinedIds.join('-');
+    return generateHash(combinedString);
+}
+
 export {
     parseCpuUtilization,
     parseMemoryUtilization,
@@ -128,5 +136,6 @@ export {
     parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
-    convertToDate
+    convertToDate,
+    generateUniqueId
 };

@@ -6,7 +6,8 @@ import {
     parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
-    convertToDate
+    convertToDate,
+    generateUniqueId
 } from '../../../src/utils/onprem-tco/onprem-tco-utils';
 
 describe('onprem-tco-utils', () => {
@@ -118,6 +119,14 @@ describe('onprem-tco-utils', () => {
         const dateString = '20230101123000';
         const expectedDate = new Date(2023, 0, 1, 12, 30, 0);
         expect(convertToDate(dateString)).toEqual(expectedDate);
+    });
+
+    it('should generate a unique id', () => {
+        const hostIds = ['host1', 'host2', 'host3'];
+        const instanceIds = ['instance1', 'instance2', 'instance3'];
+        const id = generateUniqueId('account1', instanceIds, hostIds);
+
+        expect(id).toBeDefined();
     });
 });
 /* eslint-enable no-useless-escape */

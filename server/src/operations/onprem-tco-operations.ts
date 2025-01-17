@@ -5,11 +5,16 @@ import { compact, isEmpty } from 'lodash-es';
 import { ArchitectureType, CpuManufacturer, VirtualizationType } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import { DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
-import { generateHash, getArtifactsRegionBucketName } from '../utils/utils';
+import { getArtifactsRegionBucketName } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
-import { OP_TCO_COLLECTOR_SCRIPT_PATH, REPORTING_BUCKET, NETWORK_PERF } from '../utils/continous-optimization-consts';
+import {
+    OP_TCO_COLLECTOR_SCRIPT_PATH,
+    REPORTING_BUCKET,
+    NETWORK_PERF,
+    ONPREM_TCO_CREDENTIALS_ID
+} from '../utils/continous-optimization-consts';
 import {
     OnPremCollectionObjectV1,
     SqlInstanceDetails,
@@ -30,19 +35,14 @@ import {
     parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
-    convertToDate
+    convertToDate,
+    generateUniqueId
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
-
-function generateUniqueId(accountId: string, instanceIds: string[], hostIds: string[]): string {
-    const combinedIds = [accountId, ...instanceIds, ...hostIds].sort();
-    const combinedString = combinedIds.join('-');
-    return generateHash(combinedString);
-}
 
 async function downloadOnpremTcoCollectorScript(accountId: string, databaseType: string = MSSQL) {
     logger.info('Downloading OnPrem TCO Collector Script', { accountId, databaseType });
@@ -293,6 +293,26 @@ async function analyzeOnpremData(accountId: string, data: OnPremCollectionObject
             const sqlServerEdition = isUsingAnyEnterpriseFeature ? 'Enterprise Edition' : 'Standard Edition';
 
             if (currentInstanceType && recommendedInstanceType) {
+                const [existingConfigData, recommendedConfigData] = await Promise.all([
+                    getStorageSavingsResponse(
+                        accountId,
+                        undefined,
+                        deploymentType,
+                        undefined,
+                        ebsVolumes,
+                        currentInstanceType,
+                        sqlServerEdition
+                    ),
+                    getStorageSavingsResponse(
+                        accountId,
+                        undefined,
+                        deploymentType,
+                        undefined,
+                        ebsVolumes,
+                        recommendedInstanceType,
+                        sqlServerEdition
+                    )
+                ]);
                 const {
                     compute: { existing: existingCompute } = {},
                     license: { existing: existingLicense } = {},
@@ -300,29 +320,13 @@ async function analyzeOnpremData(accountId: string, data: OnPremCollectionObject
                     fsx,
                     multi,
                     totalSummary: { existing: existingTotalSummary } = {}
-                } = await getStorageSavingsResponse(
-                    accountId,
-                    undefined,
-                    deploymentType,
-                    undefined,
-                    ebsVolumes,
-                    currentInstanceType,
-                    sqlServerEdition
-                );
+                } = existingConfigData;
 
                 const {
                     compute: { recommended: recommendedCompute } = {},
                     license: { recommended: recommendedLicense } = {},
                     totalSummary: { recommended: recommendedTotalSummary } = {}
-                } = await getStorageSavingsResponse(
-                    accountId,
-                    undefined,
-                    deploymentType,
-                    undefined,
-                    ebsVolumes,
-                    recommendedInstanceType,
-                    sqlServerEdition
-                );
+                } = recommendedConfigData;
 
                 const tcoData = {
                     compute: {
@@ -341,7 +345,7 @@ async function analyzeOnpremData(accountId: string, data: OnPremCollectionObject
                         recommended: recommendedTotalSummary
                     }
                 };
-                await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, { assessment_data: tcoData }); // TODO: Add resource id in collector script
+                await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, { assessment_data: tcoData });
 
                 // {"accountId":"account-test","resourceId":"","databaseType":"mssql","data":{"assessmentData":{"compute":{"existing":{"instanceType":"m2.xlarge","hoursInMonth":730,"machineDetails":[{"instanceType":"m2.xlarge","hoursInMonth":730,"licenseIncluded":false}]},"recommended":{"instanceType":"m2.xlarge","hoursInMonth":730,"machineDetails":[{"instanceType":"m2.xlarge","hoursInMonth":730,"licenseIncluded":false}]}},"license":{"existing":{"licenseIncluded":false,"hoursInMonth":730,"sqlServerEdition":"Enterprise Edition"},"recommended":{"licenseIncluded":false,"hoursInMonth":730,"sqlServerEdition":"Enterprise Edition"}},"ebs":{"capacity":5120,"iops":9776,"throughput":0,"snapshots":1064.96,"total":23408.96,"clones":7448},"fsx":{"capacity":2560,"iops":315.52,"throughput":1228.8,"total":4361.89,"snapshots":52.77,"clones":204.8},"multi":{"fsxCalculation":{"deploymentType":"Multi","numberOfVolumes":1,"throughput":128,"totalStorageCapacity":10995116277760,"percentageSsd":100,"savings":0,"effectiveCapacity":10995116277760,"ssdTierReqCapacity":10995116277760,"capacityPoolTier":0,"ssdIop":40000,"throughputCapacity":1024,"useCase":"Low-latency","regionName":"US East (N. Virginia)","monthlySnapshotCapacity":879609302220.7999},"fsxBreakdown":{"fsxDataLunSize":4804596350535,"fsxDataVolumeSize":5285055985589,"fsxLogVolumeSize":1321263996398,"fsxTempDbVolumeSize":528505598559,"fsxQuorumVolumeSize":12000000000,"fsxBufferVolumeSize":3848290697216,"fsxStorageCapacity":10995116277760}},"totalSummary":{"existing":23408.96,"recommended":4361.89}}}}
             } else {
@@ -382,6 +386,7 @@ async function handleOnpremTcoDataAnalysis(accountId: string, jobId: string, dat
         logger.error({ accountId, jobId, errorMessage });
         analyzeJobError = errorMessage;
         analyzeJobStatus = JOBSTATUS.FAILED;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     } finally {
         await updateJob(
             accountId,
@@ -443,7 +448,8 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const originalJsonString = atob(decompressedBase64);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObjectV1;
 
-        const { id: jobId } = await registerJob(accountId, 'ON_PREM', DEFAULT_AWS_REGION, {
+        // in OnPremises analysis, credentials ID is irrelevant, so using a dummy UUID
+        const { id: jobId } = await registerJob(accountId, ONPREM_TCO_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
             name: 'Upload OnPremises TCO data',
             description: 'OnPremises TCO data upload',
             resourceName: data?.windowsConfig?.windowsClusterName,
@@ -621,31 +627,33 @@ async function getOnPremDatabaseResources(
         return { count: 0, items: [], nextToken: '' };
     }
 
-    const onPremDatabaseResources: OnPremDatabaseResourcesParamsType[] = [];
+    let onPremDatabaseResources: OnPremDatabaseResourcesParamsType[] = [];
     try {
-        onPremDatabaseResourcesDetails.map(async onPremDatabaseResource => {
-            const {
-                resource_id: resourceId,
-                host_config: hostConfig,
-                database_instances_data: sqlInstancesDetails,
-                database_deployment_type: deploymentType
-            } = onPremDatabaseResource;
-            const { clusterNodeNames: onPremisesNodes, windowsClusterName: resourceName } =
-                hostConfig as unknown as WindowsConfig;
-            const sqlServerInstances = Array.isArray(sqlInstancesDetails) // todo check ithe correct format
-                ? sqlInstancesDetails.map(sqlInstance => {
-                      const [instanceName] = sqlInstance ? Object.keys(sqlInstance) : [];
-                      return instanceName;
-                  })
-                : [];
-            onPremDatabaseResources.push({
-                resourceId,
-                resourceName,
-                deploymentModel: deploymentType,
-                sqlServerInstances,
-                onPremisesNodes
-            });
-        });
+        onPremDatabaseResources = await Promise.all(
+            onPremDatabaseResourcesDetails.map(async onPremDatabaseResource => {
+                const {
+                    resource_id: resourceId,
+                    host_config: hostConfig,
+                    database_instances_data: sqlInstancesDetails,
+                    database_deployment_type: deploymentType
+                } = onPremDatabaseResource;
+                const { clusterNodeNames: onPremisesNodes, windowsClusterName: resourceName } =
+                    hostConfig as unknown as WindowsConfig;
+                const sqlServerInstances = Array.isArray(sqlInstancesDetails)
+                    ? sqlInstancesDetails.map(sqlInstance => {
+                          const [instanceName] = sqlInstance ? Object.keys(sqlInstance) : [];
+                          return instanceName;
+                      })
+                    : [];
+                return {
+                    resourceId,
+                    resourceName,
+                    deploymentModel: deploymentType,
+                    sqlServerInstances,
+                    onPremisesNodes
+                };
+            })
+        );
     } catch (error) {
         const errorMessage = `Error processing onPremDatabaseResourcesDetails. ${error}`;
         logger.error(errorMessage);
