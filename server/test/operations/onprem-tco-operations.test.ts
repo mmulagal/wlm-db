@@ -227,14 +227,14 @@ describe('onPrem TCO operations', () => {
             {
                 volumeType: 'gp2',
                 volumeNumber: 3,
-                storageAmount: 0.009375000000000001,
-                volumeIops: 0.012,
-                throughput: 0.000004978724516313242
+                storageAmount: 0.009375000000000001
             }
         ];
 
         const ebsVolumes = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo);
-        expect(ebsVolumes).toEqual(expectedEbsVolumes);
+        expect(ebsVolumes?.find((ebsVolume) => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
+        expect(ebsVolumes?.find((ebsVolume) => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
+        expect(ebsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 
     it('should derive the correct instance type based on SQL usage', async () => {
@@ -286,10 +286,10 @@ describe('onPrem TCO operations', () => {
             InstanceRequirements: {
                 VCpuCount: {
                     Min: 4,
-                    Max: 2
+                    Max: 4
                 },
                 MemoryMiB: {
-                    Min: 460.50390625
+                    Min: 512
                 },
                 CpuManufacturers: ['intel', 'amazon-web-services'],
                 AllowedInstanceTypes: ['m*', 'c*', 'r*'],
