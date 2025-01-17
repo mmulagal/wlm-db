@@ -2,6 +2,7 @@ import { DsTypography } from '@netapp/design-system';
 import { ReactComponent as Light } from '../../../assets/Light.svg';
 import styles from './RecommendationText.module.scss';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
+import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 
 type RecommendationTextProps = {
     data: {
@@ -9,6 +10,12 @@ type RecommendationTextProps = {
         description: string;
         values?: Array<string>;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
+        descriptionRssConfig?: {
+            first?: string;
+            second?: string;
+            points?: string[];
+            last?: string;
+        }
         info?: string;
     };
     from?: string;
@@ -98,6 +105,31 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {data?.descriptionRssConfig && (
+                <div
+                    className={styles.rssConfig}
+                    style={{
+                        //@ts-ignore
+                        whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
+                        width: from === 'dashboard' ? 'unset' : '1400px'
+                    }}
+                >
+                    <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.first}</DsTypography>
+                    <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.second}</DsTypography>
+                    {data?.descriptionRssConfig?.points?.map(perPoint => {
+                        return (
+                            <div className={styles.points}>
+                                <div className={styles.bullet}>
+                                    <Bullet />
+                                </div>
+                                <DsTypography variant="Regular_14">{perPoint}</DsTypography>
+                            </div>
+                        );
+                    })}
+                    <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.last}</DsTypography>
                 </div>
             )}
         </div>

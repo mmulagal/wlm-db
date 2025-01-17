@@ -429,7 +429,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.APPLICATION_SQL_SERVER:
+            case GENERAL.LICENSE_SQL_SERVER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -440,6 +440,34 @@ const DashboardInnerPage = () => {
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.sql_licenses?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.MAXDOP_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.maxdop?.recommendation?.description
                     }
                 });
                 break;
