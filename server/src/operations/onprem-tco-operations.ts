@@ -5,7 +5,7 @@ import { compact, isEmpty } from 'lodash-es';
 import { ArchitectureType, CpuManufacturer, VirtualizationType } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import { DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
-import { getArtifactsRegionBucketName } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -214,7 +214,7 @@ function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetail
                 ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
                     volumeType,
                     volumeNumber,
-                    storageAmount: Math.max(storageAmount, 1), // Minimum volume size is 1 GiB
+                    storageAmount: Math.max(storageAmount, convertGiBToBytes(1)), // Minimum volume size is 1 GiB // Minimum volume size is 1 GiB
                     ...(volumeType !== 'gp2' && { volumeIops, throughput }) // AWS pricing doesnt accept iops and throughout for gp2; marketing API also doesn't accept it
                 })
             );

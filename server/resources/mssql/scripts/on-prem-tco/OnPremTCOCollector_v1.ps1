@@ -74,15 +74,10 @@ function Invoke-SQLQuery {
         [string]$SqlPassword
     )
 
-    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -W -h -1 "
+    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 "
 
     if (![string]::IsNullOrEmpty($SqlUserName) -and ![string]::IsNullOrEmpty($SqlPassword)) {
         $sqlcmd += " -U $SqlUserName -P $SqlPassword"
-    }
-   
-    if($QueryKey -eq 'licenceUsageDetails'){
-        $sqlcmd = $sqlcmd -replace " -W", ""
-        $sqlcmd += " -y 1024"
     }
 
     try {
