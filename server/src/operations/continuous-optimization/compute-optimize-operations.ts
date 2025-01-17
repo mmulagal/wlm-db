@@ -6,6 +6,7 @@ import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
+    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_CLUSTER_NODE_NAMES,
     MOVE_ALL_CLUSTER_GROUPS
 } from '../workloads/mssql/continuous-optimization-scripts';
@@ -30,6 +31,7 @@ import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
+import { createJob } from '../../lib/database/job';
 
 const logger = getLogger();
 
@@ -357,6 +359,22 @@ async function handleComputeRemediation(
                     throw error;
                 }
             }
+
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                instanceName,
+                region,
+                credentialsId,
+                activeNodeInstanceId
+            );
+
+            if (!checkRunningResponse.running) {
+                subJobErrorMessage = checkRunningResponse.error;
+                anySubJobFailed = true;
+                throw checkRunningResponse.error;
+            }
+
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
@@ -383,6 +401,59 @@ async function handleComputeRemediation(
             error: errorMessage
         });
     }
+}
+
+async function checkRunningStatus(
+    accountId: string,
+    jobId: string,
+    instanceName: string,
+    region: string,
+    credentialsId: string,
+    activeNodeInstanceId: string
+) {
+    const checkRunningJob = await createJob(accountId, {
+        parent_job_id: jobId,
+        name: 'Checking running status of the service',
+        description: 'Checking running status of the service',
+        initiator: 'System',
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        account_id: accountId,
+        credentials_id: credentialsId,
+        resource_name: instanceName,
+        region,
+        start_time: new Date()
+    });
+
+    const rawStatusResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        [CHECK_RUNNING_STATUS_WITH_RESTART(instanceName)],
+        activeNodeInstanceId,
+        'Checking running status of the service',
+        accountId,
+        undefined,
+        '300'
+    );
+
+    let statusResponse: { status: string; error?: string };
+    try {
+        const cleanStatusResponse = rawStatusResponse.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        statusResponse = JSON.parse(cleanStatusResponse);
+    } catch (error) {
+        logger.error('Error parsing query response:', rawStatusResponse);
+        return { running: false, error: 'Error parsing SSM query response' };
+    }
+
+    if (statusResponse.status !== 'Running') {
+        await updateJobDetails(accountId, checkRunningJob.id, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: statusResponse.error
+        });
+    }
+
+    return { running: true, error: 'Error parsing SSM query response' };
 }
 
 export default async function optimizeCompute(

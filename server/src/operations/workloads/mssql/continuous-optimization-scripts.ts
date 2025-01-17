@@ -732,7 +732,7 @@ Write-Output $jsonResult
 `;
 
 const GET_CLUSTER_NODE_NAMES = () => `
-    #Get cluster node names 
+    #Get cluster node names
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
@@ -768,6 +768,36 @@ const GET_RSS_CONFIG_DETAILS = () => `
     $jsonResult = $result | ConvertTo-Json -Compress
     Write-Output $jsonResult
 `;
+
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+    $result = @{}
+    try {
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.WaitForStatus('Running', '00:00:20')
+
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.Start()
+        
+        $SQLService.WaitForStatus('Running', '00:00:20')
+        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+    } catch {
+        $result = @{ status = 'failed'; error = $_.Exception.Message }
+    } finally {
+        $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Output $jsonResult
+    }
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -776,5 +806,6 @@ export {
     RESCAN_EXTEND_LUN,
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
-    GET_RSS_CONFIG_DETAILS
+    GET_RSS_CONFIG_DETAILS,
+    CHECK_RUNNING_STATUS_WITH_RESTART
 };
