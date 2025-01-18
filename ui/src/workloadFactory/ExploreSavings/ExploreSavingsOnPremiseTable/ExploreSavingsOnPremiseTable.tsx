@@ -118,7 +118,12 @@ const ExploreSavingsOnPremiseTable = () => {
 
                     // Access the data inside the JSON
                     if (compressedBase64) {
-                        const result = await getUploadScript({ payload: compressedBase64 });
+                        const result = await getUploadScript({
+                            payload: {
+                                fileContent: compressedBase64,
+                                fileName: selectedFile.name
+                            }
+                        });
                         const jobInterval = setInterval(() => {
                             getJobDetailApi(result.data.jobId).then((jobRes: any) => {
                                 const status = jobRes?.data?.status;
