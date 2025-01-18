@@ -48,7 +48,7 @@ async function downloadOnpremTcoCollectorScript(accountId: string, databaseType:
     logger.info('Downloading OnPrem TCO Collector Script', { accountId, databaseType });
 
     const bucketname = getArtifactsRegionBucketName(DEFAULT_AWS_REGION);
-    const url = await getPreSignedUrl(bucketname, OP_TCO_COLLECTOR_SCRIPT_PATH);
+    const url = await getPreSignedUrl(DEFAULT_AWS_REGION, bucketname, OP_TCO_COLLECTOR_SCRIPT_PATH);
     return {
         url
     };
