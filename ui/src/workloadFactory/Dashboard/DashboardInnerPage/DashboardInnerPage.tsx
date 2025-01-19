@@ -77,7 +77,7 @@ const DashboardInnerPage = () => {
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const callOptimizeApi = (type: any, rowData?: any) => {
+    const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
         let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
@@ -91,28 +91,56 @@ const DashboardInnerPage = () => {
             };
         } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
             apiCall = optimizeStorageSizing;
-            payload = {
-                type:
-                    type === 'Log drive size'
-                        ? 'log-drive-size'
-                        : type === 'File system headroom'
-                        ? 'headroom'
-                        : 'tempdb-drive-size'
-            };
+            if (operation === 'bulk') {
+                const instanceIds = rowData.map((item: any) => item.instanceId);
+                payload = {
+                    type:
+                        type === 'Log drive size'
+                            ? 'log-drive-size'
+                            : type === 'File system headroom'
+                            ? 'headroom'
+                            : 'tempdb-drive-size',
+                    resourceId: rowData[0]?.databaseHostId,
+                    instances: instanceIds
+                };
+            } else {
+                payload = {
+                    type:
+                        type === 'Log drive size'
+                            ? 'log-drive-size'
+                            : type === 'File system headroom'
+                            ? 'headroom'
+                            : 'tempdb-drive-size'
+                };
+            }
         } else if (type === 'Storage tier') {
             apiCall = optimizeStorageTier;
-            payload = null;
+            if (operation === 'bulk') {
+                const instanceIds = rowData.map((item: any) => item.instanceId);
+                payload = {
+                    resourceId: rowData[0]?.databaseHostId,
+                    instances: instanceIds
+                };
+            } else {
+                payload = null;
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
-            payload = {
-                assessments: [
-                    {
-                        configurationName: type,
-                        objectsToOptimize: []
-                    }
-                ]
-            };
+            if (operation === 'bulk') {
+                payload = {
+                    databaseHosts: []
+                };
+            } else {
+                payload = {
+                    assessments: [
+                        {
+                            configurationName: type,
+                            objectsToOptimize: []
+                        }
+                    ]
+                };
+            }
         }
 
         // call optimize api
@@ -221,7 +249,7 @@ const DashboardInnerPage = () => {
         dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
     };
 
-    const handleDialog = (type: string, rowData: any) => {
+    const handleDialog = (type: string, rowData: any, operation?: string) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
@@ -236,7 +264,7 @@ const DashboardInnerPage = () => {
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    callOptimizeApi(type, rowData);
+                    callOptimizeApi(type, rowData, operation);
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -535,7 +563,7 @@ const DashboardInnerPage = () => {
                                 variant="secondary"
                                 onClick={() => {
                                     optimizeAction(rowData);
-                                    handleDialog(name, rowData);
+                                    handleDialog(name, rowData, 'single');
                                 }}
                             >
                                 Optimize
@@ -563,7 +591,7 @@ const DashboardInnerPage = () => {
 
     const handleBulkAction = (type: string, rowData: any) => {
         optimizeAction(rowData[0]);
-        handleDialog(type, rowData[0]);
+        handleDialog(type, rowData, 'bulk');
     };
 
     const renderTable = () => {

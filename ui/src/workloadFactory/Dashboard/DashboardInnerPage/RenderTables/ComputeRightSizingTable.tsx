@@ -69,6 +69,59 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
+    const updatedTableData = useMemo(() => {
+        if (selectedRowsForOptimize.length === 0 && !optimizingInstanceData) {
+            // If no rows are selected, reset `isDisabled` for all rows
+            return tableData.map((row: any) => ({
+                ...row,
+                cellProps: { ...row.cellProps, isDisabled: false }
+            }));
+        }
+
+        // Extract `databaseHostId` values for all selected rows
+        const selectedDatabaseHostIds = selectedRowsForOptimize.map((row: any) => row.databaseHostId);
+        if (optimizingInstanceData) {
+            // Extract IDs of rows currently selected for optimization
+            const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
+
+            return tableData.map((row: any) => {
+                // Check if the current row is being optimized
+                const isBeingOptimized = selectedInstanceIds.includes(row.id);
+
+                // Check if the current row shares a `databaseHostId` with any selected row
+                const hasSameDatabaseHostId = selectedDatabaseHostIds.includes(row.databaseHostId);
+
+                // Combine both conditions
+                const isDisabled = optimizingInstanceData && (isBeingOptimized || hasSameDatabaseHostId);
+
+                return {
+                    ...row,
+                    cellProps: {
+                        ...row.cellProps,
+                        isDisabled
+                    }
+                };
+            });
+        }
+
+        if (selectedRowsForOptimize.length > 0) {
+            const selectedDatabaseHostId = selectedRowsForOptimize[0].databaseHostId;
+            // If no rows are selected, reset `isDisabled` for all rows
+            return tableData.map((row: any) => {
+                const isSameDatabaseHostId = row.databaseHostId === selectedDatabaseHostId;
+                const isAlreadySelected = selectedRowsForOptimize.some((selectedRow: any) => selectedRow.id === row.id);
+
+                return {
+                    ...row,
+                    cellProps: {
+                        ...row.cellProps,
+                        isDisabled: !isSameDatabaseHostId && !isAlreadySelected // Disable rows with a different databaseHostId
+                    }
+                };
+            });
+        }
+    }, [selectedRowsForOptimize, optimizingInstanceData, tableData]);
+
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance name ',
@@ -110,16 +163,16 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForOptimize(rowsData));
-        if (rowsData.length === 1 && optimizingInstanceData) {
+        if (rowsData.length > 0 && optimizingInstanceData) {
             checkBoxHandle(tableProps.selectionState, rowsData);
         }
     }, [tableProps.selectionState, optimizingInstanceData]);
@@ -135,7 +188,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length === 1 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
