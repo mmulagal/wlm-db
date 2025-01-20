@@ -1399,6 +1399,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'FsxCertificates',
         url: `${WLMDB}/fsx_certs.zip`
+    },
+    {
+        name: 'PGSQLPackages',
+        url: `${WLMDB}/pgsql/packages/pgvector.zip`
     }
 ];
 
