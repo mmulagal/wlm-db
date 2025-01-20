@@ -353,12 +353,7 @@ async function driftAssessmentDataCollection(
         );
     }
 
-    if (
-        shouldRunComputeAssessment ||
-        shouldRunLicenseAssessment ||
-        shouldRunHostOsPatchAssessment ||
-        shouldRunMAXDOPAssessment
-    ) {
+    if (shouldRunComputeAssessment || shouldRunLicenseAssessment || shouldRunMAXDOPAssessment) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
             credentialsId,
