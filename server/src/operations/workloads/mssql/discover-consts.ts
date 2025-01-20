@@ -643,7 +643,7 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
                 Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
               }
               else {
-                Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+                Install-Module -Name $moduleName -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
               }
           }
       }Else{
