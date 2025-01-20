@@ -11,7 +11,8 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { GETWELL_VALUES } from '../../../../utils/consts';
+import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+
 interface StorageTierTableProps {
     lastColDetails: any;
     handleBulkAction: any;
@@ -67,16 +68,14 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (selectedRowsForOptimize.length === 0 && !optimizingInstanceData) {
+        if (!optimizingInstanceData) {
             // If no rows are selected, reset `isDisabled` for all rows
             return tableData.map((row: any) => ({
                 ...row,
-                cellProps: { ...row.cellProps, isDisabled: false }
+                cellProps: { ...row.cellProps, isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP }
             }));
         }
 
-        // Extract `databaseHostId` values for all selected rows
-        const selectedDatabaseHostIds = selectedRowsForOptimize.map((row: any) => row.databaseHostId);
         if (optimizingInstanceData) {
             // Extract IDs of rows currently selected for optimization
             const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
@@ -85,34 +84,16 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                 // Check if the current row is being optimized
                 const isBeingOptimized = selectedInstanceIds.includes(row.id);
 
-                // Check if the current row shares a `databaseHostId` with any selected row
-                const hasSameDatabaseHostId = selectedDatabaseHostIds.includes(row.databaseHostId);
+                const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
 
                 // Combine both conditions
-                const isDisabled = optimizingInstanceData && (isBeingOptimized || hasSameDatabaseHostId);
+                const isDisabled = optimizingInstanceData && (isBeingOptimized || hasStatusOffline);
 
                 return {
                     ...row,
                     cellProps: {
                         ...row.cellProps,
                         isDisabled
-                    }
-                };
-            });
-        }
-
-        if (selectedRowsForOptimize.length > 0) {
-            const selectedDatabaseHostId = selectedRowsForOptimize[0].databaseHostId;
-            // If no rows are selected, reset `isDisabled` for all rows
-            return tableData.map((row: any) => {
-                const isSameDatabaseHostId = row.databaseHostId === selectedDatabaseHostId;
-                const isAlreadySelected = selectedRowsForOptimize.some((selectedRow: any) => selectedRow.id === row.id);
-
-                return {
-                    ...row,
-                    cellProps: {
-                        ...row.cellProps,
-                        isDisabled: !isSameDatabaseHostId && !isAlreadySelected // Disable rows with a different databaseHostId
                     }
                 };
             });

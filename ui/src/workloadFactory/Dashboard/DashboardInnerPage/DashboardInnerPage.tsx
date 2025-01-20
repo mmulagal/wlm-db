@@ -31,7 +31,9 @@ import {
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
-    useOptimizeStorageTierMutation
+    useOptimizeStorageTierMutation,
+    useOptimizeStorageSizingForBulkMutation,
+    useOptimizeStorageTierForBulkMutation
 } from '../../../utils/apiService';
 import {
     setGwDatabaseInstance,
@@ -42,6 +44,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setJobToInstanceMapForBulk,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
@@ -75,10 +78,12 @@ const DashboardInnerPage = () => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
+    const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
-        let payload: null | object = {};
+        let payload: null | object | any = {};
         let apiCall = null;
         const state = store.getState();
         const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData } = state.getWellOptimize;
@@ -90,20 +95,38 @@ const DashboardInnerPage = () => {
                 instanceType: selectedRecommendedInstance?.value
             };
         } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
-            apiCall = optimizeStorageSizing;
             if (operation === 'bulk') {
-                const instanceIds = rowData.map((item: any) => item.instanceId);
+                apiCall = optimizeStorageSizingForBulk;
+
                 payload = {
-                    type:
-                        type === 'Log drive size'
-                            ? 'log-drive-size'
-                            : type === 'File system headroom'
-                            ? 'headroom'
-                            : 'tempdb-drive-size',
-                    resourceId: rowData[0]?.databaseHostId,
-                    instances: instanceIds
+                    hostsToOptimize: [
+                        {
+                            type:
+                                type === 'Log drive size'
+                                    ? 'log-drive-size'
+                                    : type === 'File system headroom'
+                                    ? 'headroom'
+                                    : 'tempdb-drive-size',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
+                                        }
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
                 };
             } else {
+                apiCall = optimizeStorageSizing;
                 payload = {
                     type:
                         type === 'Log drive size'
@@ -114,14 +137,33 @@ const DashboardInnerPage = () => {
                 };
             }
         } else if (type === 'Storage tier') {
-            apiCall = optimizeStorageTier;
             if (operation === 'bulk') {
-                const instanceIds = rowData.map((item: any) => item.instanceId);
+                apiCall = optimizeStorageTierForBulk;
+
                 payload = {
-                    resourceId: rowData[0]?.databaseHostId,
-                    instances: instanceIds
+                    hostsToOptimize: [
+                        {
+                            type: 'storage-tier',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
+                                        }
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
                 };
             } else {
+                apiCall = optimizeStorageTier;
                 payload = null;
             }
         } else {
@@ -159,18 +201,36 @@ const DashboardInnerPage = () => {
                     : 'compute-rightsizing']: 'optimizing'
             })
         );
-        dispatch(
-            setInProgressHostData({
-                ...inProgressHostData,
-                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
-            })
-        );
-        dispatch(
-            setInProgressOptimizationData({
-                ...inProgressOptimizationData,
-                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
-            })
-        );
+        if (operation === 'bulk') {
+            const hostIds = payload.hostsToOptimize[0].databaseHosts.map((host: any) => host.id);
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: [...(inProgressHostData[type] || []), [...hostIds]]
+                })
+            );
+            const instances = payload.hostsToOptimize[0].databaseHosts.flatMap((host: any) => host.sqlServerInstances);
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: [...(inProgressOptimizationData[type] || []), [...instances]]
+                })
+            );
+        } else {
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+                })
+            );
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+                })
+            );
+        }
+
         formatGetWellData(dispatch, rowData?.assessments);
         dispatch(
             addNotification({
@@ -193,13 +253,26 @@ const DashboardInnerPage = () => {
             })
         );
 
-        apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
-            payload: payload
-        }).then((res: any) => {
+        let apiData = {};
+        if (operation === 'bulk') {
+            apiData = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                payload: payload
+            };
+        } else {
+            apiData = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                payload: payload
+            };
+        }
+
+        apiCall(apiData).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {type} failed to optimize.
@@ -216,12 +289,21 @@ const DashboardInnerPage = () => {
                 </div>
             );
             if (!res.error) {
-                dispatch(
-                    setJobToInstanceMap({
-                        ...state.getWellOptimize.jobToInstanceMap,
-                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
-                    })
-                );
+                if (operation === 'bulk') {
+                    dispatch(
+                        setJobToInstanceMapForBulk({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: payload?.hostsToOptimize[0]
+                        })
+                    );
+                } else {
+                    dispatch(
+                        setJobToInstanceMap({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                        })
+                    );
+                }
             }
             handleOptimizeStorageJob(
                 res,
@@ -229,7 +311,8 @@ const DashboardInnerPage = () => {
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                operation
             );
         });
     };
