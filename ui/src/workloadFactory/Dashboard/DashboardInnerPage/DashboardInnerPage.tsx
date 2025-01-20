@@ -527,32 +527,32 @@ const DashboardInnerPage = () => {
                 } else if (
                     name === 'Log drive size' &&
                     (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-                        rowData?.assessmentStatus?.sizingViolations?.overProvisionedDrives?.length)
+                        rowData?.sizingViolations?.overProvisionedDrives?.length)
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
                 } else if (
                     name === 'TempDB drive size' &&
                     (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-                        rowData?.assessmentStatus?.sizingViolations?.overProvisionedDrives?.length)
+                        rowData?.sizingViolations?.overProvisionedDrives?.length)
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
                 } else if (
                     name === 'File system headroom' &&
                     (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-                        rowData?.assessmentStatus?.sizingViolations?.overProvisionedDrives?.length)
+                        rowData?.sizingViolations?.overProvisionedDrives?.length)
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
                 } else if (
                     (name === 'Log drive size' || name === 'TempDB drive size' || name === 'File system headroom') &&
                     rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase() &&
-                    !rowData?.assessmentStatus?.sizingViolations?.underProvisionedDrives?.length &&
-                    rowData?.assessmentStatus?.sizingViolations?.ignoredDrives?.length
+                    !rowData?.sizingViolations?.underProvisionedDrives?.length &&
+                    rowData?.sizingViolations?.ignoredDrives?.length
                 ) {
                     isDisabled = true;
-                    return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+                    errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
                 }
                 const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (

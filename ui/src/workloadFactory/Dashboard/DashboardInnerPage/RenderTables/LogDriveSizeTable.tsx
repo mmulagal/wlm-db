@@ -11,6 +11,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
+import { GETWELL_VALUES } from '../../../../utils/consts';
 interface StorageTierTableProps {
     lastColDetails: any;
     handleBulkAction: any;
@@ -42,7 +43,8 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                             percentDataDriveSize: logDriveSizeObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: logDriveSizeObj?.status,
+                            assessmentStatus: GETWELL_VALUES[logDriveSizeObj?.status],
+                            sizingViolations: logDriveSizeObj?.sizingViolations,
                             missingPermissions: logDriveSizeObj?.missingPermissions,
                             data: instanceData,
                             cellProps: {

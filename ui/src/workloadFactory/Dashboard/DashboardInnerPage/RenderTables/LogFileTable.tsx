@@ -11,6 +11,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
+import { GETWELL_VALUES } from '../../../../utils/consts';
 
 const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -38,7 +39,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                             userDataFiles: logDataFilesObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: logDataFilesObj?.status,
+                            assessmentStatus: GETWELL_VALUES[logDataFilesObj?.status],
                             data: instanceData,
                             cellProps: {
                                 isDisabled:

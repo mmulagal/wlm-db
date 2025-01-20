@@ -11,6 +11,7 @@ import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import FirstColumnComponent from './FirstColumnCoponent';
+import { GETWELL_VALUES } from '../../../../utils/consts';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -43,7 +44,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                             performanceTier: performanceTierObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: performanceTierObj?.status,
+                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
                             data: instanceData,
                             cellProps: {
                                 isDisabled:
