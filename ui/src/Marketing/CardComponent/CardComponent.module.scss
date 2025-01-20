@@ -1,0 +1,16 @@
+.cardComponent {
+    width: 792px;
+    height: 192px;
+    padding: 40px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: var(--content-background);
+
+    .row1 {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+    }
+}
