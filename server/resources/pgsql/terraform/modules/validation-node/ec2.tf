@@ -1,21 +1,21 @@
-locals {
-  user_data = templatefile("${path.module}/user_data.ps1", {
-    region                                = var.aws_location
-    deployment_name                       = var.deployment_name
-    # validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
-    #dns_ip_addresses                      = var.dns_ip_addresses
-    #domain_dns_name                       = var.domain_dns_name
-    subnet_id                             = var.subnet_id
-    #domain_admin_user                     = var.domain_admin_user
-    validation_node1_wait_handler         = var.validation_node1_wait_handler
-    #is_custom_ami                         = var.is_custom_ami
-    perform_fsx_check                     = var.perform_fsx_check
-    fsx_file_system_id                    = var.fsx_file_system_id
-    log_group                             = var.deployment_name
-    sql_deployment_mode                   = var.sql_deployment_mode
-    validation_node_name                  = var.validation_node_name
-  })
-}
+# locals {
+#   # user_data = templatefile("${path.module}/user_data.ps1", {
+#     region                                = var.aws_location
+#     deployment_name                       = var.deployment_name
+#     # validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
+#     #dns_ip_addresses                      = var.dns_ip_addresses
+#     #domain_dns_name                       = var.domain_dns_name
+#     subnet_id                             = var.subnet_id
+#     #domain_admin_user                     = var.domain_admin_user
+#     validation_node1_wait_handler         = var.validation_node1_wait_handler
+#     #is_custom_ami                         = var.is_custom_ami
+#     perform_fsx_check                     = var.perform_fsx_check
+#     fsx_file_system_id                    = var.fsx_file_system_id
+#     log_group                             = var.deployment_name
+#     sql_deployment_mode                   = var.sql_deployment_mode
+#     validation_node_name                  = var.validation_node_name
+#   })
+# }
 
 resource "aws_iam_instance_profile" "validation_instance_profile" {
   name = "${var.deployment_name}_${var.validation_node_name}_validation_instance_profile"
@@ -62,10 +62,10 @@ resource "aws_instance" "validation_node" {
 
   iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
 
-  network_interface {
-    device_index         = 0
-    network_interface_id = aws_network_interface.validation_node_ni.id
-  }
+  # network_interface {
+  #   device_index         = 0
+  #   network_interface_id = aws_network_interface.validation_node_ni.id
+  # }
 
   # user_data = local.user_data
 
