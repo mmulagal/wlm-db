@@ -957,6 +957,13 @@ export const getWellApi = createApi({
                     body: payload
                 })
             }),
+            optimizeStorageSizingForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-sizing`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             optimizeStorageConfig: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-configuration`,
@@ -982,6 +989,13 @@ export const getWellApi = createApi({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-tier`,
                     method: 'POST'
+                })
+            }),
+            optimizeStorageTierForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-tier`,
+                    method: 'POST',
+                    body: payload
                 })
             })
         };
@@ -1111,5 +1125,7 @@ export const {
     useOptimizeComputeConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeOperatingSystemMutation,
-    useOptimizeStorageTierMutation
+    useOptimizeStorageTierMutation,
+    useOptimizeStorageSizingForBulkMutation,
+    useOptimizeStorageTierForBulkMutation
 } = getWellApi;
