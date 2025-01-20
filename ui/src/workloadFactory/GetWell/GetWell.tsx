@@ -349,11 +349,13 @@ const GetWell = () => {
                         <DsTypography className={styles.optimizeHeader} variant="Semibold_16">
                             Optimize instance
                         </DsTypography>
-                        <div className={styles.triggerAssessment}>
-                            <DsButton onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress}>
-                                Trigger Assessment
-                            </DsButton>
-                        </div>
+                        {localStorage.getItem('adhocAssessment') === 'true' && (
+                            <div className={styles.triggerAssessment}>
+                                <DsButton onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress}>
+                                    Trigger Assessment
+                                </DsButton>
+                            </div>
+                        )}
                         {!optimizePrintState &&
                             (loading || triggerAssessmentInProgress ? (
                                 <div className={styles.refreshIconDisable} id={'assessment-refresh'}>
