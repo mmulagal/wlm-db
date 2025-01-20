@@ -200,6 +200,15 @@ it('should remove on-prem database resources', async () => {
     expect(deleteResponse.count).toBeGreaterThanOrEqual(0);
 });
 
+it('should remove multiple on-prem database resources', async () => {
+    const accountId = ACCOUNT_ID;
+    const response = await listOnPremDatabaseResources(accountId, MSSQL as DATABASE_TYPE);
+    const resourceIdList = response.map(resource => resource.resource_id);
+    const deleteResponse = await removeOnPremTcoReportData(undefined, undefined, resourceIdList);
+
+    expect(deleteResponse.count).toBeGreaterThanOrEqual(0);
+});
+
 it('should list on-prem database resources', async () => {
     const accountId = ACCOUNT_ID;
 
