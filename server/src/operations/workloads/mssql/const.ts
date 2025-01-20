@@ -11,6 +11,8 @@ const INVOKE_VIRTUAL_MOUNT = 'C:\\SSM\\Invoke-virtualmount.ps1';
 const CREATE_SANDBOX = 'C:\\SSM\\Create-Sandbox.ps1';
 const SCRIPT_VERSON_FILE = 'C:\\SSM\\Script-Version.txt';
 const GOOGLE_DNS = '8.8.8.8'; // Using a public DNS server to check internet connectivity
+const DISCOVER_OPERATION_LOG_PATH = 'C:\\cfn\\log\\discover-operation.log.txt';
+const COMPUTE_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\compute-optimize.log.txt';
 
 export {
     DB_ROWS_COUNT,
@@ -25,5 +27,7 @@ export {
     INVOKE_VIRTUAL_MOUNT,
     CREATE_SANDBOX,
     SCRIPT_VERSON_FILE,
-    GOOGLE_DNS
+    GOOGLE_DNS,
+    DISCOVER_OPERATION_LOG_PATH,
+    COMPUTE_OPTIMIZE_LOG_PATH
 };

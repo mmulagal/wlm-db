@@ -1,6 +1,6 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
 import { compressResponse } from './common-templates';
-import { GOOGLE_DNS } from './const';
+import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -481,24 +481,30 @@ const HOST_AND_SQL_INFO_PS1 = [
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
+  Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+  
   $ErrorActionPreference = "Stop"
   $responseObject = @{}
   $scriptStartTime = Get-Date
   $clusterNetworkIps = $null
   
   try {
+    Write-output "Discovering cluster network IPs"
     $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
       $responseObject['clusterNetworkIps'] = $clusterNetworkIps
+      Write-output "Cluster network IPs: $clusterNetworkIps"
     } else {
+      Write-output "No running clusters found"
       $responseObject['clusterNetworkIps'] = @()
     }
   } catch {
     # Prevent any possible errors from clobbering JSON output
     $responseObject['failureInfo'] = $_.Exception.Message
   } finally {
+    Stop-Transcript | Out-Null
     $scriptEndTime = Get-Date
     $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
     Echo $responseObject | ConvertTo-Json -Compress

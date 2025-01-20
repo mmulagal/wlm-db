@@ -1,5 +1,6 @@
 import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
+import { COMPUTE_OPTIMIZE_LOG_PATH, DISCOVER_OPERATION_LOG_PATH } from './const';
 import {
     DEFAULT_DATA_DRIVE_SIZE,
     INSTANCE_DATA_DRIVES_QUERY,
@@ -653,6 +654,7 @@ Write-Output $jsonResult
 `;
 
 const CHECK_NODE_STATUS = (nodeName: string) => `
+    Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     #Check Node Status
     Function Check-NodeStatus {
         param (
@@ -664,16 +666,20 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
             # Get the specific cluster node
             $node = Get-ClusterNode -Name $NodeName
             
+            Write-Output "Testing connection to node $NodeName"
             # Check if the node is "Up" and Test-Connection succeeds
             if ($node.State -eq "Up" -and (Test-Connection -ComputerName $NodeName -Count 1 -Quiet)) {
                 $result = @{ status = 'success' }
             } else {
                 $result = @{ status = 'failed' }
+                Write-Output "Failed to connect to node $NodeName"
             }
         } catch {
             # Handle any errors that occur
+            Write-Output "Error occurred while checking node status: $_.Exception.Message"
             $result = @{ status = 'failed'; error = $_.Exception.Message }
         } finally {
+            Stop-Transcript | Out-Null
             # Convert the result to JSON
             $result | ConvertTo-Json -Compress
         }
@@ -684,6 +690,7 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
 
 const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
 #Move Cluster Groups
+Start-Transcript -Path } ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
 Function Move-AllClusterGroups {
     param (
         [Parameter(Mandatory = $true)]
@@ -697,6 +704,7 @@ Function Move-AllClusterGroups {
         $clusterGroups = Get-ClusterGroup
         
         # Iterate over each cluster group
+        Write-Output "Moving cluster groups to node $TargetNodeName"
         $clusterGroups | ForEach-Object {
             if ($_.Name -match "SQL Server") {
                 $clusterGroupName = $_.Name
@@ -713,15 +721,19 @@ Function Move-AllClusterGroups {
                     # Update status and error in case of failure
                     $groupResult.status = 'failed'
                     $groupResult.error = $_.Exception.Message
+                    Write-Output "Error occurred while moving cluster group $clusterGroupName: $_.Exception.Message"
                 }
+                Write-Output "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
                 # Add group result to result array
                 $result += $groupResult
             }
         }
     } catch {
         # Handle any errors that occur
+        Write-Output "Error occurred while moving cluster groups: $_.Exception.Message"
         $result = @(@{ status = 'failed'; error = $_.Exception.Message })
     } finally {
+        Stop-Transcript | Out-Null
         # Convert the result to JSON and output
         $jsonResult = $result | ConvertTo-Json -Compress
         Write-Output $jsonResult
@@ -733,10 +745,14 @@ Write-Output $jsonResult
 
 const GET_CLUSTER_NODE_NAMES = () => `
     #Get cluster node names 
+    Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
     @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+    Write-output "Cluster nodes: $clusterNodes with owner node: $ownerNode"
+    Stop-Transcript | Out-Null
+
 `;
 
 const GET_RSS_CONFIG_DETAILS = () => `
