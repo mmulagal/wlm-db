@@ -1,5 +1,5 @@
 import styles from './DialogContent.module.scss';
-import { DsTypography, SelectField } from '@netapp/design-system';
+import { Button, DsTypography, SelectField } from '@netapp/design-system';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
@@ -10,6 +10,8 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import { AWS_RESIZE_URL } from '../../../../utils/consts';
 
 type DialogType = {
     type: string;
@@ -914,7 +916,20 @@ const DialogContent = ({
                                     </div>
 
                                     <DsTypography variant="Regular_14">
-                                        {GETWELL_DIALOG_CONTENT.COMPUTE_RS_LAST_POINT}
+                                        {GETWELL_DIALOG_CONTENT.COMPUTE_RS_LAST_POINT[0]}
+
+                                        <Button
+                                            Component="button"
+                                            variant="link"
+                                            className={CommonStyles.buttonClass}
+                                            onClick={() => {
+                                                // To open new tab with AWS resize page on click of credential link
+                                                window.open(AWS_RESIZE_URL, '_blank', 'noopener');
+                                            }}
+                                        >
+                                            {GETWELL_DIALOG_CONTENT.COMPUTE_RS_LAST_POINT[1]}
+                                        </Button>
+                                        {GETWELL_DIALOG_CONTENT.COMPUTE_RS_LAST_POINT[2]}
                                     </DsTypography>
                                 </div>
                             </div>

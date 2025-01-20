@@ -162,7 +162,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Data files (.mdf) placement recommendation',
             description:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality. \nWe recommend separating data and log LUN paths into different volumes for smaller databases. \nThis separation is required when there is more than one large database (> 500 GiB).'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
@@ -189,7 +189,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
             description:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality. \nWe recommend separating data and log LUN paths into different volumes for smaller databases. \nThis separation is required when there is more than one large database (> 500 GiB).'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
@@ -513,7 +513,7 @@ export const formatApplicationCardMainConfig = (
     let itemName = item?.name || 'sql-license';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -570,7 +570,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
     let itemName = item?.name || 'microsoft-sql-patch';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -610,7 +610,7 @@ export const formatMaxdopPatchCardConfig = (
     let itemName = item?.name || 'maxdop';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -650,7 +650,7 @@ export const formatOsPatchCardConfig = (
     let itemName = item?.name || 'host-os-patch';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -859,7 +859,8 @@ export const formatIndividualCardMainConfig = (
                     recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null,
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
-                    recommendedSizeInGib: item?.recommendedSizeInGib
+                    recommendedSizeInGib: item?.recommendedSizeInGib,
+                    sizingViolations: item?.sizingViolations
                 }
             };
         });

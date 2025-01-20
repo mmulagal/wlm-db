@@ -103,6 +103,20 @@ export interface PerConfigInterface {
         recommendedBaseProcessorNumber?: string;
         recommendedReceiveQueues?: string;
     };
+    sizingViolations?: {
+        overProvisionedDrives?: Array<PerDriveObjInterface>;
+        underProvisionedDrives?: Array<PerDriveObjInterface>;
+        ignoredDrives?: Array<PerDriveObjInterface>;
+    };
+}
+
+export interface PerDriveObjInterface {
+    databaseName?: string;
+    logDriveLetter?: string;
+    dataDriveLetter?: string;
+    logDrivePercent?: number;
+    logDriveTotalSizeMB?: number;
+    dataDriveTotalSizeMB?: number;
 }
 
 export interface GwCardDataInterface {
