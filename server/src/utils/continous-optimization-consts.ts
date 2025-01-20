@@ -1,4 +1,5 @@
 import config from 'config';
+import { WLMDB } from './consts';
 
 enum AssessmentCategories {
     STORAGE = 'storage',
@@ -164,6 +165,18 @@ const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
 const TEST_CONNECTION_COMMAND =
     'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
+
+// ONPREM CONTINUOUS OPTIMIZATION
+const OP_TCO_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/on-prem-tco/OnPremTCOCollector_v1.ps1`;
+const REPORTING_BUCKET = config.get('reporting.bucket-name') as string;
+
+const NETWORK_PERF = {
+    UP_TO_10: 'upTo10',
+    ABOVE_10: 'above10'
+};
+
+const ONPREM_TCO_CREDENTIALS_ID = 'ONPREM_TCO_CREDENTIALS_ID';
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -183,6 +196,10 @@ export {
     REDIS_SCHEMA,
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
+    OP_TCO_COLLECTOR_SCRIPT_PATH,
+    REPORTING_BUCKET,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    NUMASTATIC
+    NUMASTATIC,
+    NETWORK_PERF,
+    ONPREM_TCO_CREDENTIALS_ID
 };

@@ -235,14 +235,6 @@
                     ],
                     "layout": [
                         {
-                            "name": "user-database-layout",
-                            "status": "optimized",
-                            "recommended": "",
-                            "severity": "warning",
-                            "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                            "tags": ["Performance efficiency", "Operational excellence"]
-                        },
-                        {
                             "name": "tempdb-files-location",
                             "recommended": "separate-drive",
                             "status": "not-optimized",
@@ -251,7 +243,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-log-files-location",
+                            "name": "log-files-location",
                             "recommended": "separate-drive",
                             "status": "not-optimized",
                             "severity": "critical",
@@ -259,7 +251,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-data-files-location",
+                            "name": "data-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -388,6 +380,24 @@
                             "securityNonCompliantCount": 1
                         }
                     ]
+                },
+                "maxdop" : {
+                    "name": "maxdop",
+                    "status": "not-optimized",
+                    "recommended": 4,
+                    "severity": "critical",
+                    "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+                    "tags": ["Performance efficiency"],
+                    "current": 3
+                },
+                "microsoftSqlPatch" : {
+                    "name": "microsoft-sql-patch",
+                    "status": "not-optimized",
+                    "recommended": 4,
+                    "severity": "critical",
+                    "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+                    "tags": ["Security", "Reliability"],
+                    "current": 3
                 }
             }
         },
@@ -625,14 +635,6 @@
                     ],
                     "layout": [
                         {
-                            "name": "user-database-layout",
-                            "status": "optimized",
-                            "recommended": "",
-                            "severity": "warning",
-                            "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                            "tags": ["Performance efficiency", "Operational excellence"]
-                        },
-                        {
                             "name": "tempdb-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
@@ -641,7 +643,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-log-files-location",
+                            "name": "log-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -649,7 +651,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-data-files-location",
+                            "name": "data-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -778,6 +780,24 @@
                             "securityNonCompliantCount": 1
                         }
                     ]
+                },
+                "maxdop" : {
+                    "name": "maxdop",
+                    "status": "optimized",
+                    "recommended": 4,
+                    "severity": "critical",
+                    "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+                    "tags": ["Performance efficiency"],
+                    "current": 3
+                },
+                "microsoftSqlPatch" : {
+                    "name": "microsoft-sql-patch",
+                    "status": "optimized",
+                    "recommended": 4,
+                    "severity": "critical",
+                    "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+                    "tags": ["Security", "Reliability"],
+                    "current": 3
                 }
             }
         },
@@ -1015,14 +1035,6 @@
                     ],
                     "layout": [
                         {
-                            "name": "user-database-layout",
-                            "status": "optimized",
-                            "recommended": "",
-                            "severity": "warning",
-                            "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                            "tags": ["Performance efficiency", "Operational excellence"]
-                        },
-                        {
                             "name": "tempdb-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
@@ -1031,7 +1043,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-log-files-location",
+                            "name": "log-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -1039,7 +1051,7 @@
                             "tags": ["Performance efficiency", "Operational excellence"]
                         },
                         {
-                            "name": "default-data-files-location",
+                            "name": "data-files-location",
                             "recommended": "separate-drive",
                             "status": "optimized",
                             "severity": "critical",
@@ -1168,6 +1180,24 @@
                             "securityNonCompliantCount": 1
                         }
                     ]
+                },
+                "maxdop" : {
+                    "name": "maxdop",
+                    "status": "optimized",
+                    "recommended": 4,
+                    "severity": "critical",
+                    "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+                    "tags": ["Performance efficiency"],
+                    "current": 3
+                },
+                "microsoftSqlPatch" : {
+                    "name": "microsoft-sql-patch",
+                    "status": "optimized",
+                    "recommended": 4,
+                    "severity": "critical",
+                    "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+                    "tags": ["Security", "Reliability"],
+                    "current": 3
                 }
             }
         },

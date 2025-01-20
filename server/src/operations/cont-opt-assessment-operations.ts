@@ -342,6 +342,8 @@ async function driftAssessmentDataCollection(
     const shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
     const shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
 
+    const shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
+
     if (shouldRunStorageAssessment) {
         await initiateStorageAssessmentCollection(
             accountId,
@@ -353,7 +355,13 @@ async function driftAssessmentDataCollection(
         );
     }
 
-    if (shouldRunComputeAssessment || shouldRunLicenseAssessment || shouldRunMAXDOPAssessment) {
+    if (
+        shouldRunComputeAssessment ||
+        shouldRunLicenseAssessment ||
+        shouldRunHostOsPatchAssessment ||
+        shouldRunRssConfigAssessment ||
+        shouldRunMAXDOPAssessment
+    ) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
             credentialsId,
@@ -472,7 +480,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 const errorMessage = `No managed instances found for account ${accountId}.`;
                 logger.info(errorMessage);
             } else {
-                const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                let jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 let parentJobStatus = '';
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
@@ -489,7 +497,37 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         managedInstances.map(
                             async managedInstance => {
                                 try {
-                                    await triggerAssessment(managedInstance, parentJobId, fields);
+                                    const {
+                                        credentials_id: credentialsId,
+                                        region,
+                                        resource_id: databaseHostId,
+                                        database_instance_id: databaseInstanceId,
+                                        database_instance_name: databaseInstanceName,
+                                        resource
+                                    } = managedInstance;
+
+                                    const { resource_name: resourceName } = resource;
+                                    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+                                    const instanceDetailsForJob = JSON.stringify({
+                                        hostName: resourceName,
+                                        resourceId: databaseHostId,
+                                        databaseInstanceId,
+                                        databaseInstanceName,
+                                        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+                                    });
+
+                                    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
+                                    jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+                                    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+                                        name: jobName,
+                                        description: jobDescription,
+                                        resourceName: resourceWithInstanceName,
+                                        startTime: Date.now(),
+                                        status: JOBSTATUS.IN_PROGRESS,
+                                        type: JOBTYPE.ASSESSMENT,
+                                        parentJobId
+                                    });
+                                    await triggerAssessment(managedInstance, jobId, fields);
                                 } catch (error) {
                                     assessmentErrors.push(error);
                                 }

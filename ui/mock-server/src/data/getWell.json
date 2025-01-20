@@ -178,24 +178,9 @@
                 "tags": ["Operational excellence"],
                 "sizingViolations": {
                     "overProvisionedDrives": [
-                        {
-                            "databaseName": "hammer",
-                            "logDriveLetter": "F:",
-                            "dataDriveLetter": "E:",
-                            "logDrivePercent": 74.99420031501447,
-                            "logDriveTotalSizeMB": 61421,
-                            "dataDriveTotalSizeMB": 81901
-                        },
-                        {
-                            "databaseName": "Test",
-                            "logDriveLetter": "F:",
-                            "dataDriveLetter": "E:",
-                            "logDrivePercent": 74.99420031501447,
-                            "logDriveTotalSizeMB": 61421,
-                            "dataDriveTotalSizeMB": 81901
-                        }
                     ],
-                    "underProvisionedDrives": [],
+                    "underProvisionedDrives": [
+                    ],
                     "ignoredDrives": [
                         {
                             "databaseName": "msdb",
@@ -213,12 +198,27 @@
                 "name": "tempdb-drive-size",
                 "recommended": "10-20%",
                 "current": "5%",
-                "status": "under-provisioned",
+                "status": "over-provisioned",
                 "severity": "warning",
                 "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
                 "tags": ["Operational excellence"],
                 "sizingViolations": {
-                    "overProvisionedDrives": [],
+                    "overProvisionedDrives": [{
+                        "databaseName": "hammer",
+                        "logDriveLetter": "F:",
+                        "dataDriveLetter": "E:",
+                        "logDrivePercent": 74.99420031501447,
+                        "logDriveTotalSizeMB": 61421,
+                        "dataDriveTotalSizeMB": 81901
+                    },
+                    {
+                        "databaseName": "Test",
+                        "logDriveLetter": "F:",
+                        "dataDriveLetter": "E:",
+                        "logDrivePercent": 74.99420031501447,
+                        "logDriveTotalSizeMB": 61421,
+                        "dataDriveTotalSizeMB": 81901
+                    }],
                     "underProvisionedDrives": [],
                     "ignoredDrives": []
                 },
@@ -228,7 +228,7 @@
                 "name": "headroom",
                 "current": "110%",
                 "recommended": "36-100%",
-                "status": "over-provisioned",
+                "status": "under-provisioned",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": ["Performance efficiency"],
@@ -236,14 +236,6 @@
             }
         ],
         "layout": [
-            {
-                "name": "user-database-layout",
-                "status": "optimized",
-                "recommended": "",
-                "severity": "warning",
-                "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
-                "tags": ["Performance efficiency", "Operational excellence"]
-            },
             {
                 "name": "tempdb-files-location",
                 "recommended": "separate-drive",
@@ -253,7 +245,7 @@
                 "tags": ["Performance efficiency", "Operational excellence"]
             },
             {
-                "name": "default-log-files-location",
+                "name": "log-files-location",
                 "recommended": "separate-drive",
                 "status": "not-optimized",
                 "severity": "critical",
@@ -261,9 +253,9 @@
                 "tags": ["Performance efficiency", "Operational excellence"]
             },
             {
-                "name": "default-data-files-location",
+                "name": "data-files-location",
                 "recommended": "separate-drive",
-                "status": "optimized",
+                "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                 "tags": ["Performance efficiency", "Operational excellence"]
@@ -272,7 +264,7 @@
     },
     "compute": {
         "name": "compute-rightsizing",
-        "status": "analyzing",
+        "status": "not-optimized",
         "recommended": "optimized",
         "severity": "warning",
         "recommendation": "Your current instance m5.large is over-provisioned. We recommend downgrading it to reduce costs. This instance type will still meet the performance needs of your SQL Server DB while saving on unnecessary expenses. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings.",
@@ -338,7 +330,7 @@
                 "numberOfReceiveQueues": 2
             }
         ],
-        "tcpOffloadState": "Disabled",
+        "tcpOffloadState": "Enabled",
         "recommendedAdapterSettings": {
             "recommendedRssProfile": "NUMStatic",
             "recommendedBaseProcessorNumber": 2,
@@ -391,5 +383,23 @@
                 "securityNonCompliantCount": 1
             }
         ]
+    },
+    "maxdop" : {
+        "name": "maxdop",
+        "status": "not-optimized",
+        "recommended": 4,
+        "severity": "critical",
+        "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+        "tags": ["Performance efficiency"],
+        "current": 3
+    },
+    "microsoftSqlPatch" : {
+        "name": "microsoft-sql-patch",
+        "status": "optimized",
+        "recommended": 4,
+        "severity": "critical",
+        "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
+        "tags": ["Security", "Reliability"],
+        "current": 3
     }
 }

@@ -50,7 +50,10 @@ const SavingsSelection = ({ printState }: any) => {
     });
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+        ) {
             setMonthlyChangeRateNo(3);
         }
     }, [savingsCalculatorFrom]);
@@ -127,7 +130,10 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
 
     useEffect(() => {
-        if (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+        if (
+            (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+        ) {
             // For FSxW default value is Daily.
             dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
         }

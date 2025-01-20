@@ -6,9 +6,6 @@
       "totalRetryDelay": 0
     },
     "InstanceTypes": [
-      { "InstanceType": "i3.large" },
-      { "InstanceType": "i3en.large" },
-      { "InstanceType": "i4i.large" },
       { "InstanceType": "m2.xlarge" },
       { "InstanceType": "m4.large" },
       { "InstanceType": "m5.large" },
@@ -39,7 +36,6 @@
       { "InstanceType": "r6id.large" },
       { "InstanceType": "r6idn.large" },
       { "InstanceType": "r6in.large" },
-      { "InstanceType": "r7i.large" },
-      { "InstanceType": "z1d.large" }
+      { "InstanceType": "r7i.large" }
     ]
   }

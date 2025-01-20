@@ -1112,7 +1112,8 @@ export const GENERAL = {
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
     TEMPDB_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned tempDB drive size can not be optimized',
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
-    NOT_OPTIMIZED_SHARED_DRIVES: 'System is using shared drives for data and log files',
+    NOT_OPTIMIZED_SHARED_DRIVES:
+        'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
     ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:
@@ -1224,9 +1225,12 @@ export const GENERAL = {
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RSS_CONFIGURATION: 'RSS configuration',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
+    MICROSOFT_SQL_PATCH: 'Microsoft SQL patch',
+    MAXDOP_PATCH: 'MAXDOP patch',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
-    APPLICATION_SQL_SERVER: 'Application (SQL Server)',
+    LICENSE_SQL_SERVER: 'License (SQL Server)',
+    APPLICATION: 'Application',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         'Total managed instances include only those whose assessment has been completed and are currently online.'
 };
@@ -1336,5 +1340,9 @@ export const GETWELL_DIALOG_CONTENT = {
         'This process will require a temporary downtime of your SQL Server EC2 instance. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
     ],
-    COMPUTE_RS_LAST_POINT: 'This action will impact all SQL instances and any other application running on the host.'
+    COMPUTE_RS_LAST_POINT: [
+        'Compute rightsizing optimization involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
+        'AWS resize limitations',
+        ' for limitations on changing instance types.'
+    ]
 };

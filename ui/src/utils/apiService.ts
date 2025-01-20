@@ -9,10 +9,17 @@ import {
 //@ts-ignore
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import store, { RootState } from '../store/store';
-import { API_ERRORS, API_MAX_RETRIES, PRODUCTION, WLMDB_POLICIES_PROD_LINK, WLMDB_POLICIES_STAGE_LINK } from './consts';
+import {
+    API_ERRORS,
+    API_MAX_RETRIES,
+    MIN_RETRY_DELAY,
+    PRODUCTION,
+    WLMDB_POLICIES_PROD_LINK,
+    WLMDB_POLICIES_STAGE_LINK
+} from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
-import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
+import { delay, generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
 
 //Place the relevant headers on all requests:
@@ -92,6 +99,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
             result.error?.data &&
             result.error.data?.message.toLowerCase().includes(API_ERRORS.RATE_EXCEEDED)
         ) {
+            await delay(MIN_RETRY_DELAY);
             return result;
         }
         if (result.error && result.error?.status !== 504) {
@@ -885,14 +893,21 @@ export const exploreSavingsApi = createApi({
         return {
             getUploadScript: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/mssql/onprem/upload`,
+                    url: `v1/mssql/onprem-tco/upload`,
                     method: 'POST',
                     body: payload
                 })
             }),
             getOnPremSavings: builder.mutation({
                 query: () => ({
-                    url: `v1/mssql/onprem-tco`
+                    url: `v1/mssql/onprem-tco/resources`
+                })
+            }),
+            getOnPremCalculations: builder.mutation({
+                query: ({ databaseHostId, payload }) => ({
+                    url: `v1/mssql/onprem-tco/resources/${databaseHostId}/explore-savings`,
+                    method: 'POST',
+                    body: payload
                 })
             }),
             getStorageSavings: builder.mutation({
@@ -935,17 +950,24 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop`
                 })
             }),
             optimizeStorageSizing: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-sizing`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeStorageSizingForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-sizing`,
                     method: 'POST',
                     body: payload
                 })
@@ -975,6 +997,13 @@ export const getWellApi = createApi({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-tier`,
                     method: 'POST'
+                })
+            }),
+            optimizeStorageTierForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/storage-tier`,
+                    method: 'POST',
+                    body: payload
                 })
             })
         };
@@ -1090,6 +1119,7 @@ export const {
 export const {
     useGetUploadScriptMutation,
     useGetOnPremSavingsMutation,
+    useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
     useGetManualStorageSavingsMutation,
@@ -1103,5 +1133,7 @@ export const {
     useOptimizeComputeConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeOperatingSystemMutation,
-    useOptimizeStorageTierMutation
+    useOptimizeStorageTierMutation,
+    useOptimizeStorageSizingForBulkMutation,
+    useOptimizeStorageTierForBulkMutation
 } = getWellApi;

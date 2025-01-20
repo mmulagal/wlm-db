@@ -1,9 +1,8 @@
-import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo, useEffect } from 'react';
@@ -11,13 +10,17 @@ import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
+import FirstColumnComponent from './FirstColumnCoponent';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
 
 const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -56,6 +59,41 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
+    const updatedTableData = useMemo(() => {
+        if (!optimizingInstanceData) {
+            // If no rows are selected, reset `isDisabled` for all rows
+            return tableData.map((row: any) => ({
+                ...row,
+                cellProps: { ...row.cellProps, isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP }
+            }));
+        }
+
+        // Extract `databaseHostId` values for all selected rows
+        const selectedDatabaseHostIds = selectedRowsForOptimize.map((row: any) => row.databaseHostId);
+        if (optimizingInstanceData) {
+            // Extract IDs of rows currently selected for optimization
+            const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
+
+            return tableData.map((row: any) => {
+                // Check if the current row is being optimized
+                const isBeingOptimized = selectedInstanceIds.includes(row.id);
+
+                const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
+
+                // Combine both conditions
+                const isDisabled = optimizingInstanceData && (isBeingOptimized || hasStatusOffline);
+
+                return {
+                    ...row,
+                    cellProps: {
+                        ...row.cellProps,
+                        isDisabled
+                    }
+                };
+            });
+        }
+    }, [selectedRowsForOptimize, optimizingInstanceData, tableData]);
+
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance name ',
@@ -66,46 +104,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
             isSticky: true,
             width: '310px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div>
-                        <DsTypography variant="Semibold_14">
-                            {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
-                        {!rowData.loadingStatus && (
-                            <div className={styles.statusContainer}>
-                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
-                                    ></div>
-                                )}
-                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
-                                    ></div>
-                                )}
-                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
-                                    ></div>
-                                )}
-                                <DsTypography variant="Regular_13">
-                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                        ? INVENTORY_STATUS.ONLINE
-                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                        ? INVENTORY_STATUS.OFFLINE
-                                        : rowData?.status}
-                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
-                                </DsTypography>
-                            </div>
-                        )}
-                    </div>
-                );
+                return <FirstColumnComponent rowData={rowData} />;
             }
         },
         {
@@ -125,7 +124,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('TempDB placement', {}, inProgressOptimizationData)
+        lastColDetails('TempDB placement', {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
@@ -136,16 +135,16 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
         isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForOptimize(rowsData));
-        if (rowsData.length === 1 && optimizingInstanceData) {
+        if (rowsData.length > 0 && optimizingInstanceData) {
             checkBoxHandle(tableProps.selectionState, rowsData);
         }
     }, [tableProps.selectionState, optimizingInstanceData]);
@@ -161,7 +160,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length === 1 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

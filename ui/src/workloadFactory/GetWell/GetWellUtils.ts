@@ -4,6 +4,7 @@ import {
     setCardData,
     setDriftAssessmentData,
     setGwTimestamp,
+    setInProgressHostData,
     setInProgressOptimizationData,
     setOntapConfigTableData,
     setOptimizationBreakDown,
@@ -139,7 +140,7 @@ export const cardDataDefault: GwCardDataInterface = {
         tags: ['Operational excellence']
     },
     user_data_files: {
-        id: 'default-data-files-location',
+        id: 'data-files-location',
         category: 'storage',
         block_one: {
             value: 'Data files (.mdf) placement',
@@ -161,12 +162,12 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Data files (.mdf) placement recommendation',
             description:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality. \nWe recommend separating data and log LUN paths into different volumes for smaller databases. \nThis separation is required when there is more than one large database (> 500 GiB).'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
     transaction_log_files: {
-        id: 'default-log-files-location',
+        id: 'log-files-location',
         category: 'storage',
         block_one: {
             value: 'Log files (.ldf) placement',
@@ -188,7 +189,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
             description:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality. \nWe recommend separating data and log LUN paths into different volumes for smaller databases. \nThis separation is required when there is more than one large database (> 500 GiB).'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
@@ -365,10 +366,21 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         recommendation: {
             title: 'RSS configuration recommendation',
-            description:
-                'To enhance network performance and system efficiency for SQL Server EC2 instance, we recommend optimizing \n your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple \n processors, reducing latency and improving application responsiveness. \n \n Adhering to the best practices ensures efficient handling of network traffic, leading to better stability and reliability. \n Click optimize to apply the recommended RSS stting for your instance.'
+            descriptionRssConfig: {
+                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in MSSQL instances. RSS \ndistributes network processing across multiple processors, preventing bottlenecks and enhancing system performance.',
+                second: 'Recommended RSS settings:',
+                points: [
+                    'Disable TCP Offloading Features: Ensure all TCP offloading features are disabled.',
+                    'Number of Receive Queues: Set to 8 if vCPUs > 8. Set to the number of vCPUs if vCPUs ≤ 8.',
+                    'RSS Profile: Set to NUMAStatic.',
+                    'Base Processor Number: Set to 2.'
+                ],
+                last: 'Following these settings will improve the performance and reliability of your MSSQL instances.'
+            }
         },
-        tags: ['Cost optimization']
+        tags: ['Performance efficiency'],
+        rssOptimizedRows: {},
+        rssOptimizedValues: {}
     },
     host_os_patch: {
         id: 'host-os-patch',
@@ -401,8 +413,8 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'sql-license',
         category: 'application',
         block_one: {
-            type: GENERAL.APPLICATION_SQL_SERVER,
-            value: 'License'
+            type: 'Application',
+            value: GENERAL.LICENSE_SQL_SERVER
         },
         block_two: {
             type: 'Status',
@@ -434,6 +446,60 @@ export const cardDataDefault: GwCardDataInterface = {
             info: 'The SQL Server license assessment and recommendation are provided at the host level.'
         },
         tags: ['Cost optimization']
+    },
+    microsoft_sql_patch: {
+        id: 'microsoft-sql-patch',
+        category: 'application',
+        block_one: {
+            type: 'Application',
+            value: GENERAL.MICROSOFT_SQL_PATCH
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Missing patches',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'Microsoft SQL assessment recommendation',
+            description:
+                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities \nand significantly improves overall system reliability.'
+        },
+        tags: ['Security', 'Reliability']
+    },
+    maxdop: {
+        id: 'maxdop',
+        category: 'application',
+        block_one: {
+            type: 'Application',
+            value: GENERAL.MAXDOP_PATCH
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Missing patches',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        recommendation: {
+            title: 'MAXDOP patch assessment recommendation',
+            description:
+                'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nFor OLTP workloads, set MAXDOP to 8 or fewer. \nFor OLAP workloads, adjust accordingly but avoid setting it to 0 to prevent excessive parallelism and contention. \nProper MAXDOP configuration enhances performance and efficiency.'
+        },
+        tags: ['Performance efficiency']
     }
 };
 
@@ -444,10 +510,10 @@ export const formatApplicationCardMainConfig = (
 ) => {
     let item: any = data?.license;
     let categoryVal = 'application';
-    let itemName = item?.name || '';
+    let itemName = item?.name || 'sql-license';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -494,6 +560,86 @@ export const formatApplicationCardMainConfig = (
     return cardsData;
 };
 
+export const formatMicrosoftSqlPatchCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.microsoftSqlPatch;
+    let categoryVal = 'application';
+    let itemName = item?.name || 'microsoft-sql-patch';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
+};
+
+export const formatMaxdopPatchCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.maxdop;
+    let categoryVal = 'application';
+    let itemName = item?.name || 'maxdop';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal
+        }
+    };
+    return cardsData;
+};
+
 export const formatOsPatchCardConfig = (
     data: AssessmentResponseInterface,
     optimizingData: { [key: string]: string },
@@ -504,7 +650,7 @@ export const formatOsPatchCardConfig = (
     let itemName = item?.name || 'host-os-patch';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -564,24 +710,46 @@ export const formatRssConfigCardConfig = (
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
     let findingReasons = 0;
+    let optimizedRows: any = {
+        tcpOffloading: GENERAL.FINDINGS.OPTIMIZED,
+        receiveQueues: GENERAL.FINDINGS.OPTIMIZED,
+        rssProfile: GENERAL.FINDINGS.OPTIMIZED,
+        baseProcessorNumber: GENERAL.FINDINGS.OPTIMIZED
+    };
+    let optimizedValue: any = {
+        tcpOffloading: item?.tcpOffloadState,
+        receiveQueues: item?.recommendedAdapterSettings?.recommendedReceiveQueues,
+        rssProfile: item?.recommendedAdapterSettings?.recommendedRssProfile,
+        baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+    };
+
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
         } else {
             if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
                 findingReasons++;
+                optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                optimizedValue['rssProfile'] = item?.recommendedAdapterSettings?.recommendedRssProfile;
             }
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
+                optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                optimizedValue['baseProcessorNumber'] =
+                    item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber;
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;
+                optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                optimizedValue['receiveQueues'] = item?.recommendedAdapterSettings?.recommendedReceiveQueues;
             }
         }
     });
 
     if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
         findingReasons++;
+        optimizedRows['tcpOffloading'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+        optimizedValue['tcpOffloading'] = 'Enabled';
     }
 
     cardsData = {
@@ -605,7 +773,9 @@ export const formatRssConfigCardConfig = (
             category: categoryVal,
             errorMessage: item?.errorMessage,
             rssAdapters: item?.rssAdapters,
-            tcpOffloadState: item?.tcpOffloadState
+            tcpOffloadState: item?.tcpOffloadState,
+            rssOptimizedRows: optimizedRows,
+            rssOptimizedValues: optimizedValue
         }
     };
     return cardsData;
@@ -648,35 +818,12 @@ export const formatIndividualCardMainConfig = (
             categoryVal = 'compute';
         }
 
-        // user-database-layout is newly added and to check status for User data files (.mdf) placement we need to check status of user-database-layout also along with default-data-files-location
-        let userDataStatus: string = '';
-        let userDataSeverity: string = '';
         category?.map((item: PerConfigInterface) => {
-            if (item?.name === 'user-database-layout') {
-                userDataStatus = item?.status || '';
-                userDataSeverity = item?.severity || '';
-            }
-        });
-        category?.map((item: PerConfigInterface) => {
-            if (item?.name === 'user-database-layout') {
-                return;
-            }
             let itemName = item?.name || '';
             let status = item?.status || '';
             let severity = item?.severity || '';
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
-            }
-
-            if (itemName === 'default-data-files-location' && userDataStatus === 'not-optimized') {
-                if (status === 'optimized') {
-                    severity = userDataSeverity;
-                } else if (status === 'not-optimized') {
-                    if (userDataSeverity === 'critical') {
-                        severity = 'critical';
-                    }
-                }
-                status = 'not-optimized';
             }
 
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -712,7 +859,8 @@ export const formatIndividualCardMainConfig = (
                     recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null,
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
-                    recommendedSizeInGib: item?.recommendedSizeInGib
+                    recommendedSizeInGib: item?.recommendedSizeInGib,
+                    sizingViolations: item?.sizingViolations
                 }
             };
         });
@@ -971,6 +1119,10 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatRssConfigCardConfig(data, optimizingData, cardsData);
 
+    cardsData = formatMicrosoftSqlPatchCardConfig(data, optimizingData, cardsData);
+
+    cardsData = formatMaxdopPatchCardConfig(data, optimizingData, cardsData);
+
     cardsData = {
         ...cardsData,
         ['ontap_configuration']: {
@@ -1137,6 +1289,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
     let filteredCardData: any = {};
     let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
+
     const categoryData: any = {
         file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
         storage_tier: { category: 'Storage', subCategory: 'Storage sizing' },
@@ -1150,8 +1303,11 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
         host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
         rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
-        sql_licenses: { category: 'Application', subCategory: 'Application_sub' }
+        sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
+        microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
+        maxdop: { category: 'Application', subCategory: 'Application_sub' }
     };
+
     Object.keys(cardData).map((key: any) => {
         const checkCategory =
             !filters['all-catagories'] || filters['all-catagories'].includes(categoryData[key]?.category);
@@ -1207,11 +1363,12 @@ export const handleOptimizeStorageJob = (
                     id: res?.data?.jobId
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
+                    const jobId = jobRes?.data?.id;
                     const state = store.getState();
                     const { allmssqlHostAssessmentData } = state.inventoryV2;
+                    const { jobToInstanceMap } = state.getWellOptimize;
                     let optimizingData = state.getWellOptimize.optimizingData || {};
-                    let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
-                    let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
+                    let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
                         dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
                         dispatch(
@@ -1224,7 +1381,15 @@ export const handleOptimizeStorageJob = (
                             setInProgressOptimizationData({
                                 ...inProgressOptimizationData,
                                 [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                                )
+                            })
+                        );
+                        dispatch(
+                            setInProgressHostData({
+                                ...inProgressHostData,
+                                [type]: inProgressHostData?.[type]?.filter(
+                                    (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
                                 )
                             })
                         );
@@ -1249,7 +1414,15 @@ export const handleOptimizeStorageJob = (
                             setInProgressOptimizationData({
                                 ...inProgressOptimizationData,
                                 [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== selectedDatabaseInstance
+                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                                )
+                            })
+                        );
+                        dispatch(
+                            setInProgressHostData({
+                                ...inProgressOptimizationData,
+                                [type]: inProgressOptimizationData?.[type]?.filter(
+                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.hostId
                                 )
                             })
                         );
@@ -1266,7 +1439,7 @@ export const handleOptimizeStorageJob = (
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
-            let inProgressOptimizationData = state.getWellOptimize.inProgressOptimizationData || {};
+            let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
             let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
             dispatch(
                 setOptimizingData({
@@ -1280,6 +1453,12 @@ export const handleOptimizeStorageJob = (
                     [type]: inProgressOptimizationData?.[type]?.filter(
                         (instanceId: any) => instanceId !== selectedDatabaseInstance
                     )
+                })
+            );
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedDatabaseInstance)
                 })
             );
             formatGetWellData(dispatch);

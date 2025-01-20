@@ -384,8 +384,11 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 totalInstances++;
                 const instanceAssessmentData = instance?.assessments;
                 const isComputeOptimized = isOptimized(instanceAssessmentData?.compute?.status);
+                const isRssConfigOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
                 const isOperatingSystemOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
                 const isLicenseOptimized = isOptimized(instanceAssessmentData?.license?.status);
+                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.microsoftSqlPatch?.status);
+                const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxdop?.status);
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
                     isOptimized(item?.status)
                 );
@@ -404,12 +407,15 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 );
                 if (
                     isComputeOptimized &&
+                    isRssConfigOptimized &&
                     isOperatingSystemOptimized &&
                     isLicenseOptimized &&
                     isStorageLayoutOptimized &&
                     isAllStorageSizingPresent &&
                     isStorageSizingOptimized &&
-                    isStorageConfigOptimized
+                    isStorageConfigOptimized &&
+                    isMicrosoftSqlPatchOptimized &&
+                    isMaxdopPatchOptimized
                 ) {
                     optimizedInstances += 1;
                 }
@@ -456,6 +462,9 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
                 const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
+                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.microsoftSqlPatch?.status);
+                const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxdop?.status);
+
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
                     assessmentGroupedByCategory.compute++;
                 }
@@ -467,7 +476,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 ) {
                     assessmentGroupedByCategory.storage++;
                 }
-                if (isApplicationOptimized) {
+                if (isApplicationOptimized && isMicrosoftSqlPatchOptimized && isMaxdopPatchOptimized) {
                     assessmentGroupedByCategory.application++;
                 }
             }
@@ -491,6 +500,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         operatingSystemPatch: 0,
         rssConfiguration: 0,
         applicationSqlServer: 0,
+        microsoftSqlPatch: 0,
+        maxdopPatch: 0,
         total: 0,
         severityObj: {}
     };
@@ -521,12 +532,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isTempdbDriveSizeOptimized = isOptimized(tempdbDriveSizeObj?.status);
 
                 const userDataFilesObj = instanceAssessmentData?.storage?.layout?.find(
-                    (item: any) => item.name === 'default-data-files-location'
+                    (item: any) => item.name === 'data-files-location'
                 );
                 const isUserDataFilesOptimized = isOptimized(userDataFilesObj?.status);
 
                 const logFilesObj = instanceAssessmentData?.storage?.layout?.find(
-                    (item: any) => item.name === 'default-log-files-location'
+                    (item: any) => item.name === 'log-files-location'
                 );
                 const isLogFilesOptimized = isOptimized(logFilesObj?.status);
 
@@ -549,6 +560,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isOpearingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
                 const isRssConfigurationOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
                 const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
+                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.microsoftSqlPatch?.status);
+                const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxdop?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.storageTier = GETWELL_VALUES[perfTierObj?.severity];
@@ -585,6 +598,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
                     GETWELL_VALUES[instanceAssessmentData?.license?.severity];
+                getAssessmentGroupedByConfigurations.microsoftSqlPatch += isMicrosoftSqlPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.microsoftSqlPatch =
+                    GETWELL_VALUES[instanceAssessmentData?.microsoftSqlPatch?.severity];
+                getAssessmentGroupedByConfigurations.maxdopPatch += isMaxdopPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
+                    GETWELL_VALUES[instanceAssessmentData?.maxdop?.severity];
             }
         });
     });

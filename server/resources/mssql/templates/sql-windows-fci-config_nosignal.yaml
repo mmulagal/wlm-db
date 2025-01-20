@@ -952,7 +952,10 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        m-update-sqltag:
+                        # m-set-rssconfig:
+                        #     command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                        #     waitAfterCompletion: forever
+                        n-update-sqltag:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Update-SQLNodeTag.ps1
@@ -960,7 +963,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '"'
                             waitAfterCompletion: 0
-                        n-query-sqltag:
+                        o-query-sqltag:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Query-SQLNodeTags.ps1
@@ -970,7 +973,7 @@ Resources:
                                   - '2'
                                   - '"'
                             waitAfterCompletion: 0
-                        o-create-fsxparameter:
+                        p-create-fsxparameter:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '
@@ -1518,7 +1521,10 @@ Resources:
                         g-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
-                        h-update-sqltag:
+                        # h-set-rssconfig:
+                        #     command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                        #     waitAfterCompletion: forever
+                        i-update-sqltag:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Update-SQLNodeTag.ps1

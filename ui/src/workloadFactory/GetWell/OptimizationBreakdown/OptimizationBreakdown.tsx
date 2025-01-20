@@ -42,7 +42,7 @@ const OptimizationBreakdown = () => {
                     <OptimizeComponent
                         value={optimizationBreakDown?.application?.percent || 0}
                         data={optimizationBreakDown?.application}
-                        text={GENERAL.APPLICATION_SQL_SERVER}
+                        text={GENERAL.APPLICATION}
                         image={<Applications />}
                         isComingSoon={false}
                     />

@@ -31,7 +31,9 @@ import {
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
-    useOptimizeStorageTierMutation
+    useOptimizeStorageTierMutation,
+    useOptimizeStorageSizingForBulkMutation,
+    useOptimizeStorageTierForBulkMutation
 } from '../../../utils/apiService';
 import {
     setGwDatabaseInstance,
@@ -39,7 +41,9 @@ import {
     setGwDatabaseStorageType,
     setGwHostname,
     setGwResourceId,
+    setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
@@ -50,7 +54,7 @@ import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimi
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
-    const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
@@ -73,9 +77,11 @@ const DashboardInnerPage = () => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
+    const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const callOptimizeApi = (type: any, rowData?: any) => {
+    const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
         let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
@@ -88,29 +94,94 @@ const DashboardInnerPage = () => {
                 instanceType: selectedRecommendedInstance?.value
             };
         } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
-            apiCall = optimizeStorageSizing;
-            payload = {
-                type:
-                    type === 'Log drive size'
-                        ? 'log-drive-size'
-                        : type === 'File system headroom'
-                        ? 'headroom'
-                        : 'tempdb-drive-size'
-            };
+            if (operation === 'bulk') {
+                apiCall = optimizeStorageSizingForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type:
+                                type === 'Log drive size'
+                                    ? 'log-drive-size'
+                                    : type === 'File system headroom'
+                                    ? 'headroom'
+                                    : 'tempdb-drive-size',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; instances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, instances: [] };
+                                        }
+                                        acc[databaseHostId].instances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeStorageSizing;
+                payload = {
+                    type:
+                        type === 'Log drive size'
+                            ? 'log-drive-size'
+                            : type === 'File system headroom'
+                            ? 'headroom'
+                            : 'tempdb-drive-size'
+                };
+            }
         } else if (type === 'Storage tier') {
-            apiCall = optimizeStorageTier;
-            payload = null;
+            if (operation === 'bulk') {
+                apiCall = optimizeStorageTierForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'storage-tier',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; instances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, instances: [] };
+                                        }
+                                        acc[databaseHostId].instances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeStorageTier;
+                payload = null;
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
-            payload = {
-                assessments: [
-                    {
-                        configurationName: type,
-                        objectsToOptimize: []
-                    }
-                ]
-            };
+            if (operation === 'bulk') {
+                payload = {
+                    databaseHosts: []
+                };
+            } else {
+                payload = {
+                    assessments: [
+                        {
+                            configurationName: type,
+                            objectsToOptimize: []
+                        }
+                    ]
+                };
+            }
         }
 
         // call optimize api
@@ -127,6 +198,12 @@ const DashboardInnerPage = () => {
                     : type === 'Storage tier'
                     ? 'performance-tier'
                     : 'compute-rightsizing']: 'optimizing'
+            })
+        );
+        dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
         dispatch(
@@ -157,13 +234,26 @@ const DashboardInnerPage = () => {
             })
         );
 
-        apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
-            payload: payload
-        }).then((res: any) => {
+        let apiData = {};
+        if (operation === 'bulk') {
+            apiData = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                payload: payload
+            };
+        } else {
+            apiData = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                payload: payload
+            };
+        }
+
+        apiCall(apiData).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {type} failed to optimize.
@@ -179,6 +269,14 @@ const DashboardInnerPage = () => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
@@ -205,7 +303,7 @@ const DashboardInnerPage = () => {
         dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
     };
 
-    const handleDialog = (type: string, rowData: any) => {
+    const handleDialog = (type: string, rowData: any, operation?: string) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
@@ -220,7 +318,7 @@ const DashboardInnerPage = () => {
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    callOptimizeApi(type, rowData);
+                    callOptimizeApi(type, rowData, operation);
                 }}
                 closeCallback={() => {
                     closeDialog();
@@ -413,7 +511,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.APPLICATION_SQL_SERVER:
+            case GENERAL.LICENSE_SQL_SERVER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -427,10 +525,38 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.MAXDOP_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.maxdop?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig]);
 
-    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any) => {
+    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
             id: '4',
             Header: '',
@@ -440,7 +566,10 @@ const DashboardInnerPage = () => {
             renderCell: (cellData: any, rowData: any) => {
                 let isDisabled = false;
                 let errorMessage = '';
-                if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+                if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+                    isDisabled = true;
+                    errorMessage = 'Optimization in progress for this host';
+                } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
                     isDisabled = true;
                     errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
                 } else if (
@@ -451,28 +580,33 @@ const DashboardInnerPage = () => {
                     errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
                 } else if (
                     name === 'Log drive size' &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                    (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+                        rowData?.assessmentStatus?.sizingViolations?.overProvisionedDrives?.length)
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
                 } else if (
                     name === 'TempDB drive size' &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                    (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+                        rowData?.assessmentStatus?.sizingViolations?.overProvisionedDrives?.length)
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
                 } else if (
                     name === 'File system headroom' &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
+                    (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+                        rowData?.assessmentStatus?.sizingViolations?.overProvisionedDrives?.length)
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
                 } else if (
                     (name === 'Log drive size' || name === 'TempDB drive size' || name === 'File system headroom') &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase()
+                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase() &&
+                    !rowData?.assessmentStatus?.sizingViolations?.underProvisionedDrives?.length &&
+                    rowData?.assessmentStatus?.sizingViolations?.ignoredDrives?.length
                 ) {
                     isDisabled = true;
-                    errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+                    return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
                 }
                 const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (
@@ -488,7 +622,7 @@ const DashboardInnerPage = () => {
                                 variant="secondary"
                                 onClick={() => {
                                     optimizeAction(rowData);
-                                    handleDialog(name, rowData);
+                                    handleDialog(name, rowData, 'single');
                                 }}
                             >
                                 Optimize
@@ -516,7 +650,7 @@ const DashboardInnerPage = () => {
 
     const handleBulkAction = (type: string, rowData: any) => {
         optimizeAction(rowData[0]);
-        handleDialog(type, rowData[0]);
+        handleDialog(type, rowData, 'bulk');
     };
 
     const renderTable = () => {
