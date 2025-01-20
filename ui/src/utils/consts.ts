@@ -70,6 +70,9 @@ export const API_MAX_RETRIES = 2;
 export const LICENSE_URL =
     'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-setting-up.html#launch-wizard-custom-ami';
 
+//AWS resize URL
+export const AWS_RESIZE_URL = 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html';
+
 // Regions code list in a fixed order
 export const REGIONS_CODE_LIST = [
     'us-east-1',
