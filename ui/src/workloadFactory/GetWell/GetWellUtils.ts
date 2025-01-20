@@ -1351,7 +1351,8 @@ export const handleOptimizeStorageJob = (
     failedMsgData: any,
     getJobDetailApi: any,
     dispatch: any,
-    type?: any
+    type?: any,
+    operation?: string
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -1366,7 +1367,7 @@ export const handleOptimizeStorageJob = (
                     const jobId = jobRes?.data?.id;
                     const state = store.getState();
                     const { allmssqlHostAssessmentData } = state.inventoryV2;
-                    const { jobToInstanceMap } = state.getWellOptimize;
+                    const { jobToInstanceMap, jobToInstanceMapForBulk } = state.getWellOptimize;
                     let optimizingData = state.getWellOptimize.optimizingData || {};
                     let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
@@ -1377,22 +1378,56 @@ export const handleOptimizeStorageJob = (
                                 [rowData?.id]: 'optimized'
                             })
                         );
-                        dispatch(
-                            setInProgressOptimizationData({
-                                ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
-                                )
-                            })
-                        );
-                        dispatch(
-                            setInProgressHostData({
-                                ...inProgressHostData,
-                                [type]: inProgressHostData?.[type]?.filter(
-                                    (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
-                                )
-                            })
-                        );
+
+                        if (operation === 'bulk') {
+                            dispatch(
+                                setInProgressOptimizationData({
+                                    ...inProgressOptimizationData,
+                                    [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                                        const jobInstances =
+                                            jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap(
+                                                (host: any) => host.sqlServerInstances
+                                            ) || [];
+
+                                        return !jobInstances.includes(instanceId);
+                                    })
+                                })
+                            );
+                            dispatch(
+                                setInProgressHostData({
+                                    ...inProgressHostData,
+                                    [type]: inProgressHostData?.[type]?.filter(
+                                        //Data host id to check
+                                        (hostId: any) => {
+                                            const jobHostIds =
+                                                jobToInstanceMapForBulk[jobId]?.databaseHosts.map(
+                                                    (host: any) => host.id
+                                                ) || [];
+
+                                            return !jobHostIds.includes(hostId);
+                                        }
+                                    )
+                                })
+                            );
+                        } else {
+                            dispatch(
+                                setInProgressOptimizationData({
+                                    ...inProgressOptimizationData,
+                                    [type]: inProgressOptimizationData?.[type]?.filter(
+                                        (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                                    )
+                                })
+                            );
+                            dispatch(
+                                setInProgressHostData({
+                                    ...inProgressHostData,
+                                    [type]: inProgressHostData?.[type]?.filter(
+                                        (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
+                                    )
+                                })
+                            );
+                        }
+
                         updateOptimizationStatus(rowData, dispatch);
                         formatGetWellData(dispatch);
                         dispatch(

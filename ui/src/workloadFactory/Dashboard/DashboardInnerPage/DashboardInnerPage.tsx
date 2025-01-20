@@ -44,6 +44,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setJobToInstanceMapForBulk,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
@@ -82,7 +83,7 @@ const DashboardInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
-        let payload: null | object = {};
+        let payload: null | object | any = {};
         let apiCall = null;
         const state = store.getState();
         const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData } = state.getWellOptimize;
@@ -109,13 +110,13 @@ const DashboardInnerPage = () => {
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
-                                        acc: Record<string, { id: string; instances: string[] }>,
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
                                         { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
                                     ) => {
                                         if (!acc[databaseHostId]) {
-                                            acc[databaseHostId] = { id: databaseHostId, instances: [] };
+                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
                                         }
-                                        acc[databaseHostId].instances.push(instanceId);
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
                                         return acc;
                                     },
                                     {}
@@ -146,13 +147,13 @@ const DashboardInnerPage = () => {
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
-                                        acc: Record<string, { id: string; instances: string[] }>,
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
                                         { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
                                     ) => {
                                         if (!acc[databaseHostId]) {
-                                            acc[databaseHostId] = { id: databaseHostId, instances: [] };
+                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
                                         }
-                                        acc[databaseHostId].instances.push(instanceId);
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
                                         return acc;
                                     },
                                     {}
@@ -200,18 +201,36 @@ const DashboardInnerPage = () => {
                     : 'compute-rightsizing']: 'optimizing'
             })
         );
-        dispatch(
-            setInProgressHostData({
-                ...inProgressHostData,
-                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
-            })
-        );
-        dispatch(
-            setInProgressOptimizationData({
-                ...inProgressOptimizationData,
-                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
-            })
-        );
+        if (operation === 'bulk') {
+            const hostIds = payload.hostsToOptimize[0].databaseHosts.map((host: any) => host.id);
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: [...(inProgressHostData[type] || []), [...hostIds]]
+                })
+            );
+            const instances = payload.hostsToOptimize[0].databaseHosts.flatMap((host: any) => host.sqlServerInstances);
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: [...(inProgressOptimizationData[type] || []), [...instances]]
+                })
+            );
+        } else {
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+                })
+            );
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+                })
+            );
+        }
+
         formatGetWellData(dispatch, rowData?.assessments);
         dispatch(
             addNotification({
@@ -270,12 +289,21 @@ const DashboardInnerPage = () => {
                 </div>
             );
             if (!res.error) {
-                dispatch(
-                    setJobToInstanceMap({
-                        ...state.getWellOptimize.jobToInstanceMap,
-                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
-                    })
-                );
+                if (operation === 'bulk') {
+                    dispatch(
+                        setJobToInstanceMapForBulk({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: payload?.hostsToOptimize[0]
+                        })
+                    );
+                } else {
+                    dispatch(
+                        setJobToInstanceMap({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                        })
+                    );
+                }
             }
             handleOptimizeStorageJob(
                 res,
@@ -283,7 +311,8 @@ const DashboardInnerPage = () => {
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                operation
             );
         });
     };
