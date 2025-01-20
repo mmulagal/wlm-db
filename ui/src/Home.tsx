@@ -75,7 +75,7 @@ const Home = () => {
                     <Routes>
                         <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
                         <Route path={`/databases/mssql-deploy-wizard`} element={<MainComponent />} />
-                        <Route path={`/databases/marketing-page`} element={<Marketing />} />
+                        <Route path={`/databases/marketing`} element={<Marketing />} />
                         <Route path={`postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                         <Route path={`/databases/postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                         <Route
@@ -126,7 +126,7 @@ const Home = () => {
                         <Routes>
                             <Route path={`/mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route path={`/fsxdb/mssql-deploy-wizard`} element={<MainComponent />} />
-                            <Route path={`/fsxdb/marketing-page`} element={<Marketing />} />
+                            <Route path={`/fsxdb/marketing`} element={<Marketing />} />
                             <Route path={`/fsxdb/postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                             <Route
                                 path={`/add-working-environment/database-services/:storage/discover`}
