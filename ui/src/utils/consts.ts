@@ -64,7 +64,8 @@ export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.neta
 export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
 
 //Retry API on gateway timeout
-export const API_MAX_RETRIES = 2;
+export const API_MAX_RETRIES = 3;
+export const MIN_RETRY_DELAY = 5000;
 
 //License URL
 export const LICENSE_URL =
