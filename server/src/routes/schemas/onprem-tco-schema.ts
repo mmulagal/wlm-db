@@ -3,6 +3,43 @@ import { RouteTags } from '../../utils/consts';
 import { OnPremDatabaseResourcesResponse, UploadMetricsFileBody } from '../types/onprem-tco.types';
 import { nextTokenQueryString } from '../types/generic.types';
 
+const GeneratePayloadInternal = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Generate payload for on-premises metrics collector',
+    description: 'Generate payload for on-premises metrics collector',
+    body: Type.Any(),
+    params: Type.Object({
+        accountId: Type.String({ description: 'The account ID' })
+    }),
+    consumes: ['multipart/form-data'],
+    response: {
+        202: Type.Object({
+            fileName: Type.String(),
+            fileContent: Type.String()
+        }),
+        400: Type.Object({
+            message: Type.String()
+        })
+    }
+};
+
+const DeleteReportInternal = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Delete report for on-premises metrics collector',
+    description: 'Delete report for on-premises metrics collector',
+    body: Type.Any(),
+    params: Type.Object({
+        accountId: Type.String({ description: 'The account ID' }),
+        resourceId: Type.String({ description: 'The resource ID for part of the onprem report' })
+    }),
+    consumes: ['application/json'],
+    response: {
+        200: Type.Object({
+            count: Type.Number()
+        })
+    }
+};
+
 const DownloadOnPremTcoCollectorScriptSchema = {
     tags: [RouteTags.ONPREM_TCO],
     summary: 'Download OnPremises metrics collector script',
@@ -37,4 +74,10 @@ const ListOnPremDatabaseResourcesSchema = {
     }
 };
 
-export { DownloadOnPremTcoCollectorScriptSchema, UploadOnPremTcoDataSchema, ListOnPremDatabaseResourcesSchema };
+export {
+    GeneratePayloadInternal,
+    DeleteReportInternal,
+    DownloadOnPremTcoCollectorScriptSchema,
+    UploadOnPremTcoDataSchema,
+    ListOnPremDatabaseResourcesSchema
+};

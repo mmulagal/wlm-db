@@ -1,4 +1,4 @@
-import { decompressSync } from 'fflate';
+import { compressSync, decompressSync } from 'fflate';
 import createError from 'http-errors';
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
@@ -24,6 +24,7 @@ import {
 import {
     createOnPremTcoReportData,
     listOnPremDatabaseResources,
+    removeOnPremTcoReportData,
     updateOnPremTcoReportRecord
 } from '../lib/database/onprem-tco';
 import { getInstanceTypesFromInstanceRequirementsCommand } from '../lib/aws/ec2';
@@ -43,6 +44,32 @@ import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
+
+async function generatePayload(accountId: string, fileName: string, fileContent: Buffer) {
+    logger.info('Generate a payload', { accountId, fileName });
+
+    const fileContentString = btoa(String.fromCharCode(...fileContent));
+    const base64Bytes = new TextEncoder().encode(fileContentString);
+    const compressedData = compressSync(base64Bytes);
+    const compressedBase64 = btoa(String.fromCharCode(...compressedData));
+
+    return {
+        fileName,
+        fileContent: compressedBase64
+    };
+}
+
+async function deleteOnPremTcoReportResourceRecord(
+    accountId: string,
+    resourceIds: string,
+    databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
+) {
+    logger.info('Delete a report', { accountId, resourceIds });
+
+    const resourcesIdList = compact(resourceIds.split(','));
+
+    return removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+}
 
 async function downloadOnpremTcoCollectorScript(accountId: string, databaseType: string = MSSQL) {
     logger.info('Downloading OnPrem TCO Collector Script', { accountId, databaseType });
@@ -671,6 +698,8 @@ async function getOnPremDatabaseResources(
 }
 
 export {
+    generatePayload,
+    deleteOnPremTcoReportResourceRecord,
     downloadOnpremTcoCollectorScript,
     uploadOnpremTcoData,
     getOnPremDatabaseResources,
