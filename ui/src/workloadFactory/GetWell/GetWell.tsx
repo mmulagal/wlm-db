@@ -24,7 +24,7 @@ import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
 
-import { WLF_TABS } from '../../utils/consts';
+import { JOB_MONITORING_STATUS, OPTIMIZE_POLLING_INTERVAL, WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
@@ -53,6 +53,7 @@ import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 import downloadPdf from '../../common/pdfGenerator';
+import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
 
 const GetWell = () => {
     const dispatch = useDispatch();
@@ -68,15 +69,22 @@ const GetWell = () => {
         selectedHostname,
         selectedDatabaseInstanceName,
         gwTimestamp,
-        isAssessmentAvailable
+        isAssessmentAvailable,
+        selectedResourceId,
+        selectedDatabaseInstance
     } = useAppSelector(state => state.getWellOptimize);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
     const [configCount, setConfigCount] = useState(0);
+    const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
     const { setDialog, closeDialog } = useDialog();
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
+    const [triggerAssessmentApi] = useTriggerInstanceAssessmentMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
@@ -125,6 +133,60 @@ const GetWell = () => {
         const updatedOptimizeFilter = removeObjectFromArray(optimizeFilterTags, option);
         dispatch(setOptimizeFilterTags(updatedOptimizeFilter));
         dispatch(setDefaultFilterOptions(defaultFilterRemove));
+    };
+
+    const handleTriggerAssessment = () => {
+        setTriggerAssessmentInProgress(true);
+        triggerAssessmentApi({
+            credentialId: headerSelectedCred?.data?.credentialsId,
+            regionId: headerSelectedRegion?.label2,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance
+        }).then((res: any) => {
+            const { jobId } = res?.data;
+            if (jobId) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.INFO,
+                        message: 'Assessment triggered successfully'
+                    })
+                );
+                const jobInterval = setInterval(() => {
+                    getJobDetailApi({
+                        id: jobId
+                    }).then((jobRes: any) => {
+                        const status = jobRes?.data?.status;
+                        if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                            setTriggerAssessmentInProgress(false);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                    message: 'Assessment completed'
+                                })
+                            );
+                            refreshGetWellPage();
+                            clearInterval(jobInterval);
+                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                            setTriggerAssessmentInProgress(false);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: 'Assessment failed'
+                                })
+                            );
+                            clearInterval(jobInterval);
+                        }
+                    });
+                }, OPTIMIZE_POLLING_INTERVAL);
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Error in triggering assessment'
+                    })
+                );
+            }
+        });
     };
 
     const printDocument = () => {
@@ -287,8 +349,13 @@ const GetWell = () => {
                         <DsTypography className={styles.optimizeHeader} variant="Semibold_16">
                             Optimize instance
                         </DsTypography>
+                        <div className={styles.triggerAssessment}>
+                            <DsButton onClick={handleTriggerAssessment} isLoading={triggerAssessmentInProgress}>
+                                Trigger Assessment
+                            </DsButton>
+                        </div>
                         {!optimizePrintState &&
-                            (loading ? (
+                            (loading || triggerAssessmentInProgress ? (
                                 <div className={styles.refreshIconDisable} id={'assessment-refresh'}>
                                     <RefreshIcon />
                                 </div>
