@@ -341,6 +341,9 @@ async function driftAssessmentDataCollection(
     const shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
     const shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
     const shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
+    const shouldRunHostOsPatchAssessment = fieldsValues?.includes(
+        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
+    );
 
     const shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
 
