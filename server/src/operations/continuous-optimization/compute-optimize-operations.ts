@@ -373,7 +373,7 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
-        errorMessage = `Errorks while optimizing compute ${error}`;
+        errorMessage = `Error while optimizing compute ${error}`;
         logger.error(errorMessage);
 
         jobStatus = JOBSTATUS.FAILED;
