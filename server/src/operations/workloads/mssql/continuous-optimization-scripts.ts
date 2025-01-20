@@ -1,6 +1,6 @@
 import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
-import { COMPUTE_OPTIMIZE_LOG_PATH, DISCOVER_OPERATION_LOG_PATH } from './const';
+import { COMPUTE_OPTIMIZE_LOG_PATH, DISCOVER_OPERATION_LOG_PATH, SIZING_OPERATIONS_LOG_PATH } from './const';
 import {
     DEFAULT_DATA_DRIVE_SIZE,
     INSTANCE_DATA_DRIVES_QUERY,
@@ -16,10 +16,13 @@ import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './s
 
 const GET_ONTAP_LUN_DETAILS = (params: OntapRequestParams) => `
 #Get ONTAP LUN details Script
+Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue';
 $FSxID = '${params.fsxId}'
 $FSxRegion = '${params.region}'
 $apiEndpoint = '${params.apiEndpoint}'
+Write-output "Getting LUN details for FSxID: $FSxID, FSxRegion: $FSxRegion"
+Stop-Transcript | Out-Null
 ${ontapRestRequest}
 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
 $ontapResponse | ConvertTo-Json
@@ -599,13 +602,16 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
 const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     #Storage Optimization Script
+    Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
+
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${params.fsxId}'
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
     $apiBody = '${params.apiBody}'
-
+    Write-Output "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
+    Stop-Transcript | Out-Null
     ${ontapRestRequest}
 
     $newBody = $apiBody | ConvertFrom-Json
