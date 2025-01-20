@@ -98,27 +98,31 @@ const DashboardInnerPage = () => {
                 apiCall = optimizeStorageSizingForBulk;
 
                 payload = {
-                    type:
-                        type === 'Log drive size'
-                            ? 'log-drive-size'
-                            : type === 'File system headroom'
-                            ? 'headroom'
-                            : 'tempdb-drive-size',
-                    databaseHosts: Object.values(
-                        rowData.reduce(
-                            (
-                                acc: Record<string, { id: string; instances: string[] }>,
-                                { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
-                            ) => {
-                                if (!acc[databaseHostId]) {
-                                    acc[databaseHostId] = { id: databaseHostId, instances: [] };
-                                }
-                                acc[databaseHostId].instances.push(instanceId);
-                                return acc;
-                            },
-                            {}
-                        )
-                    )
+                    hostsToOptimize: [
+                        {
+                            type:
+                                type === 'Log drive size'
+                                    ? 'log-drive-size'
+                                    : type === 'File system headroom'
+                                    ? 'headroom'
+                                    : 'tempdb-drive-size',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; instances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, instances: [] };
+                                        }
+                                        acc[databaseHostId].instances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
                 };
             } else {
                 apiCall = optimizeStorageSizing;
@@ -136,21 +140,26 @@ const DashboardInnerPage = () => {
                 apiCall = optimizeStorageTierForBulk;
 
                 payload = {
-                    databaseHosts: Object.values(
-                        rowData.reduce(
-                            (
-                                acc: Record<string, { id: string; instances: string[] }>,
-                                { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
-                            ) => {
-                                if (!acc[databaseHostId]) {
-                                    acc[databaseHostId] = { id: databaseHostId, instances: [] };
-                                }
-                                acc[databaseHostId].instances.push(instanceId);
-                                return acc;
-                            },
-                            {}
-                        )
-                    )
+                    hostsToOptimize: [
+                        {
+                            type: 'storage-tier',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; instances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, instances: [] };
+                                        }
+                                        acc[databaseHostId].instances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
                 };
             } else {
                 apiCall = optimizeStorageTier;
