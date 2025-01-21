@@ -413,7 +413,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'sql-license',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.LICENSE_SQL_SERVER
         },
         block_two: {
@@ -451,7 +451,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'microsoft-sql-patch',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.MICROSOFT_SQL_PATCH
         },
         block_two: {
@@ -478,7 +478,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'maxdop',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.MAXDOP_PATCH
         },
         block_two: {
@@ -486,7 +486,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_three: {
-            type: 'Missing patches',
+            type: 'MAXDOP',
             value: '',
             smallFont: true
         },
