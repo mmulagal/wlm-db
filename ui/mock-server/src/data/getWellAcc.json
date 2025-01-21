@@ -385,7 +385,7 @@
                                 }
                             ]
                         },
-                        "maxdop" : {
+                        "maxDOP" : {
                             "name": "maxdop",
                             "status": "not-optimized",
                             "recommended": 4,
@@ -785,7 +785,7 @@
                                 }
                             ]
                         },
-                        "maxdop" : {
+                        "maxDOP" : {
                             "name": "maxdop",
                             "status": "optimized",
                             "recommended": 4,
@@ -1185,7 +1185,7 @@
                                 }
                             ]
                         },
-                        "maxdop" : {
+                        "maxDOP" : {
                             "name": "maxdop",
                             "status": "optimized",
                             "recommended": 4,

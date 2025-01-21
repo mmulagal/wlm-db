@@ -365,9 +365,9 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'RSS configuration recommendation',
+            title: 'Network adapter settings recommendation',
             descriptionRssConfig: {
-                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in MSSQL instances. RSS \ndistributes network processing across multiple processors, preventing bottlenecks and enhancing system performance.',
+                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in Microsoft SQL Server \ninstances. RSS distributes network processing across multiple processors, preventing bottlenecks and enhancing system \nperformance.',
                 second: 'Recommended RSS settings:',
                 points: [
                     'Disable TCP Offloading Features: Ensure all TCP offloading features are disabled.',
@@ -605,7 +605,7 @@ export const formatMaxdopPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.maxdop;
+    let item: any = data?.maxDOP;
     let categoryVal = 'application';
     let itemName = item?.name || 'maxdop';
     let status = item?.status || '';

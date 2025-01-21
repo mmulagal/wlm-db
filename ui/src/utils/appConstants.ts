@@ -1223,7 +1223,7 @@ export const GENERAL = {
         'The script is a data collection tool based on PowerShell that gathers and then uploads SQL Server configuration and performance data to Workload Factory. The migration advisor assesses the data and plans FSx for ONTAP deployment for your SQL Server environment.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
-    RSS_CONFIGURATION: 'RSS configuration',
+    RSS_CONFIGURATION: 'Network adapter settings',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
     MICROSOFT_SQL_PATCH: 'Microsoft SQL patch',
     MAXDOP_PATCH: 'MAXDOP patch',

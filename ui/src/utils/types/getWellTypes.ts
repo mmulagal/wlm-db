@@ -57,7 +57,7 @@ export interface AssessmentResponseInterface {
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
     microsoftSqlPatch?: PerConfigInterface;
-    maxdop?: PerConfigInterface;
+    maxDOP?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
