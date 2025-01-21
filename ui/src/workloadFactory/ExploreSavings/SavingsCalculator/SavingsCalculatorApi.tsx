@@ -44,6 +44,29 @@ import { addInstanceIdToGetPerf } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected } from './savingsUtil';
 import { isEqual } from 'lodash';
 
+interface NODE_USAGE_INTERFACE {
+    storage: number;
+    iops: number;
+    throughput: number;
+}
+
+interface ONPREM_PAYLOAD {
+    regionCode?: string;
+    sqlInstanceData?: Array<{
+        sqlInstanceId?: string;
+        noOfVcpusInUse?: number;
+        memory?: string;
+        networkPerformance?: string;
+        iops?: string;
+        throughput?: string;
+    }>;
+    snapshotInfo?: {
+        snapshotFrequency?: string;
+        clonedCopiesCount?: number;
+        monthlyChangeRatePercentage?: number;
+    };
+}
+
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
     const {
@@ -118,7 +141,7 @@ const SavingsCalculatorApi = () => {
 
     const createOnPremPayload = () => {
         // To create payload for OnPrem Savings calculator API call
-        let payload: any = {
+        let payload: ONPREM_PAYLOAD = {
             snapshotInfo: {
                 snapshotFrequency: selectedSnapshotFrequency?.value || 'daily',
                 clonedCopiesCount: numberOfClonedCopies || 1,
@@ -133,14 +156,14 @@ const SavingsCalculatorApi = () => {
             };
         }
 
-        let primaryData: any = {
+        let primaryData: NODE_USAGE_INTERFACE = {
             storage: storagePerformance?.primaryData?.totalStorageAmount
                 ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE
                 : 0,
             iops: storagePerformance?.primaryData?.iops,
             throughput: storagePerformance?.primaryData?.throughput
         };
-        let secondaryData: any = {
+        let secondaryData: NODE_USAGE_INTERFACE = {
             storage: storagePerformance?.secondaryData?.totalStorageAmount
                 ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
                 : 0,
@@ -197,7 +220,8 @@ const SavingsCalculatorApi = () => {
                         sqlInstanceId: perInst?.sqlInstanceId,
                         noOfVcpusInUse: value?.noOfVcpusInUse,
                         memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
-                        networkPerformance: NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value] || 'upTo10',
+                        networkPerformance:
+                            NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value || ''] || 'upTo10',
                         iops: perInstanceNodeUsage?.iops,
                         throughput: perInstanceNodeUsage?.throughput
                     });

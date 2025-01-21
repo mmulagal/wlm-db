@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useGetOnPremSavingsMutation } from '../../../utils/apiService';
-import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { setOnPremiseData, setOnPremiseDataLoading } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
@@ -22,6 +22,7 @@ export const useOnPremData = () => {
 
         setError(null); // Reset error state
         dispatch(setOnPremiseData(null));
+        dispatch(setOnPremiseDataLoading(true));
 
         try {
             const apiResult = await getOnPremSavings({}); // Unwrap the API result for cleaner error handling
@@ -46,8 +47,10 @@ export const useOnPremData = () => {
             });
 
             dispatch(setOnPremiseData(result)); // Save to Redux store
+            dispatch(setOnPremiseDataLoading(false));
         } catch (err) {
             dispatch(setOnPremiseData([]));
+            dispatch(setOnPremiseDataLoading(false));
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,

@@ -14,7 +14,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
@@ -34,9 +34,8 @@ const ExploreSavingsOnPremiseTable = () => {
     const { fetchOnPremData, error } = useOnPremData();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
-    const { onPremiseData } = useAppSelector(state => state.exploreSavings);
+    const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
     const [getUploadScript] = useGetUploadScriptMutation();
-    const [isLoading, setIsLoading] = useState(false);
 
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -44,11 +43,9 @@ const ExploreSavingsOnPremiseTable = () => {
 
     useEffect(() => {
         if (onPremiseData) {
-            setIsLoading(false);
             setTableData(onPremiseData);
         } else {
             setTableData([]);
-            setIsLoading(true);
         }
     }, [onPremiseData]);
 
@@ -202,7 +199,7 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '325px',
+            width: '345px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.resourceName;
                 return (
@@ -216,7 +213,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'deploymentModel',
             id: '2',
-            width: '325px',
+            width: '345px',
             filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -276,11 +273,46 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: 'OnPrem nodes',
             accessor: 'onPremisesNodes',
             id: '5',
-            width: '387px',
+            width: '347px',
             isSortable: true,
             accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData.join(',') || GENERAL.NOT_AVAILABLE;
+                const truncatedItems = getTruncatedItems(cellData);
+
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <div className={styles.container}>
+                                <Typography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
+                                </Typography>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <>
+                                        <Popover
+                                            popoverClass={styles['popover']}
+                                            children={truncatedItems?.remaining.map((item: any) => (
+                                                <Typography variant="Regular_14">{item}</Typography>
+                                            ))}
+                                            trigger="hover"
+                                            container={
+                                                <Typography variant="Regular_14" className={styles.colorText}>
+                                                    {`+ ${truncatedItems?.remaining.length}`}
+                                                </Typography>
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
             }
         },
 
@@ -321,7 +353,7 @@ const ExploreSavingsOnPremiseTable = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isLoading || isUploadLoading
+        isLazyLoading: onPremiseDataLoading || isUploadLoading
     });
 
     const tableComponentProps = {
