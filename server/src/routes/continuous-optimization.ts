@@ -6,7 +6,11 @@ import {
     fetchDriftAssessmentPerHost,
     onDemandTriggerDriftAssessmentDataCollection
 } from '../operations/cont-opt-assessment-operations';
-import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
+import {
+    AssessmentTriggeredBy,
+    OPTIMIZATION_CATEGORIES,
+    OptimizeStorageParams
+} from '../utils/continous-optimization-consts';
 import {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -27,12 +31,7 @@ import {
 } from '../operations/cont-opt-optimize-operations';
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
-import {
-    bulkComputeOptimization,
-    bulkOperatingSystemConfigurationOptimization,
-    bulkStorageSizingConfigurationOptimization,
-    bulkStorageTierConfigurationOptimization
-} from '../operations/bulk-cont-opt-operations';
+import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -222,10 +221,11 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
-                const response = await bulkStorageSizingConfigurationOptimization(
+                const response = await bulkOptimization(
                     accountId,
                     credentialsId,
                     region,
+                    OPTIMIZATION_CATEGORIES.STORAGE_SIZING,
                     hostsToOptimize
                 );
                 return reply.send(response);
@@ -240,10 +240,11 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
-                const response = await bulkOperatingSystemConfigurationOptimization(
+                const response = await bulkOptimization(
                     accountId,
                     credentialsId,
                     region,
+                    OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM,
                     hostsToOptimize
                 );
                 return reply.send(response);
@@ -258,10 +259,11 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     body: { hostsToOptimize }
                 } = castRequest(request);
 
-                const response = await bulkStorageTierConfigurationOptimization(
+                const response = await bulkOptimization(
                     accountId,
                     credentialsId,
                     region,
+                    OPTIMIZATION_CATEGORIES.STORAGE_TIER,
                     hostsToOptimize
                 );
                 return reply.send(response);

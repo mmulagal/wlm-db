@@ -87,6 +87,13 @@ enum OPTIMIZE_SIZING_CONFIGS {
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
 }
 
+enum OPTIMIZATION_CATEGORIES {
+    STORAGE_TIER = 'storage-tier',
+    STORAGE_SIZING = 'storage-sizing',
+    OPERATING_SYSTEM = 'operating-system',
+    COMPUTE = 'compute'
+}
+
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
 const SEVERITY = {
     CRITICAL: 'critical',
@@ -211,5 +218,6 @@ export {
     OptimizeStorageTierParams,
     OptimizeComputeParams,
     NETWORK_PERF,
-    ONPREM_TCO_CREDENTIALS_ID
+    ONPREM_TCO_CREDENTIALS_ID,
+    OPTIMIZATION_CATEGORIES
 };

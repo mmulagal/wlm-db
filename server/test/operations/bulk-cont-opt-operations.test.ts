@@ -11,6 +11,7 @@ import '../simulator/scopes/aws/compute-optimizer-scope';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import {
     AssessmentCategories,
+    OPTIMIZATION_CATEGORIES,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeParams,
     OptimizeOperatingSystemParams,
@@ -18,12 +19,7 @@ import {
 } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../src/lib/database/database-instance-config';
-import {
-    bulkComputeOptimization,
-    bulkOperatingSystemConfigurationOptimization,
-    bulkStorageSizingConfigurationOptimization,
-    bulkStorageTierConfigurationOptimization
-} from '../../src/operations/bulk-cont-opt-operations';
+import { bulkComputeOptimization, bulkOptimization } from '../../src/operations/bulk-cont-opt-operations';
 import { updateJobDetails } from '../../src/operations/database/job-operations';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
@@ -229,10 +225,11 @@ afterAll(async () => {
 
 describe('Continuous optimization optimize operations', () => {
     it('Bulk optimize sizing parameters', async () => {
-        const response = await bulkStorageSizingConfigurationOptimization(
+        const response = await bulkOptimization(
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
+            OPTIMIZATION_CATEGORIES.STORAGE_SIZING,
             [
                 {
                     type: OPTIMIZE_SIZING_CONFIGS.HEADROOM,
@@ -251,10 +248,11 @@ describe('Continuous optimization optimize operations', () => {
     });
 
     it('Bulk optimize operating system parameters', async () => {
-        const response = await bulkOperatingSystemConfigurationOptimization(
+        const response = await bulkOptimization(
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
+            OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM,
             [
                 {
                     type: OptimizeOperatingSystemParams.MPIO_SESSIONS,
@@ -273,10 +271,11 @@ describe('Continuous optimization optimize operations', () => {
     });
 
     it('Bulk optimize storage-tier parameters', async () => {
-        const response = await bulkStorageTierConfigurationOptimization(
+        const response = await bulkOptimization(
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
+            OPTIMIZATION_CATEGORIES.STORAGE_TIER,
             [
                 {
                     type: OptimizeStorageTierParams.STORAGE_TIER,
