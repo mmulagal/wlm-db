@@ -822,15 +822,25 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     }
 
     $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
-    $maxDopResult =  Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName" 
+    $maxDopResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName"
 
-    # Parse the result to extract the run_value
-    $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
-        $_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)' | Out-Null
-        $matches[4]
+    # Initialize maxDop to 0
+    $maxDop = 0
+
+    # Check if maxDopResult is not empty and parse the result to extract the run_value
+    if ($maxDopResult) {
+        $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
+            if ($_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)') {
+                $matches[4]
+            }
+        } | Select-Object -First 1
     }
 
-    # Combine the results
+    # Check if maxDop is empty or null, set to 0 if it is
+    if (-not $maxDop) {
+        $maxDop = 0
+    }
+
     $result = [PSCustomObject]@{
         vcpuCount = $vcpus
         maxDOP = $maxDop
