@@ -392,7 +392,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle={`Microsoft SQL Server hosts on-premises`}
                 singularTitle={`Microsoft SQL Server host on-premises`}
-                subTitle="The table contains the latest script results uploaded."
+                subTitle="Includes results from uploaded scripts."
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />
