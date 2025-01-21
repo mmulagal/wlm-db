@@ -20,7 +20,8 @@ import {
     PGSQL_RESOURCE_ASSETS,
     PGSQL_TEMPLATES_DISTRIBUTION,
     PGSQL_TEMPLATES_ASSETS,
-    PGSQL_MASTER_TEMPLATE_DISTRIBUTION
+    PGSQL_MASTER_TEMPLATE_DISTRIBUTION,
+    PGSQL_CW_CONFIG
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getArtifactsRegionBucketName } from '../utils/utils';
@@ -154,7 +155,8 @@ async function updateTemplateUrls(
             ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
             ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
             FsxCertificates: decodeURI(signedUrls.get('FsxCertificates')?.url || ''),
-            OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || '')
+            OpenSSL: decodeURI(signedUrls.get('OpenSSL')?.url || ''),
+            PgsqlCloudWatchConfig: PGSQL_CW_CONFIG || ''
         });
 
         const ValidationTemplate = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');
