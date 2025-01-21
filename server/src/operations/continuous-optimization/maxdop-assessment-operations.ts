@@ -43,6 +43,7 @@ async function calculateMaxDOPDrift(
             AssessmentCategories.MAXDOP
         );
 
+        logger.debug('Persisted max DOP configuration data from DB', persistedConfigurationData);
         const maxDOP = persistedConfigurationData.config_data as unknown as MaxDOPAssesment;
 
         let maxDOPAssessment;
@@ -68,6 +69,7 @@ async function calculateMaxDOPDrift(
                 instanceName,
                 sqlAuthEnabled
             );
+            logger.debug('Max DOP assessment result while calculating', maxDOPAssessment);
 
             await createDatabaseInstanceConfigData([
                 {
@@ -206,10 +208,10 @@ async function runMaxDOPAssessment(
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     return {
-        current: `${maxDOP}`,
+        current: maxDOP,
         recommendedMaxDOP,
         status: optimizationStatus
     };
 }
 
-export { managedHostsMaxDOPAssessment, calculateMaxDOPDrift };
+export { managedHostsMaxDOPAssessment, calculateMaxDOPDrift, runMaxDOPAssessment };

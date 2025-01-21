@@ -780,7 +780,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
         $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
          
     }
-    Write-Output "Sql server name $ServerInstanceName."
+
     ${slqcmdExecutionTemplate}
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
@@ -790,12 +790,16 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
     $maxDopResult =  Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName" 
 
-    $maxDop = $maxDopResult | Where-Object { $_.name -eq 'max degree of parallelism' } | Select-Object -ExpandProperty run_value
+    # Parse the result to extract the run_value
+    $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
+        $_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)' | Out-Null
+        $matches[4]
+    }
 
     # Combine the results
     $result = [PSCustomObject]@{
         vcpuCount = $vcpus
-        maxDop = $maxDop
+        maxDOP = $maxDop
     }
 
     $jsonResult = $result | ConvertTo-Json -Compress
