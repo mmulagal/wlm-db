@@ -11,7 +11,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -43,7 +43,8 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             fileSystemHeadroom: headroomObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: headroomObj?.status,
+                            assessmentStatus: GETWELL_VALUES[headroomObj?.status],
+                            sizingViolations: headroomObj?.sizingViolations,
                             recommendedSizeInGib: headroomObj?.recommendedSizeInGib,
                             missingPermissions: headroomObj?.missingPermissions,
                             data: instanceData,

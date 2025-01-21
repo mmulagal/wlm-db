@@ -11,7 +11,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
 
 const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -39,7 +39,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                             tempDBPlacement: tempDbPlacementObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: tempDbPlacementObj?.status,
+                            assessmentStatus: GETWELL_VALUES[tempDbPlacementObj?.status],
                             data: instanceData,
                             cellProps: {
                                 isDisabled:

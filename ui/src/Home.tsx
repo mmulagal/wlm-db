@@ -23,6 +23,7 @@ import { useRunOnce } from './common/hooks/useRunOnce';
 import { setTabInfoFOrBXP } from './utils/utilityFunctions';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
+import Marketing from './Marketing/Marketing';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -74,6 +75,7 @@ const Home = () => {
                     <Routes>
                         <Route path={`mssql-deploy-wizard`} element={<MainComponent />} />
                         <Route path={`/databases/mssql-deploy-wizard`} element={<MainComponent />} />
+                        <Route path={`/databases/marketing`} element={<Marketing />} />
                         <Route path={`postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                         <Route path={`/databases/postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                         <Route
@@ -124,6 +126,7 @@ const Home = () => {
                         <Routes>
                             <Route path={`/mssql-deploy-wizard`} element={<MainComponent />} />
                             <Route path={`/fsxdb/mssql-deploy-wizard`} element={<MainComponent />} />
+                            <Route path={`/fsxdb/marketing`} element={<Marketing />} />
                             <Route path={`/fsxdb/postgreSQL-deploy-wizard`} element={<PostgressMainComponent />} />
                             <Route
                                 path={`/add-working-environment/database-services/:storage/discover`}

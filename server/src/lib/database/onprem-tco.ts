@@ -29,13 +29,13 @@ async function createOnPremTcoReportData(records: OnPremTcoReportObject[]) {
 async function removeOnPremTcoReportData(
     id?: string[],
     accountId?: string,
-    resourceId?: string,
+    resourceIdList?: string[],
     databaseType?: DATABASE_TYPE
 ) {
     logger.info('Removing onpremises TCO report', {
         id,
         accountId,
-        resourceId,
+        resourceIdList,
         databaseType
     });
 
@@ -44,7 +44,7 @@ async function removeOnPremTcoReportData(
             OR: [
                 ...(id ? [{ id: { in: id } }] : []),
                 ...(accountId ? [{ account_id: accountId }] : []),
-                ...(resourceId ? [{ resource_id: resourceId }] : []),
+                ...(resourceIdList ? [{ resource_id: { in: resourceIdList } }] : []),
                 ...(databaseType ? [{ database_type: databaseType }] : [])
             ]
         }

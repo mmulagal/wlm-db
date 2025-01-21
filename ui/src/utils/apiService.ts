@@ -958,6 +958,12 @@ export const getWellApi = createApi({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop`
                 })
             }),
+            triggerInstanceAssessment: builder.mutation({
+                query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`,
+                    method: 'POST'
+                })
+            }),
             optimizeStorageSizing: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-sizing`,
@@ -1135,5 +1141,6 @@ export const {
     useOptimizeOperatingSystemMutation,
     useOptimizeStorageTierMutation,
     useOptimizeStorageSizingForBulkMutation,
-    useOptimizeStorageTierForBulkMutation
+    useOptimizeStorageTierForBulkMutation,
+    useTriggerInstanceAssessmentMutation
 } = getWellApi;

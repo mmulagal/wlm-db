@@ -11,7 +11,8 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+
 interface StorageTierTableProps {
     lastColDetails: any;
     handleBulkAction: any;
@@ -48,7 +49,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             findingReasons: `${computeRightSizingObj?.objectsInViolation?.length || 0} Findings`,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: computeRightSizingObj?.status,
+                            assessmentStatus: GETWELL_VALUES[computeRightSizingObj?.status],
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
                             isMissingPermissions: computeMissingPermissions,
                             data: instanceData,

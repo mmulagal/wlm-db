@@ -12,7 +12,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
 
 const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -40,7 +40,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                             userDataFiles: userDataFilesObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: userDataFilesObj?.status,
+                            assessmentStatus: GETWELL_VALUES[userDataFilesObj?.status],
                             data: instanceData,
                             cellProps: {
                                 isDisabled:

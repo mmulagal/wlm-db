@@ -27,6 +27,7 @@ export interface GetWellSliceInterface {
     inProgressOptimizationData: any;
     inProgressHostData: any;
     jobToInstanceMap: any;
+    jobToInstanceMapForBulk: any;
 }
 
 interface CountBreakDown {
