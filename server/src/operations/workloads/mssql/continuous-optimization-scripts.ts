@@ -22,10 +22,10 @@ $FSxID = '${params.fsxId}'
 $FSxRegion = '${params.region}'
 $apiEndpoint = '${params.apiEndpoint}'
 Write-Information "Getting LUN details for FSxID: $FSxID, FSxRegion: $FSxRegion"
-Stop-Transcript | Out-Null
 ${ontapRestRequest}
 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
 $ontapResponse | ConvertTo-Json
+Stop-Transcript | Out-Null
 `;
 
 const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
@@ -611,7 +611,6 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $apiQueryFilter = '${params.apiQueryFilter}'
     $apiBody = '${params.apiBody}'
     Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
-    Stop-Transcript | Out-Null
     ${ontapRestRequest}
 
     $newBody = $apiBody | ConvertFrom-Json
@@ -622,6 +621,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
 
     $ontapResponse | ConvertTo-Json
     
+    Stop-Transcript | Out-Null
 `;
 
 const RESCAN_EXTEND_LUN = (diskSerialNumber: string) => `
