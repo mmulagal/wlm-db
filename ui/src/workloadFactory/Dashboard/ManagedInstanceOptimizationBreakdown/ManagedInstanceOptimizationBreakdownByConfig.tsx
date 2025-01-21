@@ -61,8 +61,14 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             case GENERAL.RSS_CONFIGURATION:
                 configKey = 'rssConfiguration';
                 break;
-            case GENERAL.APPLICATION_SQL_SERVER:
+            case GENERAL.LICENSE_SQL_SERVER:
                 configKey = 'applicationSqlServer';
+                break;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                configKey = 'microsoftSqlPatch';
+                break;
+            case GENERAL.MAXDOP_PATCH:
+                configKey = 'maxdopPatch';
                 break;
         }
         const optimizedInstances = configData[configKey] || 0;
@@ -538,7 +544,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText={GENERAL.APPLICATION_SQL_SERVER}
+                        headingText={GENERAL.LICENSE_SQL_SERVER}
                         percentage={Math.round(
                             ((configData.applicationSqlServer || 0) / (configData.total || 1)) * 100
                         )}
@@ -548,7 +554,77 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[GENERAL.APPLICATION_SQL_SERVER]?.length || 0) /
+                            ((inProgressOptimizationData?.[GENERAL.LICENSE_SQL_SERVER]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.MICROSOFT_SQL_PATCH}
+                        percentage={Math.round(((configData.microsoftSqlPatch || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.microsoftSqlPatch}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[GENERAL.MICROSOFT_SQL_PATCH]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.MAXDOP_PATCH}
+                        percentage={Math.round(((configData.maxdopPatch || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.maxdopPatch}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[GENERAL.MAXDOP_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}

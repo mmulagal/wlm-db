@@ -74,7 +74,8 @@ const AUDIT_EXCLUDE_LIST = [
     '/calculations',
     '/sandboxes-meta-update',
     '/resource-credentials',
-    '/create-demo-resource'
+    '/create-demo-resource',
+    '/onprem-tco'
 ];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
@@ -149,7 +150,8 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'Continuous Optimization'
+    ASSESSMENT = 'Continuous Optimization',
+    ONPREM_TCO = 'OnPremises TCO'
 }
 
 enum HttpErrorCodes {
@@ -1397,6 +1399,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'FsxCertificates',
         url: `${WLMDB}/fsx_certs.zip`
+    },
+    {
+        name: 'PGSQLPackages',
+        url: `${WLMDB}/pgsql/packages/pgvector.zip`
     }
 ];
 

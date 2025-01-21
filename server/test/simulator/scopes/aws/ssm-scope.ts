@@ -84,7 +84,8 @@ import {
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import {
     GET_RSS_CONFIG_DETAILS,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    GET_VCPU_AND_MAXDOP_DETAILS
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
@@ -538,6 +539,10 @@ const rssConfigAssessmentSsm = {
     commands: [GET_RSS_CONFIG_DETAILS()]
 };
 
+const maxDOPAssessmentSsm = {
+    commands: [GET_VCPU_AND_MAXDOP_DETAILS('MSSQLSERVER', false)]
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -753,7 +758,9 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('getClusterNodeNames'))
     .on(SendCommandCommand, { Parameters: rssConfigAssessmentSsm })
-    .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand);
+    .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand)
+    .on(SendCommandCommand, { Parameters: maxDOPAssessmentSsm })
+    .resolves(listSendCommandCommandResponse.getMaxDopAssessmentCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -978,7 +985,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-rssConfigAssessmentDataCommand'
     })
-    .resolves(getCommandInvocationResponse.rssConfigAssessmentDataCommandResponse);
+    .resolves(getCommandInvocationResponse.rssConfigAssessmentDataCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
+    })
+    .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse);;
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

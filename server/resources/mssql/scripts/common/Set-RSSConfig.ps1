@@ -5,7 +5,7 @@ function Set-RSSBestPractices {
 
     # Get current RSS settings
     $currentRssSettings = Get-NetAdapterRss -Name $AdapterName
-
+    $parameters = @{}
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $DesiredRssReceiveQueues = $vcpus
     $DesiredBaseProcessorNumber = 2
@@ -16,7 +16,7 @@ function Set-RSSBestPractices {
 
     if ($currentRssSettings.Enabled -eq $false) {
         Write-Output "Enabling RSS on adapter: $AdapterName"
-        Enable-NetAdapterRss -Name $AdapterName
+        Enable-NetAdapterRss -Name $AdapterName -NoRestart
     }
 
     if ($currentRssSettings.NumberOfReceiveQueues -ne $DesiredRssReceiveQueues) {
@@ -34,7 +34,7 @@ function Set-RSSBestPractices {
     if ($parameters.Count -gt 0) {
         Write-Output "Setting RSS best practices values on adapter: $AdapterName"
         $parameters['Name'] = $AdapterName
-        Set-NetAdapterRss @parameters
+        Set-NetAdapterRss @parameters -NoRestart
         Write-Output "RSS best practices values have been set on adapter: $AdapterName"
     }
 }
@@ -55,3 +55,6 @@ try {
 } catch {
     Write-Output "Failed to set RSS best practices values. Exception: $_"
 }
+
+# Restart computer to make RSS settings effective
+C:\cfn\scripts\common\Restart-Computer.ps1

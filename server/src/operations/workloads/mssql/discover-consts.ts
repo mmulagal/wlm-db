@@ -1,6 +1,6 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
 import { compressResponse } from './common-templates';
-import { GOOGLE_DNS } from './const';
+import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -481,24 +481,30 @@ const HOST_AND_SQL_INFO_PS1 = [
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
+  Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+  
   $ErrorActionPreference = "Stop"
   $responseObject = @{}
   $scriptStartTime = Get-Date
   $clusterNetworkIps = $null
   
   try {
+    Write-Information "Discovering cluster network IPs"
     $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
       $responseObject['clusterNetworkIps'] = $clusterNetworkIps
+      Write-Information "Cluster network IPs: $clusterNetworkIps"
     } else {
+      Write-Information "No running clusters found"
       $responseObject['clusterNetworkIps'] = @()
     }
   } catch {
     # Prevent any possible errors from clobbering JSON output
     $responseObject['failureInfo'] = $_.Exception.Message
   } finally {
+    Stop-Transcript | Out-Null
     $scriptEndTime = Get-Date
     $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
     Echo $responseObject | ConvertTo-Json -Compress
@@ -627,9 +633,13 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           }
-          
           If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
-            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+              throw "Failed to install NuGet package provider. "
+            }
+          }
+          If ((Get-PackageProvider -Name NuGet).version -lt [System.version]"2.8.5.201") {
+            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
               throw "Failed to install NuGet package provider. "
             }
           }
@@ -639,7 +649,7 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
                 Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
               }
               else {
-                Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+                Install-Module -Name $moduleName -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
               }
           }
       }Else{

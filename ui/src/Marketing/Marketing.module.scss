@@ -1,0 +1,182 @@
+.marketing {
+    height: inherit;
+    overflow: auto;
+    background-color: var(--main-background);
+
+    .header {
+        height: 56px;
+        width: 100%;
+        min-width: 1600px;
+        background-color: var(--content-background);
+        padding: 12px 40px 0 40px;
+    }
+
+    .section2 {
+        width: 100%;
+        height: 472px;
+        min-width: 1600px;
+        background-color: var(--chart-background);
+        padding: 80px 120px 0 120px;
+        display: flex;
+        gap: 277px;
+
+        .section2LeftSde {
+            display: flex;
+            flex-direction: column;
+            max-width: 679px;
+            width: 679px;
+
+            .textSection {
+                margin-top: 16px;
+            }
+
+            .buttonSection {
+                margin-top: 32px;
+            }
+        }
+
+        .section2RightSde {
+            width: 656px;
+            min-width: 656px;
+            height: 318px;
+            background-color: var(--content-background);
+            display: flex;
+
+            .arrowStyle {
+                cursor: pointer;
+                position: relative;
+                right: 22px;
+                top: 8px;
+            }
+        }
+    }
+
+    .section3 {
+        width: 100%;
+        height: 604px;
+        min-width: 1600px;
+        background-color: var(--hover-background);
+
+        padding: 64px 0 0 120px;
+
+        .topSection {
+            margin-bottom: 32px;
+        }
+
+        .title {
+            line-height: 34px;
+            width: 607px;
+        }
+
+        .bottomSection {
+            margin-top: 48px;
+            display: flex;
+            gap: 160px;
+
+            .commonSection {
+                display: flex;
+                flex-direction: column;
+                gap: 38px;
+
+                .cardSection {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    width: 656px;
+                    height: 108px;
+
+                    .cardHeading {
+                        display: flex;
+                        gap: 24px;
+                        align-items: center;
+                    }
+                }
+            }
+        }
+    }
+
+    .section4 {
+        margin: 80px 0 0 120px;
+
+        .cards {
+            margin-top: 32px;
+            display: flex;
+            gap: 24px;
+            margin-bottom: 128px;
+
+            .commonRow {
+                display: flex;
+                gap: 24px;
+                flex-direction: column;
+            }
+        }
+    }
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(64, 64, 64, 0.5);
+    // opacity: 0.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    position: relative;
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.expandedImage {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+}
+
+.closeButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+@media screen and (min-width: 1700px) and (max-width: 1800px) {
+    .marketing {
+        .section2 {
+            gap: 180px;
+        }
+
+        .section3 {
+            .bottomSection {
+                gap: 120px;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1350px) and (max-width: 1700px) {
+    .marketing {
+        .section2 {
+            gap: 100px;
+        }
+
+        .section3 {
+            .bottomSection {
+                gap: 80px;
+            }
+        }
+    }
+}

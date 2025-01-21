@@ -345,10 +345,12 @@ describe('Group jobs', async () => {
     });
 
     it('should group jobs by status and time', async () => {
+        const [job] = await listJobs(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        updateJob(ACCOUNT_ID, job.id, undefined, JOBSTATUS.COMPLETED, new Date().valueOf());
         const response = await groupJobsByTimeAndStatus(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
+            undefined,
             Date.now() - THIRTY_DAYS,
             Date.now()
         );

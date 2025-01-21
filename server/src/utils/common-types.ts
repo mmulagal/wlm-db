@@ -61,11 +61,19 @@ interface RssConfigAssesment {
     rssAdapters?: RssAdapter[];
     tcpOffloadState: string;
 }
+
+interface MaxDOPAssesment {
+    current: string;
+    recommendedMaxDOP: string;
+    status: string;
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
+    maxDOP?: MaxDOPAssesment;
 }
 interface Metadata {
     node1InstanceId: string;
@@ -478,5 +486,6 @@ export {
     OptimizeMpioIscsiSessionsParams,
     SessionsCountPerIscsiTarget,
     PgSqlInstanceDetails,
-    RssConfigAssesment
+    RssConfigAssesment,
+    MaxDOPAssesment
 };

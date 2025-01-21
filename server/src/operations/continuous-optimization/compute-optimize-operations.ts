@@ -11,7 +11,7 @@ import {
 } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
-import { isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import { getOriginalDatabaseInstanceName, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 import getLogger from '../../utils/logger';
@@ -57,6 +57,7 @@ async function handleComputeRemediation(
     let subJobErrorMessage;
 
     let anySubJobFailed = false;
+    let originalInstanceName = '';
     try {
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -66,6 +67,7 @@ async function handleComputeRemediation(
             node1InstanceId,
             node2InstanceId
         );
+        originalInstanceName = getOriginalDatabaseInstanceName(instanceName);
 
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
@@ -108,6 +110,7 @@ async function handleComputeRemediation(
                         );
 
                         instanceIdsList.push(...clusterNodeInstanceIds);
+                        await updateLongRunningAuditGroup(undefined, undefined, originalInstanceName);
 
                         // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
                         const preReqJobId = await handleOptimizeJobCreation(
@@ -363,7 +366,7 @@ async function handleComputeRemediation(
                 updatedMetadata.isComputeOptimized = true;
                 await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
             }
-            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS, undefined, originalInstanceName);
             return;
         }
 
@@ -374,7 +377,7 @@ async function handleComputeRemediation(
         logger.error(errorMessage);
 
         jobStatus = JOBSTATUS.FAILED;
-        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage, originalInstanceName);
     } finally {
         const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {

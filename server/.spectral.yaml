@@ -59,7 +59,7 @@ rules:
         formats:
             - oas3
         recommended: true
-        severity: error
+        severity: warn
         message: '{{description}}: {{error}}'
         given: $.paths.[*].requestBody.content[?(@property.indexOf('json') === -1)]^
         then:

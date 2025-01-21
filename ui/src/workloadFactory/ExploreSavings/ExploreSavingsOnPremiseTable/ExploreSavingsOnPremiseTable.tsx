@@ -14,7 +14,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
@@ -25,7 +25,7 @@ import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../..
 import { compressSync } from 'fflate';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
-import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { JOB_MONITORING_STATUS, SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 
 import { useOnPremData } from './useOnPremData';
 
@@ -34,9 +34,8 @@ const ExploreSavingsOnPremiseTable = () => {
     const { fetchOnPremData, error } = useOnPremData();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
-    const { onPremiseData } = useAppSelector(state => state.exploreSavings);
+    const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
     const [getUploadScript] = useGetUploadScriptMutation();
-    const [isLoading, setIsLoading] = useState(false);
 
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -44,11 +43,9 @@ const ExploreSavingsOnPremiseTable = () => {
 
     useEffect(() => {
         if (onPremiseData) {
-            setIsLoading(false);
             setTableData(onPremiseData);
         } else {
             setTableData([]);
-            setIsLoading(true);
         }
     }, [onPremiseData]);
 
@@ -118,7 +115,12 @@ const ExploreSavingsOnPremiseTable = () => {
 
                     // Access the data inside the JSON
                     if (compressedBase64) {
-                        const result = await getUploadScript({ payload: compressedBase64 });
+                        const result = await getUploadScript({
+                            payload: {
+                                fileContent: compressedBase64,
+                                fileName: selectedFile.name
+                            }
+                        });
                         const jobInterval = setInterval(() => {
                             getJobDetailApi(result.data.jobId).then((jobRes: any) => {
                                 const status = jobRes?.data?.status;
@@ -199,7 +201,7 @@ const ExploreSavingsOnPremiseTable = () => {
             isSticky: true,
             width: '345px',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.databaseHostName;
+                const name = rowData?.resourceName;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -225,7 +227,10 @@ const ExploreSavingsOnPremiseTable = () => {
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'totalInstance'),
             renderCell: (cellData: string, rowData: any) => {
-                const instanceNames = rowData?.sqlServerInstances;
+                const instanceNames =
+                    rowData?.sqlInstanceDetails?.map(
+                        (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
+                    ) || [];
                 const truncatedItems = getTruncatedItems(instanceNames);
 
                 return (
@@ -266,13 +271,48 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: 'OnPrem nodes',
-            accessor: 'onPremNode',
+            accessor: 'onPremisesNodes',
             id: '5',
             width: '347px',
             isSortable: true,
             accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
-                return 'xxx';
+                const truncatedItems = getTruncatedItems(cellData);
+
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <div className={styles.container}>
+                                <Typography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
+                                </Typography>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <>
+                                        <Popover
+                                            popoverClass={styles['popover']}
+                                            children={truncatedItems?.remaining.map((item: any) => (
+                                                <Typography variant="Regular_14">{item}</Typography>
+                                            ))}
+                                            trigger="hover"
+                                            container={
+                                                <Typography variant="Regular_14" className={styles.colorText}>
+                                                    {`+ ${truncatedItems?.remaining.length}`}
+                                                </Typography>
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
             }
         },
 
@@ -313,7 +353,7 @@ const ExploreSavingsOnPremiseTable = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isLoading || isUploadLoading
+        isLazyLoading: onPremiseDataLoading || isUploadLoading
     });
 
     const tableComponentProps = {
@@ -352,7 +392,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle={`Microsoft SQL Server hosts on-premises`}
                 singularTitle={`Microsoft SQL Server host on-premises`}
-                subTitle="The table contains the latest script results uploaded."
+                subTitle="Includes results from uploaded scripts."
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />

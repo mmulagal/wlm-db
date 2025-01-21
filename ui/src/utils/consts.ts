@@ -64,11 +64,15 @@ export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.neta
 export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
 
 //Retry API on gateway timeout
-export const API_MAX_RETRIES = 2;
+export const API_MAX_RETRIES = 3;
+export const MIN_RETRY_DELAY = 5000;
 
 //License URL
 export const LICENSE_URL =
     'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-setting-up.html#launch-wizard-custom-ami';
+
+//AWS resize URL
+export const AWS_RESIZE_URL = 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html';
 
 // Regions code list in a fixed order
 export const REGIONS_CODE_LIST = [
@@ -740,14 +744,30 @@ export const GETWELL_CONFIG: any = {
     'compute-rightsizing': 'compute_rightsizing',
     'rss-config': 'rss_config',
     'sql-license': 'sql_licenses',
-    'host-os-patch': 'host_os_patch'
+    'host-os-patch': 'host_os_patch',
+    'microsoft-sql-patch': 'microsoft_sql_patch',
+    maxdop: 'maxdop'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
     'Data files (.mdf) placement',
     'Log files (.ldf) placement',
     'TempDB placement',
-    'Licenses', // Licenses is for Application (SQL Server)
+    GENERAL.LICENSE_SQL_SERVER,
     GENERAL.OPERATING_SYSTEM_PATCH,
-    GENERAL.RSS_CONFIGURATION
+    GENERAL.RSS_CONFIGURATION,
+    GENERAL.MICROSOFT_SQL_PATCH,
+    GENERAL.MAXDOP_PATCH
 ];
+
+export const GW_TOOLTIP_KEYS_MAPPING: any = {
+    rssProfile: 'RSS profile',
+    baseProcessorNumber: 'Base processor number',
+    receiveQueues: 'Receive Queues',
+    tcpOffloading: 'TCP Offloading Features'
+};
+
+export const NETWORK_PERFORMANCE_OPTIONS: any = {
+    'Up to 10 GiB': 'upTo10',
+    'Above 10 GiB': 'above10'
+};
