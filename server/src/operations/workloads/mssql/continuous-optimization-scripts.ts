@@ -21,7 +21,7 @@ $WarningPreference = 'SilentlyContinue';
 $FSxID = '${params.fsxId}'
 $FSxRegion = '${params.region}'
 $apiEndpoint = '${params.apiEndpoint}'
-Write-output "Getting LUN details for FSxID: $FSxID, FSxRegion: $FSxRegion"
+Write-Information "Getting LUN details for FSxID: $FSxID, FSxRegion: $FSxRegion"
 Stop-Transcript | Out-Null
 ${ontapRestRequest}
 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
@@ -610,7 +610,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
     $apiBody = '${params.apiBody}'
-    Write-Output "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
+    Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     Stop-Transcript | Out-Null
     ${ontapRestRequest}
 
@@ -672,17 +672,17 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
             # Get the specific cluster node
             $node = Get-ClusterNode -Name $NodeName
             
-            Write-Output "Testing connection to node $NodeName"
+            Write-Information "Testing connection to node $NodeName"
             # Check if the node is "Up" and Test-Connection succeeds
             if ($node.State -eq "Up" -and (Test-Connection -ComputerName $NodeName -Count 1 -Quiet)) {
                 $result = @{ status = 'success' }
             } else {
                 $result = @{ status = 'failed' }
-                Write-Output "Failed to connect to node $NodeName"
+                Write-Information "Failed to connect to node $NodeName"
             }
         } catch {
             # Handle any errors that occur
-            Write-Output "Error occurred while checking node status: $_.Exception.Message"
+            Write-Error "Error occurred while checking node status: $_.Exception.Message"
             $result = @{ status = 'failed'; error = $_.Exception.Message }
         } finally {
             Stop-Transcript | Out-Null
@@ -710,7 +710,7 @@ Function Move-AllClusterGroups {
         $clusterGroups = Get-ClusterGroup
         
         # Iterate over each cluster group
-        Write-Output "Moving cluster groups to node $TargetNodeName"
+        Write-Information "Moving cluster groups to node $TargetNodeName"
         $clusterGroups | ForEach-Object {
             if ($_.Name -match "SQL Server") {
                 $clusterGroupName = $_.Name
@@ -727,16 +727,16 @@ Function Move-AllClusterGroups {
                     # Update status and error in case of failure
                     $groupResult.status = 'failed'
                     $groupResult.error = $_.Exception.Message
-                    Write-Output "Error occurred while moving cluster group $clusterGroupName: $_.Exception.Message"
+                    Write-Error "Error occurred while moving cluster group $clusterGroupName: $_.Exception.Message"
                 }
-                Write-Output "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
+                Write-Information "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
                 # Add group result to result array
                 $result += $groupResult
             }
         }
     } catch {
         # Handle any errors that occur
-        Write-Output "Error occurred while moving cluster groups: $_.Exception.Message"
+        Write-Error "Error occurred while moving cluster groups: $_.Exception.Message"
         $result = @(@{ status = 'failed'; error = $_.Exception.Message })
     } finally {
         Stop-Transcript | Out-Null
@@ -756,7 +756,7 @@ const GET_CLUSTER_NODE_NAMES = () => `
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
     @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
-    Write-output "Cluster nodes: $clusterNodes with owner node: $ownerNode"
+    Write-Information "Cluster nodes: $clusterNodes with owner node: $ownerNode"
     Stop-Transcript | Out-Null
 
 `;

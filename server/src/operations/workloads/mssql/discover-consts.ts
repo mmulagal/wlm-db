@@ -489,15 +489,15 @@ const CLUSTER_NETWORK_IP_INFO_PS1 = [
   $clusterNetworkIps = $null
   
   try {
-    Write-output "Discovering cluster network IPs"
+    Write-Information "Discovering cluster network IPs"
     $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
       $responseObject['clusterNetworkIps'] = $clusterNetworkIps
-      Write-output "Cluster network IPs: $clusterNetworkIps"
+      Write-Information "Cluster network IPs: $clusterNetworkIps"
     } else {
-      Write-output "No running clusters found"
+      Write-Information "No running clusters found"
       $responseObject['clusterNetworkIps'] = @()
     }
   } catch {
