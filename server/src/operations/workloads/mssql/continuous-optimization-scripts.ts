@@ -103,7 +103,6 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             return $responseObject
         }
     
-        ${ontapRestRequest}
         Function Get-LunFromSerialNumber($responseObject) {
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
     
@@ -174,14 +173,23 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceRecord.name)}
         }
-        ${slqcmdExecutionTemplate}
+
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
         $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
-        $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
 
-        if([string]::IsNullOrEmpty($combinedResponse)) {
-            throw "No user databases found."
+         if(([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") -and ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL")) { 
+            throw "Unable to fetch details of user databases and tempdb"
         }
+        elseif([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") {
+            $combinedResponse = ($queryResponseForTempDb | ConvertFrom-Json) | ConvertTo-Json
+        }
+        elseif ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL") {
+            $combinedResponse = ($queryResponse | ConvertFrom-Json) | ConvertTo-Json
+        }
+        else {
+            $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
+        }
+        
         $responseObject = Get-SerialNumberOfWinVolumes $combinedResponse
         $responseObject = Get-LunFromSerialNumber $responseObject
        
@@ -230,7 +238,6 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
         $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
     }
 
-    ${slqcmdExecutionTemplate}
     
     if($sqlAuthEnabled) {
         ${readSsmParameter(instance)}
@@ -367,6 +374,11 @@ function Test-IscsiSessions {
 
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     `#Get Storage Configuration Assessment
+
+    ${slqcmdExecutionTemplate}
+
+    
+
     $DriftAssessmentData = @{}
     $DriftAssessmentData['errors'] = @{}
     $sqlInstance = "${instanceRecord.name}"
@@ -385,9 +397,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
     }
 
-    $DriftAssessmentData['filesystemId'] = $FSxID
-    
     ${ontapRestRequest}
+
+    $DriftAssessmentData['filesystemId'] = $FSxID
 
 
     $APIEndpoint = '/storage/volumes'
