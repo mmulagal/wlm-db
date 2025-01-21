@@ -55,6 +55,10 @@ import {
     calculateRssConfigDrift,
     managedHostsRssConfigAssessment
 } from './continuous-optimization/rssConfig-assessment-operations';
+import {
+    calculateMaxDOPDrift,
+    managedHostsMaxDOPAssessment
+} from './continuous-optimization/maxdop-assessment-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -66,7 +70,8 @@ async function initiateComputeLicenseAssessmentCollection(
     databaseHostId: string,
     resourceName: string,
     jobId: string,
-    fields: string[]
+    fields: string[],
+    databaseInstanceId?: string
 ) {
     logger.info('Initiate compute/license/host-os-patch assessment collection', {
         accountId,
@@ -75,7 +80,8 @@ async function initiateComputeLicenseAssessmentCollection(
         databaseHostId,
         resourceName,
         jobId,
-        fields
+        fields,
+        databaseInstanceId
     });
 
     const [{ metadata, cloud_provider_account_id: awsAccountId, resource_id: resourceId }] = await listResources(
@@ -99,6 +105,7 @@ async function initiateComputeLicenseAssessmentCollection(
         let computeAssessment;
         let hostOsPatchAssessment;
         let rssConfigAssessment;
+        let maxDOPAssessment;
         if (fields?.includes(AssessmentCategories.LICENSE)) {
             licenseAssessment = await managedHostsLicenseAssessment(
                 accountId,
@@ -142,7 +149,33 @@ async function initiateComputeLicenseAssessmentCollection(
                 jobId
             );
         }
-
+        if (fields?.includes(AssessmentCategories.MAXDOP)) {
+            // This will run instance level maxDOP assessment
+            maxDOPAssessment = await managedHostsMaxDOPAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName,
+                databaseHostId,
+                databaseInstanceId as string,
+                jobId
+            );
+            if (!isEmpty(maxDOPAssessment)) {
+                await createDatabaseInstanceConfigData([
+                    {
+                        account_id: accountId,
+                        credentials_id: credentialsId,
+                        region,
+                        resource_id: databaseHostId,
+                        database_instance_id: databaseInstanceId as string,
+                        creation_time: new Date(Date.now()),
+                        config_data_type: AssessmentCategories.MAXDOP,
+                        config_data: maxDOPAssessment
+                    }
+                ]);
+            }
+        }
         if (
             !isEmpty(licenseAssessment) ||
             !isEmpty(computeAssessment) ||
@@ -297,7 +330,7 @@ async function driftAssessmentDataCollection(
         fields
     });
 
-    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE];
+    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE, AssessmentCategories.MAXDOP];
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -307,6 +340,7 @@ async function driftAssessmentDataCollection(
     const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
     const shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
     const shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+    const shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
     const shouldRunHostOsPatchAssessment = fieldsValues?.includes(
         AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
     );
@@ -328,7 +362,8 @@ async function driftAssessmentDataCollection(
         shouldRunComputeAssessment ||
         shouldRunLicenseAssessment ||
         shouldRunHostOsPatchAssessment ||
-        shouldRunRssConfigAssessment
+        shouldRunRssConfigAssessment ||
+        shouldRunMAXDOPAssessment
     ) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
@@ -337,7 +372,8 @@ async function driftAssessmentDataCollection(
             databaseHostId,
             databaseInstanceRecord.resourceName,
             jobId,
-            fieldsValues
+            fieldsValues,
+            databaseInstanceRecord.id
         );
     }
 }
@@ -594,6 +630,7 @@ async function hostLevelDriftData(
     const shouldCalculateRssConfigAssessment = fieldsValues?.includes(
         AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
     );
+
     const [computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse] =
         await Promise.all([
             shouldCalculateComputeAssessment
@@ -635,6 +672,8 @@ async function fetchDriftAssessment(
     let shouldCalculateLicenseAssessment = false;
     let shouldCalculateHostOsPatchAssessment = false;
     let shouldCalculateRssConfigAssessment = false;
+    let shouldCalculateMaxDOPAssessment = false;
+
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
@@ -647,21 +686,27 @@ async function fetchDriftAssessment(
         shouldCalculateRssConfigAssessment = fieldsValues?.includes(
             AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
         );
+        shouldCalculateMaxDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
     } else {
         shouldCalculateStorageAssessment = true;
         shouldCalculateComputeAssessment = true;
         shouldCalculateLicenseAssessment = true;
         shouldCalculateHostOsPatchAssessment = true;
         shouldCalculateRssConfigAssessment = true;
+        shouldCalculateMaxDOPAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
 
     const [
         storageAssessmentResponse,
+        maxDOPResponse,
         { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse }
     ] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateMaxDOPAssessment
+            ? calculateMaxDOPDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({}),
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
@@ -769,6 +814,11 @@ async function fetchDriftAssessment(
     if (!isEmpty(rssConfigResponse)) {
         driftAssessmentData.rssConfig = rssConfigResponse as RssConfigDriftResponseType;
     }
+
+    if (!isEmpty(maxDOPResponse)) {
+        driftAssessmentData.maxDOP = maxDOPResponse as ParameterDriftResponseType; // check this type
+    }
+
     return driftAssessmentData;
 }
 
@@ -818,6 +868,7 @@ async function fetchDriftAssessmentPerHost(
     let licenseAssessmentResponse: LicenseDriftResponseType;
     let hostOsPatchAssessmentResponse: HostOsPatchDriftResponseType;
     let hostRssConfigAssessmentResponse: RssConfigDriftResponseType;
+
     const isHostLevelMetrics =
         isEmpty(fieldsList) ||
         fieldsList?.includes(AssessmentCategories.COMPUTE) ||
@@ -868,23 +919,16 @@ async function fetchDriftAssessmentPerHost(
                 managedInstance;
 
             try {
-                let instanceFieldsToQuery = [];
-                if (isEmpty(fieldsList)) {
-                    instanceFieldsToQuery = [AssessmentCategories.STORAGE];
-                } else if (fieldsList?.includes(AssessmentCategories.STORAGE)) {
-                    instanceFieldsToQuery.push(AssessmentCategories.STORAGE);
-                }
+                const instanceFieldsToQuery = [AssessmentCategories.STORAGE, AssessmentCategories.MAXDOP];
 
-                const driftAssessment = !isEmpty(instanceFieldsToQuery)
-                    ? await fetchDriftAssessment(
-                          accountId,
-                          credentialsId,
-                          region,
-                          databaseHostId,
-                          databaseInstanceId,
-                          instanceFieldsToQuery.join(',')
-                      )
-                    : {};
+                const driftAssessment = await fetchDriftAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    instanceFieldsToQuery.join(',')
+                );
 
                 if (isHostLevelMetrics) {
                     if (!isEmpty(computeAssessmentResponse)) {

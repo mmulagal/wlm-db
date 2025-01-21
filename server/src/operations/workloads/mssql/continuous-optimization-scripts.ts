@@ -802,6 +802,44 @@ const GET_RSS_CONFIG_DETAILS = () => `
     $jsonResult = $result | ConvertTo-Json -Compress
     Write-Output $jsonResult
 `;
+
+const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
+    # Get vCPU and MAXDOP Details
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+
+ 
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+         
+    }
+
+    ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+
+    $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+    $maxDopResult =  Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName" 
+
+    # Parse the result to extract the run_value
+    $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
+        $_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)' | Out-Null
+        $matches[4]
+    }
+
+    # Combine the results
+    $result = [PSCustomObject]@{
+        vcpuCount = $vcpus
+        maxDOP = $maxDop
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -810,5 +848,6 @@ export {
     RESCAN_EXTEND_LUN,
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
-    GET_RSS_CONFIG_DETAILS
+    GET_RSS_CONFIG_DETAILS,
+    GET_VCPU_AND_MAXDOP_DETAILS
 };

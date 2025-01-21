@@ -165,7 +165,8 @@ const DriftAssessmentResponse = Type.Object({
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
-    rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse]))
+    rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
+    maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
