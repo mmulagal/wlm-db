@@ -245,6 +245,11 @@ Resources:
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
+                        # /home/ec2-user/cfn/pgvector.zip:
+                        #     source: {{{ PGSQLPackages }}}
+                        #     mode: '000755'
+                        #     owner: ec2-user
+                        #     group: ec2-user
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-change-to-sudo-user:
@@ -278,6 +283,9 @@ Resources:
                         g-unpack-fsx-certificates:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
                             waitAfterCompletion: 0
+                        # h-unpack-pgvector:
+                        #     command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn
+                        #     waitAfterCompletion: 0
                 Configure:
                     commands:
                         a-configure-ontap:
