@@ -672,7 +672,7 @@ Write-Output $jsonResult
 `;
 
 const CHECK_NODE_STATUS = (nodeName: string) => `
-    Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     #Check Node Status
     Function Check-NodeStatus {
         param (
@@ -708,7 +708,7 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
 
 const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
 #Move Cluster Groups
-Start-Transcript -Path } ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
+Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
 Function Move-AllClusterGroups {
     param (
         [Parameter(Mandatory = $true)]
@@ -763,7 +763,7 @@ Write-Output $jsonResult
 
 const GET_CLUSTER_NODE_NAMES = () => `
     #Get cluster node names 
-    Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;

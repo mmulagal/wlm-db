@@ -481,7 +481,7 @@ const HOST_AND_SQL_INFO_PS1 = [
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
-  Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+  Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
   
   $ErrorActionPreference = "Stop"
   $responseObject = @{}
