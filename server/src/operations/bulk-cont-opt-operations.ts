@@ -37,14 +37,21 @@ async function bulkOptimization(
         }))
     };
 
+    const jobDescription =
+        type === OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM
+            ? 'Optimize operating system configuration'
+            : type === OPTIMIZATION_CATEGORIES.STORAGE_TIER
+            ? 'Optimize storage tier'
+            : 'Optimize storage sizing';
+
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
         accountId,
         JOBTYPE.OPTIMIZATION,
-        'Optimize operating system configuration',
-        'Optimize operating system configuration',
+        jobDescription,
+        jobDescription,
         undefined,
         jobMetaData
     );
