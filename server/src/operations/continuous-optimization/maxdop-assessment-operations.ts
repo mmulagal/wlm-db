@@ -44,7 +44,7 @@ async function calculateMaxDOPDrift(
         );
 
         logger.debug('Persisted max DOP configuration data from DB', persistedConfigurationData);
-        const maxDOP = persistedConfigurationData.config_data as unknown as MaxDOPAssesment;
+        const maxDOP = persistedConfigurationData?.config_data as unknown as MaxDOPAssesment;
 
         let maxDOPAssessment;
 
