@@ -8,6 +8,15 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
+interface PerHostJobMetadata {
+    optimizationType: string;
+    resourceId: string;
+    sqlInstances: Array<string>;
+}
+interface JobMetadata {
+    hostsToOptimize: Array<PerHostJobMetadata>;
+}
+
 function getMatchingAssessmentStatus(finding: string) {
     logger.info('Getting matching assessment status for finding:', finding);
     switch (finding) {
@@ -31,7 +40,8 @@ async function handleOptimizeJobCreation(
     jobType: string,
     jobName: string,
     jobDescription: string,
-    parentJobId?: string
+    parentJobId?: string,
+    jobMetaData?: JobMetadata
 ) {
     updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
@@ -65,11 +75,12 @@ async function handleOptimizeJobCreation(
         name: jobName,
         startTime: Date.now(),
         description: jobDescription,
-        ...(parentJobId && { parentJobId })
+        ...(parentJobId && { parentJobId }),
+        ...(jobMetaData && { metadata: jobMetaData })
     });
     logger.debug(`Job created with id ${id}`);
 
     return id;
 }
 
-export { getMatchingAssessmentStatus, handleOptimizeJobCreation };
+export { getMatchingAssessmentStatus, handleOptimizeJobCreation, JobMetadata };

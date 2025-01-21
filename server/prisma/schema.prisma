@@ -106,6 +106,7 @@ model job {
   parent_job_id             String?   @db.VarChar(40)
   initiator                 String    @db.VarChar(80)@default("SYSTEM")
   last_update_time          DateTime? @updatedAt @db.DateTime(3)
+  metadata                  Json?     @default("{}")
 
   @@index([id], map: "k_wlmdb_job_id")
   @@index([account_id], map: "k_wlmdb_job_account_id")

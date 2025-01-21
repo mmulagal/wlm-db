@@ -71,6 +71,14 @@ enum OptimizeOperatingSystemParams {
     MPIO_ENABLE = 'mpio-enabled'
 }
 
+enum OptimizeStorageTierParams {
+    STORAGE_TIER = 'storage-tier'
+}
+
+enum OptimizeComputeParams {
+    COMPUTE = 'compute'
+}
+
 enum OPTIMIZE_SIZING_CONFIGS {
     HEADROOM = 'headroom',
     LOG_DRIVE_SIZE = 'log-drive-size',
@@ -183,5 +191,7 @@ export {
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    NUMASTATIC
+    NUMASTATIC,
+    OptimizeStorageTierParams,
+    OptimizeComputeParams
 };
