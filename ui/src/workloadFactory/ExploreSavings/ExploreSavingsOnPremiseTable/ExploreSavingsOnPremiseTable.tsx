@@ -25,7 +25,7 @@ import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../..
 import { compressSync } from 'fflate';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
-import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { JOB_MONITORING_STATUS, SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 
 import { useOnPremData } from './useOnPremData';
 
@@ -202,9 +202,9 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '345px',
+            width: '325px',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.databaseHostName;
+                const name = rowData?.resourceName;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -216,7 +216,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'deploymentModel',
             id: '2',
-            width: '345px',
+            width: '325px',
             filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -230,7 +230,10 @@ const ExploreSavingsOnPremiseTable = () => {
             width: '345px',
             filterOptions: getFilterOptions(tableData, 'totalInstance'),
             renderCell: (cellData: string, rowData: any) => {
-                const instanceNames = rowData?.sqlServerInstances;
+                const instanceNames =
+                    rowData?.sqlInstanceDetails?.map(
+                        (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
+                    ) || [];
                 const truncatedItems = getTruncatedItems(instanceNames);
 
                 return (
@@ -271,13 +274,13 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: 'OnPrem nodes',
-            accessor: 'onPremNode',
+            accessor: 'onPremisesNodes',
             id: '5',
-            width: '347px',
+            width: '387px',
             isSortable: true,
             accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
-                return 'xxx';
+                return cellData.join(',') || GENERAL.NOT_AVAILABLE;
             }
         },
 

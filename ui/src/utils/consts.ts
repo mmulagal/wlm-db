@@ -766,3 +766,8 @@ export const GW_TOOLTIP_KEYS_MAPPING: any = {
     receiveQueues: 'Receive Queues',
     tcpOffloading: 'TCP Offloading Features'
 };
+
+export const NETWORK_PERFORMANCE_OPTIONS: any = {
+    'Up to 10 GiB': 'upTo10',
+    'Above 10 GiB': 'above10'
+};

@@ -36,6 +36,7 @@ import {
     EBS_PROTECTED_OPTIONS,
     GIB_IN_BYTE,
     INSTANCE_API_FIELDS,
+    NETWORK_PERFORMANCE_OPTIONS,
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY
 } from '../../../utils/consts';
@@ -132,60 +133,82 @@ const SavingsCalculatorApi = () => {
             };
         }
 
+        let primaryData: any = {
+            storage: storagePerformance?.primaryData?.totalStorageAmount
+                ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE
+                : 0,
+            iops: storagePerformance?.primaryData?.iops,
+            throughput: storagePerformance?.primaryData?.throughput
+        };
+        let secondaryData: any = {
+            storage: storagePerformance?.secondaryData?.totalStorageAmount
+                ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
+                : 0,
+            iops: storagePerformance?.secondaryData?.iops,
+            throughput: storagePerformance?.secondaryData?.throughput
+        };
+
+        if (storagePerformance) {
+            let primaryNodes = 0;
+            let secondaryNodes = 0;
+            if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
+                primaryNodes = selectedOnPremHostDetails?.sqlInstanceDetails?.filter(
+                    (instance: any) => !instance?.isReadReplica
+                ).length;
+                secondaryNodes = selectedOnPremHostDetails?.sqlInstanceDetails?.filter(
+                    (instance: any) => instance?.isReadReplica
+                ).length;
+            } else {
+                primaryNodes = selectedOnPremHostDetails?.sqlInstanceDetails?.length;
+            }
+
+            primaryData = {
+                ...primaryData,
+                storage: primaryData?.storage / primaryNodes,
+                iops: primaryData?.iops / primaryNodes,
+                throughput: primaryData?.throughput / primaryNodes
+            };
+
+            if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
+                secondaryData = {
+                    ...secondaryData,
+                    storage: secondaryData?.storage / secondaryNodes,
+                    iops: secondaryData?.iops / secondaryNodes,
+                    throughput: secondaryData?.throughput / secondaryNodes
+                };
+            }
+        }
+
         if (computeInformation) {
             let computeInfo: any = [];
             Object.keys(computeInformation).forEach(key => {
                 const value = computeInformation[key];
-                let perInst = selectedOnPremHostDetails?.sqlInstances?.find((inst: any) => inst?.sqlInstanceId === key);
-                computeInfo.push({
-                    sqlInstanceId: perInst?.sqlInstanceId,
-                    sqlInstanceName: key,
-                    noOfDatabases: perInst?.noOfDatabases,
-                    sqlEdition: perInst?.sqlEdition,
-                    noOfVcpusInUse: value?.noOfVcpusInUse,
-                    memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
-                    networkPerformance: value?.networkPerformance?.value
-                });
+                let perInst = selectedOnPremHostDetails?.sqlInstanceDetails?.find(
+                    (inst: any) => inst?.sqlInstanceName === key
+                );
+                let perInstanceNodeUsage: any = {};
+                if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG && perInst?.isReadReplica) {
+                    perInstanceNodeUsage = secondaryData;
+                } else {
+                    perInstanceNodeUsage = primaryData;
+                }
+                if (perInst) {
+                    computeInfo.push({
+                        sqlInstanceId: perInst?.sqlInstanceId,
+                        noOfVcpusInUse: value?.noOfVcpusInUse,
+                        memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
+                        networkPerformance: NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value] || 'upTo10',
+                        iops: perInstanceNodeUsage?.iops,
+                        throughput: perInstanceNodeUsage?.throughput
+                    });
+                }
             });
-            payload = {
-                ...payload,
-                sqlInstances: computeInfo
-            };
-        }
-
-        if (storagePerformance) {
-            let storagePerf: any = [];
-            storagePerf.push({
-                nodeType: 'primary',
-                dataIops: storagePerformance?.primaryData?.iops,
-                logIops: storagePerformance?.primaryLog?.iops,
-                dataTotalStorage: storagePerformance?.primaryData?.totalStorageAmount
-                    ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE
-                    : 0,
-                logTotalStorage: storagePerformance?.primaryLog?.totalStorageAmount
-                    ? Number(storagePerformance?.primaryLog?.totalStorageAmount) * GIB_IN_BYTE
-                    : 0,
-                dataThroughput: storagePerformance?.primaryData?.throughput,
-                logThroughput: storagePerformance?.primaryLog?.throughput
-            });
-            storagePerf.push({
-                nodeType: 'secondary',
-                dataIops: storagePerformance?.secondaryData?.iops,
-                logIops: storagePerformance?.secondaryLog?.iops,
-                dataTotalStorage: storagePerformance?.secondaryData?.totalStorageAmount
-                    ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
-                    : 0,
-                logTotalStorage: storagePerformance?.secondaryLog?.totalStorageAmount
-                    ? Number(storagePerformance?.secondaryLog?.totalStorageAmount) * GIB_IN_BYTE
-                    : 0,
-                dataThroughput: storagePerformance?.secondaryData?.throughput,
-                logThroughput: storagePerformance?.secondaryLog?.throughput
-            });
-
-            payload = {
-                ...payload,
-                nodeUsage: storagePerf
-            };
+            if (computeInfo) {
+                payload = {
+                    ...payload,
+                    sqlInstanceData: computeInfo
+                };
+            }
         }
 
         return payload;
