@@ -1984,7 +1984,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"adapters\":[{\"adapterName\":\"Ethernet 3\",\"rssEnabled\":true,\"rssProfile\":\"NUMAStatic\",\"baseProcessorNumber\":0,\"numberOfReceiveQueues\":4}],\"vpuCount\":4,\"tcpOffloadState\":\"Disabled\"}\r\n",
+        "StandardOutputContent": "{\"adapters\":[{\"adapterName\":\"Ethernet 3\",\"rssEnabled\":true,\"rssProfile\":\"NUMAStatic\",\"baseProcessorNumber\":0,\"numberOfReceiveQueues\":4}],\"vcpuCount\":4,\"tcpOffloadState\":\"Disabled\"}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
