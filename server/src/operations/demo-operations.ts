@@ -292,7 +292,7 @@ async function createDeploymentMockDataInDB(
 
     await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
 
-    const data = await createJobMockData(
+    const jobData = await createJobMockData(
         accountId,
         resourceName,
         stackName,
@@ -302,7 +302,7 @@ async function createDeploymentMockDataInDB(
         region
     );
 
-    await createJobs(accountId, data);
+    await createJobs(accountId, jobData);
 
     if (createSandbox) {
         const sandboxJobsData = await createSandboxJobMockData(

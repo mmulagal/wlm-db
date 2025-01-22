@@ -194,7 +194,7 @@ const reportData = {
                 hostId: '78FE1E42-0F35-F588-4AD6-1FBEC1365195'
             }
         ],
-        windowsClusterName: 'ONPREMFCI',
+        windowsSystemName: 'ONPREMFCI',
         belongsToCluster: true
     }
 };

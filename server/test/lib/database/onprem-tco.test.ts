@@ -37,7 +37,7 @@ it('should create on-prem database resources', async () => {
                 ],
                 belongsToCluster: true,
                 clusterNodeNames: ['WLMDBFCI1', 'WLMDBFCI2'],
-                windowsClusterName: { Name: 'ONPREMFCI' }
+                windowsSystemName: { Name: 'ONPREMFCI' }
             },
             database_instances_data: [
                 {
@@ -238,7 +238,7 @@ it('should list on-prem database resources', async () => {
                 ],
                 belongsToCluster: true,
                 clusterNodeNames: ['WLMDBFCI1', 'WLMDBFCI2'],
-                windowsClusterName: { Name: 'ONPREMFCI' }
+                windowsSystemName: { Name: 'ONPREMFCI' }
             }
         }
     });
