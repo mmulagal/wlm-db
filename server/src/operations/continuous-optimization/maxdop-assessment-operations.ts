@@ -95,7 +95,7 @@ async function calculateMaxDOPDrift(
             recommended: recommendedMaxDOP,
             severity: SEVERITY.CRITICAL,
             recommendation: recommendationMessage,
-            current,
+            current: current.toString(),
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
         };
         return maxDOPResponse;
