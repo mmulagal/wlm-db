@@ -1,7 +1,12 @@
 import { Type } from '@sinclair/typebox';
 import { RouteTags } from '../../utils/consts';
-import { OnPremDatabaseResourcesResponse, UploadMetricsFileBody } from '../types/onprem-tco.types';
-import { nextTokenQueryString } from '../types/generic.types';
+import {
+    OnPremDatabaseResourcesResponse,
+    OnPremTcoExploreSavingsRequestBody,
+    OnPremTcoExploreSavingsResponse,
+    UploadMetricsFileBody
+} from '../types/onprem-tco.types';
+import { NextTokenQueryString } from '../types/generic.types';
 
 const GeneratePayloadInternal = {
     tags: [RouteTags.ONPREM_TCO],
@@ -66,11 +71,21 @@ const UploadOnPremTcoDataSchema = {
 const ListOnPremDatabaseResourcesSchema = {
     tags: [RouteTags.ONPREM_TCO],
     summary: 'Fetch all the OnPremises database resources for a given account',
-    querystring: nextTokenQueryString,
+    querystring: NextTokenQueryString,
     description:
         'Fetch all the OnPremises database resources for a given account. A resource is a set of database instances in a database host or cluster of a specific deployment type.',
     response: {
         200: OnPremDatabaseResourcesResponse
+    }
+};
+
+const OnpremTcoExploreSavingsSchema = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Explore potential savings for OnPremises workloads',
+    description: 'Explore potential savings for OnPremises workloads',
+    body: OnPremTcoExploreSavingsRequestBody,
+    response: {
+        202: OnPremTcoExploreSavingsResponse
     }
 };
 
@@ -79,5 +94,6 @@ export {
     DeleteReportInternal,
     DownloadOnPremTcoCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
-    ListOnPremDatabaseResourcesSchema
+    ListOnPremDatabaseResourcesSchema,
+    OnpremTcoExploreSavingsSchema
 };

@@ -1,24 +1,93 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import {
+    StorageSavingsCalculationsMetricsResponse,
+    StorageSavingsRequestBody,
+    StorageSavingsResponse
+} from './storage-savings.types';
+import { NETWORK_PERF } from '../../utils/continous-optimization-consts';
 
 const UploadMetricsFileBody = Type.Object({
     fileName: Type.String(),
     fileContent: Type.String()
 });
 
-const OnPremDatabaseResourceParams = Type.Object({
+const SqlInstanceDetailsRequestObject = Type.Object({
+    sqlInstanceId: Type.String(),
+    noOfVcpusInUse: Type.Number(),
+    memory: Type.Number(),
+    networkPerformance: Type.String({ enum: [NETWORK_PERF.UP_TO_10, NETWORK_PERF.ABOVE_10] }),
+    totalIops: Type.Optional(Type.Number()),
+    totalThroughput: Type.Optional(Type.Number())
+});
+
+type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;
+
+const SqlInstanceDetailsResponseObject = Type.Composite([
+    SqlInstanceDetailsRequestObject,
+    Type.Object({
+        sqlInstanceName: Type.String(),
+        noOfDatabases: Type.Number(),
+        sqlEdition: Type.String(),
+        sqlVersion: Type.String(),
+        totalStorage: Type.Optional(Type.Number()),
+        isReadReplica: Type.Optional(Type.Boolean())
+    })
+]);
+
+const OnPremDatabaseResources = Type.Object({
     resourceId: Type.String(),
     resourceName: Type.String(),
     deploymentModel: Type.String(),
-    sqlServerInstances: Type.Array(Type.String()),
+    sqlInstanceDetails: Type.Array(SqlInstanceDetailsResponseObject),
     onPremisesNodes: Type.Array(Type.String())
 });
 
-type OnPremDatabaseResourcesParamsType = Static<typeof OnPremDatabaseResourceParams>;
+type OnPremDatabaseResourcesType = Static<typeof OnPremDatabaseResources>;
+
+const OnPremTcoExploreSavingsRequestBody = Type.Object({
+    regionCode: Type.String(),
+    sqlInstanceData: Type.Optional(Type.Array(SqlInstanceDetailsRequestObject)),
+    snapshotInfo: Type.Optional(StorageSavingsRequestBody)
+});
+
+const OnPremTcoResourceObject = Type.Object({
+    resourceId: Type.String(),
+    resourceName: Type.String(),
+    deploymentModel: Type.String()
+});
+
+const OnPremTcoExploreSavingsResponse = Type.Composite([
+    OnPremTcoResourceObject,
+    Type.Object({
+        region: Type.String(),
+        regionCode: Type.String(),
+        calculations: StorageSavingsCalculationsMetricsResponse,
+        storageSavings: StorageSavingsResponse
+    })
+]);
+
+const OnPremDatabaseResourceObject = Type.Composite([
+    OnPremTcoResourceObject,
+    Type.Object({
+        sqlServerInstances: Type.Array(SqlInstanceDetailsResponseObject),
+        onPremisesNodes: Type.Array(Type.String())
+    })
+]);
+
+type OnPremDatabaseResourcesObjectType = Static<typeof OnPremDatabaseResourceObject>;
 
 const OnPremDatabaseResourcesResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(OnPremDatabaseResourceParams),
+    items: Type.Array(OnPremDatabaseResourceObject),
     nextToken: Type.Optional(Type.String())
 });
 
-export { UploadMetricsFileBody, OnPremDatabaseResourcesResponse, OnPremDatabaseResourcesParamsType };
+export {
+    UploadMetricsFileBody,
+    OnPremDatabaseResourcesResponse,
+    OnPremDatabaseResourcesType,
+    OnPremTcoExploreSavingsRequestBody,
+    OnPremTcoExploreSavingsResponse,
+    SqlInstanceDetailsRequestObjectType,
+    OnPremDatabaseResourcesObjectType
+};

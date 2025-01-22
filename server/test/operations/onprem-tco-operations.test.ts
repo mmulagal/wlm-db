@@ -8,7 +8,7 @@ import {
     groupSqlServerInstancesByDeploymentType,
     saveReportInWlmdbDatabase
 } from '../../src/operations/onprem-tco-operations';
-import { ACCOUNT_ID, MSSQL } from '../../src/utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../src/utils/consts';
 import { prisma } from '../../src/utils/prisma-utils';
 import '../simulator/scopes/aws/ec2-scope';
 
@@ -212,7 +212,7 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should derive the correct instance type based on host config', async () => {
-        const instanceType = await deriveHostConfigBasedInstanceType(reportData.windowsConfig);
+        const instanceType = await deriveHostConfigBasedInstanceType(reportData.windowsConfig, DEFAULT_AWS_REGION);
         expect(instanceType).toEqual('m2.xlarge');
     });
 
@@ -282,6 +282,7 @@ describe('onPrem TCO operations', () => {
     it('should derive the correct instance requirements based on SQL instance details', () => {
         const expectedRequirements = {
             ArchitectureTypes: ['x86_64'],
+            InstanceGenerations: ['current'],
             VirtualizationTypes: ['hvm'],
             InstanceRequirements: {
                 VCpuCount: {
@@ -292,10 +293,10 @@ describe('onPrem TCO operations', () => {
                     Min: 512
                 },
                 CpuManufacturers: ['intel', 'amazon-web-services'],
-                AllowedInstanceTypes: ['m*', 'c*', 'r*'],
-                NetworkBandwidthGbps: {
-                    Max: 10
-                }
+                AllowedInstanceTypes: ['m*', 'c*', 'r*']
+                // NetworkBandwidthGbps: {
+                //     Max: 10
+                // }
             }
         };
 

@@ -549,11 +549,45 @@ ForEach ($instance in $finalInstancesList) {
         }
         { $instanceResults['isHadrEnabled'] -eq 1 } {
             $instanceResults['deploymentType'] = 'AOAG'
-            break
+             $isReadReplicaQuery = "SET NOCOUNT ON;SELECT 
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM sys.dm_hadr_availability_replica_states ars
+                    WHERE ars.role_desc = 'SECONDARY' AND ars.is_local = 1
+                ) 
+                THEN 'True'
+                ELSE 'False'
+            END
+        "
+        $instanceResults["isReadReplica"] = Invoke-SQLQuery -Query $isReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+        $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
+        $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        $aoagReadReplicaQuery = "SET NOCOUNT ON; SELECT  
+        d.name AS database_name,
+        drs.replica_id,
+        ar.replica_server_name,
+        drs.synchronization_state_desc,
+        ars.role_desc AS replica_role
+        FROM 
+            sys.dm_hadr_database_replica_states drs
+        JOIN 
+            sys.databases d ON d.database_id = drs.database_id
+        JOIN 
+            sys.dm_hadr_availability_replica_states ars ON drs.replica_id = ars.replica_id
+        JOIN 
+            sys.availability_replicas ar ON ars.replica_id = ar.replica_id
+        WHERE 
+            ars.role_desc = 'SECONDARY' AND drs.is_local = 1
+        ORDER BY 
+            d.name FOR JSON PATH;  
+        "
+        $instanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        break
         }
         default {
             $instanceResults['deploymentType'] = 'standalone'
-            $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') FOR JSON PATH; "
+            $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
             $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
         }
     }
