@@ -986,7 +986,7 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-rssConfigAssessmentDataCommand'
     })
     .resolves(getCommandInvocationResponse.rssConfigAssessmentDataCommandResponse)
-    .on(checkRunningStatusCommand, {
+    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand'
     })
     .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse);
