@@ -25,7 +25,7 @@ import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../..
 import { compressSync } from 'fflate';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
-import { JOB_MONITORING_STATUS, SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 
 import { useOnPremData } from './useOnPremData';
 
@@ -121,21 +121,28 @@ const ExploreSavingsOnPremiseTable = () => {
                                 fileName: selectedFile.name
                             }
                         });
-                        const jobInterval = setInterval(() => {
-                            getJobDetailApi(result.data.jobId).then((jobRes: any) => {
-                                const status = jobRes?.data?.status;
+                        if (result && !result?.error) {
+                            const jobInterval = setInterval(() => {
+                                getJobDetailApi({ id: result.data.jobId }).then((jobRes: any) => {
+                                    const status = jobRes?.data?.status;
 
-                                if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                    fetchOnPremData(true);
-                                    setIsUploadLoading(false);
+                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        fetchOnPremData(true);
+                                        setIsUploadLoading(false);
 
-                                    clearInterval(jobInterval);
-                                } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                    setIsUploadLoading(false);
-                                    clearInterval(jobInterval);
-                                }
-                            });
-                        }, 5000);
+                                        clearInterval(jobInterval);
+                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                        if (onPremiseData) {
+                                            setTableData(onPremiseData);
+                                        }
+                                        setIsUploadLoading(false);
+                                        clearInterval(jobInterval);
+                                    }
+                                });
+                            }, 5000);
+                        } else {
+                            setIsUploadLoading(false);
+                        }
                     } else {
                         dispatch(
                             addNotification({
