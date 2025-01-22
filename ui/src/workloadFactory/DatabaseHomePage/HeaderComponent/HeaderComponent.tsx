@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
-import DatabaseHomePage from '../DatabaseHomePage';
+
 import {
     BlueXPListeners,
     DsBlueXpMenu,
@@ -93,6 +93,7 @@ import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
+import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 type Tab = {
     tab: string;
