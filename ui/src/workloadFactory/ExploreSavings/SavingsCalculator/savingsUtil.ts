@@ -327,7 +327,10 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceType}`,
-                          text: savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.' : ''
+                          text:
+                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                  : ''
                       },
                       {
                           label: 'SQL edition',
@@ -358,7 +361,10 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceType}`,
-                          text: savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.' : ''
+                          text:
+                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                  : ''
                       },
                       {
                           label: 'SQL edition',
@@ -396,7 +402,10 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceType}`,
-                          text: savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.' : ''
+                          text:
+                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                  : ''
                       },
                       {
                           label: 'SQL edition',
@@ -773,7 +782,10 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceType}`,
-                          text: savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.' : ''
+                          text:
+                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                  : ''
                       },
                       {
                           label: 'SQL edition',
@@ -804,7 +816,10 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceType}`,
-                          text: savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.' : ''
+                          text:
+                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                  : ''
                       },
                       {
                           label: 'SQL edition',
@@ -842,7 +857,10 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceType}`,
-                          text: savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.' : ''
+                          text:
+                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                  : ''
                       },
                       {
                           label: 'SQL edition',

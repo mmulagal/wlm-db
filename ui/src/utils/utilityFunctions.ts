@@ -284,9 +284,9 @@ export const errorMessagesToBlock = (errorMsg: string) => {
         if (errorMsg.includes(msg)) {
             return true;
         }
-    };
+    }
     return false;
-}
+};
 
 export const customErrorMessages = (inputString: string, endpoint: string) => {
     if (!inputString) {

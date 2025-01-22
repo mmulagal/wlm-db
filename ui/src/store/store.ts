@@ -24,7 +24,12 @@ import postgreFormSlice from './postgre/postgreFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
-import { customErrorMessages, errorMessagesToBlock, removeOldApisError, requiredFieldError } from '../utils/utilityFunctions';
+import {
+    customErrorMessages,
+    errorMessagesToBlock,
+    removeOldApisError,
+    requiredFieldError
+} from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';

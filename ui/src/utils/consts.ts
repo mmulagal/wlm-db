@@ -772,6 +772,4 @@ export const NETWORK_PERFORMANCE_OPTIONS: any = {
     'Above 10 GiB': 'above10'
 };
 
-export const ERR_MSG_TO_CHECK = [
-    'does not match schema definition.'
-];
+export const ERR_MSG_TO_CHECK = ['does not match schema definition.'];
