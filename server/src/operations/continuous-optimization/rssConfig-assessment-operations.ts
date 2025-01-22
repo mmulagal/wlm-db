@@ -146,19 +146,23 @@ async function runRssConfigAssessment(
         'Get RSS configuration details'
     );
     const parsedResponse = sqlResponseParsing(response);
-    const { adapters: rssConfigAdapters, vpuCount, tcpOffloadState } = parsedResponse;
+    const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;
 
-    const recommendedReceiveQueues = vpuCount > 8 ? 8 : vpuCount;
-
-    const rssAdapters = []; // Will contain adapters that are not optimized
+    const recommendedReceiveQueues = vcpuCount > 8 ? 8 : vcpuCount;
+    let isAtleastOneAdapterWithBaseProcessorNumber2 = false;
+    let rssAdapters = []; // Will contain adapters that are not optimized
     let rssConfigOptimizedStatus = AssessmentStatus.OPTIMIZED;
     for (const rssConfigAdapter of rssConfigAdapters) {
         const { adapterName, rssEnabled, rssProfile, baseProcessorNumber, numberOfReceiveQueues } = rssConfigAdapter;
+        const recommendedBaseProcessorNumber = vcpuCount >= 4 ? 2 : baseProcessorNumber;
+        if (baseProcessorNumber === 2) {
+            isAtleastOneAdapterWithBaseProcessorNumber2 = true;
+        }
         // Best Practices details here : https://jira.ngage.netapp.com/browse/DBS-3872
         if (
             !rssEnabled ||
             rssProfile !== NUMASTATIC ||
-            baseProcessorNumber !== 2 ||
+            baseProcessorNumber !== recommendedBaseProcessorNumber ||
             numberOfReceiveQueues !== recommendedReceiveQueues
         ) {
             rssAdapters.push({
@@ -171,6 +175,29 @@ async function runRssConfigAssessment(
         }
     }
 
+    const adaptersToRemove: string[] = [];
+    if (
+        vcpuCount >= 4 &&
+        rssAdapters.length > 0 &&
+        rssConfigAdapters.length > 1 &&
+        isAtleastOneAdapterWithBaseProcessorNumber2
+    ) {
+        // In case of multiple adapters, if atleast one adapter has baseProcessorNumber as 2, then remove all other adapters from the unoptimized list if properties other than baseProcessorNumber are set to best practices as not all the adapters need not be having baseProcessorNumber as 2
+        for (const adapter of rssAdapters) {
+            const { rssEnabled, rssProfile, numberOfReceiveQueues, baseProcessorNumber, adapterName } = adapter;
+            if (
+                rssEnabled &&
+                rssProfile === NUMASTATIC &&
+                numberOfReceiveQueues === recommendedReceiveQueues &&
+                baseProcessorNumber !== 2
+            ) {
+                adaptersToRemove.push(adapterName);
+            }
+        }
+    }
+
+    rssAdapters = rssAdapters.filter(adapter => !adaptersToRemove.includes(adapter.adapterName));
+
     if (rssAdapters.length > 0 || tcpOffloadState !== 'Disabled') {
         rssConfigOptimizedStatus = AssessmentStatus.NOT_OPTIMIZED;
     }
@@ -178,7 +205,7 @@ async function runRssConfigAssessment(
     if (rssConfigOptimizedStatus === AssessmentStatus.NOT_OPTIMIZED) {
         recommendedAdapterSettings = {
             recommendedRssProfile: NUMASTATIC,
-            recommendedBaseProcessorNumber: 2,
+            recommendedBaseProcessorNumber: vcpuCount >= 4 ? 2 : 0,
             recommendedReceiveQueues
         };
     }
