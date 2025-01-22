@@ -141,6 +141,9 @@ const ExploreSavingsOnPremiseTable = () => {
                                 });
                             }, 5000);
                         } else {
+                            if (onPremiseData) {
+                                setTableData(onPremiseData);
+                            }
                             setIsUploadLoading(false);
                         }
                     } else {
