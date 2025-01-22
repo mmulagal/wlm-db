@@ -11,7 +11,7 @@ const ComputeInformation = () => {
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            setInstanceData(selectedOnPremHostDetails?.sqlInstanceDetails || []);
+            setInstanceData(selectedOnPremHostDetails?.sqlServerInstances || []);
         }
     }, [selectedOnPremHostDetails]);
 

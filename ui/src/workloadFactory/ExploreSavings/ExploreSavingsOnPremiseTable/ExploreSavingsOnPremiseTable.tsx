@@ -228,7 +228,7 @@ const ExploreSavingsOnPremiseTable = () => {
             filterOptions: getFilterOptions(tableData, 'totalInstance'),
             renderCell: (cellData: string, rowData: any) => {
                 const instanceNames =
-                    rowData?.sqlInstanceDetails?.map(
+                    rowData?.sqlServerInstances?.map(
                         (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
                     ) || [];
                 const truncatedItems = getTruncatedItems(instanceNames);

@@ -5,7 +5,7 @@
         "resourceId": "8defd8fd845cda3f",
         "resourceName": "ONPREMFCI",
         "deploymentModel": "FCI",
-        "sqlInstanceDetails": [
+        "sqlServerInstances": [
           {
             "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
             "sqlInstanceName": "MSSQLSERVER",
@@ -57,7 +57,7 @@
         "resourceId": "8defd8fd845cda3f2",
         "resourceName": "ONPREMFCI2",
         "deploymentModel": "Standalone",
-        "sqlInstanceDetails": [
+        "sqlServerInstances": [
           {
             "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
             "sqlInstanceName": "MSSQLSERVER",
@@ -109,7 +109,7 @@
         "resourceId": "8defd8fd845cda3f3",
         "resourceName": "ONPREMFCI3",
         "deploymentModel": "AOAG",
-        "sqlInstanceDetails": [
+        "sqlServerInstances": [
           {
             "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
             "sqlInstanceName": "MSSQLSERVER",

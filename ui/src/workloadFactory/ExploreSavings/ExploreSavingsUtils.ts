@@ -126,10 +126,10 @@ export const setESInstanceOnPremData = (data: any, dispatch: any) => {
     dispatch(
         setSelectedOnPremHostDetails({
             ...data,
-            totalInstance: data?.sqlInstanceDetails?.length || 0,
+            totalInstance: data?.sqlServerInstances?.length || 0,
             recommendedInstance: {
                 serverInstallationMode: serverInstallationMode,
-                serverVersion: data?.sqlInstanceDetails?.[0]?.sqlVersion
+                serverVersion: data?.sqlServerInstances?.[0]?.sqlVersion
             }
         })
     );

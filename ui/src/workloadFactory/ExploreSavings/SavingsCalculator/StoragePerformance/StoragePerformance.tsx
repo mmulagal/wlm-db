@@ -23,7 +23,7 @@ const StoragePerformance = () => {
             totalIops: 0,
             totalThroughput: 0
         };
-        selectedOnPremHostDetails?.sqlInstanceDetails?.map((instance: any) => {
+        selectedOnPremHostDetails?.sqlServerInstances?.map((instance: any) => {
             if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
                 if (instance.isReadReplica) {
                     primaryData.totalStorage += Number(instance?.totalStorage || 0);

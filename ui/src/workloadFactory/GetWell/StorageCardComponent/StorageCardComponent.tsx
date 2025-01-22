@@ -168,12 +168,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                         </DsTypography>
                                     </div>
 
-                                    {secListObj && secListObj[index]?.value && (
+                                    {secListObj && (
                                         <>
                                             <div className={styles.seperator} />
                                             <div className={styles.secSubPart}>
                                                 <DsTypography variant="Regular_13">
-                                                    {`${secListObj[index]?.value}`}
+                                                    {`${secListObj[index]?.value}` || ' '}
                                                 </DsTypography>
                                             </div>
                                         </>

@@ -14,6 +14,7 @@ import {
     DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
+    ERR_MSG_TO_CHECK,
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
@@ -277,6 +278,15 @@ export const requiredFieldError = (inputString: string) => {
         return null;
     }
 };
+
+export const errorMessagesToBlock = (errorMsg: string) => {
+    for (const msg of ERR_MSG_TO_CHECK) {
+        if (errorMsg.includes(msg)) {
+            return true;
+        }
+    };
+    return false;
+}
 
 export const customErrorMessages = (inputString: string, endpoint: string) => {
     if (!inputString) {

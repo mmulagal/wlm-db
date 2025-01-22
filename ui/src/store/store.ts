@@ -24,7 +24,7 @@ import postgreFormSlice from './postgre/postgreFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
-import { customErrorMessages, removeOldApisError, requiredFieldError } from '../utils/utilityFunctions';
+import { customErrorMessages, errorMessagesToBlock, removeOldApisError, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
@@ -86,7 +86,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action?.meta?.arg?.endpointName === 'registerResourceCredentials' ||
             action?.meta?.arg?.endpointName === 'manageHost' ||
             action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
-            action?.meta?.arg?.endpointName === 'prepareHost'
+            action?.meta?.arg?.endpointName === 'prepareHost' ||
+            action?.meta?.arg?.endpointName === 'manageMssqlInstance'
         ) {
             return;
         }
@@ -96,6 +97,10 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
                 action?.meta?.arg?.endpointName === 'getDatabaseHosts') &&
             removeOldApisError(action?.meta?.arg)
         ) {
+            return;
+        }
+
+        if (errorMessagesToBlock(errorMsg)) {
             return;
         }
 
