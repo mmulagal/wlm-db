@@ -43,10 +43,6 @@ const OnPremRegion = () => {
 
     return (
         <div className={styles.onPremRegion}>
-            <DsTypography variant="Regular_14">
-                Provide clone and snapshot values to calculate the cost savings.
-            </DsTypography>
-
             <div className={styles.firstRow}>
                 <SelectField
                     label={GENERAL.REGION}

@@ -258,7 +258,6 @@ async function calculateStorageDrift(
 
     if (isEmpty(persistedConfigurationData)) {
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
-        logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 

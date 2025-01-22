@@ -162,7 +162,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Data files (.mdf) placement recommendation',
             description:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality. \nWe recommend separating data and log LUN paths into different volumes for smaller databases. \nThis separation is required when there is more than one large database (> 500 GiB).'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
@@ -189,7 +189,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
             description:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality.'
+                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity,\nindependent backup schedules, and improved restore functionality. \nWe recommend separating data and log LUN paths into different volumes for smaller databases. \nThis separation is required when there is more than one large database (> 500 GiB).'
         },
         tags: ['Performance efficiency', 'Operational excellence']
     },
@@ -365,9 +365,9 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'RSS configuration recommendation',
+            title: 'Network adapter settings recommendation',
             descriptionRssConfig: {
-                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in MSSQL instances. RSS \ndistributes network processing across multiple processors, preventing bottlenecks and enhancing system performance.',
+                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in Microsoft SQL Server \ninstances. RSS distributes network processing across multiple processors, preventing bottlenecks and enhancing system \nperformance.',
                 second: 'Recommended RSS settings:',
                 points: [
                     'Disable TCP Offloading Features: Ensure all TCP offloading features are disabled.',
@@ -413,7 +413,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'sql-license',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.LICENSE_SQL_SERVER
         },
         block_two: {
@@ -451,7 +451,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'microsoft-sql-patch',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.MICROSOFT_SQL_PATCH
         },
         block_two: {
@@ -478,7 +478,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'maxdop',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.MAXDOP_PATCH
         },
         block_two: {
@@ -486,7 +486,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_three: {
-            type: 'Missing patches',
+            type: 'MAXDOP',
             value: '',
             smallFont: true
         },
@@ -513,7 +513,7 @@ export const formatApplicationCardMainConfig = (
     let itemName = item?.name || 'sql-license';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -570,7 +570,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
     let itemName = item?.name || 'microsoft-sql-patch';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -605,12 +605,12 @@ export const formatMaxdopPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.maxdop;
+    let item: any = data?.maxDOP;
     let categoryVal = 'application';
     let itemName = item?.name || 'maxdop';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -650,7 +650,7 @@ export const formatOsPatchCardConfig = (
     let itemName = item?.name || 'host-os-patch';
     let status = item?.status || '';
     let severity = item?.severity || '';
-    if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
+    if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
@@ -859,7 +859,8 @@ export const formatIndividualCardMainConfig = (
                     recommendationOptions: index === 2 ? item?.recommendationOptions || [] : null,
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
-                    recommendedSizeInGib: item?.recommendedSizeInGib
+                    recommendedSizeInGib: item?.recommendedSizeInGib,
+                    sizingViolations: item?.sizingViolations
                 }
             };
         });
@@ -1350,7 +1351,8 @@ export const handleOptimizeStorageJob = (
     failedMsgData: any,
     getJobDetailApi: any,
     dispatch: any,
-    type?: any
+    type?: any,
+    operation?: string
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -1365,7 +1367,7 @@ export const handleOptimizeStorageJob = (
                     const jobId = jobRes?.data?.id;
                     const state = store.getState();
                     const { allmssqlHostAssessmentData } = state.inventoryV2;
-                    const { jobToInstanceMap } = state.getWellOptimize;
+                    const { jobToInstanceMap, jobToInstanceMapForBulk } = state.getWellOptimize;
                     let optimizingData = state.getWellOptimize.optimizingData || {};
                     let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
@@ -1376,22 +1378,56 @@ export const handleOptimizeStorageJob = (
                                 [rowData?.id]: 'optimized'
                             })
                         );
-                        dispatch(
-                            setInProgressOptimizationData({
-                                ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
-                                )
-                            })
-                        );
-                        dispatch(
-                            setInProgressHostData({
-                                ...inProgressHostData,
-                                [type]: inProgressHostData?.[type]?.filter(
-                                    (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
-                                )
-                            })
-                        );
+
+                        if (operation === 'bulk') {
+                            dispatch(
+                                setInProgressOptimizationData({
+                                    ...inProgressOptimizationData,
+                                    [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                                        const jobInstances =
+                                            jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap(
+                                                (host: any) => host.sqlServerInstances
+                                            ) || [];
+
+                                        return !jobInstances.includes(instanceId);
+                                    })
+                                })
+                            );
+                            dispatch(
+                                setInProgressHostData({
+                                    ...inProgressHostData,
+                                    [type]: inProgressHostData?.[type]?.filter(
+                                        //Data host id to check
+                                        (hostId: any) => {
+                                            const jobHostIds =
+                                                jobToInstanceMapForBulk[jobId]?.databaseHosts.map(
+                                                    (host: any) => host.id
+                                                ) || [];
+
+                                            return !jobHostIds.includes(hostId);
+                                        }
+                                    )
+                                })
+                            );
+                        } else {
+                            dispatch(
+                                setInProgressOptimizationData({
+                                    ...inProgressOptimizationData,
+                                    [type]: inProgressOptimizationData?.[type]?.filter(
+                                        (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                                    )
+                                })
+                            );
+                            dispatch(
+                                setInProgressHostData({
+                                    ...inProgressHostData,
+                                    [type]: inProgressHostData?.[type]?.filter(
+                                        (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
+                                    )
+                                })
+                            );
+                        }
+
                         updateOptimizationStatus(rowData, dispatch);
                         formatGetWellData(dispatch);
                         dispatch(

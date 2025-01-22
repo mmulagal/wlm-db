@@ -27,6 +27,7 @@ export interface GetWellSliceInterface {
     inProgressOptimizationData: any;
     inProgressHostData: any;
     jobToInstanceMap: any;
+    jobToInstanceMapForBulk: any;
 }
 
 interface CountBreakDown {
@@ -56,7 +57,7 @@ export interface AssessmentResponseInterface {
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
     microsoftSqlPatch?: PerConfigInterface;
-    maxdop?: PerConfigInterface;
+    maxDOP?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
@@ -103,6 +104,20 @@ export interface PerConfigInterface {
         recommendedBaseProcessorNumber?: string;
         recommendedReceiveQueues?: string;
     };
+    sizingViolations?: {
+        overProvisionedDrives?: Array<PerDriveObjInterface>;
+        underProvisionedDrives?: Array<PerDriveObjInterface>;
+        ignoredDrives?: Array<PerDriveObjInterface>;
+    };
+}
+
+export interface PerDriveObjInterface {
+    databaseName?: string;
+    logDriveLetter?: string;
+    dataDriveLetter?: string;
+    logDrivePercent?: number;
+    logDriveTotalSizeMB?: number;
+    dataDriveTotalSizeMB?: number;
 }
 
 export interface GwCardDataInterface {

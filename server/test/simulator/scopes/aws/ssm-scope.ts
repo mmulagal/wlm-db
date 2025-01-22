@@ -85,7 +85,8 @@ import {
 import {
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_RSS_CONFIG_DETAILS,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    GET_VCPU_AND_MAXDOP_DETAILS
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
@@ -543,6 +544,10 @@ const checkRunningStatus = {
     commands: [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')]
 };
 
+const maxDOPAssessmentSsm = {
+    commands: [GET_VCPU_AND_MAXDOP_DETAILS('MSSQLSERVER', false)]
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -760,7 +765,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: rssConfigAssessmentSsm })
     .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand)
     .on(SendCommandCommand, { Parameters: checkRunningStatus })
-    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand);
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, { Parameters: maxDOPAssessmentSsm })
+    .resolves(listSendCommandCommandResponse.getMaxDopAssessmentCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -989,7 +996,12 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand'
     })
-    .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse);
+    .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
+    })
+    .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse);
+
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

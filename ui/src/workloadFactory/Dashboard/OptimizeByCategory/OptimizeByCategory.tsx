@@ -144,7 +144,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">Application</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.APPLICATION}</DsTypography>
                         </div>
                     </div>
                 </div>

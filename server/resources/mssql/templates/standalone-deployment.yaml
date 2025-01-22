@@ -762,9 +762,9 @@ Resources:
                                   - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        # b-set-rssconfig:
-                        #     command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
-                        #     waitAfterCompletion: forever
+                        b-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            waitAfterCompletion: forever
                         c-set-sqlinstancename:
                             command: !Join
                                 - ''

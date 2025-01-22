@@ -3,10 +3,48 @@ import styles from './StoragePerformance.module.scss';
 import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useEffect, useState } from 'react';
 // import ComputeInputComponent from './StoragePerformance.moodule.scss';
 
 const StoragePerformance = () => {
     const { selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
+
+    const [primaryData, setPrimaryData] = useState<any>(null);
+    const [secondaryData, setSecondaryData] = useState<any>(null);
+
+    useEffect(() => {
+        let primaryData = {
+            totalStorage: 0,
+            totalIops: 0,
+            totalThroughput: 0
+        };
+        let secondaryData = {
+            totalStorage: 0,
+            totalIops: 0,
+            totalThroughput: 0
+        };
+        selectedOnPremHostDetails?.sqlInstanceDetails?.map((instance: any) => {
+            if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
+                if (instance.isReadReplica) {
+                    primaryData.totalStorage += Number(instance?.totalStorage || 0);
+                    primaryData.totalIops += Number(instance?.totalIops || 0);
+                    primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
+                } else {
+                    secondaryData.totalStorage += Number(instance?.totalStorage || 0);
+                    secondaryData.totalIops += Number(instance?.totalIops || 0);
+                    secondaryData.totalThroughput += Number(instance?.totalThroughput || 0);
+                }
+            } else {
+                primaryData.totalStorage += Number(instance?.totalStorage || 0);
+                primaryData.totalIops += Number(instance?.totalIops || 0);
+                primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
+            }
+        });
+        setPrimaryData(primaryData);
+        if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
+            setSecondaryData(secondaryData);
+        }
+    }, [selectedOnPremHostDetails]);
 
     return (
         <div className={styles.storagePerf}>
@@ -32,15 +70,15 @@ const StoragePerformance = () => {
                     <div className={styles.col1}>
                         <DsTypography variant="Regular_14">Primary - data</DsTypography>
                     </div>
-                    <StoragePerfInput type="primaryData" />
+                    <StoragePerfInput type="primaryData" data={primaryData} />
                 </div>
 
-                <div className={styles.row1}>
+                {/* <div className={styles.row1}>
                     <div className={styles.col1}>
                         <DsTypography variant="Regular_14">Primary - log</DsTypography>
                     </div>
                     <StoragePerfInput type="primaryLog" />
-                </div>
+                </div> */}
 
                 {selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG && (
                     <>
@@ -48,15 +86,15 @@ const StoragePerformance = () => {
                             <div className={styles.col1}>
                                 <DsTypography variant="Regular_14">Secondary - data</DsTypography>
                             </div>
-                            <StoragePerfInput type="secondaryData" />
+                            <StoragePerfInput type="secondaryData" data={secondaryData} />
                         </div>
 
-                        <div className={styles.row1}>
+                        {/* <div className={styles.row1}>
                             <div className={styles.col1}>
                                 <DsTypography variant="Regular_14">Secondary - log</DsTypography>
                             </div>
                             <StoragePerfInput type="secondaryLog" />
-                        </div>
+                        </div> */}
                     </>
                 )}
             </div>

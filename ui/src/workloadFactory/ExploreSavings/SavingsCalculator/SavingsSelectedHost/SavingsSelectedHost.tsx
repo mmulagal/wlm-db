@@ -23,7 +23,7 @@ const SavingsSelectedHost = () => {
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
             setTotalVolume(0);
-            setHostname(selectedOnPremHostDetails?.databaseHostName);
+            setHostname(selectedOnPremHostDetails?.resourceName);
             setNoOfInstances(selectedOnPremHostDetails?.totalInstance);
         } else {
             let volumeCount = 0;

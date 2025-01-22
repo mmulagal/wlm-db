@@ -1050,8 +1050,13 @@ function getLastXDays(val: number) {
 }
 
 export const checkBoxHandle = (tableData: any, rowsData: any) => {
-    //@ts-ignore
-    tableData.rows[rowsData[0]?.id] = false;
+    if (!rowsData || rowsData.length === 0) return;
+
+    rowsData.forEach((row: any) => {
+        //@ts-ignore
+        tableData.rows[row.id] = false;
+    });
+
     //@ts-ignore
     tableData.count = 0;
     //@ts-ignore

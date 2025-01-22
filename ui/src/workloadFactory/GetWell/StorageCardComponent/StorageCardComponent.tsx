@@ -95,23 +95,31 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     }, [cardData]);
 
     const disableOptimizeButtonTooltip = useMemo(() => {
-        if (cardData?.id === 'headroom' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+        if (
+            cardData?.id === 'headroom' &&
+            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
+                cardData?.sizingViolations?.overProvisionedDrives?.length)
+        ) {
             return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'log-drive-size' &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
+                cardData?.sizingViolations?.overProvisionedDrives?.length)
         ) {
             return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'tempdb-drive-size' &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
+                cardData?.sizingViolations?.overProvisionedDrives?.length)
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             (cardData?.id === 'tempdb-drive-size' ||
                 cardData?.id === 'log-drive-size' ||
                 cardData?.id === 'headroom') &&
-            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED
+            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
+            !cardData?.sizingViolations?.underProvisionedDrives?.length &&
+            cardData?.sizingViolations?.ignoredDrives?.length
         ) {
             return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
         } else {

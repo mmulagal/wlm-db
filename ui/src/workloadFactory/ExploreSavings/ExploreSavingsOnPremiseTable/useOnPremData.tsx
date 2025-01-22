@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useGetOnPremSavingsMutation } from '../../../utils/apiService';
-import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { setOnPremiseData, setOnPremiseDataLoading } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { GENERAL } from '../../../utils/appConstants';
 
 export const useOnPremData = () => {
     const dispatch = useDispatch();
@@ -20,22 +22,35 @@ export const useOnPremData = () => {
 
         setError(null); // Reset error state
         dispatch(setOnPremiseData(null));
+        dispatch(setOnPremiseDataLoading(true));
 
         try {
             const apiResult = await getOnPremSavings({}); // Unwrap the API result for cleaner error handling
             let result: any = [];
             apiResult?.data?.items?.map((perRow: any) => {
+                let perInstallationMode: string = '';
+                if (perRow?.deploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                    perInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+                } else if (perRow?.deploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+                    perInstallationMode = GENERAL.AOAG;
+                } else if (perRow?.deploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                    perInstallationMode = GENERAL.STANDALONE;
+                }
                 const rowData = {
                     ...perRow,
-                    onPremNode: perRow?.onPremisesNode[0],
-                    totalInstance: perRow?.sqlServerInstances?.length,
-                    nameForSorting: perRow?.databaseHostName?.toLowerCase()
+                    deploymentModel: perInstallationMode,
+                    onPremNode: perRow?.onPremisesNodes[0],
+                    totalInstance: perRow?.sqlInstanceDetails?.length,
+                    nameForSorting: perRow?.resourceName?.toLowerCase()
                 };
                 result.push(rowData);
             });
 
             dispatch(setOnPremiseData(result)); // Save to Redux store
+            dispatch(setOnPremiseDataLoading(false));
         } catch (err) {
+            dispatch(setOnPremiseData([]));
+            dispatch(setOnPremiseDataLoading(false));
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,

@@ -37,9 +37,9 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(setSelectedInstanceId(''));
-    dispatch(setSelectedOnPremHostId(rowData?.databaseHostId));
+    dispatch(setSelectedOnPremHostId(rowData?.resourceId));
     dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
-    dispatch(setSelectedServerName(rowData?.databaseHostName || GENERAL.ES_SERVER_NAME));
+    dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
     setESInstanceOnPremData(rowData, dispatch);
 };
 
@@ -126,10 +126,10 @@ export const setESInstanceOnPremData = (data: any, dispatch: any) => {
     dispatch(
         setSelectedOnPremHostDetails({
             ...data,
-            totalInstance: data?.sqlServerInstances?.length || 0,
+            totalInstance: data?.sqlInstanceDetails?.length || 0,
             recommendedInstance: {
                 serverInstallationMode: serverInstallationMode,
-                serverVersion: ''
+                serverVersion: data?.sqlInstanceDetails?.[0]?.sqlVersion
             }
         })
     );

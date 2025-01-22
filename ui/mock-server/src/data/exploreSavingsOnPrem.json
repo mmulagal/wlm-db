@@ -1,172 +1,164 @@
 {
+    "count": 3,
     "items": [
-        {
-            "databaseHostName": "SQLServer-Prod-01",
-            "databaseHostId": "64de4daa-3405-47c6-8689-58f4987b6ad8",
-            "deploymentModel": "Failover Cluster Instances",
-            "onPremisesNode": ["node1"],
-            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER2", "MSSQLSERVER3"],
-            "nodeUsage": [
-                {
-                    "nodeType": "primary",
-                    "dataIops": "10000",
-                    "logIops": "1000",
-                    "dataTotalStorage": "1099511627776",
-                    "logTotalStorage": "1073741824",
-                    "dataThroughput": "128",
-                    "logThroughput": "128"
-                },
-                {
-                    "nodeType": "secondary",
-                    "dataIops": "10000",
-                    "logIops": "1000",
-                    "dataTotalStorage": "1099511627776",
-                    "logTotalStorage": "1073741824",
-                    "dataThroughput": "128",
-                    "logThroughput": "128"
-                }
-            ],
-            "sqlInstances": [
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad81",
-                    "sqlInstanceName": "MSSQLSERVER",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                },
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad82",
-                    "sqlInstanceName": "MSSQLSERVER2",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                },
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad83",
-                    "sqlInstanceName": "MSSQLSERVER3",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                }
-            ]
-        },
-        {
-            "databaseHostName": "SQLServer-Prod-02",
-            "databaseHostId": "64de4daa-3405-47c6-8689-58f4987b6ad9",
-            "deploymentModel": "Standalone",
-            "onPremisesNode": ["node1"],
-            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER2", "MSSQLSERVER3"],
-            "nodeUsage": [
-                {
-                    "nodeType": "primary",
-                    "dataIops": "10000",
-                    "logIops": "1000",
-                    "dataTotalStorage": "1099511627776",
-                    "logTotalStorage": "1073741824",
-                    "dataThroughput": "128",
-                    "logThroughput": "128"
-                },
-                {
-                    "nodeType": "secondary",
-                    "dataIops": "10000",
-                    "logIops": "1000",
-                    "dataTotalStorage": "1099511627776",
-                    "logTotalStorage": "1073741824",
-                    "dataThroughput": "128",
-                    "logThroughput": "128"
-                }
-            ],
-            "sqlInstances": [
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad81",
-                    "sqlInstanceName": "MSSQLSERVER",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                },
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad82",
-                    "sqlInstanceName": "MSSQLSERVER2",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                },
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad83",
-                    "sqlInstanceName": "MSSQLSERVER3",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                }
-            ]
-        },
-        {
-            "databaseHostName": "SQLServer-Prod-02",
-            "databaseHostId": "64de4daa-3405-47c6-8689-58f4987b6ad9",
-            "deploymentModel": "Always on availability group",
-            "onPremisesNode": ["node1"],
-            "sqlServerInstances": ["MSSQLSERVER", "MSSQLSERVER2", "MSSQLSERVER3"],
-            "nodeUsage": [
-                {
-                    "nodeType": "primary",
-                    "dataIops": "10000",
-                    "logIops": "1000",
-                    "dataTotalStorage": "1099511627776",
-                    "logTotalStorage": "1073741824",
-                    "dataThroughput": "128",
-                    "logThroughput": "128"
-                },
-                {
-                    "nodeType": "secondary",
-                    "dataIops": "10000",
-                    "logIops": "1000",
-                    "dataTotalStorage": "1099511627776",
-                    "logTotalStorage": "1073741824",
-                    "dataThroughput": "128",
-                    "logThroughput": "128"
-                }
-            ],
-            "sqlInstances": [
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad81",
-                    "sqlInstanceName": "MSSQLSERVER",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                },
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad82",
-                    "sqlInstanceName": "MSSQLSERVER2",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                },
-                {
-                    "sqlInstanceId": "64de4daa-3405-47c6-8689-58f4987b6ad83",
-                    "sqlInstanceName": "MSSQLSERVER3",
-                    "noOfDatabases": "10",
-                    "sqlEdition": "SQL Server Enterprise Edition",
-                    "noOfVcpusInUse": "4",
-                    "memory": "1073741824",
-                    "networkPerformance": "Up to 10 GiB"
-                }
-            ]
-        }
+      {
+        "resourceId": "8defd8fd845cda3f",
+        "resourceName": "ONPREMFCI",
+        "deploymentModel": "FCI",
+        "sqlInstanceDetails": [
+          {
+            "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
+            "sqlInstanceName": "MSSQLSERVER",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "559652864",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "0.00",
+            "totalStorage": "16777216.00"
+          },
+          {
+            "sqlInstanceId": "E7A86AFB-12D4-4A69-8942-43E548CAD2B2",
+            "sqlInstanceName": "FCI23NEW",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "565800960",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "211.50",
+            "totalStorage": "16777216.00"
+          },
+          {
+            "sqlInstanceId": "3",
+            "sqlInstanceName": "FCI24NEW",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "561307648",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "212.44",
+            "totalStorage": "16777216.00"
+          }
+        ],
+        "onPremisesNodes": [
+          "WLMDBFCI1",
+          "WLMDBFCI2",
+          "WLMDBFCI3",
+          "WLMDBFCI4"
+        ]
+      },
+      {
+        "resourceId": "8defd8fd845cda3f2",
+        "resourceName": "ONPREMFCI2",
+        "deploymentModel": "Standalone",
+        "sqlInstanceDetails": [
+          {
+            "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
+            "sqlInstanceName": "MSSQLSERVER",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "559652864",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "0.00",
+            "totalStorage": "16777216.00"
+          },
+          {
+            "sqlInstanceId": "E7A86AFB-12D4-4A69-8942-43E548CAD2B2",
+            "sqlInstanceName": "FCI23NEW",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "565800960",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "211.50",
+            "totalStorage": "16777216.00"
+          },
+          {
+            "sqlInstanceId": "3",
+            "sqlInstanceName": "FCI24NEW",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "561307648",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "212.44",
+            "totalStorage": "16777216.00"
+          }
+        ],
+        "onPremisesNodes": [
+          "WLMDBFCI1",
+          "WLMDBFCI2",
+          "WLMDBFCI3",
+          "WLMDBFCI4"
+        ]
+      },
+      {
+        "resourceId": "8defd8fd845cda3f3",
+        "resourceName": "ONPREMFCI3",
+        "deploymentModel": "AOAG",
+        "sqlInstanceDetails": [
+          {
+            "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
+            "sqlInstanceName": "MSSQLSERVER",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "559652864",
+            "isReadReplica": false,
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "0.00",
+            "totalStorage": "16777216.00"
+          },
+          {
+            "sqlInstanceId": "E7A86AFB-12D4-4A69-8942-43E548CAD2B2",
+            "sqlInstanceName": "FCI23NEW",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "565800960",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "211.50",
+            "totalStorage": "16777216.00",
+            "isReadReplica": true
+          },
+          {
+            "sqlInstanceId": "3",
+            "sqlInstanceName": "FCI24NEW",
+            "noOfDatabases": "5",
+            "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+            "sqlVersion": "Microsoft SQL Server 2022",
+            "noOfVcpusInUse": 4,
+            "memory": "561307648",
+            "networkPerformance": "upTo10",
+            "totalIops": "0.00",
+            "totalThroughput": "212.44",
+            "totalStorage": "16777216.00",
+            "isReadReplica": false
+          }
+        ],
+        "onPremisesNodes": [
+          "WLMDBFCI1",
+          "WLMDBFCI2",
+          "WLMDBFCI3",
+          "WLMDBFCI4"
+        ]
+      }
     ]
-}
+  }

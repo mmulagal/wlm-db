@@ -74,7 +74,8 @@ const AUDIT_EXCLUDE_LIST = [
     '/calculations',
     '/sandboxes-meta-update',
     '/resource-credentials',
-    '/create-demo-resource'
+    '/create-demo-resource',
+    '/onprem-tco'
 ];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
@@ -149,7 +150,8 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
-    ASSESSMENT = 'Continuous Optimization'
+    ASSESSMENT = 'Continuous Optimization',
+    ONPREM_TCO = 'OnPremises TCO'
 }
 
 enum HttpErrorCodes {
@@ -1397,6 +1399,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'FsxCertificates',
         url: `${WLMDB}/fsx_certs.zip`
+    },
+    {
+        name: 'PGSQLPackages',
+        url: `${WLMDB}/pgsql/packages/pgvector.zip`
     }
 ];
 
@@ -1476,6 +1482,38 @@ sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance o
     */
 const ENT_ENGINE_EDITION = 3;
 const STD_ENGINE_EDITION = 2;
+
+const PGSQL_CW_CONFIG = `{
+                                    "agent": {
+                                        "metrics_collection_interval": 5,
+                                        "run_as_user": "cwagent",
+                                        "region": "\${AWS::Region}"
+                                    },
+                                    "logs": {
+                                        "logs_collected": {
+                                            "files": {
+                                                "collect_list": [
+                                                    {
+                                                        "file_path": "/var/log/cfn-*.log",
+                                                        "log_group_name": "\${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
+                                                        "log_group_name": "\${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/var/log/netapp_wf/*.log",
+                                                        "log_group_name": "\${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+`;
 
 export {
     WLMDB,
@@ -1796,5 +1834,6 @@ export {
     STD_ENGINE_EDITION,
     AWS_ERROR_CODES,
     CF_STACK_COUNT_QUOTACODE,
-    DATABASE_INSTANCE_INDEX_MAPPING
+    DATABASE_INSTANCE_INDEX_MAPPING,
+    PGSQL_CW_CONFIG
 };

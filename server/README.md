@@ -16,5 +16,5 @@
 # Spectral for API doc linting
 - Simplest way `npm install -g @stoplight/spectral-cli` ; Alternatives (https://meta.stoplight.io/docs/spectral/b8391e051b7d8-installation)
 - Run `spectral --version` to confirm installation
-- Run `npm install apidoc` to run spectral validation over new set of API changes
+- Run `npm run apidoc` to run spectral validation over new set of API changes
 - API linting also gets executed as part of the pre-commit hook

@@ -64,11 +64,15 @@ export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.neta
 export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
 
 //Retry API on gateway timeout
-export const API_MAX_RETRIES = 2;
+export const API_MAX_RETRIES = 3;
+export const MIN_RETRY_DELAY = 5000;
 
 //License URL
 export const LICENSE_URL =
     'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-setting-up.html#launch-wizard-custom-ami';
+
+//AWS resize URL
+export const AWS_RESIZE_URL = 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html';
 
 // Regions code list in a fixed order
 export const REGIONS_CODE_LIST = [
@@ -761,4 +765,9 @@ export const GW_TOOLTIP_KEYS_MAPPING: any = {
     baseProcessorNumber: 'Base processor number',
     receiveQueues: 'Receive Queues',
     tcpOffloading: 'TCP Offloading Features'
+};
+
+export const NETWORK_PERFORMANCE_OPTIONS: any = {
+    'Up to 10 GiB': 'upTo10',
+    'Above 10 GiB': 'above10'
 };

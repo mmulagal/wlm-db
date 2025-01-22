@@ -804,6 +804,7 @@ async function updateTrackedEc2Record(
         data
     });
 }
+
 export {
     Resource,
     listDeployments,
