@@ -795,7 +795,7 @@ const GET_RSS_CONFIG_DETAILS = () => `
     # Combine the results
     $result = [PSCustomObject]@{
         adapters = $result
-        vpuCount = $vcpus
+        vcpuCount = $vcpus
         tcpOffloadState = $tcpOffloadState -as [string]
     }
 

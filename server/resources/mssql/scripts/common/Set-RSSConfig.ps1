@@ -8,7 +8,10 @@ function Set-RSSBestPractices {
     $parameters = @{}
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $DesiredRssReceiveQueues = $vcpus
-    $DesiredBaseProcessorNumber = 2
+    $DesiredBaseProcessorNumber = $currentRssSettings.BaseProcessorNumber
+    if($vcpus -ge 4) {
+        $DesiredBaseProcessorNumber = 2
+    }
     $DesiredRssProfile = 'NUMAStatic'
     if($vcpus -gt 8) {
         $DesiredRssReceiveQueues = 8

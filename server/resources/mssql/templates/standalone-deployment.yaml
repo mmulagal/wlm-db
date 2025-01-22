@@ -762,10 +762,7 @@ Resources:
                                   - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        b-set-rssconfig:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
-                            waitAfterCompletion: forever
-                        c-set-sqlinstancename:
+                        b-set-sqlinstancename:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Set-SQLInstanceName.ps1 -DomainAdminUser '
@@ -776,6 +773,9 @@ Resources:
                                   - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
+                        c-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            waitAfterCompletion: forever
                         d-create-fsxparameter:
                             command: !Join
                                 - ''
