@@ -245,7 +245,8 @@ async function updateTemplateUrls(
             ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
             ScriptSetup: decodeURI(signedUrls.get('ScriptSetup')?.url || ''),
             FsxCertificates: decodeURI(signedUrls.get('FsxCertificates')?.url || ''),
-            ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || '')
+            ArtifactsSignatures: decodeURI(signedUrls.get('ArtifactsSignatures')?.url || ''),
+            PgsqlCloudWatchConfig: PGSQL_CW_CONFIG || ''
         });
         const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
         const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
