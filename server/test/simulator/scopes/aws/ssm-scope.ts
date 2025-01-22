@@ -83,6 +83,7 @@ import {
     ENABLE_MPIO_AND_CONFIGURE
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
 import {
+    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_RSS_CONFIG_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
@@ -538,6 +539,10 @@ const rssConfigAssessmentSsm = {
     commands: [GET_RSS_CONFIG_DETAILS()]
 };
 
+const checkRunningStatus = {
+    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')]
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -753,7 +758,9 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('getClusterNodeNames'))
     .on(SendCommandCommand, { Parameters: rssConfigAssessmentSsm })
-    .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand);
+    .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand)
+    .on(SendCommandCommand, { Parameters: checkRunningStatus })
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -978,7 +985,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-rssConfigAssessmentDataCommand'
     })
-    .resolves(getCommandInvocationResponse.rssConfigAssessmentDataCommandResponse);
+    .resolves(getCommandInvocationResponse.rssConfigAssessmentDataCommandResponse)
+    .on(checkRunningStatusCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand'
+    })
+    .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

@@ -31,7 +31,6 @@ import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
-import { createJob } from '../../lib/database/job';
 
 const logger = getLogger();
 
@@ -405,25 +404,22 @@ async function handleComputeRemediation(
 
 async function checkRunningStatus(
     accountId: string,
-    jobId: string,
+    parentJobId: string,
     instanceName: string,
     region: string,
     credentialsId: string,
     activeNodeInstanceId: string
 ) {
-    const checkRunningJob = await createJob(accountId, {
-        parent_job_id: jobId,
-        name: 'Checking running status of the service',
-        description: 'Checking running status of the service',
-        initiator: 'System',
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        account_id: accountId,
-        credentials_id: credentialsId,
-        resource_name: instanceName,
+    const checkRunningJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
         region,
-        start_time: new Date()
-    });
+        instanceName,
+        JOBTYPE.ASSESSMENT,
+        'Checking running status of the service',
+        'Checking running status of the service',
+        parentJobId
+    );
 
     const rawStatusResponse = await callSsmExecution(
         credentialsId,
@@ -446,7 +442,7 @@ async function checkRunningStatus(
     }
 
     if (statusResponse.status !== 'Running') {
-        await updateJobDetails(accountId, checkRunningJob.id, {
+        await updateJobDetails(accountId, checkRunningJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: statusResponse.error
@@ -454,7 +450,7 @@ async function checkRunningStatus(
         return { running: false, error: statusResponse.error };
     }
 
-    await updateJobDetails(accountId, checkRunningJob.id, {
+    await updateJobDetails(accountId, checkRunningJobId, {
         status: JOBSTATUS.COMPLETED,
         endTime: Date.now()
     });

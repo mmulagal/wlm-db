@@ -1846,7 +1846,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData",
         "Comment": "",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1871,7 +1874,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "86cc75b0-f24b-4d58-9066-16dd5c3fed1d",
         "Comment": "",
         "DocumentName": "AWS-RunShellScript",
@@ -1896,7 +1902,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "1ec45077-c38e-4708-b0e0-0e8dce47f886",
         "Comment": "",
         "DocumentName": "AWS-RunShellScript",
@@ -1921,7 +1930,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "ebb0d06a-3f1b-40e0-a9d1-a614d4cb1e3e",
         "Comment": "",
         "DocumentName": "AWS-RunShellScript",
@@ -1946,7 +1958,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "ebb0d06a-3f1b-40e0-a9d1-a614d4cb1e3e",
         "Comment": "",
         "DocumentName": "AWS-RunShellScript",
@@ -1971,7 +1986,10 @@
             "attempts": 1,
             "totalRetryDelay": 0
         },
-        "CloudWatchOutputConfig": { "CloudWatchLogGroupName": "", "CloudWatchOutputEnabled": false },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
         "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
         "Comment": "Get RSS configuration details",
         "DocumentName": "AWS-RunPowerShellScript",
@@ -1985,6 +2003,34 @@
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
         "StandardOutputContent": "{\"adapters\":[{\"adapterName\":\"Ethernet 3\",\"rssEnabled\":true,\"rssProfile\":\"NUMAStatic\",\"baseProcessorNumber\":0,\"numberOfReceiveQueues\":4}],\"vpuCount\":4,\"tcpOffloadState\":\"Disabled\"}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "checkRunningStatusCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
+        "Comment": "Check running status with restart",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT2.193S",
+        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
+        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
+        "InstanceId": "i-05978dd409ce8e0e6",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"status\":\"4\",\"error\":\"\"}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
