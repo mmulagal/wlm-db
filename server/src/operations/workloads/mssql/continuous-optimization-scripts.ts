@@ -854,7 +854,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     $maxDopResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName"
 
     # Initialize maxDop to 0
-    $maxDop = 0
+    $maxDop = "0"
 
     # Check if maxDopResult is not empty and parse the result to extract the run_value
     if ($maxDopResult) {
@@ -867,7 +867,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
 
     # Check if maxDop is empty or null, set to 0 if it is
     if (-not $maxDop) {
-        $maxDop = 0
+        $maxDop = "0"
     }
 
     $result = [PSCustomObject]@{

@@ -208,7 +208,7 @@ async function runMaxDOPAssessment(
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     return {
-        current: maxDOP,
+        current: maxDOP.toString(),
         recommendedMaxDOP,
         status: optimizationStatus
     };
