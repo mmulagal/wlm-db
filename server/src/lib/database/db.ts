@@ -543,7 +543,12 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
-async function updateResourceMetaData(accountId: string, credentialsId: string, resourceId: string, metaData: any) {
+async function updateResourceMetaData(
+    accountId: string,
+    credentialsId: string | undefined = undefined,
+    resourceId: string,
+    metaData: any
+) {
     logger.info('Updating resource metadata', { accountId, resourceId, credentialsId });
 
     accountId = checkAccount(accountId);
@@ -552,7 +557,7 @@ async function updateResourceMetaData(accountId: string, credentialsId: string, 
         where: {
             account_id: accountId,
             resource_id: resourceId,
-            credentials_id: credentialsId
+            ...(credentialsId && { credentials_id: credentialsId })
         },
         data: {
             ...(!isEmpty(metaData) && { metadata: metaData })

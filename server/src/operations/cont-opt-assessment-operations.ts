@@ -48,7 +48,8 @@ import {
 } from './continuous-optimization/compute-assessment-operations';
 import {
     calculateHostOsPatchDrift,
-    managedHostOsPatchAssessment
+    managedHostOsPatchAssessment,
+    updatePatchBaselineStatusForHost
 } from './continuous-optimization/hostOsPatch-assessment-operations';
 import { calculateStorageDrift } from './continuous-optimization/storage-assessment-operations';
 import {
@@ -189,6 +190,9 @@ async function initiateComputeLicenseAssessmentCollection(
                 rssConfig: rssConfigAssessment || undefined
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
+        }
+        if (!isEmpty(hostOsPatchAssessment)) {
+            updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
         }
     } else {
         logger.error('No active node found for the resource', { accountId, databaseHostId, credentialsId, region });
