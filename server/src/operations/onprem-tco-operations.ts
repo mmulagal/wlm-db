@@ -525,7 +525,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await Promise.all([
-            // saveReportInReportingRegistry(accountId, fileName, data),
+            saveReportInReportingRegistry(accountId, fileName, data),
             saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data)
         ]);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);

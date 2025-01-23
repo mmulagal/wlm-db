@@ -237,6 +237,7 @@ if($belongsToCluster){
 else{
     $windowsName = hostname
     $windowsConfig.Add("windowsSystemName", $windowsName)
+    $windowsConfig.Add("clusterNodeNames", $windowsName)
 }
 
 # Collect SQL Server instances
