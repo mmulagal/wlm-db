@@ -795,12 +795,41 @@ const GET_RSS_CONFIG_DETAILS = () => `
     # Combine the results
     $result = [PSCustomObject]@{
         adapters = $result
-        vpuCount = $vcpus
+        vcpuCount = $vcpus
         tcpOffloadState = $tcpOffloadState -as [string]
     }
 
     $jsonResult = $result | ConvertTo-Json -Compress
     Write-Output $jsonResult
+`;
+
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+    $result = @{}
+    try {
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.WaitForStatus('Running', '00:00:20')
+
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.Start()
+        
+        $SQLService.WaitForStatus('Running', '00:00:20')
+        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+    } catch {
+        $result = @{ status = 'failed'; error = $_.Exception.Message }
+    } finally {
+        $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Output $jsonResult
+    }
 `;
 
 const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
@@ -825,7 +854,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     $maxDopResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName"
 
     # Initialize maxDop to 0
-    $maxDop = 0
+    $maxDop = "0"
 
     # Check if maxDopResult is not empty and parse the result to extract the run_value
     if ($maxDopResult) {
@@ -838,7 +867,7 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
 
     # Check if maxDop is empty or null, set to 0 if it is
     if (-not $maxDop) {
-        $maxDop = 0
+        $maxDop = "0"
     }
 
     $result = [PSCustomObject]@{
@@ -859,5 +888,6 @@ export {
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
+    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS
 };

@@ -14,6 +14,7 @@ import {
     DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
+    ERR_MSG_TO_CHECK,
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
@@ -107,7 +108,7 @@ export const getTruncatedItems = (items: any) => {
         //@ts-ignore
         const itemWidth = context.measureText(item + ', ').width;
         //@ts-ignore
-        if (totalWidth + itemWidth <= 261 || maxItemsToShow.length === 0) {
+        if (totalWidth + itemWidth <= 180 || maxItemsToShow.length === 0) {
             maxItemsToShow.push(item);
             totalWidth += itemWidth;
         } else {
@@ -276,6 +277,15 @@ export const requiredFieldError = (inputString: string) => {
     } else {
         return null;
     }
+};
+
+export const errorMessagesToBlock = (errorMsg: string) => {
+    for (const msg of ERR_MSG_TO_CHECK) {
+        if (errorMsg.includes(msg)) {
+            return true;
+        }
+    }
+    return false;
 };
 
 export const customErrorMessages = (inputString: string, endpoint: string) => {
@@ -1621,6 +1631,8 @@ export const setTabInfoFOrBXP = (tab: string) => {
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case '/fsxdb/explore-savings-fsxw':
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case '/fsxdb/explore-savings-on-premise':
+            return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case '/fsxdb/storage-saving-calculator':
             return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':

@@ -98,19 +98,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         if (
             cardData?.id === 'headroom' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                cardData?.sizingViolations?.overProvisionedDrives?.length)
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'log-drive-size' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                cardData?.sizingViolations?.overProvisionedDrives?.length)
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'tempdb-drive-size' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                cardData?.sizingViolations?.overProvisionedDrives?.length)
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
@@ -168,12 +171,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                         </DsTypography>
                                     </div>
 
-                                    {secListObj && secListObj[index]?.value && (
+                                    {secListObj && (
                                         <>
                                             <div className={styles.seperator} />
                                             <div className={styles.secSubPart}>
                                                 <DsTypography variant="Regular_13">
-                                                    {`${secListObj[index]?.value}`}
+                                                    {`${secListObj[index]?.value}` || ' '}
                                                 </DsTypography>
                                             </div>
                                         </>

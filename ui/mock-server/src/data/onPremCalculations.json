@@ -4,34 +4,6 @@
     "deploymentModel": "FCI",
     "region": "US East (N. Virginia)",
     "regionCode": "us-east-1",
-    "sqlInstanceDetails": [
-      {
-        "sqlInstanceId": "E7A86AFB-12D4-4A69-8942-43E548CAD2B2",
-        "sqlInstanceName": "FCI23NEW",
-        "noOfDatabases": "5",
-        "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-        "sqlVersion": "Microsoft SQL Server 2022",
-        "noOfVcpusInUse": 4,
-        "memory": 482873344,
-        "networkPerformance": "upTo10",
-        "totalIops": "0.02",
-        "totalThroughput": "957.71",
-        "totalStorage": "16777216.00"
-      },
-      {
-        "sqlInstanceId": "3",
-        "sqlInstanceName": "FCI24NEW",
-        "noOfDatabases": "5",
-        "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-        "sqlVersion": "Microsoft SQL Server 2022",
-        "noOfVcpusInUse": 4,
-        "memory": 474525696,
-        "networkPerformance": "upTo10",
-        "totalIops": "0.02",
-        "totalThroughput": "984.83",
-        "totalStorage": "16777216.00"
-      }
-    ],
     "calculations": {
       "single": {
         "fsxCloneCalculation": {

@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Notification, NotificationPanel } from '@netapp/design-system';
 
 import styles from './AppNotification.module.scss';
+import { NOTIFICATION_TYPES } from '../../store/notificationSlice';
 
 export type NotificationObject = {
     messages: [
@@ -37,6 +38,30 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
     }, [notifications]);
     const manualNotificationPlacement =
         notifications.messages.length === 1 && notifications.messages[0].notificationPlacement;
+
+    // Set timers for specific notification types: success and info
+    useEffect(() => {
+        const timers: NodeJS.Timeout[] = [];
+
+        notifications.messages.forEach((notification, idx) => {
+            if (
+                notification.notificationType === NOTIFICATION_TYPES.SUCCESS ||
+                notification.notificationType === NOTIFICATION_TYPES.INFO
+            ) {
+                const timer = setTimeout(() => {
+                    onClose(idx, notifications.messages.length);
+                }, 8000);
+
+                timers.push(timer);
+            }
+        });
+
+        return () => {
+            // Clear timers when component unmounts or notifications change
+            timers.forEach(clearTimeout);
+        };
+    }, [notifications, onClose]);
+
     return (
         <div
             className={styles['app-notification-container']}

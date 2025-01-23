@@ -235,6 +235,10 @@ const SavingsSelection = ({ printState }: any) => {
                 >
                     <DsTypography variant="Regular_14">Snapshot & clones</DsTypography>
 
+                    <DsTypography variant="Regular_14" style={{ marginTop: '16px' }}>
+                        Provide clone and snapshot values to calculate the cost savings.
+                    </DsTypography>
+
                     <div className={styles.firstRow}>
                         <SelectField
                             label={GENERAL.ES_SNAPSHOT_FREQUENCY}

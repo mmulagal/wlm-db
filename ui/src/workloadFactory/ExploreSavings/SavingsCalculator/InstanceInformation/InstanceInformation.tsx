@@ -89,7 +89,7 @@ const InstanceInformation = () => {
             setNoOfInstances(selectedOnPremHostDetails?.totalInstance || 0);
 
             let serverEdition: any = [];
-            selectedOnPremHostDetails?.sqlInstanceDetails?.map((perRow: any) => {
+            selectedOnPremHostDetails?.sqlServerInstances?.map((perRow: any) => {
                 if (perRow?.sqlEdition && !serverEdition.includes(perRow?.sqlEdition)) {
                     serverEdition.push(perRow?.sqlEdition);
                 }

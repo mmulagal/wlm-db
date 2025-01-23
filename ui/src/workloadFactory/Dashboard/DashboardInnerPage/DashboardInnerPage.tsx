@@ -610,21 +610,24 @@ const DashboardInnerPage = () => {
                 } else if (
                     name === 'Log drive size' &&
                     (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-                        rowData?.sizingViolations?.overProvisionedDrives?.length)
+                        (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                            !rowData?.sizingViolations?.underProvisionedDrives?.length))
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
                 } else if (
                     name === 'TempDB drive size' &&
                     (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-                        rowData?.sizingViolations?.overProvisionedDrives?.length)
+                        (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                            !rowData?.sizingViolations?.underProvisionedDrives?.length))
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
                 } else if (
                     name === 'File system headroom' &&
                     (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-                        rowData?.sizingViolations?.overProvisionedDrives?.length)
+                        (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                            !rowData?.sizingViolations?.underProvisionedDrives?.length))
                 ) {
                     isDisabled = true;
                     errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;

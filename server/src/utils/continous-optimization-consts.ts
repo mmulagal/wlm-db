@@ -182,7 +182,7 @@ const TEST_CONNECTION_COMMAND =
     'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
 
 // ONPREM CONTINUOUS OPTIMIZATION
-const OP_TCO_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/on-prem-tco/OnPremTCOCollector_v1.ps1`;
+const OP_TCO_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/on-prem-tco.zip`;
 const REPORTING_BUCKET = config.get('reporting.bucket-name') as string;
 
 const NETWORK_PERF = {

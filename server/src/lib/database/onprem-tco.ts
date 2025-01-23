@@ -75,6 +75,7 @@ async function listOnPremDatabaseResources(
     databaseType: DATABASE_TYPE,
     pageSize?: number,
     nextToken?: string,
+    resourceId?: string,
     sort: string = 'creation_time',
     sortOrder: string = 'desc'
 ) {
@@ -85,7 +86,8 @@ async function listOnPremDatabaseResources(
     return prisma.client.onprem_tco_reports.findMany({
         where: {
             account_id: accountId,
-            database_type: databaseType
+            database_type: databaseType,
+            ...(resourceId && { resource_id: resourceId })
         },
         orderBy: [
             {
@@ -103,5 +105,6 @@ export {
     createOnPremTcoReportData,
     removeOnPremTcoReportData,
     updateOnPremTcoReportRecord,
-    listOnPremDatabaseResources
+    listOnPremDatabaseResources,
+    OnPremTcoReportObject
 };

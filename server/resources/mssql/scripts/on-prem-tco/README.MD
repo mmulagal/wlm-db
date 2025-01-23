@@ -15,15 +15,18 @@ This PowerShell script, `OnPremTCOCollector.ps1`, collects detailed information 
 1. Download the script file `OnPremTCOCollector.ps1`.
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
-4. Run the script with the required parameters.
+4. Run the script without any parameters to assess all instances with Windows configuration.
+5. Run the script by passing the SQL instances to be assessed using the `-InstanceNames` parameter.
+6. Run the script by passing the SQL username with the `-SqlUserName` parameter for instances with SQL authentication specified with the `-InstanceNames` parameter.
+7. Run the script with the required parameters.
 
 ### Parameters
 
--   `-instanceNames`: (Optional) Array of SQL Server instance names to query.
+-   `-InstanceNames`: (Optional) Array of SQL Server instance names to query.
 -   `-SqlUserName`: (Optional) SQL Server username for authentication.
 
 ### Example
 
 ```powershell
-.\OnPremTCOCollector.ps1 -instanceNames "MSSQLSERVER", "SALES" -SqlUserName "sa"
+.\OnPremTCOCollector.ps1 -InstanceNames "MSSQLSERVER", "SALES" -SqlUserName "sa"
 ```

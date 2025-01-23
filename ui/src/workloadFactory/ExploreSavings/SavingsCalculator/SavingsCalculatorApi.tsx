@@ -175,14 +175,14 @@ const SavingsCalculatorApi = () => {
             let primaryNodes = 0;
             let secondaryNodes = 0;
             if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-                primaryNodes = selectedOnPremHostDetails?.sqlInstanceDetails?.filter(
+                primaryNodes = selectedOnPremHostDetails?.sqlServerInstances?.filter(
                     (instance: any) => !instance?.isReadReplica
                 ).length;
-                secondaryNodes = selectedOnPremHostDetails?.sqlInstanceDetails?.filter(
+                secondaryNodes = selectedOnPremHostDetails?.sqlServerInstances?.filter(
                     (instance: any) => instance?.isReadReplica
                 ).length;
             } else {
-                primaryNodes = selectedOnPremHostDetails?.sqlInstanceDetails?.length;
+                primaryNodes = selectedOnPremHostDetails?.sqlServerInstances?.length;
             }
 
             primaryData = {
@@ -206,7 +206,7 @@ const SavingsCalculatorApi = () => {
             let computeInfo: any = [];
             Object.keys(computeInformation).forEach(key => {
                 const value = computeInformation[key];
-                let perInst = selectedOnPremHostDetails?.sqlInstanceDetails?.find(
+                let perInst = selectedOnPremHostDetails?.sqlServerInstances?.find(
                     (inst: any) => inst?.sqlInstanceName === key
                 );
                 let perInstanceNodeUsage: any = {};

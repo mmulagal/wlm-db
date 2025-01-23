@@ -495,7 +495,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'MAXDOP patch assessment recommendation',
+            title: 'MAXDOP assessment recommendation',
             description:
                 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nFor OLTP workloads, set MAXDOP to 8 or fewer. \nFor OLAP workloads, adjust accordingly but avoid setting it to 0 to prevent excessive parallelism and contention. \nProper MAXDOP configuration enhances performance and efficiency.'
         },
@@ -726,22 +726,27 @@ export const formatRssConfigCardConfig = (
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
+            optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['rssProfile'] = adapter?.rssProfile;
+            optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+            optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
         } else {
             if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
                 findingReasons++;
                 optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['rssProfile'] = item?.recommendedAdapterSettings?.recommendedRssProfile;
+                optimizedValue['rssProfile'] = adapter?.rssProfile;
             }
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
                 optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['baseProcessorNumber'] =
-                    item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber;
+                optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;
                 optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['receiveQueues'] = item?.recommendedAdapterSettings?.recommendedReceiveQueues;
+                optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
             }
         }
     });

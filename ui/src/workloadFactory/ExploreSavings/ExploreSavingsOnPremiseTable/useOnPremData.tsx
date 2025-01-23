@@ -40,7 +40,11 @@ export const useOnPremData = () => {
                     ...perRow,
                     deploymentModel: perInstallationMode,
                     onPremNode: perRow?.onPremisesNodes[0],
-                    totalInstance: perRow?.sqlInstanceDetails?.length,
+                    totalInstance: perRow?.sqlServerInstances?.length,
+                    instanceNameList:
+                        perRow?.sqlServerInstances?.map(
+                            (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
+                        ) || [],
                     nameForSorting: perRow?.resourceName?.toLowerCase()
                 };
                 result.push(rowData);

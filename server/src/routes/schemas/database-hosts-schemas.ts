@@ -30,7 +30,7 @@ import {
     PgSqlDbHostSummaryListResponse,
     PgSqlDbHostsSummaryResponse
 } from '../types/database-hosts.types';
-import { CredentialsIdParams, nextTokenQueryString } from '../types/generic.types';
+import { CredentialsIdParams, NextTokenQueryString } from '../types/generic.types';
 
 // Base Request for resource with credential and region Routes
 const resourceRequest = {
@@ -162,7 +162,7 @@ const GetSandboxesInfoSchema = {
     tags: [RouteTags.SANDBOX],
     summary: 'Get Sandboxes Information',
     description: 'Get Sandboxes Information of all databases',
-    querystring: nextTokenQueryString,
+    querystring: NextTokenQueryString,
     response: {
         200: SandboxInfoResponseBody
     }

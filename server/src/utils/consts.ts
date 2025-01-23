@@ -1483,6 +1483,38 @@ sqlServerEngineEdition = EngineEdition	Database Engine edition of the instance o
 const ENT_ENGINE_EDITION = 3;
 const STD_ENGINE_EDITION = 2;
 
+const PGSQL_CW_CONFIG = `{
+                                    "agent": {
+                                        "metrics_collection_interval": 5,
+                                        "run_as_user": "cwagent",
+                                        "region": "\${AWS::Region}"
+                                    },
+                                    "logs": {
+                                        "logs_collected": {
+                                            "files": {
+                                                "collect_list": [
+                                                    {
+                                                        "file_path": "/var/log/cfn-*.log",
+                                                        "log_group_name": "\${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
+                                                        "log_group_name": "\${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    },
+                                                    {
+                                                        "file_path": "/var/log/netapp_wf/*.log",
+                                                        "log_group_name": "\${ParentStackName}",
+                                                        "log_stream_name": "{instance_id}"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+`;
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1802,5 +1834,6 @@ export {
     STD_ENGINE_EDITION,
     AWS_ERROR_CODES,
     CF_STACK_COUNT_QUOTACODE,
-    DATABASE_INSTANCE_INDEX_MAPPING
+    DATABASE_INSTANCE_INDEX_MAPPING,
+    PGSQL_CW_CONFIG
 };
