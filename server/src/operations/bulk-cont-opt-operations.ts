@@ -16,11 +16,11 @@ async function bulkOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
-    type: string,
+    optimizationCategory: string,
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]
 ) {
     logger.info(
-        `Bulk optimizing configuration: ${accountId}, ${credentialsId}, ${region}, ${type}, ${hostsToOptimize}`
+        `Bulk optimization: ${accountId}, ${credentialsId}, ${region}, ${optimizationCategory}, ${hostsToOptimize}`
     );
 
     if (isEmpty(hostsToOptimize)) {
@@ -29,18 +29,20 @@ async function bulkOptimization(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const jobMetaData: JobMetadata = {
-        hostsToOptimize: hostsToOptimize.map(each => ({
-            resourceId: each.databaseHosts[0].id,
-            sqlInstances: each.databaseHosts[0].sqlServerInstances,
-            optimizationType: each.type
-        }))
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: hostsToOptimize.flatMap(({ type, databaseHosts }) =>
+            databaseHosts.map(({ id, sqlServerInstances }) => ({
+                resourceId: id,
+                sqlServerInstances,
+                optimizationType: type
+            }))
+        )
     };
 
     const jobDescription =
-        type === OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM
+        optimizationCategory === OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM
             ? 'Optimize operating system configuration'
-            : type === OPTIMIZATION_CATEGORIES.STORAGE_TIER
+            : optimizationCategory === OPTIMIZATION_CATEGORIES.STORAGE_TIER
             ? 'Optimize storage tier'
             : 'Optimize storage sizing';
 
@@ -53,94 +55,111 @@ async function bulkOptimization(
         jobDescription,
         jobDescription,
         undefined,
-        jobMetaData
+        jobMetadata
     );
 
-    handleBulkOptimization(accountId, credentialsId, region, type, hostsToOptimize, parentJobId);
+    handleBulkOptimization(accountId, credentialsId, region, optimizationCategory, hostsToOptimize, parentJobId);
     return { jobId: parentJobId };
+}
+
+async function handleOptimization(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    optimizationCategory: string,
+    optimizationSubcategory: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    parentJobId: string
+) {
+    switch (optimizationCategory) {
+        case OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM:
+            try {
+                await optimizeOperatingSystemSettings(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    optimizationSubcategory,
+                    parentJobId
+                );
+            } catch (error: any) {
+                logger.error(
+                    `Error occurred while optimizing operating system configuration for host ${databaseHostId} and instance ${databaseInstanceId}. Error: ${error}`
+                );
+            }
+            break;
+        case OPTIMIZATION_CATEGORIES.STORAGE_TIER:
+            try {
+                await optimizeStorageTier(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    parentJobId
+                );
+            } catch (error: any) {
+                logger.error(
+                    `Error occurred while optimizing storage tier for host ${databaseHostId} and instance ${databaseInstanceId}. Error: ${error}`
+                );
+            }
+            break;
+        case OPTIMIZATION_CATEGORIES.STORAGE_SIZING:
+            try {
+                await optimizeSizing(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    [optimizationSubcategory as unknown as OPTIMIZE_SIZING_CONFIGS],
+                    parentJobId
+                );
+            } catch (error: any) {
+                logger.error(
+                    `Error occurred while optimizing storage tier for host ${databaseHostId} and instance ${databaseInstanceId}. Error: ${error}`
+                );
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 async function handleBulkOptimization(
     accountId: string,
     credentialsId: string,
     region: string,
-    type: string,
+    optimizationCategory: string,
     hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
     logger.info(
-        `Handle bulk optimizing : ${accountId}, ${credentialsId}, ${region}, ${type}, ${hostsToOptimize}, ${masterOptimizeParentId}`
+        `Handle bulk optimizing : ${accountId}, ${credentialsId}, ${region}, ${optimizationCategory}, ${hostsToOptimize}, ${masterOptimizeParentId}`
     );
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async each => {
-                const { databaseHosts } = each;
+            hostsToOptimize.map(async ({ type: optimizationSubcategory, databaseHosts }) => {
                 await Promise.all(
-                    databaseHosts.map(async host => {
-                        const optimizationType = each.type;
-                        const databaseHostId = host.id;
-                        const instances = host.sqlServerInstances;
-                        if (isEmpty(instances)) {
-                            const errorMessage = `No instances given for resource ${databaseHostId}.`;
-                            logger.error(errorMessage);
+                    databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances }) => {
+                        if (isEmpty(sqlServerInstances)) {
+                            logger.error(`No instances given for resource ${databaseHostId}.`);
                         }
                         await Promise.all(
-                            instances.map(async instance => {
-                                switch (type) {
-                                    case OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM:
-                                        try {
-                                            await optimizeOperatingSystemSettings(
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                databaseHostId,
-                                                instance,
-                                                optimizationType,
-                                                masterOptimizeParentId
-                                            );
-                                        } catch (error: any) {
-                                            logger.error(
-                                                `Error occurred while optimizing operating system configuration for host ${databaseHostId} and instance ${instance}. Error: ${error}`
-                                            );
-                                        }
-                                        break;
-                                    case OPTIMIZATION_CATEGORIES.STORAGE_TIER:
-                                        try {
-                                            await optimizeStorageTier(
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                databaseHostId,
-                                                instance,
-                                                masterOptimizeParentId
-                                            );
-                                        } catch (error: any) {
-                                            logger.error(
-                                                `Error occurred while optimizing storage tier for host ${databaseHostId} and instance ${instance}. Error: ${error}`
-                                            );
-                                        }
-                                        break;
-                                    case OPTIMIZATION_CATEGORIES.STORAGE_SIZING:
-                                        try {
-                                            await optimizeSizing(
-                                                accountId,
-                                                credentialsId,
-                                                region,
-                                                databaseHostId,
-                                                instance,
-                                                [optimizationType as OPTIMIZE_SIZING_CONFIGS],
-                                                masterOptimizeParentId
-                                            );
-                                        } catch (error: any) {
-                                            logger.error(
-                                                `Error occurred while optimizing storage tier for host ${databaseHostId} and instance ${instance}. Error: ${error}`
-                                            );
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
+                            sqlServerInstances.map(async instance => {
+                                await handleOptimization(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    optimizationCategory,
+                                    optimizationSubcategory,
+                                    databaseHostId,
+                                    instance,
+                                    masterOptimizeParentId
+                                );
                             })
                         );
                     })
@@ -173,10 +192,10 @@ async function bulkComputeOptimization(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const jobMetaData: JobMetadata = {
+    const jobMetadata: JobMetadata = {
         hostsToOptimize: hostsToOptimize.map(each => ({
             resourceId: each.databaseHosts[0].id,
-            sqlInstances: each.databaseHosts[0].sqlServerInstances,
+            sqlServerInstances: each.databaseHosts[0].sqlServerInstances,
             optimizationType: each.type
         }))
     };
@@ -190,7 +209,7 @@ async function bulkComputeOptimization(
         'Optimize compute',
         'Optimize compute',
         undefined,
-        jobMetaData
+        jobMetadata
     );
 
     handleBulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize, parentJobId);
@@ -210,16 +229,14 @@ async function handleBulkComputeOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     try {
         await Promise.all(
-            hostsToOptimize.map(async each => {
-                const { databaseHosts } = each;
+            hostsToOptimize.map(async ({ databaseHosts }) => {
                 await Promise.all(
-                    databaseHosts.map(async host => {
-                        const databaseHostId = host.id;
-                        const { instanceType } = host;
-                        const instances = host.sqlServerInstances;
-                        if (isEmpty(instances)) {
-                            const errorMessage = `No instances given for resource ${databaseHostId}.`;
-                            logger.error(errorMessage);
+                    databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances, instanceType }) => {
+                        if (isEmpty(sqlServerInstances)) {
+                            logger.error(`No instances given for resource ${databaseHostId}.`);
+                        }
+                        if (!instanceType) {
+                            logger.error(`instanceType cannot be empty, ${databaseHostId}.`);
                         }
                         try {
                             await optimizeCompute(
@@ -228,7 +245,7 @@ async function handleBulkComputeOptimization(
                                 region,
                                 databaseHostId,
                                 instanceType!,
-                                instances[0],
+                                sqlServerInstances[0],
                                 masterOptimizeParentId
                             );
                         } catch (error: any) {

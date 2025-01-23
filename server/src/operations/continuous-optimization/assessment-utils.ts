@@ -11,7 +11,7 @@ const logger = getLogger();
 interface PerHostJobMetadata {
     optimizationType: string;
     resourceId: string;
-    sqlInstances: Array<string>;
+    sqlServerInstances: Array<string>;
 }
 interface JobMetadata {
     hostsToOptimize: Array<PerHostJobMetadata>;
@@ -41,7 +41,7 @@ async function handleOptimizeJobCreation(
     jobName: string,
     jobDescription: string,
     parentJobId?: string,
-    jobMetaData?: JobMetadata
+    jobMetadata?: JobMetadata
 ) {
     updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
@@ -76,7 +76,7 @@ async function handleOptimizeJobCreation(
         startTime: Date.now(),
         description: jobDescription,
         ...(parentJobId && { parentJobId }),
-        ...(jobMetaData && { metadata: jobMetaData })
+        ...(jobMetadata && { metadata: jobMetadata })
     });
     logger.debug(`Job created with id ${id}`);
 

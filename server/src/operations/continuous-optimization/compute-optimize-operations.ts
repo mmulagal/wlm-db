@@ -517,12 +517,12 @@ export default async function optimizeCompute(
 
     const [{ resource_name: resourceName, metadata }] = resourceDetails;
 
-    const jobMetaData: JobMetadata = {
+    const jobMetadata: JobMetadata = {
         hostsToOptimize: [
             {
                 optimizationType: 'compute-rightsizing',
                 resourceId: databaseHostId,
-                sqlInstances: [databaseInstanceId]
+                sqlServerInstances: [databaseInstanceId]
             }
         ]
     };
@@ -535,7 +535,7 @@ export default async function optimizeCompute(
         `Optimize EC2 compute for ${resourceName}`,
         `Optimize EC2 compute for ${resourceName}`,
         masterOptimizeParentId,
-        jobMetaData
+        jobMetadata
     );
 
     handleComputeRemediation(

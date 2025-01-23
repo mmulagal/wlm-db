@@ -1079,9 +1079,9 @@ async function optimizeSizing(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
     }
 
-    const jobMetaData: JobMetadata = {
+    const jobMetadata: JobMetadata = {
         hostsToOptimize: [
-            { optimizationType: types[0], resourceId: databaseHostId, sqlInstances: [databaseInstanceId] }
+            { optimizationType: types[0], resourceId: databaseHostId, sqlServerInstances: [databaseInstanceId] }
         ]
     };
 
@@ -1095,7 +1095,7 @@ async function optimizeSizing(
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
         masterOptimizeParentId,
-        jobMetaData
+        jobMetadata
     );
 
     modifySizingAttributes(
@@ -1993,9 +1993,13 @@ async function optimizeOperatingSystemSettings(
             : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
             ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
             : '';
-    const jobMetaData: JobMetadata = {
+    const jobMetadata: JobMetadata = {
         hostsToOptimize: [
-            { optimizationType: configurationName, resourceId: databaseHostId, sqlInstances: [databaseInstanceId] }
+            {
+                optimizationType: configurationName,
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
         ]
     };
     const parentJobId = await handleOptimizeJobCreation(
@@ -2007,7 +2011,7 @@ async function optimizeOperatingSystemSettings(
         jobDescription,
         jobDescription,
         masterOptimizeParentId,
-        jobMetaData
+        jobMetadata
     );
     switch (configurationName) {
         case OptimizeOperatingSystemParams.MPIO_POLICY: {
@@ -2311,12 +2315,12 @@ async function optimizeStorageTier(
         instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
-    const jobMetaData: JobMetadata = {
+    const jobMetadata: JobMetadata = {
         hostsToOptimize: [
             {
                 optimizationType: 'storage-tier',
                 resourceId: databaseHostId,
-                sqlInstances: [databaseInstanceId]
+                sqlServerInstances: [databaseInstanceId]
             }
         ]
     };
@@ -2330,7 +2334,7 @@ async function optimizeStorageTier(
         `Optimize storage-tier for ${serverNameWithHostName}`,
         `Optimize storage-tier for ${serverNameWithHostName}`,
         masterOptimizeParentId,
-        jobMetaData
+        jobMetadata
     );
 
     const svmDetailsObject = svmDetails as Record<string, string>;
