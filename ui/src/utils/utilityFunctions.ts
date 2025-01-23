@@ -1631,6 +1631,8 @@ export const setTabInfoFOrBXP = (tab: string) => {
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case '/fsxdb/explore-savings-fsxw':
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case '/fsxdb/explore-savings-on-premise':
+            return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case '/fsxdb/storage-saving-calculator':
             return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':
