@@ -412,20 +412,6 @@ async function triggerAssessment(
     let newDatabaseInstanceDetails;
     let cloudProviderAccountId;
 
-    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
-    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
-    if (!skipInstanceLevelJobCreation) {
-        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-            name: jobName,
-            description: jobDescription,
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            status: JOBSTATUS.IN_PROGRESS,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
-        parentJobId = jobId;
-    }
     try {
         const instanceDetails = await getInstanceDetails(
             accountId,
@@ -442,6 +428,21 @@ async function triggerAssessment(
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+    }
+
+    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
+    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+    if (!skipInstanceLevelJobCreation) {
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            name: jobName,
+            description: jobDescription,
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
+        });
+        parentJobId = jobId;
     }
 
     try {
