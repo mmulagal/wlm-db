@@ -11,7 +11,11 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+import {
+    disableOptimizeCheckBoxForErrCase,
+    disableOptimizeCheckBoxForOptimizeCase
+} from '../../../GetWell/GetWellUtils';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -23,9 +27,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -52,13 +54,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             assessmentStatus: GETWELL_VALUES[computeRightSizingObj?.status],
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
                             isMissingPermissions: computeMissingPermissions,
-                            data: instanceData,
-                            cellProps: {
-                                isDisabled:
-                                    optimizingInstanceData &&
-                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
-                                selectionProps: undefined
-                            }
+                            data: instanceData
                         });
                     }
                 }
@@ -72,37 +68,16 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     const updatedTableData = useMemo(() => {
-        if (!optimizingInstanceData) {
-            // If no rows are selected, reset `isDisabled` for all rows
-            return tableData.map((row: any) => ({
-                ...row,
-                cellProps: { ...row.cellProps, isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP }
-            }));
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
+            return disableOptimizeCheckBoxForOptimizeCase(
+                tableData,
+                ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+                selectedRowsForOptimize
+            );
+        } else {
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
         }
-
-        if (optimizingInstanceData) {
-            // Extract IDs of rows currently selected for optimization
-            const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
-
-            return tableData.map((row: any) => {
-                // Check if the current row is being optimized
-                const isBeingOptimized = selectedInstanceIds.includes(row.id);
-
-                const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
-
-                // Combine both conditions
-                const isDisabled = optimizingInstanceData && (isBeingOptimized || hasStatusOffline);
-
-                return {
-                    ...row,
-                    cellProps: {
-                        ...row.cellProps,
-                        isDisabled
-                    }
-                };
-            });
-        }
-    }, [selectedRowsForOptimize, optimizingInstanceData, tableData]);
+    }, [selectedRowsForOptimize, inProgressOptimizationData, tableData]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -134,7 +109,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Compute rightsizing', {}, inProgressOptimizationData, inProgressHostData)
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
@@ -154,13 +129,13 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForOptimize(rowsData));
-        if (rowsData.length > 0 && optimizingInstanceData) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData);
         }
-    }, [tableProps.selectionState, optimizingInstanceData]);
+    }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction('Compute rightsizing', selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>

@@ -11,7 +11,11 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
+import {
+    disableOptimizeCheckBoxForErrCase,
+    disableOptimizeCheckBoxForOptimizeCase
+} from '../../../GetWell/GetWellUtils';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -23,9 +27,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData, inProgressHostData } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
@@ -47,13 +49,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                             assessmentStatus: GETWELL_VALUES[logDriveSizeObj?.status],
                             sizingViolations: logDriveSizeObj?.sizingViolations,
                             missingPermissions: logDriveSizeObj?.missingPermissions,
-                            data: instanceData,
-                            cellProps: {
-                                isDisabled:
-                                    optimizingInstanceData &&
-                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
-                                selectionProps: undefined
-                            }
+                            data: instanceData
                         });
                     }
                 }
@@ -68,37 +64,16 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (!optimizingInstanceData) {
-            // If no rows are selected, reset `isDisabled` for all rows
-            return tableData.map((row: any) => ({
-                ...row,
-                cellProps: { ...row.cellProps, isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP }
-            }));
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length) {
+            return disableOptimizeCheckBoxForOptimizeCase(
+                tableData,
+                ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+                selectedRowsForOptimize
+            );
+        } else {
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
         }
-
-        if (optimizingInstanceData) {
-            // Extract IDs of rows currently selected for optimization
-            const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
-
-            return tableData.map((row: any) => {
-                // Check if the current row is being optimized
-                const isBeingOptimized = selectedInstanceIds.includes(row.id);
-
-                const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
-
-                // Combine both conditions
-                const isDisabled = optimizingInstanceData && (isBeingOptimized || hasStatusOffline);
-
-                return {
-                    ...row,
-                    cellProps: {
-                        ...row.cellProps,
-                        isDisabled
-                    }
-                };
-            });
-        }
-    }, [selectedRowsForOptimize, optimizingInstanceData, tableData]);
+    }, [selectedRowsForOptimize, inProgressOptimizationData, tableData]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -130,7 +105,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Log drive size', {}, inProgressOptimizationData, inProgressHostData)
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
@@ -150,13 +125,13 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForOptimize(rowsData));
-        if (rowsData.length > 0 && optimizingInstanceData) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData);
         }
-    }, [tableProps.selectionState, optimizingInstanceData]);
+    }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction('Log drive size', selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>

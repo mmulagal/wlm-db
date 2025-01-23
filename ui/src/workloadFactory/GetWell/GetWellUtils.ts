@@ -15,11 +15,15 @@ import {
 import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    ASSESSMENT_CONFIG_NAMES,
+    FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
+    INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
-    OPTIMIZE_POLLING_INTERVAL
+    OPTIMIZE_POLLING_INTERVAL,
+    STATUS_CONST
 } from '../../utils/consts';
 import {
     AssessmentResponseInterface,
@@ -37,7 +41,7 @@ export const cardDataDefault: GwCardDataInterface = {
         category: 'storage',
         block_one: {
             type: 'Storage sizing',
-            value: 'Storage tier'
+            value: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
         },
         block_two: {
             type: 'Status',
@@ -62,7 +66,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'headroom',
         category: 'storage',
         block_one: {
-            value: 'File system headroom',
+            value: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
             type: 'Storage sizing'
         },
         block_two: {
@@ -89,7 +93,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'log-drive-size',
         category: 'storage',
         block_one: {
-            value: 'Log drive size',
+            value: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
             type: 'Storage sizing'
         },
         block_two: {
@@ -116,7 +120,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'tempdb-drive-size',
         category: 'storage',
         block_one: {
-            value: 'TempDB drive size',
+            value: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
             type: 'Storage sizing'
         },
         block_two: {
@@ -197,7 +201,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'tempdb-files-location',
         category: 'storage',
         block_one: {
-            value: 'TempDB placement',
+            value: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
             type: 'Storage layout'
         },
         block_two: {
@@ -322,7 +326,7 @@ export const cardDataDefault: GwCardDataInterface = {
         category: 'compute',
         block_one: {
             type: 'Compute',
-            value: 'Compute rightsizing'
+            value: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         },
         block_two: {
             type: 'Status',
@@ -1357,7 +1361,8 @@ export const handleOptimizeStorageJob = (
     getJobDetailApi: any,
     dispatch: any,
     type?: any,
-    operation?: string
+    operation?: string,
+    bulkRowData?: any
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -1377,12 +1382,6 @@ export const handleOptimizeStorageJob = (
                     let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
                         dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
-                        dispatch(
-                            setOptimizingData({
-                                ...optimizingData,
-                                [rowData?.id]: 'optimized'
-                            })
-                        );
 
                         if (operation === 'bulk') {
                             dispatch(
@@ -1414,7 +1413,25 @@ export const handleOptimizeStorageJob = (
                                     )
                                 })
                             );
+                            bulkRowData?.map((row: any) => {
+                                updateOptimizationStatus(row, dispatch);
+                            });
+                            setTimeout(() => {
+                                formatGetWellData(dispatch);
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                        message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
+                                    })
+                                );
+                            }, 0);
                         } else {
+                            dispatch(
+                                setOptimizingData({
+                                    ...optimizingData,
+                                    [rowData?.id]: 'optimized'
+                                })
+                            );
                             dispatch(
                                 setInProgressOptimizationData({
                                     ...inProgressOptimizationData,
@@ -1431,19 +1448,20 @@ export const handleOptimizeStorageJob = (
                                     )
                                 })
                             );
+                            updateOptimizationStatus(rowData, dispatch);
+                            formatGetWellData(dispatch);
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                    message: `${rowData?.name} optimized successfully.`
+                                })
+                            );
                         }
-
-                        updateOptimizationStatus(rowData, dispatch);
-                        formatGetWellData(dispatch);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                message: `${rowData?.name} optimized successfully.`
-                            })
-                        );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                        // ToDo to handle for bulk operation
+                        // ToDo to handle completed with warnings case
                         dispatch(
                             setOptimizingData({
                                 ...optimizingData,
@@ -1558,7 +1576,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 }
                             }
                         };
-                    } else if (rowData?.name === 'Compute rightsizing') {
+                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
                         return {
                             ...instance,
                             assessments: {
@@ -1600,4 +1618,130 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
         }
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+};
+
+export const checkIfDisableForOptimize = (inProgressHostData: any, name: string, rowData: any) => {
+    let isDisabled = false;
+    let errorMessage = '';
+    if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+        isDisabled = true;
+        errorMessage = 'Optimization in progress for this host';
+    } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+        isDisabled = true;
+        errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
+    } else if (
+        !rowData?.assessmentStatus ||
+        rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
+    ) {
+        isDisabled = true;
+        errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+    } else if (
+        name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
+        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                !rowData?.sizingViolations?.underProvisionedDrives?.length))
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+    } else if (
+        name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE &&
+        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                !rowData?.sizingViolations?.underProvisionedDrives?.length))
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+    } else if (
+        name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                !rowData?.sizingViolations?.underProvisionedDrives?.length))
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+    } else if (
+        (name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
+            name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) &&
+        rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase() &&
+        !rowData?.sizingViolations?.underProvisionedDrives?.length &&
+        rowData?.sizingViolations?.ignoredDrives?.length
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+    }
+
+    return { isDisabled, errorMessage };
+};
+
+export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) => {
+    const state = store.getState();
+    const { inProgressHostData } = state.getWellOptimize;
+
+    // If no rows are selected, reset `isDisabled` for all rows
+    return tableData.map((row: any) => {
+        const { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row);
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP || isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
+export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: string, selectedRowsForOptimize: any) => {
+    const state = store.getState();
+    const { inProgressHostData, inProgressOptimizationData } = state.getWellOptimize;
+
+    // Extract IDs of rows currently selected for optimization
+    const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
+
+    return tableData.map((row: any) => {
+        // Check if the current row is being optimized
+        const isBeingOptimized =
+            selectedInstanceIds.includes(row.id) && inProgressOptimizationData?.[type]?.includes(row.id);
+
+        const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
+
+        // Combine both conditions
+        let isDisabled = isBeingOptimized || hasStatusOffline;
+        let errorMessage = '';
+        if (!isDisabled) {
+            ({ isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row));
+        }
+
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
+export const nameToIdConfigMapping = (name: string) => {
+    return name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
+        ? 'log-drive-size'
+        : name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+        ? 'headroom'
+        : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ? 'tempdb-drive-size'
+        : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
+        ? 'performance-tier'
+        : 'compute-rightsizing';
 };

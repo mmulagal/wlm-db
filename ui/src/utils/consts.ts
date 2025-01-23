@@ -773,3 +773,14 @@ export const NETWORK_PERFORMANCE_OPTIONS: any = {
 };
 
 export const ERR_MSG_TO_CHECK = ['does not match schema definition.'];
+
+export const ASSESSMENT_CONFIG_NAMES = {
+    STORAGE_TIER: 'Storage tier',
+    FILE_SYSTEM_HEADROOM: 'File system headroom',
+    LOG_DRIVE_SIZE: 'Log drive size',
+    TEMPDB_DRIVE_SIZE: 'TempDB drive size',
+    DATA_FILES_MDF: 'Data files (.mdf)',
+    LOG_FILES_LDF: 'Log files (.ldf)',
+    TEMPDB_PLACEMENT: 'TempDB placement',
+    COMPUTE_RIGHTSIZING: 'Compute rightsizing'
+};

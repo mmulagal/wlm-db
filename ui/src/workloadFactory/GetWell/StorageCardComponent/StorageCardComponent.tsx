@@ -11,6 +11,7 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
 import {
+    ASSESSMENT_CONFIG_NAMES,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -410,12 +411,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+        } else if (
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ) {
             apiCall = optimizeStorageSizing;
             payload = {
                 type: [cardData?.id]
             };
-        } else if (type === 'Storage tier') {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
             payload = null;
         } else {
@@ -528,7 +533,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={'innerPage'}
                 hidePrimaryButton={
-                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
+                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }

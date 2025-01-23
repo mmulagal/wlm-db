@@ -28,6 +28,7 @@ export interface GetWellSliceInterface {
     inProgressHostData: any;
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
+    recommendedInstanceInBulk?: any;
 }
 
 interface CountBreakDown {
