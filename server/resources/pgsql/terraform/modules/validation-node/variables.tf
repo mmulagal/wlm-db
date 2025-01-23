@@ -87,10 +87,10 @@ variable "validation_node_instance_type" {
   type        = string
 }
 
-# variable "validation_node_initialization_s3_url" {
-#   description = "Value of the validaton node initialization URL"
-#   type        = string
-# }
+variable "validation_node_initialization_s3_url" {
+  description = "Value of the validaton node initialization URL"
+  type        = string
+}
 
 variable "validation_node1_wait_handler" {
   description = "The wait handler for the validation node"
@@ -116,4 +116,5 @@ variable "aws_profile" {
   description = "The name of the AWS profile configured on the host"
   type        = string
 }
+
 

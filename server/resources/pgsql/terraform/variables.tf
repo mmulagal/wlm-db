@@ -534,3 +534,13 @@ variable "route_table2_id" {
   description = "The ID of the second route table"
   type        = string
 }
+
+variable "validation_node_initialization_s3_url" {
+  description = "Value of the validaton node initialization URL"
+  type        = string
+
+  validation {
+    condition     = length(var.validation_node_initialization_s3_url) > 0
+    error_message = "The validation_node_initialization_s3_url value must not be empty."
+  }
+}

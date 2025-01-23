@@ -87,12 +87,12 @@ resource "aws_instance" "sql_node" {
     create = "90m"
   }
 
-  tags = merge(
-    {
-      Name = local.tagName
-    },
-    var.is_standalone ? {} : { FCIName = var.sql_fsx_fci_name, FCIRole = local.node_type }
-  )
+  # tags = merge(
+  #   {
+  #     Name = local.tagName
+  #   },
+  #   var.is_standalone ? {} : { FCIName = var.sql_fsx_fci_name, FCIRole = local.node_type }
+  # )
 }
 
 

@@ -73,40 +73,40 @@ module "vpc_endpoints" {
   deployment_name            = var.deployment_name
 }
 
-module "fsxn_standalone" {
-  source = "./modules/fsxn"
-  count  = local.is_standalone ? 1 : 0
+# module "fsxn_standalone" {
+#   source = "./modules/fsxn"
+#   count  = local.is_standalone ? 1 : 0
 
-  depends_on                     = [module.vpc_endpoints]
-  fsx_file_system_id             = var.fsx_file_system_id
-  deployment_mode                = var.deployment_mode
-  deployment_name                = var.deployment_name
-  vpc_id                         = var.vpc_id
-  vpc_cidr                       = var.vpc_cidr
-  preferred_subnet_id            = var.private_subnet1_id
-  standby_subnet_id              = var.private_subnet2_id
-  preferred_route_table_id       = var.route_table1_id
-  standby_route_table_id         = var.route_table2_id
-  preferred_subnet_cidrblock     = var.private_subnet1_cidrblock
-  standby_subnet_cidrblock       = var.private_subnet2_cidrblock
-  fsx_file_system_name           = var.fsx_file_system_name
-  fsx_storage_capacity           = var.fsx_storage_capacity
-  fsx_volume_throughput_capacity = var.fsx_volume_throughput_capacity
-  fsx_disk_iops                  = var.fsx_disk_iops
+#   depends_on                     = [module.vpc_endpoints]
+#   fsx_file_system_id             = var.fsx_file_system_id
+#   deployment_mode                = var.deployment_mode
+#   deployment_name                = var.deployment_name
+#   vpc_id                         = var.vpc_id
+#   vpc_cidr                       = var.vpc_cidr
+#   preferred_subnet_id            = var.private_subnet1_id
+#   standby_subnet_id              = var.private_subnet2_id
+#   preferred_route_table_id       = var.route_table1_id
+#   standby_route_table_id         = var.route_table2_id
+#   preferred_subnet_cidrblock     = var.private_subnet1_cidrblock
+#   standby_subnet_cidrblock       = var.private_subnet2_cidrblock
+#   fsx_file_system_name           = var.fsx_file_system_name
+#   fsx_storage_capacity           = var.fsx_storage_capacity
+#   fsx_volume_throughput_capacity = var.fsx_volume_throughput_capacity
+#   fsx_disk_iops                  = var.fsx_disk_iops
 
-  fsx_kms_key_id                    = var.fsx_encryption_key # its kms key for fsx
-  fsx_data_volume_name              = var.fsx_data_volume_name
-  fsx_data_volume_size              = var.fsx_data_volume_size
-  fsx_log_volume_name               = var.fsx_log_volume_name
-  fsx_log_volume_size               = var.fsx_log_volume_size
-  # fsx_temp_db_volume_name           = var.fsx_temp_db_volume_name
-  # fsx_temp_db_volume_size           = var.fsx_temp_db_volume_size
-  # fsx_cluster_quorum_volume_name    = var.fsx_quorum_volume_name
-  # fsx_cluster_quorum_volume_size    = var.fsx_quorum_volume_size
-  fsx_administrator_password        = var.fsx_admin_password
-  fsx_svm_name                      = var.sql_svm_name
-  fsx_weekly_maintenance_start_time = "1:05:00"
-}
+#   fsx_kms_key_id                    = var.fsx_encryption_key # its kms key for fsx
+#   fsx_data_volume_name              = var.fsx_data_volume_name
+#   fsx_data_volume_size              = var.fsx_data_volume_size
+#   fsx_log_volume_name               = var.fsx_log_volume_name
+#   fsx_log_volume_size               = var.fsx_log_volume_size
+#   # fsx_temp_db_volume_name           = var.fsx_temp_db_volume_name
+#   # fsx_temp_db_volume_size           = var.fsx_temp_db_volume_size
+#   # fsx_cluster_quorum_volume_name    = var.fsx_quorum_volume_name
+#   # fsx_cluster_quorum_volume_size    = var.fsx_quorum_volume_size
+#   fsx_administrator_password        = var.fsx_admin_password
+#   fsx_svm_name                      = var.sql_svm_name
+#   fsx_weekly_maintenance_start_time = "1:05:00"
+# }
 
 module "validation_node1" {
   source = "./modules/validation-node"
@@ -116,13 +116,9 @@ module "validation_node1" {
   vpc_id                                = var.vpc_id
   aws_location                          = var.aws_location
   subnet_id                             = var.private_subnet1_id
-  # dns_ip_addresses                      = var.dns_ip_addresses
   ec2_role_name                         = var.deployment_name
-  # is_custom_ami                         = var.is_custom_ami
   key_pair_name                         = var.key_pair_name
-  # perform_ad_check                      = "true"
-  # domain_dns_name                       = var.domain_dns_name
-  # domain_admin_user                     = var.domain_admin_user
+
   perform_fsx_check                     = local.existing_ontap_fsx ? "true" : "false"
   fsx_file_system_id                    = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
   enable_cloudwatch_log_feature         = var.enable_cloud_watch_log_feature
@@ -130,7 +126,7 @@ module "validation_node1" {
   validation_node_instance_type         = var.validation_node_instance_type
   deployment_name                       = var.deployment_name
   unique_id                             = var.unique_id
-  # validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
+  validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
   validation_node1_wait_handler         = "wait"
   sql_deployment_mode                   = var.sql_deployment_mode
   validation_node_name                  = "Validation-Node-1"
