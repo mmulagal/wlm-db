@@ -4,6 +4,12 @@
 
     margin-top: 24px;
 
+    [class*='Table-module_table-wrapper'] {
+        [class*='Table-module_right-border'] {
+            cursor: not-allowed !important;
+        }
+    }
+
     .container {
         display: flex;
         gap: 8px;

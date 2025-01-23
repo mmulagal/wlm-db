@@ -240,7 +240,7 @@ const ExploreSavingsOnPremiseTable = () => {
             accessor: 'deploymentModel',
             id: '2',
             width: '345px',
-            filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
+            filterOptions: getFilterOptions(tableData, 'deploymentModel'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -248,16 +248,12 @@ const ExploreSavingsOnPremiseTable = () => {
 
         {
             Header: 'SQL server instances',
-            accessor: 'totalInstance',
+            accessor: 'instanceNameList',
             id: '4',
             width: '345px',
-            filterOptions: getFilterOptions(tableData, 'totalInstance'),
+            filterOptions: getFilterOptions(tableData, 'instanceNameList'),
             renderCell: (cellData: string, rowData: any) => {
-                const instanceNames =
-                    rowData?.sqlServerInstances?.map(
-                        (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
-                    ) || [];
-                const truncatedItems = getTruncatedItems(instanceNames);
+                const truncatedItems = getTruncatedItems(cellData);
 
                 return (
                     <div>

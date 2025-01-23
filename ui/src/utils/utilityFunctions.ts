@@ -108,7 +108,7 @@ export const getTruncatedItems = (items: any) => {
         //@ts-ignore
         const itemWidth = context.measureText(item + ', ').width;
         //@ts-ignore
-        if (totalWidth + itemWidth <= 261 || maxItemsToShow.length === 0) {
+        if (totalWidth + itemWidth <= 180 || maxItemsToShow.length === 0) {
             maxItemsToShow.push(item);
             totalWidth += itemWidth;
         } else {
