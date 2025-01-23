@@ -105,5 +105,6 @@ export {
     createOnPremTcoReportData,
     removeOnPremTcoReportData,
     updateOnPremTcoReportRecord,
-    listOnPremDatabaseResources
+    listOnPremDatabaseResources,
+    OnPremTcoReportObject
 };

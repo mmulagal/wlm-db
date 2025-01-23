@@ -88,7 +88,6 @@ function Invoke-SQLQuery {
     }
 }
 
-
 # Function to get drive details for a given node
 function GetDriveDetails {
     param (
@@ -228,12 +227,17 @@ $windowsConfig["nodeDetails"] += $hostDetails
 if($belongsToCluster){
     $windowsConfig.Add("clusterNodeNames", $nodeNames)
     $windowsClusterName = Get-Cluster | Select-Object -ExpandProperty Name
-    $windowsConfig.Add("windowsClusterName", $windowsClusterName)
+    $windowsConfig.Add("windowsSystemName", $windowsClusterName)
     $remoteClusterNodes = $nodeNames | Where-Object { $_ -ne $hostname }
     foreach ($node in $remoteClusterNodes) {
         $clusterResult = GetClusterNodeDetails -nodeName $node
         $windowsConfig["nodeDetails"] += $clusterResult
     }
+}
+else{
+    $windowsName = hostname
+    $windowsConfig.Add("windowsSystemName", $windowsName)
+    $windowsConfig.Add("clusterNodeNames", $windowsName)
 }
 
 # Collect SQL Server instances
@@ -244,14 +248,14 @@ ForEach ($sqlService in $sqlServiceList) {
     $isDefaultInstance = -Not $sqlService.Name.Contains('$')
     $instanceName = $sqlService.Name -Replace "MSSQL\$", ""
     $fciName = Get-FCIName -sqlServerNameToFind $instanceName -ErrorAction SilentlyContinue
-   if ($fciName) {
+    if ($fciName) {
     $serverInstance = if ($isDefaultInstance) { 
         $fciName 
     } else { 
         "$fciName\$instanceName" 
     }
-} else {
-    $serverInstance = if ($isDefaultInstance) { 
+    } else {
+        $serverInstance = if ($isDefaultInstance) { 
         "$Env:ComputerName" 
     } else { 
         "$Env:ComputerName\$instanceName" 
@@ -583,6 +587,7 @@ ForEach ($instance in $finalInstancesList) {
             d.name FOR JSON PATH;  
         "
         $instanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+       
         break
         }
         default {

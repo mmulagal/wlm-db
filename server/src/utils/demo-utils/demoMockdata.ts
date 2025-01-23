@@ -1,8 +1,9 @@
 import randomize from 'randomatic';
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { AWS_REGIONS, RESOURCESTYPE } from '../consts';
 import { checkAccount, getSubJobDescriptions } from '../utils';
+import { OnPremTcoReportObject } from '../../lib/database/onprem-tco';
 
 const DEMO_PRODUCT_RATE = {
     ec2Instance: {
@@ -2782,6 +2783,1146 @@ function enableMPIOJobData(
     ];
 }
 
+const onPremRecords = (accountId: string): OnPremTcoReportObject[] => [
+    {
+        account_id: accountId,
+        resource_id: randomize('A0', 8),
+        database_type: DATABASE_TYPE.mssql,
+        database_deployment_type: DATABASE_DEPLOYMENT_TYPE.AOAG,
+        creation_time: new Date(),
+        version: '1.0.0',
+        host_config: {
+            nodeDetails: [
+                {
+                    hostId: '3B791E42-87BF-0F62-A6B9-8879355A59BC',
+                    ramSize: 8,
+                    hostName: 'AOAG-Node1',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {
+                        value: '[\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE0",\r\n        "model":  "VMware Virtual disk SCSI Disk Device",\r\n        "driveLetter":  "C:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE1",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "E:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE2",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "F:"\r\n    }\r\n]',
+                        RunspaceId: '39cbfe16-d06f-4545-b0c6-dac70bfe04c5',
+                        PSComputerName: 'AOAG-Node1',
+                        PSShowComputerName: true
+                    },
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                },
+                {
+                    hostId: 'F5171E42-4C90-CCB7-ED0E-DAD2DC26DF09',
+                    ramSize: 8,
+                    hostName: 'AOAG-Node2',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {
+                        value: '[\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE0",\r\n        "model":  "VMware Virtual disk SCSI Disk Device",\r\n        "driveLetter":  "C:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE1",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "E:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE2",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "F:"\r\n    }\r\n]',
+                        RunspaceId: '99c9529e-41f8-449b-bfa3-03d0e3f9546e',
+                        PSComputerName: 'AOAG-Node2',
+                        PSShowComputerName: true
+                    },
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                }
+            ],
+            belongsToCluster: true,
+            clusterNodeNames: ['AOAG-Node1', 'AOAG-Node2'],
+            windowsSystemName: 'OnPrem-AOAG'
+        },
+        database_instances_data: [
+            {
+                iops: '[{"writeIops":"      10.18","readIops":"      10.00","writeBytesPerSec":"            10823456.36","readBytesPerSec":"              22147852.80"}]',
+                collation: 'SQL_Romanian_CP1250_CS_AS',
+                totalIops: '100.18',
+                ownerNodes: '[{"primary":"AOAG-Node1"}]',
+                sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
+                sqlVersion: [
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
+                    '\tOct  8 2022 05:58:25 ',
+                    '\tCopyright (C) 2022 Microsoft Corporation',
+                    '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)',
+                    ''
+                ],
+                instanceGuid: '8',
+                isReadReplica: 'True',
+                noOfDatabases: '1',
+                cpuUtilization: '1',
+                deploymentType: 'AOAG',
+                memUtilization: '[{"used":6904355840,"total":8588910592,"remaining":7684554752,"percentUsed":10}]',
+                sqlInstanceName: 'AOAG-Instance1',
+                totalThroughput: '214511045.16',
+                vcpusPerInstance: '8',
+                storageDetailsByDb:
+                    '[{"databaseName":"AG1NORMALDB1","allocatedSizeMb":160000,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":87021,"driveAvailableSizeMb":8679700},{"databaseName":"AOAGDB1","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"E:","driveTotalSizeMb":87021,"driveAvailableSizeMb":86797},{"databaseName":"AOAGDB22","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"E:","driveTotalSizeMb":87021,"driveAvailableSizeMb":86797},{"databaseName":"DB1","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":87021,"driveAvailableSizeMb":86797},{"databaseName":"DB2","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":87021,"driveAvailableSizeMb":86797},{"databaseName":"DB3","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":87021,"driveAvailableSizeMb":86797}]',
+                licenceUsageDetails:
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"},{"IsUsingFeature":1,"FeatureDescription":"You have Availability Groups with > 1 database"}]'
+            }
+        ],
+        assessment_data: {
+            calculations: {
+                multi: {
+                    fsxCloneCalculation: {
+                        fsxnSsdPrice: { unit: 'UsdPerGiB', price: 0.25 },
+                        ssdMonthlyCost: 0.02,
+                        clonedCopiesCount: 1,
+                        totalFsxnCapacity: 1073741824,
+                        ssdStoragePerMonth: 85899345.92,
+                        totalCloneMonthlyCost: 0.02,
+                        desiredStorageCapacity: 85899345.92,
+                        changeRateBetweenClones: 8,
+                        monthlyChangeRatePercentage: 8,
+                        effectiveFsxnStorageCapacity: 85899345.92,
+                        percentageOfDataOnSsdStorage: 1,
+                        savingsFromCompressionAndDeduplication: 0,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    },
+                    fsxOntapCalculation: {
+                        maxSsdIops: 51200,
+                        ebsCapacity: 1073741824,
+                        includedIops: 3,
+                        fsxnIopsPrice: 0.034,
+                        maxThroughput: 4096,
+                        maxSsdTierSize: 211106232532992,
+                        ssdMonthlyCost: 256,
+                        includedSsdIops: 3072,
+                        numberOfVolumes: 1,
+                        fsxnStoragePrice: { unit: 'UsdPerGiB', price: 0.25 },
+                        requiredNumOfFsx: 1,
+                        additionalSsdIops: 0,
+                        fsxnCapacityPrice: { unit: 'UsdPerGiB', price: 0.0438 },
+                        ratioAfterSavings: 1,
+                        provisionedSsdIops: 3072,
+                        ssdStoragePerMonth: 1073741824,
+                        capacityMonthlyCost: 0,
+                        capacityPoolStorage: 0,
+                        fsxnThroughputPrice: 1.2,
+                        desiredStorageCapacity: 1073741824,
+                        billedAdditionalSsdIops: 0,
+                        totalMonthlyCostForFSxSsd: 256,
+                        totalMonthlyStorageCharge: 256,
+                        requiredNumOfFsxFractional: 0.06,
+                        minFileSystemsNumForSsdIops: 0.06,
+                        minFileSystemsNumForStorage: 0.005208333333333333,
+                        totalMonthlyCostForCapacity: 0,
+                        effectiveFsxnStorageCapacity: 1073741824,
+                        greaterOfSsdAndMinAllowedSsd: 1099511627776,
+                        percentageOfDataOnSSDStorage: 1,
+                        percentageOfDataOnSsdStorage: 1,
+                        minThroughputCapacityRequired: 128,
+                        provisionedThroughputCapacity: 128,
+                        totalThroughputAndIopsMonthly: 153.6,
+                        additionalBilledCostForSsdIops: 0,
+                        dataOnCapacityPoolStorageFactor: 0,
+                        suggestedFsxnThroughputCapacity: 128,
+                        minFileSystemsNumForThroughputCapacity: 0.03125,
+                        savingsFromCompressionAndDeduplication: 0,
+                        totalMonthlyFsxnThroughputCapacityCost: 153.6,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    },
+                    fsxOntapSnapshotCalculation: {
+                        fsxnSsdPrice: { unit: 'UsdPerGiB', price: 0.25 },
+                        ssdMonthlyCost: 256,
+                        fsxnCapacityPrice: { unit: 'UsdPerGiB', price: 0.0438 },
+                        ratioAfterSavings: 1,
+                        ssdStoragePerMonth: 8589934.592,
+                        capacityMonthlyCost: 0.0031536,
+                        capacityPoolStorage: 77309411.32800001,
+                        desiredStorageCapacity: 85899345.92,
+                        totalSnapshotMonthlyCost: 0.0051536,
+                        totalMonthlyCostForCapacity: 0.0031536,
+                        effectiveFsxnStorageCapacity: 85899345.92,
+                        percentageOfDataOnSsdStorage: 0.1,
+                        dataOnCapacityPoolStorageFactor: 0.9,
+                        totalSnapshotMonthlyCostForFsxSsd: 0.002,
+                        savingsFromCompressionAndDeduplication: 0,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    }
+                },
+                ebsCalculation: {
+                    gp2: {
+                        ebsIopsCost: 0,
+                        billableIops: 0,
+                        billableMbps: 0,
+                        hoursInAMonth: 730,
+                        ebsStorageCost: 0.1,
+                        numberOfVolumes: 1,
+                        ebsCapacityPrice: { unit: 'UsdPerGiB', price: 0.1 },
+                        ebsInstanceMonth: 1,
+                        ebsThroughputCost: 0,
+                        totalBillableIops: 0,
+                        totalInstanceHours: 730,
+                        ebsTotalCostMonthly: 0.152,
+                        instanceAvgDuration: 730,
+                        storageAmountPerVol: 1073741824,
+                        billableThroughputGbps: 0,
+                        billableThroughputMbps: 0
+                    }
+                },
+                ebsCloneCalculation: {
+                    gp2: { iops: 0, capacity: 0.1, throughput: 0, clonedCopiesCount: 1, totalCloneMonthlyCost: 0.1 }
+                },
+                ebsSnapshotCalculation: {
+                    gp2: {
+                        storageAmount: 1073741824,
+                        totalSnapshots: 30,
+                        ebsSnapshotCost: 0.052,
+                        numberOfVolumes: 1,
+                        ebsInstanceMonth: 1,
+                        ebsSnapshotPrice: { unit: 'UsdPerGiB', price: 0.05 },
+                        totalSnapshotCost: 0.052,
+                        initialSnapshotCost: 0.05,
+                        totalEbsSnapshotCost: 0.052,
+                        monthlyCostOfSnapshots: 0.0001333333333333333,
+                        monthlyCostPerSnapshot: 0.0001333333333333333,
+                        incrementalSnapshotCost: 0.002,
+                        amountChangedPerSnapshot: 2863311.530666667,
+                        monthlyChangeRatePercentage: 8,
+                        discountForPartialStorageMonth: 0.00006666666666666667
+                    }
+                },
+                existingComputeCalculation: {
+                    hoursInMonth: 730,
+                    instanceType: 'c3.xlarge',
+                    machineDetails: [
+                        {
+                            price: 1.066,
+                            basePrice: 0.376,
+                            hoursInMonth: 730,
+                            instanceType: 'c3.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 274.48,
+                            licenseMonthlyPrice: 503.7,
+                            instanceMonthlyPrice: 778.1800000000001
+                        }
+                    ],
+                    computeHourlyPrice: 0.376,
+                    computeMonthlyPrice: 274.48,
+                    instanceMonthlyPrice: 778.1800000000001
+                },
+                existingLicenseCalculation: {
+                    hoursInMonth: 730,
+                    licenseIncluded: true,
+                    sqlServerEdition: 'Standard Edition',
+                    licenseHourlyPrice: 0.6900000000000001,
+                    licenseMonthlyPrice: 503.7
+                },
+                recommendedComputeCalculation: {
+                    hoursInMonth: 730,
+                    instanceType: 'c3.xlarge',
+                    machineDetails: [
+                        {
+                            price: 1.066,
+                            basePrice: 0.376,
+                            hoursInMonth: 730,
+                            instanceType: 'c3.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 274.48,
+                            licenseMonthlyPrice: 503.7,
+                            instanceMonthlyPrice: 778.1800000000001
+                        }
+                    ],
+                    computeHourlyPrice: 0.376,
+                    computeMonthlyPrice: 274.48,
+                    instanceMonthlyPrice: 778.1800000000001
+                },
+                recommendedLicenseCalculation: {
+                    hoursInMonth: 730,
+                    licenseIncluded: true,
+                    sqlServerEdition: 'Standard Edition',
+                    licenseHourlyPrice: 0.6900000000000001,
+                    licenseMonthlyPrice: 503.7
+                }
+            },
+            storageSavings: {
+                ebs: { iops: 0, total: 0.25, clones: 0.1, capacity: 0.1, snapshots: 0.05, throughput: 0 },
+                fsx: { iops: 0, total: 409.63, clones: 0.02, capacity: 256, snapshots: 0.01, throughput: 153.6 },
+                multi: {
+                    fsxBreakdown: {
+                        fsxDataLunSize: 473186907781,
+                        fsxLogVolumeSize: 130126399640,
+                        fsxDataVolumeSize: 520505598560,
+                        fsxStorageCapacity: 1099511627776,
+                        fsxBufferVolumeSize: 384829069722,
+                        fsxQuorumVolumeSize: 12000000000,
+                        fsxTempDbVolumeSize: 52050559856
+                    },
+                    fsxCalculation: {
+                        ssdIop: 3072,
+                        savings: 0,
+                        useCase: 'Low-latency',
+                        regionName: 'US East (N. Virginia)',
+                        throughput: 0,
+                        percentageSsd: 100,
+                        deploymentType: 'Multi',
+                        numberOfVolumes: 1,
+                        capacityPoolTier: 0,
+                        effectiveCapacity: 1073741824,
+                        ssdTierReqCapacity: 1073741824,
+                        throughputCapacity: 128,
+                        totalStorageCapacity: 107374182400,
+                        monthlySnapshotCapacity: 85899345.92
+                    }
+                },
+                compute: {
+                    existing: {
+                        hoursInMonth: 730,
+                        instanceType: 'c3.xlarge',
+                        machineDetails: [
+                            {
+                                price: 1.066,
+                                basePrice: 0.376,
+                                hoursInMonth: 730,
+                                instanceType: 'c3.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 274.48,
+                                licenseMonthlyPrice: 503.7,
+                                instanceMonthlyPrice: 778.1800000000001
+                            }
+                        ],
+                        computeHourlyPrice: 0.376,
+                        computeMonthlyPrice: 274.48,
+                        instanceMonthlyPrice: 778.1800000000001
+                    },
+                    recommended: {
+                        hoursInMonth: 730,
+                        instanceType: 'c3.xlarge',
+                        machineDetails: [
+                            {
+                                price: 1.066,
+                                basePrice: 0.376,
+                                hoursInMonth: 730,
+                                instanceType: 'c3.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 274.48,
+                                licenseMonthlyPrice: 503.7,
+                                instanceMonthlyPrice: 778.1800000000001
+                            }
+                        ],
+                        computeHourlyPrice: 0.376,
+                        computeMonthlyPrice: 274.48,
+                        instanceMonthlyPrice: 778.1800000000001
+                    }
+                },
+                license: {
+                    existing: {
+                        hoursInMonth: 730,
+                        licenseIncluded: true,
+                        sqlServerEdition: 'Standard Edition',
+                        licenseHourlyPrice: 0.6900000000000001,
+                        licenseMonthlyPrice: 503.7
+                    },
+                    recommended: {
+                        hoursInMonth: 730,
+                        licenseIncluded: true,
+                        sqlServerEdition: 'Standard Edition',
+                        licenseHourlyPrice: 0.6900000000000001,
+                        licenseMonthlyPrice: 503.7
+                    }
+                },
+                totalSummary: { existing: 2778.4300000001, recommended: 1187.81 }
+            }
+        }
+    },
+    {
+        account_id: accountId,
+        resource_id: randomize('A0', 8),
+        database_type: DATABASE_TYPE.mssql,
+        database_deployment_type: DATABASE_DEPLOYMENT_TYPE.FCI,
+        creation_time: new Date(),
+        version: '1.0.0',
+        host_config: {
+            nodeDetails: [
+                {
+                    hostId: 'B1E71E42-B9BC-D5D4-9D4D-D828ED4C31AF',
+                    ramSize: 8,
+                    hostName: 'FCI-Node2',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {
+                        value: '[\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE6",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "I:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE3",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "F:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE5",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "K:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE0",\r\n        "model":  "VMware Virtual disk SCSI Disk Device",\r\n        "driveLetter":  "C:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE4",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "E:"\r\n    }\r\n]',
+                        RunspaceId: 'e53b87a4-0509-41b5-bcbf-fb75a94aa85c',
+                        PSComputerName: 'FCI-Node2',
+                        PSShowComputerName: true
+                    },
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                },
+                {
+                    hostId: '16D31E42-DDCA-BC7E-E26A-305FB0842EDD',
+                    ramSize: 8,
+                    hostName: 'FCI-Node1',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {
+                        value: '[\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE0",\r\n        "model":  "VMware Virtual disk SCSI Disk Device",\r\n        "driveLetter":  "C:"\r\n    },\r\n    {\r\n        "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE2",\r\n        "model":  "NETAPP LUN C-Mode SCSI Disk Device",\r\n        "driveLetter":  "G:"\r\n    }\r\n]',
+                        RunspaceId: 'b8eea70a-90ea-467e-bc54-9190903449fa',
+                        PSComputerName: 'FCI-Node1',
+                        PSShowComputerName: true
+                    },
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                },
+                {
+                    hostId: '9E031E42-5521-22B6-E0D1-1D1FCC152971',
+                    ramSize: 8,
+                    hostName: 'FCI-Node3',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {
+                        value: '{\r\n    "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE0",\r\n    "model":  "VMware Virtual disk SCSI Disk Device",\r\n    "driveLetter":  "C:"\r\n}',
+                        RunspaceId: 'a8faf787-a361-4f99-89c4-af667791a1e4',
+                        PSComputerName: 'FCI-Node3',
+                        PSShowComputerName: true
+                    },
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                },
+                {
+                    hostId: '78FE1E42-0F35-F588-4AD6-1FBEC1365195',
+                    ramSize: 8,
+                    hostName: 'FCI-Node4',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {
+                        value: '{\r\n    "deviceId":  "\\\\\\\\.\\\\PHYSICALDRIVE0",\r\n    "model":  "VMware Virtual disk SCSI Disk Device",\r\n    "driveLetter":  "C:"\r\n}',
+                        RunspaceId: 'e57a7c67-7f36-4ac6-a4e3-b363856b6f0f',
+                        PSComputerName: 'FCI-Node4',
+                        PSShowComputerName: true
+                    },
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                }
+            ],
+            belongsToCluster: true,
+            clusterNodeNames: ['FCI-Node1', 'FCI-Node2', 'FCI-Node3', 'FCI-Node4'],
+            windowsSystemName: 'OnPrem-FCI'
+        },
+        database_instances_data: [
+            {
+                iops: '[{"writeIops":"      0.00","readIops":"      0.00","writeBytesPerSec":"               31.01","readBytesPerSec":"               66.47"}]',
+                collation: 'SQL_Icelandic_Pref_CP1_CI_AS',
+                totalIops: 0,
+                ownerNodes:
+                    '[{"nodeName":"FCI-Node3","nodeRole":"Standby"},{"nodeName":"FCI-Node4","nodeRole":"Standby"},{"nodeName":"FCI-Node2","nodeRole":"Standby"},{"nodeName":"FCI-Node1","nodeRole":"Primary"}]',
+                sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
+                sqlVersion: [
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
+                    '\tOct  8 2022 05:58:25 ',
+                    '\tCopyright (C) 2022 Microsoft Corporation',
+                    '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)',
+                    ''
+                ],
+                instanceGuid: 'AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC',
+                totalStorage: 100.015625,
+                noOfDatabases: '5',
+                cpuUtilization: '1',
+                deploymentType: 'fci',
+                memUtilization: '[{"used":561774592,"total":8588910592,"remaining":8027136000,"percentUsed":6}]',
+                sqlInstanceName: 'MSSQLSERVER',
+                totalThroughput: 0.000002044202896211656,
+                vcpusPerInstance: '4',
+                storageDetailsByDb:
+                    '[{"databaseName":"test1","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"G:","driveTotalSizeMb":25581,"driveAvailableSizeMb":24104}]',
+                licenceUsageDetails:
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]'
+            },
+            {
+                iops: '[{"writeIops":"      0.00","readIops":"      0.00","writeBytesPerSec":"               33.18","readBytesPerSec":"               68.91"}]',
+                collation: 'SQL_Croatian_CP1250_CI_AS',
+                totalIops: 0,
+                ownerNodes:
+                    '[{"nodeName":"FCI-Node3","nodeRole":"Standby"},{"nodeName":"FCI-Node4","nodeRole":"Standby"},{"nodeName":"FCI-Node2","nodeRole":"Primary"}]',
+                sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
+                sqlVersion: [
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
+                    '\tOct  8 2022 05:58:25 ',
+                    '\tCopyright (C) 2022 Microsoft Corporation',
+                    '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)',
+                    ''
+                ],
+                instanceGuid: 'E7A86AFB-12D4-4A69-8942-43E548CAD2B2',
+                totalStorage: 100.015625,
+                noOfDatabases: '5',
+                cpuUtilization: '1',
+                deploymentType: 'fci',
+                memUtilization: '[{"used":574230528,"total":8588910592,"remaining":8014680064,"percentUsed":6}]',
+                sqlInstanceName: 'FCIInstance1',
+                totalThroughput: 0.000001980641866894355,
+                vcpusPerInstance: '4',
+                storageDetailsByDb:
+                    '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":26605,"driveAvailableSizeMb":24663}]',
+                licenceUsageDetails:
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]'
+            },
+            {
+                iops: '[{"writeIops":"      0.00","readIops":"      0.00","writeBytesPerSec":"               33.20","readBytesPerSec":"               69.05"}]',
+                collation: 'SQL_AltDiction_CP850_CI_AI',
+                totalIops: 0,
+                ownerNodes:
+                    '[{"nodeName":"FCI-Node4","nodeRole":"Standby"},{"nodeName":"FCI-Node2","nodeRole":"Primary"}]',
+                sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
+                sqlVersion: [
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
+                    '\tOct  8 2022 05:58:25 ',
+                    '\tCopyright (C) 2022 Microsoft Corporation',
+                    '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)',
+                    ''
+                ],
+                instanceGuid: '3',
+                totalStorage: 100.015625,
+                noOfDatabases: '5',
+                cpuUtilization: '2',
+                deploymentType: 'fci',
+                memUtilization: '[{"used":565460992,"total":8588910592,"remaining":8023449600,"percentUsed":6}]',
+                sqlInstanceName: 'FCIInstance2',
+                totalThroughput: 0.000001983470227344926,
+                vcpusPerInstance: '4',
+                storageDetailsByDb:
+                    '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"K:","driveTotalSizeMb":27629,"driveAvailableSizeMb":26158}]',
+                licenceUsageDetails:
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]'
+            }
+        ],
+        assessment_data: {
+            calculations: {
+                single: {
+                    fsxCloneCalculation: {
+                        fsxnSsdPrice: { unit: 'UsdPerGiB', price: 0.125 },
+                        ssdMonthlyCost: 0.01,
+                        clonedCopiesCount: 1,
+                        totalFsxnCapacity: 1073741824,
+                        ssdStoragePerMonth: 85899345.92,
+                        totalCloneMonthlyCost: 0.01,
+                        desiredStorageCapacity: 85899345.92,
+                        changeRateBetweenClones: 8,
+                        monthlyChangeRatePercentage: 8,
+                        effectiveFsxnStorageCapacity: 85899345.92,
+                        percentageOfDataOnSsdStorage: 1,
+                        savingsFromCompressionAndDeduplication: 0,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    },
+                    fsxOntapCalculation: {
+                        maxSsdIops: 51200,
+                        ebsCapacity: 1073741824,
+                        includedIops: 3,
+                        fsxnIopsPrice: 0.017,
+                        maxThroughput: 4096,
+                        maxSsdTierSize: 211106232532992,
+                        ssdMonthlyCost: 128,
+                        includedSsdIops: 3072,
+                        numberOfVolumes: 1,
+                        fsxnStoragePrice: { unit: 'UsdPerGiB', price: 0.125 },
+                        requiredNumOfFsx: 1,
+                        additionalSsdIops: 0,
+                        fsxnCapacityPrice: { unit: 'UsdPerGiB', price: 0.0219 },
+                        ratioAfterSavings: 1,
+                        provisionedSsdIops: 3072,
+                        ssdStoragePerMonth: 1073741824,
+                        capacityMonthlyCost: 0,
+                        capacityPoolStorage: 0,
+                        fsxnThroughputPrice: 0.72,
+                        desiredStorageCapacity: 1073741824,
+                        billedAdditionalSsdIops: 0,
+                        totalMonthlyCostForFSxSsd: 128,
+                        totalMonthlyStorageCharge: 128,
+                        requiredNumOfFsxFractional: 0.06,
+                        minFileSystemsNumForSsdIops: 0.06,
+                        minFileSystemsNumForStorage: 0.005208333333333333,
+                        totalMonthlyCostForCapacity: 0,
+                        effectiveFsxnStorageCapacity: 1073741824,
+                        greaterOfSsdAndMinAllowedSsd: 1099511627776,
+                        percentageOfDataOnSSDStorage: 1,
+                        percentageOfDataOnSsdStorage: 1,
+                        minThroughputCapacityRequired: 128,
+                        provisionedThroughputCapacity: 128,
+                        totalThroughputAndIopsMonthly: 92.16,
+                        additionalBilledCostForSsdIops: 0,
+                        dataOnCapacityPoolStorageFactor: 0,
+                        suggestedFsxnThroughputCapacity: 128,
+                        minFileSystemsNumForThroughputCapacity: 0.03125,
+                        savingsFromCompressionAndDeduplication: 0,
+                        totalMonthlyFsxnThroughputCapacityCost: 92.16,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    },
+                    fsxOntapSnapshotCalculation: {
+                        fsxnSsdPrice: { unit: 'UsdPerGiB', price: 0.125 },
+                        ssdMonthlyCost: 128,
+                        fsxnCapacityPrice: { unit: 'UsdPerGiB', price: 0.0219 },
+                        ratioAfterSavings: 1,
+                        ssdStoragePerMonth: 8589934.592,
+                        capacityMonthlyCost: 0.0015768,
+                        capacityPoolStorage: 77309411.32800001,
+                        desiredStorageCapacity: 85899345.92,
+                        totalSnapshotMonthlyCost: 0.0025768,
+                        totalMonthlyCostForCapacity: 0.0015768,
+                        effectiveFsxnStorageCapacity: 85899345.92,
+                        percentageOfDataOnSsdStorage: 0.1,
+                        dataOnCapacityPoolStorageFactor: 0.9,
+                        totalSnapshotMonthlyCostForFsxSsd: 0.001,
+                        savingsFromCompressionAndDeduplication: 0,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    }
+                },
+                ebsCalculation: {
+                    gp2: {
+                        ebsIopsCost: 0,
+                        billableIops: 0,
+                        billableMbps: 0,
+                        hoursInAMonth: 730,
+                        ebsStorageCost: 0.3,
+                        numberOfVolumes: 3,
+                        ebsCapacityPrice: { unit: 'UsdPerGiB', price: 0.1 },
+                        ebsInstanceMonth: 3,
+                        ebsThroughputCost: 0,
+                        totalBillableIops: 0,
+                        totalInstanceHours: 2190,
+                        ebsTotalCostMonthly: 0.4560000000000001,
+                        instanceAvgDuration: 730,
+                        storageAmountPerVol: 1073741824,
+                        billableThroughputGbps: 0,
+                        billableThroughputMbps: 0
+                    }
+                },
+                ebsCloneCalculation: {
+                    gp2: { iops: 0, capacity: 0.3, throughput: 0, clonedCopiesCount: 1, totalCloneMonthlyCost: 0.3 }
+                },
+                ebsSnapshotCalculation: {
+                    gp2: {
+                        storageAmount: 3221225472,
+                        totalSnapshots: 30,
+                        ebsSnapshotCost: 0.156,
+                        numberOfVolumes: 3,
+                        ebsInstanceMonth: 3,
+                        ebsSnapshotPrice: { unit: 'UsdPerGiB', price: 0.05 },
+                        totalSnapshotCost: 0.052,
+                        initialSnapshotCost: 0.05,
+                        totalEbsSnapshotCost: 0.156,
+                        monthlyCostOfSnapshots: 0.0001333333333333333,
+                        monthlyCostPerSnapshot: 0.0001333333333333333,
+                        incrementalSnapshotCost: 0.002,
+                        amountChangedPerSnapshot: 2863311.530666667,
+                        monthlyChangeRatePercentage: 8,
+                        discountForPartialStorageMonth: 0.00006666666666666667
+                    }
+                },
+                existingComputeCalculation: {
+                    hoursInMonth: 730,
+                    instanceType: 'c5.xlarge, c5.xlarge',
+                    machineDetails: [
+                        {
+                            price: 0.834,
+                            basePrice: 0.354,
+                            hoursInMonth: 730,
+                            instanceType: 'c5.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 258.42,
+                            licenseMonthlyPrice: 700.8,
+                            instanceMonthlyPrice: 608.8199999999999
+                        },
+                        {
+                            price: 0.834,
+                            basePrice: 0.354,
+                            hoursInMonth: 730,
+                            instanceType: 'c5.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 258.42,
+                            licenseMonthlyPrice: 700.8,
+                            instanceMonthlyPrice: 608.8199999999999
+                        }
+                    ],
+                    computeHourlyPrice: 0.708,
+                    computeMonthlyPrice: 516.8399999999999,
+                    instanceMonthlyPrice: 1217.64
+                },
+                existingLicenseCalculation: {
+                    hoursInMonth: 730,
+                    licenseIncluded: true,
+                    sqlServerEdition: 'Standard Edition',
+                    licenseHourlyPrice: 0.96,
+                    licenseMonthlyPrice: 700.8
+                },
+                recommendedComputeCalculation: {
+                    hoursInMonth: 730,
+                    instanceType: 'c5.xlarge, c5.xlarge',
+                    machineDetails: [
+                        {
+                            price: 0.834,
+                            basePrice: 0.354,
+                            hoursInMonth: 730,
+                            instanceType: 'c5.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 258.42,
+                            licenseMonthlyPrice: 700.8,
+                            instanceMonthlyPrice: 608.8199999999999
+                        },
+                        {
+                            price: 0.834,
+                            basePrice: 0.354,
+                            hoursInMonth: 730,
+                            instanceType: 'c5.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 258.42,
+                            licenseMonthlyPrice: 700.8,
+                            instanceMonthlyPrice: 608.8199999999999
+                        }
+                    ],
+                    computeHourlyPrice: 0.708,
+                    computeMonthlyPrice: 516.8399999999999,
+                    instanceMonthlyPrice: 1217.64
+                },
+                recommendedLicenseCalculation: {
+                    hoursInMonth: 730,
+                    licenseIncluded: true,
+                    sqlServerEdition: 'Standard Edition',
+                    licenseHourlyPrice: 0.96,
+                    licenseMonthlyPrice: 700.8
+                }
+            },
+            storageSavings: {
+                ebs: { iops: 0, total: 0.76, clones: 0.3, capacity: 0.3, snapshots: 0.16, throughput: 0 },
+                fsx: { iops: 0, total: 220.17, clones: 0.01, capacity: 128, snapshots: 0, throughput: 92.16 },
+                compute: {
+                    existing: {
+                        hoursInMonth: 730,
+                        instanceType: 'c5.xlarge, c5.xlarge',
+                        machineDetails: [
+                            {
+                                price: 0.834,
+                                basePrice: 0.354,
+                                hoursInMonth: 730,
+                                instanceType: 'c5.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 258.42,
+                                licenseMonthlyPrice: 700.8,
+                                instanceMonthlyPrice: 608.8199999999999
+                            },
+                            {
+                                price: 0.834,
+                                basePrice: 0.354,
+                                hoursInMonth: 730,
+                                instanceType: 'c5.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 258.42,
+                                licenseMonthlyPrice: 700.8,
+                                instanceMonthlyPrice: 608.8199999999999
+                            }
+                        ],
+                        computeHourlyPrice: 0.708,
+                        computeMonthlyPrice: 516.8399999999999,
+                        instanceMonthlyPrice: 1217.64
+                    },
+                    recommended: {
+                        hoursInMonth: 730,
+                        instanceType: 'c3.xlarge, c3.xlarge',
+                        machineDetails: [
+                            {
+                                price: 1.066,
+                                basePrice: 0.376,
+                                hoursInMonth: 730,
+                                instanceType: 'c3.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 274.48,
+                                licenseMonthlyPrice: 1007.4,
+                                instanceMonthlyPrice: 778.1800000000001
+                            },
+                            {
+                                price: 1.066,
+                                basePrice: 0.376,
+                                hoursInMonth: 730,
+                                instanceType: 'c3.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 274.48,
+                                licenseMonthlyPrice: 1007.4,
+                                instanceMonthlyPrice: 778.1800000000001
+                            }
+                        ],
+                        computeHourlyPrice: 0.752,
+                        computeMonthlyPrice: 548.96,
+                        instanceMonthlyPrice: 1556.36
+                    }
+                },
+                license: {
+                    existing: {
+                        hoursInMonth: 730,
+                        licenseIncluded: true,
+                        sqlServerEdition: 'Standard Edition',
+                        licenseHourlyPrice: 0.96,
+                        licenseMonthlyPrice: 700.8
+                    },
+                    recommended: {
+                        hoursInMonth: 730,
+                        licenseIncluded: true,
+                        sqlServerEdition: 'Standard Edition',
+                        licenseHourlyPrice: 1.38,
+                        licenseMonthlyPrice: 1007.4
+                    }
+                },
+                totalSummary: { existing: 2218.4, recommended: 1776.53 }
+            }
+        }
+    },
+    {
+        account_id: accountId,
+        resource_id: randomize('A0', 8),
+        database_type: DATABASE_TYPE.mssql,
+        database_deployment_type: DATABASE_DEPLOYMENT_TYPE.Standalone,
+        creation_time: new Date(),
+        version: '1.0.0',
+        host_config: {
+            nodeDetails: [
+                {
+                    hostId: '12C01E42-1349-4206-82FE-99795431ECEF',
+                    ramSize: 8,
+                    hostName: 'OnPrem-Standalone',
+                    osEdition: 'Microsoft Windows Server 2022 Standard',
+                    driveDetails: {},
+                    numberOfVcpus: 4,
+                    networkConfiguration: [
+                        {
+                            name: 'Intel(R) 82574L Gigabit Network Connection',
+                            speedMbps: 953.67431640625,
+                            adapterType: 'Ethernet 802.3'
+                        },
+                        {
+                            name: 'Microsoft Failover Cluster Virtual Adapter',
+                            speedMbps: 9536.7431640625,
+                            adapterType: 'Ethernet 802.3'
+                        }
+                    ]
+                }
+            ],
+            belongsToCluster: false,
+            clusterNodeNames: ['OnPrem-Standalone'],
+            windowsSystemName: 'OnPrem-Standalone'
+        },
+        database_instances_data: [
+            {
+                iops: '[{"writeIops":"      0.00","readIops":"      0.00","writeBytesPerSec":"               44.78","readBytesPerSec":"              218.64"}]',
+                collation: 'SQL_Latin1_General_CP1_CI_AS',
+                totalIops: 0,
+                ownerNodes: '[{"primary":"OnPrem-Standalone"}]',
+                sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
+                sqlVersion: [
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
+                    '\tOct  8 2022 05:58:25 ',
+                    '\tCopyright (C) 2022 Microsoft Corporation',
+                    '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)',
+                    ''
+                ],
+                instanceGuid: '3',
+                totalStorage: 0.15625,
+                noOfDatabases: '1',
+                cpuUtilization: '2',
+                deploymentType: 'standalone',
+                memUtilization: '[{"used":958869504,"total":8588910592,"remaining":7630041088,"percentUsed":11}]',
+                sqlInstanceName: 'MSSQLSERVER',
+                totalThroughput: 0.000004656349989706621,
+                vcpusPerInstance: '4',
+                storageDetailsByDb:
+                    '[{"databaseName":"STDDB1","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"H:","driveTotalSizeMb":6125,"driveAvailableSizeMb":6092},{"databaseName":"stddb10","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"Z:","driveTotalSizeMb":30683,"driveAvailableSizeMb":30596},{"databaseName":"STDDB2","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"J:","driveTotalSizeMb":7149,"driveAvailableSizeMb":7115},{"databaseName":"STDDB3","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"L:","driveTotalSizeMb":8173,"driveAvailableSizeMb":8136},{"databaseName":"STDDB4","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"N:","driveTotalSizeMb":9197,"driveAvailableSizeMb":9158},{"databaseName":"STDDB5","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"Q:","driveTotalSizeMb":10221,"driveAvailableSizeMb":10179},{"databaseName":"STDDB6","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"S:","driveTotalSizeMb":11245,"driveAvailableSizeMb":11202},{"databaseName":"STDDB7","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"U:","driveTotalSizeMb":12269,"driveAvailableSizeMb":12222},{"databaseName":"STDDB8","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"W:","driveTotalSizeMb":13293,"driveAvailableSizeMb":13245},{"databaseName":"STDDB9","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"Y:","driveTotalSizeMb":14317,"driveAvailableSizeMb":14266}]',
+                licenceUsageDetails:
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has > 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]'
+            }
+        ],
+        assessment_data: {
+            calculations: {
+                single: {
+                    fsxCloneCalculation: {
+                        fsxnSsdPrice: { unit: 'UsdPerGiB', price: 0.125 },
+                        ssdMonthlyCost: 0.01,
+                        clonedCopiesCount: 1,
+                        totalFsxnCapacity: 1073741824,
+                        ssdStoragePerMonth: 85899345.92,
+                        totalCloneMonthlyCost: 0.01,
+                        desiredStorageCapacity: 85899345.92,
+                        changeRateBetweenClones: 8,
+                        monthlyChangeRatePercentage: 8,
+                        effectiveFsxnStorageCapacity: 85899345.92,
+                        percentageOfDataOnSsdStorage: 1,
+                        savingsFromCompressionAndDeduplication: 0,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    },
+                    fsxOntapCalculation: {
+                        maxSsdIops: 51200,
+                        ebsCapacity: 1073741824,
+                        includedIops: 3,
+                        fsxnIopsPrice: 0.017,
+                        maxThroughput: 4096,
+                        maxSsdTierSize: 211106232532992,
+                        ssdMonthlyCost: 128,
+                        includedSsdIops: 3072,
+                        numberOfVolumes: 1,
+                        fsxnStoragePrice: { unit: 'UsdPerGiB', price: 0.125 },
+                        requiredNumOfFsx: 1,
+                        additionalSsdIops: 0,
+                        fsxnCapacityPrice: { unit: 'UsdPerGiB', price: 0.0219 },
+                        ratioAfterSavings: 1,
+                        provisionedSsdIops: 3072,
+                        ssdStoragePerMonth: 1073741824,
+                        capacityMonthlyCost: 0,
+                        capacityPoolStorage: 0,
+                        fsxnThroughputPrice: 0.72,
+                        desiredStorageCapacity: 1073741824,
+                        billedAdditionalSsdIops: 0,
+                        totalMonthlyCostForFSxSsd: 128,
+                        totalMonthlyStorageCharge: 128,
+                        requiredNumOfFsxFractional: 0.06,
+                        minFileSystemsNumForSsdIops: 0.06,
+                        minFileSystemsNumForStorage: 0.005208333333333333,
+                        totalMonthlyCostForCapacity: 0,
+                        effectiveFsxnStorageCapacity: 1073741824,
+                        greaterOfSsdAndMinAllowedSsd: 1099511627776,
+                        percentageOfDataOnSSDStorage: 1,
+                        percentageOfDataOnSsdStorage: 1,
+                        minThroughputCapacityRequired: 128,
+                        provisionedThroughputCapacity: 128,
+                        totalThroughputAndIopsMonthly: 92.16,
+                        additionalBilledCostForSsdIops: 0,
+                        dataOnCapacityPoolStorageFactor: 0,
+                        suggestedFsxnThroughputCapacity: 128,
+                        minFileSystemsNumForThroughputCapacity: 0.03125,
+                        savingsFromCompressionAndDeduplication: 0,
+                        totalMonthlyFsxnThroughputCapacityCost: 92.16,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    },
+                    fsxOntapSnapshotCalculation: {
+                        fsxnSsdPrice: { unit: 'UsdPerGiB', price: 0.125 },
+                        ssdMonthlyCost: 128,
+                        fsxnCapacityPrice: { unit: 'UsdPerGiB', price: 0.0219 },
+                        ratioAfterSavings: 1,
+                        ssdStoragePerMonth: 8589934.592,
+                        capacityMonthlyCost: 0.0015768,
+                        capacityPoolStorage: 77309411.32800001,
+                        desiredStorageCapacity: 85899345.92,
+                        totalSnapshotMonthlyCost: 0.0025768,
+                        totalMonthlyCostForCapacity: 0.0015768,
+                        effectiveFsxnStorageCapacity: 85899345.92,
+                        percentageOfDataOnSsdStorage: 0.1,
+                        dataOnCapacityPoolStorageFactor: 0.9,
+                        totalSnapshotMonthlyCostForFsxSsd: 0.001,
+                        savingsFromCompressionAndDeduplication: 0,
+                        storageSavingsFromCompressionAndDeduplication: 0
+                    }
+                },
+                ebsCalculation: {
+                    gp2: {
+                        ebsIopsCost: 0,
+                        billableIops: 0,
+                        billableMbps: 0,
+                        hoursInAMonth: 730,
+                        ebsStorageCost: 0.1,
+                        numberOfVolumes: 1,
+                        ebsCapacityPrice: { unit: 'UsdPerGiB', price: 0.1 },
+                        ebsInstanceMonth: 1,
+                        ebsThroughputCost: 0,
+                        totalBillableIops: 0,
+                        totalInstanceHours: 730,
+                        ebsTotalCostMonthly: 0.152,
+                        instanceAvgDuration: 730,
+                        storageAmountPerVol: 1073741824,
+                        billableThroughputGbps: 0,
+                        billableThroughputMbps: 0
+                    }
+                },
+                ebsCloneCalculation: {
+                    gp2: { iops: 0, capacity: 0.1, throughput: 0, clonedCopiesCount: 1, totalCloneMonthlyCost: 0.1 }
+                },
+                ebsSnapshotCalculation: {
+                    gp2: {
+                        storageAmount: 1073741824,
+                        totalSnapshots: 30,
+                        ebsSnapshotCost: 0.052,
+                        numberOfVolumes: 1,
+                        ebsInstanceMonth: 1,
+                        ebsSnapshotPrice: { unit: 'UsdPerGiB', price: 0.05 },
+                        totalSnapshotCost: 0.052,
+                        initialSnapshotCost: 0.05,
+                        totalEbsSnapshotCost: 0.052,
+                        monthlyCostOfSnapshots: 0.0001333333333333333,
+                        monthlyCostPerSnapshot: 0.0001333333333333333,
+                        incrementalSnapshotCost: 0.002,
+                        amountChangedPerSnapshot: 2863311.530666667,
+                        monthlyChangeRatePercentage: 8,
+                        discountForPartialStorageMonth: 0.00006666666666666667
+                    }
+                },
+                existingComputeCalculation: {
+                    hoursInMonth: 730,
+                    instanceType: 'c5.xlarge',
+                    machineDetails: [
+                        {
+                            price: 0.834,
+                            basePrice: 0.354,
+                            hoursInMonth: 730,
+                            instanceType: 'c5.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 258.42,
+                            licenseMonthlyPrice: 350.4,
+                            instanceMonthlyPrice: 608.8199999999999
+                        }
+                    ],
+                    computeHourlyPrice: 0.354,
+                    computeMonthlyPrice: 258.42,
+                    instanceMonthlyPrice: 608.8199999999999
+                },
+                existingLicenseCalculation: {
+                    hoursInMonth: 730,
+                    licenseIncluded: true,
+                    sqlServerEdition: 'Standard Edition',
+                    licenseHourlyPrice: 0.48,
+                    licenseMonthlyPrice: 350.4
+                },
+                recommendedComputeCalculation: {
+                    hoursInMonth: 730,
+                    instanceType: 'c5.xlarge',
+                    machineDetails: [
+                        {
+                            price: 0.834,
+                            basePrice: 0.354,
+                            hoursInMonth: 730,
+                            instanceType: 'c5.xlarge',
+                            licenseIncluded: true,
+                            computeMonthlyPrice: 258.42,
+                            licenseMonthlyPrice: 350.4,
+                            instanceMonthlyPrice: 608.8199999999999
+                        }
+                    ],
+                    computeHourlyPrice: 0.354,
+                    computeMonthlyPrice: 258.42,
+                    instanceMonthlyPrice: 608.8199999999999
+                },
+                recommendedLicenseCalculation: {
+                    hoursInMonth: 730,
+                    licenseIncluded: true,
+                    sqlServerEdition: 'Standard Edition',
+                    licenseHourlyPrice: 0.48,
+                    licenseMonthlyPrice: 350.4
+                }
+            },
+            storageSavings: {
+                ebs: { iops: 0, total: 0.25, clones: 0.1, capacity: 0.1, snapshots: 0.05, throughput: 0 },
+                fsx: { iops: 0, total: 220.17, clones: 0.01, capacity: 128, snapshots: 0, throughput: 92.16 },
+                compute: {
+                    existing: {
+                        hoursInMonth: 730,
+                        instanceType: 'c5.xlarge',
+                        machineDetails: [
+                            {
+                                price: 0.834,
+                                basePrice: 0.354,
+                                hoursInMonth: 730,
+                                instanceType: 'c5.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 258.42,
+                                licenseMonthlyPrice: 350.4,
+                                instanceMonthlyPrice: 608.8199999999999
+                            }
+                        ],
+                        computeHourlyPrice: 0.354,
+                        computeMonthlyPrice: 258.42,
+                        instanceMonthlyPrice: 608.8199999999999
+                    },
+                    recommended: {
+                        hoursInMonth: 730,
+                        instanceType: 'c3.xlarge',
+                        machineDetails: [
+                            {
+                                price: 1.066,
+                                basePrice: 0.376,
+                                hoursInMonth: 730,
+                                instanceType: 'c3.xlarge',
+                                licenseIncluded: true,
+                                computeMonthlyPrice: 274.48,
+                                licenseMonthlyPrice: 503.7,
+                                instanceMonthlyPrice: 778.1800000000001
+                            }
+                        ],
+                        computeHourlyPrice: 0.376,
+                        computeMonthlyPrice: 274.48,
+                        instanceMonthlyPrice: 778.1800000000001
+                    }
+                },
+                license: {
+                    existing: {
+                        hoursInMonth: 730,
+                        licenseIncluded: true,
+                        sqlServerEdition: 'Standard Edition',
+                        licenseHourlyPrice: 0.48,
+                        licenseMonthlyPrice: 350.4
+                    },
+                    recommended: {
+                        hoursInMonth: 730,
+                        licenseIncluded: true,
+                        sqlServerEdition: 'Standard Edition',
+                        licenseHourlyPrice: 0.6900000000000001,
+                        licenseMonthlyPrice: 503.7
+                    }
+                },
+                totalSummary: { existing: 1609.0699999999999, recommended: 998.35 }
+            }
+        }
+    }
+];
+
 export {
     masterStackData,
     validationStack1Data,
@@ -2801,5 +3942,6 @@ export {
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
     enableMPIOJobData,
-    DEMO_PRODUCT_RATE
+    DEMO_PRODUCT_RATE,
+    onPremRecords
 };

@@ -5,7 +5,7 @@ import { compact, isEmpty } from 'lodash-es';
 import { ArchitectureType, CpuManufacturer, InstanceGeneration, VirtualizationType } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import { AWS_REGIONS, DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -55,6 +55,8 @@ import {
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 async function generatePayload(accountId: string, fileName: string, fileContent: Buffer) {
     logger.info('Generate a payload', { accountId, fileName });
@@ -478,12 +480,12 @@ async function handleOnpremTcoDataAnalysis(accountId: string, jobId: string, dat
     let analyzeJobError;
     try {
         const {
-            windowsConfig: { windowsClusterName }
+            windowsConfig: { windowsSystemName }
         } = data;
         ({ id: analyzeJobId } = await registerJob(accountId, 'ON_PREM', DEFAULT_AWS_REGION, {
             name: 'Analyze OnPremises TCO data',
             description: 'Analyze OnPremises TCO data',
-            resourceName: windowsClusterName,
+            resourceName: windowsSystemName,
             startTime: Date.now(),
             endTime: Date.now(),
             status: 'IN_PROGRESS',
@@ -563,7 +565,7 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const { id: jobId } = await registerJob(accountId, ONPREM_TCO_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
             name: 'Upload OnPremises TCO data',
             description: 'OnPremises TCO data upload',
-            resourceName: data?.windowsConfig?.windowsClusterName,
+            resourceName: data?.windowsConfig?.windowsSystemName,
             startTime: Date.now(),
             endTime: Date.now(),
             status: 'IN_PROGRESS',
@@ -782,7 +784,7 @@ async function getOnPremDatabaseResources(
                 } = onPremDatabaseResource;
                 const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
 
-                const { clusterNodeNames: onPremisesNodes, windowsClusterName: resourceName } =
+                const { clusterNodeNames: onPremisesNodes, windowsSystemName: resourceName } =
                     hostConfig as unknown as WindowsConfig;
                 const sqlServerInstances = Array.isArray(rawSqlInstanceDetails)
                     ? formatSqlInstanceDetails(rawSqlInstanceDetails)
@@ -859,9 +861,9 @@ async function getOnPremResourceExploreSavings(
 
     const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
 
-    const { windowsClusterName: resourceName } = hostConfig as unknown as WindowsConfig;
+    const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
 
-    if (sqlInstanceData || snapShotInfo) {
+    if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
         try {
             const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
                 const instanceData = sqlInstanceData?.find(

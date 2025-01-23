@@ -34,7 +34,7 @@ interface NodeDetail {
 interface WindowsConfig {
     clusterNodeNames: string[];
     nodeDetails: NodeDetail[];
-    windowsClusterName: string;
+    windowsSystemName: string;
     belongsToCluster: boolean;
 }
 
