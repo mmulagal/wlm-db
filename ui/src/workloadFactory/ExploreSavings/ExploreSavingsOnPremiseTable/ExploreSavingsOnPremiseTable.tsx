@@ -385,7 +385,7 @@ const ExploreSavingsOnPremiseTable = () => {
     const handleDownload = async () => {
         // getDownloadFn([{ input: tcoScript, name: 'list-vms.ps1' }]);
 
-        const fileProps = [{ input: tcoScript, name: 'tco-script.ps1' }];
+        const fileProps = [{ input: tcoScript, name: 'OnPremTCOCollector.ps1' }];
 
         const files = fileProps.map(
             ({ name, input }) =>
