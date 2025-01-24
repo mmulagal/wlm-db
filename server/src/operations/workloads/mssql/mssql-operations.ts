@@ -816,10 +816,12 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
             if (response) {
                 let parsedResponse = sqlResponseParsing(response);
                 parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
-
-                return parsedResponse;
+                if (parsedResponse[0].instanceState === SQL_SERVICE_STATE.RUNNING) {
+                    return parsedResponse;
+                }
             }
         }
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'No running instance found');
     } catch (error) {
         logger.error(`Error while fetching SQL node status for node ${nodeIds}`, { error });
     }
