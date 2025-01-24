@@ -12,6 +12,15 @@ import optimizeCompute from './continuous-optimization/compute-optimize-operatio
 
 const logger = getLogger();
 
+async function formatJobMetadata(hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]) {
+    return hostsToOptimize.flatMap(({ type, databaseHosts }) =>
+        databaseHosts.map(({ id, sqlServerInstances }) => ({
+            resourceId: id,
+            sqlServerInstances,
+            optimizationType: type
+        }))
+    );
+}
 async function bulkOptimization(
     accountId: string,
     credentialsId: string,
@@ -30,13 +39,7 @@ async function bulkOptimization(
     }
 
     const jobMetadata: JobMetadata = {
-        hostsToOptimize: hostsToOptimize.flatMap(({ type, databaseHosts }) =>
-            databaseHosts.map(({ id, sqlServerInstances }) => ({
-                resourceId: id,
-                sqlServerInstances,
-                optimizationType: type
-            }))
-        )
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
 
     const jobDescription =
@@ -72,9 +75,9 @@ async function handleOptimization(
     databaseInstanceId: string,
     parentJobId: string
 ) {
-    switch (optimizationCategory) {
-        case OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM:
-            try {
+    try {
+        switch (optimizationCategory) {
+            case OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM:
                 await optimizeOperatingSystemSettings(
                     accountId,
                     credentialsId,
@@ -84,14 +87,8 @@ async function handleOptimization(
                     optimizationSubcategory,
                     parentJobId
                 );
-            } catch (error: any) {
-                logger.error(
-                    `Error occurred while optimizing operating system configuration for host ${databaseHostId} and instance ${databaseInstanceId}. Error: ${error}`
-                );
-            }
-            break;
-        case OPTIMIZATION_CATEGORIES.STORAGE_TIER:
-            try {
+                break;
+            case OPTIMIZATION_CATEGORIES.STORAGE_TIER:
                 await optimizeStorageTier(
                     accountId,
                     credentialsId,
@@ -100,14 +97,8 @@ async function handleOptimization(
                     databaseInstanceId,
                     parentJobId
                 );
-            } catch (error: any) {
-                logger.error(
-                    `Error occurred while optimizing storage tier for host ${databaseHostId} and instance ${databaseInstanceId}. Error: ${error}`
-                );
-            }
-            break;
-        case OPTIMIZATION_CATEGORIES.STORAGE_SIZING:
-            try {
+                break;
+            case OPTIMIZATION_CATEGORIES.STORAGE_SIZING:
                 await optimizeSizing(
                     accountId,
                     credentialsId,
@@ -117,14 +108,14 @@ async function handleOptimization(
                     [optimizationSubcategory as unknown as OPTIMIZE_SIZING_CONFIGS],
                     parentJobId
                 );
-            } catch (error: any) {
-                logger.error(
-                    `Error occurred while optimizing storage tier for host ${databaseHostId} and instance ${databaseInstanceId}. Error: ${error}`
-                );
-            }
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
+        }
+    } catch (error: any) {
+        logger.error(
+            `Error occurred while optimizing storage tier for host ${databaseHostId}, instance ${databaseInstanceId}, configuration category ${optimizationCategory}. Error: ${error}`
+        );
     }
 }
 
@@ -193,11 +184,7 @@ async function bulkComputeOptimization(
     }
 
     const jobMetadata: JobMetadata = {
-        hostsToOptimize: hostsToOptimize.map(each => ({
-            resourceId: each.databaseHosts[0].id,
-            sqlServerInstances: each.databaseHosts[0].sqlServerInstances,
-            optimizationType: each.type
-        }))
+        hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -244,7 +231,7 @@ async function handleBulkComputeOptimization(
                                 credentialsId,
                                 region,
                                 databaseHostId,
-                                instanceType!,
+                                instanceType as string,
                                 sqlServerInstances[0],
                                 masterOptimizeParentId
                             );
