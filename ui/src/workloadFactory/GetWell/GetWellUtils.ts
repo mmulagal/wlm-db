@@ -1362,6 +1362,270 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
+const updateProgressForBulk = (
+    dispatch: any,
+    type: string,
+    jobId: string,
+    inProgressOptimizationData: any,
+    jobToInstanceMapForBulk: any,
+    inProgressHostData: any
+) => {
+    dispatch(
+        setInProgressOptimizationData({
+            ...inProgressOptimizationData,
+            [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                const jobInstances =
+                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => host.sqlServerInstances) || [];
+
+                return !jobInstances.includes(instanceId);
+            })
+        })
+    );
+    dispatch(
+        setInProgressHostData({
+            ...inProgressHostData,
+            [type]: inProgressHostData?.[type]?.filter(
+                //Data host id to check
+                (hostId: any) => {
+                    const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
+
+                    return !jobHostIds.includes(hostId);
+                }
+            )
+        })
+    );
+};
+
+const updateProgressForSingle = (
+    dispatch: any,
+    type: string,
+    jobId: string,
+    inProgressOptimizationData: any,
+    jobToInstanceMap: any,
+    inProgressHostData: any
+) => {
+    dispatch(
+        setInProgressOptimizationData({
+            ...inProgressOptimizationData,
+            [type]: inProgressOptimizationData?.[type]?.filter(
+                (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+            )
+        })
+    );
+    dispatch(
+        setInProgressHostData({
+            ...inProgressHostData,
+            [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId)
+        })
+    );
+};
+
+const updateAssessmentWithCompletedJobs = (
+    dispatch: any,
+    operation: string | undefined,
+    type: string,
+    jobId: string,
+    rowData: any,
+    bulkRowData: any
+) => {
+    const state = store.getState();
+    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    const {
+        jobToInstanceMap,
+        jobToInstanceMapForBulk,
+        inProgressOptimizationData,
+        inProgressHostData,
+        optimizingData
+    } = state.getWellOptimize;
+    dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+
+    if (operation === 'bulk') {
+        updateProgressForBulk(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMapForBulk,
+            inProgressHostData
+        );
+        bulkRowData?.map((row: any) => {
+            updateOptimizationStatus(row, dispatch);
+        });
+        setTimeout(() => {
+            formatGetWellData(dispatch);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
+                })
+            );
+        }, 0);
+    } else {
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: 'optimized'
+            })
+        );
+        updateProgressForSingle(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMap,
+            inProgressHostData
+        );
+
+        updateOptimizationStatus(rowData, dispatch);
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                message: `${rowData?.name} optimized successfully.`
+            })
+        );
+    }
+};
+
+const updateAssessmentWithWarningJobs = (
+    dispatch: any,
+    operation: string | undefined,
+    type: string,
+    jobId: string,
+    rowData: any,
+    bulkRowData: any,
+    subjobs: any
+) => {
+    const state = store.getState();
+    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    const {
+        jobToInstanceMap,
+        jobToInstanceMapForBulk,
+        inProgressOptimizationData,
+        inProgressHostData,
+        optimizingData
+    } = state.getWellOptimize;
+    dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+
+    if (operation === 'bulk') {
+        updateProgressForBulk(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMapForBulk,
+            inProgressHostData
+        );
+        let successJobCount = 0;
+        bulkRowData?.map((row: any) => {
+            const isSuccess = subjobs?.filter((subjob: any) => {
+                return (
+                    subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
+                    subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
+                    subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
+                );
+            });
+            if (isSuccess?.length) {
+                successJobCount++;
+                updateOptimizationStatus(row, dispatch);
+            }
+        });
+        setTimeout(() => {
+            formatGetWellData(dispatch);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                })
+            );
+        }, 0);
+    } else {
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: 'optimized'
+            })
+        );
+        updateProgressForSingle(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMap,
+            inProgressHostData
+        );
+        updateOptimizationStatus(rowData, dispatch);
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                message: `${rowData?.name} optimized successfully.`
+            })
+        );
+    }
+};
+
+const updateAssessmentWithFailedJobs = (
+    dispatch: any,
+    operation: string | undefined,
+    type: string,
+    jobId: string,
+    rowData: any,
+    bulkRowData: any,
+    failedMsgData: any
+) => {
+    const state = store.getState();
+    const {
+        jobToInstanceMap,
+        jobToInstanceMapForBulk,
+        inProgressOptimizationData,
+        inProgressHostData,
+        optimizingData
+    } = state.getWellOptimize;
+    if (operation === 'bulk') {
+        updateProgressForBulk(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMapForBulk,
+            inProgressHostData
+        );
+
+        setTimeout(() => {
+            formatGetWellData(dispatch);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: failedMsgData
+                })
+            );
+        }, 0);
+    } else {
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: ''
+            })
+        );
+        updateProgressForSingle(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMap,
+            inProgressHostData
+        );
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: failedMsgData
+            })
+        );
+    }
+};
+
 export const handleOptimizeStorageJob = (
     res: any,
     rowData: any,
@@ -1383,125 +1647,33 @@ export const handleOptimizeStorageJob = (
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
                     const jobId = jobRes?.data?.id;
-                    const state = store.getState();
-                    const { allmssqlHostAssessmentData } = state.inventoryV2;
-                    const { jobToInstanceMap, jobToInstanceMapForBulk } = state.getWellOptimize;
-                    let optimizingData = state.getWellOptimize.optimizingData || {};
-                    let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
+                    const subjobs = jobRes?.data?.subJobs;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
-
-                        if (operation === 'bulk') {
-                            dispatch(
-                                setInProgressOptimizationData({
-                                    ...inProgressOptimizationData,
-                                    [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
-                                        const jobInstances =
-                                            jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap(
-                                                (host: any) => host.sqlServerInstances
-                                            ) || [];
-
-                                        return !jobInstances.includes(instanceId);
-                                    })
-                                })
-                            );
-                            dispatch(
-                                setInProgressHostData({
-                                    ...inProgressHostData,
-                                    [type]: inProgressHostData?.[type]?.filter(
-                                        //Data host id to check
-                                        (hostId: any) => {
-                                            const jobHostIds =
-                                                jobToInstanceMapForBulk[jobId]?.databaseHosts.map(
-                                                    (host: any) => host.id
-                                                ) || [];
-
-                                            return !jobHostIds.includes(hostId);
-                                        }
-                                    )
-                                })
-                            );
-                            bulkRowData?.map((row: any) => {
-                                updateOptimizationStatus(row, dispatch);
-                            });
-                            setTimeout(() => {
-                                formatGetWellData(dispatch);
-                                dispatch(
-                                    addNotification({
-                                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                        message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
-                                    })
-                                );
-                            }, 0);
-                        } else {
-                            dispatch(
-                                setOptimizingData({
-                                    ...optimizingData,
-                                    [rowData?.id]: 'optimized'
-                                })
-                            );
-                            dispatch(
-                                setInProgressOptimizationData({
-                                    ...inProgressOptimizationData,
-                                    [type]: inProgressOptimizationData?.[type]?.filter(
-                                        (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
-                                    )
-                                })
-                            );
-                            dispatch(
-                                setInProgressHostData({
-                                    ...inProgressHostData,
-                                    [type]: inProgressHostData?.[type]?.filter(
-                                        (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
-                                    )
-                                })
-                            );
-                            updateOptimizationStatus(rowData, dispatch);
-                            formatGetWellData(dispatch);
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                    message: `${rowData?.name} optimized successfully.`
-                                })
-                            );
-                        }
-                        dispatch(setOptimizingInstanceData(false));
-                        clearInterval(jobInterval);
+                        updateAssessmentWithCompletedJobs(dispatch, operation, type, jobId, rowData, bulkRowData);
+                    } else if (status === JOB_MONITORING_STATUS.WARNING) {
+                        updateAssessmentWithWarningJobs(
+                            dispatch,
+                            operation,
+                            type,
+                            jobId,
+                            rowData,
+                            bulkRowData,
+                            subjobs
+                        );
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                        // ToDo to handle for bulk operation
-                        // ToDo to handle completed with warnings case
-                        dispatch(
-                            setOptimizingData({
-                                ...optimizingData,
-                                [rowData?.id]: ''
-                            })
+                        updateAssessmentWithFailedJobs(
+                            dispatch,
+                            operation,
+                            type,
+                            jobId,
+                            rowData,
+                            bulkRowData,
+                            failedMsgData
                         );
-                        dispatch(
-                            setInProgressOptimizationData({
-                                ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
-                                )
-                            })
-                        );
-                        dispatch(
-                            setInProgressHostData({
-                                ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.hostId
-                                )
-                            })
-                        );
-                        formatGetWellData(dispatch);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: failedMsgData
-                            })
-                        );
-                        dispatch(setOptimizingInstanceData(false));
-                        clearInterval(jobInterval);
                     }
+
+                    dispatch(setOptimizingInstanceData(false));
+                    clearInterval(jobInterval);
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {

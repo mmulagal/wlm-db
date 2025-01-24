@@ -2127,7 +2127,7 @@
                                 {
                                     "name": "performance-tier",
                                     "recommended": "100%",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "severity": "critical",
                                     "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                                     "tags": ["Performance efficiency"],
