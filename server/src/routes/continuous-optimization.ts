@@ -6,7 +6,11 @@ import {
     fetchDriftAssessmentPerHost,
     onDemandTriggerDriftAssessmentDataCollection
 } from '../operations/cont-opt-assessment-operations';
-import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
+import {
+    AssessmentTriggeredBy,
+    OPTIMIZATION_CATEGORIES,
+    OptimizeStorageParams
+} from '../utils/continous-optimization-consts';
 import {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -16,7 +20,8 @@ import {
     OptimizeComputeSchema,
     DriftAssessmentPerHost,
     OptimizeStorageTierSchema,
-    DriftAssessmentPerAccount
+    DriftAssessmentPerAccount,
+    BulkOptimizeGeneralSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -26,6 +31,7 @@ import {
 } from '../operations/cont-opt-optimize-operations';
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
+import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -205,5 +211,75 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 pageSize
             );
             return reply.send(response);
-        });
+        })
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-sizing`,
+            { schema: BulkOptimizeGeneralSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OPTIMIZATION_CATEGORIES.STORAGE_SIZING,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-operating-system`,
+            { schema: BulkOptimizeGeneralSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OPTIMIZATION_CATEGORIES.OPERATING_SYSTEM,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-tier`,
+            { schema: BulkOptimizeGeneralSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OPTIMIZATION_CATEGORIES.STORAGE_TIER,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/compute`,
+            { schema: BulkOptimizeGeneralSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize);
+                return reply.send(response);
+            }
+        );
 }

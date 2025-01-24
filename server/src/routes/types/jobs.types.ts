@@ -137,7 +137,8 @@ const CreateJobObject = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    initiator: Type.Optional(Type.String())
+    initiator: Type.Optional(Type.String()),
+    metadata: Type.Optional(Type.Any())
 });
 type JobRecordType = Static<typeof CreateJobObject>;
 

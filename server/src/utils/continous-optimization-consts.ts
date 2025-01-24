@@ -73,10 +73,25 @@ enum OptimizeOperatingSystemParams {
     MPIO_ENABLE = 'mpio-enabled'
 }
 
+enum OptimizeStorageTierParams {
+    STORAGE_TIER = 'storage-tier'
+}
+
+enum OptimizeComputeParams {
+    COMPUTE = 'compute'
+}
+
 enum OPTIMIZE_SIZING_CONFIGS {
     HEADROOM = 'headroom',
     LOG_DRIVE_SIZE = 'log-drive-size',
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
+}
+
+enum OPTIMIZATION_CATEGORIES {
+    STORAGE_TIER = 'storage-tier',
+    STORAGE_SIZING = 'storage-sizing',
+    OPERATING_SYSTEM = 'operating-system',
+    COMPUTE = 'compute'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -200,6 +215,9 @@ export {
     REPORTING_BUCKET,
     STORAGE_OPTIMIZE_JOB_PARAM,
     NUMASTATIC,
+    OptimizeStorageTierParams,
+    OptimizeComputeParams,
     NETWORK_PERF,
-    ONPREM_TCO_CREDENTIALS_ID
+    ONPREM_TCO_CREDENTIALS_ID,
+    OPTIMIZATION_CATEGORIES
 };

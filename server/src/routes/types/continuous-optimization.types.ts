@@ -3,8 +3,10 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeComputeParams,
     OptimizeOperatingSystemParams,
-    OptimizeStorageConfigs
+    OptimizeStorageConfigs,
+    OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 
 const SizingViolationResponse = Type.Object({
@@ -196,6 +198,24 @@ type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
 
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
+const BulkOptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    instances: Type.Array(
+        Type.Object({
+            id: Type.String({ minLength: 1 }),
+            configurations: Type.Array(OptimizeStorageRequestParams)
+        })
+    )
+});
+
+type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
+
+const BulkOptimizeStorageRequestBody = Type.Object({
+    databaseHosts: Type.Array(BulkOptimizePerHostRequestBody)
+});
+
+type BulkOptimizeStorageRequestBodyType = Static<typeof BulkOptimizeStorageRequestBody>;
+
 const OptimizeComputeRequestBody = Type.Object({
     instanceType: Type.String()
 });
@@ -207,6 +227,13 @@ const OptimizeSizingRequestBody = Type.Object({
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
+const OptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+    instanceType: Type.Optional(Type.String())
+});
+type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
+
 const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
 });
@@ -216,6 +243,24 @@ const DriftAssessmentResponsePerAccount = Type.Object({
     assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
     nextToken: Type.Optional(Type.String())
 });
+
+const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
+    type: Type.Enum({
+        ...OPTIMIZE_SIZING_CONFIGS,
+        ...OptimizeOperatingSystemParams,
+        ...OptimizeStorageTierParams,
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+
+type BulkOptimizeGeneralPerHostRequestBodyType = Static<typeof BulkOptimizeGeneralPerHostRequestBody>;
+
+const BulkOptimizeGeneralRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeGeneralPerHostRequestBody)
+});
+
+type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
 
 export {
     DriftAssessmentResponse,
@@ -236,5 +281,13 @@ export {
     OptimizeSizingRequestBodyType,
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
-    DriftAssessmentResponsePerAccount
+    DriftAssessmentResponsePerAccount,
+    BulkOptimizeStorageRequestBody,
+    BulkOptimizeStorageRequestBodyType,
+    BulkOptimizePerHostRequestBodyType,
+    BulkOptimizeGeneralRequestBody,
+    BulkOptimizeGeneralRequestBodyType,
+    OptimizePerHostRequestBody,
+    OptimizePerHostRequestBodyType,
+    BulkOptimizeGeneralPerHostRequestBodyType
 };

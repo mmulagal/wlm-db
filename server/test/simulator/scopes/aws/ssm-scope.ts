@@ -1001,7 +1001,6 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
     })
     .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse);
-
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

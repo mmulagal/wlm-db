@@ -28,7 +28,7 @@ import {
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/discover-consts';
 import { calculateComputeDrift } from './compute-assessment-operations';
-import { handleOptimizeJobCreation } from './assessment-utils';
+import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
 
@@ -467,7 +467,8 @@ export default async function optimizeCompute(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    instanceType: string
+    instanceType: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info('Optimizing compute', {
         accountId,
@@ -515,6 +516,16 @@ export default async function optimizeCompute(
     const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
 
     const [{ resource_name: resourceName, metadata }] = resourceDetails;
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: 'compute-rightsizing',
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -522,7 +533,9 @@ export default async function optimizeCompute(
         resourceName!,
         JOBTYPE.OPTIMIZATION,
         `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`
+        `Optimize EC2 compute for ${resourceName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     handleComputeRemediation(
