@@ -7,7 +7,8 @@ import {
     parseIops,
     parseStorageDetailsByDb,
     convertToDate,
-    generateUniqueId
+    generateUniqueId,
+    parseAoagReadReplica
 } from '../../../src/utils/onprem-tco/onprem-tco-utils';
 
 describe('onprem-tco-utils', () => {
@@ -115,6 +116,27 @@ describe('onprem-tco-utils', () => {
         ).toBeUndefined();
     });
 
+    it('should parse valid AOAG details array', () => {
+        const input =
+            '[{"databaseName":"AOAGDB22","replicaId":"4B08A481-D542-4168-9B1B-976CA6B1B1DE","replicaServerName":"WLMDBAOAG1\\AOAG1_NODE1","syncStateDesc":"SYNCHRONIZED","replicaRole":"SECONDARY"},{"databaseName":"AOAGDB22_DB2","replicaId":"9CECFD61-8D8F-4953-AB8F-6DCAFE1DB035","replicaServerName":"WLMDBAOAG1\\AOAG1_NODE1","syncStateDesc":"SYNCHRONIZED","replicaRole":"SECONDARY"}]';
+
+        expect(parseAoagReadReplica(input)).toEqual([
+            {
+                databaseName: 'AOAGDB22',
+                replicaId: '4B08A481-D542-4168-9B1B-976CA6B1B1DE',
+                replicaServerName: 'WLMDBAOAG1\\AOAG1_NODE1',
+                syncStateDesc: 'SYNCHRONIZED',
+                replicaRole: 'SECONDARY'
+            },
+            {
+                databaseName: 'AOAGDB22_DB2',
+                replicaId: '9CECFD61-8D8F-4953-AB8F-6DCAFE1DB035',
+                replicaServerName: 'WLMDBAOAG1\\AOAG1_NODE1',
+                syncStateDesc: 'SYNCHRONIZED',
+                replicaRole: 'SECONDARY'
+            }
+        ]);
+    });
     it('should convert valid date string to Date object', () => {
         const dateString = '20230101123000';
         const expectedDate = new Date(2023, 0, 1, 12, 30, 0);

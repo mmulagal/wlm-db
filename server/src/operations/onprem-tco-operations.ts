@@ -18,6 +18,7 @@ import {
 import {
     OnPremCollectionObjectV1,
     SqlInstanceDetails,
+    StorageDetailByDB,
     WindowsConfig
 } from '../utils/onprem-tco/onprem-tco-generic.types';
 import {
@@ -39,10 +40,12 @@ import {
     parseIops,
     convertToDate,
     generateUniqueId,
-    parseStorageDetailsByDb
+    parseStorageDetailsByDb,
+    parseAoagReadReplica
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
+    ManualModeInstancesType,
     StorageSavingsMetricsCalculationsResponseType,
     StorageSavingsRequestBodyType,
     StorageSavingsResponseType
@@ -170,13 +173,7 @@ async function getStorageSavingsResponse(
     clonedCopiesCount: number = 1,
     sqlServerDeploymentType: string,
     monthlyChangeRatePercentage: number = 8,
-    volumes: {
-        volumeType: string;
-        volumeNumber: number;
-        storageAmount: number;
-        volumeIops?: number;
-        throughput?: number;
-    }[],
+    ec2Instances: ManualModeInstancesType,
     instanceType: string,
     sqlServerEdition: string = 'Standard Edition',
     snapshotFrequency: string = 'Daily'
@@ -186,7 +183,7 @@ async function getStorageSavingsResponse(
         clonedCopiesCount,
         sqlServerDeploymentType,
         monthlyChangeRatePercentage,
-        volumes,
+        ec2Instances,
         instanceType,
         sqlServerEdition,
         snapshotFrequency
@@ -196,14 +193,7 @@ async function getStorageSavingsResponse(
         clonedCopiesCount,
         sqlServerDeploymentType,
         monthlyChangeRatePercentage,
-        ec2Instances: [
-            {
-                ec2InstanceDescription: 'Primary',
-                ec2InstanceType: instanceType,
-                isPrimary: true,
-                volumes
-            }
-        ],
+        ec2Instances,
         sqlServerEdition,
         snapshotFrequency
     });
@@ -243,60 +233,96 @@ function groupSqlServerInstancesByDeploymentType(sqlServerInstances: SqlInstance
     }, {});
 }
 
+function processEbsDisks(disks: EBSClassification[]) {
+    logger.info('Processing EBS Disks', { disks: disks.length });
+
+    const ebsTypeCountMap = new Map<
+        string,
+        {
+            volumeType: string;
+            volumeNumber: number;
+            storageAmount: number;
+            volumeIops: number;
+            throughput: number;
+        }
+    >();
+
+    disks.forEach((disk: EBSClassification) => {
+        if (ebsTypeCountMap.has(disk.ebsType)) {
+            const existing = ebsTypeCountMap.get(disk.ebsType)!;
+            ebsTypeCountMap.set(disk.ebsType, {
+                volumeType: disk.ebsType,
+                volumeNumber: existing.volumeNumber + disk.numDatabases,
+                storageAmount: existing.storageAmount + disk.avgVolumeSizePerDb,
+                volumeIops: existing.volumeIops + disk.avgIopsPerDb,
+                throughput: existing.throughput + disk.avgThroughputPerDb
+            });
+        } else {
+            ebsTypeCountMap.set(disk.ebsType, {
+                volumeType: disk.ebsType,
+                volumeNumber: disk.numDatabases,
+                storageAmount: disk.avgVolumeSizePerDb,
+                volumeIops: disk.avgIopsPerDb,
+                throughput: disk.avgThroughputPerDb
+            });
+        }
+    });
+
+    return Array.from(ebsTypeCountMap.values()).map(
+        ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
+            volumeType,
+            volumeNumber,
+            storageAmount: Math.max(storageAmount, convertGiBToBytes(1)), // Minimum volume size is 1 GiB
+            volumeIops: volumeType === 'gp3' ? Math.max(volumeIops, 3000) : volumeIops, // Minimum IOPS is 3000
+            throughput: volumeType === 'gp3' ? Math.max(throughput, 125) : throughput // Minimum throughput is 125
+        })
+    );
+}
+
 function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetails[]) {
     logger.info('Deriving EBS Volumes List', { sqlInstancesDetails: sqlInstancesDetails.length });
     try {
         const ebsDisks = classifyDisksToEBS(sqlInstancesDetails);
 
-        logger.info('>>EBS DISKS', ebsDisks);
-        if (ebsDisks.length > 0) {
-            const ebsTypeCountMap = new Map<
-                string,
-                {
-                    volumeType: string;
-                    volumeNumber: number;
-                    storageAmount: number;
-                    volumeIops: number;
-                    throughput: number;
-                }
-            >();
+        const primaryEbsDisks = ebsDisks.filter(({ isPrimary }) => isPrimary);
+        const secondaryEbsDisks = ebsDisks.filter(({ isPrimary }) => !isPrimary);
 
-            ebsDisks?.forEach((disk: EBSClassification) => {
-                if (ebsTypeCountMap.has(disk.ebsType)) {
-                    const existing = ebsTypeCountMap.get(disk.ebsType)!;
-                    ebsTypeCountMap.set(disk.ebsType, {
-                        volumeType: disk.ebsType,
-                        volumeNumber: existing.volumeNumber + 1,
-                        storageAmount: existing.storageAmount + disk.avgVolumeSizePerDb,
-                        volumeIops: existing.volumeIops + disk.avgIopsPerDb,
-                        throughput: existing.throughput + disk.avgThroughputPerDb
-                    });
-                } else {
-                    ebsTypeCountMap.set(disk.ebsType, {
-                        volumeType: disk.ebsType,
-                        volumeNumber: 1,
-                        storageAmount: disk.avgVolumeSizePerDb,
-                        volumeIops: disk.avgIopsPerDb,
-                        throughput: disk.avgThroughputPerDb
-                    });
-                }
-            });
+        const primaryEbsVolumes = processEbsDisks(primaryEbsDisks);
+        const secondaryEbsVolumes = processEbsDisks(secondaryEbsDisks);
 
-            const ebsVolumes = Array.from(ebsTypeCountMap.values()).map(
-                ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
-                    volumeType,
-                    volumeNumber,
-                    storageAmount: Math.max(storageAmount, convertGiBToBytes(1)), // Minimum volume size is 1 GiB // Minimum volume size is 1 GiB
-                    ...(volumeType !== 'gp2' && { volumeIops, throughput }) // AWS pricing doesnt accept iops and throughout for gp2; marketing API also doesn't accept it
-                })
-            );
-            logger.info('>>EBS VOLUMES', ebsVolumes);
+        logger.info('>>EBS VOLUMES', { primaryEbsVolumes, secondaryEbsVolumes });
 
-            return ebsVolumes;
-        }
+        return { primaryEbsVolumes, secondaryEbsVolumes };
     } catch (error) {
         logger.error(`Error deriving EBS Volumes List for ${sqlInstancesDetails}`, error);
     }
+}
+
+function deriveEc2InstanceListForMarketing(
+    sqlInstancesDetails: SqlInstanceDetails[],
+    instanceType: string
+): ManualModeInstancesType {
+    logger.info('Deriving EC2 Instance List for Marketing', { sqlInstancesDetails: sqlInstancesDetails.length });
+
+    const { primaryEbsVolumes, secondaryEbsVolumes } = deriveEbsVolumesListForMarketing(sqlInstancesDetails) || {};
+
+    const ec2Instances = [
+        {
+            ec2InstanceDescription: 'Primary',
+            ec2InstanceType: instanceType,
+            isPrimary: true,
+            volumes: primaryEbsVolumes
+        }
+    ];
+    if (!isEmpty(secondaryEbsVolumes)) {
+        ec2Instances.push({
+            ec2InstanceDescription: 'Secondary',
+            ec2InstanceType: instanceType,
+            isPrimary: false,
+            volumes: secondaryEbsVolumes
+        });
+    }
+    return ec2Instances;
 }
 
 async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, region: string) {
@@ -375,101 +401,94 @@ async function analyzeOnpremData(
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
 
+    const response = [];
     for (const [deploymentType, instances] of Object.entries(sqlInstancesPerDeploymentType)) {
         const instanceIds = instances.map(instance => instance.instanceGuid);
         const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
-        const ebsVolumes = deriveEbsVolumesListForMarketing(instances);
-        if (ebsVolumes && !isEmpty(ebsVolumes)) {
-            const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
-            const isUsingAnyEnterpriseFeature = checkEnterpriseUsage(instances); // there is no existing vs recommended, if any of the instances are using enterprise features, we are considering it as using enterprise features ( SQL license price will be same for both existing and recommended)
-            const sqlServerEdition = isUsingAnyEnterpriseFeature ? 'Enterprise Edition' : 'Standard Edition';
 
-            if (currentInstanceType && recommendedInstanceType) {
-                const [existingConfigData, recommendedConfigData, calculations] = await Promise.all([
-                    getStorageSavingsResponse(
-                        accountId,
-                        clonedCopiesCount,
-                        deploymentType,
-                        monthlyChangeRatePercentage,
-                        ebsVolumes,
-                        currentInstanceType,
-                        sqlServerEdition
-                    ),
-                    getStorageSavingsResponse(
-                        accountId,
-                        clonedCopiesCount,
-                        deploymentType,
-                        monthlyChangeRatePercentage,
-                        ebsVolumes,
-                        recommendedInstanceType,
-                        sqlServerEdition
-                    ),
-                    getManualModeStorageSavingsCalculationMetrics(accountId, region || DEFAULT_AWS_REGION, {
-                        clonedCopiesCount: 1,
-                        sqlServerDeploymentType: deploymentType,
-                        monthlyChangeRatePercentage: 8,
-                        ec2Instances: [
-                            {
-                                ec2InstanceDescription: 'Primary',
-                                ec2InstanceType: currentInstanceType,
-                                isPrimary: true,
-                                volumes: ebsVolumes
-                            }
-                        ],
-                        sqlServerEdition,
-                        snapshotFrequency: snapshotFrequency || 'Daily'
-                    })
-                ]);
+        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
+        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(instances);
 
-                const {
-                    compute: { existing: existingCompute } = {},
-                    license: { existing: existingLicense } = {},
-                    ebs,
-                    fsx,
-                    multi,
-                    totalSummary: { existing: existingTotalSummary } = {}
-                } = existingConfigData;
-
-                const {
-                    compute: { recommended: recommendedCompute } = {},
-                    license: { recommended: recommendedLicense } = {},
-                    totalSummary: { recommended: recommendedTotalSummary } = {}
-                } = recommendedConfigData;
-
-                const storageSavings = {
-                    compute: {
-                        existing: existingCompute,
-                        recommended: recommendedCompute
-                    },
-                    license: {
-                        existing: existingLicense,
-                        recommended: recommendedLicense
-                    },
-                    ebs,
-                    fsx,
-                    multi,
-                    totalSummary: {
-                        existing: existingTotalSummary,
-                        recommended: recommendedTotalSummary
-                    }
-                };
-                const response = { storageSavings, calculations };
-                if (!adHocRequest) {
-                    // Update the record in the database as part of the initial report analysis only
-                    await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
-                        assessment_data: response
-                    });
-                }
-
-                return response;
-            }
+        if (!currentInstanceType || !recommendedInstanceType) {
             throw createError(
                 HttpErrorCodes.INTERNAL_SERVER_ERROR,
                 'Error deriving instance requirements. Could not find instance type matching requirements.'
             );
         }
-        logger.warn('No EBS Volumes found for SQL Instances', { accountId, resourceId });
+
+        const ec2Instances = deriveEc2InstanceListForMarketing(instances, currentInstanceType);
+        const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(instances, recommendedInstanceType);
+
+        const [existingConfigData, recommendedConfigData, calculations] = await Promise.all([
+            getStorageSavingsResponse(
+                accountId,
+                clonedCopiesCount,
+                deploymentType,
+                monthlyChangeRatePercentage,
+                ec2Instances,
+                currentInstanceType,
+                currentLicenseEdition
+            ),
+            getStorageSavingsResponse(
+                accountId,
+                clonedCopiesCount,
+                deploymentType,
+                monthlyChangeRatePercentage,
+                ec2InstancesRecommended,
+                recommendedInstanceType,
+                recommendedLicenseEdition
+            ),
+            getManualModeStorageSavingsCalculationMetrics(accountId, region || DEFAULT_AWS_REGION, {
+                clonedCopiesCount: 1,
+                sqlServerDeploymentType: deploymentType,
+                monthlyChangeRatePercentage: 8,
+                ec2Instances,
+                sqlServerEdition: currentLicenseEdition,
+                snapshotFrequency: snapshotFrequency || 'Daily'
+            })
+        ]);
+
+        const {
+            compute: { existing: existingCompute } = {},
+            license: { existing: existingLicense } = {},
+            ebs,
+            fsx,
+            multi,
+            totalSummary: { existing: existingTotalSummary } = {}
+        } = existingConfigData;
+
+        const {
+            compute: { recommended: recommendedCompute } = {},
+            license: { recommended: recommendedLicense } = {},
+            totalSummary: { recommended: recommendedTotalSummary } = {}
+        } = recommendedConfigData;
+
+        const storageSavings = {
+            compute: {
+                existing: existingCompute,
+                recommended: recommendedCompute
+            },
+            license: {
+                existing: existingLicense,
+                recommended: recommendedLicense
+            },
+            ebs,
+            fsx,
+            multi,
+            totalSummary: {
+                existing: existingTotalSummary,
+                recommended: recommendedTotalSummary
+            }
+        };
+        response.push({ accountId, resourceId, storageSavings, calculations });
+        if (!adHocRequest) {
+            // Update the record in the database as part of the initial report analysis only
+            await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
+                assessment_data: response
+            });
+        }
     }
+    return response;
 }
 
 async function handleOnpremTcoDataAnalysis(accountId: string, jobId: string, data: OnPremCollectionObjectV1) {
@@ -525,7 +544,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await Promise.all([
-            saveReportInReportingRegistry(accountId, fileName, data),
+            // saveReportInReportingRegistry(accountId, fileName, data),
             saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data)
         ]);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
@@ -589,50 +608,71 @@ interface EBSClassification {
     avgThroughputPerDb: number;
     ebsType: string;
     avgVolumeSizePerDb: number;
+    isPrimary: boolean;
+}
+
+function getEbsDisks(instance: SqlInstanceDetails, databases: StorageDetailByDB[], isPrimary: boolean) {
+    // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
+    if (databases.length > 0) {
+        const { avgVolumeSizePerDb, avgIopsPerDb, avgThroughputPerDb } = parseSqlUsageParams(instance, databases);
+
+        if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
+            logger.warn(
+                'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
+            );
+            return;
+        }
+        let ebsType = 'gp3';
+        if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
+            // 4000 MB/s
+            ebsType = 'io2';
+        } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
+            // 1000 MB/s
+            ebsType = 'io1';
+        } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
+            ebsType = 'st1';
+        }
+        return {
+            instanceName: instance.sqlInstanceName,
+            numDatabases: databases.length,
+            avgIopsPerDb,
+            avgThroughputPerDb,
+            ebsType,
+            avgVolumeSizePerDb,
+            isPrimary
+        };
+    }
 }
 
 function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClassification[] {
-    // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
     logger.info('Classifying Disks to EBS', { sqlInstancesDetails });
 
-    return compact(
-        sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
-            const { avgVolumeSizePerDb, avgIopsPerDb, avgThroughputPerDb, numDatabases } =
-                parseSqlUsageParams(instance);
-            if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
-                logger.warn(
-                    'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
-                );
-                return undefined;
-            }
-            let ebsType;
-            if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
-                // 4000 MB/s
-                ebsType = 'io2';
-            } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
-                // 1000 MB/s
-                ebsType = 'io1';
-            } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
-                ebsType = 'st1';
-            } else if (avgVolumeSizePerDb > 1 && avgIopsPerDb <= 16000 && avgThroughputPerDb <= 1000) {
-                ebsType = 'gp3';
-            } else {
-                ebsType = 'gp2'; // Do we need it?
-            }
+    const ebsDisks: EBSClassification[] = [];
+    sqlInstancesDetails.forEach((instance: SqlInstanceDetails) => {
+        const { aoagReadReplica, storageDetailsByDb } = instance;
+        const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
+        let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
 
-            return {
-                instanceName: instance.sqlInstanceName,
-                numDatabases,
-                avgIopsPerDb,
-                avgThroughputPerDb,
-                ebsType,
-                avgVolumeSizePerDb
-            };
-        })
-    );
+        const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
+        const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
+
+        let secondaryDatabases: StorageDetailByDB[] = [];
+        if (aoagReadReplicaDbs && !isEmpty(aoagReadReplicaDbs) && allDatabases && !isEmpty(allDatabases)) {
+            primaryDatabases = allDatabases.filter(
+                ({ databaseName }) => !aoagReadReplicaDbNames?.includes(databaseName)
+            );
+            secondaryDatabases = allDatabases.filter(({ databaseName }) =>
+                aoagReadReplicaDbNames?.includes(databaseName)
+            );
+            ebsDisks.push(getEbsDisks(instance, secondaryDatabases, false)!);
+        }
+        ebsDisks.push(getEbsDisks(instance, primaryDatabases, true)!);
+    });
+
+    return compact(ebsDisks);
 }
 
-function parseSqlUsageParams(instance: SqlInstanceDetails) {
+function parseSqlUsageParams(instance: SqlInstanceDetails, databasesList: StorageDetailByDB[] = []) {
     logger.info('Parsing SQL Usage Parameters', { instance });
 
     let sqlVersion = parseSqlVersion(instance.sqlVersion) || '';
@@ -659,9 +699,8 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
 
     let totalStorage = instance?.totalStorage;
     if (isEmpty(totalStorage)) {
-        const storageDetailsByDb = parseStorageDetailsByDb(instance?.storageDetailsByDb || '') || [];
         // handle data and log volume separately; or ignore log volume size?
-        totalStorage = storageDetailsByDb.reduce((acc, db) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
+        totalStorage = databasesList.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
     }
 
     const numDatabases = parseInt(instance.noOfDatabases, 10);
@@ -684,33 +723,37 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
     };
 }
 
-// This approach assumes that if we have an instance type that can handle the maximum CPU and memory requirements, it should be able to handle the rest as well.
 function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving Instance Requirements', { sqlInstancesDetails: sqlInstancesDetails.length });
+    const totalSqlInstances = sqlInstancesDetails.length;
+    logger.info('Deriving Instance Requirements', { sqlInstancesDetails: totalSqlInstances });
 
-    let maxVCpuCount = 4;
-    let minMemoryMiB = 512; // nano instances have memory of 512 MiB
+    let requiredVcpuCount = 4;
+    let requiredMemory = 512; // nano instances have memory of 512 MiB
 
     let networkPerformance = NETWORK_PERF.UP_TO_10;
+
+    let totalCpuCount = 0;
+    let totalMemory = 0;
     sqlInstancesDetails.forEach(sqlInstance => {
         const { cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
-        const vcpuCount = Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
+        totalCpuCount += Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
         // Assuming memUtilization is a JSO N string with memory details
         const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
-        const memoryMiB = memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
-
-        maxVCpuCount = vcpuCount ? Math.max(maxVCpuCount, vcpuCount) : maxVCpuCount;
-        minMemoryMiB = memoryMiB && memoryMiB > minMemoryMiB ? memoryMiB : minMemoryMiB;
+        totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
         networkPerformance =
             sqlInstance.networkPerformance === NETWORK_PERF.ABOVE_10 ? NETWORK_PERF.ABOVE_10 : NETWORK_PERF.UP_TO_10;
     });
+
+    requiredVcpuCount = Math.max(requiredVcpuCount, totalCpuCount / totalSqlInstances); // Taking average of the total CPU count of all instances as the required vCPU count
+    requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
+
     logger.debug('>>>NETWORK PERFORMANCE', networkPerformance);
     return {
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: maxVCpuCount },
-            MemoryMiB: { Min: minMemoryMiB },
+            VCpuCount: { Min: 4, Max: requiredVcpuCount },
+            MemoryMiB: { Min: requiredMemory },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
             AllowedInstanceTypes: ['m*', 'c*', 'r*']
             // NetworkBandwidthGbps: //TODO: Commenting out for now as there are no instance types matching the cpu, mem and network requirements we set
@@ -727,8 +770,8 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
 }
 
 // This approach assumes that if any of the features are being used in any one of the SQL server instance, it is considered as using an enterprise feature.
-function checkEnterpriseUsage(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Checking Enterprise Usage', { sqlInstancesDetails: sqlInstancesDetails.length });
+function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
+    logger.info('Getting license recommendations', { sqlInstancesDetails: sqlInstancesDetails.length });
 
     const enterpriseUsageResults = compact(
         sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
@@ -740,16 +783,25 @@ function checkEnterpriseUsage(sqlInstancesDetails: SqlInstanceDetails[]) {
                     licenseFeatures &&
                     licenseFeatures.some(({ IsUsingFeature }: { IsUsingFeature: number }) => IsUsingFeature === 1)
                 ) {
-                    return true;
+                    return { sqlVersionStr, isUsingAnyEnterpriseFeature: true };
                 }
             }
-            return false;
+            return { sqlVersionStr, isUsingAnyEnterpriseFeature: false };
         })
     );
 
     logger.info('>>ENTERPRISE USAGE RESULTS', enterpriseUsageResults);
 
-    return enterpriseUsageResults.some((result: boolean) => result);
+    const currentLicenseEdition = enterpriseUsageResults.some(
+        ({ sqlVersionStr }) => sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)
+    )
+        ? 'Enterprise Edition'
+        : 'Standard Edition';
+    const isUsingEnterpriseFeature = enterpriseUsageResults.some(
+        ({ isUsingAnyEnterpriseFeature }) => isUsingAnyEnterpriseFeature
+    );
+    const recommendedLicenseEdition = isUsingEnterpriseFeature ? 'Enterprise Edition' : 'Standard Edition';
+    return { currentLicenseEdition, recommendedLicenseEdition };
 }
 
 async function getOnPremDatabaseResources(
@@ -899,7 +951,7 @@ async function getOnPremResourceExploreSavings(
                 const errorMessage = 'No analysis result found for the input provided.';
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
             }
-            const { storageSavings, calculations } = analysisResult;
+            const [{ storageSavings, calculations }] = analysisResult;
             return {
                 resourceId,
                 resourceName,
@@ -950,7 +1002,7 @@ export {
     groupSqlServerInstancesByDeploymentType,
     deriveEbsVolumesListForMarketing,
     deriveSqlUsageBasedInstanceType,
-    checkEnterpriseUsage,
+    getLicenseRecommendations,
     deriveInstanceRequirements,
     getOnPremResourceExploreSavings,
     saveReportInReportingRegistry

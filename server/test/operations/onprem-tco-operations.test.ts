@@ -1,6 +1,6 @@
 import { listOnPremDatabaseResources } from '../../src/lib/database/onprem-tco';
 import {
-    checkEnterpriseUsage,
+    getLicenseRecommendations,
     deriveEbsVolumesListForMarketing,
     deriveHostConfigBasedInstanceType,
     deriveInstanceRequirements,
@@ -231,10 +231,10 @@ describe('onPrem TCO operations', () => {
             }
         ];
 
-        const ebsVolumes = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo);
-        expect(ebsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
-        expect(ebsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
-        expect(ebsVolumes?.length).toEqual(expectedEbsVolumes.length);
+        const { primaryEbsVolumes } = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo) || {};
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
+        expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 
     it('should derive the correct instance type based on SQL usage', async () => {
@@ -243,8 +243,11 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should return false if any SQL instance is not using enterprise features', () => {
-        const result = checkEnterpriseUsage(reportData.sqlServerInfo);
-        expect(result).toBe(false);
+        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(
+            reportData.sqlServerInfo
+        );
+        expect(currentLicenseEdition).toBeDefined();
+        expect(recommendedLicenseEdition).toBeDefined();
     });
 
     it('should return true if any SQL instance is using enterprise features', () => {
@@ -252,7 +255,7 @@ describe('onPrem TCO operations', () => {
             {
                 instanceGuid: 'E7A86AFB-12D4-4A69-8942-43E548CAD458',
                 licenceUsageDetails:
-                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":1,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]                                                                                                                                                                                                                             ',
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]                                                                                                                                                                                                                             ',
                 memUtilization: '[{"used":474525696,"total":8588910592,"remaining":8114384896,"percentUsed":5}]',
                 noOfDatabases: '5',
                 ownerNodes:
@@ -275,8 +278,9 @@ describe('onPrem TCO operations', () => {
                 deploymentType: 'fci'
             }
         ];
-        const result = checkEnterpriseUsage(sqlServerInfo);
-        expect(result).toBe(true);
+        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(sqlServerInfo);
+        expect(recommendedLicenseEdition).toEqual('Standard Edition');
+        expect(currentLicenseEdition).toEqual('Enterprise Edition');
     });
 
     it('should derive the correct instance requirements based on SQL instance details', () => {

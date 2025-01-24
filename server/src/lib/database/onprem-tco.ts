@@ -41,7 +41,7 @@ async function removeOnPremTcoReportData(
 
     return prisma.client.onprem_tco_reports.deleteMany({
         where: {
-            OR: [
+            AND: [
                 ...(id ? [{ id: { in: id } }] : []),
                 ...(accountId ? [{ account_id: accountId }] : []),
                 ...(resourceIdList ? [{ resource_id: { in: resourceIdList } }] : []),

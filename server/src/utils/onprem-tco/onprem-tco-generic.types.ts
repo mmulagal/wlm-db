@@ -92,11 +92,13 @@ interface SqlInstanceDetails {
     vcpusPerInstance: string;
     cpuUtilization: string;
     deploymentType: string;
+    isReadReplica?: string;
+    aoagReadReplica?: string;
+    // Below items are not part of the report, but added for the purpose of TCO calculation in the backend
     networkPerformance?: string;
     totalIops?: number;
     totalThroughput?: number;
     totalStorage?: number;
-    isReadReplica?: string;
     memory?: number;
 }
 
