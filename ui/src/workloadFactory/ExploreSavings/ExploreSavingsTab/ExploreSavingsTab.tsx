@@ -80,7 +80,7 @@ const ExploreSavingsTab = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.MSSQL_ON_PREMISES)}
                 >
-                    SQL Server On-Premises
+                    SQL Server on-premises
                 </DsTypography>
             </div>
         </div>

@@ -1218,9 +1218,9 @@ export const GENERAL = {
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
-        'The script is a data collection tool based on PowerShell that gathers and then uploads SQL Server configuration and performance data to Workload Factory. The migration advisor assesses the data and plans FSx for ONTAP deployment for your SQL Server environment.',
+        'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RSS_CONFIGURATION: 'Network adapter settings',
