@@ -324,7 +324,7 @@
         "rssAdapters": [
           {
             "adapterName": "Ethernet 3",
-            "rssEnabled": false,
+            "rssEnabled": true,
             "rssProfile": "",
             "baseProcessorNumber": 2,
             "numberOfReceiveQueues": 32
@@ -380,7 +380,8 @@
                 "ec2InstanceId": "i-07e76a4b916548dc0",
                 "operationStartTime": 551,
                 "operationEndTime": 115,
-                "securityNonCompliantCount": 1
+                "securityNonCompliantCount": 1,
+                "otherNonCompliantCount": 1
             }
         ]
     },

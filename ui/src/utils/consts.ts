@@ -762,6 +762,7 @@ export const GW_CONFIG_OPTIMIZE_NA = [
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
     rssProfile: 'RSS profile',
+    rssStatus: 'RSS status',
     baseProcessorNumber: 'Base processor number',
     receiveQueues: 'Receive Queues',
     tcpOffloading: 'TCP Offloading Features'

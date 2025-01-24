@@ -86,7 +86,6 @@ const StoragePerfInput = ({ type, data }: any) => {
                     placeholder={''}
                     value={totalStorageAmount || ''}
                     className={styles.keyField}
-                    isDisabled={true}
                 />
             </div>
             <div className={styles.col3}>

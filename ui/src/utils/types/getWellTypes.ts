@@ -97,6 +97,7 @@ export interface PerConfigInterface {
         operationStartTime?: number;
         operationEndTime?: number;
         securityNonCompliantCount?: number;
+        otherNonCompliantCount?: number;
     }>;
     rssAdapters?: Array<RSSConfigAdapterInterface>;
     tcpOffloadState?: string;

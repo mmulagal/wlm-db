@@ -223,7 +223,8 @@ const SavingsCalculatorApi = () => {
                         networkPerformance:
                             NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value || ''] || 'upTo10',
                         iops: perInstanceNodeUsage?.iops,
-                        throughput: perInstanceNodeUsage?.throughput
+                        throughput: perInstanceNodeUsage?.throughput,
+                        totalStorage: perInstanceNodeUsage?.storage
                     });
                 }
             });

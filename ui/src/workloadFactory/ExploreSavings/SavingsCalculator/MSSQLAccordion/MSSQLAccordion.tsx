@@ -203,6 +203,16 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         }
     };
 
+    const saveIsDisabled = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            return GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE;
+        } else if (configData?.length >= MAX_SAVED_CONFIG) {
+            return SELECT_CONFIG.MAX_CONFIG_LIMIT;
+        } else {
+            return '';
+        }
+    };
+
     return (
         <div className={setCSS()} id="recommended-accordion">
             <DsAccordion
@@ -237,10 +247,10 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     ) : (
                         !printState && (
                             <div id="es-save-config">
-                                {configData?.length >= MAX_SAVED_CONFIG ? (
+                                {saveIsDisabled() ? (
                                     <Popover
                                         popoverClass={styles['popover']}
-                                        children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
+                                        children={saveIsDisabled()}
                                         trigger="hover"
                                         container={
                                             <div id="es-save-config">
@@ -273,20 +283,35 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
                     !printState && (
                         <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
-                            <DsButton
-                                type="button"
-                                isDisabled={
-                                    isMutliFsx ||
-                                    storageSavingsLoading ||
-                                    selectedHostDetails?.loading ||
-                                    viewCalculationsLoading ||
-                                    disableState ||
-                                    !storageSavingsResponse
-                                }
-                                onClick={() => handleCreateClick()}
-                            >
-                                {GENERAL.CREATE_TEMPLATE}
-                            </DsButton>
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? (
+                                <Popover
+                                    popoverClass={styles['popover']}
+                                    children={GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE}
+                                    trigger="hover"
+                                    container={
+                                        <div id="es-create-template">
+                                            <DsButton type="button" isDisabled={true}>
+                                                {GENERAL.CREATE_TEMPLATE}
+                                            </DsButton>
+                                        </div>
+                                    }
+                                />
+                            ) : (
+                                <DsButton
+                                    type="button"
+                                    isDisabled={
+                                        isMutliFsx ||
+                                        storageSavingsLoading ||
+                                        selectedHostDetails?.loading ||
+                                        viewCalculationsLoading ||
+                                        disableState ||
+                                        !storageSavingsResponse
+                                    }
+                                    onClick={() => handleCreateClick()}
+                                >
+                                    {GENERAL.CREATE_TEMPLATE}
+                                </DsButton>
+                            )}
                         </div>
                     )
                 ]}

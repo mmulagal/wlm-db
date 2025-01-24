@@ -662,11 +662,14 @@ export const formatOsPatchCardConfig = (
     let totalViolations = 0;
     let criticalViolations = 0;
     let securityViolations = 0;
+    let otherViolations = 0;
     data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
+        totalViolations += perInstance?.otherNonCompliantCount || 0;
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
+        otherViolations += perInstance?.otherNonCompliantCount || 0;
     });
 
     cardsData = {
@@ -691,7 +694,8 @@ export const formatOsPatchCardConfig = (
             errorMessage: item?.errorMessage,
             osPatchMissingPatches: {
                 critical: criticalViolations,
-                security: securityViolations
+                security: securityViolations,
+                other: otherViolations
             }
         }
     };
@@ -718,12 +722,14 @@ export const formatRssConfigCardConfig = (
         tcpOffloading: GENERAL.FINDINGS.OPTIMIZED,
         receiveQueues: GENERAL.FINDINGS.OPTIMIZED,
         rssProfile: GENERAL.FINDINGS.OPTIMIZED,
+        rssStatus: GENERAL.FINDINGS.OPTIMIZED,
         baseProcessorNumber: GENERAL.FINDINGS.OPTIMIZED
     };
     let optimizedValue: any = {
         tcpOffloading: item?.tcpOffloadState,
         receiveQueues: item?.recommendedAdapterSettings?.recommendedReceiveQueues,
         rssProfile: item?.recommendedAdapterSettings?.recommendedRssProfile,
+        rssStatus: 'Enabled',
         baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
     };
 
@@ -732,6 +738,8 @@ export const formatRssConfigCardConfig = (
             findingReasons++;
             optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
             optimizedValue['rssProfile'] = adapter?.rssProfile;
+            optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['rssStatus'] = 'Disabled';
             optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
             optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
             optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;

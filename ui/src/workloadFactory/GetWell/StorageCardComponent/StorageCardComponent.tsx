@@ -331,7 +331,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
             let listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security }
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
+                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
             ];
             return (
                 <div className={styles.tooltipContainer}>

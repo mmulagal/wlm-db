@@ -670,6 +670,8 @@ export const GENERAL = {
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
     CREATE_TEMPLATE: 'Create template',
+    ONPREM_CREATE_TEMPLATE_DISABLE:
+        'This configuration is not supported by our deployment wizard. Manual deployment is possible.',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
