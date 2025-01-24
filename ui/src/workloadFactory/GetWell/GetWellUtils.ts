@@ -1650,6 +1650,8 @@ export const handleOptimizeStorageJob = (
                     const subjobs = jobRes?.data?.subJobs;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
                         updateAssessmentWithCompletedJobs(dispatch, operation, type, jobId, rowData, bulkRowData);
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.WARNING) {
                         updateAssessmentWithWarningJobs(
                             dispatch,
@@ -1660,6 +1662,8 @@ export const handleOptimizeStorageJob = (
                             bulkRowData,
                             subjobs
                         );
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
                         updateAssessmentWithFailedJobs(
                             dispatch,
@@ -1670,10 +1674,9 @@ export const handleOptimizeStorageJob = (
                             bulkRowData,
                             failedMsgData
                         );
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
                     }
-
-                    dispatch(setOptimizingInstanceData(false));
-                    clearInterval(jobInterval);
                 });
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
