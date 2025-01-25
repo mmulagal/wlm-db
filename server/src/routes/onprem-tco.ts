@@ -9,7 +9,8 @@ import {
     ListOnPremDatabaseResourcesSchema,
     GeneratePayloadInternal,
     DeleteReportInternal,
-    OnpremTcoExploreSavingsSchema
+    OnpremTcoExploreSavingsSchema,
+    GetOnPremDatabaseResourceSchema
 } from './schemas/onprem-tco-schema';
 import {
     downloadOnpremTcoCollectorScript,
@@ -17,13 +18,18 @@ import {
     getOnPremDatabaseResources,
     generatePayload,
     deleteOnPremTcoReportResourceRecord,
-    getOnPremResourceExploreSavings
+    getOnPremResourceExploreSavings,
+    getIndividualOnPremDatabaseResource
 } from '../operations/onprem-tco-operations';
 import { MSSQL } from '../utils/consts';
 
 export default function onPremTcoRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-    fastify.register(fastifyMultipart);
+    fastify.register(fastifyMultipart, {
+        limits: {
+            fileSize: 500 * 1024 * 1024 // 500 MB
+        }
+    });
     const API_PATH_ON_PREM_TCO = '/v1/mssql/onprem-tco';
 
     if (process.env.NODE_ENV !== 'production') {
@@ -51,6 +57,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 }
 
                 const response = await generatePayload(accountId, fileName, fileContent);
+                uploadOnpremTcoData(accountId, MSSQL, fileName, response.fileContent);
                 return reply.send(response);
             }
         );
@@ -110,13 +117,26 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
         }
     );
 
+    server.get(
+        `${API_PATH_ON_PREM_TCO}/resources/:resourceId`,
+        { schema: GetOnPremDatabaseResourceSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, resourceId }
+            } = castRequest(request);
+
+            const response = await getIndividualOnPremDatabaseResource(accountId, resourceId, MSSQL);
+            return reply.send(response);
+        }
+    );
+
     server.post(
         `${API_PATH_ON_PREM_TCO}/resources/:resourceId/explore-savings`,
         { schema: OnpremTcoExploreSavingsSchema },
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId, resourceId },
-                body: { regionCode, sqlInstanceData, snapshotInfo }
+                body: { regionCode, sqlInstanceData, snapshotInfo, totalPrimaryHostStorage, totalSecondaryHostStorage }
             } = castRequest(request);
 
             const response = await getOnPremResourceExploreSavings(
@@ -124,7 +144,9 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 resourceId,
                 regionCode,
                 sqlInstanceData,
-                snapshotInfo
+                snapshotInfo,
+                totalPrimaryHostStorage,
+                totalSecondaryHostStorage
             );
             return reply.send(response);
         }
