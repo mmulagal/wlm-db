@@ -99,6 +99,7 @@ interface SqlInstanceDetails {
     totalIops?: number;
     totalThroughput?: number;
     totalStorage?: number;
+    totalSecondaryStorage?: number;
     memory?: number;
 }
 

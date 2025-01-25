@@ -30,6 +30,7 @@ const SqlInstanceDetailsResponseObject = Type.Composite([
         sqlEdition: Type.String(),
         sqlVersion: Type.String(),
         totalStorage: Type.Optional(Type.Number()),
+        totalSecondaryStorage: Type.Optional(Type.Number()),
         isReadReplica: Type.Optional(Type.Boolean())
     })
 ]);
@@ -47,7 +48,9 @@ type OnPremDatabaseResourcesType = Static<typeof OnPremDatabaseResources>;
 const OnPremTcoExploreSavingsRequestBody = Type.Object({
     regionCode: Type.String(),
     sqlInstanceData: Type.Optional(Type.Array(SqlInstanceDetailsRequestObject)),
-    snapshotInfo: Type.Optional(StorageSavingsRequestBody)
+    snapshotInfo: Type.Optional(StorageSavingsRequestBody),
+    totalPrimaryHostStorage: Type.Optional(Type.Number()),
+    totalSecondaryHostStorage: Type.Optional(Type.Number())
 });
 
 const OnPremTcoResourceObject = Type.Object({
@@ -70,7 +73,9 @@ const OnPremDatabaseResourceObject = Type.Composite([
     OnPremTcoResourceObject,
     Type.Object({
         sqlServerInstances: Type.Array(SqlInstanceDetailsResponseObject),
-        onPremisesNodes: Type.Array(Type.String())
+        onPremisesNodes: Type.Array(Type.String()),
+        totalPrimaryHostStorage: Type.Number(),
+        totalSecondaryHostStorage: Type.Optional(Type.Number())
     })
 ]);
 
@@ -89,5 +94,6 @@ export {
     OnPremTcoExploreSavingsRequestBody,
     OnPremTcoExploreSavingsResponse,
     SqlInstanceDetailsRequestObjectType,
+    OnPremDatabaseResourceObject,
     OnPremDatabaseResourcesObjectType
 };
