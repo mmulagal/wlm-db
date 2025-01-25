@@ -127,7 +127,7 @@ function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
                 totalThroughput,
                 isReadReplica: !!(isReadReplica && isReadReplica?.toLowerCase() === 'true'),
                 totalStorage,
-                ...(totalSecondaryStorage && { totalSecondaryStorage })
+                ...(totalSecondaryStorage !== undefined && { totalSecondaryStorage })
             };
         })
     );
