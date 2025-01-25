@@ -2,7 +2,13 @@ import { compressSync, decompressSync } from 'fflate';
 import createError from 'http-errors';
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
-import { ArchitectureType, CpuManufacturer, InstanceGeneration, VirtualizationType } from '@aws-sdk/client-ec2';
+import {
+    ArchitectureType,
+    CpuManufacturer,
+    GetInstanceTypesFromInstanceRequirementsCommandInput,
+    InstanceGeneration,
+    VirtualizationType
+} from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     AWS_REGIONS,
@@ -341,12 +347,12 @@ function deriveEc2InstanceListForMarketing(
     return ec2Instances;
 }
 
-async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, region: string) {
-    logger.info('Deriving Instance Type based on host config', { windowsConfig });
+async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: WindowsConfig) {
+    logger.info('Deriving Instance Type based on host config', { region, windowsConfig });
 
     const { nodeDetails } = windowsConfig;
-    let maxVCpuCount = 0;
-    let minMemoryMiB = 512;
+    let maxVCpuCount = 4;
+    let minMemoryMiB = 1024; // 1 GiB
     nodeDetails.forEach(node => {
         const { numberOfVcpus, ramSize: ramSizeGiB } = node;
         if (numberOfVcpus > maxVCpuCount) {
@@ -363,7 +369,7 @@ async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, r
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
             VCpuCount: { Min: 4, Max: maxVCpuCount },
-            MemoryMiB: { Min: minMemoryMiB }, // think of scenarios where vcpu and memory requirements are different
+            MemoryMiB: { Min: minMemoryMiB },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
 
             AllowedInstanceTypes: ['m*', 'c*', 'r*']
@@ -371,24 +377,63 @@ async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, r
         InstanceGenerations: [InstanceGeneration.CURRENT]
     };
 
-    const { InstanceTypes: [{ InstanceType: instanceType }] = [] } =
-        (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
-    logger.info('>>INSTANCE TYPE MATCHING INSTANCE REQUIREMENTS', instanceType);
-
-    return instanceType;
+    return fetchInstanceTypesByRetry(region, instanceRequirements);
 }
 
-async function deriveSqlUsageBasedInstanceType(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving SQL usage based Instance Type', { sqlInstancesDetails: sqlInstancesDetails?.length });
+async function deriveSqlUsageBasedInstanceType(region: string, sqlInstancesDetails: SqlInstanceDetails[]) {
+    logger.info('Deriving SQL usage based Instance Type', { region, sqlInstancesDetails: sqlInstancesDetails?.length });
 
     const instanceRequirements = deriveInstanceRequirements(sqlInstancesDetails);
-    logger.info('>>INSTANCE REQUIREMENTS', instanceRequirements);
 
-    const { InstanceTypes: [{ InstanceType: instanceType }] = [] } =
-        (await getInstanceTypesFromInstanceRequirementsCommand(DEFAULT_AWS_REGION, instanceRequirements)) || {};
-    logger.info('>>INSTANCE TYPE MATCHING INSTANCE REQUIREMENTS', instanceType);
+    return fetchInstanceTypesByRetry(region, instanceRequirements);
+}
 
-    return instanceType;
+async function fetchInstanceTypesByRetry(
+    region: string,
+    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput
+) {
+    let { InstanceTypes: instanceTypes } =
+        (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
+    if (
+        isEmpty(instanceTypes) &&
+        instanceRequirements.InstanceRequirements &&
+        !isEmpty(instanceRequirements.InstanceRequirements?.NetworkBandwidthGbps)
+    ) {
+        logger.info(
+            'No instance types matching initial requirements. Removing network bandwidth requirement and trying again.'
+        );
+        delete instanceRequirements.InstanceRequirements.NetworkBandwidthGbps;
+        ({ InstanceTypes: instanceTypes } =
+            (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
+    }
+
+    if (
+        !instanceTypes &&
+        instanceRequirements.InstanceRequirements?.MemoryMiB &&
+        !isEmpty(instanceRequirements.InstanceRequirements.MemoryMiB.Min)
+    ) {
+        logger.info(
+            'No instance types matching requirements after removing network bandwidth. Resetting minimum memory to minimum possible and trying again.'
+        );
+        instanceRequirements.InstanceRequirements.MemoryMiB.Min = 1024; // 1 GiB
+        ({ InstanceTypes: instanceTypes } =
+            (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
+    }
+
+    if (
+        !instanceTypes &&
+        instanceRequirements.InstanceRequirements?.VCpuCount &&
+        !isEmpty(instanceRequirements.InstanceRequirements.VCpuCount.Max)
+    ) {
+        logger.info(
+            'No instance types matching requirements after resetting minimum memory. Removing maximum CPU criteria and trying again.'
+        );
+        delete instanceRequirements.InstanceRequirements.VCpuCount.Max;
+        ({ InstanceTypes: instanceTypes } =
+            (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
+    }
+
+    return instanceTypes?.[0]?.InstanceType; // TODO: fetch cheapest instance type instead of first item in the list
 }
 
 async function analyzeOnpremData(
@@ -412,7 +457,7 @@ async function analyzeOnpremData(
     // Analyze OnPrem data
     const { windowsConfig, sqlServerInfo } = data;
 
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(windowsConfig, region || DEFAULT_AWS_REGION); // Instance type here is based on the host config; considered as existing instance type
+    const currentInstanceType = await deriveHostConfigBasedInstanceType(region || DEFAULT_AWS_REGION, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
 
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
@@ -422,7 +467,7 @@ async function analyzeOnpremData(
         const instanceIds = instances.map(instance => instance.instanceGuid);
         const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
 
-        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
+        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region || DEFAULT_AWS_REGION, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
         const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(instances);
 
         if (!currentInstanceType || !recommendedInstanceType) {
@@ -775,12 +820,14 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
     };
 }
 
-function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
+function deriveInstanceRequirements(
+    sqlInstancesDetails: SqlInstanceDetails[]
+): GetInstanceTypesFromInstanceRequirementsCommandInput {
     const totalSqlInstances = sqlInstancesDetails.length;
     logger.info('Deriving Instance Requirements', { sqlInstancesDetails: totalSqlInstances });
 
     let requiredVcpuCount = 4;
-    let requiredMemory = 512; // nano instances have memory of 512 MiB
+    let requiredMemory = 8192; // 8 GiB as minimum memory requirement for database workloads
 
     let networkPerformance = NETWORK_PERF.UP_TO_10;
 
@@ -799,7 +846,6 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
     requiredVcpuCount = Math.max(requiredVcpuCount, totalCpuCount / totalSqlInstances); // Taking average of the total CPU count of all instances as the required vCPU count
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 
-    logger.debug('>>>NETWORK PERFORMANCE', networkPerformance);
     return {
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
@@ -807,17 +853,17 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
             VCpuCount: { Min: 4, Max: requiredVcpuCount },
             MemoryMiB: { Min: requiredMemory },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
-            AllowedInstanceTypes: ['m*', 'c*', 'r*']
-            // NetworkBandwidthGbps: //TODO: Commenting out for now as there are no instance types matching the cpu, mem and network requirements we set
-            //     networkPerformance === NETWORK_PERF.UP_TO_10
-            //         ? {
-            //             Max: 10
-            //         }
-            //         : {
-            //             Min: 10
-            //         }
-        },
-        InstanceGenerations: [InstanceGeneration.CURRENT]
+            AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+            InstanceGenerations: [InstanceGeneration.CURRENT],
+            NetworkBandwidthGbps:
+                networkPerformance === NETWORK_PERF.UP_TO_10
+                    ? {
+                          Max: 10
+                      }
+                    : {
+                          Min: 10
+                      }
+        }
     };
 }
 
