@@ -1,0 +1,44 @@
+@keyframes move-it-move-it {
+    0% {
+        width: 1%;
+        left: 0;
+    }
+    70% {
+        width: 35%;
+        left: 45%;
+    }
+    100% {
+        width: 1%;
+        left: 99%;
+    }
+}
+
+.track {
+    height: 16px;
+    width: 100%;
+    background-color: var(--loader-line-bg);
+    border-radius: 12px;
+
+    &.small {
+        height: 8px;
+    }
+}
+
+.thumb {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 1s linear;
+    max-width: 100%;
+
+    background-color: var(--loader-wheel-line);
+}
+
+.indeterminate {
+    position: relative;
+
+    .thumb {
+        animation: move-it-move-it 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+        position: absolute;
+        transition: initial;
+    }
+}
