@@ -1234,7 +1234,7 @@ export const GENERAL = {
     LICENSE_SQL_SERVER: 'License',
     APPLICATION: 'Application (SQL Server)',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        'Total managed instances include only those whose assessment has been completed and are currently online.'
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };
 
 export const CODE_VIEWER = {
