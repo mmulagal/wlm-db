@@ -24,6 +24,13 @@
             cursor: pointer;
             color: var(--text-button-primary);
         }
+        [class*='Popover-module_base'] {
+            max-height: 180px;
+            overflow: auto;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
     }
 
     .lazyLoadContainer {

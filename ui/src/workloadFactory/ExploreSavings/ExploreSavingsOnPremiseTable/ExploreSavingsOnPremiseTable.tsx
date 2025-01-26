@@ -274,6 +274,8 @@ const ExploreSavingsOnPremiseTable = () => {
                                                 <Typography variant="Regular_14">{item}</Typography>
                                             ))}
                                             trigger="hover"
+                                            interactive={true}
+                                            delayHide={200}
                                             container={
                                                 <Typography variant="Regular_14" className={styles.colorText}>
                                                     {`+ ${truncatedItems?.remaining.length}`}
@@ -320,6 +322,8 @@ const ExploreSavingsOnPremiseTable = () => {
                                                 <Typography variant="Regular_14">{item}</Typography>
                                             ))}
                                             trigger="hover"
+                                            interactive={true}
+                                            delayHide={200}
                                             container={
                                                 <Typography variant="Regular_14" className={styles.colorText}>
                                                     {`+ ${truncatedItems?.remaining.length}`}
