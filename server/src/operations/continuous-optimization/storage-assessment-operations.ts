@@ -84,8 +84,27 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
+
+    // In the case of multiple data drives for the same log drive, we need to combine the data drives to the same log drive
+    const filteredDriveDetails: LogDriveDetails[] = driveDetails.reduce((acc: LogDriveDetails[], driveDetail) => {
+        let logDriveItem = acc.find(
+            el => el.databaseName === driveDetail.databaseName && el.dataDriveLetter !== driveDetail.dataDriveLetter
+        );
+        if (logDriveItem) {
+            // Add all data drives to the same log drive - DBS-4838
+            logDriveItem.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
+        } else {
+            // There is already a log drive with the same databaseName
+            logDriveItem = acc.find(el => el.databaseName === driveDetail.databaseName);
+            if (!logDriveItem) {
+                acc.push(driveDetail);
+            }
+        }
+        return acc;
+    }, []);
+
     const currentSizePercentForAllVolumes: number[] = [];
-    driveDetails.forEach((drive: LogDriveDetails) => {
+    filteredDriveDetails.forEach((drive: LogDriveDetails) => {
         let { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (isNull(logDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
             logDriveTotalSizeMB = 0;
