@@ -69,7 +69,8 @@ const JobObject = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Array(Type.Any()))
+    subJobs: Type.Optional(Type.Array(Type.Any())),
+    metadata: Type.Optional(Type.Any())
 });
 
 const ListJobsResponse = Type.Object({
@@ -92,7 +93,8 @@ const JobDetailsResponse = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Array(Type.Composite([CredentialsIdRegionParams, JobObject])))
+    subJobs: Type.Optional(Type.Array(Type.Composite([CredentialsIdRegionParams, JobObject]))),
+    metadata: Type.Optional(Type.Any())
 });
 
 const DeleteJobResponse = Type.Object({

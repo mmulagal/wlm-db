@@ -71,7 +71,8 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
         initiator,
         end_time: endTime,
         parent_job_id: parentJobId,
-        subJobs
+        subJobs,
+        metadata
     } = job;
 
     return {
@@ -89,7 +90,8 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
         ...(endTime && { endTime: moment(endTime).unix() * 1000 }),
         initiator,
         ...(parentJobId && { parentJobId }),
-        ...(subJobs && subJobs.length && { subJobs: subJobs.map(formatJob) })
+        ...(subJobs && subJobs.length && { subJobs: subJobs.map(formatJob) }),
+        ...(metadata && { metadata })
     };
 }
 
