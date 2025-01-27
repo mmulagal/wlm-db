@@ -4,7 +4,8 @@ import {
     OnPremDatabaseResourcesResponse,
     OnPremTcoExploreSavingsRequestBody,
     OnPremTcoExploreSavingsResponse,
-    UploadMetricsFileBody
+    UploadMetricsFileBody,
+    OnPremDatabaseResourceObject
 } from '../types/onprem-tco.types';
 import { NextTokenQueryString } from '../types/generic.types';
 
@@ -17,6 +18,7 @@ const GeneratePayloadInternal = {
         accountId: Type.String({ description: 'The account ID' })
     }),
     consumes: ['multipart/form-data'],
+    hide: true,
     response: {
         202: Type.Object({
             fileName: Type.String(),
@@ -33,6 +35,7 @@ const DeleteReportInternal = {
     summary: 'Delete report for on-premises metrics collector',
     description: 'Delete report for on-premises metrics collector',
     body: Type.Any(),
+    hide: true,
     params: Type.Object({
         accountId: Type.String({ description: 'The account ID' }),
         resourceId: Type.String({ description: 'The resource ID for part of the onprem report' })
@@ -79,6 +82,17 @@ const ListOnPremDatabaseResourcesSchema = {
     }
 };
 
+const GetOnPremDatabaseResourceSchema = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Fetch an onprem database resource for a given account and resource identifier',
+    querystring: NextTokenQueryString,
+    description:
+        'Fetch an onprem database resource for a given account and resource identifier. A resource is a set of database instances in a database host or cluster of a specific deployment type.',
+    response: {
+        200: OnPremDatabaseResourceObject
+    }
+};
+
 const OnpremTcoExploreSavingsSchema = {
     tags: [RouteTags.ONPREM_TCO],
     summary: 'Explore potential savings for OnPremises workloads',
@@ -95,5 +109,6 @@ export {
     DownloadOnPremTcoCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
+    GetOnPremDatabaseResourceSchema,
     OnpremTcoExploreSavingsSchema
 };

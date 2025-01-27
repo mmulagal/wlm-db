@@ -2,9 +2,22 @@ import { compressSync, decompressSync } from 'fflate';
 import createError from 'http-errors';
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
-import { ArchitectureType, CpuManufacturer, InstanceGeneration, VirtualizationType } from '@aws-sdk/client-ec2';
+import {
+    ArchitectureType,
+    CpuManufacturer,
+    GetInstanceTypesFromInstanceRequirementsCommandInput,
+    InstanceGeneration,
+    VirtualizationType
+} from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
-import { AWS_REGIONS, DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
+import {
+    AWS_REGIONS,
+    DEFAULT_AWS_REGION,
+    HttpErrorCodes,
+    MSSQL,
+    SqlServerDeploymentModel,
+    WLMDB
+} from '../utils/consts';
 import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
@@ -91,13 +104,20 @@ function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
     return compact(
         sqlInstances.map(instance => {
             const { isReadReplica, instanceGuid, sqlInstanceName, sqlEdition, vcpusPerInstance } = instance;
-            const { numDatabases, totalIops, totalThroughput, totalVolumeSizeGiB, sqlVersion, memoryDetails } =
-                parseSqlUsageParams(instance);
+            const {
+                numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary },
+                totalIops,
+                totalThroughput,
+                totalStorage,
+                sqlVersion,
+                memoryDetails,
+                totalSecondaryStorage
+            } = parseSqlUsageParams(instance);
 
             return {
                 sqlInstanceId: instanceGuid,
                 sqlInstanceName,
-                noOfDatabases: numDatabases,
+                noOfDatabases: numDatabases + (numDatabasesSecondary || 0),
                 sqlEdition,
                 sqlVersion,
                 noOfVcpusInUse: parseInt(vcpusPerInstance, 10),
@@ -106,7 +126,8 @@ function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
                 totalIops,
                 totalThroughput,
                 isReadReplica: !!(isReadReplica && isReadReplica?.toLowerCase() === 'true'),
-                totalStorage: totalVolumeSizeGiB
+                totalStorage,
+                ...(totalSecondaryStorage !== undefined && { totalSecondaryStorage })
             };
         })
     );
@@ -223,11 +244,12 @@ function groupSqlServerInstancesByDeploymentType(sqlServerInstances: SqlInstance
             acc[deploymentType] = [];
         }
 
-        const { totalIops, totalThroughput, totalVolumeSizeGiB } = parseSqlUsageParams(instance);
+        const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } = parseSqlUsageParams(instance);
         instance.totalIops = totalIops;
 
         instance.totalThroughput = totalThroughput;
-        instance.totalStorage = totalVolumeSizeGiB;
+        instance.totalStorage = totalStorage;
+        instance.totalSecondaryStorage = totalSecondaryStorage;
         acc[deploymentType].push({ ...instance });
         return acc;
     }, {});
@@ -325,12 +347,12 @@ function deriveEc2InstanceListForMarketing(
     return ec2Instances;
 }
 
-async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, region: string) {
-    logger.info('Deriving Instance Type based on host config', { windowsConfig });
+async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: WindowsConfig) {
+    logger.info('Deriving Instance Type based on host config', { region, windowsConfig });
 
     const { nodeDetails } = windowsConfig;
-    let maxVCpuCount = 0;
-    let minMemoryMiB = 512;
+    let maxVCpuCount = 4;
+    let minMemoryMiB = 1024; // 1 GiB
     nodeDetails.forEach(node => {
         const { numberOfVcpus, ramSize: ramSizeGiB } = node;
         if (numberOfVcpus > maxVCpuCount) {
@@ -347,7 +369,7 @@ async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, r
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
             VCpuCount: { Min: 4, Max: maxVCpuCount },
-            MemoryMiB: { Min: minMemoryMiB }, // think of scenarios where vcpu and memory requirements are different
+            MemoryMiB: { Min: minMemoryMiB },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
 
             AllowedInstanceTypes: ['m*', 'c*', 'r*']
@@ -355,24 +377,63 @@ async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, r
         InstanceGenerations: [InstanceGeneration.CURRENT]
     };
 
-    const { InstanceTypes: [{ InstanceType: instanceType }] = [] } =
-        (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
-    logger.info('>>INSTANCE TYPE MATCHING INSTANCE REQUIREMENTS', instanceType);
-
-    return instanceType;
+    return fetchInstanceTypesByRetry(region, instanceRequirements);
 }
 
-async function deriveSqlUsageBasedInstanceType(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving SQL usage based Instance Type', { sqlInstancesDetails: sqlInstancesDetails?.length });
+async function deriveSqlUsageBasedInstanceType(region: string, sqlInstancesDetails: SqlInstanceDetails[]) {
+    logger.info('Deriving SQL usage based Instance Type', { region, sqlInstancesDetails: sqlInstancesDetails?.length });
 
     const instanceRequirements = deriveInstanceRequirements(sqlInstancesDetails);
-    logger.info('>>INSTANCE REQUIREMENTS', instanceRequirements);
 
-    const { InstanceTypes: [{ InstanceType: instanceType }] = [] } =
-        (await getInstanceTypesFromInstanceRequirementsCommand(DEFAULT_AWS_REGION, instanceRequirements)) || {};
-    logger.info('>>INSTANCE TYPE MATCHING INSTANCE REQUIREMENTS', instanceType);
+    return fetchInstanceTypesByRetry(region, instanceRequirements);
+}
 
-    return instanceType;
+async function fetchInstanceTypesByRetry(
+    region: string,
+    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput
+) {
+    let { InstanceTypes: instanceTypes } =
+        (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
+    if (
+        isEmpty(instanceTypes) &&
+        instanceRequirements.InstanceRequirements &&
+        !isEmpty(instanceRequirements.InstanceRequirements?.NetworkBandwidthGbps)
+    ) {
+        logger.info(
+            'No instance types matching initial requirements. Removing network bandwidth requirement and trying again.'
+        );
+        delete instanceRequirements.InstanceRequirements.NetworkBandwidthGbps;
+        ({ InstanceTypes: instanceTypes } =
+            (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
+    }
+
+    if (
+        !instanceTypes &&
+        instanceRequirements.InstanceRequirements?.MemoryMiB &&
+        !isEmpty(instanceRequirements.InstanceRequirements.MemoryMiB.Min)
+    ) {
+        logger.info(
+            'No instance types matching requirements after removing network bandwidth. Resetting minimum memory to minimum possible and trying again.'
+        );
+        instanceRequirements.InstanceRequirements.MemoryMiB.Min = 1024; // 1 GiB
+        ({ InstanceTypes: instanceTypes } =
+            (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
+    }
+
+    if (
+        !instanceTypes &&
+        instanceRequirements.InstanceRequirements?.VCpuCount &&
+        !isEmpty(instanceRequirements.InstanceRequirements.VCpuCount.Max)
+    ) {
+        logger.info(
+            'No instance types matching requirements after resetting minimum memory. Removing maximum CPU criteria and trying again.'
+        );
+        delete instanceRequirements.InstanceRequirements.VCpuCount.Max;
+        ({ InstanceTypes: instanceTypes } =
+            (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
+    }
+
+    return instanceTypes?.[0]?.InstanceType; // TODO: fetch cheapest instance type instead of first item in the list
 }
 
 async function analyzeOnpremData(
@@ -396,7 +457,7 @@ async function analyzeOnpremData(
     // Analyze OnPrem data
     const { windowsConfig, sqlServerInfo } = data;
 
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(windowsConfig, region || DEFAULT_AWS_REGION); // Instance type here is based on the host config; considered as existing instance type
+    const currentInstanceType = await deriveHostConfigBasedInstanceType(region || DEFAULT_AWS_REGION, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
 
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
@@ -406,7 +467,7 @@ async function analyzeOnpremData(
         const instanceIds = instances.map(instance => instance.instanceGuid);
         const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
 
-        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
+        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region || DEFAULT_AWS_REGION, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
         const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(instances);
 
         if (!currentInstanceType || !recommendedInstanceType) {
@@ -611,37 +672,70 @@ interface EBSClassification {
     isPrimary: boolean;
 }
 
-function getEbsDisks(instance: SqlInstanceDetails, databases: StorageDetailByDB[], isPrimary: boolean) {
+function getEbsDisks(instance: SqlInstanceDetails, classification: string = 'primary') {
+    logger.info('Getting EBS Disks', { instance, classification });
     // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
-    if (databases.length > 0) {
-        const { avgVolumeSizePerDb, avgIopsPerDb, avgThroughputPerDb } = parseSqlUsageParams(instance, databases);
 
-        if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
-            logger.warn(
-                'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
-            );
-            return;
-        }
-        let ebsType = 'gp3';
-        if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
-            // 4000 MB/s
-            ebsType = 'io2';
-        } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
-            // 1000 MB/s
-            ebsType = 'io1';
-        } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
-            ebsType = 'st1';
-        }
-        return {
-            instanceName: instance.sqlInstanceName,
-            numDatabases: databases.length,
-            avgIopsPerDb,
-            avgThroughputPerDb,
-            ebsType,
-            avgVolumeSizePerDb,
-            isPrimary
-        };
+    let {
+        avgVolumeSizePerDb: { primary: avgVolumeSizePerDb, secondary: avgVolumeSizePerDbSecondary = 0 },
+        avgIopsPerDb: { primary: avgIopsPerDb, secondary: avgIopsPerDbSecondary = 0 },
+        avgThroughputPerDb: { primary: avgThroughputPerDb, secondary: avgThroughputPerDbSecondary = 0 },
+        numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
+    } = parseSqlUsageParams(instance);
+
+    if (classification === 'secondary') {
+        avgVolumeSizePerDb = avgVolumeSizePerDbSecondary;
+        avgIopsPerDb = avgIopsPerDbSecondary;
+        avgThroughputPerDb = avgThroughputPerDbSecondary;
+        numDatabases = numDatabasesSecondary;
     }
+
+    if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
+        logger.warn(
+            'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
+        );
+        return;
+    }
+    let ebsType = 'gp3';
+    if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
+        // 4000 MB/s
+        ebsType = 'io2';
+    } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
+        // 1000 MB/s
+        ebsType = 'io1';
+    } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
+        ebsType = 'st1';
+    }
+
+    return {
+        instanceName: instance.sqlInstanceName,
+        numDatabases,
+        avgIopsPerDb,
+        avgThroughputPerDb,
+        ebsType,
+        avgVolumeSizePerDb,
+        isPrimary: classification !== 'secondary' // if it is not secondary, it is primary by default because marketing API expects atleast primary volumes
+    };
+}
+
+function getDatabaseClassifications(sqlInstancesDetails: SqlInstanceDetails) {
+    const { aoagReadReplica, storageDetailsByDb } = sqlInstancesDetails;
+    const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
+    let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
+
+    const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
+    const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
+
+    let secondaryDatabases: StorageDetailByDB[] = [];
+    if (aoagReadReplicaDbs && !isEmpty(aoagReadReplicaDbs) && allDatabases && !isEmpty(allDatabases)) {
+        primaryDatabases = allDatabases.filter(({ databaseName }) => !aoagReadReplicaDbNames?.includes(databaseName));
+        secondaryDatabases = allDatabases.filter(({ databaseName }) => aoagReadReplicaDbNames?.includes(databaseName));
+    }
+    return {
+        ...sqlInstancesDetails,
+        primaryDatabases,
+        secondaryDatabases
+    };
 }
 
 function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClassification[] {
@@ -649,31 +743,17 @@ function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClass
 
     const ebsDisks: EBSClassification[] = [];
     sqlInstancesDetails.forEach((instance: SqlInstanceDetails) => {
-        const { aoagReadReplica, storageDetailsByDb } = instance;
-        const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
-        let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
-
-        const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
-        const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
-
-        let secondaryDatabases: StorageDetailByDB[] = [];
-        if (aoagReadReplicaDbs && !isEmpty(aoagReadReplicaDbs) && allDatabases && !isEmpty(allDatabases)) {
-            primaryDatabases = allDatabases.filter(
-                ({ databaseName }) => !aoagReadReplicaDbNames?.includes(databaseName)
-            );
-            secondaryDatabases = allDatabases.filter(({ databaseName }) =>
-                aoagReadReplicaDbNames?.includes(databaseName)
-            );
-            ebsDisks.push(getEbsDisks(instance, secondaryDatabases, false)!);
-        }
-        ebsDisks.push(getEbsDisks(instance, primaryDatabases, true)!);
+        ebsDisks.push(getEbsDisks(instance, 'primary')!);
+        ebsDisks.push(getEbsDisks(instance, 'secondary')!);
     });
 
     return compact(ebsDisks);
 }
 
-function parseSqlUsageParams(instance: SqlInstanceDetails, databasesList: StorageDetailByDB[] = []) {
+function parseSqlUsageParams(instance: SqlInstanceDetails) {
     logger.info('Parsing SQL Usage Parameters', { instance });
+
+    const { primaryDatabases, secondaryDatabases } = getDatabaseClassifications(instance);
 
     let sqlVersion = parseSqlVersion(instance.sqlVersion) || '';
     sqlVersion = sqlVersion.substring(0, sqlVersion.indexOf('(')).trim();
@@ -697,18 +777,34 @@ function parseSqlUsageParams(instance: SqlInstanceDetails, databasesList: Storag
         }
     }
 
-    let totalStorage = instance?.totalStorage;
+    let totalStorage;
+    const totalSecondaryStorage = undefined;
     if (isEmpty(totalStorage)) {
-        // handle data and log volume separately; or ignore log volume size?
-        totalStorage = databasesList.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
+        totalStorage =
+            primaryDatabases.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
     }
 
-    const numDatabases = parseInt(instance.noOfDatabases, 10);
-    const avgIopsPerDb = (totalIops || 0) / numDatabases;
-    const avgThroughputPerDb = (totalThroughput || 0) / numDatabases;
-    const avgVolumeSizePerDb = (totalStorage || 0) / numDatabases;
-
     const [memoryDetails] = parseMemoryUtilization(instance?.memUtilization || '') || [];
+    const primaryDatabasesCount = primaryDatabases.length;
+    const secondaryDatabasesCount = secondaryDatabases.length;
+    const numDatabases = {
+        primary: primaryDatabasesCount,
+        secondary: secondaryDatabasesCount
+    };
+
+    const avgIopsPerDb = {
+        primary: primaryDatabasesCount ? (totalIops || 0) / primaryDatabasesCount : 0,
+        ...(secondaryDatabasesCount && { secondary: (totalIops || 0) / secondaryDatabasesCount })
+    };
+    const avgThroughputPerDb = {
+        primary: primaryDatabasesCount ? (totalThroughput || 0) / primaryDatabasesCount : 0,
+        ...(secondaryDatabasesCount && { secondary: (totalThroughput || 0) / secondaryDatabasesCount })
+    };
+
+    const avgVolumeSizePerDb = {
+        primary: primaryDatabasesCount ? (totalStorage || 0) / primaryDatabasesCount : 0,
+        ...(secondaryDatabasesCount && { secondary: (totalSecondaryStorage || 0) / secondaryDatabasesCount })
+    };
 
     return {
         avgVolumeSizePerDb,
@@ -717,18 +813,21 @@ function parseSqlUsageParams(instance: SqlInstanceDetails, databasesList: Storag
         numDatabases,
         totalIops,
         totalThroughput,
-        totalVolumeSizeGiB: totalStorage,
+        totalStorage,
         sqlVersion,
-        memoryDetails
+        memoryDetails,
+        totalSecondaryStorage
     };
 }
 
-function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
+function deriveInstanceRequirements(
+    sqlInstancesDetails: SqlInstanceDetails[]
+): GetInstanceTypesFromInstanceRequirementsCommandInput {
     const totalSqlInstances = sqlInstancesDetails.length;
     logger.info('Deriving Instance Requirements', { sqlInstancesDetails: totalSqlInstances });
 
     let requiredVcpuCount = 4;
-    let requiredMemory = 512; // nano instances have memory of 512 MiB
+    let requiredMemory = 8192; // 8 GiB as minimum memory requirement for database workloads
 
     let networkPerformance = NETWORK_PERF.UP_TO_10;
 
@@ -747,7 +846,6 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
     requiredVcpuCount = Math.max(requiredVcpuCount, totalCpuCount / totalSqlInstances); // Taking average of the total CPU count of all instances as the required vCPU count
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 
-    logger.debug('>>>NETWORK PERFORMANCE', networkPerformance);
     return {
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
@@ -755,17 +853,17 @@ function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
             VCpuCount: { Min: 4, Max: requiredVcpuCount },
             MemoryMiB: { Min: requiredMemory },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
-            AllowedInstanceTypes: ['m*', 'c*', 'r*']
-            // NetworkBandwidthGbps: //TODO: Commenting out for now as there are no instance types matching the cpu, mem and network requirements we set
-            //     networkPerformance === NETWORK_PERF.UP_TO_10
-            //         ? {
-            //             Max: 10
-            //         }
-            //         : {
-            //             Min: 10
-            //         }
-        },
-        InstanceGenerations: [InstanceGeneration.CURRENT]
+            AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+            InstanceGenerations: [InstanceGeneration.CURRENT],
+            NetworkBandwidthGbps:
+                networkPerformance === NETWORK_PERF.UP_TO_10
+                    ? {
+                          Max: 10
+                      }
+                    : {
+                          Min: 10
+                      }
+        }
     };
 }
 
@@ -804,11 +902,23 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
     return { currentLicenseEdition, recommendedLicenseEdition };
 }
 
+async function getIndividualOnPremDatabaseResource(
+    accountId: string,
+    resourceId: string,
+    databaseType: DATABASE_TYPE = MSSQL
+) {
+    const {
+        items: [onPremDatabaseResource]
+    } = await getOnPremDatabaseResources(accountId, databaseType, undefined, undefined, resourceId);
+
+    return onPremDatabaseResource;
+}
 async function getOnPremDatabaseResources(
     accountId: string,
     databaseType: DATABASE_TYPE = MSSQL,
     apiPageSize?: number,
-    nextToken?: string
+    nextToken?: string,
+    resourceId?: string
 ): Promise<{ count: number; items: OnPremDatabaseResourcesObjectType[]; nextToken?: string }> {
     logger.info('Getting OnPrem database resources', { accountId, databaseType, apiPageSize, nextToken });
 
@@ -816,7 +926,8 @@ async function getOnPremDatabaseResources(
         accountId,
         databaseType,
         apiPageSize,
-        nextToken
+        nextToken,
+        resourceId
     );
 
     if (isEmpty(onPremDatabaseResourcesDetails)) {
@@ -829,7 +940,7 @@ async function getOnPremDatabaseResources(
         onPremDatabaseResources = await Promise.all(
             onPremDatabaseResourcesDetails.map(async onPremDatabaseResource => {
                 const {
-                    resource_id: resourceId,
+                    resource_id: onpremResourceId,
                     host_config: hostConfig,
                     database_instances_data: persistedSqlInstancesDetails,
                     database_deployment_type: deploymentType
@@ -841,12 +952,22 @@ async function getOnPremDatabaseResources(
                 const sqlServerInstances = Array.isArray(rawSqlInstanceDetails)
                     ? formatSqlInstanceDetails(rawSqlInstanceDetails)
                     : [];
+                const totalPrimaryHostStorage = rawSqlInstanceDetails.reduce(
+                    (acc, instance) => acc + (instance?.totalStorage || 0),
+                    0
+                );
+                const totalSecondaryHostStorage = rawSqlInstanceDetails.reduce(
+                    (acc, instance) => acc + (instance?.totalSecondaryStorage || 0),
+                    0
+                );
                 return {
-                    resourceId,
+                    resourceId: onpremResourceId,
                     resourceName,
                     deploymentModel: deploymentType,
                     sqlServerInstances,
-                    onPremisesNodes
+                    onPremisesNodes,
+                    totalPrimaryHostStorage,
+                    ...(deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && { totalSecondaryHostStorage })
                 };
             })
         );
@@ -871,14 +992,18 @@ async function getOnPremResourceExploreSavings(
     onPrmResourceId: string,
     regionCode: string,
     sqlInstanceData?: SqlInstanceDetailsRequestObjectType[],
-    snapShotInfo?: StorageSavingsRequestBodyType
+    snapShotInfo?: StorageSavingsRequestBodyType,
+    totalPrimaryHostStorage?: number,
+    totalSecondaryHostStorage?: number
 ) {
     logger.info('Getting OnPrem Resource Explore Savings', {
         accountId,
         onPrmResourceId,
         regionCode,
         sqlInstanceData,
-        snapShotInfo
+        snapShotInfo,
+        totalPrimaryHostStorage,
+        totalSecondaryHostStorage
     });
 
     const [onPremDatabaseResource] = await listOnPremDatabaseResources(
@@ -917,6 +1042,14 @@ async function getOnPremResourceExploreSavings(
 
     if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
         try {
+            let avgSqlInstancePrimaryStorage: number;
+            let avgSqlInstanceSecondaryStorage: number;
+            if (totalPrimaryHostStorage) {
+                avgSqlInstancePrimaryStorage = totalPrimaryHostStorage / rawSqlInstanceDetails.length;
+            }
+            if (totalSecondaryHostStorage) {
+                avgSqlInstanceSecondaryStorage = totalSecondaryHostStorage / rawSqlInstanceDetails.length;
+            }
             const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
                 const instanceData = sqlInstanceData?.find(
                     (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
@@ -930,11 +1063,17 @@ async function getOnPremResourceExploreSavings(
                         ...(memory && { memory }),
                         ...(totalIops && { totalIops }),
                         ...(totalThroughput && { totalThroughput }),
+                        ...(avgSqlInstancePrimaryStorage && { totalStorage: avgSqlInstancePrimaryStorage }),
+                        ...(avgSqlInstanceSecondaryStorage && {
+                            totalSecondaryStorage: avgSqlInstanceSecondaryStorage
+                        }),
                         deploymentType
                     };
                 }
                 return {
                     ...detail,
+                    ...(avgSqlInstancePrimaryStorage && { totalStorage: avgSqlInstancePrimaryStorage }),
+                    ...(avgSqlInstanceSecondaryStorage && { totalSecondaryStorage: avgSqlInstanceSecondaryStorage }),
                     deploymentType
                 };
             });
@@ -996,6 +1135,7 @@ export {
     deleteOnPremTcoReportResourceRecord,
     downloadOnpremTcoCollectorScript,
     uploadOnpremTcoData,
+    getIndividualOnPremDatabaseResource,
     getOnPremDatabaseResources,
     saveReportInWlmdbDatabase,
     deriveHostConfigBasedInstanceType,

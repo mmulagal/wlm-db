@@ -212,7 +212,7 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should derive the correct instance type based on host config', async () => {
-        const instanceType = await deriveHostConfigBasedInstanceType(reportData.windowsConfig, DEFAULT_AWS_REGION);
+        const instanceType = await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, reportData.windowsConfig);
         expect(instanceType).toEqual('m2.xlarge');
     });
 
@@ -238,7 +238,7 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should derive the correct instance type based on SQL usage', async () => {
-        const instanceType = await deriveSqlUsageBasedInstanceType(reportData.sqlServerInfo);
+        const instanceType = await deriveSqlUsageBasedInstanceType(DEFAULT_AWS_REGION, reportData.sqlServerInfo);
         expect(instanceType).toEqual('m2.xlarge');
     });
 
@@ -286,7 +286,6 @@ describe('onPrem TCO operations', () => {
     it('should derive the correct instance requirements based on SQL instance details', () => {
         const expectedRequirements = {
             ArchitectureTypes: ['x86_64'],
-            InstanceGenerations: ['current'],
             VirtualizationTypes: ['hvm'],
             InstanceRequirements: {
                 VCpuCount: {
@@ -294,13 +293,14 @@ describe('onPrem TCO operations', () => {
                     Max: 4
                 },
                 MemoryMiB: {
-                    Min: 512
+                    Min: 8192
                 },
                 CpuManufacturers: ['intel', 'amazon-web-services'],
-                AllowedInstanceTypes: ['m*', 'c*', 'r*']
-                // NetworkBandwidthGbps: {
-                //     Max: 10
-                // }
+                InstanceGenerations: ['current'],
+                AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+                NetworkBandwidthGbps: {
+                    Max: 10
+                }
             }
         };
 

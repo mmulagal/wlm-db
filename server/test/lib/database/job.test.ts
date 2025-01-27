@@ -351,7 +351,7 @@ describe('Group jobs', async () => {
         const response = await groupJobsByTimeAndStatus(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
-            undefined,
+            job.region,
             Date.now() - THIRTY_DAYS,
             Date.now()
         );
