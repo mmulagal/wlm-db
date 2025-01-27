@@ -111,6 +111,32 @@ const AdditionalHostOsParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
+    Type.Object({
+        missingPatchesInEc2Instances: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    criticalMissingPatchesCount: Type.Number(),
+                    importantMissingPatchesCount: Type.Optional(Type.Number()),
+                    ec2InstanceId: Type.String(),
+                    missingPatchesCount: Type.Number(),
+                    missingPatchDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                classification: Type.String(),
+                                kbId: Type.String(),
+                                severity: Type.String(),
+                                state: Type.String(),
+                                title: Type.String()
+                            })
+                        )
+                    )
+                })
+            )
+        )
+    })
+);
+
 const AdditionalRssConfigParameterDriftResponse = Type.Optional(
     Type.Object({
         rssAdapters: Type.Array(
@@ -145,6 +171,9 @@ type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 const RssConfigDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalRssConfigParameterDriftResponse]);
 type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
 
+const MSSQLPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalMSSQLPatchParameterDriftResponse]);
+type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
+
 const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
     errorMessage: Type.String()
@@ -166,7 +195,8 @@ const DriftAssessmentResponse = Type.Object({
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
-    maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
+    mssqlPatch: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -236,5 +266,6 @@ export {
     OptimizeSizingRequestBodyType,
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
-    DriftAssessmentResponsePerAccount
+    DriftAssessmentResponsePerAccount,
+    MSSQLPatchDriftResponseType
 };
