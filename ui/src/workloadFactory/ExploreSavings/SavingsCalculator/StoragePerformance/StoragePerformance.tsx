@@ -68,7 +68,7 @@ const StoragePerformance = () => {
 
                 <div className={styles.row1} style={{ marginTop: '-8px' }}>
                     <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Primary - data</DsTypography>
+                        <DsTypography variant="Regular_14">Primary</DsTypography>
                     </div>
                     <StoragePerfInput type="primaryData" data={primaryData} />
                 </div>
@@ -84,7 +84,7 @@ const StoragePerformance = () => {
                     <>
                         <div className={styles.row1}>
                             <div className={styles.col1}>
-                                <DsTypography variant="Regular_14">Secondary - data</DsTypography>
+                                <DsTypography variant="Regular_14">Secondary</DsTypography>
                             </div>
                             <StoragePerfInput type="secondaryData" data={secondaryData} />
                         </div>

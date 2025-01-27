@@ -13,8 +13,8 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         if (data) {
             setTotalStorageAmount(formatFractionalNumber(Number(data?.totalStorage || 0) / GIB_IN_BYTE, 3));
-            setIOPS(data?.totalIops);
-            setThroughput(data?.totalThroughput);
+            setIOPS(formatFractionalNumber(data?.totalIops, 3));
+            setThroughput(formatFractionalNumber(data?.totalThroughput, 3));
         }
     }, [data]);
 

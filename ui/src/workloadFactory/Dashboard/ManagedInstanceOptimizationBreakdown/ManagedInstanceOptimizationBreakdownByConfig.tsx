@@ -65,7 +65,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 configKey = 'applicationSqlServer';
                 break;
             case GENERAL.MICROSOFT_SQL_PATCH:
-                configKey = 'microsoftSqlPatch';
+                configKey = 'mssqlPatch';
                 break;
             case GENERAL.MAXDOP_PATCH:
                 configKey = 'maxdopPatch';
@@ -611,8 +611,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.MICROSOFT_SQL_PATCH}
-                        percentage={Math.round(((configData.microsoftSqlPatch || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.microsoftSqlPatch}
+                        percentage={Math.round(((configData.mssqlPatch || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.mssqlPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}

@@ -57,7 +57,7 @@ export interface AssessmentResponseInterface {
     rssConfig?: PerConfigInterface;
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
-    microsoftSqlPatch?: PerConfigInterface;
+    mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
 }
 
@@ -98,6 +98,19 @@ export interface PerConfigInterface {
         operationEndTime?: number;
         securityNonCompliantCount?: number;
         otherNonCompliantCount?: number;
+    }>;
+    missingPatchesInEc2Instances?: Array<{
+        ec2InstanceId?: string;
+        criticalMissingPatchesCount?: number;
+        importantMissingPatchesCount?: number;
+        missingPatchesCount?: number;
+        missingPatchDetails?: Array<{
+            classification?: string;
+            severity?: string;
+            state?: string;
+            title?: string;
+            kbId?: string;
+        }>;
     }>;
     rssAdapters?: Array<RSSConfigAdapterInterface>;
     tcpOffloadState?: string;

@@ -218,13 +218,13 @@ const SavingsCalculatorApi = () => {
                 if (perInst) {
                     computeInfo.push({
                         sqlInstanceId: perInst?.sqlInstanceId,
-                        noOfVcpusInUse: value?.noOfVcpusInUse,
+                        noOfVcpusInUse: value?.noOfVcpusInUse || 0,
                         memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
                         networkPerformance:
                             NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value || ''] || 'upTo10',
-                        iops: perInstanceNodeUsage?.iops,
-                        throughput: perInstanceNodeUsage?.throughput,
-                        totalStorage: perInstanceNodeUsage?.storage
+                        iops: perInstanceNodeUsage?.iops || 0,
+                        throughput: perInstanceNodeUsage?.throughput || 0,
+                        totalStorage: perInstanceNodeUsage?.storage || 0
                     });
                 }
             });

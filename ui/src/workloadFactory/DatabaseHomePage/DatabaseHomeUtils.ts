@@ -387,7 +387,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 const isRssConfigOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
                 const isOperatingSystemOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
                 const isLicenseOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.microsoftSqlPatch?.status);
+                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) =>
                     isOptimized(item?.status)
@@ -462,7 +462,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
                 const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.microsoftSqlPatch?.status);
+                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
@@ -500,7 +500,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         operatingSystemPatch: 0,
         rssConfiguration: 0,
         applicationSqlServer: 0,
-        microsoftSqlPatch: 0,
+        mssqlPatch: 0,
         maxdopPatch: 0,
         total: 0,
         severityObj: {}
@@ -560,7 +560,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isOpearingSystemPatchOptimized = isOptimized(instanceAssessmentData?.hostOsPatch?.status);
                 const isRssConfigurationOptimized = isOptimized(instanceAssessmentData?.rssConfig?.status);
                 const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
-                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.microsoftSqlPatch?.status);
+                const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
@@ -598,9 +598,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
                     GETWELL_VALUES[instanceAssessmentData?.license?.severity];
-                getAssessmentGroupedByConfigurations.microsoftSqlPatch += isMicrosoftSqlPatchOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.severityObj.microsoftSqlPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.microsoftSqlPatch?.severity];
+                getAssessmentGroupedByConfigurations.mssqlPatch += isMicrosoftSqlPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.mssqlPatch =
+                    GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity];
                 getAssessmentGroupedByConfigurations.maxdopPatch += isMaxdopPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
                     GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity];

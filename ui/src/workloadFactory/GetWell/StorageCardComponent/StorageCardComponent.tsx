@@ -354,6 +354,30 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </DsTypography>
                 </div>
             );
+        } else if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
+            let listObj = [
+                { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
+                { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
+            ];
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '30px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
         } else if (cardData?.block_one?.value === GENERAL.RSS_CONFIGURATION) {
             let listObj: any = [];
             let secListObj: any = [];

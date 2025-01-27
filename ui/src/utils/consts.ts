@@ -745,7 +745,7 @@ export const GETWELL_CONFIG: any = {
     'rss-config': 'rss_config',
     'sql-license': 'sql_licenses',
     'host-os-patch': 'host_os_patch',
-    'microsoft-sql-patch': 'microsoft_sql_patch',
+    'mssql-patch': 'microsoft_sql_patch',
     maxdop: 'maxdop'
 };
 

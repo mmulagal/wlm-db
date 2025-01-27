@@ -574,15 +574,25 @@ export const formatMicrosoftSqlPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.microsoftSqlPatch;
+    let item: any = data?.mssqlPatch;
     let categoryVal = 'application';
-    let itemName = item?.name || 'microsoft-sql-patch';
+    let itemName = item?.name || 'mssql-patch';
     let status = item?.status || '';
     let severity = item?.severity || '';
     if (optimizingData?.[itemName]) {
         status = optimizingData?.[itemName];
     }
     itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    let totalPatches = 0;
+    let criticalPatches = 0;
+    let importantPatches = 0;
+    data?.mssqlPatch?.missingPatchesInEc2Instances?.map(perInstance => {
+        totalPatches += perInstance?.criticalMissingPatchesCount || 0;
+        totalPatches += perInstance?.importantMissingPatchesCount || 0;
+        criticalPatches += perInstance?.criticalMissingPatchesCount || 0;
+        importantPatches += perInstance?.importantMissingPatchesCount || 0;
+    });
 
     cardsData = {
         ...cardsData,
@@ -594,7 +604,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
             },
             block_three: {
                 ...(cardDataDefault?.[itemName]?.block_three || {}),
-                value: item?.current || 0
+                value: String(totalPatches)
             },
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
@@ -603,7 +613,11 @@ export const formatMicrosoftSqlPatchCardConfig = (
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
-            category: categoryVal
+            category: categoryVal,
+            sqlPatchMissingPatches: {
+                critical: criticalPatches,
+                important: importantPatches
+            }
         }
     };
     return cardsData;
