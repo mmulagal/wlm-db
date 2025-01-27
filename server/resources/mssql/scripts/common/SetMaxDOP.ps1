@@ -14,7 +14,10 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]
-    $dop = "4"
+    $dop = "4",
+
+    [Parameter(Mandatory = $false)]
+    [string]$ClusterName
 
 )
 
@@ -67,7 +70,8 @@ try {
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     if ($vcpus -gt 8 -and $vcpus -le 16) {
         $dop = "8"
-    } elseif ($vcpus -gt 16) {
+    }
+    elseif ($vcpus -gt 16) {
         $dop = "16"
     }
 
