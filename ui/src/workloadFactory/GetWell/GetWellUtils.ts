@@ -474,7 +474,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Microsoft SQL assessment recommendation',
             description:
-                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities \nand significantly improves overall system reliability.'
+                'Whenever possible, apply the latest patches to ensure security and stability. Applying the latest patch helps protect \nyour SQL server databases from vulnerabilities and significantly improves overall system reliability.'
         },
         tags: ['Security', 'Reliability']
     },
@@ -500,8 +500,13 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         recommendation: {
             title: 'MAXDOP assessment recommendation',
-            description:
-                'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nFor OLTP workloads, set MAXDOP to 8 or fewer. \nFor OLAP workloads, adjust accordingly but avoid setting it to 0 to prevent excessive parallelism and contention. \nProper MAXDOP configuration enhances performance and efficiency.'
+            descriptionRssConfig: {
+                first: 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nAccurate MAXDOP configuration enhances performance and efficiency.',
+                points: [
+                    'For OLTP workloads, set MAXDOP to 8 or fewer.',
+                    'For OLAP workloads, adjust accordingly. Avoid setting MAXDOP to 0 to prevent excessive parallelism and contention.'
+                ]
+            }
         },
         tags: ['Performance efficiency']
     }
