@@ -1,0 +1,40 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "12345abcde-6789-0fgh-ijkl-1234567890mn",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Patches": [
+        {
+            "Id": "patch-1234",
+            "Title": "2024-10 Cumulative Update for Windows Server 2019 (KB5006670)",
+            "Description": "A security update for Windows Server 2019.",
+            "ContentUrl": "https://support.microsoft.com/kb/5006670",
+            "ReleaseDate": "2024-10-12T00:00:00.000Z",
+            "KbNumber": "KB5044099",
+            "Classification": "SecurityUpdates",
+            "Severity": "Critical",
+            "Product": "Windows Server 2019",
+            "ProductFamily": "Windows Server",
+            "MSRCSeverity": "Critical",
+            "MSRCNumber": "MSRC-2024-10",
+            "Vendor": "Microsoft"
+        },
+        {
+            "Id": "patch-5678",
+            "Title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 (KB5044099)",
+            "Description": "A security update for .NET Framework.",
+            "ContentUrl": "https://support.microsoft.com/kb/5044099",
+            "ReleaseDate": "2024-10-12T00:00:00.000Z",
+            "KbNumber": "5044099",
+            "Classification": "SecurityUpdates",
+            "Severity": "Important",
+            "Product": ".NET Framework",
+            "ProductFamily": "Microsoft .NET",
+            "MSRCSeverity": "Important",
+            "MSRCNumber": "MSRC-2024-10",
+            "Vendor": "Microsoft"
+        }
+    ]
+}

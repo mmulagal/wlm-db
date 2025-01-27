@@ -31,6 +31,7 @@ import {
     DriftAssessmentResponseType,
     HostOsPatchDriftResponseType,
     LicenseDriftResponseType,
+    MSSQLPatchDriftResponseType,
     ParameterDriftResponseType,
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
@@ -59,6 +60,10 @@ import {
     calculateMaxDOPDrift,
     managedHostsMaxDOPAssessment
 } from './continuous-optimization/maxdop-assessment-operations';
+import {
+    calculateMSSQLPatchDrift,
+    managedHostMSSQLPatchAssessment
+} from './continuous-optimization/mssqlPatch-assessment-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -106,6 +111,8 @@ async function initiateComputeLicenseAssessmentCollection(
         let hostOsPatchAssessment;
         let rssConfigAssessment;
         let maxDOPAssessment;
+        let mssqlPatchAssessment;
+
         if (fields?.includes(AssessmentCategories.LICENSE)) {
             licenseAssessment = await managedHostsLicenseAssessment(
                 accountId,
@@ -176,17 +183,33 @@ async function initiateComputeLicenseAssessmentCollection(
                 ]);
             }
         }
+        if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
+            const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
+
+            mssqlPatchAssessment = await managedHostMSSQLPatchAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                activeNodeInstanceId,
+                isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                resourceName,
+                jobId
+            );
+        }
         if (
             !isEmpty(licenseAssessment) ||
             !isEmpty(computeAssessment) ||
             !isEmpty(hostOsPatchAssessment) ||
-            !isEmpty(rssConfigAssessment)
+            !isEmpty(rssConfigAssessment) ||
+            !isEmpty(mssqlPatchAssessment)
         ) {
             (metadata as unknown as Metadata).assessment = {
                 license: licenseAssessment || undefined,
                 compute: computeAssessment || undefined,
                 hostOsPatch: hostOsPatchAssessment || undefined,
-                rssConfig: rssConfigAssessment || undefined
+                rssConfig: rssConfigAssessment || undefined,
+                mssqlPatch: mssqlPatchAssessment || undefined
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -344,7 +367,7 @@ async function driftAssessmentDataCollection(
     const shouldRunHostOsPatchAssessment = fieldsValues?.includes(
         AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
     );
-
+    const shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
     const shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
 
     if (shouldRunStorageAssessment) {
@@ -363,7 +386,8 @@ async function driftAssessmentDataCollection(
         shouldRunLicenseAssessment ||
         shouldRunHostOsPatchAssessment ||
         shouldRunRssConfigAssessment ||
-        shouldRunMAXDOPAssessment
+        shouldRunMAXDOPAssessment ||
+        shouldRunMSSQLPatchAssessment
     ) {
         await initiateComputeLicenseAssessmentCollection(
             accountId,
@@ -577,7 +601,8 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                                             AssessmentCategories.LICENSE,
                                             AssessmentCategories.COMPUTE,
                                             AssessmentCategories.HOST_OS_PATCH,
-                                            AssessmentCategories.RSS_CONFIG
+                                            AssessmentCategories.RSS_CONFIG,
+                                            AssessmentCategories.MSSQL_PATCH
                                         ]
                                     );
                                 }
@@ -628,24 +653,41 @@ async function hostLevelDriftData(
     const shouldCalculateRssConfigAssessment = fieldsValues?.includes(
         AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
     );
+    const shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
+        AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
+    );
 
-    const [computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse] =
-        await Promise.all([
-            shouldCalculateComputeAssessment
-                ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-                : Promise.resolve({}),
-            shouldCalculateLicenseAssessment
-                ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
-                : Promise.resolve({}),
-            shouldCalculateHostOsPatchAssessment
-                ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
-                : Promise.resolve({}),
-            shouldCalculateRssConfigAssessment
-                ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId)
-                : Promise.resolve({})
-        ]);
+    const [
+        computeAssessmentResponse,
+        licenseAssessmentResponse,
+        hostOsPatchAssessmentResponse,
+        rssConfigResponse,
+        mssqlPatchAssessmentResponse
+    ] = await Promise.all([
+        shouldCalculateComputeAssessment
+            ? calculateComputeDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateLicenseAssessment
+            ? calculateLicenseDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            : Promise.resolve({}),
+        shouldCalculateHostOsPatchAssessment
+            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId)
+            : Promise.resolve({}),
+        shouldCalculateRssConfigAssessment
+            ? calculateRssConfigDrift(accountId, credentialsId, region, databaseHostId)
+            : Promise.resolve({}),
+        shouldCalculateMSSQLPatchAssessment
+            ? calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId)
+            : Promise.resolve({})
+    ]);
 
-    return { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse };
+    return {
+        computeAssessmentResponse,
+        licenseAssessmentResponse,
+        hostOsPatchAssessmentResponse,
+        rssConfigResponse,
+        mssqlPatchAssessmentResponse
+    };
 }
 
 async function fetchDriftAssessment(
@@ -671,6 +713,7 @@ async function fetchDriftAssessment(
     let shouldCalculateHostOsPatchAssessment = false;
     let shouldCalculateRssConfigAssessment = false;
     let shouldCalculateMaxDOPAssessment = false;
+    let shouldCalculateMSSQLPatchAssessment = false;
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
@@ -685,6 +728,9 @@ async function fetchDriftAssessment(
             AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
         );
         shouldCalculateMaxDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
+        shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
+            AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
+        );
     } else {
         shouldCalculateStorageAssessment = true;
         shouldCalculateComputeAssessment = true;
@@ -692,13 +738,20 @@ async function fetchDriftAssessment(
         shouldCalculateHostOsPatchAssessment = true;
         shouldCalculateRssConfigAssessment = true;
         shouldCalculateMaxDOPAssessment = true;
+        shouldCalculateMSSQLPatchAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
 
     const [
         storageAssessmentResponse,
         maxDOPResponse,
-        { computeAssessmentResponse, licenseAssessmentResponse, hostOsPatchAssessmentResponse, rssConfigResponse }
+        {
+            computeAssessmentResponse,
+            licenseAssessmentResponse,
+            hostOsPatchAssessmentResponse,
+            rssConfigResponse,
+            mssqlPatchAssessmentResponse
+        }
     ] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
@@ -709,7 +762,8 @@ async function fetchDriftAssessment(
         shouldCalculateComputeAssessment ||
         shouldCalculateLicenseAssessment ||
         shouldCalculateHostOsPatchAssessment ||
-        shouldCalculateRssConfigAssessment
+        shouldCalculateRssConfigAssessment ||
+        shouldCalculateMSSQLPatchAssessment
             ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
             : Promise.resolve({})
     ]);
@@ -817,6 +871,10 @@ async function fetchDriftAssessment(
         driftAssessmentData.maxDOP = maxDOPResponse as ParameterDriftResponseType; // check this type
     }
 
+    if (!isEmpty(mssqlPatchAssessmentResponse)) {
+        driftAssessmentData.mssqlPatch = mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType;
+    }
+
     return driftAssessmentData;
 }
 
@@ -866,13 +924,15 @@ async function fetchDriftAssessmentPerHost(
     let licenseAssessmentResponse: LicenseDriftResponseType;
     let hostOsPatchAssessmentResponse: HostOsPatchDriftResponseType;
     let hostRssConfigAssessmentResponse: RssConfigDriftResponseType;
+    let mssqlPatchAssessmentResponse: MSSQLPatchDriftResponseType;
 
     const isHostLevelMetrics =
         isEmpty(fieldsList) ||
         fieldsList?.includes(AssessmentCategories.COMPUTE) ||
         fieldsList?.includes(AssessmentCategories.LICENSE) ||
         fieldsList?.includes(AssessmentCategories.HOST_OS_PATCH) ||
-        fieldsList?.includes(AssessmentCategories.RSS_CONFIG); // if fields are not provided or if any of the fields are provided then fetch respective fields or all fields metrics
+        fieldsList?.includes(AssessmentCategories.RSS_CONFIG) ||
+        fieldsList?.includes(AssessmentCategories.MSSQL_PATCH); // if fields are not provided or if any of the fields are provided then fetch respective fields or all fields metrics
     if (isHostLevelMetrics) {
         let hostFieldsToQuery = [];
         if (isEmpty(fieldsList)) {
@@ -880,7 +940,8 @@ async function fetchDriftAssessmentPerHost(
                 AssessmentCategories.COMPUTE,
                 AssessmentCategories.LICENSE,
                 AssessmentCategories.HOST_OS_PATCH,
-                AssessmentCategories.RSS_CONFIG
+                AssessmentCategories.RSS_CONFIG,
+                AssessmentCategories.MSSQL_PATCH
             ];
         } else {
             if (fieldsList?.includes(AssessmentCategories.COMPUTE)) {
@@ -894,6 +955,9 @@ async function fetchDriftAssessmentPerHost(
             }
             if (fieldsList?.includes(AssessmentCategories.RSS_CONFIG)) {
                 hostFieldsToQuery.push(AssessmentCategories.RSS_CONFIG);
+            }
+            if (fieldsList?.includes(AssessmentCategories.MSSQL_PATCH)) {
+                hostFieldsToQuery.push(AssessmentCategories.MSSQL_PATCH);
             }
         }
 
@@ -910,6 +974,7 @@ async function fetchDriftAssessmentPerHost(
         licenseAssessmentResponse = hostLevelData.licenseAssessmentResponse as LicenseDriftResponseType;
         hostOsPatchAssessmentResponse = hostLevelData.hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType;
         hostRssConfigAssessmentResponse = hostLevelData.rssConfigResponse as RssConfigDriftResponseType;
+        mssqlPatchAssessmentResponse = hostLevelData.mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType;
     }
     await Promise.all(
         instancesManaged.map(async managedInstance => {
@@ -940,6 +1005,9 @@ async function fetchDriftAssessmentPerHost(
                     }
                     if (!isEmpty(hostRssConfigAssessmentResponse)) {
                         driftAssessment.rssConfig = hostRssConfigAssessmentResponse;
+                    }
+                    if (!isEmpty(mssqlPatchAssessmentResponse)) {
+                        driftAssessment.mssqlPatch = mssqlPatchAssessmentResponse;
                     }
                 }
 

@@ -7,7 +7,8 @@ enum AssessmentCategories {
     LICENSE = 'license',
     HOST_OS_PATCH = 'host-os-patch',
     RSS_CONFIG = 'rss-config',
-    MAXDOP = 'maxdop'
+    MAXDOP = 'maxdop',
+    MSSQL_PATCH = 'mssql-patch'
 }
 
 enum AssessmentTriggeredBy {

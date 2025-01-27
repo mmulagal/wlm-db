@@ -15,6 +15,7 @@ import {
     DeleteParametersCommand,
     DescribeInstancePatchStatesCommand,
     DescribeInstancePatchesCommand,
+    DescribeAvailablePatchesCommand,
     ListCommandsCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -32,6 +33,7 @@ import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
 import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-states.json';
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
+import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
@@ -1020,6 +1022,7 @@ ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: Describ
     return response;
 });
 ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse);
+ssmMock.on(DescribeAvailablePatchesCommand).resolves(describeAvailablePatchesResponse);
 ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) => {
     const instanceId = command.InstanceId;
     if (instanceId?.includes('inProgress')) {
