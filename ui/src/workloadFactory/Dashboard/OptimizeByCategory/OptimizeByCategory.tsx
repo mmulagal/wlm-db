@@ -77,6 +77,7 @@ const OptimizeByCategory = () => {
                 }}
                 customClass={styles.dialog}
                 primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
+                testId="wlm-db-not optimize-instance-continue-button"
             />
         );
     };
@@ -94,6 +95,7 @@ const OptimizeByCategory = () => {
                         isThin={true}
                         onClick={() => handleClick()}
                         isDisabled={allmssqlHostAssessmentLoading}
+                        data-testid="wlm-db-optimize-instances-by-category"
                     >
                         Optimize
                     </DsButton>

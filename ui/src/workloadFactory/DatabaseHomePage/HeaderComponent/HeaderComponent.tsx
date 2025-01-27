@@ -93,7 +93,6 @@ import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
-import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 type Tab = {
     tab: string;
@@ -720,7 +719,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                     autoPosition: true,
                                                     items: [
                                                         {
-                                                            id: '1',
+                                                            id: 'wlm-db-deploy-mssql-host',
                                                             label: 'Microsoft SQL Server',
                                                             onClick: () => {
                                                                 dispatch(setDatabaseHostEntryPoint('database'));
@@ -749,7 +748,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             className: 'mssql-deployment-button'
                                                         },
                                                         {
-                                                            id: '2',
+                                                            id: 'wlm-db-deploy-pgsql-host',
                                                             label: 'PostgreSQL Server',
                                                             onClick: () => {
                                                                 dispatch(setDatabaseHostEntryPoint('database'));

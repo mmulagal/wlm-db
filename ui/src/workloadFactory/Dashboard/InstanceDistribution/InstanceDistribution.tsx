@@ -32,7 +32,12 @@ const InstanceDistribution = () => {
 
                 <div className={styles.rightSection}>
                     {(mssqlDatabaseHostsLoading || pgsqlDatabaseHostsLoading) && <FlashingDotsLoader />}
-                    <DsButton variant="secondary" isThin={true} onClick={() => handleClick(WLF_TABS.INVENTORY)}>
+                    <DsButton
+                        variant="secondary"
+                        data-testid="wlm-db-manage-instances"
+                        isThin={true}
+                        onClick={() => handleClick(WLF_TABS.INVENTORY)}
+                    >
                         Manage instances
                     </DsButton>
                 </div>

@@ -71,6 +71,7 @@ const PotentialSavings = () => {
                     <DsButton
                         variant="secondary"
                         isThin={true}
+                        data-testid="wlm-db-potential-savings"
                         onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
                         isDisabled={loading}
                     >
@@ -135,8 +136,7 @@ const PotentialSavings = () => {
                     <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                $
-                                {formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
+                                ${formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>
