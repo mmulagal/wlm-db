@@ -14,6 +14,7 @@ const GOOGLE_DNS = '8.8.8.8'; // Using a public DNS server to check internet con
 const DISCOVER_OPERATION_LOG_PATH = 'C:\\cfn\\log\\discover-operation.log.txt';
 const COMPUTE_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\compute-optimize.log.txt';
 const SIZING_OPERATIONS_LOG_PATH = 'C:\\cfn\\log\\sizing-operations.log.txt';
+const STORAGE_ASSESSMENT_LOG_PATH = 'C:\\cfn\\log\\storage-assessment.log.txt';
 
 export {
     DB_ROWS_COUNT,
@@ -31,5 +32,6 @@ export {
     GOOGLE_DNS,
     DISCOVER_OPERATION_LOG_PATH,
     COMPUTE_OPTIMIZE_LOG_PATH,
-    SIZING_OPERATIONS_LOG_PATH
+    SIZING_OPERATIONS_LOG_PATH,
+    STORAGE_ASSESSMENT_LOG_PATH
 };

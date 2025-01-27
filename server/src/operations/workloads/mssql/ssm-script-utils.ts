@@ -488,6 +488,15 @@ const getMappedOntapVolumesScript = (
         $responseObject = @{}
     }
 
+    # Define the path of the directory you want to create
+    $LogFilesPath = "C:\\cfn\\log"
+    $MappedVolumesErrorFile = 'C:\\cfn\\log\\mapped_volumes_err.log'
+
+    # Check if the directory exists
+    if (-not (Test-Path -Path $LogFilesPath -PathType Container)) {
+        New-Item -Path $LogFilesPath -ItemType Directory
+    } 
+
     $includeLogVolumes = [System.Convert]::ToBoolean('${includeLogVolumes}')
     try {
         #Requires -Module AWS.Tools.SimpleSystemsManagement
@@ -630,10 +639,16 @@ const getMappedOntapVolumesScript = (
                 }
 
                 if ($sqlCredential.useSqlAuth -eq $True) {
-                    $sqlqueryresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0;
+                    $sqlqueryresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2> $MappedVolumesErrorFile;
                 } else {
-                    $sqlqueryresponse =  sqlcmd -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0;
+                    $sqlqueryresponse =  sqlcmd -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2> $MappedVolumesErrorFile;
                 }
+                
+                
+                if (Get-Content $MappedVolumesErrorFile) { 
+                  $errorContent = Get-Content $MappedVolumesErrorFile
+                  throw $errorContent
+                 }
 
                 Function Get-VolumeIdsList($sqlqueryresponse) {        
                     $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
