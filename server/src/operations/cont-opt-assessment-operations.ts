@@ -184,13 +184,15 @@ async function initiateComputeLicenseAssessmentCollection(
             }
         }
         if (fields?.includes(AssessmentCategories.MSSQL_PATCH)) {
+            const isCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
+
             mssqlPatchAssessment = await managedHostMSSQLPatchAssessment(
                 accountId,
                 credentialsId,
                 region,
                 databaseHostId,
                 activeNodeInstanceId,
-                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                isCluster, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
                 resourceName,
                 jobId
             );

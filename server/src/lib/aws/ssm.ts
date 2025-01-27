@@ -216,7 +216,7 @@ async function describeAvailablePatches(
         nextToken = NextToken;
     } while (nextToken);
 
-    logger.debug('all available patches', allPatches);
+    logger.debug('all MSSQL available patches', allPatches);
     return allPatches;
 }
 

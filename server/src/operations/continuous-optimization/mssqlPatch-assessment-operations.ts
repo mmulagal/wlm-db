@@ -170,15 +170,21 @@ async function runMSSQLPatchAssessment(
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
 
     if (!isEmpty(clusterNodeInstanceIds)) {
-        const availableCriticalSQLPatches = (await getAvailablePatches(region)) || [];
-        const instanceMissingPatchDetails =
-            (await getMissingPatchDetails(credentialsId, region, clusterNodeInstanceIds)) || [];
+        const [availableCriticalSQLPatches, instanceMissingPatchDetails] = await Promise.all([
+            getAvailablePatches(region),
+            getMissingPatchDetails(credentialsId, region, clusterNodeInstanceIds)
+        ]);
+
+        const availableCriticalSQLPatchesList = availableCriticalSQLPatches || [];
+        const instanceMissingPatchDetailsList = instanceMissingPatchDetails || [];
 
         // Check if any of the missing patches are part of the available critical patches
-        const missingCriticalSqlPatches = instanceMissingPatchDetails?.map(({ instanceId, missingPatches }) => {
+        const missingCriticalSqlPatches = instanceMissingPatchDetailsList?.map(({ instanceId, missingPatches }) => {
             const missingPatchDetails = missingPatches
                 ?.filter(missingPatch =>
-                    availableCriticalSQLPatches?.some(availablePatch => availablePatch.KbNumber === missingPatch.KBId)
+                    availableCriticalSQLPatchesList?.some(
+                        availablePatch => availablePatch.KbNumber === missingPatch.KBId
+                    )
                 )
                 .map(
                     ({
