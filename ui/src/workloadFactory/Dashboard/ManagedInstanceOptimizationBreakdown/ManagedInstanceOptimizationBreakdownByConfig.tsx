@@ -124,6 +124,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
                             }}
+                            data-testid="optimize-storage-tier"
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
@@ -160,6 +161,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="optimize-file-system-headroom"
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
@@ -202,6 +204,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
                             }}
+                            data-testid="optimize-log-drive-size"
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
@@ -238,6 +241,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="optimize-temdb-drive-size"
                             onClick={() => {
                                 handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
@@ -281,7 +285,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="optimize-data-files" variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
@@ -317,7 +321,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="optimize-log-files" variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
@@ -353,7 +357,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="optimize-temdb-placement" variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
@@ -382,6 +386,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="optimize-ontap"
                             onClick={() => {
                                 handleOptimize('ONTAP');
                             }}
@@ -419,6 +424,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="optimize-operating-system"
                             onClick={() => {
                                 handleOptimize('Operating system');
                             }}
@@ -457,6 +463,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="optimize-compute-right-sizing"
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
@@ -500,7 +507,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="optimize-operating-system-patch"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -535,7 +546,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="optimize-rss-configuration"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -572,7 +587,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="optimize-license-sql-server"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -607,7 +626,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="optimize-microsoft-sql-server"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -642,7 +665,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="optimize-maxdop-patch" variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
