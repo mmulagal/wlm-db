@@ -950,6 +950,8 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlFSxServerNetBIOSName1'
+                                  - "' -ClusterName '"
+                                  - !Ref 'SqlFSxWSFCName'
                                   - '''"'
                             waitAfterCompletion: '0'
                         m-update-sqltag:
