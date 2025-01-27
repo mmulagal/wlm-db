@@ -11,6 +11,7 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
 import {
+    ASSESSMENT_CONFIG_NAMES,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -22,6 +23,7 @@ import { useDispatch } from 'react-redux';
 import {
     setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -98,19 +100,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         if (
             cardData?.id === 'headroom' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                cardData?.sizingViolations?.overProvisionedDrives?.length)
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'log-drive-size' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                cardData?.sizingViolations?.overProvisionedDrives?.length)
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'tempdb-drive-size' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                cardData?.sizingViolations?.overProvisionedDrives?.length)
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
@@ -168,12 +173,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                         </DsTypography>
                                     </div>
 
-                                    {secListObj && secListObj[index]?.value && (
+                                    {secListObj && (
                                         <>
                                             <div className={styles.seperator} />
                                             <div className={styles.secSubPart}>
                                                 <DsTypography variant="Regular_13">
-                                                    {`${secListObj[index]?.value}`}
+                                                    {`${secListObj[index]?.value}` || ' '}
                                                 </DsTypography>
                                             </div>
                                         </>
@@ -327,7 +332,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
             let listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security }
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
+                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
             ];
             return (
                 <div className={styles.tooltipContainer}>
@@ -407,12 +413,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+        } else if (
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ) {
             apiCall = optimizeStorageSizing;
             payload = {
                 type: [cardData?.id]
             };
-        } else if (type === 'Storage tier') {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
             payload = null;
         } else {
@@ -492,6 +502,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
@@ -525,7 +543,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={'innerPage'}
                 hidePrimaryButton={
-                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
+                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }

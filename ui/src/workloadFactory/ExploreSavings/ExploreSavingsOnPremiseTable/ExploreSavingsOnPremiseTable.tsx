@@ -14,7 +14,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
@@ -34,9 +34,9 @@ const ExploreSavingsOnPremiseTable = () => {
     const { fetchOnPremData, error } = useOnPremData();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
-    const { onPremiseData } = useAppSelector(state => state.exploreSavings);
+    const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const [getUploadScript] = useGetUploadScriptMutation();
-    const [isLoading, setIsLoading] = useState(false);
 
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -44,11 +44,9 @@ const ExploreSavingsOnPremiseTable = () => {
 
     useEffect(() => {
         if (onPremiseData) {
-            setIsLoading(false);
             setTableData(onPremiseData);
         } else {
             setTableData([]);
-            setIsLoading(true);
         }
     }, [onPremiseData]);
 
@@ -60,7 +58,7 @@ const ExploreSavingsOnPremiseTable = () => {
         const selectedFile = event.target.files[0];
         if (!selectedFile) return;
         // Validate the file type (ensure it's JSON)
-        if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json')) {
+        if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json') && !isDemoMode) {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
@@ -72,7 +70,7 @@ const ExploreSavingsOnPremiseTable = () => {
         // Validate the file size (should be <= 2 MB)
         const maxSizeInMB = 2;
         const maxSizeInBytes = maxSizeInMB * 1024 * 1024; // 2 MB in bytes
-        if (selectedFile.size > maxSizeInBytes) {
+        if (selectedFile.size > maxSizeInBytes && !isDemoMode) {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
@@ -83,7 +81,7 @@ const ExploreSavingsOnPremiseTable = () => {
         }
 
         // Validate the file name (should start with "TCOResponse-")
-        if (!selectedFile.name.startsWith('TCOResponse-')) {
+        if (!selectedFile.name.startsWith('TCOResponse-') && !isDemoMode) {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
@@ -101,51 +99,76 @@ const ExploreSavingsOnPremiseTable = () => {
 
             reader.onload = async e => {
                 try {
-                    // Parse the JSON data
-                    const jsonString = e.target?.result as string;
-
-                    // Encode JSON to Base64
-                    const base64Encoded = btoa(jsonString);
-
-                    // Convert Base64 string to Uint8Array
-                    const base64Bytes = new TextEncoder().encode(base64Encoded);
-
-                    // Compress the Base64 data using fflate
-                    const compressedData = compressSync(base64Bytes);
-
-                    // Convert the compressed data to Base64
-                    const compressedBase64 = btoa(String.fromCharCode(...compressedData));
-
-                    // Access the data inside the JSON
-                    if (compressedBase64) {
-                        const result = await getUploadScript({
-                            payload: {
-                                fileContent: compressedBase64,
-                                fileName: selectedFile.name
+                    if (isDemoMode) {
+                        setTimeout(() => {
+                            setIsUploadLoading(false);
+                            if (onPremiseData) {
+                                setTableData(onPremiseData);
                             }
-                        });
-                        const jobInterval = setInterval(() => {
-                            getJobDetailApi(result.data.jobId).then((jobRes: any) => {
-                                const status = jobRes?.data?.status;
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                    message: 'File is already uploaded.'
+                                })
+                            );
+                        }, 3000);
+                    } else {
+                        // Parse the JSON data
+                        const jsonString = e.target?.result as string;
 
-                                if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                    fetchOnPremData(true);
-                                    setIsUploadLoading(false);
+                        // Encode JSON to Base64
+                        const base64Encoded = btoa(jsonString);
 
-                                    clearInterval(jobInterval);
-                                } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                    setIsUploadLoading(false);
-                                    clearInterval(jobInterval);
+                        // Convert Base64 string to Uint8Array
+                        const base64Bytes = new TextEncoder().encode(base64Encoded);
+
+                        // Compress the Base64 data using fflate
+                        const compressedData = compressSync(base64Bytes);
+
+                        // Convert the compressed data to Base64
+                        const compressedBase64 = btoa(String.fromCharCode(...compressedData));
+
+                        // Access the data inside the JSON
+                        if (compressedBase64) {
+                            const result = await getUploadScript({
+                                payload: {
+                                    fileContent: compressedBase64,
+                                    fileName: selectedFile.name
                                 }
                             });
-                        }, 5000);
-                    } else {
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: 'No data found in the file.'
-                            })
-                        );
+                            if (result && !result?.error) {
+                                const jobInterval = setInterval(() => {
+                                    getJobDetailApi({ id: result.data.jobId }).then((jobRes: any) => {
+                                        const status = jobRes?.data?.status;
+
+                                        if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                            fetchOnPremData(true);
+                                            setIsUploadLoading(false);
+
+                                            clearInterval(jobInterval);
+                                        } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                            if (onPremiseData) {
+                                                setTableData(onPremiseData);
+                                            }
+                                            setIsUploadLoading(false);
+                                            clearInterval(jobInterval);
+                                        }
+                                    });
+                                }, 5000);
+                            } else {
+                                if (onPremiseData) {
+                                    setTableData(onPremiseData);
+                                }
+                                setIsUploadLoading(false);
+                            }
+                        } else {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: 'No data found in the file.'
+                                })
+                            );
+                        }
                     }
                 } catch (error) {
                     dispatch(
@@ -204,7 +227,7 @@ const ExploreSavingsOnPremiseTable = () => {
             isSticky: true,
             width: '345px',
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.databaseHostName;
+                const name = rowData?.resourceName;
                 return (
                     <div>
                         <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
@@ -217,7 +240,7 @@ const ExploreSavingsOnPremiseTable = () => {
             accessor: 'deploymentModel',
             id: '2',
             width: '345px',
-            filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
+            filterOptions: getFilterOptions(tableData, 'deploymentModel'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -225,13 +248,12 @@ const ExploreSavingsOnPremiseTable = () => {
 
         {
             Header: 'SQL server instances',
-            accessor: 'totalInstance',
+            accessor: 'instanceNameList',
             id: '4',
             width: '345px',
-            filterOptions: getFilterOptions(tableData, 'totalInstance'),
+            filterOptions: getFilterOptions(tableData, 'instanceNameList'),
             renderCell: (cellData: string, rowData: any) => {
-                const instanceNames = rowData?.sqlServerInstances;
-                const truncatedItems = getTruncatedItems(instanceNames);
+                const truncatedItems = getTruncatedItems(cellData);
 
                 return (
                     <div>
@@ -252,6 +274,8 @@ const ExploreSavingsOnPremiseTable = () => {
                                                 <Typography variant="Regular_14">{item}</Typography>
                                             ))}
                                             trigger="hover"
+                                            interactive={true}
+                                            delayHide={200}
                                             container={
                                                 <Typography variant="Regular_14" className={styles.colorText}>
                                                     {`+ ${truncatedItems?.remaining.length}`}
@@ -271,13 +295,50 @@ const ExploreSavingsOnPremiseTable = () => {
         },
         {
             Header: 'OnPrem nodes',
-            accessor: 'onPremNode',
+            accessor: 'onPremisesNodes',
             id: '5',
             width: '347px',
             isSortable: true,
             accessorForTextFilter: 'onPremNode',
             renderCell: (cellData: any, rowData: any) => {
-                return 'xxx';
+                const truncatedItems = getTruncatedItems(cellData);
+
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <div className={styles.container}>
+                                <Typography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
+                                </Typography>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <>
+                                        <Popover
+                                            popoverClass={styles['popover']}
+                                            children={truncatedItems?.remaining.map((item: any) => (
+                                                <Typography variant="Regular_14">{item}</Typography>
+                                            ))}
+                                            trigger="hover"
+                                            interactive={true}
+                                            delayHide={200}
+                                            container={
+                                                <Typography variant="Regular_14" className={styles.colorText}>
+                                                    {`+ ${truncatedItems?.remaining.length}`}
+                                                </Typography>
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
             }
         },
 
@@ -318,7 +379,7 @@ const ExploreSavingsOnPremiseTable = () => {
         columns: ExploreSavingsColDefs,
         rows: tableData || [],
         pageSize: 50,
-        isLazyLoading: isLoading || isUploadLoading
+        isLazyLoading: onPremiseDataLoading || isUploadLoading
     });
 
     const tableComponentProps = {
@@ -328,7 +389,7 @@ const ExploreSavingsOnPremiseTable = () => {
     const handleDownload = async () => {
         // getDownloadFn([{ input: tcoScript, name: 'list-vms.ps1' }]);
 
-        const fileProps = [{ input: tcoScript, name: 'tco-script.ps1' }];
+        const fileProps = [{ input: tcoScript, name: 'OnPremTCOCollector.ps1' }];
 
         const files = fileProps.map(
             ({ name, input }) =>
@@ -357,7 +418,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle={`Microsoft SQL Server hosts on-premises`}
                 singularTitle={`Microsoft SQL Server host on-premises`}
-                subTitle="The table contains the latest script results uploaded."
+                subTitle="Includes results from uploaded scripts."
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />

@@ -6,6 +6,7 @@ import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
+    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_CLUSTER_NODE_NAMES,
     MOVE_ALL_CLUSTER_GROUPS
 } from '../workloads/mssql/continuous-optimization-scripts';
@@ -27,7 +28,7 @@ import {
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/discover-consts';
 import { calculateComputeDrift } from './compute-assessment-operations';
-import { handleOptimizeJobCreation } from './assessment-utils';
+import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
 
@@ -360,6 +361,22 @@ async function handleComputeRemediation(
                     throw error;
                 }
             }
+
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                instanceName,
+                region,
+                credentialsId,
+                activeNodeInstanceId
+            );
+
+            if (!checkRunningResponse.running) {
+                subJobErrorMessage = checkRunningResponse.error;
+                anySubJobFailed = true;
+                throw checkRunningResponse.error;
+            }
+
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
@@ -388,13 +405,70 @@ async function handleComputeRemediation(
     }
 }
 
+async function checkRunningStatus(
+    accountId: string,
+    parentJobId: string,
+    instanceName: string,
+    region: string,
+    credentialsId: string,
+    activeNodeInstanceId: string
+) {
+    const checkRunningJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        JOBTYPE.ASSESSMENT,
+        'Checking running status of the service',
+        'Checking running status of the service',
+        parentJobId
+    );
+
+    const rawStatusResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        [CHECK_RUNNING_STATUS_WITH_RESTART(instanceName)],
+        activeNodeInstanceId,
+        'Checking running status of the service',
+        accountId,
+        undefined,
+        '300'
+    );
+
+    let statusResponse: { status: string; error?: string };
+    try {
+        const cleanStatusResponse = rawStatusResponse.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        statusResponse = JSON.parse(cleanStatusResponse);
+    } catch (error) {
+        logger.error('Error parsing query response:', rawStatusResponse);
+        return { running: false, error: 'Error parsing SSM query response' };
+    }
+
+    if (statusResponse.status !== 'Running') {
+        await updateJobDetails(accountId, checkRunningJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: statusResponse.error
+        });
+        return { running: false, error: statusResponse.error };
+    }
+
+    await updateJobDetails(accountId, checkRunningJobId, {
+        status: JOBSTATUS.COMPLETED,
+        endTime: Date.now()
+    });
+
+    return { running: true, error: 'Error parsing SSM query response' };
+}
+
 export default async function optimizeCompute(
     accountId: string,
     credentialsId: string,
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    instanceType: string
+    instanceType: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info('Optimizing compute', {
         accountId,
@@ -442,6 +516,16 @@ export default async function optimizeCompute(
     const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
 
     const [{ resource_name: resourceName, metadata }] = resourceDetails;
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: 'compute-rightsizing',
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -449,7 +533,9 @@ export default async function optimizeCompute(
         resourceName!,
         JOBTYPE.OPTIMIZATION,
         `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`
+        `Optimize EC2 compute for ${resourceName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     handleComputeRemediation(

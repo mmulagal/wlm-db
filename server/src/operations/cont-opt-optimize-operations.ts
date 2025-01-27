@@ -76,7 +76,7 @@ import {
     getLogVolumeDrift,
     getTempDbVolumeDrift
 } from './continuous-optimization/storage-assessment-operations';
-import { handleOptimizeJobCreation } from './continuous-optimization/assessment-utils';
+import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 
@@ -209,23 +209,23 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
     logger.info(`Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
     const jobDescription = `Optimize storage for ${serverNameWithHostName}`;
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Optimize storage for ${serverNameWithHostName}`,
-        description: jobDescription,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZATION,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
+    for (const data of optimizationTargets) {
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            name: `Optimize storage for ${serverNameWithHostName}`,
+            description: jobDescription,
+            startTime: Date.now(),
+            type: JOBTYPE.OPTIMIZATION,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: serverNameWithHostName,
+            parentJobId
+        });
 
-    logger.debug(`Job created with id ${jobId}`);
-    let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let newJobError;
-    let newJobDescription;
+        logger.debug(`Job created with id ${jobId}`);
 
-    try {
-        for (const data of optimizationTargets) {
+        let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+        let newJobError;
+        let newJobDescription;
+        try {
             const { configurationName, objectsToOptimize } = data;
             const configKey = Object.keys(optimizationConfigs).find(
                 key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
@@ -282,19 +282,19 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 newJobDescription = optimizeMessage;
                 newJobStatus = JOBSTATUS.COMPLETED;
             }
+        } catch (error) {
+            const errorMessage = `Error while optimizing storage ${error}`;
+            logger.error(errorMessage);
+            newJobStatus = JOBSTATUS.FAILED;
+            newJobError = errorMessage;
+        } finally {
+            await updateJobDetails(accountId, jobId, {
+                status: newJobStatus,
+                endTime: Date.now(),
+                error: newJobError,
+                description: newJobDescription
+            });
         }
-    } catch (error) {
-        const errorMessage = `Error while optimizing storage ${error}`;
-        logger.error(errorMessage);
-        newJobStatus = JOBSTATUS.FAILED;
-        newJobError = errorMessage;
-    } finally {
-        await updateJobDetails(accountId, jobId, {
-            status: newJobStatus,
-            endTime: Date.now(),
-            error: newJobError,
-            description: newJobDescription
-        });
     }
 }
 
@@ -381,10 +381,12 @@ async function getSvmNameFromId(credentialsId: string, region: string, fsxId: st
     return svmName;
 }
 
-async function optimizeStorage(params: OptimizeStorageParams) {
+async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?: string) {
     const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
     logger.info(
-        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${optimizationTargets}`
+        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${JSON.stringify(
+            optimizationTargets
+        )}`
     );
 
     if (optimizationTargets && optimizationTargets.length === 0) {
@@ -412,7 +414,8 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         `Optimize storage for ${serverNameWithHostName}`,
-        `Optimize storage for ${serverNameWithHostName}`
+        `Optimize storage for ${serverNameWithHostName}`,
+        bulkOptimizeJobId
     );
 
     const svmDetailsObject = svmDetails as Record<string, string>;
@@ -1045,7 +1048,8 @@ async function optimizeSizing(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    types: OPTIMIZE_SIZING_CONFIGS[]
+    types: OPTIMIZE_SIZING_CONFIGS[],
+    masterOptimizeParentId?: string
 ) {
     logger.info('Optimizing sizing ', { accountId, credentialsId, region, databaseHostId, databaseInstanceId, types });
 
@@ -1075,6 +1079,12 @@ async function optimizeSizing(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
     }
 
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            { optimizationType: types[0], resourceId: databaseHostId, sqlServerInstances: [databaseInstanceId] }
+        ]
+    };
+
     const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
     const jobId = await handleOptimizeJobCreation(
         accountId,
@@ -1083,7 +1093,9 @@ async function optimizeSizing(
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
-        `Optimize ${types} sizing for ${serverNameWithHostName}`
+        `Optimize ${types} sizing for ${serverNameWithHostName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     modifySizingAttributes(
@@ -1904,7 +1916,8 @@ async function optimizeOperatingSystemSettings(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    configurationName: string
+    configurationName: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info(
         `Optimizing operating system settings for ${accountId}, ${credentialsId} ${databaseHostId} ${databaseInstanceId} in ${region} for configuration ${configurationName}`
@@ -1980,6 +1993,15 @@ async function optimizeOperatingSystemSettings(
             : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
             ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
             : '';
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: configurationName,
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1987,7 +2009,9 @@ async function optimizeOperatingSystemSettings(
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         jobDescription,
-        jobDescription
+        jobDescription,
+        masterOptimizeParentId,
+        jobMetadata
     );
     switch (configurationName) {
         case OptimizeOperatingSystemParams.MPIO_POLICY: {
@@ -2271,10 +2295,11 @@ async function optimizeStorageTier(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info(
-        `Optimizing storage tier for ${accountId}, ${credentialsId}, ${region}, ${databaseHostId}, ${databaseInstanceId}`
+        `Optimizing storage tier for ${accountId}, ${credentialsId}, ${region}, ${databaseHostId}, ${databaseInstanceId}, ${masterOptimizeParentId}`
     );
 
     const {
@@ -2289,6 +2314,16 @@ async function optimizeStorageTier(
         serverNameWithHostName,
         instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: 'storage-tier',
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     // check whether any jobs on the same resource running
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
@@ -2297,7 +2332,9 @@ async function optimizeStorageTier(
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         `Optimize storage-tier for ${serverNameWithHostName}`,
-        `Optimize storage-tier for ${serverNameWithHostName}`
+        `Optimize storage-tier for ${serverNameWithHostName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     const svmDetailsObject = svmDetails as Record<string, string>;
@@ -2404,6 +2441,7 @@ async function triggerAssessmentAfterOptimization(
         endTime: Date.now(),
         description: `Optimization completed for ${serverNameWithHostName}`
     });
+
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 

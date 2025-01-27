@@ -670,6 +670,8 @@ export const GENERAL = {
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
     CREATE_TEMPLATE: 'Create template',
+    ONPREM_CREATE_TEMPLATE_DISABLE:
+        'This configuration is not supported by our deployment wizard. Manual deployment is possible.',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
@@ -1044,7 +1046,7 @@ export const GENERAL = {
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
     SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
-    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on On-Premises configuration',
+    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on-premises configuration',
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
@@ -1218,21 +1220,21 @@ export const GENERAL = {
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
-        'The script is a data collection tool based on PowerShell that gathers and then uploads SQL Server configuration and performance data to Workload Factory. The migration advisor assesses the data and plans FSx for ONTAP deployment for your SQL Server environment.',
+        'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
-    RSS_CONFIGURATION: 'RSS configuration',
+    RSS_CONFIGURATION: 'Network adapter settings',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
-    MICROSOFT_SQL_PATCH: 'Microsoft SQL patch',
-    MAXDOP_PATCH: 'MAXDOP patch',
+    MICROSOFT_SQL_PATCH: 'Microsoft SQL Server patch',
+    MAXDOP_PATCH: 'MAXDOP',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
-    LICENSE_SQL_SERVER: 'License (SQL Server)',
-    APPLICATION: 'Application',
+    LICENSE_SQL_SERVER: 'License',
+    APPLICATION: 'Application (SQL Server)',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        'Total managed instances include only those whose assessment has been completed and are currently online.'
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };
 
 export const CODE_VIEWER = {

@@ -1011,6 +1011,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeComputeConfigForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/compute`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1142,5 +1149,6 @@ export const {
     useOptimizeStorageTierMutation,
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
-    useTriggerInstanceAssessmentMutation
+    useTriggerInstanceAssessmentMutation,
+    useOptimizeComputeConfigForBulkMutation
 } = getWellApi;

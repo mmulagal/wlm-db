@@ -119,6 +119,31 @@ function parseStorageDetailsByDb(value: string) {
     }
 }
 
+function parseAoagReadReplica(value: string) {
+    try {
+        const correctedValue = value.replace(/\\/g, '\\\\');
+        const parsedValue = JSON.parse(correctedValue);
+        if (
+            Array.isArray(parsedValue) &&
+            parsedValue.every(
+                item =>
+                    'databaseName' in item &&
+                    'replicaId' in item &&
+                    'replicaServerName' in item &&
+                    'syncStateDesc' in item &&
+                    'replicaRole' in item
+            )
+        ) {
+            return parsedValue;
+        }
+        if (typeof parsedValue === 'object' && parsedValue.error) {
+            logger.error(`Error: ${parsedValue.error}`);
+        }
+    } catch (error) {
+        logger.error(`Error parsing aoagReadReplica: ${error}`);
+    }
+}
+
 function convertToDate(dateString: string): Date {
     return moment(dateString, 'YYYYMMDDHHmmss').toDate();
 }
@@ -136,6 +161,7 @@ export {
     parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
+    parseAoagReadReplica,
     convertToDate,
     generateUniqueId
 };

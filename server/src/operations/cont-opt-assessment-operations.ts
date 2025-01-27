@@ -403,7 +403,8 @@ async function driftAssessmentDataCollection(
 async function triggerAssessment(
     managedInstance: DatabaseInstancesIncludingResource,
     parentJobId: string,
-    fields?: string
+    fields?: string,
+    skipInstanceLevelJobCreation: boolean = false
 ) {
     logger.info('Triggering drift assessment ', { managedInstance, parentJobId, fields });
 
@@ -415,12 +416,24 @@ async function triggerAssessment(
         region,
         resource_id: databaseHostId,
         database_instance_id: databaseInstanceId,
+        database_instance_name: databaseInstanceName,
         resource
     } = managedInstance;
+
+    const { resource_name: resourceName } = resource;
+    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    const instanceDetailsForJob = JSON.stringify({
+        hostName: resourceName,
+        resourceId: databaseHostId,
+        databaseInstanceId,
+        databaseInstanceName,
+        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
+    });
 
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
     let cloudProviderAccountId;
+
     try {
         const instanceDetails = await getInstanceDetails(
             accountId,
@@ -437,6 +450,21 @@ async function triggerAssessment(
         errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+    }
+
+    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
+    const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+    if (!skipInstanceLevelJobCreation) {
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            name: jobName,
+            description: jobDescription,
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
+        });
+        parentJobId = jobId;
     }
 
     try {
@@ -505,7 +533,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                 const errorMessage = `No managed instances found for account ${accountId}.`;
                 logger.info(errorMessage);
             } else {
-                let jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
+                const jobDescription = `Assess online SQL Server instances out of ${managedInstances.length} managed instances in your account ${accountId} for best practice misalignments.`;
                 let parentJobStatus = '';
                 const { id: parentJobId } = await registerJob(accountId, '', '', {
                     name: jobDescription,
@@ -522,37 +550,7 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                         managedInstances.map(
                             async managedInstance => {
                                 try {
-                                    const {
-                                        credentials_id: credentialsId,
-                                        region,
-                                        resource_id: databaseHostId,
-                                        database_instance_id: databaseInstanceId,
-                                        database_instance_name: databaseInstanceName,
-                                        resource
-                                    } = managedInstance;
-
-                                    const { resource_name: resourceName } = resource;
-                                    const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-                                    const instanceDetailsForJob = JSON.stringify({
-                                        hostName: resourceName,
-                                        resourceId: databaseHostId,
-                                        databaseInstanceId,
-                                        databaseInstanceName,
-                                        sqlServerDeploymentType: RESOURCESTYPE.MSSQL
-                                    });
-
-                                    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceWithInstanceName}`;
-                                    jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
-                                    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-                                        name: jobName,
-                                        description: jobDescription,
-                                        resourceName: resourceWithInstanceName,
-                                        startTime: Date.now(),
-                                        status: JOBSTATUS.IN_PROGRESS,
-                                        type: JOBTYPE.ASSESSMENT,
-                                        parentJobId
-                                    });
-                                    await triggerAssessment(managedInstance, jobId, fields);
+                                    await triggerAssessment(managedInstance, parentJobId, fields);
                                 } catch (error) {
                                     assessmentErrors.push(error);
                                 }
@@ -1040,7 +1038,7 @@ async function handleAssessment(
 ) {
     let jobStatus = '';
     try {
-        await triggerAssessment(managedInstance, masterAssessmentJobId, fields);
+        await triggerAssessment(managedInstance, masterAssessmentJobId, fields, true);
     } catch (error) {
         jobStatus = JOBSTATUS.FAILED;
         await updateJobDetails(accountId, masterAssessmentJobId, {

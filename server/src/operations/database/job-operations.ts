@@ -27,7 +27,7 @@ import {
     JobSummaryQueryType
 } from '../../routes/types/jobs.types';
 import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
-import { getRegionDetails, isDemo } from '../../utils/utils';
+import { getRegionDetails, isDemo, sleep } from '../../utils/utils';
 import { RegionDetailsType } from '../../routes/types/generic.types';
 
 const logger = getLogger();
@@ -98,7 +98,19 @@ function isValidStartTime(startTime: number) {
 }
 
 function formatJobDbSchema(accountId: string, credentialsId: string, region: string, job: JobRecordType) {
-    const { type, status, resourceName, name, description, error, startTime, endTime, initiator, parentJobId } = job;
+    const {
+        type,
+        status,
+        resourceName,
+        name,
+        description,
+        error,
+        startTime,
+        endTime,
+        initiator,
+        parentJobId,
+        metadata
+    } = job;
     return {
         account_id: accountId,
         credentials_id: credentialsId,
@@ -112,7 +124,8 @@ function formatJobDbSchema(accountId: string, credentialsId: string, region: str
         start_time: isValidStartTime(startTime) ? new Date(startTime) : new Date(),
         initiator,
         end_time: endTime ? new Date(endTime) : undefined,
-        parent_job_id: parentJobId || undefined
+        parent_job_id: parentJobId || undefined,
+        metadata
     };
 }
 
@@ -415,7 +428,12 @@ async function updateParentJobStatus(accountId: string, parentId: string, errorM
     logger.info('Updating parent job', { accountId, parentId });
 
     const parentJob = await getJobDetails(accountId, parentId);
-    if (parentJob.status !== JOBSTATUS.FAILED) {
+
+    if (parentJob.status === JOBSTATUS.COMPLETED || parentJob.status === JOBSTATUS.FAILED) {
+        return;
+    }
+
+    while (parentJob.status === JOBSTATUS.IN_PROGRESS) {
         const allSubJobs = await listJobs(accountId, '', '', parentId);
 
         const jobStatus: JOBSTATUS = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
@@ -427,14 +445,16 @@ async function updateParentJobStatus(accountId: string, parentId: string, errorM
             : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
             ? JOBSTATUS.WARNING
             : JOBSTATUS.IN_PROGRESS;
-
         const modifiedJobData = {
             status: jobStatus,
             endTime: Date.now(),
             ...(errorMsg ? { error: errorMsg } : {})
         };
-
-        await updateJobDetails(accountId, parentId, modifiedJobData);
+        if (jobStatus !== JOBSTATUS.IN_PROGRESS) {
+            await updateJobDetails(accountId, parentId, modifiedJobData);
+            return;
+        }
+        await sleep(30000);
     }
 }
 

@@ -70,10 +70,12 @@ describe('Marketing API operations ', () => {
                         monthlyChangeRatePercentage: 30
                     }
                 );
-            } catch (error: any) {
-                expect(error.message).toBe(
-                    `No EBS volumes found for the provided instance: ${instanceWithoutEbs?.ec2InstanceId}`
-                );
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    expect(error.message).toBe(
+                        `No EBS volumes found for the provided instance: ${instanceWithoutEbs?.ec2InstanceId}`
+                    );
+                }
             }
         }
     });
@@ -131,10 +133,12 @@ describe('Marketing API operations ', () => {
                         monthlyChangeRatePercentage: 30
                     }
                 );
-            } catch (error: any) {
-                expect(error.message).toBe(
-                    `No EBS volumes found for the provided instance: ${instanceWithoutEbs?.ec2InstanceId}`
-                );
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    expect(error.message).toBe(
+                        `No EBS volumes found for the provided instance: ${instanceWithoutEbs?.ec2InstanceId}`
+                    );
+                }
             }
         }
     });

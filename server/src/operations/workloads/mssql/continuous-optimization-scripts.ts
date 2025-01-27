@@ -672,7 +672,7 @@ Write-Output $jsonResult
 `;
 
 const CHECK_NODE_STATUS = (nodeName: string) => `
-    Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     #Check Node Status
     Function Check-NodeStatus {
         param (
@@ -708,7 +708,7 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
 
 const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
 #Move Cluster Groups
-Start-Transcript -Path } ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
+Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
 Function Move-AllClusterGroups {
     param (
         [Parameter(Mandatory = $true)]
@@ -763,7 +763,7 @@ Write-Output $jsonResult
 
 const GET_CLUSTER_NODE_NAMES = () => `
     #Get cluster node names 
-    Start-Transcript -Path } ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
@@ -795,12 +795,41 @@ const GET_RSS_CONFIG_DETAILS = () => `
     # Combine the results
     $result = [PSCustomObject]@{
         adapters = $result
-        vpuCount = $vcpus
+        vcpuCount = $vcpus
         tcpOffloadState = $tcpOffloadState -as [string]
     }
 
     $jsonResult = $result | ConvertTo-Json -Compress
     Write-Output $jsonResult
+`;
+
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+    $result = @{}
+    try {
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.WaitForStatus('Running', '00:00:20')
+
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.Start()
+        
+        $SQLService.WaitForStatus('Running', '00:00:20')
+        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+    } catch {
+        $result = @{ status = 'failed'; error = $_.Exception.Message }
+    } finally {
+        $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Output $jsonResult
+    }
 `;
 
 const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
@@ -822,15 +851,25 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     }
 
     $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
-    $maxDopResult =  Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName" 
+    $maxDopResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName"
 
-    # Parse the result to extract the run_value
-    $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
-        $_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)' | Out-Null
-        $matches[4]
+    # Initialize maxDop to 0
+    $maxDop = "0"
+
+    # Check if maxDopResult is not empty and parse the result to extract the run_value
+    if ($maxDopResult) {
+        $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
+            if ($_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)') {
+                $matches[4]
+            }
+        } | Select-Object -First 1
     }
 
-    # Combine the results
+    # Check if maxDop is empty or null, set to 0 if it is
+    if (-not $maxDop) {
+        $maxDop = "0"
+    }
+
     $result = [PSCustomObject]@{
         vcpuCount = $vcpus
         maxDOP = $maxDop
@@ -849,5 +888,6 @@ export {
     MOVE_ALL_CLUSTER_GROUPS,
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
+    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS
 };

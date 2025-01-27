@@ -23,17 +23,26 @@ const CopyToClipboardCommon = ({
     const [visible, setVisible] = useState<boolean>(false);
 
     const handleCopy = () => {
-        if (contentForCopyRef.current) {
-            contentForCopyRef.current.select(); // Select the text in the textarea
-            navigator.clipboard
-                .writeText(contentForCopyRef.current.value) // Use Clipboard API to copy
-                .then(() => {
-                    setVisible(true);
-                    setTimeout(() => setVisible(false), 1500); // Show tooltip for 1.5 seconds
-                })
-                .catch(err => {
-                    console.error('Failed to copy text: ', err);
-                });
+        try {
+            // Create a temporary textarea element
+            const textarea = document.createElement('textarea');
+            textarea.value = value; // Set the text to copy
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px'; // Move it offscreen
+            document.body.appendChild(textarea); // Append to the document
+
+            // Select the text and copy
+            textarea.select();
+            document.execCommand('copy'); // Fallback method for older browsers
+
+            // Clean up
+            document.body.removeChild(textarea);
+
+            // Show success message
+            setVisible(true);
+            setTimeout(() => setVisible(false), 1500);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
         }
     };
 

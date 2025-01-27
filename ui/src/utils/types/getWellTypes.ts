@@ -28,6 +28,7 @@ export interface GetWellSliceInterface {
     inProgressHostData: any;
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
+    recommendedInstanceInBulk?: any;
 }
 
 interface CountBreakDown {
@@ -57,7 +58,7 @@ export interface AssessmentResponseInterface {
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
     microsoftSqlPatch?: PerConfigInterface;
-    maxdop?: PerConfigInterface;
+    maxDOP?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
@@ -96,6 +97,7 @@ export interface PerConfigInterface {
         operationStartTime?: number;
         operationEndTime?: number;
         securityNonCompliantCount?: number;
+        otherNonCompliantCount?: number;
     }>;
     rssAdapters?: Array<RSSConfigAdapterInterface>;
     tcpOffloadState?: string;

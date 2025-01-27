@@ -11,20 +11,7 @@ const ComputeInformation = () => {
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            if (selectedOnPremHostDetails?.sqlInstances) {
-                setInstanceData(selectedOnPremHostDetails?.sqlInstances);
-            } else {
-                let instanceList: any = [];
-                selectedOnPremHostDetails?.sqlServerInstances?.map((host: any) => {
-                    instanceList.push({
-                        sqlInstanceName: host,
-                        noOfVcpusInUse: '',
-                        memory: '',
-                        networkPerformance: ''
-                    });
-                });
-                setInstanceData(instanceList);
-            }
+            setInstanceData(selectedOnPremHostDetails?.sqlServerInstances || []);
         }
     }, [selectedOnPremHostDetails]);
 

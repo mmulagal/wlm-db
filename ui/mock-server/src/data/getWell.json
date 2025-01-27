@@ -317,26 +317,26 @@
         "status": "not-optimized",
         "recommended": "optimized",
         "severity": "warning",
-        "recommendation": "When Workload Factory detects that your database infrastructure is not meeting the best practices for RSS Config Settings, the database instance is considered not optimized. A database instance that is not optimized might result in sub-optimal network performances.",
+        "recommendation": "To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.",
         "tags": [
-            "Cost optimization"
+          "Cost optimization"
         ],
         "rssAdapters": [
-            {
-                "adapterName": "Ethernet 3",
-                "rssProfile": "NUMStatic",
-                "rssEnabled": false,
-                "baseProcessorNumber": 0,
-                "numberOfReceiveQueues": 2
-            }
+          {
+            "adapterName": "Ethernet 3",
+            "rssEnabled": true,
+            "rssProfile": "",
+            "baseProcessorNumber": 2,
+            "numberOfReceiveQueues": 32
+          }
         ],
-        "tcpOffloadState": "Enabled",
+        "tcpOffloadState": "Disabled",
         "recommendedAdapterSettings": {
-            "recommendedRssProfile": "NUMStatic",
-            "recommendedBaseProcessorNumber": 2,
-            "recommendedReceiveQueues": 2
+          "recommendedRssProfile": "NUMAStatic",
+          "recommendedBaseProcessorNumber": 2,
+          "recommendedReceiveQueues": 2
         }
-    },
+      },
     "license": {
         "name": "sql-license",
         "status": "not-optimized",
@@ -380,11 +380,12 @@
                 "ec2InstanceId": "i-07e76a4b916548dc0",
                 "operationStartTime": 551,
                 "operationEndTime": 115,
-                "securityNonCompliantCount": 1
+                "securityNonCompliantCount": 1,
+                "otherNonCompliantCount": 1
             }
         ]
     },
-    "maxdop" : {
+    "maxDOP" : {
         "name": "maxdop",
         "status": "not-optimized",
         "recommended": 4,

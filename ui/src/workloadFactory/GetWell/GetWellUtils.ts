@@ -15,11 +15,15 @@ import {
 import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    ASSESSMENT_CONFIG_NAMES,
+    FINDINGS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
+    INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
-    OPTIMIZE_POLLING_INTERVAL
+    OPTIMIZE_POLLING_INTERVAL,
+    STATUS_CONST
 } from '../../utils/consts';
 import {
     AssessmentResponseInterface,
@@ -37,7 +41,7 @@ export const cardDataDefault: GwCardDataInterface = {
         category: 'storage',
         block_one: {
             type: 'Storage sizing',
-            value: 'Storage tier'
+            value: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
         },
         block_two: {
             type: 'Status',
@@ -62,7 +66,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'headroom',
         category: 'storage',
         block_one: {
-            value: 'File system headroom',
+            value: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
             type: 'Storage sizing'
         },
         block_two: {
@@ -89,7 +93,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'log-drive-size',
         category: 'storage',
         block_one: {
-            value: 'Log drive size',
+            value: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
             type: 'Storage sizing'
         },
         block_two: {
@@ -116,7 +120,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'tempdb-drive-size',
         category: 'storage',
         block_one: {
-            value: 'TempDB drive size',
+            value: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
             type: 'Storage sizing'
         },
         block_two: {
@@ -197,7 +201,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'tempdb-files-location',
         category: 'storage',
         block_one: {
-            value: 'TempDB placement',
+            value: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
             type: 'Storage layout'
         },
         block_two: {
@@ -322,7 +326,7 @@ export const cardDataDefault: GwCardDataInterface = {
         category: 'compute',
         block_one: {
             type: 'Compute',
-            value: 'Compute rightsizing'
+            value: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         },
         block_two: {
             type: 'Status',
@@ -365,9 +369,9 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'RSS configuration recommendation',
+            title: 'Network adapter settings recommendation',
             descriptionRssConfig: {
-                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in MSSQL instances. RSS \ndistributes network processing across multiple processors, preventing bottlenecks and enhancing system performance.',
+                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in Microsoft SQL Server \ninstances. RSS distributes network processing across multiple processors, preventing bottlenecks and enhancing system \nperformance.',
                 second: 'Recommended RSS settings:',
                 points: [
                     'Disable TCP Offloading Features: Ensure all TCP offloading features are disabled.',
@@ -413,7 +417,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'sql-license',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.LICENSE_SQL_SERVER
         },
         block_two: {
@@ -451,7 +455,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'microsoft-sql-patch',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.MICROSOFT_SQL_PATCH
         },
         block_two: {
@@ -478,7 +482,7 @@ export const cardDataDefault: GwCardDataInterface = {
         id: 'maxdop',
         category: 'application',
         block_one: {
-            type: 'Application',
+            type: GENERAL.APPLICATION,
             value: GENERAL.MAXDOP_PATCH
         },
         block_two: {
@@ -486,7 +490,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_three: {
-            type: 'Missing patches',
+            type: 'MAXDOP',
             value: '',
             smallFont: true
         },
@@ -495,7 +499,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         recommendation: {
-            title: 'MAXDOP patch assessment recommendation',
+            title: 'MAXDOP assessment recommendation',
             description:
                 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nFor OLTP workloads, set MAXDOP to 8 or fewer. \nFor OLAP workloads, adjust accordingly but avoid setting it to 0 to prevent excessive parallelism and contention. \nProper MAXDOP configuration enhances performance and efficiency.'
         },
@@ -605,7 +609,7 @@ export const formatMaxdopPatchCardConfig = (
     optimizingData: { [key: string]: string },
     cardsData: any
 ) => {
-    let item: any = data?.maxdop;
+    let item: any = data?.maxDOP;
     let categoryVal = 'application';
     let itemName = item?.name || 'maxdop';
     let status = item?.status || '';
@@ -658,11 +662,14 @@ export const formatOsPatchCardConfig = (
     let totalViolations = 0;
     let criticalViolations = 0;
     let securityViolations = 0;
+    let otherViolations = 0;
     data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
+        totalViolations += perInstance?.otherNonCompliantCount || 0;
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
+        otherViolations += perInstance?.otherNonCompliantCount || 0;
     });
 
     cardsData = {
@@ -687,7 +694,8 @@ export const formatOsPatchCardConfig = (
             errorMessage: item?.errorMessage,
             osPatchMissingPatches: {
                 critical: criticalViolations,
-                security: securityViolations
+                security: securityViolations,
+                other: otherViolations
             }
         }
     };
@@ -714,34 +722,43 @@ export const formatRssConfigCardConfig = (
         tcpOffloading: GENERAL.FINDINGS.OPTIMIZED,
         receiveQueues: GENERAL.FINDINGS.OPTIMIZED,
         rssProfile: GENERAL.FINDINGS.OPTIMIZED,
+        rssStatus: GENERAL.FINDINGS.OPTIMIZED,
         baseProcessorNumber: GENERAL.FINDINGS.OPTIMIZED
     };
     let optimizedValue: any = {
         tcpOffloading: item?.tcpOffloadState,
         receiveQueues: item?.recommendedAdapterSettings?.recommendedReceiveQueues,
         rssProfile: item?.recommendedAdapterSettings?.recommendedRssProfile,
+        rssStatus: 'Enabled',
         baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
     };
 
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
+            optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['rssProfile'] = adapter?.rssProfile;
+            optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['rssStatus'] = 'Disabled';
+            optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+            optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+            optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
         } else {
             if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
                 findingReasons++;
                 optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['rssProfile'] = item?.recommendedAdapterSettings?.recommendedRssProfile;
+                optimizedValue['rssProfile'] = adapter?.rssProfile;
             }
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
                 optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['baseProcessorNumber'] =
-                    item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber;
+                optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;
                 optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['receiveQueues'] = item?.recommendedAdapterSettings?.recommendedReceiveQueues;
+                optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
             }
         }
     });
@@ -1345,6 +1362,270 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizingInstanceData(false));
 };
 
+const updateProgressForBulk = (
+    dispatch: any,
+    type: string,
+    jobId: string,
+    inProgressOptimizationData: any,
+    jobToInstanceMapForBulk: any,
+    inProgressHostData: any
+) => {
+    dispatch(
+        setInProgressOptimizationData({
+            ...inProgressOptimizationData,
+            [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                const jobInstances =
+                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => host.sqlServerInstances) || [];
+
+                return !jobInstances.includes(instanceId);
+            })
+        })
+    );
+    dispatch(
+        setInProgressHostData({
+            ...inProgressHostData,
+            [type]: inProgressHostData?.[type]?.filter(
+                //Data host id to check
+                (hostId: any) => {
+                    const jobHostIds = jobToInstanceMapForBulk[jobId]?.databaseHosts.map((host: any) => host.id) || [];
+
+                    return !jobHostIds.includes(hostId);
+                }
+            )
+        })
+    );
+};
+
+const updateProgressForSingle = (
+    dispatch: any,
+    type: string,
+    jobId: string,
+    inProgressOptimizationData: any,
+    jobToInstanceMap: any,
+    inProgressHostData: any
+) => {
+    dispatch(
+        setInProgressOptimizationData({
+            ...inProgressOptimizationData,
+            [type]: inProgressOptimizationData?.[type]?.filter(
+                (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+            )
+        })
+    );
+    dispatch(
+        setInProgressHostData({
+            ...inProgressHostData,
+            [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId)
+        })
+    );
+};
+
+const updateAssessmentWithCompletedJobs = (
+    dispatch: any,
+    operation: string | undefined,
+    type: string,
+    jobId: string,
+    rowData: any,
+    bulkRowData: any
+) => {
+    const state = store.getState();
+    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    const {
+        jobToInstanceMap,
+        jobToInstanceMapForBulk,
+        inProgressOptimizationData,
+        inProgressHostData,
+        optimizingData
+    } = state.getWellOptimize;
+    dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+
+    if (operation === 'bulk') {
+        updateProgressForBulk(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMapForBulk,
+            inProgressHostData
+        );
+        bulkRowData?.map((row: any) => {
+            updateOptimizationStatus(row, dispatch);
+        });
+        setTimeout(() => {
+            formatGetWellData(dispatch);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: `${bulkRowData?.[0]?.name} instances optimized successfully.`
+                })
+            );
+        }, 0);
+    } else {
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: 'optimized'
+            })
+        );
+        updateProgressForSingle(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMap,
+            inProgressHostData
+        );
+
+        updateOptimizationStatus(rowData, dispatch);
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                message: `${rowData?.name} optimized successfully.`
+            })
+        );
+    }
+};
+
+const updateAssessmentWithWarningJobs = (
+    dispatch: any,
+    operation: string | undefined,
+    type: string,
+    jobId: string,
+    rowData: any,
+    bulkRowData: any,
+    subjobs: any
+) => {
+    const state = store.getState();
+    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    const {
+        jobToInstanceMap,
+        jobToInstanceMapForBulk,
+        inProgressOptimizationData,
+        inProgressHostData,
+        optimizingData
+    } = state.getWellOptimize;
+    dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+
+    if (operation === 'bulk') {
+        updateProgressForBulk(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMapForBulk,
+            inProgressHostData
+        );
+        let successJobCount = 0;
+        bulkRowData?.map((row: any) => {
+            const isSuccess = subjobs?.filter((subjob: any) => {
+                return (
+                    subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
+                    subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
+                    subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
+                );
+            });
+            if (isSuccess?.length) {
+                successJobCount++;
+                updateOptimizationStatus(row, dispatch);
+            }
+        });
+        setTimeout(() => {
+            formatGetWellData(dispatch);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: `${successJobCount} out of ${bulkRowData?.length} ${bulkRowData?.[0]?.name} instances optimized successfully.`
+                })
+            );
+        }, 0);
+    } else {
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: 'optimized'
+            })
+        );
+        updateProgressForSingle(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMap,
+            inProgressHostData
+        );
+        updateOptimizationStatus(rowData, dispatch);
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                message: `${rowData?.name} optimized successfully.`
+            })
+        );
+    }
+};
+
+const updateAssessmentWithFailedJobs = (
+    dispatch: any,
+    operation: string | undefined,
+    type: string,
+    jobId: string,
+    rowData: any,
+    bulkRowData: any,
+    failedMsgData: any
+) => {
+    const state = store.getState();
+    const {
+        jobToInstanceMap,
+        jobToInstanceMapForBulk,
+        inProgressOptimizationData,
+        inProgressHostData,
+        optimizingData
+    } = state.getWellOptimize;
+    if (operation === 'bulk') {
+        updateProgressForBulk(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMapForBulk,
+            inProgressHostData
+        );
+
+        setTimeout(() => {
+            formatGetWellData(dispatch);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: failedMsgData
+                })
+            );
+        }, 0);
+    } else {
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [rowData?.id]: ''
+            })
+        );
+        updateProgressForSingle(
+            dispatch,
+            type,
+            jobId,
+            inProgressOptimizationData,
+            jobToInstanceMap,
+            inProgressHostData
+        );
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.ERROR,
+                message: failedMsgData
+            })
+        );
+    }
+};
+
 export const handleOptimizeStorageJob = (
     res: any,
     rowData: any,
@@ -1352,7 +1633,8 @@ export const handleOptimizeStorageJob = (
     getJobDetailApi: any,
     dispatch: any,
     type?: any,
-    operation?: string
+    operation?: string,
+    bulkRowData?: any
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -1365,108 +1647,32 @@ export const handleOptimizeStorageJob = (
                 }).then((jobRes: any) => {
                     const status = jobRes?.data?.status;
                     const jobId = jobRes?.data?.id;
-                    const state = store.getState();
-                    const { allmssqlHostAssessmentData } = state.inventoryV2;
-                    const { jobToInstanceMap, jobToInstanceMapForBulk } = state.getWellOptimize;
-                    let optimizingData = state.getWellOptimize.optimizingData || {};
-                    let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
+                    const subjobs = jobRes?.data?.subJobs;
                     if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
-                        dispatch(
-                            setOptimizingData({
-                                ...optimizingData,
-                                [rowData?.id]: 'optimized'
-                            })
-                        );
-
-                        if (operation === 'bulk') {
-                            dispatch(
-                                setInProgressOptimizationData({
-                                    ...inProgressOptimizationData,
-                                    [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
-                                        const jobInstances =
-                                            jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap(
-                                                (host: any) => host.sqlServerInstances
-                                            ) || [];
-
-                                        return !jobInstances.includes(instanceId);
-                                    })
-                                })
-                            );
-                            dispatch(
-                                setInProgressHostData({
-                                    ...inProgressHostData,
-                                    [type]: inProgressHostData?.[type]?.filter(
-                                        //Data host id to check
-                                        (hostId: any) => {
-                                            const jobHostIds =
-                                                jobToInstanceMapForBulk[jobId]?.databaseHosts.map(
-                                                    (host: any) => host.id
-                                                ) || [];
-
-                                            return !jobHostIds.includes(hostId);
-                                        }
-                                    )
-                                })
-                            );
-                        } else {
-                            dispatch(
-                                setInProgressOptimizationData({
-                                    ...inProgressOptimizationData,
-                                    [type]: inProgressOptimizationData?.[type]?.filter(
-                                        (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
-                                    )
-                                })
-                            );
-                            dispatch(
-                                setInProgressHostData({
-                                    ...inProgressHostData,
-                                    [type]: inProgressHostData?.[type]?.filter(
-                                        (hostId: any) => hostId !== jobToInstanceMap[jobId]?.hostId
-                                    )
-                                })
-                            );
-                        }
-
-                        updateOptimizationStatus(rowData, dispatch);
-                        formatGetWellData(dispatch);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                message: `${rowData?.name} optimized successfully.`
-                            })
+                        updateAssessmentWithCompletedJobs(dispatch, operation, type, jobId, rowData, bulkRowData);
+                        dispatch(setOptimizingInstanceData(false));
+                        clearInterval(jobInterval);
+                    } else if (status === JOB_MONITORING_STATUS.WARNING) {
+                        updateAssessmentWithWarningJobs(
+                            dispatch,
+                            operation,
+                            type,
+                            jobId,
+                            rowData,
+                            bulkRowData,
+                            subjobs
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                        dispatch(
-                            setOptimizingData({
-                                ...optimizingData,
-                                [rowData?.id]: ''
-                            })
-                        );
-                        dispatch(
-                            setInProgressOptimizationData({
-                                ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
-                                )
-                            })
-                        );
-                        dispatch(
-                            setInProgressHostData({
-                                ...inProgressOptimizationData,
-                                [type]: inProgressOptimizationData?.[type]?.filter(
-                                    (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.hostId
-                                )
-                            })
-                        );
-                        formatGetWellData(dispatch);
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: failedMsgData
-                            })
+                        updateAssessmentWithFailedJobs(
+                            dispatch,
+                            operation,
+                            type,
+                            jobId,
+                            rowData,
+                            bulkRowData,
+                            failedMsgData
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
@@ -1553,7 +1759,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                                 }
                             }
                         };
-                    } else if (rowData?.name === 'Compute rightsizing') {
+                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
                         return {
                             ...instance,
                             assessments: {
@@ -1595,4 +1801,130 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
         }
     });
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+};
+
+export const checkIfDisableForOptimize = (inProgressHostData: any, name: string, rowData: any) => {
+    let isDisabled = false;
+    let errorMessage = '';
+    if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+        isDisabled = true;
+        errorMessage = 'Optimization in progress for this host';
+    } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+        isDisabled = true;
+        errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
+    } else if (
+        !rowData?.assessmentStatus ||
+        rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
+    ) {
+        isDisabled = true;
+        errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
+    } else if (
+        name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
+        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                !rowData?.sizingViolations?.underProvisionedDrives?.length))
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+    } else if (
+        name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE &&
+        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                !rowData?.sizingViolations?.underProvisionedDrives?.length))
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+    } else if (
+        name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+                !rowData?.sizingViolations?.underProvisionedDrives?.length))
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
+    } else if (
+        (name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
+            name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) &&
+        rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase() &&
+        !rowData?.sizingViolations?.underProvisionedDrives?.length &&
+        rowData?.sizingViolations?.ignoredDrives?.length
+    ) {
+        isDisabled = true;
+        errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+    }
+
+    return { isDisabled, errorMessage };
+};
+
+export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string) => {
+    const state = store.getState();
+    const { inProgressHostData } = state.getWellOptimize;
+
+    // If no rows are selected, reset `isDisabled` for all rows
+    return tableData.map((row: any) => {
+        const { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row);
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP || isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
+export const disableOptimizeCheckBoxForOptimizeCase = (tableData: any, type: string, selectedRowsForOptimize: any) => {
+    const state = store.getState();
+    const { inProgressHostData, inProgressOptimizationData } = state.getWellOptimize;
+
+    // Extract IDs of rows currently selected for optimization
+    const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
+
+    return tableData.map((row: any) => {
+        // Check if the current row is being optimized
+        const isBeingOptimized =
+            selectedInstanceIds.includes(row.id) && inProgressOptimizationData?.[type]?.includes(row.id);
+
+        const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
+
+        // Combine both conditions
+        let isDisabled = isBeingOptimized || hasStatusOffline;
+        let errorMessage = '';
+        if (!isDisabled) {
+            ({ isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, type, row));
+        }
+
+        return {
+            ...row,
+            cellProps: {
+                ...row.cellProps,
+                isDisabled,
+                selectionProps: {
+                    title: errorMessage,
+                    titleProps: {
+                        placement: 'bottom'
+                    }
+                }
+            }
+        };
+    });
+};
+
+export const nameToIdConfigMapping = (name: string) => {
+    return name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
+        ? 'log-drive-size'
+        : name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+        ? 'headroom'
+        : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ? 'tempdb-drive-size'
+        : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
+        ? 'performance-tier'
+        : 'compute-rightsizing';
 };

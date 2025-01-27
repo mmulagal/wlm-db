@@ -8,11 +8,6 @@
     "apiDocUrl": "<%=process.env.SWAGGER%>",
     "stageIntegrations": [
         {
-            "path": "/marketing",
-            "renderType": "iframe/v2",
-            "iframeUrl": "/wlmdb/index.html"
-        },
-        {
             "path": "/",
             "renderType": "iframe/v2",
             "iframeUrl": "/wlmdb/index.html"

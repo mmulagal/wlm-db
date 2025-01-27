@@ -1,4 +1,4 @@
-import { Static, Type } from '@fastify/type-provider-typebox';
+import { Type } from '@fastify/type-provider-typebox';
 
 const UploadMetricsFileBody = Type.Object({
     fileName: Type.String(),
@@ -34,7 +34,7 @@ interface NodeDetail {
 interface WindowsConfig {
     clusterNodeNames: string[];
     nodeDetails: NodeDetail[];
-    windowsClusterName: string;
+    windowsSystemName: string;
     belongsToCluster: boolean;
 }
 
@@ -92,7 +92,14 @@ interface SqlInstanceDetails {
     vcpusPerInstance: string;
     cpuUtilization: string;
     deploymentType: string;
+    isReadReplica?: string;
+    aoagReadReplica?: string;
+    // Below items are not part of the report, but added for the purpose of TCO calculation in the backend
     networkPerformance?: string;
+    totalIops?: number;
+    totalThroughput?: number;
+    totalStorage?: number;
+    memory?: number;
 }
 
 interface OnPremCollectionObjectV1 {
@@ -101,22 +108,6 @@ interface OnPremCollectionObjectV1 {
     timestamp: string;
     scriptVersion: string;
 }
-
-const OnPremDatabaseResourceParams = Type.Object({
-    resourceId: Type.String(),
-    resourceName: Type.String(),
-    deploymentModel: Type.String(),
-    sqlServerInstances: Type.Array(Type.String()),
-    onPremisesNodes: Type.Array(Type.String())
-});
-
-type OnPremDatabaseResourcesParamsType = Static<typeof OnPremDatabaseResourceParams>;
-
-const OnPremDatabaseResourcesResponse = Type.Object({
-    count: Type.Number(),
-    items: Type.Array(OnPremDatabaseResourceParams),
-    nextToken: Type.Optional(Type.String())
-});
 
 export {
     UploadMetricsFileBody,
@@ -131,7 +122,5 @@ export {
     CpuUtilization,
     StorageDetailByDB,
     SqlInstanceDetails,
-    OnPremDatabaseResourcesResponse,
-    OnPremDatabaseResourcesParamsType,
     OnPremCollectionObjectV1
 };

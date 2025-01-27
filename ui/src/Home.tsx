@@ -52,6 +52,8 @@ const Home = () => {
                             navigate('../fsxdb/mssql-deploy-wizard');
                         } else if (msg?.data?.payload?.pathname === '/fsxdb/postgreSQL-deploy-wizard') {
                             navigate('../fsxdb/postgreSQL-deploy-wizard');
+                        } else if (msg?.data?.payload?.pathname === '/fsxdb/marketing') {
+                            navigate('../fsxdb/marketing');
                         } else {
                             const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
                             navigate('../fsxdb');

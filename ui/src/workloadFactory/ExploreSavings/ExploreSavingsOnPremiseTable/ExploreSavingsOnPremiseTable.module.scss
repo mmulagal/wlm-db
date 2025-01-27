@@ -4,6 +4,12 @@
 
     margin-top: 24px;
 
+    [class*='Table-module_table-wrapper'] {
+        [class*='Table-module_right-border'] {
+            cursor: not-allowed !important;
+        }
+    }
+
     .container {
         display: flex;
         gap: 8px;
@@ -17,6 +23,13 @@
         .colorText {
             cursor: pointer;
             color: var(--text-button-primary);
+        }
+        [class*='Popover-module_base'] {
+            max-height: 180px;
+            overflow: auto;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
         }
     }
 

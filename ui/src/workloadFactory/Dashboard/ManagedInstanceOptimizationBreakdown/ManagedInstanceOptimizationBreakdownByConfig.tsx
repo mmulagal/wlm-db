@@ -4,7 +4,7 @@ import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
 import { setSelectedConfig, setSelectedConfigSummary } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -25,25 +25,25 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         dispatch(setSelectedConfig(type));
         let configKey = '';
         switch (type) {
-            case 'Storage tier':
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 configKey = 'storageTier';
                 break;
-            case 'File system headroom':
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 configKey = 'fileSystemHeadroom';
                 break;
-            case 'Log drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 configKey = 'logDriveSize';
                 break;
-            case 'TempDB drive size':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 configKey = 'tempdbDriveSize';
                 break;
-            case 'Data files (.mdf)':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 configKey = 'userDataFiles';
                 break;
-            case 'Log files (.ldf)':
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 configKey = 'logFiles';
                 break;
-            case 'TempDB placement':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 configKey = 'tempdbPlacement';
                 break;
             case 'ONTAP':
@@ -108,10 +108,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Storage tier']?.length || 0) / (configData.total || 1)) *
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
+                                (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Storage tier']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -121,13 +122,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('Storage tier');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.storageTier === configData?.total ||
-                                inProgressOptimizationData['Storage tier']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
                             }
                         >
                             Optimize
@@ -146,11 +147,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['File system headroom']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['File system headroom']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -160,13 +161,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('File system headroom');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.fileSystemHeadroom === configData?.total ||
-                                inProgressOptimizationData['File system headroom']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
                             }
                         >
                             Optimize
@@ -185,10 +186,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Log drive size']?.length || 0) / (configData.total || 1)) *
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
+                                (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Log drive size']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -198,13 +200,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('Log drive size');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.logDriveSize === configData?.total ||
-                                inProgressOptimizationData['Log drive size']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
                             }
                         >
                             Optimize
@@ -223,11 +225,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['TempDB drive size']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['TempDB drive size']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -237,13 +239,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('TempDB drive size');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.tempdbDriveSize === configData?.total ||
-                                inProgressOptimizationData['TempDB drive size']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
                             }
                         >
                             Optimize
@@ -262,11 +264,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Data files (.mdf)']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Data files (.mdf)']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -298,11 +300,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Log files (.ldf)']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Log files (.ldf)']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -326,7 +328,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="TempDB placement"
+                        headingText={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
                         percentage={Math.round(((configData.tempdbPlacement || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.tempdbPlacement}
                         afterOutOf={configData.total}
@@ -334,11 +336,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['TempDB placement']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['TempDB placement']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />

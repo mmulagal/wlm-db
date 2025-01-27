@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
 import { setComputeInformation } from '../../../../../store/workloadFactory/exploreSavingsSlice';
-import { generateOptionType } from '../../../../../utils/utilityFunctions';
+import { formatFractionalNumber, generateOptionType } from '../../../../../utils/utilityFunctions';
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 
 const ComputeInputComponent = ({ data }: any) => {
@@ -49,8 +49,6 @@ const ComputeInputComponent = ({ data }: any) => {
         );
     }, [memorySearch]);
 
-    const [dropDownValue, setDropdownValue] = useState<any>(null);
-
     const generateNetworkPerfOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = ['Up to 10 GiB', 'Above 10 GiB'];
         const options: optionType[] = [];
@@ -61,13 +59,20 @@ const ComputeInputComponent = ({ data }: any) => {
         return options;
     }, []);
 
+    const [dropDownValue, setDropdownValue] = useState<any>(
+        data?.networkPerformance === 'upTo10' ? generateNetworkPerfOptions[0] : generateNetworkPerfOptions[1]
+    );
+
     useEffect(() => {
-        if (!data?.networkPerformance) {
+        if (data?.networkPerformance) {
             dispatch(
                 setComputeInformation({
                     type: data?.sqlInstanceName,
                     mode: 'networkPerformance',
-                    value: generateNetworkPerfOptions[0]
+                    value:
+                        data?.networkPerformance === 'upTo10'
+                            ? generateNetworkPerfOptions[0]
+                            : generateNetworkPerfOptions[1]
                 })
             );
         }
@@ -75,8 +80,10 @@ const ComputeInputComponent = ({ data }: any) => {
 
     useEffect(() => {
         setNumberOfCpu(data?.noOfVcpusInUse);
-        setMemory(Number(data?.memory || 0) / GIB_IN_BYTE);
-        setDropdownValue(generateNetworkPerfOptions[0]);
+        setMemory(formatFractionalNumber(Number(data?.memory || 0) / GIB_IN_BYTE, 3));
+        setDropdownValue(
+            data?.networkPerformance === 'upTo10' ? generateNetworkPerfOptions[0] : generateNetworkPerfOptions[1]
+        );
     }, [data]);
 
     return (

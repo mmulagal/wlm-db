@@ -44,7 +44,7 @@ async function calculateMaxDOPDrift(
         );
 
         logger.debug('Persisted max DOP configuration data from DB', persistedConfigurationData);
-        const maxDOP = persistedConfigurationData.config_data as unknown as MaxDOPAssesment;
+        const maxDOP = persistedConfigurationData?.config_data as unknown as MaxDOPAssesment;
 
         let maxDOPAssessment;
 
@@ -95,7 +95,7 @@ async function calculateMaxDOPDrift(
             recommended: recommendedMaxDOP,
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
-            current,
+            current: current.toString(),
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
         };
         return maxDOPResponse;
@@ -208,7 +208,7 @@ async function runMaxDOPAssessment(
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     return {
-        current: maxDOP,
+        current: maxDOP.toString(),
         recommendedMaxDOP,
         status: optimizationStatus
     };

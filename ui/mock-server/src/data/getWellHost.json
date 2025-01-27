@@ -1,8 +1,10 @@
 {
     "databaseHostId": "resource-id-4",
+    "databaseHostName": "STVYGT2",
     "instancesAssessment": [
         {
             "databaseInstanceId": "41",
+            "databaseInstanceName": "MSSQLSERVER",
             "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
@@ -381,7 +383,7 @@
                         }
                     ]
                 },
-                "maxdop" : {
+                "maxDOP" : {
                     "name": "maxdop",
                     "status": "not-optimized",
                     "recommended": 4,
@@ -403,6 +405,7 @@
         },
         {
             "databaseInstanceId": "42",
+            "databaseInstanceName": "MSSQLSERVER2",
             "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
@@ -781,7 +784,7 @@
                         }
                     ]
                 },
-                "maxdop" : {
+                "maxDOP" : {
                     "name": "maxdop",
                     "status": "optimized",
                     "recommended": 4,
@@ -803,6 +806,7 @@
         },
         {
             "databaseInstanceId": "43",
+            "databaseInstanceName": "MSSQLSERVER3",
             "assessments": {
                 "storage": {
                     "timestamp": 1730074791000,
@@ -1181,7 +1185,7 @@
                         }
                     ]
                 },
-                "maxdop" : {
+                "maxDOP" : {
                     "name": "maxdop",
                     "status": "optimized",
                     "recommended": 4,

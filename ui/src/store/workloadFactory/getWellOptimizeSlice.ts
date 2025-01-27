@@ -26,7 +26,8 @@ const initialState: GetWellSliceInterface = {
     inProgressOptimizationData: {},
     inProgressHostData: {},
     jobToInstanceMap: {},
-    jobToInstanceMapForBulk: []
+    jobToInstanceMapForBulk: [],
+    recommendedInstanceInBulk: {}
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -91,6 +92,7 @@ const getWellOptimizeSlice = createSlice({
             state.optimizingData = null;
             state.optimizingInstanceData = false;
             state.selectedRecommendedInstance = null;
+            state.recommendedInstanceInBulk = {};
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -121,6 +123,12 @@ const getWellOptimizeSlice = createSlice({
         },
         setJobToInstanceMapForBulk: (state, action: PayloadAction<any>) => {
             state.jobToInstanceMapForBulk = action.payload;
+        },
+        setRecommendedInstanceInBulk: (state, action: PayloadAction<any>) => {
+            if (!state.recommendedInstanceInBulk[action.payload.type]) {
+                state.recommendedInstanceInBulk[action.payload.type] = {};
+            }
+            state.recommendedInstanceInBulk[action.payload.type] = action.payload.value;
         }
     }
 });
@@ -150,7 +158,8 @@ export const {
     setSelectedRecommendedInstance,
     setInProgressOptimizationData,
     setInProgressHostData,
-    setJobToInstanceMap
+    setJobToInstanceMap,
+    setRecommendedInstanceInBulk
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

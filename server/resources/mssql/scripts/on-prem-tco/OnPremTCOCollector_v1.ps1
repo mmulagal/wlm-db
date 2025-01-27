@@ -1,4 +1,10 @@
 <#
+===============================================================================
+        NETAPP BLUEXP WORKLOAD FACTORY - ONPREM TCO COLLECTOR
+        Version 1.0.0
+        Copyright (c) 2025 NetApp, Inc. All rights reserved.
+===============================================================================
+ 
 .SYNOPSIS
 Collects detailed information about the Windows system and SQL Server instances on a specified remote computer.
 
@@ -88,7 +94,6 @@ function Invoke-SQLQuery {
     }
 }
 
-
 # Function to get drive details for a given node
 function GetDriveDetails {
     param (
@@ -172,6 +177,38 @@ function GetClusterNodeDetails {
     return $nodeDetails
 }
 
+# Function to get AOAG partner details
+function Get-AoagPartnerDetails{
+    param(
+        [string]$instanceName
+    )
+
+    $partnerInstanceResults = @{}
+    ForEach ($queryKey in $queries.Keys) {
+        $query = $queries[$queryKey]
+        # Execute the query using the verified SQL credentials
+        $output = Invoke-SQLQuery -QueryKey $queryKey -Query $query -InstanceName $instanceName -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
+        if ($output) {
+            $partnerInstanceResults[$queryKey] = $output           
+        } else {
+            
+            $partnerInstanceResults[$queryKey] = @{ "error" = "Error running query '$queryKey' on instance $aoagPartnerInstance" } | ConvertTo-Json
+        }
+    }
+        $partnerInstanceResults['deploymentType'] = 'AOAG'
+        $partnerInstanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instanceName -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        $partnerInstanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instanceName -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        $partnerInstanceResults["isReadReplica"] = Invoke-SQLQuery -Query $isReadReplicaQuery -InstanceName $instanceName -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+
+        $filteredInstanceName = $instanceName.Split('\')[-1]
+        $partnerInstanceResults['sqlInstanceName'] = $filteredInstanceName
+        $partnerInstanceResults.Remove('isClustered')
+        $partnerInstanceResults.Remove('isHadrEnabled')
+
+    return $partnerInstanceResults
+
+}
+
 # Collect basic host information
 $osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
 $cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
@@ -228,12 +265,17 @@ $windowsConfig["nodeDetails"] += $hostDetails
 if($belongsToCluster){
     $windowsConfig.Add("clusterNodeNames", $nodeNames)
     $windowsClusterName = Get-Cluster | Select-Object -ExpandProperty Name
-    $windowsConfig.Add("windowsClusterName", $windowsClusterName)
+    $windowsConfig.Add("windowsSystemName", $windowsClusterName)
     $remoteClusterNodes = $nodeNames | Where-Object { $_ -ne $hostname }
     foreach ($node in $remoteClusterNodes) {
         $clusterResult = GetClusterNodeDetails -nodeName $node
         $windowsConfig["nodeDetails"] += $clusterResult
     }
+}
+else{
+    $windowsName = hostname
+    $windowsConfig.Add("windowsSystemName", $windowsName)
+    $windowsConfig.Add("clusterNodeNames", @($windowsName))
 }
 
 # Collect SQL Server instances
@@ -244,14 +286,14 @@ ForEach ($sqlService in $sqlServiceList) {
     $isDefaultInstance = -Not $sqlService.Name.Contains('$')
     $instanceName = $sqlService.Name -Replace "MSSQL\$", ""
     $fciName = Get-FCIName -sqlServerNameToFind $instanceName -ErrorAction SilentlyContinue
-   if ($fciName) {
+    if ($fciName) {
     $serverInstance = if ($isDefaultInstance) { 
         $fciName 
     } else { 
         "$fciName\$instanceName" 
     }
-} else {
-    $serverInstance = if ($isDefaultInstance) { 
+    } else {
+        $serverInstance = if ($isDefaultInstance) { 
         "$Env:ComputerName" 
     } else { 
         "$Env:ComputerName\$instanceName" 
@@ -474,7 +516,7 @@ JOIN
 CROSS APPLY 
     sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
 WHERE 
-    d.name NOT IN ('tempdb', 'master', 'model', 'msdb')
+    d.name NOT IN ('tempdb', 'model', 'msdb')
 ORDER BY 
     d.name FOR JSON PATH
 "@ 
@@ -516,16 +558,7 @@ ForEach ($instance in $finalInstancesList) {
         # Execute the query using the verified SQL credentials
         $output = Invoke-SQLQuery -QueryKey $queryKey -Query $query -InstanceName $instance -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
         if ($output) {
-            try {
-                # Attempt to convert the output from JSON and back to JSON to standardize the format
-                $tempOutput = $output[0] | ConvertFrom-Json
-                $jsonOutput = $tempOutput | ConvertTo-Json -Depth 4
-                $instanceResults[$queryKey] = $jsonOutput
-            }
-            catch {
-                # If conversion fails, store the raw output
-                $instanceResults[$queryKey] = $output
-            }
+            $instanceResults[$queryKey] = $output           
         } else {
             Write-Output "Error running query '$queryKey' on instance $instance"
             $instanceResults[$queryKey] = @{ "error" = "Error running query '$queryKey' on instance $instance" } | ConvertTo-Json
@@ -549,11 +582,67 @@ ForEach ($instance in $finalInstancesList) {
         }
         { $instanceResults['isHadrEnabled'] -eq 1 } {
             $instanceResults['deploymentType'] = 'AOAG'
-            break
+             $isReadReplicaQuery = "SET NOCOUNT ON;SELECT 
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM sys.dm_hadr_availability_replica_states ars
+                    WHERE ars.role_desc = 'SECONDARY' AND ars.is_local = 1
+                ) 
+                THEN 'True'
+                ELSE 'False'
+            END
+        "
+        $instanceResults["isReadReplica"] = Invoke-SQLQuery -Query $isReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+        $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
+        $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        $aoagReadReplicaQuery = "SET NOCOUNT ON; SELECT  
+        d.name AS databaseName,
+        drs.replica_id AS replicaId,
+        ar.replica_server_name AS replicaServerName,
+        drs.synchronization_state_desc AS syncStateDesc,
+        ars.role_desc AS replicaRole
+        FROM 
+            sys.dm_hadr_database_replica_states drs
+        JOIN 
+            sys.databases d ON d.database_id = drs.database_id
+        JOIN 
+            sys.dm_hadr_availability_replica_states ars ON drs.replica_id = ars.replica_id
+        JOIN 
+            sys.availability_replicas ar ON ars.replica_id = ar.replica_id
+        WHERE 
+            ars.role_desc = 'SECONDARY' AND drs.is_local = 1
+        ORDER BY 
+            d.name FOR JSON PATH;  
+        "
+        $instanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        
+         $aoagPartnerInstanceQuery = " SET NOCOUNT ON;
+            SELECT DISTINCT
+                ar.replica_server_name
+            FROM 
+                sys.dm_hadr_availability_replica_states ars
+            JOIN 
+                sys.availability_replicas ar ON ars.replica_id = ar.replica_id;"
+
+        $aoagPartnerInstance = Invoke-SQLQuery -Query $aoagPartnerInstanceQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+        # Split the response into lines
+        $replicaNames = $aoagPartnerInstance -split "`n"
+
+        # Filter out the instance name that matches $instanceName
+        $filteredNames = $replicaNames | Where-Object { $_ -ne $instance }
+
+        foreach ($name in $filteredNames) { 
+            # Get the AOAG partner details for each partner instance
+            $partnerInstanceResults = Get-AoagPartnerDetails -instanceName $name
+            $results += $partnerInstanceResults
+         }
+
+        break
         }
         default {
             $instanceResults['deploymentType'] = 'standalone'
-            $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') FOR JSON PATH; "
+            $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
             $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
         }
     }

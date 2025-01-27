@@ -4,30 +4,39 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { setSelectedRecommendedInstance } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setRecommendedInstanceInBulk,
+    setSelectedRecommendedInstance
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { useDispatch } from 'react-redux';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useMemo } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { AWS_RESIZE_URL } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
 
 type DialogType = {
     type: string;
     recommendationOptions?: any;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    bulkRecommendationOptions?: Array<any>;
+    operation?: string;
 };
 
 const DialogContent = ({
     type,
     recommendationOptions = null,
     missingPermissions,
-    recommendedSizeInGib
+    recommendedSizeInGib,
+    bulkRecommendationOptions = [],
+    operation = 'single'
 }: DialogType) => {
     const dispatch = useDispatch();
-    const { selectedRecommendedInstance, selectedDatabaseStorageType } = useAppSelector(state => state.getWellOptimize);
+    const { selectedRecommendedInstance, selectedDatabaseStorageType, recommendedInstanceInBulk } = useAppSelector(
+        state => state.getWellOptimize
+    );
 
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
@@ -40,6 +49,18 @@ const DialogContent = ({
         }
         return options;
     }, [recommendationOptions]);
+
+    const generateRecommendedInstanceTypesForHost = (instance: any) => {
+        let options: optionType[] = [];
+        instance?.recommendationOptions?.map((option: any) => {
+            let label2 = 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%';
+            options.push(generateOptionType(option?.instanceType, option?.instanceType, label2, false, ''));
+        });
+        if (options.length > 1 && !recommendedInstanceInBulk?.[instance?.hostName]) {
+            dispatch(setRecommendedInstanceInBulk({ type: instance?.hostName, value: options[0] }));
+        }
+        return options;
+    };
 
     const ontapConfigTextSet = () => {
         switch (type) {
@@ -141,7 +162,7 @@ const DialogContent = ({
 
     const setContent = () => {
         switch (type) {
-            case 'Storage tier':
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -210,7 +231,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-            case 'File system headroom':
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 return missingPermissions && missingPermissions.length ? (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -360,7 +381,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-            case 'Log drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return missingPermissions && missingPermissions.length ? (
                     driveSizeMissingPermissions(missingPermissions)
                 ) : (
@@ -413,7 +434,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-            case 'TempDB drive size':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 return missingPermissions && missingPermissions.length ? (
                     driveSizeMissingPermissions(missingPermissions)
                 ) : (
@@ -795,7 +816,7 @@ const DialogContent = ({
                     </div>
                 );
 
-            case 'Compute rightsizing':
+            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -815,21 +836,60 @@ const DialogContent = ({
                                         {GETWELL_DIALOG_CONTENT.SELECT_INSTANCE}
                                     </DsTypography>
                                 </div>
-                                <div className={styles.instanceTypeContainer}>
-                                    <SelectField
-                                        label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
-                                        isClearable={false}
-                                        isDisabled={recommendationOptions?.missingPermissions}
-                                        variant="two-lines"
-                                        value={selectedRecommendedInstance}
-                                        onChange={(selectedOptions: any): void => {
-                                            dispatch(setSelectedRecommendedInstance(selectedOptions));
-                                        }}
-                                        isSearchable={generateRecommendedInstanceTypes?.length > 5}
-                                        options={generateRecommendedInstanceTypes}
-                                        className={`${styles.widthSet}`}
-                                    />
-                                </div>
+                                {operation === 'single' && (
+                                    <div className={styles.instanceTypeContainer}>
+                                        <SelectField
+                                            label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
+                                            isClearable={false}
+                                            isDisabled={recommendationOptions?.missingPermissions}
+                                            variant="two-lines"
+                                            value={selectedRecommendedInstance}
+                                            onChange={(selectedOptions: any): void => {
+                                                dispatch(setSelectedRecommendedInstance(selectedOptions));
+                                            }}
+                                            isSearchable={generateRecommendedInstanceTypes?.length > 5}
+                                            options={generateRecommendedInstanceTypes}
+                                            className={`${styles.widthSet}`}
+                                        />
+                                    </div>
+                                )}
+
+                                {operation === 'bulk' &&
+                                    bulkRecommendationOptions
+                                        ?.reduce((acc: any[], perInstance: any) => {
+                                            if (!acc.some(item => item.hostName === perInstance.hostName)) {
+                                                acc.push(perInstance);
+                                            }
+                                            return acc;
+                                        }, [])
+                                        ?.map((perInstance: any) => (
+                                            <div className={styles.instanceTypeContainer}>
+                                                <SelectField
+                                                    label={
+                                                        GENERAL.RECOMMENDED_INSTANCE_TYPE +
+                                                        ' for ' +
+                                                        perInstance?.hostName
+                                                    }
+                                                    isClearable={false}
+                                                    isDisabled={perInstance?.missingPermissions}
+                                                    variant="two-lines"
+                                                    value={recommendedInstanceInBulk?.[perInstance?.hostName]}
+                                                    onChange={(selectedOptions: any): void => {
+                                                        dispatch(
+                                                            setRecommendedInstanceInBulk({
+                                                                type: perInstance?.hostName,
+                                                                value: selectedOptions
+                                                            })
+                                                        );
+                                                    }}
+                                                    isSearchable={
+                                                        generateRecommendedInstanceTypesForHost(perInstance)?.length > 5
+                                                    }
+                                                    options={generateRecommendedInstanceTypesForHost(perInstance)}
+                                                    className={`${styles.widthSet}`}
+                                                />
+                                            </div>
+                                        ))}
                             </div>
                         </div>
 

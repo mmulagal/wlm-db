@@ -24,7 +24,12 @@ import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { useDispatch } from 'react-redux';
 
-import { JOB_MONITORING_STATUS, OPTIMIZE_POLLING_INTERVAL, WLF_TABS } from '../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    JOB_MONITORING_STATUS,
+    OPTIMIZE_POLLING_INTERVAL,
+    WLF_TABS
+} from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
@@ -1331,7 +1336,7 @@ const GetWell = () => {
                                         <StorageCardComponent
                                             cardData={filteredCardData?.tempdb_files}
                                             optimizePrintState={optimizePrintState}
-                                            type="TempDB placement"
+                                            type={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
                                         />
                                         <DsAccordion
                                             id="7"

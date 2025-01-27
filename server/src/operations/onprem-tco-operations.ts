@@ -2,10 +2,10 @@ import { compressSync, decompressSync } from 'fflate';
 import createError from 'http-errors';
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { compact, isEmpty } from 'lodash-es';
-import { ArchitectureType, CpuManufacturer, VirtualizationType } from '@aws-sdk/client-ec2';
+import { ArchitectureType, CpuManufacturer, InstanceGeneration, VirtualizationType } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
-import { DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName } from '../utils/utils';
+import { AWS_REGIONS, DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
+import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -18,9 +18,9 @@ import {
 import {
     OnPremCollectionObjectV1,
     SqlInstanceDetails,
-    WindowsConfig,
-    OnPremDatabaseResourcesParamsType
-} from '../utils/onprem-tco/onprem-tco.types';
+    StorageDetailByDB,
+    WindowsConfig
+} from '../utils/onprem-tco/onprem-tco-generic.types';
 import {
     createOnPremTcoReportData,
     listOnPremDatabaseResources,
@@ -28,22 +28,38 @@ import {
     updateOnPremTcoReportRecord
 } from '../lib/database/onprem-tco';
 import { getInstanceTypesFromInstanceRequirementsCommand } from '../lib/aws/ec2';
-import { performManualModeStorageSavingsCalculations } from './storage-savings-operations';
+import {
+    getManualModeStorageSavingsCalculationMetrics,
+    performManualModeStorageSavingsCalculations
+} from './storage-savings-operations';
 import {
     parseCpuUtilization,
     parseMemoryUtilization,
     parseLicenceUsageDetails,
     parseSqlVersion,
     parseIops,
-    parseStorageDetailsByDb,
     convertToDate,
-    generateUniqueId
+    generateUniqueId,
+    parseStorageDetailsByDb,
+    parseAoagReadReplica
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
+import {
+    ManualModeInstancesType,
+    StorageSavingsMetricsCalculationsResponseType,
+    StorageSavingsRequestBodyType,
+    StorageSavingsResponseType
+} from '../routes/types/storage-savings.types';
+import {
+    OnPremDatabaseResourcesObjectType,
+    SqlInstanceDetailsRequestObjectType
+} from '../routes/types/onprem-tco.types';
 
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 async function generatePayload(accountId: string, fileName: string, fileContent: Buffer) {
     logger.info('Generate a payload', { accountId, fileName });
@@ -69,6 +85,31 @@ async function deleteOnPremTcoReportResourceRecord(
     const resourcesIdList = compact(resourceIds.split(','));
 
     return removeOnPremTcoReportData(undefined, accountId, resourcesIdList, databaseType);
+}
+
+function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
+    return compact(
+        sqlInstances.map(instance => {
+            const { isReadReplica, instanceGuid, sqlInstanceName, sqlEdition, vcpusPerInstance } = instance;
+            const { numDatabases, totalIops, totalThroughput, totalVolumeSizeGiB, sqlVersion, memoryDetails } =
+                parseSqlUsageParams(instance);
+
+            return {
+                sqlInstanceId: instanceGuid,
+                sqlInstanceName,
+                noOfDatabases: numDatabases,
+                sqlEdition,
+                sqlVersion,
+                noOfVcpusInUse: parseInt(vcpusPerInstance, 10),
+                memory: memoryDetails?.used || 0,
+                networkPerformance: NETWORK_PERF.UP_TO_10,
+                totalIops,
+                totalThroughput,
+                isReadReplica: !!(isReadReplica && isReadReplica?.toLowerCase() === 'true'),
+                totalStorage: totalVolumeSizeGiB
+            };
+        })
+    );
 }
 
 async function downloadOnpremTcoCollectorScript(accountId: string, databaseType: string = MSSQL) {
@@ -132,40 +173,29 @@ async function getStorageSavingsResponse(
     clonedCopiesCount: number = 1,
     sqlServerDeploymentType: string,
     monthlyChangeRatePercentage: number = 8,
-    volumes: {
-        volumeType: string;
-        volumeNumber: number;
-        storageAmount: number;
-        volumeIops?: number;
-        throughput?: number;
-    }[],
+    ec2Instances: ManualModeInstancesType,
     instanceType: string,
-    sqlServerEdition: string = 'Standard Edition'
+    sqlServerEdition: string = 'Standard Edition',
+    snapshotFrequency: string = 'Daily'
 ) {
     logger.info('Getting Storage Savings Response', {
         accountId,
         clonedCopiesCount,
         sqlServerDeploymentType,
         monthlyChangeRatePercentage,
-        volumes,
+        ec2Instances,
         instanceType,
-        sqlServerEdition
+        sqlServerEdition,
+        snapshotFrequency
     });
 
     const response = await performManualModeStorageSavingsCalculations(accountId, DEFAULT_AWS_REGION, {
         clonedCopiesCount,
         sqlServerDeploymentType,
         monthlyChangeRatePercentage,
-        ec2Instances: [
-            {
-                ec2InstanceDescription: 'Primary',
-                ec2InstanceType: instanceType,
-                isPrimary: true,
-                volumes
-            }
-        ],
+        ec2Instances,
         sqlServerEdition,
-        snapshotFrequency: 'Daily'
+        snapshotFrequency
     });
 
     logger.info('>>STORAGE SAVINGS RESPONSE', response);
@@ -193,9 +223,60 @@ function groupSqlServerInstancesByDeploymentType(sqlServerInstances: SqlInstance
             acc[deploymentType] = [];
         }
 
+        const { totalIops, totalThroughput, totalVolumeSizeGiB } = parseSqlUsageParams(instance);
+        instance.totalIops = totalIops;
+
+        instance.totalThroughput = totalThroughput;
+        instance.totalStorage = totalVolumeSizeGiB;
         acc[deploymentType].push({ ...instance });
         return acc;
     }, {});
+}
+
+function processEbsDisks(disks: EBSClassification[]) {
+    logger.info('Processing EBS Disks', { disks: disks.length });
+
+    const ebsTypeCountMap = new Map<
+        string,
+        {
+            volumeType: string;
+            volumeNumber: number;
+            storageAmount: number;
+            volumeIops: number;
+            throughput: number;
+        }
+    >();
+
+    disks.forEach((disk: EBSClassification) => {
+        if (ebsTypeCountMap.has(disk.ebsType)) {
+            const existing = ebsTypeCountMap.get(disk.ebsType)!;
+            ebsTypeCountMap.set(disk.ebsType, {
+                volumeType: disk.ebsType,
+                volumeNumber: existing.volumeNumber + disk.numDatabases,
+                storageAmount: existing.storageAmount + disk.avgVolumeSizePerDb,
+                volumeIops: existing.volumeIops + disk.avgIopsPerDb,
+                throughput: existing.throughput + disk.avgThroughputPerDb
+            });
+        } else {
+            ebsTypeCountMap.set(disk.ebsType, {
+                volumeType: disk.ebsType,
+                volumeNumber: disk.numDatabases,
+                storageAmount: disk.avgVolumeSizePerDb,
+                volumeIops: disk.avgIopsPerDb,
+                throughput: disk.avgThroughputPerDb
+            });
+        }
+    });
+
+    return Array.from(ebsTypeCountMap.values()).map(
+        ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
+            volumeType,
+            volumeNumber,
+            storageAmount: Math.max(storageAmount, convertGiBToBytes(1)), // Minimum volume size is 1 GiB
+            volumeIops: volumeType === 'gp3' ? Math.max(volumeIops, 3000) : volumeIops, // Minimum IOPS is 3000
+            throughput: volumeType === 'gp3' ? Math.max(throughput, 125) : throughput // Minimum throughput is 125
+        })
+    );
 }
 
 function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetails[]) {
@@ -203,86 +284,79 @@ function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetail
     try {
         const ebsDisks = classifyDisksToEBS(sqlInstancesDetails);
 
-        logger.info('>>EBS DISKS', ebsDisks);
-        if (ebsDisks.length > 0) {
-            const ebsTypeCountMap = new Map<
-                string,
-                {
-                    volumeType: string;
-                    volumeNumber: number;
-                    storageAmount: number;
-                    volumeIops: number;
-                    throughput: number;
-                }
-            >();
+        const primaryEbsDisks = ebsDisks.filter(({ isPrimary }) => isPrimary);
+        const secondaryEbsDisks = ebsDisks.filter(({ isPrimary }) => !isPrimary);
 
-            ebsDisks?.forEach((disk: EBSClassification) => {
-                if (ebsTypeCountMap.has(disk.ebsType)) {
-                    const existing = ebsTypeCountMap.get(disk.ebsType)!;
-                    ebsTypeCountMap.set(disk.ebsType, {
-                        volumeType: disk.ebsType,
-                        volumeNumber: existing.volumeNumber + 1,
-                        storageAmount: existing.storageAmount + disk.avgVolumeSizePerDb,
-                        volumeIops: existing.volumeIops + disk.avgIopsPerDb,
-                        throughput: existing.throughput + disk.avgThroughputPerDb
-                    });
-                } else {
-                    ebsTypeCountMap.set(disk.ebsType, {
-                        volumeType: disk.ebsType,
-                        volumeNumber: 1,
-                        storageAmount: disk.avgVolumeSizePerDb,
-                        volumeIops: disk.avgIopsPerDb,
-                        throughput: disk.avgThroughputPerDb
-                    });
-                }
-            });
+        const primaryEbsVolumes = processEbsDisks(primaryEbsDisks);
+        const secondaryEbsVolumes = processEbsDisks(secondaryEbsDisks);
 
-            const ebsVolumes = Array.from(ebsTypeCountMap.values()).map(
-                ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
-                    volumeType,
-                    volumeNumber,
-                    storageAmount: Math.max(storageAmount, convertGiBToBytes(1)), // Minimum volume size is 1 GiB // Minimum volume size is 1 GiB
-                    ...(volumeType !== 'gp2' && { volumeIops, throughput }) // AWS pricing doesnt accept iops and throughout for gp2; marketing API also doesn't accept it
-                })
-            );
-            logger.info('>>EBS VOLUMES', ebsVolumes);
+        logger.info('>>EBS VOLUMES', { primaryEbsVolumes, secondaryEbsVolumes });
 
-            return ebsVolumes;
-        }
+        return { primaryEbsVolumes, secondaryEbsVolumes };
     } catch (error) {
         logger.error(`Error deriving EBS Volumes List for ${sqlInstancesDetails}`, error);
     }
 }
 
-async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig) {
+function deriveEc2InstanceListForMarketing(
+    sqlInstancesDetails: SqlInstanceDetails[],
+    instanceType: string
+): ManualModeInstancesType {
+    logger.info('Deriving EC2 Instance List for Marketing', { sqlInstancesDetails: sqlInstancesDetails.length });
+
+    const { primaryEbsVolumes, secondaryEbsVolumes } = deriveEbsVolumesListForMarketing(sqlInstancesDetails) || {};
+
+    const ec2Instances = [
+        {
+            ec2InstanceDescription: 'Primary',
+            ec2InstanceType: instanceType,
+            isPrimary: true,
+            volumes: primaryEbsVolumes
+        }
+    ];
+    if (!isEmpty(secondaryEbsVolumes)) {
+        ec2Instances.push({
+            ec2InstanceDescription: 'Secondary',
+            ec2InstanceType: instanceType,
+            isPrimary: false,
+            volumes: secondaryEbsVolumes
+        });
+    }
+    return ec2Instances;
+}
+
+async function deriveHostConfigBasedInstanceType(windowsConfig: WindowsConfig, region: string) {
     logger.info('Deriving Instance Type based on host config', { windowsConfig });
 
     const { nodeDetails } = windowsConfig;
     let maxVCpuCount = 0;
-    let maxMemoryMiB = 0;
+    let minMemoryMiB = 512;
     nodeDetails.forEach(node => {
-        const { numberOfVcpus, ramSize } = node;
+        const { numberOfVcpus, ramSize: ramSizeGiB } = node;
         if (numberOfVcpus > maxVCpuCount) {
             maxVCpuCount = numberOfVcpus;
         }
-        if (ramSize > maxMemoryMiB) {
-            maxMemoryMiB = ramSize;
+        const ramSizeInMiB = ramSizeGiB * 1024;
+        if (ramSizeInMiB > minMemoryMiB) {
+            minMemoryMiB = ramSizeInMiB;
         }
     });
 
     const instanceRequirements = {
-        ArchitectureTypes: [ArchitectureType.x86_64], // check if this is the correct architecture
-        VirtualizationTypes: [VirtualizationType.hvm], // check if this is the correct virtualization type
+        ArchitectureTypes: [ArchitectureType.x86_64],
+        VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
             VCpuCount: { Min: 4, Max: maxVCpuCount },
-            MemoryMiB: { Min: maxMemoryMiB },
+            MemoryMiB: { Min: minMemoryMiB }, // think of scenarios where vcpu and memory requirements are different
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
+
             AllowedInstanceTypes: ['m*', 'c*', 'r*']
-        }
+        },
+        InstanceGenerations: [InstanceGeneration.CURRENT]
     };
 
     const { InstanceTypes: [{ InstanceType: instanceType }] = [] } =
-        (await getInstanceTypesFromInstanceRequirementsCommand(DEFAULT_AWS_REGION, instanceRequirements)) || {};
+        (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
     logger.info('>>INSTANCE TYPE MATCHING INSTANCE REQUIREMENTS', instanceType);
 
     return instanceType;
@@ -301,89 +375,120 @@ async function deriveSqlUsageBasedInstanceType(sqlInstancesDetails: SqlInstanceD
     return instanceType;
 }
 
-async function analyzeOnpremData(accountId: string, data: OnPremCollectionObjectV1) {
-    logger.info('Analyzing OnPrem Data', { accountId });
+async function analyzeOnpremData(
+    accountId: string,
+    data: OnPremCollectionObjectV1,
+    snapShotInfo?: StorageSavingsRequestBodyType,
+    region?: string,
+    adHocRequest: boolean = false
+) {
+    logger.info('Analyzing OnPrem Data', { accountId, snapShotInfo, region, adHocRequest });
+
+    let clonedCopiesCount;
+    let monthlyChangeRatePercentage;
+    let snapshotFrequency;
+    if (snapShotInfo) {
+        snapshotFrequency = snapShotInfo.snapshotFrequency;
+        clonedCopiesCount = snapShotInfo.clonedCopiesCount;
+        monthlyChangeRatePercentage = snapShotInfo.monthlyChangeRatePercentage;
+    }
 
     // Analyze OnPrem data
     const { windowsConfig, sqlServerInfo } = data;
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(windowsConfig); // Instance type here is based on the host config; considered as existing instance type
+
+    const currentInstanceType = await deriveHostConfigBasedInstanceType(windowsConfig, region || DEFAULT_AWS_REGION); // Instance type here is based on the host config; considered as existing instance type
 
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
+
+    const response = [];
     for (const [deploymentType, instances] of Object.entries(sqlInstancesPerDeploymentType)) {
         const instanceIds = instances.map(instance => instance.instanceGuid);
         const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
-        const ebsVolumes = deriveEbsVolumesListForMarketing(instances);
-        if (ebsVolumes && !isEmpty(ebsVolumes)) {
-            const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
-            const isUsingAnyEnterpriseFeature = checkEnterpriseUsage(instances); // there is no existing vs recommended, if any of the instances are using enterprise features, we are considering it as using enterprise features ( SQL license price will be same for both existing and recommended)
-            const sqlServerEdition = isUsingAnyEnterpriseFeature ? 'Enterprise Edition' : 'Standard Edition';
 
-            if (currentInstanceType && recommendedInstanceType) {
-                const [existingConfigData, recommendedConfigData] = await Promise.all([
-                    getStorageSavingsResponse(
-                        accountId,
-                        undefined,
-                        deploymentType,
-                        undefined,
-                        ebsVolumes,
-                        currentInstanceType,
-                        sqlServerEdition
-                    ),
-                    getStorageSavingsResponse(
-                        accountId,
-                        undefined,
-                        deploymentType,
-                        undefined,
-                        ebsVolumes,
-                        recommendedInstanceType,
-                        sqlServerEdition
-                    )
-                ]);
-                const {
-                    compute: { existing: existingCompute } = {},
-                    license: { existing: existingLicense } = {},
-                    ebs,
-                    fsx,
-                    multi,
-                    totalSummary: { existing: existingTotalSummary } = {}
-                } = existingConfigData;
+        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
+        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(instances);
 
-                const {
-                    compute: { recommended: recommendedCompute } = {},
-                    license: { recommended: recommendedLicense } = {},
-                    totalSummary: { recommended: recommendedTotalSummary } = {}
-                } = recommendedConfigData;
-
-                const tcoData = {
-                    compute: {
-                        existing: existingCompute,
-                        recommended: recommendedCompute
-                    },
-                    license: {
-                        existing: existingLicense,
-                        recommended: recommendedLicense
-                    },
-                    ebs,
-                    fsx,
-                    multi,
-                    totalSummary: {
-                        existing: existingTotalSummary,
-                        recommended: recommendedTotalSummary
-                    }
-                };
-                await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, { assessment_data: tcoData });
-
-                // {"accountId":"account-test","resourceId":"","databaseType":"mssql","data":{"assessmentData":{"compute":{"existing":{"instanceType":"m2.xlarge","hoursInMonth":730,"machineDetails":[{"instanceType":"m2.xlarge","hoursInMonth":730,"licenseIncluded":false}]},"recommended":{"instanceType":"m2.xlarge","hoursInMonth":730,"machineDetails":[{"instanceType":"m2.xlarge","hoursInMonth":730,"licenseIncluded":false}]}},"license":{"existing":{"licenseIncluded":false,"hoursInMonth":730,"sqlServerEdition":"Enterprise Edition"},"recommended":{"licenseIncluded":false,"hoursInMonth":730,"sqlServerEdition":"Enterprise Edition"}},"ebs":{"capacity":5120,"iops":9776,"throughput":0,"snapshots":1064.96,"total":23408.96,"clones":7448},"fsx":{"capacity":2560,"iops":315.52,"throughput":1228.8,"total":4361.89,"snapshots":52.77,"clones":204.8},"multi":{"fsxCalculation":{"deploymentType":"Multi","numberOfVolumes":1,"throughput":128,"totalStorageCapacity":10995116277760,"percentageSsd":100,"savings":0,"effectiveCapacity":10995116277760,"ssdTierReqCapacity":10995116277760,"capacityPoolTier":0,"ssdIop":40000,"throughputCapacity":1024,"useCase":"Low-latency","regionName":"US East (N. Virginia)","monthlySnapshotCapacity":879609302220.7999},"fsxBreakdown":{"fsxDataLunSize":4804596350535,"fsxDataVolumeSize":5285055985589,"fsxLogVolumeSize":1321263996398,"fsxTempDbVolumeSize":528505598559,"fsxQuorumVolumeSize":12000000000,"fsxBufferVolumeSize":3848290697216,"fsxStorageCapacity":10995116277760}},"totalSummary":{"existing":23408.96,"recommended":4361.89}}}}
-            } else {
-                throw createError(
-                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                    'Error deriving instance requirements. Could not find instance type matching requirements.'
-                );
-            }
+        if (!currentInstanceType || !recommendedInstanceType) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                'Error deriving instance requirements. Could not find instance type matching requirements.'
+            );
         }
-        logger.warn('No EBS Volumes found for SQL Instances', { accountId, resourceId });
+
+        const ec2Instances = deriveEc2InstanceListForMarketing(instances, currentInstanceType);
+        const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(instances, recommendedInstanceType);
+
+        const [existingConfigData, recommendedConfigData, calculations] = await Promise.all([
+            getStorageSavingsResponse(
+                accountId,
+                clonedCopiesCount,
+                deploymentType,
+                monthlyChangeRatePercentage,
+                ec2Instances,
+                currentInstanceType,
+                currentLicenseEdition
+            ),
+            getStorageSavingsResponse(
+                accountId,
+                clonedCopiesCount,
+                deploymentType,
+                monthlyChangeRatePercentage,
+                ec2InstancesRecommended,
+                recommendedInstanceType,
+                recommendedLicenseEdition
+            ),
+            getManualModeStorageSavingsCalculationMetrics(accountId, region || DEFAULT_AWS_REGION, {
+                clonedCopiesCount: 1,
+                sqlServerDeploymentType: deploymentType,
+                monthlyChangeRatePercentage: 8,
+                ec2Instances,
+                sqlServerEdition: currentLicenseEdition,
+                snapshotFrequency: snapshotFrequency || 'Daily'
+            })
+        ]);
+
+        const {
+            compute: { existing: existingCompute } = {},
+            license: { existing: existingLicense } = {},
+            ebs,
+            fsx,
+            multi,
+            totalSummary: { existing: existingTotalSummary } = {}
+        } = existingConfigData;
+
+        const {
+            compute: { recommended: recommendedCompute } = {},
+            license: { recommended: recommendedLicense } = {},
+            totalSummary: { recommended: recommendedTotalSummary } = {}
+        } = recommendedConfigData;
+
+        const storageSavings = {
+            compute: {
+                existing: existingCompute,
+                recommended: recommendedCompute
+            },
+            license: {
+                existing: existingLicense,
+                recommended: recommendedLicense
+            },
+            ebs,
+            fsx,
+            multi,
+            totalSummary: {
+                existing: existingTotalSummary,
+                recommended: recommendedTotalSummary
+            }
+        };
+        response.push({ accountId, resourceId, storageSavings, calculations });
+        if (!adHocRequest) {
+            // Update the record in the database as part of the initial report analysis only
+            await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
+                assessment_data: response
+            });
+        }
     }
+    return response;
 }
 
 async function handleOnpremTcoDataAnalysis(accountId: string, jobId: string, data: OnPremCollectionObjectV1) {
@@ -394,12 +499,12 @@ async function handleOnpremTcoDataAnalysis(accountId: string, jobId: string, dat
     let analyzeJobError;
     try {
         const {
-            windowsConfig: { windowsClusterName }
+            windowsConfig: { windowsSystemName }
         } = data;
         ({ id: analyzeJobId } = await registerJob(accountId, 'ON_PREM', DEFAULT_AWS_REGION, {
             name: 'Analyze OnPremises TCO data',
             description: 'Analyze OnPremises TCO data',
-            resourceName: windowsClusterName,
+            resourceName: windowsSystemName,
             startTime: Date.now(),
             endTime: Date.now(),
             status: 'IN_PROGRESS',
@@ -439,7 +544,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await Promise.all([
-            saveReportInReportingRegistry(accountId, fileName, data),
+            // saveReportInReportingRegistry(accountId, fileName, data),
             saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data)
         ]);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
@@ -479,7 +584,7 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const { id: jobId } = await registerJob(accountId, ONPREM_TCO_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
             name: 'Upload OnPremises TCO data',
             description: 'OnPremises TCO data upload',
-            resourceName: data?.windowsConfig?.windowsClusterName,
+            resourceName: data?.windowsConfig?.windowsSystemName,
             startTime: Date.now(),
             endTime: Date.now(),
             status: 'IN_PROGRESS',
@@ -503,114 +608,170 @@ interface EBSClassification {
     avgThroughputPerDb: number;
     ebsType: string;
     avgVolumeSizePerDb: number;
+    isPrimary: boolean;
+}
+
+function getEbsDisks(instance: SqlInstanceDetails, databases: StorageDetailByDB[], isPrimary: boolean) {
+    // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
+    if (databases.length > 0) {
+        const { avgVolumeSizePerDb, avgIopsPerDb, avgThroughputPerDb } = parseSqlUsageParams(instance, databases);
+
+        if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
+            logger.warn(
+                'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
+            );
+            return;
+        }
+        let ebsType = 'gp3';
+        if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
+            // 4000 MB/s
+            ebsType = 'io2';
+        } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
+            // 1000 MB/s
+            ebsType = 'io1';
+        } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
+            ebsType = 'st1';
+        }
+        return {
+            instanceName: instance.sqlInstanceName,
+            numDatabases: databases.length,
+            avgIopsPerDb,
+            avgThroughputPerDb,
+            ebsType,
+            avgVolumeSizePerDb,
+            isPrimary
+        };
+    }
 }
 
 function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClassification[] {
     logger.info('Classifying Disks to EBS', { sqlInstancesDetails });
 
-    return compact(
-        sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
-            const [iops] = parseIops(instance?.iops || '') || [];
-            const storageDetailsByDb = parseStorageDetailsByDb(instance?.storageDetailsByDb || '') || [];
-            if (iops && storageDetailsByDb && instance?.sqlInstanceName) {
-                const writeIops = parseFloat(iops?.writeIops?.trim());
-                const readIops = parseFloat(iops?.readIops?.trim());
-                const totalIops = writeIops + readIops;
+    const ebsDisks: EBSClassification[] = [];
+    sqlInstancesDetails.forEach((instance: SqlInstanceDetails) => {
+        const { aoagReadReplica, storageDetailsByDb } = instance;
+        const allDatabases = parseStorageDetailsByDb(storageDetailsByDb);
+        let primaryDatabases: StorageDetailByDB[] = allDatabases || [];
 
-                const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
-                const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
-                const totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
+        const aoagReadReplicaDbs = aoagReadReplica ? parseAoagReadReplica(aoagReadReplica) : undefined;
+        const aoagReadReplicaDbNames = aoagReadReplicaDbs?.map(({ databaseName }) => databaseName);
 
-                const numDatabases = parseInt(instance.noOfDatabases, 10);
-                const avgIopsPerDb = totalIops / numDatabases;
-                const avgThroughputPerDb = totalThroughput / numDatabases;
-                // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
+        let secondaryDatabases: StorageDetailByDB[] = [];
+        if (aoagReadReplicaDbs && !isEmpty(aoagReadReplicaDbs) && allDatabases && !isEmpty(allDatabases)) {
+            primaryDatabases = allDatabases.filter(
+                ({ databaseName }) => !aoagReadReplicaDbNames?.includes(databaseName)
+            );
+            secondaryDatabases = allDatabases.filter(({ databaseName }) =>
+                aoagReadReplicaDbNames?.includes(databaseName)
+            );
+            ebsDisks.push(getEbsDisks(instance, secondaryDatabases, false)!);
+        }
+        ebsDisks.push(getEbsDisks(instance, primaryDatabases, true)!);
+    });
 
-                const totalVolumeSizeGiB = storageDetailsByDb.reduce((acc, db) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
-                const avgVolumeSizePerDb = totalVolumeSizeGiB / numDatabases;
-
-                if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
-                    logger.warn(
-                        'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
-                    );
-                    return undefined;
-                }
-                let ebsType;
-                if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
-                    // 4000 MB/s
-                    ebsType = 'io2';
-                } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
-                    // 1000 MB/s
-                    ebsType = 'io1';
-                } else if (avgVolumeSizePerDb > 125 && avgIopsPerDb <= 500 && avgThroughputPerDb <= 500) {
-                    ebsType = 'st1';
-                } else if (avgVolumeSizePerDb > 1 && avgIopsPerDb <= 16000 && avgThroughputPerDb <= 1000) {
-                    ebsType = 'gp3';
-                } else {
-                    ebsType = 'gp2';
-                }
-
-                return {
-                    instanceName: instance.sqlInstanceName,
-                    numDatabases,
-                    avgIopsPerDb,
-                    avgThroughputPerDb,
-                    ebsType,
-                    avgVolumeSizePerDb
-                };
-            }
-            // TODO: handle error objects
-            logger.error('Error classifying disks to EBS. Invalid input data.', { instance });
-            return undefined;
-        })
-    );
+    return compact(ebsDisks);
 }
 
-// This approach assumes that if we have an instance type that can handle the maximum CPU and memory requirements, it should be able to handle the rest as well.
-function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving Instance Requirements', { sqlInstancesDetails: sqlInstancesDetails.length });
+function parseSqlUsageParams(instance: SqlInstanceDetails, databasesList: StorageDetailByDB[] = []) {
+    logger.info('Parsing SQL Usage Parameters', { instance });
 
-    let maxVCpuCount = 4;
-    let minMemoryMiB = 512; // nano instances have memory of 512 MiB
+    let sqlVersion = parseSqlVersion(instance.sqlVersion) || '';
+    sqlVersion = sqlVersion.substring(0, sqlVersion.indexOf('(')).trim();
+
+    let totalIops = instance?.totalIops;
+    let totalThroughput = instance?.totalThroughput;
+
+    if (isEmpty(totalIops) || isEmpty(totalThroughput)) {
+        const [iops] = parseIops(instance?.iops || '') || [];
+
+        if (isEmpty(totalIops)) {
+            const writeIops = parseFloat(iops?.writeIops?.trim());
+            const readIops = parseFloat(iops?.readIops?.trim());
+            totalIops = writeIops + readIops;
+        }
+
+        if (isEmpty(totalThroughput)) {
+            const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
+            const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
+            totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
+        }
+    }
+
+    let totalStorage = instance?.totalStorage;
+    if (isEmpty(totalStorage)) {
+        // handle data and log volume separately; or ignore log volume size?
+        totalStorage = databasesList.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
+    }
+
+    const numDatabases = parseInt(instance.noOfDatabases, 10);
+    const avgIopsPerDb = (totalIops || 0) / numDatabases;
+    const avgThroughputPerDb = (totalThroughput || 0) / numDatabases;
+    const avgVolumeSizePerDb = (totalStorage || 0) / numDatabases;
+
+    const [memoryDetails] = parseMemoryUtilization(instance?.memUtilization || '') || [];
+
+    return {
+        avgVolumeSizePerDb,
+        avgIopsPerDb,
+        avgThroughputPerDb,
+        numDatabases,
+        totalIops,
+        totalThroughput,
+        totalVolumeSizeGiB: totalStorage,
+        sqlVersion,
+        memoryDetails
+    };
+}
+
+function deriveInstanceRequirements(sqlInstancesDetails: SqlInstanceDetails[]) {
+    const totalSqlInstances = sqlInstancesDetails.length;
+    logger.info('Deriving Instance Requirements', { sqlInstancesDetails: totalSqlInstances });
+
+    let requiredVcpuCount = 4;
+    let requiredMemory = 512; // nano instances have memory of 512 MiB
 
     let networkPerformance = NETWORK_PERF.UP_TO_10;
-    sqlInstancesDetails.forEach(sqlInstance => {
-        const { cpuUtilization, memUtilization } = sqlInstance;
-        const vcpuCount = parseCpuUtilization(cpuUtilization);
 
+    let totalCpuCount = 0;
+    let totalMemory = 0;
+    sqlInstancesDetails.forEach(sqlInstance => {
+        const { cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
+        totalCpuCount += Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
         // Assuming memUtilization is a JSO N string with memory details
         const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
-        const memoryMiB = memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
-
-        maxVCpuCount = vcpuCount ? Math.max(maxVCpuCount, vcpuCount) : maxVCpuCount;
-        minMemoryMiB = memoryMiB && memoryMiB > minMemoryMiB ? memoryMiB : minMemoryMiB;
+        totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
         networkPerformance =
             sqlInstance.networkPerformance === NETWORK_PERF.ABOVE_10 ? NETWORK_PERF.ABOVE_10 : NETWORK_PERF.UP_TO_10;
     });
 
+    requiredVcpuCount = Math.max(requiredVcpuCount, totalCpuCount / totalSqlInstances); // Taking average of the total CPU count of all instances as the required vCPU count
+    requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
+
+    logger.debug('>>>NETWORK PERFORMANCE', networkPerformance);
     return {
-        ArchitectureTypes: [ArchitectureType.x86_64], // check if this is the correct architecture
-        VirtualizationTypes: [VirtualizationType.hvm], // check if this is the correct virtualization type
+        ArchitectureTypes: [ArchitectureType.x86_64],
+        VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: maxVCpuCount },
-            MemoryMiB: { Min: minMemoryMiB },
+            VCpuCount: { Min: 4, Max: requiredVcpuCount },
+            MemoryMiB: { Min: requiredMemory },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
-            AllowedInstanceTypes: ['m*', 'c*', 'r*'],
-            NetworkBandwidthGbps:
-                networkPerformance === NETWORK_PERF.UP_TO_10
-                    ? {
-                          Max: 10
-                      }
-                    : {
-                          Min: 10
-                      }
-        }
+            AllowedInstanceTypes: ['m*', 'c*', 'r*']
+            // NetworkBandwidthGbps: //TODO: Commenting out for now as there are no instance types matching the cpu, mem and network requirements we set
+            //     networkPerformance === NETWORK_PERF.UP_TO_10
+            //         ? {
+            //             Max: 10
+            //         }
+            //         : {
+            //             Min: 10
+            //         }
+        },
+        InstanceGenerations: [InstanceGeneration.CURRENT]
     };
 }
 
 // This approach assumes that if any of the features are being used in any one of the SQL server instance, it is considered as using an enterprise feature.
-function checkEnterpriseUsage(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Checking Enterprise Usage', { sqlInstancesDetails: sqlInstancesDetails.length });
+function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
+    logger.info('Getting license recommendations', { sqlInstancesDetails: sqlInstancesDetails.length });
 
     const enterpriseUsageResults = compact(
         sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
@@ -622,16 +783,25 @@ function checkEnterpriseUsage(sqlInstancesDetails: SqlInstanceDetails[]) {
                     licenseFeatures &&
                     licenseFeatures.some(({ IsUsingFeature }: { IsUsingFeature: number }) => IsUsingFeature === 1)
                 ) {
-                    return true;
+                    return { sqlVersionStr, isUsingAnyEnterpriseFeature: true };
                 }
             }
-            return false;
+            return { sqlVersionStr, isUsingAnyEnterpriseFeature: false };
         })
     );
 
     logger.info('>>ENTERPRISE USAGE RESULTS', enterpriseUsageResults);
 
-    return enterpriseUsageResults.some((result: boolean) => result);
+    const currentLicenseEdition = enterpriseUsageResults.some(
+        ({ sqlVersionStr }) => sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)
+    )
+        ? 'Enterprise Edition'
+        : 'Standard Edition';
+    const isUsingEnterpriseFeature = enterpriseUsageResults.some(
+        ({ isUsingAnyEnterpriseFeature }) => isUsingAnyEnterpriseFeature
+    );
+    const recommendedLicenseEdition = isUsingEnterpriseFeature ? 'Enterprise Edition' : 'Standard Edition';
+    return { currentLicenseEdition, recommendedLicenseEdition };
 }
 
 async function getOnPremDatabaseResources(
@@ -639,7 +809,7 @@ async function getOnPremDatabaseResources(
     databaseType: DATABASE_TYPE = MSSQL,
     apiPageSize?: number,
     nextToken?: string
-): Promise<{ count: number; items: OnPremDatabaseResourcesParamsType[]; nextToken?: string }> {
+): Promise<{ count: number; items: OnPremDatabaseResourcesObjectType[]; nextToken?: string }> {
     logger.info('Getting OnPrem database resources', { accountId, databaseType, apiPageSize, nextToken });
 
     const onPremDatabaseResourcesDetails = await listOnPremDatabaseResources(
@@ -654,23 +824,22 @@ async function getOnPremDatabaseResources(
         return { count: 0, items: [], nextToken: '' };
     }
 
-    let onPremDatabaseResources: OnPremDatabaseResourcesParamsType[] = [];
+    let onPremDatabaseResources: OnPremDatabaseResourcesObjectType[] = [];
     try {
         onPremDatabaseResources = await Promise.all(
             onPremDatabaseResourcesDetails.map(async onPremDatabaseResource => {
                 const {
                     resource_id: resourceId,
                     host_config: hostConfig,
-                    database_instances_data: sqlInstancesDetails,
+                    database_instances_data: persistedSqlInstancesDetails,
                     database_deployment_type: deploymentType
                 } = onPremDatabaseResource;
-                const { clusterNodeNames: onPremisesNodes, windowsClusterName: resourceName } =
+                const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
+
+                const { clusterNodeNames: onPremisesNodes, windowsSystemName: resourceName } =
                     hostConfig as unknown as WindowsConfig;
-                const sqlServerInstances = Array.isArray(sqlInstancesDetails)
-                    ? sqlInstancesDetails.map(sqlInstance => {
-                          const [instanceName] = sqlInstance ? Object.keys(sqlInstance) : [];
-                          return instanceName;
-                      })
+                const sqlServerInstances = Array.isArray(rawSqlInstanceDetails)
+                    ? formatSqlInstanceDetails(rawSqlInstanceDetails)
                     : [];
                 return {
                     resourceId,
@@ -682,7 +851,7 @@ async function getOnPremDatabaseResources(
             })
         );
     } catch (error) {
-        const errorMessage = `Error processing onPremDatabaseResourcesDetails. ${error}`;
+        const errorMessage = `Failed to fetch On-premises resources . ${error}`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -697,6 +866,131 @@ async function getOnPremDatabaseResources(
     };
 }
 
+async function getOnPremResourceExploreSavings(
+    accountId: string,
+    onPrmResourceId: string,
+    regionCode: string,
+    sqlInstanceData?: SqlInstanceDetailsRequestObjectType[],
+    snapShotInfo?: StorageSavingsRequestBodyType
+) {
+    logger.info('Getting OnPrem Resource Explore Savings', {
+        accountId,
+        onPrmResourceId,
+        regionCode,
+        sqlInstanceData,
+        snapShotInfo
+    });
+
+    const [onPremDatabaseResource] = await listOnPremDatabaseResources(
+        accountId,
+        MSSQL,
+        undefined,
+        undefined,
+        onPrmResourceId
+    );
+
+    if (isEmpty(onPremDatabaseResource)) {
+        const errorMessage = `No On-premises  database resources found for account ${accountId}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+    const region = AWS_REGIONS.get(regionCode);
+    if (!region) {
+        const errorMessage = `Invalid region code provided ${accountId}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    const {
+        resource_id: resourceId,
+        host_config: hostConfig,
+        database_instances_data: persistedSqlInstancesDetails,
+        database_deployment_type: deploymentType,
+        assessment_data: assessmentData,
+        version: scriptVersion,
+        creation_time: reportCreationTime
+    } = onPremDatabaseResource;
+
+    const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
+
+    const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
+
+    if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
+        try {
+            const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
+                const instanceData = sqlInstanceData?.find(
+                    (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
+                );
+                if (instanceData) {
+                    const { noOfVcpusInUse, memory, networkPerformance, totalIops, totalThroughput } = instanceData;
+                    return {
+                        ...detail,
+                        ...(noOfVcpusInUse && { noOfVcpusInUse: noOfVcpusInUse.toString() }),
+                        ...(networkPerformance && { networkPerformance }),
+                        ...(memory && { memory }),
+                        ...(totalIops && { totalIops }),
+                        ...(totalThroughput && { totalThroughput }),
+                        deploymentType
+                    };
+                }
+                return {
+                    ...detail,
+                    deploymentType
+                };
+            });
+
+            const data: OnPremCollectionObjectV1 = {
+                windowsConfig: hostConfig as unknown as WindowsConfig,
+                sqlServerInfo: updatedSqlDetailsBasedOnRequest as unknown as SqlInstanceDetails[],
+                scriptVersion,
+                timestamp: new Date(reportCreationTime).toISOString()
+            };
+            const analysisResult = await analyzeOnpremData(accountId, data, snapShotInfo, regionCode, true);
+
+            if (isEmpty(analysisResult)) {
+                const errorMessage = 'No analysis result found for the input provided.';
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            }
+            const [{ storageSavings, calculations }] = analysisResult;
+            return {
+                resourceId,
+                resourceName,
+                deploymentModel: deploymentType,
+                region,
+                regionCode,
+                calculations,
+                storageSavings,
+                snapShotInfo
+            };
+        } catch (error) {
+            const errorMessage = `Failed to fetch assessment data for the input provided. ${error}`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+    }
+
+    // If no user input is provided, return the persisted report data
+    try {
+        const { calculations, storageSavings } = assessmentData as {
+            calculations: StorageSavingsMetricsCalculationsResponseType;
+            storageSavings: StorageSavingsResponseType;
+        };
+        return {
+            resourceId,
+            resourceName,
+            deploymentModel: deploymentType,
+            region,
+            regionCode,
+            calculations,
+            storageSavings
+        };
+    } catch (error) {
+        const errorMessage = `Failed to fetch assessment data for the selected resource. ${error}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+}
+
 export {
     generatePayload,
     deleteOnPremTcoReportResourceRecord,
@@ -708,6 +1002,8 @@ export {
     groupSqlServerInstancesByDeploymentType,
     deriveEbsVolumesListForMarketing,
     deriveSqlUsageBasedInstanceType,
-    checkEnterpriseUsage,
-    deriveInstanceRequirements
+    getLicenseRecommendations,
+    deriveInstanceRequirements,
+    getOnPremResourceExploreSavings,
+    saveReportInReportingRegistry
 };
