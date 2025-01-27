@@ -93,7 +93,7 @@ async function calculateMaxDOPDrift(
             name: 'maxdop',
             status: status as AssessmentStatus,
             recommended: recommendedMaxDOP,
-            severity: SEVERITY.CRITICAL,
+            severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             current,
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
