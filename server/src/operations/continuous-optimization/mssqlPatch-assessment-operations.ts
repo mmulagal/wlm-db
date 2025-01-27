@@ -31,6 +31,8 @@ async function calculateMSSQLPatchDrift(
         const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
         const metadataObject = metadata as unknown as Metadata;
         const { assessment: { mssqlPatch } = {} } = metadataObject;
+        logger.info('MSSQL patch assessment from metadata', mssqlPatch);
+
         if (!isEmpty(mssqlPatch)) {
             patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
         } else {
@@ -43,7 +45,7 @@ async function calculateMSSQLPatchDrift(
                 node1InstanceId,
                 !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
             );
-            logger.debug('Patch assessment result while calculating', patchAssessment);
+            logger.info('Patch assessment result while calculating', patchAssessment);
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
@@ -57,19 +59,26 @@ async function calculateMSSQLPatchDrift(
         const importantPatchesCount =
             patchAssessment?.reduce((count, instance) => count + (instance.importantMissingPatchesCount || 0), 0) || 0;
 
-        const status = patchAssessment?.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const status = patchAssessment?.some(instance => (instance?.missingPatchDetails?.length ?? 0) > 0)
+            ? AssessmentStatus.NOT_OPTIMIZED
+            : AssessmentStatus.OPTIMIZED;
+
         const recommendationMessage =
             status === AssessmentStatus.NOT_OPTIMIZED
                 ? `Critical (${criticalPatchesCount}) and important (${importantPatchesCount}) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.`
                 : 'Your MSSQL instance is up-to-date with all critical and important patches applied.';
+        const objectsInViolation =
+            status === AssessmentStatus.NOT_OPTIMIZED ? patchAssessment?.map(({ ec2InstanceId }) => ec2InstanceId) : [];
 
         return {
             name: 'mssql-patch',
             status: status as AssessmentStatus,
+            recommended: AssessmentStatus.OPTIMIZED,
             missingPatchesInEc2Instances: patchAssessment,
             severity: SEVERITY.CRITICAL,
             recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.SECURITY]
+            tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+            objectsInViolation
         };
     } catch (error: any) {
         errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
@@ -121,6 +130,7 @@ async function managedHostMSSQLPatchAssessment(
             activeNodeInstanceId,
             isPartOfCluster
         );
+        logger.info('managed host mssql patch response', patchAssessment);
     } catch (error) {
         errorMessage = `Error while performing mssql patch assessment. ${error}`;
         logger.error(errorMessage);

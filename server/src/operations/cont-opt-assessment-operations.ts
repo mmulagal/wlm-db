@@ -63,7 +63,7 @@ import {
 import {
     calculateMSSQLPatchDrift,
     managedHostMSSQLPatchAssessment
-} from './continuous-optimization/mssql-patch-assessment-operations';
+} from './continuous-optimization/mssqlPatch-assessment-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
