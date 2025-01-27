@@ -23,6 +23,7 @@ import { useDispatch } from 'react-redux';
 import {
     setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -501,6 +502,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
