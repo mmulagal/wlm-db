@@ -931,319 +931,6 @@ async function getEbsResourceInfo(
     }));
 }
 
-// getDatabaseHostsSummary getDatabaseHostSummary & getDatabases are all unused. Kept here for reference, can be removed later.
-
-// async function getDatabaseHostsSummary(
-//     accountId: string,
-//     fields?: string,
-//     nextToken?: string,
-//     awsRegion?: string,
-//     customerCredentialsId?: string,
-//     vpcId?: string,
-//     fsxId?: string
-// ): Promise<DatabaseHostSummaryPerStorageTypeListResponseType> {
-//     logger.info(
-//         'Fetching all database hosts deployed in account ',
-//         accountId,
-//         fields,
-//         nextToken,
-//         awsRegion,
-//         customerCredentialsId,
-//         vpcId,
-//         fsxId
-//     );
-
-//     const resourceDetails = await listResources(
-//         accountId,
-//         undefined,
-//         customerCredentialsId,
-//         awsRegion,
-//         RESOURCESTYPE.MSSQL,
-//         fsxId,
-//         undefined,
-//         API_PAGE_SIZE,
-//         nextToken
-//     );
-
-//     if (isEmpty(resourceDetails)) {
-//         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
-//         return { count: 0, items: [], nextToken: '' };
-//     }
-
-//     const databaseHosts: DatabaseHostSummaryPerStorageTypeResponseType[] = [];
-//     try {
-//         await Promise.all(
-//             resourceDetails.map(async resourceDetail => {
-//                 const { resource_id: resourceId } = resourceDetail;
-
-//                 const databaseHostDetails = await getDatabaseHostSummary(accountId, resourceId, fields, resourceDetail);
-//                 if (!vpcId || vpcId === databaseHostDetails?.topology?.vpcId) {
-//                     databaseHosts.push(databaseHostDetails);
-//                 }
-//             })
-//         );
-//     } catch (error) {
-//         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
-//         throw createError(
-//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-//             `Error while fetching database hosts details ${accountId}, ${error}`
-//         );
-//     }
-
-//     logger.debug('Database hosts details', databaseHosts);
-
-//     return {
-//         count: databaseHosts.length,
-//         items: databaseHosts,
-//         nextToken:
-//             resourceDetails?.length === API_PAGE_SIZE ? resourceDetails[resourceDetails.length - 1].id : undefined
-//     };
-// }
-
-// async function getDatabaseHostSummary(
-//     accountId: string,
-//     databaseHostId: string,
-//     fields?: string,
-//     resourceDetail?: ResourceDetails,
-//     isManagedResource: boolean = true
-// ): Promise<DatabaseHostSummaryPerStorageTypeResponseType> {
-//     logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields, isManagedResource);
-
-//     if (isEmpty(resourceDetail)) {
-//         [resourceDetail] = await listResources(accountId, databaseHostId);
-//     }
-//     if (isEmpty(resourceDetail)) {
-//         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-//         logger.error(errorMessage);
-//         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-//     }
-
-//     const databaseHostDetails: DatabaseHostSummaryPerStorageTypeResponseType = {
-//         id: '',
-//         name: '',
-//         status: '',
-//         databaseCount: 0
-//     };
-
-//     let fieldsValues: Array<string> = [];
-
-//     if (fields) {
-//         // remove the empty spaces in the string & split the fields by comma separated array values
-//         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-//     }
-
-//     const shouldQueryServerDetails = fieldsValues?.includes(
-//         DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
-//     );
-//     const shouldQueryTopology = fieldsValues?.includes(DatabaseHostsQueryFields.TOPOLOGY);
-//     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
-//     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
-//     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
-//     const getResourceutilization = fieldsValues?.includes(
-//         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
-//     );
-//     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
-
-//     const {
-//         resource_id: resourceId,
-//         resource_name: resourceName,
-//         region,
-//         credentials_id: credentialsId,
-//         metadata
-//     } = resourceDetail;
-//     try {
-//         const { node1InstanceId, node2InstanceId, creationDate, userDatabase = [] } = metadata as unknown as Metadata;
-//         // Check SSM Connection status
-//         const { isSSMConnected, activeNodeInstanceId, standbyNodeInstanceId, instanceName } = await getActiveSqlNode(
-//             credentialsId,
-//             region!,
-//             node1InstanceId,
-//             node2InstanceId,
-//             resourceId
-//         );
-//         let serverDetails: any;
-//         let topologyData: any;
-//         let performanceData: any;
-//         let storageData: any;
-//         let usageEstimationData: any;
-//         let resourceUtilizationData: any;
-//         let protectionData: any;
-//         const errormessages: { [index: string]: string } = {};
-//         const serverInstanceName = getOriginalDatabaseInstanceName(instanceName) || DEFAULT_INSTANCE_NAME;
-//         if (credentialsId && region) {
-//             [
-//                 serverDetails,
-//                 topologyData,
-//                 performanceData,
-//                 storageData,
-//                 protectionData,
-//                 usageEstimationData,
-//                 resourceUtilizationData
-//             ] = await Promise.all(
-//                 [
-//                     ...(isSSMConnected && activeNodeInstanceId && shouldQueryServerDetails
-//                         ? [getServerDetails(credentialsId, region, activeNodeInstanceId, [serverInstanceName])]
-//                         : [Promise.resolve()]), // Fetch server metadata
-//                     ...[
-//                         getTopology(
-//                             accountId,
-//                             region,
-//                             resourceId,
-//                             resourceDetail,
-//                             activeNodeInstanceId!,
-//                             standbyNodeInstanceId,
-//                             shouldQueryTopology
-//                         )
-//                     ],
-//                     ...(isSSMConnected && getPerformance && activeNodeInstanceId
-//                         ? [getPerformanceMetrics(credentialsId, region, activeNodeInstanceId, [serverInstanceName])]
-//                         : [Promise.resolve()]), // Fetch io latency data
-//                     ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-//                     ...(isSSMConnected && getProtection && activeNodeInstanceId
-//                         ? [getProtectionStatus(activeNodeInstanceId, instanceName, resourceDetail)]
-//                         : [Promise.resolve()]), // Fetch protection status
-//                     ...(getUsageEstimation
-//                         ? [getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource)]
-//                         : [Promise.resolve()]), // Fetch pricing estimate data
-//                     ...(isSSMConnected && getResourceutilization && activeNodeInstanceId
-//                         ? [
-//                               getAllResourceUtilisationDetails(credentialsId, region, activeNodeInstanceId, [
-//                                   serverInstanceName
-//                               ])
-//                           ]
-//                         : [Promise.resolve()])
-//                 ].map((p, index) =>
-//                     p.catch(error => {
-//                         if (DATABASE_HOSTS_INDEX_MAPPING[index]) {
-//                             errormessages[DATABASE_HOSTS_INDEX_MAPPING[index]] = JSON.stringify(error);
-//                         }
-//                         logger.error(`Error while fetching data: ${error}.`);
-//                     })
-//                 )
-//             );
-//             if (isDemo() && shouldQueryServerDetails && shouldQueryTopology) {
-//                 serverDetails.dbCount = serverDetails?.dbCount || 0;
-//                 serverDetails.dbCount += userDatabase.length;
-//                 if (topologyData?.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
-//                     delete serverDetails?.clusterName;
-//                     serverDetails.activeNode = resourceName || '';
-//                     serverDetails.nodeNames = [resourceName || ''];
-//                 } else {
-//                     serverDetails.clusterName = resourceName || '';
-//                 }
-//             }
-//             databaseHostDetails.status = isSSMConnected ? ServerState.UP : ServerState.DOWN;
-//             if (shouldQueryServerDetails && serverDetails) {
-//                 databaseHostDetails.databaseCount = serverDetails?.dbCount || 0;
-//                 databaseHostDetails.databaseServer = serverDetails;
-//                 serverDetails.creationDate = creationDate || '';
-//                 // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
-//             }
-//             databaseHostDetails.id = resourceId;
-//             databaseHostDetails.name = resourceName || '';
-//             databaseHostDetails.topology = topologyData!;
-//             databaseHostDetails.performance = getPerformance
-//                 ? { assessment: performanceData?.assessment, rwMetrics: performanceData! }
-//                 : {};
-//             databaseHostDetails.storage = storageData!;
-//             databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-//             databaseHostDetails.ebsResourceInfo = usageEstimationData?.storage?.ebsBreakdownByVolumeType || [];
-//             databaseHostDetails.sqlServerDeploymentType = resourceDetail?.sqlServerDeploymentType || '';
-//             if (resourceDetail?.clusterNodeDetails && resourceDetail?.clusterNodeDetails?.length > 0) {
-//                 databaseHostDetails.clusterNodeDetails = resourceDetail?.clusterNodeDetails;
-//             }
-//             if (getResourceutilization && resourceUtilizationData) {
-//                 databaseHostDetails.resourceUtilization = {
-//                     cpu: resourceUtilizationData.cpuUtilization! || {},
-//                     memory: resourceUtilizationData.memoryUtilization! || {},
-//                     disk: resourceUtilizationData.diskUtilization! || {}
-//                 };
-//             }
-//             if (getProtection && protectionData) {
-//                 databaseHostDetails.protection = protectionData;
-//             }
-//             if (!isEmpty(errormessages)) {
-//                 databaseHostDetails.errors = errormessages;
-//             }
-//         }
-//     } catch (error) {
-//         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
-//         throw createError(
-//             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-//             `Error while fetching database hosts details ${accountId}, ${error}`
-//         );
-//     }
-
-//     logger.debug('Database host details', databaseHostDetails);
-
-//     return databaseHostDetails;
-// }
-
-// async function getDatabases(
-//     accountId: string,
-//     databaseHostId: string,
-//     fields?: string
-// ): Promise<DatabasesListResponseType> {
-//     logger.info('Getting database list', accountId, databaseHostId, fields);
-
-//     const [resourceDetail] = await listResources(accountId, databaseHostId);
-
-//     if (isEmpty(resourceDetail)) {
-//         const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-//         logger.error(errorMessage);
-//         throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
-//     }
-
-//     const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-//     const { node1InstanceId, node2InstanceId, userDatabase = [] } = metadata as unknown as Metadata;
-//     if (!region) {
-//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Region not found for ${databaseHostId}`);
-//     }
-
-//     if (!fileSystemId) {
-//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `FSX ID not found for ${databaseHostId}`);
-//     }
-
-//     let fieldsValues: Array<string> = [];
-
-//     if (fields) {
-//         // remove the empty spaces in the string & split the fields by comma separated array values
-//         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-//     }
-
-//     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
-
-//     // Check SSM Connection status
-//     const { isSSMConnected, activeNodeInstanceId, instanceName } = await getActiveSqlNode(
-//         credentialsId,
-//         region,
-//         node1InstanceId,
-//         node2InstanceId
-//     );
-
-//     if (!isSSMConnected) {
-//         const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
-//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
-//     }
-//     try {
-//         return await getDatabaseDetails(
-//             accountId,
-//             region,
-//             credentialsId,
-//             databaseHostId,
-//             fileSystemId,
-//             getProtection,
-//             userDatabase,
-//             activeNodeInstanceId,
-//             instanceName
-//         );
-//     } catch (error) {
-//         const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
-//         logger.error(errorMessage);
-//         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
-//     }
-// }
-
 async function getNodeTopology(
     accountId: string,
     region: string,
@@ -1307,43 +994,49 @@ async function getNodeTopology(
             // fetch instance details only if there is atleast one active node
             try {
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
-                const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
+                const node1 = ec2InstanceDetails.Reservations?.[0]?.Instances?.[0];
                 const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
-                const [activeNode, standbyNode] =
-                    node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
-                if (!isEmpty(activeNode)) {
-                    keyPairName = activeNode.KeyName;
-                    activeInstanceType = activeNode.InstanceType;
-                    activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
-                    activeSubnetId = activeNode.SubnetId;
-                    activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                    activeNodeInstanceName = isDemo()
-                        ? `sqlnode-${randomize('0', 5)}`
-                        : getResourceNameFromTags(activeNode.Tags);
-                    vpcId = activeNode.VpcId;
-                    vpcCidr = activeNode.VpcId;
-                    activeNodeStatus = activeNode.State?.Name;
-
-                    const vpcParams: DescribeVpcsCommandInput = {
-                        VpcIds: [vpcId!]
-                    };
-                    const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
-                    vpcCidr = vpc?.CidrBlock;
-                    const vpcTags = vpc.Tags || [];
-
-                    vpcName = vpcTags.find(keyValuePair => keyValuePair.Key === 'Name')?.Value;
-
-                    if (!isEmpty(standbyNode)) {
-                        standbyInstanceType = standbyNode.InstanceType;
-                        standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
-                        standbySubnetId = standbyNode.SubnetId;
-                        standbyNodeStatus = standbyNode.State?.Name;
-                        const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
-                        ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                        standbyNodeInstanceName = isDemo()
+                if (node1) {
+                    const [activeNode, standbyNode] =
+                        node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
+                    if (!isEmpty(activeNode)) {
+                        keyPairName = activeNode.KeyName;
+                        activeInstanceType = activeNode.InstanceType;
+                        activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
+                        activeSubnetId = activeNode.SubnetId;
+                        activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                        activeNodeInstanceName = isDemo()
                             ? `sqlnode-${randomize('0', 5)}`
-                            : getResourceNameFromTags(standbyNode.Tags);
+                            : getResourceNameFromTags(activeNode.Tags);
+                        vpcId = activeNode.VpcId;
+                        vpcCidr = activeNode.VpcId;
+                        activeNodeStatus = activeNode.State?.Name;
+
+                        const vpcParams: DescribeVpcsCommandInput = {
+                            VpcIds: [vpcId!]
+                        };
+                        const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
+                        vpcCidr = vpc?.CidrBlock;
+                        const vpcTags = vpc.Tags || [];
+
+                        vpcName = vpcTags.find(keyValuePair => keyValuePair.Key === 'Name')?.Value;
+
+                        if (!isEmpty(standbyNode)) {
+                            standbyInstanceType = standbyNode.InstanceType;
+                            standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
+                            standbySubnetId = standbyNode.SubnetId;
+                            standbyNodeStatus = standbyNode.State?.Name;
+                            const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
+                            ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
+                            standbyNodeInstanceName = isDemo()
+                                ? `sqlnode-${randomize('0', 5)}`
+                                : getResourceNameFromTags(standbyNode.Tags);
+                        }
                     }
+                } else {
+                    logger.warn(
+                        `Instance details for ${activeNodeInstanceId} in account ${accountId} in ${region} is not found. The instance may be deleted.`
+                    );
                 }
             } catch (error) {
                 if (error instanceof EC2ServiceException && error.toString().includes(AWS_ERROR_CODES.ec2NotFound)) {
