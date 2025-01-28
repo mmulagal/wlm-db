@@ -606,10 +606,11 @@ async function processCloudFormationMessages() {
                                                                   )
                                                                 : [{ instanceName: 'postgresql' }];
 
-                                                        const instanceNames = deployedInstances.map(
-                                                            (instance: { instanceName: string }) =>
-                                                                instance.instanceName
-                                                        );
+                                                        const instanceNames =
+                                                            deployedInstances?.map(
+                                                                (instance: { instanceName: string }) =>
+                                                                    instance.instanceName
+                                                            ) || [];
 
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {
