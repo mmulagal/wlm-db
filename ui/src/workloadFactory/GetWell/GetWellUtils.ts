@@ -1346,20 +1346,20 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
 
     Object.keys(cardData).map((key: any) => {
         const checkCategory =
-            !filters['all-catagories'] || filters['all-catagories'].includes(categoryData[key]?.category);
+            !filters['all-catagories'] || filters['all-catagories']?.includes(categoryData[key]?.category);
         const checkSubCategory =
-            !filters['sub-catagories'] || filters['sub-catagories'].includes(categoryData[key]?.subCategory);
+            !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryData[key]?.subCategory);
 
         const isOptmized = cardData[key]['block_two'].value === GETWELL_VALUES.optimized;
         const checkStatus =
             !filters.status ||
-            (filters.status.includes(GETWELL_VALUES.optimized) && isOptmized) ||
-            (filters.status.includes('Not optimized') && !isOptmized);
+            (filters.status?.includes(GETWELL_VALUES.optimized) && isOptmized) ||
+            (filters.status?.includes('Not optimized') && !isOptmized);
 
-        const checkSeverity = !filters.severity || filters.severity.includes(cardData[key]['block_four'].value);
+        const checkSeverity = !filters.severity || filters.severity?.includes(cardData[key]['block_four'].value);
 
         const checkTags =
-            !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags.includes(tag)).length > 0;
+            !filters.tags || filters.tags.filter((tag: string) => cardData[key].tags?.includes(tag)).length > 0;
 
         if (checkCategory && checkSubCategory && checkStatus && checkSeverity && checkTags) {
             filteredCardData[key] = cardData[key];
