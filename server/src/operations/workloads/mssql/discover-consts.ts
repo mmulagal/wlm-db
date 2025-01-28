@@ -635,12 +635,12 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           }
           If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
             If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider. "
+              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
             }
           }
           If ((Get-PackageProvider -Name NuGet).version -lt [System.version]"2.8.5.201") {
             If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider. "
+              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
             }
           }
 
