@@ -783,43 +783,49 @@ async function getNodeTopology(
             // fetch instance details only if there is atleast one active node
             try {
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
-                const node1 = ec2InstanceDetails.Reservations?.[0].Instances?.[0];
+                const node1 = ec2InstanceDetails.Reservations?.[0]?.Instances?.[0];
                 const node2 = ec2InstanceDetails.Reservations?.[1]?.Instances?.[0];
-                const [activeNode, standbyNode] =
-                    node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
-                if (!isEmpty(activeNode)) {
-                    keyPairName = activeNode.KeyName;
-                    activeInstanceType = activeNode.InstanceType;
-                    activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
-                    activeSubnetId = activeNode.SubnetId;
-                    activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
-                    activeNodeInstanceName = isDemo()
-                        ? `sqlnode-${randomize('0', 5)}`
-                        : getResourceNameFromTags(activeNode.Tags);
-                    vpcId = activeNode.VpcId;
-                    vpcCidr = activeNode.VpcId;
-                    activeNodeStatus = activeNode.State?.Name;
-
-                    const vpcParams: DescribeVpcsCommandInput = {
-                        VpcIds: [vpcId!]
-                    };
-                    const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
-                    vpcCidr = vpc?.CidrBlock;
-                    const vpcTags = vpc.Tags || [];
-
-                    vpcName = vpcTags.find(keyValuePair => keyValuePair.Key === 'Name')?.Value;
-
-                    if (!isEmpty(standbyNode)) {
-                        standbyInstanceType = standbyNode.InstanceType;
-                        standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
-                        standbySubnetId = standbyNode.SubnetId;
-                        standbyNodeStatus = standbyNode.State?.Name;
-                        const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
-                        ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
-                        standbyNodeInstanceName = isDemo()
+                if (node1) {
+                    const [activeNode, standbyNode] =
+                        node1?.InstanceId === activeNodeInstanceId ? [node1, node2] : [node2, node1];
+                    if (!isEmpty(activeNode)) {
+                        keyPairName = activeNode.KeyName;
+                        activeInstanceType = activeNode.InstanceType;
+                        activeAvailabilityZone = activeNode.Placement?.AvailabilityZone;
+                        activeSubnetId = activeNode.SubnetId;
+                        activeVolumeId = activeNode.BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                        activeNodeInstanceName = isDemo()
                             ? `sqlnode-${randomize('0', 5)}`
-                            : getResourceNameFromTags(standbyNode.Tags);
+                            : getResourceNameFromTags(activeNode.Tags);
+                        vpcId = activeNode.VpcId;
+                        vpcCidr = activeNode.VpcId;
+                        activeNodeStatus = activeNode.State?.Name;
+
+                        const vpcParams: DescribeVpcsCommandInput = {
+                            VpcIds: [vpcId!]
+                        };
+                        const { Vpcs: [vpc = {}] = [] } = await describeVpc(credentialsId, region, vpcParams);
+                        vpcCidr = vpc?.CidrBlock;
+                        const vpcTags = vpc.Tags || [];
+
+                        vpcName = vpcTags.find(keyValuePair => keyValuePair.Key === 'Name')?.Value;
+
+                        if (!isEmpty(standbyNode)) {
+                            standbyInstanceType = standbyNode.InstanceType;
+                            standbyAvailabilityZone = standbyNode.Placement?.AvailabilityZone;
+                            standbySubnetId = standbyNode.SubnetId;
+                            standbyNodeStatus = standbyNode.State?.Name;
+                            const [firstBlockDeviceMapping = {}] = standbyNode.BlockDeviceMappings || [];
+                            ({ Ebs: { VolumeId: standbyVolumeId = undefined } = {} } = firstBlockDeviceMapping);
+                            standbyNodeInstanceName = isDemo()
+                                ? `sqlnode-${randomize('0', 5)}`
+                                : getResourceNameFromTags(standbyNode.Tags);
+                        }
                     }
+                } else {
+                    logger.warn(
+                        `Instance details for ${activeNodeInstanceId} in account ${accountId} in ${region} is not found. The instance may be deleted.`
+                    );
                 }
             } catch (error) {
                 if (error instanceof EC2ServiceException && error.toString().includes(AWS_ERROR_CODES.ec2NotFound)) {
