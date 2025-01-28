@@ -22,16 +22,23 @@ const SqlInstanceDetailsRequestObject = Type.Object({
 
 type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;
 
-const SqlInstanceDetailsResponseObject = Type.Composite([
-    SqlInstanceDetailsRequestObject,
+const SqlInstanceDetailsResponseObject = Type.Union([
+    Type.Composite([
+        SqlInstanceDetailsRequestObject,
+        Type.Object({
+            sqlInstanceName: Type.String(),
+            noOfDatabases: Type.Number(),
+            sqlEdition: Type.String(),
+            sqlVersion: Type.String(),
+            totalStorage: Type.Optional(Type.Number()),
+            totalSecondaryStorage: Type.Optional(Type.Number()),
+            isReadReplica: Type.Optional(Type.Boolean())
+        })
+    ]),
     Type.Object({
-        sqlInstanceName: Type.String(),
-        noOfDatabases: Type.Number(),
-        sqlEdition: Type.String(),
-        sqlVersion: Type.String(),
-        totalStorage: Type.Optional(Type.Number()),
-        totalSecondaryStorage: Type.Optional(Type.Number()),
-        isReadReplica: Type.Optional(Type.Boolean())
+        sqlInstanceId: Type.Optional(Type.String()),
+        sqlInstanceName: Type.Optional(Type.String()),
+        errorMessage: Type.Optional(Type.String())
     })
 ]);
 
