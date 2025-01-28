@@ -127,3 +127,14 @@ else
     echo "Error: PostgreSQL data directory is not set to the FSxN mounted volume. Current data directory: $data_directory"
     exit 1
 fi
+
+# pgvector installation
+dnf install -y make $pgsql_version-server-devel
+cd /home/ec2-user/cfn/pgvector
+make
+check_status "Failed to build pgvector"
+make install
+check_status "Failed to install pgvector"
+
+# Create pgvector extension
+sudo -u postgres /usr/bin/psql -c "CREATE EXTENSION vector;"
