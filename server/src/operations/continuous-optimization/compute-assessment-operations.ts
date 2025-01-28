@@ -58,23 +58,36 @@ async function runComputeAssessment(
                 } = {}
             ] = []
         } = computeOptimizerInstanceRecommendations || {};
+
+        const filteredRecommendationOptions = coRecOptions
+            ?.filter(
+                ({ instanceType, platformDifferences }) =>
+                    platformDifferences?.length === 0 && /^[mcr]/.test(instanceType!)
+            )
+            ?.map(
+                ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
+                    instanceType,
+                    rank,
+                    savingsOpportunity,
+                    platformDifferences
+                }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
+            );
+
+        // If the current instance type is already one of the recommended instance type, then the finding should be OPTIMIZED.
+        let updatedFinding = finding;
+        for (const recommendedInstance of filteredRecommendationOptions) {
+            const { instanceType: recommendedInstanceType } = recommendedInstance;
+            if (recommendedInstanceType === currentInstanceType) {
+                updatedFinding = AssessmentStatus.OPTIMIZED;
+                break;
+            }
+        }
+
         return {
             currentInstanceType,
-            finding,
+            finding: updatedFinding,
             findingReasonCodes,
-            recommendationOptions: coRecOptions
-                ?.filter(
-                    ({ instanceType, platformDifferences }) =>
-                        platformDifferences?.length === 0 && /^[mcr]/.test(instanceType!)
-                )
-                ?.map(
-                    ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
-                        instanceType,
-                        rank,
-                        savingsOpportunity,
-                        platformDifferences
-                    }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
-                )
+            recommendationOptions: filteredRecommendationOptions
         } as ComputeAssessment;
     } catch (error: any) {
         errorMessage = `Failed to get compute optimizer recommendation options for the selected database host during Continuous Optimization. ${error.message}`;

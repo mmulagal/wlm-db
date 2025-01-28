@@ -74,6 +74,31 @@ const logger = getLogger();
 
 const isDemoFlow = isDemo();
 
+function validateOnPremCollectionObjectV1(data: OnPremCollectionObjectV1): boolean {
+    if (!data) {
+        return false;
+    }
+    const { windowsConfig, sqlServerInfo, scriptVersion, timestamp } = data;
+    if (!windowsConfig || !sqlServerInfo || !scriptVersion || !timestamp) {
+        return false;
+    }
+    if (!Array.isArray(sqlServerInfo) || sqlServerInfo.length === 0) {
+        return false;
+    }
+    return true;
+}
+
+function validateWindowsConfig(windowsConfig: WindowsConfig): boolean {
+    if (!windowsConfig) {
+        return false;
+    }
+    const { windowsSystemName, nodeDetails } = windowsConfig;
+    if (!windowsSystemName || !Array.isArray(nodeDetails) || nodeDetails.length === 0) {
+        return false;
+    }
+    return nodeDetails.every(node => node.hostId && node.numberOfVcpus && node.ramSize);
+}
+
 async function generatePayload(accountId: string, fileName: string, fileContent: Buffer) {
     logger.info('Generate a payload', { accountId, fileName });
 
@@ -545,7 +570,7 @@ async function analyzeOnpremData(
         if (!adHocRequest) {
             // Update the record in the database as part of the initial report analysis only
             await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
-                assessment_data: response
+                assessment_data: { storageSavings, calculations }
             });
         }
     }
@@ -641,6 +666,18 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const originalJsonString = atob(decompressedBase64);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObjectV1;
 
+        if (!validateOnPremCollectionObjectV1(data)) {
+            const errorMessage = 'Error uploading OnPrem TCO data. Invalid data format.';
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+
+        if (!validateWindowsConfig(data.windowsConfig)) {
+            const errorMessage = 'Error uploading OnPrem TCO data. Invalid windowsConfig format.';
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+
         // in OnPremises analysis, credentials ID is irrelevant, so using a dummy UUID
         const { id: jobId } = await registerJob(accountId, ONPREM_TCO_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
             name: 'Upload OnPremises TCO data',
@@ -677,19 +714,27 @@ function getEbsDisks(instance: SqlInstanceDetails, classification: string = 'pri
     // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
 
     let {
-        avgVolumeSizePerDb: { primary: avgVolumeSizePerDb, secondary: avgVolumeSizePerDbSecondary = 0 },
-        avgIopsPerDb: { primary: avgIopsPerDb, secondary: avgIopsPerDbSecondary = 0 },
-        avgThroughputPerDb: { primary: avgThroughputPerDb, secondary: avgThroughputPerDbSecondary = 0 },
+        avgVolumeSizePerDb: { primary: avgVolumeSizePerDb, secondary: avgVolumeSizePerDbSecondary },
+        avgIopsPerDb: { primary: avgIopsPerDb, secondary: avgIopsPerDbSecondary },
+        avgThroughputPerDb: { primary: avgThroughputPerDb, secondary: avgThroughputPerDbSecondary },
         numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
     } = parseSqlUsageParams(instance);
 
     if (classification === 'secondary') {
-        avgVolumeSizePerDb = avgVolumeSizePerDbSecondary;
-        avgIopsPerDb = avgIopsPerDbSecondary;
-        avgThroughputPerDb = avgThroughputPerDbSecondary;
-        numDatabases = numDatabasesSecondary;
+        if (
+            numDatabasesSecondary > 0 &&
+            avgVolumeSizePerDbSecondary &&
+            avgIopsPerDbSecondary &&
+            avgThroughputPerDbSecondary
+        ) {
+            avgVolumeSizePerDb = avgVolumeSizePerDbSecondary;
+            avgIopsPerDb = avgIopsPerDbSecondary;
+            avgThroughputPerDb = avgThroughputPerDbSecondary;
+            numDatabases = numDatabasesSecondary;
+        } else {
+            return;
+        }
     }
-
     if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
         logger.warn(
             'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'

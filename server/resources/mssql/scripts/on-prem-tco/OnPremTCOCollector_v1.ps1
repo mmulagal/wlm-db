@@ -58,7 +58,7 @@ function Get-FCIName {
         [string]$sqlServerNameToFind
     )
 
-    $ipResources = Get-ClusterResource | Where-Object {$_.ResourceType -eq "IP Address"} -ErrorAction SilentlyContinue
+    $ipResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object {$_.ResourceType -eq "IP Address"}
 
     $filteredResources = $ipResources | Where-Object {
         $_.OwnerGroup -match "^SQL Server \(([^)]+)\)"
@@ -478,47 +478,72 @@ WHERE status = 'VISIBLE ONLINE';
 
     storageDetailsByDb = @"
 SET NOCOUNT ON;
+
 WITH db_size_cte AS (
     SELECT 
         database_id,
         type,
         size * 8 / 1024 AS size_mb, 
-        physical_name
+        physical_name,
+        file_id
     FROM 
         sys.master_files
 ),
 db_space_cte AS (
     SELECT 
         database_id,
-        SUM(CASE WHEN type = 0 THEN size_mb ELSE 0 END) AS data_size_mb,
-        SUM(CASE WHEN type = 1 THEN size_mb ELSE 0 END) AS log_size_mb,
-        MAX(physical_name) AS physical_name
+        type,
+        size_mb,
+        physical_name,
+        file_id
     FROM 
         db_size_cte
+),
+drive_info_cte AS (
+    SELECT 
+        ds.database_id,
+        ds.type,
+        ds.size_mb,
+        ds.physical_name,
+        LEFT(ds.physical_name, CHARINDEX(':', ds.physical_name)) AS driveLetter,
+        vs.total_bytes / 1048576 AS driveTotalSizeMb,
+        vs.available_bytes / 1048576 AS driveAvailableSizeMb,
+        ds.file_id
+    FROM 
+        db_space_cte ds
+    CROSS APPLY 
+        sys.dm_os_volume_stats(ds.database_id, ds.file_id) vs
+),
+aggregated_db_info AS (
+    SELECT 
+        d.name AS databaseName,
+        SUM(CASE WHEN ds.type = 0 THEN ds.size_mb ELSE 0 END) AS dataSizeMbmb,
+        SUM(CASE WHEN ds.type = 1 THEN ds.size_mb ELSE 0 END) AS logSizeMb,
+        SUM(ds.size_mb) AS allocatedSizeMb,
+        ds.driveLetter,
+        ds.driveTotalSizeMb,
+        ds.driveAvailableSizeMb
+    FROM 
+        sys.databases d
+    JOIN 
+        drive_info_cte ds ON d.database_id = ds.database_id
+    WHERE 
+        d.name NOT IN ('tempdb', 'model', 'msdb')
     GROUP BY 
-        database_id
+        d.name, ds.driveLetter, ds.driveTotalSizeMb, ds.driveAvailableSizeMb
 )
 SELECT 
-    d.name AS databaseName,
-    ds.data_size_mb + ds.log_size_mb AS allocatedSizeMb, 
-    ds.data_size_mb AS dataSizeMb,
-    ds.log_size_mb AS logSizeMb,
-    (CAST(FILEPROPERTY(mf.file_id, 'SpaceUsed') AS INT) * 8 / 1024) AS usedDataSizeMb,
-    LEFT(ds.physical_name, CHARINDEX(':', ds.physical_name)) AS driveLetter,
-    vs.total_bytes / 1048576 AS driveTotalSizeMb,
-    vs.available_bytes / 1048576 AS driveAvailableSizeMb 
+    databaseName,
+    allocatedSizeMb, 
+    dataSizeMbmb,
+    logSizeMb,
+    driveLetter,
+    driveTotalSizeMb,
+    driveAvailableSizeMb
 FROM 
-    sys.databases d
-JOIN 
-    db_space_cte ds ON d.database_id = ds.database_id
-JOIN 
-    sys.master_files mf ON d.database_id = mf.database_id AND mf.type = 0
-CROSS APPLY 
-    sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
-WHERE 
-    d.name NOT IN ('tempdb', 'model', 'msdb')
+    aggregated_db_info
 ORDER BY 
-    d.name FOR JSON PATH
+    databaseName, driveLetter FOR JSON PATH;
 "@ 
 
 }
