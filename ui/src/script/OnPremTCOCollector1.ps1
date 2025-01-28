@@ -517,7 +517,7 @@ drive_info_cte AS (
 aggregated_db_info AS (
     SELECT 
         d.name AS databaseName,
-        SUM(CASE WHEN ds.type = 0 THEN ds.size_mb ELSE 0 END) AS dataSizeMbmb,
+        SUM(CASE WHEN ds.type = 0 THEN ds.size_mb ELSE 0 END) AS dataSizeMb,
         SUM(CASE WHEN ds.type = 1 THEN ds.size_mb ELSE 0 END) AS logSizeMb,
         SUM(ds.size_mb) AS allocatedSizeMb,
         ds.driveLetter,
@@ -535,7 +535,7 @@ aggregated_db_info AS (
 SELECT 
     databaseName,
     allocatedSizeMb, 
-    dataSizeMbmb,
+    dataSizeMb,
     logSizeMb,
     driveLetter,
     driveTotalSizeMb,
@@ -699,8 +699,8 @@ $finalOutput['windowsConfig'] = $windowsConfig
 # Add SQL Server information to the final output
 $finalOutput['sqlServerInfo'] = $results
 
-# Convert the final output to JSON with a depth of 8
-$jsonResults = $finalOutput | ConvertTo-Json -Depth 8
+# Convert the final output to JSON with a depth of 15
+$jsonResults = $finalOutput | ConvertTo-Json -Depth 15
 
 # Define the output file path
 $outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("TCOResponse-" + $dateString + ".json")

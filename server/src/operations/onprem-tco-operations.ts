@@ -192,22 +192,20 @@ async function saveReportInWlmdbDatabase(
     if (!isEmpty(sqlServerInfo) && !isEmpty(windowsConfig)) {
         const hostIds = windowsConfig.nodeDetails?.map(({ hostId }) => hostId);
         const sqlServerInstancesByDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
-        const reports = await Promise.all(
-            Object.entries(sqlServerInstancesByDeploymentType).map(async ([deploymentType, instances]) => {
-                const instanceIds = instances.map(instance => instance.instanceGuid);
-                const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
-                return {
-                    account_id: accountId,
-                    resource_id: resourceId,
-                    database_type: databaseType,
-                    host_config: windowsConfig,
-                    database_instances_data: instances,
-                    database_deployment_type: deploymentType as DATABASE_DEPLOYMENT_TYPE,
-                    creation_time: convertToDate(timestamp),
-                    version: scriptVersion
-                };
-            })
-        );
+        const reports = Object.entries(sqlServerInstancesByDeploymentType).map(([deploymentType, instances]) => {
+            const instanceIds = instances.map(instance => instance.instanceGuid);
+            const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
+            return {
+                account_id: accountId,
+                resource_id: resourceId,
+                database_type: databaseType,
+                host_config: windowsConfig,
+                database_instances_data: instances,
+                database_deployment_type: deploymentType as DATABASE_DEPLOYMENT_TYPE,
+                creation_time: convertToDate(timestamp),
+                version: scriptVersion
+            };
+        });
 
         for (const report of reports) {
             const existingReport = await getOnPremDatabaseResources(
@@ -217,8 +215,8 @@ async function saveReportInWlmdbDatabase(
                 undefined,
                 report.resource_id
             );
-            const resolvedReport = await report;
-            if (existingReport.items.some(item => item.creationTime === resolvedReport.creation_time.getTime())) {
+            if (existingReport.items.some(item => item.creationTime === report.creation_time.getTime())) {
+                logger.error(`Report with the same resource ID ${report.resource_id} and timestamp already exists.`);
                 reports.splice(reports.indexOf(report), 1);
             }
         }
