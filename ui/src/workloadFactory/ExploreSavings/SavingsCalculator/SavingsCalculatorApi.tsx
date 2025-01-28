@@ -57,14 +57,16 @@ interface ONPREM_PAYLOAD {
         noOfVcpusInUse?: number;
         memory?: string;
         networkPerformance?: string;
-        iops?: string;
-        throughput?: string;
+        totalIops?: string;
+        totalThroughput?: string;
     }>;
     snapshotInfo?: {
         snapshotFrequency?: string;
         clonedCopiesCount?: number;
         monthlyChangeRatePercentage?: number;
     };
+    totalPrimaryHostStorage?: number;
+    totalSecondaryHostStorage?: number;
 }
 
 const SavingsCalculatorApi = () => {
@@ -187,7 +189,6 @@ const SavingsCalculatorApi = () => {
 
             primaryData = {
                 ...primaryData,
-                storage: primaryData?.storage / primaryNodes,
                 iops: primaryData?.iops / primaryNodes,
                 throughput: primaryData?.throughput / primaryNodes
             };
@@ -195,7 +196,6 @@ const SavingsCalculatorApi = () => {
             if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
                 secondaryData = {
                     ...secondaryData,
-                    storage: secondaryData?.storage / secondaryNodes,
                     iops: secondaryData?.iops / secondaryNodes,
                     throughput: secondaryData?.throughput / secondaryNodes
                 };
@@ -222,16 +222,17 @@ const SavingsCalculatorApi = () => {
                         memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
                         networkPerformance:
                             NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value || ''] || 'upTo10',
-                        iops: perInstanceNodeUsage?.iops || 0,
-                        throughput: perInstanceNodeUsage?.throughput || 0,
-                        totalStorage: perInstanceNodeUsage?.storage || 0
+                        totalIops: perInstanceNodeUsage?.iops || 0,
+                        totalThroughput: perInstanceNodeUsage?.throughput || 0
                     });
                 }
             });
             if (computeInfo) {
                 payload = {
                     ...payload,
-                    sqlInstanceData: computeInfo
+                    sqlInstanceData: computeInfo,
+                    totalPrimaryHostStorage: primaryData?.storage,
+                    totalSecondaryHostStorage: secondaryData?.storage
                 };
             }
         }
