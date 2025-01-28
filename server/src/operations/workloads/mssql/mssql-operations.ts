@@ -822,10 +822,10 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
             }
         }
         instances = instances.filter(res => res?.instanceState === SQL_SERVICE_STATE.RUNNING);
-        if (isEmpty(instances)) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'No running instance found');
+        if (!isEmpty(instances)) {
+            return instances;
         }
-        return instances;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'No running instance found');
     } catch (error) {
         logger.error(`Error while fetching SQL node status for node ${nodeIds}`, { error });
     }
