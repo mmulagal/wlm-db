@@ -17,6 +17,7 @@ import getLogger from '../utils/logger';
 import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
 
 import {
+    deleteResource,
     listAllManagedInstances,
     listTrackedEc2,
     removeTrackedEc2Record,
@@ -232,14 +233,21 @@ async function updateManagedInstRecPrefs() {
                             if (node2InstanceId) {
                                 instanceIds.push(node2InstanceId);
                             }
-                            await manageInstanceRecommendationPreReqsForManagedInstances(
-                                awsAccountId,
-                                region,
-                                credentialsId,
-                                instanceIds,
-                                accountId,
-                                deploymentType as string
-                            );
+                            try {
+                                await manageInstanceRecommendationPreReqsForManagedInstances(
+                                    awsAccountId,
+                                    region,
+                                    credentialsId,
+                                    instanceIds,
+                                    accountId,
+                                    deploymentType as string
+                                );
+                            } catch (error: any) {
+                                if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
+                                    // TODO: This covers most of the scenarios. Only for accounts where compute optimizer is not opted in, we may not be able to delete the resource record from our DB. See the pattern after Jan 2025 release and accordingly introduce a new cron operation to delete the managed instances if required
+                                    await deleteResource(accountId, instance?.resource?.resource_id, credentialsId);
+                                }
+                            }
                         });
                     }
                 }

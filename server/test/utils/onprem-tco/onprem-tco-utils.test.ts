@@ -36,11 +36,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid memory utilization', () => {
-        expect(
+        expect(() => {
             parseMemoryUtilization(
                 '{\r\n    "error":  "Error running query \\u0027memUtilization\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid licence usage details array', () => {
@@ -52,11 +52,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid license usage details', () => {
-        expect(
+        expect(() => {
             parseLicenceUsageDetails(
                 '{\r\n    "error":  "Error running query \\u0027licenceUsageDetails\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should join array of strings', () => {
@@ -71,9 +71,9 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid sql version', () => {
-        expect(
-            parseSqlVersion('{\r\n    "error":  "Error running query \\u0027sqlVersion\\u0027 on instance FCI12"\r\n}')
-        ).toBeUndefined();
+        expect(() => {
+            parseSqlVersion('{\r\n    "error":  "Error running query \\u0027sqlVersion\\u0027 on instance FCI12"\r\n}');
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid IOPS array', () => {
@@ -87,9 +87,9 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid IOPS', () => {
-        expect(
-            parseIops('{\r\n    "error":  "Error running query \\u0027iops\\u0027 on instance FCI12"\r\n}')
-        ).toBeUndefined();
+        expect(() => {
+            parseIops('{\r\n    "error":  "Error running query \\u0027iops\\u0027 on instance FCI12"\r\n}');
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid storage details array', () => {
@@ -109,11 +109,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid storage details', () => {
-        expect(
+        expect(() => {
             parseStorageDetailsByDb(
                 '{\r\n    "error":  "Error running query \\u0027iops\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid AOAG details array', () => {

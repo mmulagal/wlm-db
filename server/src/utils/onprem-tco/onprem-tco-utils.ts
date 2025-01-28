@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import moment from 'moment';
 import getLogger from '../logger';
 import { generateHash } from '../utils';
@@ -17,7 +18,8 @@ function parseCpuUtilization(value: string) {
         if (typeof value === 'string' && !Number.isNaN(Number(value))) {
             return Number(value);
         }
-        logger.error(`Error parsing cpuUtilization: ${error}`);
+        const errorMessage = `Error parsing cpuUtilization: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -32,9 +34,11 @@ function parseMemoryUtilization(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing memUtilization: ${error}`);
+        const errorMessage = `Error parsing memUtilization: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -49,9 +53,11 @@ function parseLicenceUsageDetails(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing licenceUsageDetails: ${error}`);
+        const errorMessage = `Error parsing licenceUsageDetails: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -67,9 +73,11 @@ function parseSqlVersion(value: string | string[]) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing sqlVersion: ${error}`);
+        const errorMessage = `Error parsing sqlVersion: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -87,9 +95,11 @@ function parseIops(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing iops: ${error}`);
+        const errorMessage = `Error parsing iops: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -113,9 +123,11 @@ function parseStorageDetailsByDb(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing storageDetailsByDb: ${error}`);
+        const errorMessage = `Error parsing storageDetailsByDb: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -138,9 +150,11 @@ function parseAoagReadReplica(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing aoagReadReplica: ${error}`);
+        const errorMessage = `Error parsing aoagReadReplica: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 

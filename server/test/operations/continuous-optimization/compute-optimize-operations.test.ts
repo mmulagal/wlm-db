@@ -1,3 +1,4 @@
+import { JOBTYPE } from '@prisma/client';
 import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -11,7 +12,6 @@ import '../../simulator/scopes/aws/cloud-watch-scope';
 import '../../simulator/scopes/aws/compute-optimizer-scope';
 import { handleComputeRemediation } from '../../../src/operations/continuous-optimization/compute-optimize-operations';
 import { handleOptimizeJobCreation } from '../../../src/operations/continuous-optimization/assessment-utils';
-import { JOBTYPE } from '@prisma/client';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 let optimizeParentId = '';
@@ -22,7 +22,7 @@ beforeAll(async () => {
 
     await createResource(ACCOUNT_ID, {
         resourceId: '6cbdabbfe3fb147e',
-        resourceName: resourceName,
+        resourceName,
         resourceType: 'MSSQL',
         coRelationId: 'fs-f6082f35c1db',
         cloudProviderAccountId: 'test-aws-account',
@@ -41,7 +41,7 @@ beforeAll(async () => {
         credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
         region: DEFAULT_AWS_REGION,
         resourceId: RESOURCE_ID,
-        databaseInstanceId: databaseInstanceId,
+        databaseInstanceId,
         databaseInstanceName: 'MSSQLSERVER',
         isDefault: true,
         source: 'deployment',
