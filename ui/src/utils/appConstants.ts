@@ -1219,6 +1219,8 @@ export const GENERAL = {
     OS_NOTE_POINT_TWO:
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
+    SQL_COLLATION_NOTE:
+        'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
     OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:

@@ -10,6 +10,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { setSqlServerCollation } from '../../../../store/mssql/mssqlFormSlice';
 import { selectDefaultCollation } from '../../MSSqlServer/MSSqlUtils';
+import { ReactComponent as Note } from '../../../../assets/action-required.svg';
 
 const SqlServerCollation = () => {
     const dispatch = useDispatch();
@@ -65,6 +66,16 @@ const SqlServerCollation = () => {
                                 isSearchable={generateCollationValues.length > 5}
                                 options={generateCollationValues}
                             />
+                        </div>
+                        <div className={styles['note-collation']}>
+                            <div className={styles['note-svg']}>
+                                <Note />
+                            </div>
+
+                            <DsTypography variant="Semibold_14" className={styles.noteHeading}>
+                                {GENERAL.NOTE}:
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">{GENERAL.SQL_COLLATION_NOTE}</DsTypography>
                         </div>
                     </DsTypography>
                 </AccordionCardContent>
