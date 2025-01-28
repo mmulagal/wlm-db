@@ -179,7 +179,7 @@ describe('MSSQL Resource methods', () => {
             [ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID],
             ACCOUNT_ID
         );
-        expect(resp[0]).toEqual(mssqlResponse.mssqlServerInstanceDetails);
+        expect(resp?.[0]).toEqual(mssqlResponse.mssqlServerInstanceDetails);
     });
 
     it('Get active instance', async () => {

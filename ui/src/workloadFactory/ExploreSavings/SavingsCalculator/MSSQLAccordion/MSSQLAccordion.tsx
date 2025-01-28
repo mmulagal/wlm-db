@@ -1,6 +1,12 @@
 import { DsAccordion, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import styles from './MSSQLAccordion.module.scss';
-import { ExploreSaveConfiguration, MSSQLServerInstance, calculatedFSXData, setRecommendedConfig } from '../savingsUtil';
+import {
+    ExploreSaveConfiguration,
+    MSSQLServerInstance,
+    MSSQLServerInstanceForOnPremise,
+    calculatedFSXData,
+    setRecommendedConfig
+} from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useNavigate } from 'react-router-dom';
 import { Text } from '../../../../ui-components/Typography';
@@ -22,10 +28,10 @@ import { useGetConfigListQuery, useSaveConfigDataMutation } from '../../../../ut
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
-const TableLayout = ({ data }: any) => {
+const TableLayout = ({ data, type }: any) => {
     return (
         <Grid className={styles['fsx-table-column']} style={{ marginBottom: 3 }}>
-            <GridItem lg="4">
+            <GridItem lg={type === WLF_TABS.MSSQL_ON_PREMISES ? '3' : '4'}>
                 <Text>{data.label}</Text>
             </GridItem>
             <GridItem lg="3">
@@ -33,8 +39,9 @@ const TableLayout = ({ data }: any) => {
                     {data.value}
                 </Text>
             </GridItem>
-            <GridItem lg="5">
+            <GridItem lg={type === WLF_TABS.MSSQL_ON_PREMISES ? '6' : '5'}>
                 <Text>{data.text}</Text>
+                {data?.text2 && <Text style={{ padding: '0', marginTop: '-15px' }}>{data?.text2}</Text>}
             </GridItem>
         </Grid>
     );
@@ -325,17 +332,25 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 {GENERAL.MS_SQL_TWO_INSTANCES}
                             </DsTypography>
 
-                            {MSSQLServerInstance(msSqlInstance, storageType).map(
-                                (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={index} />
-                                )
-                            )}
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
+                                MSSQLServerInstanceForOnPremise(msSqlInstance, storageType).map(
+                                    (data: { label: string; text: string; value: string }, index: number) => (
+                                        <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
+                                    )
+                                )}
+
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES &&
+                                MSSQLServerInstance(msSqlInstance, storageType).map(
+                                    (data: { label: string; text: string; value: string }, index: number) => (
+                                        <TableLayout data={data} key={index} />
+                                    )
+                                )}
                             <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
                                 {GENERAL.FSX_FOR_ONTAP} 1
                             </DsTypography>
                             {calculatedFSXData(fsxData, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={index} />
+                                    <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
                                 )
                             )}
 
@@ -344,7 +359,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             </DsTypography>
                             {calculatedFSXData(fsxData, storageType).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={index} />
+                                    <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
                                 )
                             )}
                         </div>
@@ -365,11 +380,20 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 {GENERAL.MS_SQL_SINGLE_INSTANCES}
                             </DsTypography>
 
-                            {MSSQLServerInstance(msSqlInstance, storageType).map(
-                                (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={index} />
-                                )
-                            )}
+                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
+                                MSSQLServerInstanceForOnPremise(msSqlInstance, storageType).map(
+                                    (data: { label: string; text: string; value: string }, index: number) => (
+                                        <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
+                                    )
+                                )}
+
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES &&
+                                MSSQLServerInstance(msSqlInstance, storageType).map(
+                                    (data: { label: string; text: string; value: string }, index: number) => (
+                                        <TableLayout data={data} key={index} />
+                                    )
+                                )}
+
                             <DsTypography
                                 variant="Semibold_14"
                                 style={{ marginTop: '32px', marginBottom: '6px' }}
@@ -377,9 +401,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             >
                                 {GENERAL.FSX_FOR_ONTAP}
                             </DsTypography>
-                            {calculatedFSXData(fsxData, storageType).map(
+                            {calculatedFSXData(fsxData, storageType, selectedExploreSavingsTab).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={index} />
+                                    <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
                                 )
                             )}
                         </div>
