@@ -664,7 +664,7 @@ Resources:
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
-  SQLStandaloneStack:
+  PGSQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsStandalone
     DependsOn: WaitCondition
@@ -765,7 +765,7 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-      Node1InstanceId: !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
+      Node1InstanceId: !GetAtt "PGSQLStandaloneStack.Outputs.SqlNodeId"
       ResourceName: !Ref 'SqlServerName'
       SQLDeploymentType: 
           !If

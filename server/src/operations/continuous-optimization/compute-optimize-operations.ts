@@ -31,6 +31,7 @@ import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
+import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -380,6 +381,20 @@ async function handleComputeRemediation(
                 throw checkRunningResponse.error;
             }
 
+            // update metadata after successful optimization
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+            const { compute: { findingReasonCodes = [], recommendationOptions = [] } = {} } =
+                existingAssessmentData || {};
+            (metadata as unknown as Metadata).assessment = {
+                ...existingAssessmentData,
+                compute: {
+                    finding: AssessmentStatus.OPTIMIZED,
+                    findingReasonCodes,
+                    currentInstanceType: instanceType,
+                    recommendationOptions
+                }
+            };
+            await updateResourceMetaData(accountId, credentialsId, resourceId, metadata);
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
