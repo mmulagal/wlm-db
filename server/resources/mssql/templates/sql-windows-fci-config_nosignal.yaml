@@ -951,7 +951,7 @@ Resources:
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - "' -ClusterName '"
-                                  - !Ref 'SqlFSxWSFCName'
+                                  - !Ref 'SqlFsxFciName'
                                   - '''"'
                             waitAfterCompletion: '0'
                         m-update-sqltag:
