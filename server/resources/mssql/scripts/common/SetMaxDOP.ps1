@@ -75,14 +75,29 @@ try {
         $dop = "16"
     }
 
+    Write-Output "Setting max dop to $dop."
     $SetupMaxDOPPs = {
         $sql = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', " + $Using:dop + "; RECONFIGURE WITH OVERRIDE; "
-        Import-Module SQLPS
-        Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ServerInstance $Using:ServerInstanceName
+        try {
+            Import-Module SQLPS
+            Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ServerInstance $Using:ServerInstanceName
+        }
+        catch {
+            Write-Output "Error while configuring max dop using server instance name: $_."
+            if ($Using:ClusterName -ne '') {
+                try {
+                    $connectionString = "Server=$Using:ClusterName;Integrated Security=True;TrustServerCertificate=True;"
+                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $Using:sql -ConnectionString $connectionString
+                    Write-Output "Max dop configured using cluster name."
+                }
+                catch {
+                    Write-Output "Error while configuring max dop using cluster name: $_."
+                }
+            }
+        }
     }
-
+    
     Invoke-Command -Authentication Credssp -Scriptblock $SetupMaxDOPPs -ComputerName $NetBIOSName -Credential $DomainAdminCreds
-
 }
 catch {
     Write-Output "Error while configuring max dop: $_."
