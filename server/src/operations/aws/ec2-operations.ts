@@ -565,7 +565,7 @@ async function getServicesWithNoEndpoint(
             : [];
     const missingRoutesInS3 =
         routeTableIds && !isEmpty(routeTableIds)
-            ? routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0)
+            ? [...new Set(routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0))]
             : [];
 
     const availableEndpoints = !isEmpty(endpoints)

@@ -27,7 +27,7 @@ router.get(`${BASE_URL}/v1/mssql/onprem-tco/resources`, async (req: {}, res: any
 router.post(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId/explore-savings`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, OnPremCalculations);
-    }, 5000);
+    }, 1000);
 });
 
 router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/ebs`, async (req: {}, res: any) => {

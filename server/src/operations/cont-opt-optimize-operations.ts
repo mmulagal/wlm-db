@@ -31,7 +31,8 @@ import {
     getResourceNameFromTags,
     calculateFsxStorageCapacityForHeadroomOptimization,
     sleep,
-    retryWithDelay
+    retryWithDelay,
+    getServerNameWithHostname
 } from '../utils/utils';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -1036,10 +1037,6 @@ async function tempDbDriveOptimization(
         });
     }
     return { jobStatus, errorMessage };
-}
-
-function getServerNameWithHostname(sqlServerName: string, instanceName: string) {
-    return instanceName && sqlServerName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
 }
 
 async function optimizeSizing(

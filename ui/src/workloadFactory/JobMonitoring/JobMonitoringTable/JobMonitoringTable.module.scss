@@ -37,7 +37,7 @@
                     height: 74px;
                 }
             }
-            span {
+            [class*='Table-module_cell'] {
                 background-color: var(--content-background) !important;
             }
         }

@@ -443,6 +443,13 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualFSXIOPS = 6000;
             state.selectedManualFSXThroughput = 128;
             state.requestedPayload = {};
+            state.computeInformation = {};
+            state.storagePerformance = {
+                primaryData: { totalStorageAmount: '', iops: '', throughput: '' },
+                primaryLog: { totalStorageAmount: '', iops: '', throughput: '' },
+                secondaryData: { totalStorageAmount: '', iops: '', throughput: '' },
+                secondaryLog: { totalStorageAmount: '', iops: '', throughput: '' }
+            };
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;

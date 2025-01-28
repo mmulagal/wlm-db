@@ -27,6 +27,7 @@ import store from '../../../store/store';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import CategoryDialogComponent from '../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
+import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
@@ -150,6 +151,8 @@ const OptimizeByCategory = () => {
                         </div>
                     </div>
                 </div>
+
+                <div className={styles.optimizeSeparator} />
 
                 <div className={styles.topSection}>
                     <div className={styles.tile1}>

@@ -22,7 +22,8 @@ import {
     SQL_DEPLOYMENT_MODE,
     TCO_MANUAL_DEPLOYMENT_TYPE,
     THROUGHPUT_LIST,
-    TIB_IN_BYTE
+    TIB_IN_BYTE,
+    WLF_TABS
 } from '../../../utils/consts';
 
 export const comparisonData = (calculatedResponse: any) => {
@@ -190,7 +191,7 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
     ];
 };
 
-export const calculatedFSXData = (fsxData: any, storageType: string) => {
+export const calculatedFSXData = (fsxData: any, storageType: string, selectedExploreSavingsTab?: string) => {
     return [
         {
             label: 'Region',
@@ -205,14 +206,20 @@ export const calculatedFSXData = (fsxData: any, storageType: string) => {
                     : fsxData?.deploymentType === 'Multi'
                     ? 'Multi Availability Zone'
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
-            text: `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `${fsxData?.deploymentType} Availability Zones is the equivalent deployment type for your on-premises configuration.`
+                    : `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
         },
         {
             label: 'Total storage capacity',
             value: fsxData?.totalStorageCapacity
                 ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: `According to ${storageType} total capacity of primary database volumes.`
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `For Fci: According to On-Premises total capacity of primary database volumes.`
+                    : `According to ${storageType} total capacity of primary database volumes.`
         },
 
         {
@@ -220,7 +227,10 @@ export const calculatedFSXData = (fsxData: any, storageType: string) => {
             value: fsxData?.percentageSsd
                 ? formatFractionalNumber(fsxData?.percentageSsd, 2) + '%'
                 : GENERAL.NOT_AVAILABLE,
-            text: `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `The percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} database workload when using FSx for ONTAP.`
+                    : `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
         },
         {
             label: 'Savings from compression and deduplication',
@@ -232,7 +242,10 @@ export const calculatedFSXData = (fsxData: any, storageType: string) => {
             value: fsxData?.effectiveCapacity
                 ? formatSizeTwoPrecision(fsxData?.effectiveCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `Effective capacity reduces costs based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
+                    : `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
         },
         {
             label: 'SSD tier required capacity',
@@ -251,21 +264,30 @@ export const calculatedFSXData = (fsxData: any, storageType: string) => {
         {
             label: 'Provisioned SSD IOPS',
             value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
-            text: 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `Based on your on-premises configuration.`
+                    : 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
             label: 'Throughput capacity',
             value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
-            text: `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
-                fsxData?.numberOfVolumes * fsxData?.throughput
-            } Mbps).`
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `Based on your on-premises configuration.`
+                    : `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
+                          fsxData?.numberOfVolumes * fsxData?.throughput
+                      } Mbps).`
         },
         {
             label: 'Monthly snapshot capacity',
             value: fsxData?.monthlySnapshotCapacity
                 ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
                 : GENERAL.NOT_AVAILABLE,
-            text: 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
+            text:
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                    ? `FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.`
+                    : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
         }
     ];
 };
@@ -294,6 +316,35 @@ export const MSSQLServerInstance = (sqlData: any, storageType: string) => {
             label: 'Database instance type',
             value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
             text: 'Database instance type selected based on the EC2 instance type'
+        }
+    ];
+};
+
+export const MSSQLServerInstanceForOnPremise = (sqlData: any, storageType: string) => {
+    return [
+        {
+            label: 'Database deployment mode',
+            value: sqlData?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+            text:
+                sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                    ? `Failover cluster instance (FCI) is the equivalent deployment mode for FCI on-premises.`
+                    : `Database deployment mode selected based on the current ${storageType} database deployment mode`
+        },
+        {
+            label: 'Database edition',
+            value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
+            text: `Option 1: The selected database edition is based on the source on-premises SQL Server database.`,
+            text2: 'Option 2: Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.'
+        },
+        {
+            label: 'Database version',
+            value: sqlData?.serverVersion || GENERAL.NOT_AVAILABLE,
+            text: `Supported database version selected based on your on-premises SQL Server version.`
+        },
+        {
+            label: 'Database instance type',
+            value: sqlData?.instanceType || GENERAL.NOT_AVAILABLE,
+            text: 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
         }
     ];
 };

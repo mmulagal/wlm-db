@@ -57,14 +57,16 @@ interface ONPREM_PAYLOAD {
         noOfVcpusInUse?: number;
         memory?: string;
         networkPerformance?: string;
-        iops?: string;
-        throughput?: string;
+        totalIops?: string;
+        totalThroughput?: string;
     }>;
     snapshotInfo?: {
         snapshotFrequency?: string;
         clonedCopiesCount?: number;
         monthlyChangeRatePercentage?: number;
     };
+    totalPrimaryHostStorage?: number;
+    totalSecondaryHostStorage?: number;
 }
 
 const SavingsCalculatorApi = () => {
@@ -160,44 +162,45 @@ const SavingsCalculatorApi = () => {
             storage: storagePerformance?.primaryData?.totalStorageAmount
                 ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE
                 : 0,
-            iops: storagePerformance?.primaryData?.iops,
-            throughput: storagePerformance?.primaryData?.throughput
+            iops: Number(storagePerformance?.primaryData?.iops) || 0,
+            throughput: Number(storagePerformance?.primaryData?.throughput) || 0
         };
+
         let secondaryData: NODE_USAGE_INTERFACE = {
-            storage: storagePerformance?.secondaryData?.totalStorageAmount
-                ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
-                : 0,
-            iops: storagePerformance?.secondaryData?.iops,
-            throughput: storagePerformance?.secondaryData?.throughput
+            storage: 0,
+            iops: 0,
+            throughput: 0
+        };
+
+        if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
+            secondaryData = {
+                storage: storagePerformance?.secondaryData?.totalStorageAmount
+                    ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
+                    : 0,
+                iops: Number(storagePerformance?.secondaryData?.iops) || 0,
+                throughput: Number(storagePerformance?.secondaryData?.throughput) || 0
+            };
+        }
+
+        let totalDataPerInstance: any = {
+            iops: 0,
+            throughput: 0
         };
 
         if (storagePerformance) {
-            let primaryNodes = 0;
-            let secondaryNodes = 0;
+            let nodesLength = selectedOnPremHostDetails?.sqlServerInstances?.length;
+
             if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-                primaryNodes = selectedOnPremHostDetails?.sqlServerInstances?.filter(
-                    (instance: any) => !instance?.isReadReplica
-                ).length;
-                secondaryNodes = selectedOnPremHostDetails?.sqlServerInstances?.filter(
-                    (instance: any) => instance?.isReadReplica
-                ).length;
+                totalDataPerInstance = {
+                    ...totalDataPerInstance,
+                    iops: (primaryData?.iops + secondaryData?.iops) / nodesLength,
+                    throughput: (primaryData?.throughput + secondaryData?.throughput) / nodesLength
+                };
             } else {
-                primaryNodes = selectedOnPremHostDetails?.sqlServerInstances?.length;
-            }
-
-            primaryData = {
-                ...primaryData,
-                storage: primaryData?.storage / primaryNodes,
-                iops: primaryData?.iops / primaryNodes,
-                throughput: primaryData?.throughput / primaryNodes
-            };
-
-            if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-                secondaryData = {
-                    ...secondaryData,
-                    storage: secondaryData?.storage / secondaryNodes,
-                    iops: secondaryData?.iops / secondaryNodes,
-                    throughput: secondaryData?.throughput / secondaryNodes
+                totalDataPerInstance = {
+                    ...totalDataPerInstance,
+                    iops: primaryData?.iops / nodesLength,
+                    throughput: primaryData?.throughput / nodesLength
                 };
             }
         }
@@ -209,12 +212,6 @@ const SavingsCalculatorApi = () => {
                 let perInst = selectedOnPremHostDetails?.sqlServerInstances?.find(
                     (inst: any) => inst?.sqlInstanceName === key
                 );
-                let perInstanceNodeUsage: any = {};
-                if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG && perInst?.isReadReplica) {
-                    perInstanceNodeUsage = secondaryData;
-                } else {
-                    perInstanceNodeUsage = primaryData;
-                }
                 if (perInst) {
                     computeInfo.push({
                         sqlInstanceId: perInst?.sqlInstanceId,
@@ -222,16 +219,17 @@ const SavingsCalculatorApi = () => {
                         memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
                         networkPerformance:
                             NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value || ''] || 'upTo10',
-                        iops: perInstanceNodeUsage?.iops || 0,
-                        throughput: perInstanceNodeUsage?.throughput || 0,
-                        totalStorage: perInstanceNodeUsage?.storage || 0
+                        totalIops: totalDataPerInstance?.iops || 0,
+                        totalThroughput: totalDataPerInstance?.throughput || 0
                     });
                 }
             });
             if (computeInfo) {
                 payload = {
                     ...payload,
-                    sqlInstanceData: computeInfo
+                    sqlInstanceData: computeInfo,
+                    totalPrimaryHostStorage: primaryData?.storage,
+                    totalSecondaryHostStorage: secondaryData?.storage
                 };
             }
         }

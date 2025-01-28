@@ -12,7 +12,7 @@ import {
 } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
-import { getOriginalDatabaseInstanceName, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 import getLogger from '../../utils/logger';
@@ -31,6 +31,7 @@ import { calculateComputeDrift } from './compute-assessment-operations';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
+import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -58,7 +59,7 @@ async function handleComputeRemediation(
     let subJobErrorMessage;
 
     let anySubJobFailed = false;
-    let originalInstanceName = '';
+    let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
     try {
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -68,10 +69,13 @@ async function handleComputeRemediation(
             node1InstanceId,
             node2InstanceId
         );
-        originalInstanceName = getOriginalDatabaseInstanceName(instanceName);
 
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            formattedInstanceName = getServerNameWithHostname(
+                resourceDetails[0]?.resource_name || undefined,
+                instanceDetail?.database_instance_name
+            );
             const { fsxn_ids: fsxId, fsx_svm_id: svmDetails } = instanceDetail as unknown as DatabaseInstance;
             const svmDetailsObject = svmDetails as Record<string, string>;
             const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
@@ -111,14 +115,14 @@ async function handleComputeRemediation(
                         );
 
                         instanceIdsList.push(...clusterNodeInstanceIds);
-                        await updateLongRunningAuditGroup(undefined, undefined, originalInstanceName);
+                        await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
 
                         // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
                         const preReqJobId = await handleOptimizeJobCreation(
                             accountId,
                             credentialsId,
                             region,
-                            instanceName,
+                            formattedInstanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Prerequisite check for compute optimization of secondary nodes.',
                             'Prerequisite check for compute optimization of secondary nodes.',
@@ -149,7 +153,7 @@ async function handleComputeRemediation(
                             accountId,
                             credentialsId,
                             region,
-                            instanceName,
+                            formattedInstanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Modify instance type for secondary nodes in the cluster',
                             `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
@@ -221,7 +225,7 @@ async function handleComputeRemediation(
                             accountId,
                             credentialsId,
                             region,
-                            instanceName,
+                            formattedInstanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Transfer cluster node ownership from primary to another node in the cluster',
                             `Transfer cluster node ownership from ${ownerNode} to ${targetNodeName} in the cluster. Cluster node ownership transfers to a healthy node in the cluster.`,
@@ -265,7 +269,7 @@ async function handleComputeRemediation(
                     accountId,
                     credentialsId,
                     region,
-                    instanceName,
+                    formattedInstanceName,
                     JOBTYPE.OPTIMIZATION,
                     'Prerequisite check for compute optimization in SQL node',
                     'Prerequisite check for compute optimization of SQL node.',
@@ -293,7 +297,7 @@ async function handleComputeRemediation(
                 accountId,
                 credentialsId,
                 region,
-                instanceName,
+                formattedInstanceName,
                 JOBTYPE.OPTIMIZATION,
                 'Modify instance type for primary node in the cluster',
                 `Modify instance type of SQL node ${activeNodeInstanceId} to ${instanceType}.To modify, instance will be stopped,modified and restarted.`,
@@ -332,7 +336,7 @@ async function handleComputeRemediation(
                     accountId,
                     credentialsId,
                     region,
-                    instanceName,
+                    formattedInstanceName,
                     JOBTYPE.OPTIMIZATION,
                     'Transfer node ownership back to primary node in the cluster',
                     'Transfer node ownership back to primary node in the cluster',
@@ -377,13 +381,27 @@ async function handleComputeRemediation(
                 throw checkRunningResponse.error;
             }
 
+            // update metadata after successful optimization
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+            const { compute: { findingReasonCodes = [], recommendationOptions = [] } = {} } =
+                existingAssessmentData || {};
+            (metadata as unknown as Metadata).assessment = {
+                ...existingAssessmentData,
+                compute: {
+                    finding: AssessmentStatus.OPTIMIZED,
+                    findingReasonCodes,
+                    currentInstanceType: instanceType,
+                    recommendationOptions
+                }
+            };
+            await updateResourceMetaData(accountId, credentialsId, resourceId, metadata);
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
                 updatedMetadata.isComputeOptimized = true;
                 await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
             }
-            await updateLongRunningAuditGroup(AuditStatus.SUCCESS, undefined, originalInstanceName);
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS, undefined, formattedInstanceName);
             return;
         }
 
@@ -394,7 +412,7 @@ async function handleComputeRemediation(
         logger.error(errorMessage);
 
         jobStatus = JOBSTATUS.FAILED;
-        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage, originalInstanceName);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage, formattedInstanceName);
     } finally {
         const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {
@@ -413,6 +431,15 @@ async function checkRunningStatus(
     credentialsId: string,
     activeNodeInstanceId: string
 ) {
+    logger.info('Checking running status', {
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        parentJobId,
+        activeNodeInstanceId
+    });
+
     const checkRunningJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -458,7 +485,7 @@ async function checkRunningStatus(
         endTime: Date.now()
     });
 
-    return { running: true, error: 'Error parsing SSM query response' };
+    return { running: true, error: '' };
 }
 
 export default async function optimizeCompute(
@@ -808,3 +835,5 @@ async function updateNodeInstanceType(
         throw createError(500, errorMessage);
     }
 }
+
+export { handleComputeRemediation };
