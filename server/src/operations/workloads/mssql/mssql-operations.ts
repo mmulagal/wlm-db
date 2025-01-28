@@ -803,6 +803,8 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 async function getAllInstanceDetails(credentialsId: string, region: string, nodeIds: string[], accountId?: string) {
     logger.info('Fetch all MSSQL instance details', { credentialsId, region });
     const commands = [INSTANCE_DETAILS];
+    let instances = [];
+
     try {
         for (const nodeId of nodeIds) {
             const response = await callSsmExecution(
@@ -816,12 +818,14 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
             if (response) {
                 let parsedResponse = sqlResponseParsing(response);
                 parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
-                if (parsedResponse[0].instanceState === SQL_SERVICE_STATE.RUNNING) {
-                    return parsedResponse;
-                }
+                instances.push(...parsedResponse);
             }
         }
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'No running instance found');
+        instances = instances.filter(res => res?.instanceState === SQL_SERVICE_STATE.RUNNING);
+        if (isEmpty(instances)) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'No running instance found');
+        }
+        return instances;
     } catch (error) {
         logger.error(`Error while fetching SQL node status for node ${nodeIds}`, { error });
     }
