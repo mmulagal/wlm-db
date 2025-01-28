@@ -200,7 +200,7 @@ const reportData = {
 };
 
 describe('onPrem TCO operations', () => {
-    it.skip('Save report in WLMDB database', async () => {
+    it('Save report in WLMDB database', async () => {
         await saveReportInWlmdbDatabase(ACCOUNT_ID, MSSQL, reportData);
         const listReports = await listOnPremDatabaseResources(ACCOUNT_ID, MSSQL);
         expect(listReports.length).toEqual(2);
@@ -211,18 +211,18 @@ describe('onPrem TCO operations', () => {
         });
     });
 
-    it.skip('should derive the correct instance type based on host config', async () => {
+    it('should derive the correct instance type based on host config', async () => {
         const instanceType = await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, reportData.windowsConfig);
         expect(instanceType).toEqual('m2.xlarge');
     });
 
-    it.skip('should group SQL Server instances by deployment type', () => {
+    it('should group SQL Server instances by deployment type', () => {
         const groupedInstances = groupSqlServerInstancesByDeploymentType(reportData.sqlServerInfo);
         expect(groupedInstances.FCI.length).toEqual(2);
         expect(groupedInstances.Standalone.length).toEqual(1);
     });
 
-    it.skip('should derive the correct EBS volumes list from SQL instance details', () => {
+    it('should derive the correct EBS volumes list from SQL instance details', () => {
         const expectedEbsVolumes = [
             {
                 volumeType: 'gp2',
@@ -237,7 +237,7 @@ describe('onPrem TCO operations', () => {
         expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 
-    it.skip('should derive the correct instance type based on SQL usage', async () => {
+    it('should derive the correct instance type based on SQL usage', async () => {
         const instanceType = await deriveSqlUsageBasedInstanceType(DEFAULT_AWS_REGION, reportData.sqlServerInfo);
         expect(instanceType).toEqual('m2.xlarge');
     });
@@ -250,7 +250,7 @@ describe('onPrem TCO operations', () => {
         expect(recommendedLicenseEdition).toBeDefined();
     });
 
-    it.skip('should return true if any SQL instance is using enterprise features', () => {
+    it('should return true if any SQL instance is using enterprise features', () => {
         const sqlServerInfo = [
             {
                 instanceGuid: 'E7A86AFB-12D4-4A69-8942-43E548CAD458',
@@ -283,7 +283,7 @@ describe('onPrem TCO operations', () => {
         expect(currentLicenseEdition).toEqual('Enterprise Edition');
     });
 
-    it.skip('should derive the correct instance requirements based on SQL instance details', () => {
+    it('should derive the correct instance requirements based on SQL instance details', () => {
         const expectedRequirements = {
             ArchitectureTypes: ['x86_64'],
             VirtualizationTypes: ['hvm'],
