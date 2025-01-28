@@ -29,7 +29,7 @@
         }
 
         [class*='Table-module_row'] {
-            span {
+            [class*='Table-module_cell'] {
                 background-color: var(--main-background) !important;
             }
         }
