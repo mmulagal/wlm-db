@@ -17,7 +17,7 @@ import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
 import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
-import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
+import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
 
 import FileUpload from './FileUpload';
 import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
@@ -398,7 +398,7 @@ const ExploreSavingsOnPremiseTable = () => {
     const handleDownload = async () => {
         // getDownloadFn([{ input: tcoScript, name: 'list-vms.ps1' }]);
 
-        const fileProps = [{ input: tcoScript, name: 'OnPremTCOCollector.ps1' }];
+        const fileProps = [{ input: tcoScript, name: 'SQLServerDataCollector.ps1' }];
 
         const files = fileProps.map(
             ({ name, input }) =>

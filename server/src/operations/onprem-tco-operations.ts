@@ -158,7 +158,7 @@ function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
     );
 }
 
-async function downloadOnpremTcoCollectorScript(accountId: string, databaseType: string = MSSQL) {
+async function downloadSqlServerDataCollectorScript(accountId: string, databaseType: string = MSSQL) {
     logger.info('Downloading OnPrem TCO Collector Script', { accountId, databaseType });
 
     const bucketname = getArtifactsRegionBucketName(DEFAULT_AWS_REGION);
@@ -1201,7 +1201,7 @@ async function getOnPremResourceExploreSavings(
 export {
     generatePayload,
     deleteOnPremTcoReportResourceRecord,
-    downloadOnpremTcoCollectorScript,
+    downloadSqlServerDataCollectorScript,
     uploadOnpremTcoData,
     getIndividualOnPremDatabaseResource,
     getOnPremDatabaseResources,

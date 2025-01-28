@@ -9,7 +9,7 @@
 Collects detailed information about the Windows system and SQL Server instances on a specified remote computer.
 
 .DESCRIPTION
-This PowerShell script, `OnPremTCOCollector.ps1`, collects comprehensive data about the Windows operating system and SQL Server instances on a specified remote computer. 
+This PowerShell script, `SQLServerDataCollector.ps1`, collects comprehensive data about the Windows operating system and SQL Server instances on a specified remote computer. 
 The script gathers information such as OS edition, CPU count, RAM size, network configuration, disk details, and SQL Server instance details. 
 The collected data is output in JSON format, which can be used for further analysis or reporting.
 
@@ -19,7 +19,7 @@ The collected data is output in JSON format, which can be used for further analy
 # - Network connectivity to the remote computer
 
 .USAGE
-1. Download the script file `OnPremTCOCollector.ps1`.
+1. Download the script file `SQLServerDataCollector.ps1`.
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
 4. Run the script with the required parameters.
@@ -31,7 +31,7 @@ The collected data is output in JSON format, which can be used for further analy
 (Optional) SQL Server username for authentication. If not specified, Windows Authentication will be used.
 
 .EXAMPLE
-.\OnPremTCOCollector.ps1 -instanceNames "MSSQLSERVER", "MSSQLSERVER1" -SqlUserName "sa"
+.\SQLServerDataCollector.ps1 -instanceNames "MSSQLSERVER", "MSSQLSERVER1" -SqlUserName "sa"
 This example runs the script to collect data from the "MSSQLSERVER" and "MSSQLSERVER1" SQL Server instances using the SQL Server username "sa" for authentication.
 
 .NOTES

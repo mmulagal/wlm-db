@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import castRequest from './utils';
 import {
-    DownloadOnPremTcoCollectorScriptSchema,
+    downloadSqlServerDataCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GeneratePayloadInternal,
@@ -13,7 +13,7 @@ import {
     GetOnPremDatabaseResourceSchema
 } from './schemas/onprem-tco-schema';
 import {
-    downloadOnpremTcoCollectorScript,
+    downloadSqlServerDataCollectorScript,
     uploadOnpremTcoData,
     getOnPremDatabaseResources,
     generatePayload,
@@ -78,13 +78,13 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${API_PATH_ON_PREM_TCO}/collector`,
-        { schema: DownloadOnPremTcoCollectorScriptSchema },
+        { schema: downloadSqlServerDataCollectorScriptSchema },
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId }
             } = castRequest(request);
 
-            const response = await downloadOnpremTcoCollectorScript(accountId, MSSQL);
+            const response = await downloadSqlServerDataCollectorScript(accountId, MSSQL);
             return reply.send(response);
         }
     );
