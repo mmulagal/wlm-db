@@ -192,21 +192,42 @@ async function saveReportInWlmdbDatabase(
     if (!isEmpty(sqlServerInfo) && !isEmpty(windowsConfig)) {
         const hostIds = windowsConfig.nodeDetails?.map(({ hostId }) => hostId);
         const sqlServerInstancesByDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
-        const reports = Object.entries(sqlServerInstancesByDeploymentType).map(([deploymentType, instances]) => {
-            const instanceIds = instances.map(instance => instance.instanceGuid);
-            const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
-            return {
-                account_id: accountId,
-                resource_id: resourceId,
-                database_type: databaseType,
-                host_config: windowsConfig,
-                database_instances_data: instances,
-                database_deployment_type: deploymentType as DATABASE_DEPLOYMENT_TYPE,
-                creation_time: convertToDate(timestamp),
-                version: scriptVersion
-            };
-        });
-        return createOnPremTcoReportData(reports);
+        const reports = await Promise.all(
+            Object.entries(sqlServerInstancesByDeploymentType).map(async ([deploymentType, instances]) => {
+                const instanceIds = instances.map(instance => instance.instanceGuid);
+                const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
+                return {
+                    account_id: accountId,
+                    resource_id: resourceId,
+                    database_type: databaseType,
+                    host_config: windowsConfig,
+                    database_instances_data: instances,
+                    database_deployment_type: deploymentType as DATABASE_DEPLOYMENT_TYPE,
+                    creation_time: convertToDate(timestamp),
+                    version: scriptVersion
+                };
+            })
+        );
+
+        for (const report of reports) {
+            const existingReport = await getOnPremDatabaseResources(
+                accountId,
+                databaseType,
+                undefined,
+                undefined,
+                report.resource_id
+            );
+            const resolvedReport = await report;
+            if (existingReport.items.some(item => item.creationTime === resolvedReport.creation_time.getTime())) {
+                reports.splice(reports.indexOf(report), 1);
+            }
+        }
+        if (reports.length === 0) {
+            throw new Error('Report with the same resource ID and timestamp already exists.');
+        }
+
+        const resolvedReports = await Promise.all(reports);
+        return createOnPremTcoReportData(resolvedReports);
     }
     throw createError(
         HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -630,7 +651,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await Promise.all([
-            // saveReportInReportingRegistry(accountId, fileName, data),
+            saveReportInReportingRegistry(accountId, fileName, data),
             saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data)
         ]);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
@@ -667,13 +688,13 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const data = JSON.parse(originalJsonString) as OnPremCollectionObjectV1;
 
         if (!validateOnPremCollectionObjectV1(data)) {
-            const errorMessage = 'Error uploading OnPrem TCO data. Invalid data format.';
+            const errorMessage = 'Invalid data format.';
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }
 
         if (!validateWindowsConfig(data.windowsConfig)) {
-            const errorMessage = 'Error uploading OnPrem TCO data. Invalid windowsConfig format.';
+            const errorMessage = 'Invalid windowsConfig format.';
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }
@@ -988,7 +1009,8 @@ async function getOnPremDatabaseResources(
                     resource_id: onpremResourceId,
                     host_config: hostConfig,
                     database_instances_data: persistedSqlInstancesDetails,
-                    database_deployment_type: deploymentType
+                    database_deployment_type: deploymentType,
+                    creation_time: reportCreationTime
                 } = onPremDatabaseResource;
                 const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
 
@@ -1009,6 +1031,7 @@ async function getOnPremDatabaseResources(
                     resourceId: onpremResourceId,
                     resourceName,
                     deploymentModel: deploymentType,
+                    creationTime: new Date(reportCreationTime).getTime(),
                     sqlServerInstances,
                     onPremisesNodes,
                     totalPrimaryHostStorage,
@@ -1140,6 +1163,7 @@ async function getOnPremResourceExploreSavings(
                 resourceId,
                 resourceName,
                 deploymentModel: deploymentType,
+                creationTime: new Date(reportCreationTime).getTime(),
                 region,
                 regionCode,
                 calculations,
@@ -1163,6 +1187,7 @@ async function getOnPremResourceExploreSavings(
             resourceId,
             resourceName,
             deploymentModel: deploymentType,
+            creationTime: new Date(reportCreationTime).getTime(),
             region,
             regionCode,
             calculations,

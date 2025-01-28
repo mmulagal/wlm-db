@@ -56,7 +56,8 @@ const OnPremTcoExploreSavingsRequestBody = Type.Object({
 const OnPremTcoResourceObject = Type.Object({
     resourceId: Type.String(),
     resourceName: Type.String(),
-    deploymentModel: Type.String()
+    deploymentModel: Type.String(),
+    creationTime: Type.Number()
 });
 
 const OnPremTcoExploreSavingsResponse = Type.Composite([
