@@ -14,28 +14,25 @@ const StoragePerformance = () => {
 
     useEffect(() => {
         let primaryData = {
-            totalStorage: 0,
+            totalStorage: selectedOnPremHostDetails?.totalPrimaryHostStorage,
             totalIops: 0,
             totalThroughput: 0
         };
         let secondaryData = {
-            totalStorage: 0,
+            totalStorage: selectedOnPremHostDetails?.totalSecondaryHostStorage,
             totalIops: 0,
             totalThroughput: 0
         };
         selectedOnPremHostDetails?.sqlServerInstances?.map((instance: any) => {
             if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
                 if (instance.isReadReplica) {
-                    primaryData.totalStorage += Number(instance?.totalStorage || 0);
-                    primaryData.totalIops += Number(instance?.totalIops || 0);
-                    primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
-                } else {
-                    secondaryData.totalStorage += Number(instance?.totalStorage || 0);
                     secondaryData.totalIops += Number(instance?.totalIops || 0);
                     secondaryData.totalThroughput += Number(instance?.totalThroughput || 0);
+                } else {
+                    primaryData.totalIops += Number(instance?.totalIops || 0);
+                    primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
                 }
             } else {
-                primaryData.totalStorage += Number(instance?.totalStorage || 0);
                 primaryData.totalIops += Number(instance?.totalIops || 0);
                 primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
             }

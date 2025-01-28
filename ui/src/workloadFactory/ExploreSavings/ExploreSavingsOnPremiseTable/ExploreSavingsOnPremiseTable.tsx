@@ -15,7 +15,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
-import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
 
@@ -225,7 +225,7 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '345px',
+            width: '245px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.resourceName;
                 return (
@@ -239,7 +239,7 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'deploymentModel',
             id: '2',
-            width: '345px',
+            width: '245px',
             filterOptions: getFilterOptions(tableData, 'deploymentModel'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -339,6 +339,15 @@ const ExploreSavingsOnPremiseTable = () => {
                         {!cellData ? GENERAL.NOT_AVAILABLE : ''}
                     </div>
                 );
+            }
+        },
+        {
+            Header: 'Data collection time',
+            accessor: 'creationTime',
+            id: '6',
+            width: '200px',
+            renderCell: (cellData: string) => {
+                return <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>;
             }
         },
 
