@@ -144,13 +144,26 @@ const ExploreSavingsOnPremiseTable = () => {
                                         if (status === JOB_MONITORING_STATUS.COMPLETED) {
                                             fetchOnPremData(true);
                                             setIsUploadLoading(false);
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                    message: 'File is uploaded successfully.'
+                                                })
+                                            );
 
                                             clearInterval(jobInterval);
                                         } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                             if (onPremiseData) {
                                                 setTableData(onPremiseData);
                                             }
+
                                             setIsUploadLoading(false);
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                                    message: jobRes?.data?.error || 'Error uploading file.'
+                                                })
+                                            );
                                             clearInterval(jobInterval);
                                         }
                                     });
