@@ -65,6 +65,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     message: 'Invalid file type. Please upload a JSON file.'
                 })
             );
+            event.target.value = ''; // Clear the file input
             return;
         }
         // Validate the file size (should be <= 2 MB)
@@ -77,6 +78,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     message: `File size exceeds ${maxSizeInMB} MB. Please upload a smaller file.`
                 })
             );
+            event.target.value = ''; // Clear the file input
             return;
         }
 
@@ -88,6 +90,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     message: 'Invalid file name. File name must start with "TCOResponse-".'
                 })
             );
+            event.target.value = ''; // Clear the file input
             return;
         }
 
@@ -111,6 +114,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                     message: 'File is already uploaded.'
                                 })
                             );
+                            event.target.value = ''; // Clear the file input
                         }, 3000);
                     } else {
                         // Parse the JSON data
@@ -150,7 +154,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                                     message: 'File is uploaded successfully.'
                                                 })
                                             );
-
+                                            event.target.value = ''; // Clear the file input
                                             clearInterval(jobInterval);
                                         } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                             if (onPremiseData) {
@@ -164,6 +168,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                                     message: jobRes?.data?.error || 'Error uploading file.'
                                                 })
                                             );
+                                            event.target.value = ''; // Clear the file input
                                             clearInterval(jobInterval);
                                         }
                                     });
@@ -172,7 +177,9 @@ const ExploreSavingsOnPremiseTable = () => {
                                 if (onPremiseData) {
                                     setTableData(onPremiseData);
                                 }
+
                                 setIsUploadLoading(false);
+                                event.target.value = ''; // Clear the file input
                             }
                         } else {
                             dispatch(
@@ -181,6 +188,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                     message: 'No data found in the file.'
                                 })
                             );
+                            event.target.value = ''; // Clear the file input
                         }
                     }
                 } catch (error) {
@@ -190,6 +198,7 @@ const ExploreSavingsOnPremiseTable = () => {
                             message: 'Error parsing JSON: ' + error
                         })
                     );
+                    event.target.value = ''; // Clear the file input
                 }
             };
 
