@@ -81,7 +81,7 @@ const PotentialSavings = () => {
             </div>
 
             {windowSize.width < 1700 && (
-                <DsTypography style={{ margin: '20px 0 -20px 40px' }} variant="Regular_13">
+                <DsTypography style={{ margin: '20px 0 -20px 40px' }} variant="Semibold_13">
                     (Elastic Block Store (EBS) & FSx for Windows File Server)
                 </DsTypography>
             )}

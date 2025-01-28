@@ -22,7 +22,12 @@
         padding: 24px 40px;
         display: flex;
         flex-direction: column;
-        gap: 48px;
+        gap: 24px;
+        .optimizeSeparator {
+            border-top: 1px solid var(--border);
+            width: 928px;
+            margin-left: -40px;
+        }
 
         .topSection {
             display: flex;
@@ -78,6 +83,15 @@
 @media screen and (max-width: 1700px) {
     .optimizeByCategory {
         width: 760px;
+        .mainSection {
+            gap: 16px !important;
+
+            .optimizeSeparator {
+                border-top: 1px solid var(--border);
+                width: 760px;
+                margin-left: -40px;
+            }
+        }
         .topSection {
             display: flex;
             gap: 16px !important;

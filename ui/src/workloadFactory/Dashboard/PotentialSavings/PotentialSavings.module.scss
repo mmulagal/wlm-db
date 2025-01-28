@@ -11,6 +11,12 @@
         align-items: center;
         border-bottom: 1px solid var(--border);
         justify-content: space-between;
+
+        .title {
+            span {
+                font-weight: 500;
+            }
+        }
     }
 
     .rightSection {

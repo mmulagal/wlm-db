@@ -16,7 +16,7 @@ const SquareComponent = ({ value, color, text, boldValue, loadingInFirstRow = fa
         <div className={styles.container}>
             {!boldValue && (
                 <div className={styles.headerArea}>
-                    <Typography className={styles.valueText} variant="Regular_14">
+                    <Typography className={styles.valueText} variant="Semibold_14">
                         {value}
                     </Typography>
 
