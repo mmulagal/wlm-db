@@ -99,10 +99,19 @@ function validateWindowsConfig(windowsConfig: WindowsConfig): boolean {
     return nodeDetails.every(node => node.hostId && node.numberOfVcpus && node.ramSize);
 }
 
+function uint8ArrayToBase64(uint8Array: Uint8Array): string {
+    let binary = '';
+    const len = uint8Array.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+    }
+    return btoa(binary);
+}
+
 async function generatePayload(accountId: string, fileName: string, fileContent: Buffer) {
     logger.info('Generate a payload', { accountId, fileName });
 
-    const fileContentString = btoa(String.fromCharCode(...fileContent));
+    const fileContentString = uint8ArrayToBase64(fileContent);
     const base64Bytes = new TextEncoder().encode(fileContentString);
     const compressedData = compressSync(base64Bytes);
     const compressedBase64 = btoa(String.fromCharCode(...compressedData));
@@ -128,32 +137,42 @@ async function deleteOnPremTcoReportResourceRecord(
 function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
     return compact(
         sqlInstances.map(instance => {
-            const { isReadReplica, instanceGuid, sqlInstanceName, sqlEdition, vcpusPerInstance } = instance;
-            const {
-                numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary },
-                totalIops,
-                totalThroughput,
-                totalStorage,
-                sqlVersion,
-                memoryDetails,
-                totalSecondaryStorage
-            } = parseSqlUsageParams(instance);
+            try {
+                const { isReadReplica, instanceGuid, sqlInstanceName, sqlEdition, vcpusPerInstance } = instance;
+                const {
+                    numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary },
+                    totalIops,
+                    totalThroughput,
+                    totalStorage,
+                    sqlVersion,
+                    memoryDetails,
+                    totalSecondaryStorage
+                } = parseSqlUsageParams(instance);
 
-            return {
-                sqlInstanceId: instanceGuid,
-                sqlInstanceName,
-                noOfDatabases: numDatabases + (numDatabasesSecondary || 0),
-                sqlEdition,
-                sqlVersion,
-                noOfVcpusInUse: parseInt(vcpusPerInstance, 10),
-                memory: memoryDetails?.used || 0,
-                networkPerformance: NETWORK_PERF.UP_TO_10,
-                totalIops,
-                totalThroughput,
-                isReadReplica: !!(isReadReplica && isReadReplica?.toLowerCase() === 'true'),
-                totalStorage,
-                ...(totalSecondaryStorage !== undefined && { totalSecondaryStorage })
-            };
+                return {
+                    sqlInstanceId: instanceGuid,
+                    sqlInstanceName,
+                    noOfDatabases: numDatabases + (numDatabasesSecondary || 0),
+                    sqlEdition,
+                    sqlVersion,
+                    noOfVcpusInUse: parseInt(vcpusPerInstance, 10),
+                    memory: memoryDetails?.used || 0,
+                    networkPerformance: NETWORK_PERF.UP_TO_10,
+                    totalIops,
+                    totalThroughput,
+                    isReadReplica: !!(isReadReplica && isReadReplica?.toLowerCase() === 'true'),
+                    totalStorage,
+                    ...(totalSecondaryStorage !== undefined && { totalSecondaryStorage })
+                };
+            } catch (error) {
+                const errorMessage = `Failed to format SQL instance details ${error}`;
+                logger.error('Failed to format SQL instance details', { instance, errorMessage });
+                return {
+                    ...(instance.instanceGuid ? { sqlInstanceId: instance.instanceGuid } : {}),
+                    ...(instance.sqlInstanceName ? { sqlInstanceName: instance.sqlInstanceName } : {}),
+                    errorMessage
+                };
+            }
         })
     );
 }
@@ -796,7 +815,7 @@ function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClass
 }
 
 function parseSqlUsageParams(instance: SqlInstanceDetails) {
-    logger.info('Parsing SQL Usage Parameters', { instance });
+    logger.debug('Parsing SQL Usage Parameters', { instance });
 
     const { primaryDatabases, secondaryDatabases } = getDatabaseClassifications(instance);
 
@@ -879,13 +898,21 @@ function deriveInstanceRequirements(
     let totalCpuCount = 0;
     let totalMemory = 0;
     sqlInstancesDetails.forEach(sqlInstance => {
-        const { cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
-        totalCpuCount += Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
-        // Assuming memUtilization is a JSO N string with memory details
-        const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
-        totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
-        networkPerformance =
-            sqlInstance.networkPerformance === NETWORK_PERF.ABOVE_10 ? NETWORK_PERF.ABOVE_10 : NETWORK_PERF.UP_TO_10;
+        try {
+            const { cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
+            totalCpuCount += Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
+            // Assuming memUtilization is a JSO N string with memory details
+            const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
+            totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
+            networkPerformance =
+                sqlInstance.networkPerformance === NETWORK_PERF.ABOVE_10
+                    ? NETWORK_PERF.ABOVE_10
+                    : NETWORK_PERF.UP_TO_10;
+        } catch (error) {
+            logger.error(`Error accounting SQL instance ${sqlInstance.sqlInstanceName} for instance requirements`, {
+                error
+            });
+        }
     });
 
     requiredVcpuCount = Math.max(requiredVcpuCount, totalCpuCount / totalSqlInstances); // Taking average of the total CPU count of all instances as the required vCPU count

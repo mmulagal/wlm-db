@@ -18,6 +18,7 @@ function parseCpuUtilization(value: string) {
             return Number(value);
         }
         logger.error(`Error parsing cpuUtilization: ${error}`);
+        throw error;
     }
 }
 
@@ -32,9 +33,11 @@ function parseMemoryUtilization(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         logger.error(`Error parsing memUtilization: ${error}`);
+        throw error;
     }
 }
 
@@ -49,9 +52,11 @@ function parseLicenceUsageDetails(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         logger.error(`Error parsing licenceUsageDetails: ${error}`);
+        throw error;
     }
 }
 
@@ -67,9 +72,11 @@ function parseSqlVersion(value: string | string[]) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         logger.error(`Error parsing sqlVersion: ${error}`);
+        throw error;
     }
 }
 
@@ -87,9 +94,11 @@ function parseIops(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         logger.error(`Error parsing iops: ${error}`);
+        throw error;
     }
 }
 
@@ -113,9 +122,11 @@ function parseStorageDetailsByDb(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         logger.error(`Error parsing storageDetailsByDb: ${error}`);
+        throw error;
     }
 }
 
@@ -138,9 +149,11 @@ function parseAoagReadReplica(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         logger.error(`Error parsing aoagReadReplica: ${error}`);
+        throw error;
     }
 }
 
