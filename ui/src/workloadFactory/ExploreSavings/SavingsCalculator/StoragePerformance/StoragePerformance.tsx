@@ -23,20 +23,25 @@ const StoragePerformance = () => {
             totalIops: 0,
             totalThroughput: 0
         };
+        let totalData = {
+            totalIops: 0,
+            totalThroughput: 0
+        };
         selectedOnPremHostDetails?.sqlServerInstances?.map((instance: any) => {
-            if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-                if (instance.isReadReplica) {
-                    secondaryData.totalIops += Number(instance?.totalIops || 0);
-                    secondaryData.totalThroughput += Number(instance?.totalThroughput || 0);
-                } else {
-                    primaryData.totalIops += Number(instance?.totalIops || 0);
-                    primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
-                }
-            } else {
-                primaryData.totalIops += Number(instance?.totalIops || 0);
-                primaryData.totalThroughput += Number(instance?.totalThroughput || 0);
-            }
+            totalData.totalIops += Number(instance?.totalIops || 0);
+            totalData.totalThroughput += Number(instance?.totalThroughput || 0);
         });
+
+        if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
+            secondaryData.totalIops += Number(totalData?.totalIops || 0) / 2;
+            secondaryData.totalThroughput += Number(totalData?.totalThroughput || 0) / 2;
+            primaryData.totalIops += Number(totalData?.totalIops || 0) / 2;
+            primaryData.totalThroughput += Number(totalData?.totalThroughput || 0) / 2;
+        } else {
+            primaryData.totalIops += Number(totalData?.totalIops || 0);
+            primaryData.totalThroughput += Number(totalData?.totalThroughput || 0);
+        }
+
         setPrimaryData(primaryData);
         if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
             setSecondaryData(secondaryData);
