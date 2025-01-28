@@ -4,6 +4,13 @@
         margin-bottom: 1px;
     }
 
+    .linkMessage {
+        .textSection,
+        .linkSection {
+            background-color: var(--hover-background) !important;
+        }
+    }
+
     .firstItem {
         height: 72px;
         width: 732px;
