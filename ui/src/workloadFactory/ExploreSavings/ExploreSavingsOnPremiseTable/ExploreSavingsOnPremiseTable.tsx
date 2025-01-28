@@ -251,7 +251,7 @@ const ExploreSavingsOnPremiseTable = () => {
             accessor: 'instanceNameList',
             id: '4',
             width: '345px',
-            filterOptions: getFilterOptions(tableData, 'instanceNameList'),
+            isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 const truncatedItems = getTruncatedItems(cellData);
 
@@ -294,7 +294,7 @@ const ExploreSavingsOnPremiseTable = () => {
             }
         },
         {
-            Header: 'OnPrem nodes',
+            Header: 'On-premises nodes',
             accessor: 'onPremisesNodes',
             id: '5',
             width: '347px',

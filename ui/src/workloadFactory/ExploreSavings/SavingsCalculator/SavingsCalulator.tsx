@@ -178,15 +178,25 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <div style={{ marginBottom: '40px' }}></div>
                     )}
 
-                    <div className={styles.savingsHeading}>
+                    <div
+                        className={
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                                ? `${styles.savingsHeading} ${styles.savingsHeadingOnPremise}`
+                                : styles.savingsHeading
+                        }
+                    >
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
                         <div />
                     </div>
 
                     <div
-                        className={styles.contentArea}
+                        className={
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                                ? `${styles.contentArea} ${styles.contentAreaOnPremise}`
+                                : styles.contentArea
+                        }
                         style={{
-                            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '1607px' : '1336px'
+                            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '1607px ' : '1336px'
                         }}
                     >
                         {/* Left side code here */}
@@ -285,6 +295,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     </div>
 
                     {/* Accordion here */}
+
                     <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
                 </div>
 
