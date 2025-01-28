@@ -431,6 +431,15 @@ async function checkRunningStatus(
     credentialsId: string,
     activeNodeInstanceId: string
 ) {
+    logger.info('Checking running status', {
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        parentJobId,
+        activeNodeInstanceId
+    });
+
     const checkRunningJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -476,7 +485,7 @@ async function checkRunningStatus(
         endTime: Date.now()
     });
 
-    return { running: true, error: 'Error parsing SSM query response' };
+    return { running: true, error: '' };
 }
 
 export default async function optimizeCompute(
@@ -826,3 +835,5 @@ async function updateNodeInstanceType(
         throw createError(500, errorMessage);
     }
 }
+
+export { handleComputeRemediation };

@@ -543,7 +543,7 @@ const rssConfigAssessmentSsm = {
 };
 
 const checkRunningStatus = {
-    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('MSSQLSERVER')]
+    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('$env:computername')]
 };
 
 const maxDOPAssessmentSsm = {
