@@ -569,10 +569,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                     if($dataVolumeLunDetails -and $dataVolumeLunDetails.accessPaths -and $dataVolumeLunDetails.accessPaths.Count -gt 0) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataVolumeLunDetails.accessPaths[0]         
                         }
+                    $consolidatedDriveDetails += $driveObject
                     }
                 }
-            
-            $consolidatedDriveDetails += $driveObject
             }
         
         foreach ($drive in $defaultTempDBDriveDetails) {
