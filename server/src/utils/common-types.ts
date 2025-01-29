@@ -331,6 +331,7 @@ interface LogDriveDetails {
     ontapVolumeUuid: string;
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
+    diskNumber: number;
 }
 
 interface TempDbDriveDetails {
