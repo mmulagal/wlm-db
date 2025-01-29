@@ -31,7 +31,7 @@ const StoragePerformance = ({ printState }: any) => {
                         <div className={styles.col1}>
                             <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
                         </div>
-                        <StoragePerfInput data={instance} />
+                        <StoragePerfInput printState={printState} data={instance} />
                     </div>
                 ))}
             </div>
