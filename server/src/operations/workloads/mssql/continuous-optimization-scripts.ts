@@ -55,7 +55,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-            where db.database_id > 4
+            where db.database_id > 4 or db.name = 'msdb'
             FOR JSON PATH)
             SELECT @JSON
             ;
