@@ -5,7 +5,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
-const ComputeInformation = () => {
+const ComputeInformation = ({ printState }: any) => {
     const [instanceData, setInstanceData] = useState([]);
     const { savingsCalculatorFrom, selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
 
