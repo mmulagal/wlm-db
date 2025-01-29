@@ -9,7 +9,7 @@
 Collects detailed information about the Windows system and SQL Server instances on a specified remote computer.
 
 .DESCRIPTION
-This PowerShell script, `OnPremTCOCollector.ps1`, collects comprehensive data about the Windows operating system and SQL Server instances on a specified remote computer. 
+This PowerShell script, `SQLServerDataCollector.ps1`, collects comprehensive data about the Windows operating system and SQL Server instances on a specified remote computer. 
 The script gathers information such as OS edition, CPU count, RAM size, network configuration, disk details, and SQL Server instance details. 
 The collected data is output in JSON format, which can be used for further analysis or reporting.
 
@@ -19,7 +19,7 @@ The collected data is output in JSON format, which can be used for further analy
 # - Network connectivity to the remote computer
 
 .USAGE
-1. Download the script file `OnPremTCOCollector.ps1`.
+1. Download the script file `SQLServerDataCollector.ps1`.
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
 4. Run the script with the required parameters.
@@ -31,7 +31,7 @@ The collected data is output in JSON format, which can be used for further analy
 (Optional) SQL Server username for authentication. If not specified, Windows Authentication will be used.
 
 .EXAMPLE
-.\OnPremTCOCollector.ps1 -instanceNames "MSSQLSERVER", "MSSQLSERVER1" -SqlUserName "sa"
+.\SQLServerDataCollector.ps1 -instanceNames "MSSQLSERVER", "MSSQLSERVER1" -SqlUserName "sa"
 This example runs the script to collect data from the "MSSQLSERVER" and "MSSQLSERVER1" SQL Server instances using the SQL Server username "sa" for authentication.
 
 .NOTES
@@ -80,7 +80,7 @@ function Invoke-SQLQuery {
         [string]$SqlPassword
     )
 
-    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 "
+    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 -s `",`" "
 
     if (![string]::IsNullOrEmpty($SqlUserName) -and ![string]::IsNullOrEmpty($SqlPassword)) {
         $sqlcmd += " -U $SqlUserName -P $SqlPassword"
@@ -332,7 +332,10 @@ SET NOCOUNT ON;SELECT @@VERSION AS SQLServerVersion;
 "@
 
     noOfDatabases = @"
-SET NOCOUNT ON; SELECT count(name) FROM sys.databases;
+SET NOCOUNT ON;
+SELECT COUNT(name) AS DatabaseCount
+FROM sys.databases
+WHERE name NOT IN ('tempdb', 'model', 'msdb');
 "@
 
     collation = @"
@@ -517,7 +520,7 @@ drive_info_cte AS (
 aggregated_db_info AS (
     SELECT 
         d.name AS databaseName,
-        SUM(CASE WHEN ds.type = 0 THEN ds.size_mb ELSE 0 END) AS dataSizeMbmb,
+        SUM(CASE WHEN ds.type = 0 THEN ds.size_mb ELSE 0 END) AS dataSizeMb,
         SUM(CASE WHEN ds.type = 1 THEN ds.size_mb ELSE 0 END) AS logSizeMb,
         SUM(ds.size_mb) AS allocatedSizeMb,
         ds.driveLetter,
@@ -535,7 +538,7 @@ aggregated_db_info AS (
 SELECT 
     databaseName,
     allocatedSizeMb, 
-    dataSizeMbmb,
+    dataSizeMb,
     logSizeMb,
     driveLetter,
     driveTotalSizeMb,
@@ -583,7 +586,9 @@ ForEach ($instance in $finalInstancesList) {
         # Execute the query using the verified SQL credentials
         $output = Invoke-SQLQuery -QueryKey $queryKey -Query $query -InstanceName $instance -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
         if ($output) {
-            $instanceResults[$queryKey] = $output           
+            $jsonResp = $output -join ""
+            $jsonResp = $jsonResp.Trim()
+            $instanceResults[$queryKey] = $jsonResp
         } else {
             Write-Output "Error running query '$queryKey' on instance $instance"
             $instanceResults[$queryKey] = @{ "error" = "Error running query '$queryKey' on instance $instance" } | ConvertTo-Json
@@ -699,8 +704,8 @@ $finalOutput['windowsConfig'] = $windowsConfig
 # Add SQL Server information to the final output
 $finalOutput['sqlServerInfo'] = $results
 
-# Convert the final output to JSON with a depth of 8
-$jsonResults = $finalOutput | ConvertTo-Json -Depth 8
+# Convert the final output to JSON with a depth of 15
+$jsonResults = $finalOutput | ConvertTo-Json -Depth 15
 
 # Define the output file path
 $outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("TCOResponse-" + $dateString + ".json")

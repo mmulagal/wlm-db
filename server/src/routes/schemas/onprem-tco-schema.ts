@@ -48,7 +48,7 @@ const DeleteReportInternal = {
     }
 };
 
-const DownloadOnPremTcoCollectorScriptSchema = {
+const downloadSqlServerDataCollectorScriptSchema = {
     tags: [RouteTags.ONPREM_TCO],
     summary: 'Download OnPremises metrics collector script',
     description: 'Downloads OnPremises metrics collector script',
@@ -106,7 +106,7 @@ const OnpremTcoExploreSavingsSchema = {
 export {
     GeneratePayloadInternal,
     DeleteReportInternal,
-    DownloadOnPremTcoCollectorScriptSchema,
+    downloadSqlServerDataCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GetOnPremDatabaseResourceSchema,
