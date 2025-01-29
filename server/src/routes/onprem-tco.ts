@@ -57,7 +57,6 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 }
 
                 const response = await generatePayload(accountId, fileName, fileContent);
-                uploadOnpremTcoData(accountId, MSSQL, fileName, response.fileContent);
                 return reply.send(response);
             }
         );
@@ -136,7 +135,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId, resourceId },
-                body: { regionCode, sqlInstanceData, snapshotInfo, totalPrimaryHostStorage, totalSecondaryHostStorage }
+                body: { regionCode, sqlInstanceData, snapshotInfo }
             } = castRequest(request);
 
             const response = await getOnPremResourceExploreSavings(
@@ -144,9 +143,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 resourceId,
                 regionCode,
                 sqlInstanceData,
-                snapshotInfo,
-                totalPrimaryHostStorage,
-                totalSecondaryHostStorage
+                snapshotInfo
             );
             return reply.send(response);
         }
