@@ -17,7 +17,8 @@ const SqlInstanceDetailsRequestObject = Type.Object({
     memory: Type.Number(),
     networkPerformance: Type.String({ enum: [NETWORK_PERF.UP_TO_10, NETWORK_PERF.ABOVE_10] }),
     totalIops: Type.Optional(Type.Number()),
-    totalThroughput: Type.Optional(Type.Number())
+    totalThroughput: Type.Optional(Type.Number()),
+    totalStorage: Type.Optional(Type.Number())
 });
 
 type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;
@@ -31,7 +32,6 @@ const SqlInstanceDetailsResponseObject = Type.Union([
             sqlEdition: Type.String(),
             sqlVersion: Type.String(),
             totalStorage: Type.Optional(Type.Number()),
-            totalSecondaryStorage: Type.Optional(Type.Number()),
             isReadReplica: Type.Optional(Type.Boolean())
         })
     ]),
@@ -55,15 +55,14 @@ type OnPremDatabaseResourcesType = Static<typeof OnPremDatabaseResources>;
 const OnPremTcoExploreSavingsRequestBody = Type.Object({
     regionCode: Type.String(),
     sqlInstanceData: Type.Optional(Type.Array(SqlInstanceDetailsRequestObject)),
-    snapshotInfo: Type.Optional(StorageSavingsRequestBody),
-    totalPrimaryHostStorage: Type.Optional(Type.Number()),
-    totalSecondaryHostStorage: Type.Optional(Type.Number())
+    snapshotInfo: Type.Optional(StorageSavingsRequestBody)
 });
 
 const OnPremTcoResourceObject = Type.Object({
     resourceId: Type.String(),
     resourceName: Type.String(),
-    deploymentModel: Type.String()
+    deploymentModel: Type.String(),
+    creationTime: Type.Number()
 });
 
 const OnPremTcoExploreSavingsResponse = Type.Composite([
@@ -80,9 +79,7 @@ const OnPremDatabaseResourceObject = Type.Composite([
     OnPremTcoResourceObject,
     Type.Object({
         sqlServerInstances: Type.Array(SqlInstanceDetailsResponseObject),
-        onPremisesNodes: Type.Array(Type.String()),
-        totalPrimaryHostStorage: Type.Number(),
-        totalSecondaryHostStorage: Type.Optional(Type.Number())
+        onPremisesNodes: Type.Array(Type.String())
     })
 ]);
 

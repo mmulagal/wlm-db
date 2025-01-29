@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import castRequest from './utils';
 import {
-    DownloadOnPremTcoCollectorScriptSchema,
+    downloadSqlServerDataCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GeneratePayloadInternal,
@@ -13,7 +13,7 @@ import {
     GetOnPremDatabaseResourceSchema
 } from './schemas/onprem-tco-schema';
 import {
-    downloadOnpremTcoCollectorScript,
+    downloadSqlServerDataCollectorScript,
     uploadOnpremTcoData,
     getOnPremDatabaseResources,
     generatePayload,
@@ -57,7 +57,6 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 }
 
                 const response = await generatePayload(accountId, fileName, fileContent);
-                uploadOnpremTcoData(accountId, MSSQL, fileName, response.fileContent);
                 return reply.send(response);
             }
         );
@@ -78,13 +77,13 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${API_PATH_ON_PREM_TCO}/collector`,
-        { schema: DownloadOnPremTcoCollectorScriptSchema },
+        { schema: downloadSqlServerDataCollectorScriptSchema },
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId }
             } = castRequest(request);
 
-            const response = await downloadOnpremTcoCollectorScript(accountId, MSSQL);
+            const response = await downloadSqlServerDataCollectorScript(accountId, MSSQL);
             return reply.send(response);
         }
     );
@@ -136,7 +135,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId, resourceId },
-                body: { regionCode, sqlInstanceData, snapshotInfo, totalPrimaryHostStorage, totalSecondaryHostStorage }
+                body: { regionCode, sqlInstanceData, snapshotInfo }
             } = castRequest(request);
 
             const response = await getOnPremResourceExploreSavings(
@@ -144,9 +143,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 resourceId,
                 regionCode,
                 sqlInstanceData,
-                snapshotInfo,
-                totalPrimaryHostStorage,
-                totalSecondaryHostStorage
+                snapshotInfo
             );
             return reply.send(response);
         }

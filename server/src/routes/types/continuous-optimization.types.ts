@@ -10,7 +10,8 @@ import {
 } from '../../utils/continous-optimization-consts';
 
 const SizingViolationResponse = Type.Object({
-    dataAccessPath: Type.Optional(Type.String()),
+    databases: Type.Optional(Type.Array(Type.String())),
+    dataAccessPath: Type.Optional(Type.Array(Type.String())),
     dataDriveTotalSizeMB: Type.Optional(Type.Number()),
     logAccessPath: Type.Optional(Type.String()),
     logDriveTotalSizeMB: Type.Optional(Type.Number()),

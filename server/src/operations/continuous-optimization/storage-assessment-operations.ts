@@ -85,17 +85,24 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
 
-    // In the case of multiple data drives for the same log drive, we need to combine the data drives to the same log drive
     const filteredDriveDetails: LogDriveDetails[] = driveDetails.reduce((acc: LogDriveDetails[], driveDetail) => {
-        let logDriveItem = acc.find(
-            el => el.databaseName === driveDetail.databaseName && el.dataDriveLetter !== driveDetail.dataDriveLetter
-        );
-        if (logDriveItem) {
+        // Case 1: Log drive is shared by multiple databases
+        // Case 2: Log drive is shared by multiple data drives possibly from different databases
+        // Both the cases are handled here
+        const logDrive = acc.find(el => el.diskNumber === driveDetail.diskNumber);
+
+        if (logDrive) {
             // Add all data drives to the same log drive - DBS-4838
-            logDriveItem.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
+            if (!driveDetail.dataAccessPath.includes(logDrive.dataAccessPath)) {
+                logDrive.dataAccessPath += `,${driveDetail.dataAccessPath}`;
+            }
+            if (!driveDetail.databaseName.includes(logDrive.databaseName)) {
+                logDrive.databaseName += `,${driveDetail.databaseName}`;
+            }
+            logDrive.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
         } else {
             // There is already a log drive with the same databaseName
-            logDriveItem = acc.find(el => el.databaseName === driveDetail.databaseName);
+            const logDriveItem = acc.find(el => el.databaseName === driveDetail.databaseName);
             if (!logDriveItem) {
                 acc.push(driveDetail);
             }
@@ -110,25 +117,27 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             logDriveTotalSizeMB = 0;
             dataDriveTotalSizeMB = 0;
         }
-        drive = {
+        const formattedDriveInfo = {
             ...drive,
             dataDriveTotalSizeMB,
-            logDriveTotalSizeMB
+            logDriveTotalSizeMB,
+            dataAccessPath: dataAccessPath.split(','),
+            databases: drive.databaseName.split(',')
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
-            ignoredDrives.push(drive as SizingViolationResponseType);
+            ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
         } else if (dataAccessPath !== logAccessPath) {
             const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
             currentSizePercentForAllVolumes.push(logToDriveSizePercent);
             if (logToDriveSizePercent > 30) {
-                overProvisionedDrives.push(drive as SizingViolationResponseType);
+                overProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             } else if (logToDriveSizePercent < 20) {
-                underProvisionedDrives.push(drive as SizingViolationResponseType);
+                underProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             } else {
-                optimisedDrives.push(drive as SizingViolationResponseType);
+                optimisedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             }
         } else {
-            ignoredDrives.push(drive as SizingViolationResponseType);
+            ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
         }
     });
     key = 'log-drive-size';
