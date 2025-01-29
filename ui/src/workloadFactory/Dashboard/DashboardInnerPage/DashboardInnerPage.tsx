@@ -774,8 +774,15 @@ const DashboardInnerPage = () => {
                 </div>
 
                 <div className={styles.headingSection}>
-                    <DsTypography variant="Semibold_20">{selectedConfig}</DsTypography>
-                    <DsTypography variant="Semibold_16">Manage instance optimization</DsTypography>
+                    <DsTypography data-testid={`wlm-db-${selectedConfig}`} variant="Semibold_20">
+                        {selectedConfig}
+                    </DsTypography>
+                    <DsTypography
+                        data-testid={`wlm-db-manage-instance-optimization-heading-for-${selectedConfig}`}
+                        variant="Semibold_16"
+                    >
+                        Manage instance optimization
+                    </DsTypography>
                 </div>
 
                 <div className={styles.mainSection}>
