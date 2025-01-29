@@ -87,7 +87,7 @@ try {
             if ($Using:ClusterName -ne '') {
                 try {
                     $connectionString = "Server=$Using:ClusterName;Integrated Security=True;TrustServerCertificate=True;"
-                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $Using:sql -ConnectionString $connectionString
+                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ConnectionString $connectionString
                     Write-Output "Max dop configured using cluster name."
                 }
                 catch {
