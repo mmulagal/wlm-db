@@ -81,6 +81,7 @@ const DashboardInnerPage = () => {
     });
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -677,7 +678,12 @@ const DashboardInnerPage = () => {
             isSticky: true,
             width: '318px',
             renderCell: (cellData: any, rowData: any) => {
-                let { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, name, rowData);
+                let { isDisabled, errorMessage } = checkIfDisableForOptimize(
+                    inProgressHostData,
+                    name,
+                    rowData,
+                    selectedRowsForOptimize
+                );
                 const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (
                     <div className={styles.buttonContainer}>

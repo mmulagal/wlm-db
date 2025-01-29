@@ -1822,10 +1822,18 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const checkIfDisableForOptimize = (inProgressHostData: any, name: string, rowData: any) => {
+export const checkIfDisableForOptimize = (
+    inProgressHostData: any,
+    name: string,
+    rowData: any,
+    selectedRowsForOptimize?: any
+) => {
     let isDisabled = false;
     let errorMessage = '';
-    if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+    if (selectedRowsForOptimize && selectedRowsForOptimize.length > 0) {
+        isDisabled = true;
+        errorMessage = 'Bulk operation is selected for this host';
+    } else if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
         isDisabled = true;
         errorMessage = 'Optimization in progress for this host';
     } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {

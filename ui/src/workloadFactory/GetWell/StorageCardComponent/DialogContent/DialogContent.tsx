@@ -865,11 +865,7 @@ const DialogContent = ({
                                         ?.map((perInstance: any) => (
                                             <div className={styles.instanceTypeContainer}>
                                                 <SelectField
-                                                    label={
-                                                        GENERAL.RECOMMENDED_INSTANCE_TYPE +
-                                                        ' for ' +
-                                                        perInstance?.hostName
-                                                    }
+                                                    label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
                                                     isClearable={false}
                                                     isDisabled={perInstance?.missingPermissions}
                                                     variant="two-lines"
