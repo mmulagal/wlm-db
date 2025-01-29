@@ -90,7 +90,6 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
         // Case 2: Log drive is shared by multiple data drives possibly from different databases
         // Both the cases are handled here
         const logDrive = acc.find(el => el.diskNumber === driveDetail.diskNumber);
-
         if (logDrive) {
             // Add all data drives to the same log drive - DBS-4838
             if (!driveDetail.dataAccessPath.includes(logDrive.dataAccessPath)) {
@@ -121,8 +120,8 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             ...drive,
             dataDriveTotalSizeMB,
             logDriveTotalSizeMB,
-            dataAccessPath: dataAccessPath.split(','),
-            databases: drive.databaseName.split(',')
+            dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
+            databases: [...new Set(drive.databaseName.split(','))]
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
