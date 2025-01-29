@@ -133,11 +133,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
     };
     return (
         <div
-            className={
-                selectedRowsForOptimize.length === 0
-                    ? `${styles.renderTable} ${styles.hideCheckbox}`
-                    : styles.renderTable
-            }
+         className={styles.renderTable}
         >
             <TableTopBar
                 //@ts-ignore
@@ -152,7 +148,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                 isDoubleRow={true}
                 key={Date.now()}
             />
-        </div>
+        </>
     );
 };
 
