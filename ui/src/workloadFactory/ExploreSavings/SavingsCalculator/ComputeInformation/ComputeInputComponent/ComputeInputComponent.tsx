@@ -12,7 +12,7 @@ import { formatFractionalNumber, generateOptionType } from '../../../../../utils
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
-const ComputeInputComponent = ({ data, index }: any) => {
+const ComputeInputComponent = ({ data, index, printState }: any) => {
     const dispatch = useDispatch();
 
     const [numberOfCpu, setNumberOfCpu] = useState<any>(data?.noOfVcpusInUse);
@@ -85,26 +85,40 @@ const ComputeInputComponent = ({ data, index }: any) => {
     return (
         <div className={styles.computeInputComponent}>
             <div className={styles.col2}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setNumberOfCpu(numVal);
-                    }}
-                    placeholder={''}
-                    value={numberOfCpu}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{numberOfCpu}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setNumberOfCpu(numVal);
+                        }}
+                        placeholder={''}
+                        value={numberOfCpu}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col3}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setMemory(numVal);
-                    }}
-                    placeholder={''}
-                    value={memory}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{memory}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setMemory(numVal);
+                        }}
+                        placeholder={''}
+                        value={memory}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col4}>
                 <SelectField
