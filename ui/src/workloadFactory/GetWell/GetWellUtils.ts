@@ -1,5 +1,6 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
+import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     setCardData,
     setDriftAssessmentData,
@@ -766,18 +767,30 @@ export const formatRssConfigCardConfig = (
         } else {
             if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
                 findingReasons++;
-                optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['rssProfile'] = adapter?.rssProfile;
+                if (optimizedRows?.['rssProfile'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue['rssProfile'] = GENERAL.MULTIPLE_VALUES;
+                } else {
+                    optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue['rssProfile'] = adapter?.rssProfile;
+                }
             }
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
-                optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+                if (optimizedRows?.['baseProcessorNumber'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue['baseProcessorNumber'] = GENERAL.MULTIPLE_VALUES;
+                } else {
+                    optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+                }
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;
-                optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
+                if (optimizedRows?.['receiveQueues'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue['receiveQueues'] = GENERAL.MULTIPLE_VALUES;
+                } else {
+                    optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
+                }
             }
         }
     });
@@ -1822,7 +1835,12 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const checkIfDisableForOptimize = (inProgressHostData: any, name: string, rowData: any) => {
+export const checkIfDisableForOptimize = (
+    inProgressHostData: any,
+    name: string,
+    rowData: any,
+    selectedRowsForOptimize?: any
+) => {
     let isDisabled = false;
     let errorMessage = '';
     if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
@@ -1871,6 +1889,9 @@ export const checkIfDisableForOptimize = (inProgressHostData: any, name: string,
     ) {
         isDisabled = true;
         errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+    } else if (selectedRowsForOptimize && selectedRowsForOptimize.length > 0) {
+        isDisabled = true;
+        errorMessage = '';
     }
 
     return { isDisabled, errorMessage };
@@ -1946,4 +1967,64 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
         ? 'performance-tier'
         : 'compute-rightsizing';
+};
+
+export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
+    let configKey = '';
+    switch (type) {
+        case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
+            configKey = 'storageTier';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+            configKey = 'fileSystemHeadroom';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+            configKey = 'logDriveSize';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
+            configKey = 'tempdbDriveSize';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
+            configKey = 'userDataFiles';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+            configKey = 'logFiles';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+            configKey = 'tempdbPlacement';
+            break;
+        case 'ONTAP':
+            configKey = 'ontapConfiguration';
+            break;
+        case 'Operating system':
+            configKey = 'operatingSystem';
+            break;
+        case GENERAL.COMPUTE_RIGHTSIZING:
+            configKey = 'computeRightsizing';
+            break;
+        case GENERAL.OPERATING_SYSTEM_PATCH:
+            configKey = 'operatingSystemPatch';
+            break;
+        case GENERAL.RSS_CONFIGURATION:
+            configKey = 'rssConfiguration';
+            break;
+        case GENERAL.LICENSE_SQL_SERVER:
+            configKey = 'applicationSqlServer';
+            break;
+        case GENERAL.MICROSOFT_SQL_PATCH:
+            configKey = 'mssqlPatch';
+            break;
+        case GENERAL.MAXDOP_PATCH:
+            configKey = 'maxdopPatch';
+            break;
+    }
+    const optimizedInstances = configData[configKey] || 0;
+    dispatch(
+        setSelectedConfigSummary({
+            optimizedInstances: optimizedInstances,
+            notOptimizedInstances: configData?.total - optimizedInstances,
+            optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
+            severity: configData?.severityObj?.[configKey] || ''
+        })
+    );
 };

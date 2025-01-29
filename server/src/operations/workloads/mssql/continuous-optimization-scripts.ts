@@ -55,7 +55,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-            where db.database_id > 4
+            where db.database_id > 4 or db.name = 'msdb'
             FOR JSON PATH)
             SELECT @JSON
             ;
@@ -272,7 +272,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
         if($netappDataDrives -contains $dataDrive.dataDriveLetter) {
             $logDrives = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq $dataDrive.databaseName }
             if ($logDrives) {
-                if($logDrives.length -eq 1) {
+                if(-Not ($logDrives -is [array])) {
                     $logDrives = @($logDrives)
                 }
                 foreach ($logDrive in $logDrives) {
@@ -492,7 +492,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
         $isPerformanceTier100Percent = $true
         # loop through each volume and get data
-        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent
+        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
         foreach ($perVolumeData in $Volumes) {
         if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
                 $isPerformanceTier100Percent = $false
@@ -550,8 +550,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
             $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
             if ($logVolumeLunDetails) {
-                if($logVolumeLunDetails.length -eq 1) { $logVolumeLunDetails = @($logVolumeLunDetails)}
+                if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
                 foreach($logVolumeLunDetail in $logVolumeLunDetails) {
+                    
                     $driveObject = New-Object PSObject
                     # Copy each property from the source object to the new object
                     foreach ($property in $drive.PSObject.Properties) {
@@ -569,11 +570,15 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                     if($dataVolumeLunDetails -and $dataVolumeLunDetails.accessPaths -and $dataVolumeLunDetails.accessPaths.Count -gt 0) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataVolumeLunDetails.accessPaths[0]         
                         }
+                    $consolidatedDriveDetails += $driveObject
                     }
                 }
-            
-            $consolidatedDriveDetails += $driveObject
+            else {
+                $consolidatedDriveDetails += $drive
+                }
             }
+            
+            
         
         foreach ($drive in $defaultTempDBDriveDetails) {
             $tempdbVolumeLunDetails = $responseObject.tempDb

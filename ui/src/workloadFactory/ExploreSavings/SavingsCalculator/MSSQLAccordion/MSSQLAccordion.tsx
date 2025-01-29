@@ -129,6 +129,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
             windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
         }
+        const editionUpgradeCheck =
+            storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+            storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard');
 
         let mssqlInstanceData = {};
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
@@ -137,7 +140,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 serverEdition: serverEdition,
                 serverVersion: selectedOnPremHostDetails?.recommendedInstance?.serverVersion,
                 instanceType: instanceType,
-                windowsServer: windowsServer
+                windowsServer: windowsServer,
+                editionUpgradeCheck: editionUpgradeCheck
             };
         } else {
             mssqlInstanceData = {
@@ -211,7 +215,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     };
 
     const saveIsDisabled = () => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx) {
             return GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE;
         } else if (configData?.length >= MAX_SAVED_CONFIG) {
             return SELECT_CONFIG.MAX_CONFIG_LIMIT;
@@ -290,7 +294,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
                     !printState && (
                         <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
-                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? (
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx ? (
                                 <Popover
                                     popoverClass={styles['popover']}
                                     children={GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE}

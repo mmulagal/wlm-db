@@ -351,7 +351,11 @@ const GetWell = () => {
                 )}
                 <div className={styles.header}>
                     <div className={styles['header-top-section']}>
-                        <DsTypography className={styles.optimizeHeader} variant="Semibold_16">
+                        <DsTypography
+                            data-testid={`wlm-db-optimize-instance`}
+                            className={styles.optimizeHeader}
+                            variant="Semibold_16"
+                        >
                             Optimize instance
                         </DsTypography>
                         {localStorage.getItem('adhocAssessment') === 'true' && (
@@ -384,7 +388,10 @@ const GetWell = () => {
                             ))}
                     </div>
                     {!optimizePrintState && (
-                        <DsTypography variant="Regular_14">
+                        <DsTypography
+                            data-testid={`wlm-db-${selectedDatabaseInstanceName.toLowerCase().replace(/ /g, '-')}`}
+                            variant="Regular_14"
+                        >
                             {selectedDatabaseInstanceName || 'instance name'}
                         </DsTypography>
                     )}

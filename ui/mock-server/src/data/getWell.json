@@ -325,8 +325,15 @@
           {
             "adapterName": "Ethernet 3",
             "rssEnabled": true,
-            "rssProfile": "",
+            "rssProfile": "test",
             "baseProcessorNumber": 2,
+            "numberOfReceiveQueues": 32
+          },
+          {
+            "adapterName": "Ethernet 4",
+            "rssEnabled": true,
+            "rssProfile": "test",
+            "baseProcessorNumber": 3,
             "numberOfReceiveQueues": 32
           }
         ],

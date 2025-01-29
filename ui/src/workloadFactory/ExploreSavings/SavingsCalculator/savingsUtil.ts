@@ -333,8 +333,9 @@ export const MSSQLServerInstanceForOnPremise = (sqlData: any, storageType: strin
         {
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
-            text: `Option 1: The selected database edition is based on the source on-premises SQL Server database.`,
-            text2: 'Option 2: Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.'
+            text: sqlData?.editionUpgradeCheck
+                ? `Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.`
+                : `The selected database edition is based on the source on-premises SQL Server database.`
         },
         {
             label: 'Database version',

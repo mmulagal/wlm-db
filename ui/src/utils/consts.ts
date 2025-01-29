@@ -769,8 +769,8 @@ export const GW_TOOLTIP_KEYS_MAPPING: any = {
 };
 
 export const NETWORK_PERFORMANCE_OPTIONS: any = {
-    'Up to 10 GiB': 'upTo10',
-    'Above 10 GiB': 'above10'
+    'Up to 10 Gbps': 'upTo10',
+    'Above 10 Gbps': 'above10'
 };
 
 export const ERR_MSG_TO_CHECK = ['does not match schema definition.'];

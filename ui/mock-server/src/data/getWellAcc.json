@@ -608,7 +608,7 @@
                                 {
                                     "name": "log-drive-size",
                                     "recommended": "20-30%",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                                     "tags": ["Operational excellence"],
@@ -631,7 +631,14 @@
                                                 "dataDriveTotalSizeMB": 81901
                                             }
                                         ],
-                                        "underProvisionedDrives": [],
+                                        "underProvisionedDrives": [{
+                                            "databaseName": "hammer",
+                                            "logDriveLetter": "F:",
+                                            "dataDriveLetter": "E:",
+                                            "logDrivePercent": 74.99420031501447,
+                                            "logDriveTotalSizeMB": 61421,
+                                            "dataDriveTotalSizeMB": 81901
+                                        }],
                                         "ignoredDrives": [
                                             {
                                                 "databaseName": "msdb",

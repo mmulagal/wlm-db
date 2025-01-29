@@ -68,6 +68,35 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     const updatedTableData = useMemo(() => {
+        if (
+            selectedRowsForOptimize.length > 0 &&
+            !inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length
+        ) {
+            const selectedDatabaseHostId = selectedRowsForOptimize[0].databaseHostId;
+            // If no rows are selected, reset `isDisabled` for all rows
+            return tableData.map((row: any) => {
+                const isSameDatabaseHostId = row.databaseHostId === selectedDatabaseHostId;
+                const isAlreadySelected = selectedRowsForOptimize.some((selectedRow: any) => selectedRow.id === row.id);
+                return {
+                    ...row,
+                    cellProps: {
+                        ...row.cellProps,
+                        isDisabled:
+                            (!isSameDatabaseHostId && (!isAlreadySelected || isAlreadySelected)) ||
+                            row?.status !== 'Up', // Disable rows with a different databaseHostId
+                        selectionProps: {
+                            title:
+                                !isSameDatabaseHostId && (!isAlreadySelected || isAlreadySelected)
+                                    ? 'Same host instances can be optimized together'
+                                    : '',
+                            titleProps: {
+                                placement: 'bottom'
+                            }
+                        }
+                    }
+                };
+            });
+        }
         if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
@@ -128,10 +157,30 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
-        dispatch(setSelectedRowsForOptimize(rowsData));
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData);
         }
+        if (rowsData.length > 0 && tableProps?.selectionState?.allSelected) {
+            //@ts-ignore
+            const hostId = rowsData[0]?.databaseHostId;
+            rowsData.forEach((row: any, index: number) => {
+                if (row?.databaseHostId !== hostId) {
+                    //@ts-ignore
+                    tableProps.selectionState.rows[row.id] = false;
+                }
+            });
+
+            rowsData
+                .slice()
+                .reverse()
+                .forEach((row: any, index, arr) => {
+                    const actualIndex = arr.length - 1 - index; // Get the actual index in the original array
+                    if (row?.databaseHostId !== hostId) {
+                        rowsData.splice(actualIndex, 1);
+                    }
+                });
+        }
+        dispatch(setSelectedRowsForOptimize(rowsData));
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {

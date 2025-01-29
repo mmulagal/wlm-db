@@ -2,7 +2,7 @@ import { defineConfig /*, Plugin*/ } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgr from '@svgr/rollup';
-import svgr2 from 'vite-plugin-svgr';
+
 import eslint from 'vite-plugin-eslint';
 import { vitePluginVersionMark } from 'vite-plugin-version-mark';
 import { PRODUCTION } from './src/utils/consts';
@@ -31,7 +31,6 @@ export default defineConfig({
         viteTsconfigPaths(),
         //@ts-ignore
         svgr({ plugins: ['@svgr/plugin-jsx'] }),
-        svgr2(),
         vitePluginVersionMark({
             name: 'wlm-db_ui_short_sha',
             ifShortSHA: true,
@@ -47,5 +46,13 @@ export default defineConfig({
     build: {
         outDir: 'build',
         sourcemap: shouldUseSourceMap
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                api: 'modern-compiler',
+                silenceDeprecations: ['mixed-decls']
+            }
+        }
     }
 });

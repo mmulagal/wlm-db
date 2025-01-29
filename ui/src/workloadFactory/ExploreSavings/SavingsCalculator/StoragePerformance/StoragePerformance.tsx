@@ -2,51 +2,9 @@ import { DsTypography } from '@netapp/design-system';
 import styles from './StoragePerformance.module.scss';
 import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
-import { useEffect, useState } from 'react';
-// import ComputeInputComponent from './StoragePerformance.moodule.scss';
 
-const StoragePerformance = () => {
+const StoragePerformance = ({ printState }: any) => {
     const { selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
-
-    const [primaryData, setPrimaryData] = useState<any>(null);
-    const [secondaryData, setSecondaryData] = useState<any>(null);
-
-    useEffect(() => {
-        let primaryData = {
-            totalStorage: selectedOnPremHostDetails?.totalPrimaryHostStorage,
-            totalIops: 0,
-            totalThroughput: 0
-        };
-        let secondaryData = {
-            totalStorage: selectedOnPremHostDetails?.totalSecondaryHostStorage,
-            totalIops: 0,
-            totalThroughput: 0
-        };
-        let totalData = {
-            totalIops: 0,
-            totalThroughput: 0
-        };
-        selectedOnPremHostDetails?.sqlServerInstances?.map((instance: any) => {
-            totalData.totalIops += Number(instance?.totalIops || 0);
-            totalData.totalThroughput += Number(instance?.totalThroughput || 0);
-        });
-
-        if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-            secondaryData.totalIops += Number(totalData?.totalIops || 0) / 2;
-            secondaryData.totalThroughput += Number(totalData?.totalThroughput || 0) / 2;
-            primaryData.totalIops += Number(totalData?.totalIops || 0) / 2;
-            primaryData.totalThroughput += Number(totalData?.totalThroughput || 0) / 2;
-        } else {
-            primaryData.totalIops += Number(totalData?.totalIops || 0);
-            primaryData.totalThroughput += Number(totalData?.totalThroughput || 0);
-        }
-
-        setPrimaryData(primaryData);
-        if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-            setSecondaryData(secondaryData);
-        }
-    }, [selectedOnPremHostDetails]);
 
     return (
         <div className={styles.storagePerf}>
@@ -64,41 +22,18 @@ const StoragePerformance = () => {
                         <DsTypography variant="Semibold_14">IOPS</DsTypography>
                     </div>
                     <div className={styles.col4}>
-                        <DsTypography variant="Semibold_14">Throughput</DsTypography>
+                        <DsTypography variant="Semibold_14">Throughput (MB/s)</DsTypography>
                     </div>
                 </div>
 
-                <div className={styles.row1} style={{ marginTop: '-8px' }}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Primary</DsTypography>
-                    </div>
-                    <StoragePerfInput type="primaryData" data={primaryData} />
-                </div>
-
-                {/* <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Primary - log</DsTypography>
-                    </div>
-                    <StoragePerfInput type="primaryLog" />
-                </div> */}
-
-                {selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG && (
-                    <>
-                        <div className={styles.row1}>
-                            <div className={styles.col1}>
-                                <DsTypography variant="Regular_14">Secondary</DsTypography>
-                            </div>
-                            <StoragePerfInput type="secondaryData" data={secondaryData} />
+                {selectedOnPremHostDetails?.sqlServerInstances?.map((instance: any, index: number) => (
+                    <div key={index} className={styles.row1} style={{ marginTop: '-8px' }}>
+                        <div className={styles.col1}>
+                            <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
                         </div>
-
-                        {/* <div className={styles.row1}>
-                            <div className={styles.col1}>
-                                <DsTypography variant="Regular_14">Secondary - log</DsTypography>
-                            </div>
-                            <StoragePerfInput type="secondaryLog" />
-                        </div> */}
-                    </>
-                )}
+                        <StoragePerfInput printState={printState} data={instance} />
+                    </div>
+                ))}
             </div>
         </div>
     );

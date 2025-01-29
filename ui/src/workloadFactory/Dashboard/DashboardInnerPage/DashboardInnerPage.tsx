@@ -15,7 +15,8 @@ import {
     checkIfDisableForOptimize,
     formatGetWellData,
     handleOptimizeStorageJob,
-    nameToIdConfigMapping
+    nameToIdConfigMapping,
+    setOptimizeInnerpageSummary
 } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import StorageTierTable from './RenderTables/StorageTierTable';
@@ -58,12 +59,14 @@ import {
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
+import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
+    const { allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -81,6 +84,7 @@ const DashboardInnerPage = () => {
     });
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -447,6 +451,13 @@ const DashboardInnerPage = () => {
     };
 
     useEffect(() => {
+        if (selectedConfig) {
+            const configData = getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
+            setOptimizeInnerpageSummary(selectedConfig, configData, dispatch);
+        }
+    }, [allmssqlHostAssessmentData]);
+
+    useEffect(() => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 setValueCardData({
@@ -667,7 +678,7 @@ const DashboardInnerPage = () => {
                 });
                 break;
         }
-    }, [selectedConfig]);
+    }, [selectedConfig, selectedConfigSummary]);
 
     const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
@@ -677,7 +688,12 @@ const DashboardInnerPage = () => {
             isSticky: true,
             width: '318px',
             renderCell: (cellData: any, rowData: any) => {
-                let { isDisabled, errorMessage } = checkIfDisableForOptimize(inProgressHostData, name, rowData);
+                let { isDisabled, errorMessage } = checkIfDisableForOptimize(
+                    inProgressHostData,
+                    name,
+                    rowData,
+                    selectedRowsForOptimize
+                );
                 const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (
                     <div className={styles.buttonContainer}>
@@ -686,18 +702,7 @@ const DashboardInnerPage = () => {
                                 <OptimizeInProgressIcon />
                                 <DsTypography variant="Semibold_14">Optimizing</DsTypography>
                             </div>
-                        ) : !isDisabled ? (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                onClick={() => {
-                                    optimizeAction(rowData);
-                                    handleDialog(name, rowData, 'single');
-                                }}
-                            >
-                                Optimize
-                            </DsButton>
-                        ) : (
+                        ) : isDisabled && errorMessage ? (
                             <Popover
                                 popoverClass={CommonStyles['popover']}
                                 isAppendedToBody={true}
@@ -711,6 +716,18 @@ const DashboardInnerPage = () => {
                                     </DsButton>
                                 }
                             />
+                        ) : (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                isDisabled={isDisabled}
+                                onClick={() => {
+                                    optimizeAction(rowData);
+                                    handleDialog(name, rowData, 'single');
+                                }}
+                            >
+                                Optimize
+                            </DsButton>
                         )}
                     </div>
                 );
@@ -768,8 +785,20 @@ const DashboardInnerPage = () => {
                 </div>
 
                 <div className={styles.headingSection}>
-                    <DsTypography variant="Semibold_20">{selectedConfig}</DsTypography>
-                    <DsTypography variant="Semibold_16">Manage instance optimization</DsTypography>
+                    <DsTypography
+                        data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
+                        variant="Semibold_20"
+                    >
+                        {selectedConfig}
+                    </DsTypography>
+                    <DsTypography
+                        data-testid={`wlm-db-manage-instance-optimization-heading-for-${selectedConfig
+                            .toLowerCase()
+                            .replace(/ /g, '-')}`}
+                        variant="Semibold_16"
+                    >
+                        Manage instance optimization
+                    </DsTypography>
                 </div>
 
                 <div className={styles.mainSection}>

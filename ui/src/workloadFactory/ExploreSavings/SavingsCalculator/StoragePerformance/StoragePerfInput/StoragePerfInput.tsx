@@ -7,7 +7,7 @@ import { setStoragePerformance } from '../../../../../store/workloadFactory/expl
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 import { formatFractionalNumber } from '../../../../../utils/utilityFunctions';
 
-const StoragePerfInput = ({ type, data }: any) => {
+const StoragePerfInput = ({ data, printState }: any) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -20,7 +20,7 @@ const StoragePerfInput = ({ type, data }: any) => {
 
     const [totalStorageAmount, setTotalStorageAmount] = useState<any>(null);
 
-    const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(300);
+    const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -30,8 +30,8 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         dispatch(
             setStoragePerformance({
-                type: type,
-                mode: 'totalStorageAmount',
+                type: data?.sqlInstanceName,
+                mode: 'storage',
                 value: totalStorageAmountSearch
             })
         );
@@ -39,7 +39,7 @@ const StoragePerfInput = ({ type, data }: any) => {
 
     const [iops, setIOPS] = useState<any>(null);
 
-    const [iopsSearch, setIOPSSearch] = useSearchDebounce(300);
+    const [iopsSearch, setIOPSSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -49,7 +49,7 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         dispatch(
             setStoragePerformance({
-                type: type,
+                type: data?.sqlInstanceName,
                 mode: 'iops',
                 value: iopsSearch
             })
@@ -58,7 +58,7 @@ const StoragePerfInput = ({ type, data }: any) => {
 
     const [throughput, setThroughput] = useState<any>(null);
 
-    const [throughputSearch, setThroughputSearch] = useSearchDebounce(300);
+    const [throughputSearch, setThroughputSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -68,7 +68,7 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         dispatch(
             setStoragePerformance({
-                type: type,
+                type: data?.sqlInstanceName,
                 mode: 'throughput',
                 value: throughputSearch
             })
@@ -78,37 +78,58 @@ const StoragePerfInput = ({ type, data }: any) => {
     return (
         <div className={styles.computeInputComponent}>
             <div className={styles.col2}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setTotalStorageAmount(numVal);
-                    }}
-                    placeholder={''}
-                    value={totalStorageAmount || ''}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{totalStorageAmount}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setTotalStorageAmount(numVal);
+                        }}
+                        placeholder={''}
+                        value={totalStorageAmount || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col3}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setIOPS(numVal);
-                    }}
-                    placeholder={''}
-                    value={iops || ''}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{iops}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setIOPS(numVal);
+                        }}
+                        placeholder={''}
+                        value={iops || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col4}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setThroughput(numVal);
-                    }}
-                    placeholder={''}
-                    value={throughput || ''}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{throughput}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setThroughput(numVal);
+                        }}
+                        placeholder={''}
+                        value={throughput || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
         </div>
     );
