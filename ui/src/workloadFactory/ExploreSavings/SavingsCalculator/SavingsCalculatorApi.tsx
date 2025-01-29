@@ -44,12 +44,6 @@ import { addInstanceIdToGetPerf } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected } from './savingsUtil';
 import { isEqual } from 'lodash';
 
-interface NODE_USAGE_INTERFACE {
-    storage: number;
-    iops: number;
-    throughput: number;
-}
-
 interface ONPREM_PAYLOAD {
     regionCode?: string;
     sqlInstanceData?: Array<{
@@ -89,7 +83,8 @@ const SavingsCalculatorApi = () => {
         computeInformation,
         storagePerformance,
         requestedPayload,
-        requestedRegion
+        requestedRegion,
+        onPremNetworkPerformance
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -158,57 +153,11 @@ const SavingsCalculatorApi = () => {
             };
         }
 
-        let primaryData: NODE_USAGE_INTERFACE = {
-            storage: storagePerformance?.primaryData?.totalStorageAmount
-                ? Number(storagePerformance?.primaryData?.totalStorageAmount) * GIB_IN_BYTE
-                : 0,
-            iops: Number(storagePerformance?.primaryData?.iops) || 0,
-            throughput: Number(storagePerformance?.primaryData?.throughput) || 0
-        };
-
-        let secondaryData: NODE_USAGE_INTERFACE = {
-            storage: 0,
-            iops: 0,
-            throughput: 0
-        };
-
-        if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-            secondaryData = {
-                storage: storagePerformance?.secondaryData?.totalStorageAmount
-                    ? Number(storagePerformance?.secondaryData?.totalStorageAmount) * GIB_IN_BYTE
-                    : 0,
-                iops: Number(storagePerformance?.secondaryData?.iops) || 0,
-                throughput: Number(storagePerformance?.secondaryData?.throughput) || 0
-            };
-        }
-
-        let totalDataPerInstance: any = {
-            iops: 0,
-            throughput: 0
-        };
-
-        if (storagePerformance) {
-            let nodesLength = selectedOnPremHostDetails?.sqlServerInstances?.length;
-
-            if (selectedOnPremHostDetails?.deploymentModel === GENERAL.AOAG) {
-                totalDataPerInstance = {
-                    ...totalDataPerInstance,
-                    iops: (primaryData?.iops + secondaryData?.iops) / nodesLength,
-                    throughput: (primaryData?.throughput + secondaryData?.throughput) / nodesLength
-                };
-            } else {
-                totalDataPerInstance = {
-                    ...totalDataPerInstance,
-                    iops: primaryData?.iops / nodesLength,
-                    throughput: primaryData?.throughput / nodesLength
-                };
-            }
-        }
-
         if (computeInformation) {
             let computeInfo: any = [];
             Object.keys(computeInformation).forEach(key => {
                 const value = computeInformation[key];
+                const storagevalue = storagePerformance?.[key];
                 let perInst = selectedOnPremHostDetails?.sqlServerInstances?.find(
                     (inst: any) => inst?.sqlInstanceName === key
                 );
@@ -218,18 +167,17 @@ const SavingsCalculatorApi = () => {
                         noOfVcpusInUse: value?.noOfVcpusInUse || 0,
                         memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
                         networkPerformance:
-                            NETWORK_PERFORMANCE_OPTIONS?.[value?.networkPerformance?.value || ''] || 'upTo10',
-                        totalIops: totalDataPerInstance?.iops || 0,
-                        totalThroughput: totalDataPerInstance?.throughput || 0
+                            NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || ''] || 'upTo10',
+                        totalIops: storagevalue?.iops || 0,
+                        totalThroughput: storagevalue?.throughput || 0,
+                        totalStorage: Number(storagevalue?.storage || 0) * GIB_IN_BYTE
                     });
                 }
             });
             if (computeInfo) {
                 payload = {
                     ...payload,
-                    sqlInstanceData: computeInfo,
-                    totalPrimaryHostStorage: primaryData?.storage,
-                    totalSecondaryHostStorage: secondaryData?.storage
+                    sqlInstanceData: computeInfo
                 };
             }
         }
@@ -571,7 +519,8 @@ const SavingsCalculatorApi = () => {
         monthlyChangeRate,
         computeInformation,
         storagePerformance,
-        selectedOnPremRegion
+        selectedOnPremRegion,
+        onPremNetworkPerformance
     ]);
 
     return <></>;

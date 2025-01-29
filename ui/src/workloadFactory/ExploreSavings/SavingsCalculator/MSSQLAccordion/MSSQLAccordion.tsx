@@ -129,6 +129,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
             windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
         }
+        const editionUpgradeCheck =
+            storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+            storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard');
 
         let mssqlInstanceData = {};
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
@@ -137,7 +140,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 serverEdition: serverEdition,
                 serverVersion: selectedOnPremHostDetails?.recommendedInstance?.serverVersion,
                 instanceType: instanceType,
-                windowsServer: windowsServer
+                windowsServer: windowsServer,
+                editionUpgradeCheck: editionUpgradeCheck
             };
         } else {
             mssqlInstanceData = {

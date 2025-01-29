@@ -36,15 +36,17 @@ export const useOnPremData = () => {
                 } else if (perRow?.deploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                     perInstallationMode = GENERAL.STANDALONE;
                 }
+                const perRowInstance = perRow?.sqlServerInstances?.filter((perInstance: any) => {
+                    return !perInstance?.errorMessage;
+                });
                 const rowData = {
                     ...perRow,
+                    sqlServerInstances: perRowInstance,
                     deploymentModel: perInstallationMode,
                     onPremNode: perRow?.onPremisesNodes[0],
-                    totalInstance: perRow?.sqlServerInstances?.length,
+                    totalInstance: perRowInstance?.length,
                     instanceNameList:
-                        perRow?.sqlServerInstances?.map(
-                            (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
-                        ) || [],
+                        perRowInstance?.map((detail: { sqlInstanceName: string }) => detail?.sqlInstanceName) || [],
                     nameForSorting: perRow?.resourceName?.toLowerCase()
                 };
                 result.push(rowData);

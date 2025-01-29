@@ -4,16 +4,22 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
-import { setComputeInformation } from '../../../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setComputeInformation,
+    setOnPremNetworkPerformance
+} from '../../../../../store/workloadFactory/exploreSavingsSlice';
 import { formatFractionalNumber, generateOptionType } from '../../../../../utils/utilityFunctions';
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
-const ComputeInputComponent = ({ data }: any) => {
+const ComputeInputComponent = ({ data, index }: any) => {
     const dispatch = useDispatch();
 
     const [numberOfCpu, setNumberOfCpu] = useState<any>(data?.noOfVcpusInUse);
 
-    const [numberOfCpuSearch, setNumberOfCpuSearch] = useSearchDebounce(300);
+    const [numberOfCpuSearch, setNumberOfCpuSearch] = useSearchDebounce(1000);
+
+    const { onPremNetworkPerformance }: any = useAppSelector(state => state.exploreSavings);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -32,7 +38,7 @@ const ComputeInputComponent = ({ data }: any) => {
 
     const [memory, setMemory] = useState<any>(Number(data?.memory || 0) / GIB_IN_BYTE);
 
-    const [memorySearch, setMemorySearch] = useSearchDebounce(300);
+    const [memorySearch, setMemorySearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -50,7 +56,7 @@ const ComputeInputComponent = ({ data }: any) => {
     }, [memorySearch]);
 
     const generateNetworkPerfOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = ['Up to 10 GiB', 'Above 10 GiB'];
+        const arr = ['Up to 10 Gbps', 'Above 10 Gbps'];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -59,21 +65,14 @@ const ComputeInputComponent = ({ data }: any) => {
         return options;
     }, []);
 
-    const [dropDownValue, setDropdownValue] = useState<any>(
-        data?.networkPerformance === 'upTo10' ? generateNetworkPerfOptions[0] : generateNetworkPerfOptions[1]
-    );
-
     useEffect(() => {
         if (data?.networkPerformance) {
             dispatch(
-                setComputeInformation({
-                    type: data?.sqlInstanceName,
-                    mode: 'networkPerformance',
-                    value:
-                        data?.networkPerformance === 'upTo10'
-                            ? generateNetworkPerfOptions[0]
-                            : generateNetworkPerfOptions[1]
-                })
+                setOnPremNetworkPerformance(
+                    data?.networkPerformance === 'upTo10'
+                        ? generateNetworkPerfOptions[0]
+                        : generateNetworkPerfOptions[1]
+                )
             );
         }
     }, [generateNetworkPerfOptions]);
@@ -81,9 +80,6 @@ const ComputeInputComponent = ({ data }: any) => {
     useEffect(() => {
         setNumberOfCpu(data?.noOfVcpusInUse);
         setMemory(formatFractionalNumber(Number(data?.memory || 0) / GIB_IN_BYTE, 3));
-        setDropdownValue(
-            data?.networkPerformance === 'upTo10' ? generateNetworkPerfOptions[0] : generateNetworkPerfOptions[1]
-        );
     }, [data]);
 
     return (
@@ -113,20 +109,13 @@ const ComputeInputComponent = ({ data }: any) => {
             <div className={styles.col4}>
                 <SelectField
                     isClearable={false}
-                    // value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
                     onChange={(selectedOptions: any): void => {
-                        setDropdownValue(selectedOptions);
-                        dispatch(
-                            setComputeInformation({
-                                type: data?.sqlInstanceName,
-                                mode: 'networkPerformance',
-                                value: selectedOptions
-                            })
-                        );
+                        dispatch(setOnPremNetworkPerformance(selectedOptions));
                     }}
+                    isDisabled={index !== 0}
                     isSearchable={false}
                     options={generateNetworkPerfOptions}
-                    defaultValue={[generateNetworkPerfOptions[0]]}
+                    value={onPremNetworkPerformance}
                 />
             </div>
         </div>

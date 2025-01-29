@@ -22,7 +22,7 @@
                   "isReadReplica": true
               },
               {
-                "sqlInstanceId": "8",
+                "sqlInstanceId": "9",
                 "noOfVcpusInUse": 8,
                 "memory": 6904355840,
                 "networkPerformance": "upTo10",
@@ -34,14 +34,17 @@
                 "totalThroughput": 128,
                 "totalStorage": 1073741824,
                 "isReadReplica": false
+            },
+            {
+                "sqlInstanceId":"{\r\n    \"error\":  \"Error running query instanceGuid on instance WLMDBSTD2SCALE\\\\INSTANCE30\"\r\n}",
+                "sqlInstanceName": "INSTANCE30",
+                "errorMessage": "Failed to format SQL instance details InternalServerError: Error parsing storageDetailsByDb: Error running query 'storageDetailsByDb' on instance WLMDBSTD2SCALE\\INSTANCE30"
             }
           ],
           "onPremisesNodes": [
               "AOAG-Node1",
               "AOAG-Node2"
-          ],
-          "totalPrimaryHostStorage": 1073741824,
-          "totalSecondaryHostStorage": 1073741824
+          ]
       },
       {
           "resourceId": "ASJHIJI0",
@@ -97,8 +100,7 @@
               "FCI-Node2",
               "FCI-Node3",
               "FCI-Node4"
-          ],
-          "totalPrimaryHostStorage": 1073741824
+          ]
       },
       {
           "resourceId": "WJIF66X2",
@@ -123,8 +125,7 @@
           ],
           "onPremisesNodes": [
               "OnPrem-Standalone"
-          ],
-          "totalPrimaryHostStorage": 1073741824
+          ]
       }
   ]
 }

@@ -7,7 +7,7 @@ import { setStoragePerformance } from '../../../../../store/workloadFactory/expl
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 import { formatFractionalNumber } from '../../../../../utils/utilityFunctions';
 
-const StoragePerfInput = ({ type, data }: any) => {
+const StoragePerfInput = ({ data }: any) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -20,7 +20,7 @@ const StoragePerfInput = ({ type, data }: any) => {
 
     const [totalStorageAmount, setTotalStorageAmount] = useState<any>(null);
 
-    const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(300);
+    const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -30,8 +30,8 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         dispatch(
             setStoragePerformance({
-                type: type,
-                mode: 'totalStorageAmount',
+                type: data?.sqlInstanceName,
+                mode: 'storage',
                 value: totalStorageAmountSearch
             })
         );
@@ -39,7 +39,7 @@ const StoragePerfInput = ({ type, data }: any) => {
 
     const [iops, setIOPS] = useState<any>(null);
 
-    const [iopsSearch, setIOPSSearch] = useSearchDebounce(300);
+    const [iopsSearch, setIOPSSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -49,7 +49,7 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         dispatch(
             setStoragePerformance({
-                type: type,
+                type: data?.sqlInstanceName,
                 mode: 'iops',
                 value: iopsSearch
             })
@@ -58,7 +58,7 @@ const StoragePerfInput = ({ type, data }: any) => {
 
     const [throughput, setThroughput] = useState<any>(null);
 
-    const [throughputSearch, setThroughputSearch] = useSearchDebounce(300);
+    const [throughputSearch, setThroughputSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -68,7 +68,7 @@ const StoragePerfInput = ({ type, data }: any) => {
     useEffect(() => {
         dispatch(
             setStoragePerformance({
-                type: type,
+                type: data?.sqlInstanceName,
                 mode: 'throughput',
                 value: throughputSearch
             })
