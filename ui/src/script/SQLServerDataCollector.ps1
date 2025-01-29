@@ -80,7 +80,7 @@ function Invoke-SQLQuery {
         [string]$SqlPassword
     )
 
-    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 "
+    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 -s `",`" "
 
     if (![string]::IsNullOrEmpty($SqlUserName) -and ![string]::IsNullOrEmpty($SqlPassword)) {
         $sqlcmd += " -U $SqlUserName -P $SqlPassword"
@@ -332,7 +332,10 @@ SET NOCOUNT ON;SELECT @@VERSION AS SQLServerVersion;
 "@
 
     noOfDatabases = @"
-SET NOCOUNT ON; SELECT count(name) FROM sys.databases;
+SET NOCOUNT ON;
+SELECT COUNT(name) AS DatabaseCount
+FROM sys.databases
+WHERE name NOT IN ('tempdb', 'model', 'msdb');
 "@
 
     collation = @"
@@ -583,7 +586,9 @@ ForEach ($instance in $finalInstancesList) {
         # Execute the query using the verified SQL credentials
         $output = Invoke-SQLQuery -QueryKey $queryKey -Query $query -InstanceName $instance -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
         if ($output) {
-            $instanceResults[$queryKey] = $output           
+            $jsonResp = $output -join ""
+            $jsonResp = $jsonResp.Trim()
+            $instanceResults[$queryKey] = $jsonResp
         } else {
             Write-Output "Error running query '$queryKey' on instance $instance"
             $instanceResults[$queryKey] = @{ "error" = "Error running query '$queryKey' on instance $instance" } | ConvertTo-Json

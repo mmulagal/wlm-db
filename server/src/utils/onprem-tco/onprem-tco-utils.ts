@@ -61,26 +61,6 @@ function parseLicenceUsageDetails(value: string) {
     }
 }
 
-function parseSqlVersion(value: string | string[]) {
-    if (Array.isArray(value)) {
-        return value.join(',');
-    }
-
-    try {
-        const parsedValue = JSON.parse(value);
-        if (Array.isArray(parsedValue)) {
-            return parsedValue.join(',');
-        }
-        if (typeof parsedValue === 'object' && parsedValue.error) {
-            logger.error(`Error: ${parsedValue.error}`);
-            throw parsedValue?.error;
-        }
-    } catch (error) {
-        const errorMessage = `Error parsing sqlVersion: ${error}`;
-        throw createError(500, errorMessage);
-    }
-}
-
 function parseIops(value: string) {
     try {
         const parsedValue = JSON.parse(value);
@@ -172,7 +152,6 @@ export {
     parseCpuUtilization,
     parseMemoryUtilization,
     parseLicenceUsageDetails,
-    parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
     parseAoagReadReplica,

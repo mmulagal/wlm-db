@@ -84,7 +84,7 @@ interface SqlInstanceDetails {
     noOfDatabases: string;
     ownerNodes: string;
     sqlInstanceName: string;
-    sqlVersion: string[];
+    sqlVersion: string;
     storageDetailsByDb: string;
     sqlEdition: string;
     iops: string;

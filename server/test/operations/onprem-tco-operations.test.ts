@@ -24,13 +24,8 @@ const reportData = {
             ownerNodes:
                 '[{"nodeName":"WLMDBFCI3","nodeRole":"Standby"},{"nodeName":"WLMDBFCI4","nodeRole":"Standby"},{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
             sqlInstanceName: 'FCI23NEW',
-            sqlVersion: [
-                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                '\tOct  8 2022 05:58:25 ',
-                '\tCopyright (C) 2022 Microsoft Corporation',
-                '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                ''
-            ],
+            sqlVersion:
+                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
             storageDetailsByDb:
                 '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":26605,"driveAvailableSizeMb":25509}]',
             sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -48,13 +43,8 @@ const reportData = {
             noOfDatabases: '5',
             ownerNodes: '[{"nodeName":"WLMDBFCI4","nodeRole":"Standby"},{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
             sqlInstanceName: 'FCI24NEW',
-            sqlVersion: [
-                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                '\tOct  8 2022 05:58:25 ',
-                '\tCopyright (C) 2022 Microsoft Corporation',
-                '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                ''
-            ],
+            sqlVersion:
+                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
             storageDetailsByDb:
                 '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"K:","driveTotalSizeMb":27629,"driveAvailableSizeMb":27004}]',
             sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -72,13 +62,8 @@ const reportData = {
             noOfDatabases: '5',
             ownerNodes: '[{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
             sqlInstanceName: 'STD1NEW',
-            sqlVersion: [
-                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                '\tOct  8 2022 05:58:25 ',
-                '\tCopyright (C) 2022 Microsoft Corporation',
-                '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                ''
-            ],
+            sqlVersion:
+                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
             storageDetailsByDb:
                 '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":26605,"driveAvailableSizeMb":25509}]',
             sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -261,13 +246,8 @@ describe('onPrem TCO operations', () => {
                 ownerNodes:
                     '[{"nodeName":"WLMDBFCI4","nodeRole":"Standby"},{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
                 sqlInstanceName: 'FCI24NEW',
-                sqlVersion: [
-                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                    '\tOct  8 2022 05:58:25 ',
-                    '\tCopyright (C) 2022 Microsoft Corporation',
-                    '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                    ''
-                ],
+                sqlVersion:
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
                 storageDetailsByDb:
                     '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"K:","driveTotalSizeMb":27629,"driveAvailableSizeMb":27004}]',
                 sqlEdition: 'Enterprise Evaluation Edition (64-bit)',

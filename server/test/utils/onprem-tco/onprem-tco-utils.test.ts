@@ -3,7 +3,6 @@ import {
     parseCpuUtilization,
     parseMemoryUtilization,
     parseLicenceUsageDetails,
-    parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
     convertToDate,
@@ -56,23 +55,6 @@ describe('onprem-tco-utils', () => {
             parseLicenceUsageDetails(
                 '{\r\n    "error":  "Error running query \\u0027licenceUsageDetails\\u0027 on instance FCI12"\r\n}'
             );
-        }).toThrowError(/Error/);
-    });
-
-    it('should join array of strings', () => {
-        const response = parseSqlVersion([
-            'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-            '\tOct  8 2022 05:58:25 ',
-            '\tCopyright (C) 2022 Microsoft Corporation',
-            '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-            ''
-        ]);
-        expect(response?.includes('nterprise')).toBeDefined();
-    });
-
-    it('invalid sql version', () => {
-        expect(() => {
-            parseSqlVersion('{\r\n    "error":  "Error running query \\u0027sqlVersion\\u0027 on instance FCI12"\r\n}');
         }).toThrowError(/Error/);
     });
 

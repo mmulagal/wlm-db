@@ -42,7 +42,6 @@ import {
     parseCpuUtilization,
     parseMemoryUtilization,
     parseLicenceUsageDetails,
-    parseSqlVersion,
     parseIops,
     convertToDate,
     generateUniqueId,
@@ -170,7 +169,7 @@ function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
 }
 
 async function downloadSqlServerDataCollectorScript(accountId: string, databaseType: string = MSSQL) {
-    logger.info('Downloading OnPrem TCO Collector Script', { accountId, databaseType });
+    logger.info('Downloading SQL Server data collector Script', { accountId, databaseType });
 
     const bucketname = getArtifactsRegionBucketName(DEFAULT_AWS_REGION);
     const url = await getPreSignedUrl(DEFAULT_AWS_REGION, bucketname, OP_TCO_COLLECTOR_SCRIPT_PATH);
@@ -235,8 +234,7 @@ async function saveReportInWlmdbDatabase(
             throw new Error('Report with the same resource ID and timestamp already exists.');
         }
 
-        const resolvedReports = await Promise.all(reports);
-        return createOnPremTcoReportData(resolvedReports);
+        return createOnPremTcoReportData(reports);
     }
     throw createError(
         HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -661,10 +659,8 @@ async function handleOnpremTcoDataUpload(
     let uploadJobStatus;
     let uploadJobError;
     try {
-        await Promise.all([
-            saveReportInReportingRegistry(accountId, fileName, data),
-            saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data)
-        ]);
+        await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
+        // await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error handling OnPrem TCO data upload. ${error}`;
@@ -838,7 +834,7 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
 
     const { primaryDatabases, secondaryDatabases } = getDatabaseClassifications(instance);
 
-    let sqlVersion = parseSqlVersion(instance.sqlVersion) || '';
+    let sqlVersion = instance?.sqlVersion.replace(/\t/g, ' ') || '';
     sqlVersion = sqlVersion.substring(0, sqlVersion.indexOf('(')).trim();
 
     let totalIops = instance?.totalIops;
@@ -868,8 +864,9 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
     }
 
     const [memoryDetails] = parseMemoryUtilization(instance?.memUtilization || '') || [];
-    const primaryDatabasesCount = primaryDatabases.length;
-    const secondaryDatabasesCount = secondaryDatabases.length;
+    // The StorageDetailByDB response will have duplicate entry for datbases whose storage is spread across differnt drives so using below logic
+    const secondaryDatabasesCount = secondaryDatabases?.length || 0;
+    const primaryDatabasesCount = parseInt(instance.noOfDatabases, 10) - secondaryDatabasesCount;
     const numDatabases = {
         primary: primaryDatabasesCount,
         secondary: secondaryDatabasesCount
@@ -966,7 +963,7 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
         sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
             try {
                 const { licenceUsageDetails, sqlVersion } = instance;
-                const sqlVersionStr = parseSqlVersion(sqlVersion);
+                const sqlVersionStr = sqlVersion.replace(/\t/g, ' ') || '';
                 if (sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)) {
                     const licenseFeatures = parseLicenceUsageDetails(licenceUsageDetails);
                     if (
