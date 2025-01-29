@@ -661,7 +661,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
-        // await saveReportInReportingRegistry(accountId, fileName, data);
+        await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error handling OnPrem TCO data upload. ${error}`;
