@@ -11,7 +11,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import { AWS_REGIONS, DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -48,6 +48,7 @@ import {
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     parseSqlVersion
+    // checkForErrors
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
@@ -298,13 +299,17 @@ function groupSqlServerInstancesByDeploymentType(sqlServerInstances: SqlInstance
             acc[deploymentType] = [];
         }
 
-        const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } = parseSqlUsageParams(instance);
-        instance.totalIops = totalIops;
-
-        instance.totalThroughput = totalThroughput;
-        instance.totalStorage = totalStorage;
-        instance.totalSecondaryStorage = totalSecondaryStorage;
-        acc[deploymentType].push({ ...instance });
+        try {
+            const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } = parseSqlUsageParams(instance);
+            instance.totalIops = totalIops;
+            instance.totalThroughput = totalThroughput;
+            instance.totalStorage = totalStorage;
+            instance.totalSecondaryStorage = totalSecondaryStorage;
+            acc[deploymentType].push({ ...instance });
+            // TODO: For handling errors any instance with error will be not added in the DB oand not considered for assessment revisit this
+        } catch (error) {
+            logger.error(`Error parsing SQL instance details: ${error}`);
+        }
         return acc;
     }, {});
 }
@@ -661,7 +666,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
-        await saveReportInReportingRegistry(accountId, fileName, data);
+        // await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error handling OnPrem TCO data upload. ${error}`;
@@ -1156,12 +1161,12 @@ async function getOnPremResourceExploreSavings(
                             ...(totalThroughput && { totalThroughput }),
                             ...(numDatabases &&
                                 incomingTotalStorage && {
-                                    totalStorage: incomingTotalStorage / (1024 * 1024 * 1024) / numDatabases
+                                    totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') / numDatabases
                                 }),
                             ...(numDatabasesSecondary &&
                                 incomingTotalStorage && {
                                     totalSecondaryStorage:
-                                        incomingTotalStorage / (1024 * 1024 * 1024) / numDatabasesSecondary
+                                        sizeInGigaBytes(incomingTotalStorage, 'B') / numDatabasesSecondary
                                 }),
                             deploymentType
                         };
