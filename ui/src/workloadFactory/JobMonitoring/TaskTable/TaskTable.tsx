@@ -108,7 +108,11 @@ const TaskTable = ({ taskList = [] }: any) => {
                 return (
                     <div className={styles.taskRow}>
                         <Typography variant="Regular_14" className={styles.firstItem}>
-                            <div className={CommonStyles.wrapTextIn2Line} title={task.description}>
+                            <div
+                                className={CommonStyles.wrapTextIn2Line}
+                                style={{ display: 'block' }}
+                                title={task.description}
+                            >
                                 {taskDesc(task.description, task)}
                             </div>
                         </Typography>
