@@ -107,7 +107,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         setTimeout(() => {
             const elem = document.getElementById('export-pdf') as HTMLElement;
             var options = {
-                filename: `SavingsCalculator.pdf`,
+                filename: `SavingsCalculator-${Date.now()}.pdf`,
                 compression: 'MEDIUM'
             };
             //@ts-ignore
