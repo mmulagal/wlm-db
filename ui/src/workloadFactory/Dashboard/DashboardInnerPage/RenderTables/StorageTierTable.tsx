@@ -132,9 +132,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
     };
     return (
-        <div
-         className={styles.renderTable}
-        >
+        <div className={styles.renderTable}>
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
@@ -148,7 +146,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                 isDoubleRow={true}
                 key={Date.now()}
             />
-        </>
+        </div>
     );
 };
 
