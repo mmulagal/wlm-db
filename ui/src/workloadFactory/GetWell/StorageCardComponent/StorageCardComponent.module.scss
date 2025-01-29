@@ -189,14 +189,14 @@
             }
         }
     }
+
+    [class*='Popover-module_base'] {
+        max-width: 430px;
+    }
 }
 
 .colorSet {
     div {
         color: var(--text-primary);
     }
-}
-
-[class*='Popover-module_base'] {
-    max-width: 430px;
 }
