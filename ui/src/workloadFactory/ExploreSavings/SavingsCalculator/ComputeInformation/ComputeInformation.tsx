@@ -39,7 +39,7 @@ const ComputeInformation = ({ printState }: any) => {
                         <div className={styles.col1}>
                             <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
                         </div>
-                        <ComputeInputComponent data={instance} index={index} />
+                        <ComputeInputComponent data={instance} index={index} printState={printState} />
                     </div>
                 ))}
             </div>
