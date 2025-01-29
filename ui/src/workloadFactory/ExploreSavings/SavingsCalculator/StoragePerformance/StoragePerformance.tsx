@@ -3,7 +3,7 @@ import styles from './StoragePerformance.module.scss';
 import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
 import { useAppSelector } from '../../../../store/storeHooks';
 
-const StoragePerformance = () => {
+const StoragePerformance = ({ printState }: any) => {
     const { selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
 
     return (

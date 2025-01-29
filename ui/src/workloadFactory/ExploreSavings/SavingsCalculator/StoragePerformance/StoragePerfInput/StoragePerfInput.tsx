@@ -7,7 +7,7 @@ import { setStoragePerformance } from '../../../../../store/workloadFactory/expl
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 import { formatFractionalNumber } from '../../../../../utils/utilityFunctions';
 
-const StoragePerfInput = ({ data }: any) => {
+const StoragePerfInput = ({ data, printState }: any) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -78,37 +78,43 @@ const StoragePerfInput = ({ data }: any) => {
     return (
         <div className={styles.computeInputComponent}>
             <div className={styles.col2}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setTotalStorageAmount(numVal);
-                    }}
-                    placeholder={''}
-                    value={totalStorageAmount || ''}
-                    className={styles.keyField}
-                />
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setTotalStorageAmount(numVal);
+                        }}
+                        placeholder={''}
+                        value={totalStorageAmount || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col3}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setIOPS(numVal);
-                    }}
-                    placeholder={''}
-                    value={iops || ''}
-                    className={styles.keyField}
-                />
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setIOPS(numVal);
+                        }}
+                        placeholder={''}
+                        value={iops || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col4}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setThroughput(numVal);
-                    }}
-                    placeholder={''}
-                    value={throughput || ''}
-                    className={styles.keyField}
-                />
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setThroughput(numVal);
+                        }}
+                        placeholder={''}
+                        value={throughput || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
         </div>
     );

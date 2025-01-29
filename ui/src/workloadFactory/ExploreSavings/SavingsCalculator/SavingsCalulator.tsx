@@ -254,8 +254,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <OnPremRegion />
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
-                                    <ComputeInformation />
-                                    <StoragePerformance />
+                                    <ComputeInformation printState={printState} />
+                                    <StoragePerformance printState={printState} />
                                     <SavingsSelection printState={printState} />
                                 </>
                             </div>
