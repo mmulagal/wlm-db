@@ -20,11 +20,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid CPU utilization', () => {
-        expect(
+        expect(() => {
             parseCpuUtilization(
                 '{\r\n    "error":  "Error running query \\u0027cpuUtilization\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid memory utilization array', () => {

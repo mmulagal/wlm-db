@@ -17,8 +17,8 @@ const SqlInstanceDetailsRequestObject = Type.Object({
     memory: Type.Number(),
     networkPerformance: Type.String({ enum: [NETWORK_PERF.UP_TO_10, NETWORK_PERF.ABOVE_10] }),
     totalIops: Type.Optional(Type.Number()),
-    totalThroughput: Type.Optional(Type.Number()),
-    totalStorage: Type.Optional(Type.Number())
+    totalThroughput: Type.Optional(Type.Number({ description: 'Throughput in mbps' })),
+    totalStorage: Type.Optional(Type.Number({ description: 'Storage in bytes' }))
 });
 
 type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;

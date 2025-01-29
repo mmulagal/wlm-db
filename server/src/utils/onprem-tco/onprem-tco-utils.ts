@@ -13,6 +13,7 @@ function parseCpuUtilization(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         if (typeof value === 'string' && !Number.isNaN(Number(value))) {
@@ -57,6 +58,25 @@ function parseLicenceUsageDetails(value: string) {
         }
     } catch (error) {
         const errorMessage = `Error parsing licenceUsageDetails: ${error}`;
+        throw createError(500, errorMessage);
+    }
+}
+
+function parseSqlVersion(value: string | string[]) {
+    if (Array.isArray(value)) {
+        return value.join(',');
+    }
+    try {
+        if (typeof value === 'object') {
+            const parsedValue = JSON.parse(value);
+            if (parsedValue.error) {
+                logger.error(`Error: ${parsedValue.error}`);
+                throw parsedValue?.error;
+            }
+        }
+        return value.replace(/\t/g, ' ') || '';
+    } catch (error) {
+        const errorMessage = `Error parsing sqlVersion: ${error}`;
         throw createError(500, errorMessage);
     }
 }
@@ -156,5 +176,6 @@ export {
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     convertToDate,
-    generateUniqueId
+    generateUniqueId,
+    parseSqlVersion
 };

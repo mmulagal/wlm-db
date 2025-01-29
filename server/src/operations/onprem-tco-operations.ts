@@ -11,7 +11,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import { AWS_REGIONS, DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -46,7 +46,9 @@ import {
     convertToDate,
     generateUniqueId,
     parseStorageDetailsByDb,
-    parseAoagReadReplica
+    parseAoagReadReplica,
+    parseSqlVersion
+    // checkForErrors
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
@@ -153,7 +155,7 @@ function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
                     totalIops,
                     totalThroughput,
                     isReadReplica: !!(isReadReplica && isReadReplica?.toLowerCase() === 'true'),
-                    totalStorage: totalStorage || 0 + (totalSecondaryStorage || 0)
+                    totalStorage: convertGiBToBytes(totalStorage || 0) + convertGiBToBytes(totalSecondaryStorage || 0)
                 };
             } catch (error) {
                 const errorMessage = `Failed to format SQL instance details ${error}`;
@@ -297,13 +299,17 @@ function groupSqlServerInstancesByDeploymentType(sqlServerInstances: SqlInstance
             acc[deploymentType] = [];
         }
 
-        const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } = parseSqlUsageParams(instance);
-        instance.totalIops = totalIops;
-
-        instance.totalThroughput = totalThroughput;
-        instance.totalStorage = totalStorage;
-        instance.totalSecondaryStorage = totalSecondaryStorage;
-        acc[deploymentType].push({ ...instance });
+        try {
+            const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } = parseSqlUsageParams(instance);
+            instance.totalIops = totalIops;
+            instance.totalThroughput = totalThroughput;
+            instance.totalStorage = totalStorage;
+            instance.totalSecondaryStorage = totalSecondaryStorage;
+            acc[deploymentType].push({ ...instance });
+            // TODO: For handling errors any instance with error will be not added in the DB oand not considered for assessment revisit this
+        } catch (error) {
+            logger.error(`Error parsing SQL instance details: ${error}`);
+        }
         return acc;
     }, {});
 }
@@ -834,7 +840,7 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
 
     const { primaryDatabases, secondaryDatabases } = getDatabaseClassifications(instance);
 
-    let sqlVersion = instance?.sqlVersion.replace(/\t/g, ' ') || '';
+    let sqlVersion = parseSqlVersion(instance?.sqlVersion || '') || '';
     sqlVersion = sqlVersion.substring(0, sqlVersion.indexOf('(')).trim();
 
     let totalIops = instance?.totalIops;
@@ -963,7 +969,7 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
         sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
             try {
                 const { licenceUsageDetails, sqlVersion } = instance;
-                const sqlVersionStr = sqlVersion.replace(/\t/g, ' ') || '';
+                const sqlVersionStr = parseSqlVersion(sqlVersion || '') || '';
                 if (sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)) {
                     const licenseFeatures = parseLicenceUsageDetails(licenceUsageDetails);
                     if (
@@ -975,6 +981,10 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
                 }
                 return { sqlVersionStr, isUsingAnyEnterpriseFeature: false };
             } catch (error) {
+                logger.error(
+                    `Error getting license recommendations for SQL instance ${instance.sqlInstanceName}`,
+                    error
+                );
                 return {};
             }
         })
@@ -1141,6 +1151,7 @@ async function getOnPremResourceExploreSavings(
                             totalThroughput,
                             totalStorage: incomingTotalStorage
                         } = instanceData;
+
                         return {
                             ...detail,
                             ...(noOfVcpusInUse && { noOfVcpusInUse: noOfVcpusInUse.toString() }),
@@ -1149,10 +1160,13 @@ async function getOnPremResourceExploreSavings(
                             ...(totalIops && { totalIops }),
                             ...(totalThroughput && { totalThroughput }),
                             ...(numDatabases &&
-                                incomingTotalStorage && { totalStorage: incomingTotalStorage / numDatabases }),
+                                incomingTotalStorage && {
+                                    totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') / numDatabases
+                                }),
                             ...(numDatabasesSecondary &&
                                 incomingTotalStorage && {
-                                    totalSecondaryStorage: incomingTotalStorage / numDatabasesSecondary
+                                    totalSecondaryStorage:
+                                        sizeInGigaBytes(incomingTotalStorage, 'B') / numDatabasesSecondary
                                 }),
                             deploymentType
                         };
