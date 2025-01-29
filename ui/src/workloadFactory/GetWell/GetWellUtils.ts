@@ -766,18 +766,30 @@ export const formatRssConfigCardConfig = (
         } else {
             if (adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile) {
                 findingReasons++;
-                optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['rssProfile'] = adapter?.rssProfile;
+                if (optimizedRows?.['rssProfile'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue['rssProfile'] = GENERAL.MULTIPLE_VALUES;
+                } else {
+                    optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue['rssProfile'] = adapter?.rssProfile;
+                }
             }
             if (adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber) {
                 findingReasons++;
-                optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+                if (optimizedRows?.['baseProcessorNumber'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue['baseProcessorNumber'] = GENERAL.MULTIPLE_VALUES;
+                } else {
+                    optimizedRows['baseProcessorNumber'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue['baseProcessorNumber'] = adapter?.baseProcessorNumber;
+                }
             }
             if (adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues) {
                 findingReasons++;
-                optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-                optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
+                if (optimizedRows?.['receiveQueues'] === GENERAL.FINDINGS.NOT_OPTIMIZED) {
+                    optimizedValue['receiveQueues'] = GENERAL.MULTIPLE_VALUES;
+                } else {
+                    optimizedRows['receiveQueues'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+                    optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
+                }
             }
         }
     });

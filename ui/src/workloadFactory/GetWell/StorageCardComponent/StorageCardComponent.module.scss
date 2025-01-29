@@ -134,7 +134,7 @@
 
                 .secSubPart {
                     display: flex;
-                    width: 87px;
+                    width: 100px;
                     gap: 8px;
                     flex-direction: row;
                 }
@@ -195,4 +195,8 @@
     div {
         color: var(--text-primary);
     }
+}
+
+[class*='Popover-module_base'] {
+    max-width: 430px;
 }

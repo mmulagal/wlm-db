@@ -28,6 +28,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
     MICROSOFT_SQL: 'Microsoft SQL',
