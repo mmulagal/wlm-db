@@ -692,18 +692,7 @@ const DashboardInnerPage = () => {
                                 <OptimizeInProgressIcon />
                                 <DsTypography variant="Semibold_14">Optimizing</DsTypography>
                             </div>
-                        ) : !isDisabled ? (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                onClick={() => {
-                                    optimizeAction(rowData);
-                                    handleDialog(name, rowData, 'single');
-                                }}
-                            >
-                                Optimize
-                            </DsButton>
-                        ) : (
+                        ) : isDisabled && errorMessage ? (
                             <Popover
                                 popoverClass={CommonStyles['popover']}
                                 isAppendedToBody={true}
@@ -717,6 +706,18 @@ const DashboardInnerPage = () => {
                                     </DsButton>
                                 }
                             />
+                        ) : (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                isDisabled={isDisabled}
+                                onClick={() => {
+                                    optimizeAction(rowData);
+                                    handleDialog(name, rowData, 'single');
+                                }}
+                            >
+                                Optimize
+                            </DsButton>
                         )}
                     </div>
                 );

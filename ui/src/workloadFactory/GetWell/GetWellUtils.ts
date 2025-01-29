@@ -1842,10 +1842,7 @@ export const checkIfDisableForOptimize = (
 ) => {
     let isDisabled = false;
     let errorMessage = '';
-    if (selectedRowsForOptimize && selectedRowsForOptimize.length > 0) {
-        isDisabled = true;
-        errorMessage = 'Bulk operation is selected for this host';
-    } else if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+    if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
         isDisabled = true;
         errorMessage = 'Optimization in progress for this host';
     } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
@@ -1891,6 +1888,9 @@ export const checkIfDisableForOptimize = (
     ) {
         isDisabled = true;
         errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+    } else if (selectedRowsForOptimize && selectedRowsForOptimize.length > 0) {
+        isDisabled = true;
+        errorMessage = '';
     }
 
     return { isDisabled, errorMessage };

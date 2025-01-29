@@ -11,9 +11,8 @@ import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
-import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
-    checkIfDisableForOptimize,
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
