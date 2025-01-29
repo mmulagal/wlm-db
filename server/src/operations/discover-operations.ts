@@ -1816,8 +1816,6 @@ async function manageSqlServerV2(
                     }
 
                     let errorMessage = '';
-                    logger.info('@@@@@@@@@@@@@@');
-                    logger.info(sqlInstanceInfo);
                     if (sqlInstanceInfo.missingSqlPermissions && sqlInstanceInfo.missingSqlPermissions?.length > 0) {
                         errorMessage = `SQL Instance permissions ${sqlInstanceInfo.missingSqlPermissions} are required for managing the resource.`;
                     }
