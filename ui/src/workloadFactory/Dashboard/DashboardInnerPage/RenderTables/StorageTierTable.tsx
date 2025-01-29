@@ -108,8 +108,6 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
 
     const tableProps = useTable({
         //@ts-ignore
-        selectAllProps: false,
-        //@ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -124,6 +122,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         disptach(setSelectedRowsForOptimize(rowsData));
+
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData);
         }
@@ -133,7 +132,13 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
     };
     return (
-        <div className={styles.renderTable}>
+        <div
+            className={
+                selectedRowsForOptimize.length === 0
+                    ? `${styles.renderTable} ${styles.hideCheckbox}`
+                    : styles.renderTable
+            }
+        >
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}

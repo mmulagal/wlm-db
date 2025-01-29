@@ -78,6 +78,11 @@ const StoragePerfInput = ({ data, printState }: any) => {
     return (
         <div className={styles.computeInputComponent}>
             <div className={styles.col2}>
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{totalStorageAmount}</div>
+                    </div>
+                )}
                 {!printState && (
                     <TextField
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,6 +96,11 @@ const StoragePerfInput = ({ data, printState }: any) => {
                 )}
             </div>
             <div className={styles.col3}>
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{iops}</div>
+                    </div>
+                )}
                 {!printState && (
                     <TextField
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +114,11 @@ const StoragePerfInput = ({ data, printState }: any) => {
                 )}
             </div>
             <div className={styles.col4}>
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{throughput}</div>
+                    </div>
+                )}
                 {!printState && (
                     <TextField
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
