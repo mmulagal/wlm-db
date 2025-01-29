@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import castRequest from './utils';
 import {
-    downloadSqlServerDataCollectorScriptSchema,
+    DownloadSqlServerDataCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GeneratePayloadInternal,
@@ -77,7 +77,7 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${API_PATH_ON_PREM_TCO}/collector`,
-        { schema: downloadSqlServerDataCollectorScriptSchema },
+        { schema: DownloadSqlServerDataCollectorScriptSchema },
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId }

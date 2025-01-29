@@ -61,6 +61,18 @@ function parseLicenceUsageDetails(value: string) {
     }
 }
 
+function parseSqlVersion(value: string | string[]) {
+    if (Array.isArray(value)) {
+        return value.join(',');
+    }
+    try {
+        return value.replace(/\t/g, ' ') || '';
+    } catch (error) {
+        const errorMessage = `Error parsing sqlVersion: ${error}`;
+        throw createError(500, errorMessage);
+    }
+}
+
 function parseIops(value: string) {
     try {
         const parsedValue = JSON.parse(value);
@@ -156,5 +168,6 @@ export {
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     convertToDate,
-    generateUniqueId
+    generateUniqueId,
+    parseSqlVersion
 };

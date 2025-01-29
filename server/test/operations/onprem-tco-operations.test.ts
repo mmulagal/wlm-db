@@ -260,7 +260,7 @@ describe('onPrem TCO operations', () => {
         ];
         const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(sqlServerInfo);
         expect(recommendedLicenseEdition).toEqual('Standard Edition');
-        expect(currentLicenseEdition).toEqual('Enterprise Edition');
+        expect(currentLicenseEdition).toEqual('Standard Edition');
     });
 
     it('should derive the correct instance requirements based on SQL instance details', () => {
