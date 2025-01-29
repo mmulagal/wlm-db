@@ -195,9 +195,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
-                    //This logic yet to decide
-                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
-                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+
+                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
+                    setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
             } else {
                 if (!isWorkloadFactory) {
