@@ -971,7 +971,7 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
                         licenseFeatures &&
                         licenseFeatures.some(({ IsUsingFeature }: { IsUsingFeature: number }) => IsUsingFeature === 1)
                     ) {
-                        return { sqlVersionStr, totalStorage: true };
+                        return { sqlVersionStr, isUsingAnyEnterpriseFeature: true };
                     }
                 }
                 return { sqlVersionStr, isUsingAnyEnterpriseFeature: false };
