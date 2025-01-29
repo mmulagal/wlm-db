@@ -15,7 +15,8 @@ import {
     checkIfDisableForOptimize,
     formatGetWellData,
     handleOptimizeStorageJob,
-    nameToIdConfigMapping
+    nameToIdConfigMapping,
+    setOptimizeInnerpageSummary
 } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import StorageTierTable from './RenderTables/StorageTierTable';
@@ -58,12 +59,14 @@ import {
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
+import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
+    const { allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -448,6 +451,13 @@ const DashboardInnerPage = () => {
     };
 
     useEffect(() => {
+        if (selectedConfig) {
+            const configData = getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
+            setOptimizeInnerpageSummary(selectedConfig, configData, dispatch);
+        }
+    }, [allmssqlHostAssessmentData]);
+
+    useEffect(() => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 setValueCardData({
@@ -668,7 +678,7 @@ const DashboardInnerPage = () => {
                 });
                 break;
         }
-    }, [selectedConfig]);
+    }, [selectedConfig, selectedConfigSummary]);
 
     const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {

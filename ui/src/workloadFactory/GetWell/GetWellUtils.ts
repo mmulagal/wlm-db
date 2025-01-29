@@ -1,5 +1,6 @@
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
+import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
 import {
     setCardData,
     setDriftAssessmentData,
@@ -1966,4 +1967,64 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
         ? 'performance-tier'
         : 'compute-rightsizing';
+};
+
+export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
+    let configKey = '';
+    switch (type) {
+        case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
+            configKey = 'storageTier';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+            configKey = 'fileSystemHeadroom';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+            configKey = 'logDriveSize';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
+            configKey = 'tempdbDriveSize';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
+            configKey = 'userDataFiles';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+            configKey = 'logFiles';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+            configKey = 'tempdbPlacement';
+            break;
+        case 'ONTAP':
+            configKey = 'ontapConfiguration';
+            break;
+        case 'Operating system':
+            configKey = 'operatingSystem';
+            break;
+        case GENERAL.COMPUTE_RIGHTSIZING:
+            configKey = 'computeRightsizing';
+            break;
+        case GENERAL.OPERATING_SYSTEM_PATCH:
+            configKey = 'operatingSystemPatch';
+            break;
+        case GENERAL.RSS_CONFIGURATION:
+            configKey = 'rssConfiguration';
+            break;
+        case GENERAL.LICENSE_SQL_SERVER:
+            configKey = 'applicationSqlServer';
+            break;
+        case GENERAL.MICROSOFT_SQL_PATCH:
+            configKey = 'mssqlPatch';
+            break;
+        case GENERAL.MAXDOP_PATCH:
+            configKey = 'maxdopPatch';
+            break;
+    }
+    const optimizedInstances = configData[configKey] || 0;
+    dispatch(
+        setSelectedConfigSummary({
+            optimizedInstances: optimizedInstances,
+            notOptimizedInstances: configData?.total - optimizedInstances,
+            optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
+            severity: configData?.severityObj?.[configKey] || ''
+        })
+    );
 };
