@@ -172,10 +172,10 @@ export {
     parseCpuUtilization,
     parseMemoryUtilization,
     parseLicenceUsageDetails,
+    parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     convertToDate,
-    generateUniqueId,
-    parseSqlVersion
+    generateUniqueId
 };

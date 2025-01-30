@@ -10,7 +10,7 @@ import {
     VirtualizationType
 } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
-import { AWS_REGIONS, DEFAULT_AWS_REGION, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
+import { AWS_REGIONS, DEFAULT_AWS_REGION, FINDING, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
 import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
@@ -48,7 +48,6 @@ import {
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     parseSqlVersion
-    // checkForErrors
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
@@ -68,6 +67,8 @@ const logger = getLogger();
 
 const isDemoFlow = isDemo();
 
+const ENTERPRISE_EDITION = 'Enterprise Edition';
+const STANDARD_EDITION = 'Standard Edition';
 function validateOnPremCollectionObjectV1(data: OnPremCollectionObjectV1): boolean {
     if (!data) {
         return false;
@@ -244,71 +245,229 @@ async function saveReportInWlmdbDatabase(
     );
 }
 
+async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, storageSavings: any, calculations: any) {
+    logger.info('Adjusting Compute License Cost for Multiple Nodes', { nodeCount, storageSavings, calculations });
+
+    const {
+        compute: { existing: existingCompute, recommended: recommendedCompute },
+        license: { existing: existingLicense, recommended: recommendedLicense, finding }
+    } = storageSavings;
+    if (
+        !isEmpty(existingCompute) &&
+        !isEmpty(recommendedCompute) &&
+        !isEmpty(existingLicense) &&
+        !isEmpty(recommendedLicense)
+    ) {
+        const adjustedExistingCompute = {
+            ...existingCompute,
+            computeHourlyPrice: Number.isSafeInteger(existingCompute?.computeHourlyPrice)
+                ? existingCompute.computeHourlyPrice * nodeCount
+                : existingCompute.computeHourlyPrice,
+            computeMonthlyPrice: Number.isSafeInteger(existingCompute?.computeMonthlyPrice)
+                ? existingCompute.computeMonthlyPrice * nodeCount
+                : existingCompute.computeMonthlyPrice,
+            instanceMonthlyPrice: Number.isSafeInteger(existingCompute?.instanceMonthlyPrice)
+                ? existingCompute.instanceMonthlyPrice * nodeCount
+                : existingCompute.instanceMonthlyPrice,
+            machineDetails: Array(nodeCount).fill(existingCompute.machineDetails).flat()
+        };
+
+        const adjustedRecommendedCompute = {
+            ...recommendedCompute,
+            computeHourlyPrice: Number.isSafeInteger(recommendedCompute?.computeHourlyPrice)
+                ? recommendedCompute.computeHourlyPrice * nodeCount
+                : recommendedCompute.computeHourlyPrice,
+            computeMonthlyPrice: Number.isSafeInteger(recommendedCompute?.computeMonthlyPrice)
+                ? recommendedCompute.computeMonthlyPrice * nodeCount
+                : recommendedCompute.computeMonthlyPrice,
+            instanceMonthlyPrice: Number.isSafeInteger(recommendedCompute?.instanceMonthlyPrice)
+                ? recommendedCompute.instanceMonthlyPrice * nodeCount
+                : recommendedCompute.instanceMonthlyPrice,
+            machineDetails: Array(nodeCount).fill(recommendedCompute.machineDetails).flat()
+        };
+
+        const adjustedExistingLicense = {
+            ...existingLicense,
+            licenseMonthlyPrice: existingLicense.licenseMonthlyPrice * nodeCount
+        };
+
+        const adjustedRecommendedLicense = {
+            ...recommendedLicense,
+            licenseMonthlyPrice: recommendedLicense.licenseMonthlyPrice * nodeCount
+        };
+
+        const adjustedStorageSavings = {
+            ...storageSavings,
+            compute: {
+                existing: adjustedExistingCompute,
+                recommended: adjustedRecommendedCompute
+            },
+            license: {
+                existing: adjustedExistingLicense,
+                recommended: adjustedRecommendedLicense,
+                finding
+            }
+        };
+
+        const adjustedCalculations = {
+            ...calculations,
+            existingComputeCalculation: adjustedExistingCompute,
+            recommendedComputeCalculation: adjustedRecommendedCompute,
+            existingLicenseCalculation: adjustedExistingLicense,
+            recommendedLicenseCalculation: adjustedRecommendedLicense
+        };
+
+        return { storageSavings: adjustedStorageSavings, calculations: adjustedCalculations };
+    }
+}
+
 async function getStorageSavingsResponse(
     accountId: string,
-    clonedCopiesCount: number = 1,
+    region: string,
     sqlServerDeploymentType: string,
-    monthlyChangeRatePercentage: number = 8,
-    ec2Instances: ManualModeInstancesType,
-    instanceType: string,
-    sqlServerEdition: string = 'Standard Edition',
-    snapshotFrequency: string = 'Daily'
+    windowsConfig: WindowsConfig,
+    instances: SqlInstanceDetails[],
+    snapshotInfo?: StorageSavingsRequestBodyType
 ) {
     logger.info('Getting Storage Savings Response', {
         accountId,
-        clonedCopiesCount,
+        region,
         sqlServerDeploymentType,
-        monthlyChangeRatePercentage,
-        ec2Instances,
-        instanceType,
-        sqlServerEdition,
-        snapshotFrequency
+        windowsConfig,
+        instances,
+        snapshotInfo
     });
+    const currentInstanceType = await deriveHostConfigBasedInstanceType(region, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
+    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
+    const { currentLicenseEdition, recommendedLicenseEdition, finding } = getLicenseRecommendations(instances);
 
-    const response = await performManualModeStorageSavingsCalculations(accountId, DEFAULT_AWS_REGION, {
+    if (!currentInstanceType || !recommendedInstanceType) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Error deriving instance requirements. Could not find instance type matching requirements.'
+        );
+    }
+
+    const ec2Instances = deriveEc2InstanceListForMarketing(instances, currentInstanceType);
+    const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(instances, recommendedInstanceType);
+
+    const { clonedCopiesCount = 1, monthlyChangeRatePercentage = 8, snapshotFrequency = 'Daily' } = snapshotInfo || {};
+
+    const params = {
         clonedCopiesCount,
-        sqlServerDeploymentType,
+        snapshotFrequency,
         monthlyChangeRatePercentage,
-        ec2Instances,
-        sqlServerEdition,
-        snapshotFrequency
-    });
+        sqlServerDeploymentType
+    };
+    const [existingConfigData, existingConfigCalculations, recommendedConfigData, recommendedConfigCalculations] =
+        await Promise.all([
+            performManualModeStorageSavingsCalculations(accountId, region, {
+                ...params,
+                ec2Instances,
+                sqlServerEdition: currentLicenseEdition
+            }),
+            getManualModeStorageSavingsCalculationMetrics(accountId, region, {
+                ...params,
+                ec2Instances,
+                sqlServerEdition: currentLicenseEdition
+            }),
+            performManualModeStorageSavingsCalculations(accountId, region, {
+                ...params,
+                ec2Instances: ec2InstancesRecommended,
+                sqlServerEdition: recommendedLicenseEdition
+            }),
+            getManualModeStorageSavingsCalculationMetrics(accountId, region, {
+                ...params,
+                ec2Instances: ec2InstancesRecommended,
+                sqlServerEdition: recommendedLicenseEdition
+            })
+        ]);
 
-    logger.info('>>STORAGE SAVINGS RESPONSE', response);
-    return response;
+    const {
+        compute: { existing: existingCompute } = {},
+        license: { existing: existingLicense } = {},
+        ebs,
+        fsx,
+        single,
+        multi,
+        totalSummary: { existing: existingTotalSummary } = {}
+    } = existingConfigData;
+
+    const {
+        compute: { recommended: recommendedCompute } = {},
+        license: { recommended: recommendedLicense } = {},
+        totalSummary: { recommended: recommendedTotalSummary } = {}
+    } = recommendedConfigData;
+
+    let storageSavings = {
+        compute: {
+            existing: existingCompute,
+            recommended: recommendedCompute
+        },
+        license: {
+            existing: existingLicense,
+            recommended: recommendedLicense,
+            finding
+        },
+        ebs,
+        fsx,
+        single,
+        multi,
+        totalSummary: {
+            existing: existingTotalSummary,
+            recommended: recommendedTotalSummary
+        }
+    };
+
+    const { recommendedComputeCalculation, recommendedLicenseCalculation } = recommendedConfigCalculations;
+
+    let calculations = {
+        ...existingConfigCalculations,
+        recommendedComputeCalculation,
+        recommendedLicenseCalculation
+    };
+
+    if (
+        sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ||
+        sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.FCI
+    ) {
+        const nodeCount = windowsConfig.nodeDetails.length;
+        ({ storageSavings, calculations } =
+            (await adjustComputeLicenseCostForMultipleNodes(nodeCount, storageSavings, calculations)) || {});
+    }
+    return { storageSavings, calculations };
 }
 
 function groupSqlServerInstancesByDeploymentType(sqlServerInstances: SqlInstanceDetails[]) {
     logger.info('Grouping SQL Server Instances by Deployment Type', { sqlServerInstances: sqlServerInstances.length });
 
     return compact(sqlServerInstances).reduce((acc: { [key: string]: SqlInstanceDetails[] }, instance) => {
-        let { deploymentType = '' } = instance || {};
-        if (deploymentType.toLowerCase() === 'standalone') {
-            deploymentType = DATABASE_DEPLOYMENT_TYPE.Standalone;
-        } else if (deploymentType.toLowerCase() === 'aoag') {
-            deploymentType = DATABASE_DEPLOYMENT_TYPE.AOAG;
-        } else if (deploymentType.toLowerCase() === 'fci') {
-            deploymentType = DATABASE_DEPLOYMENT_TYPE.FCI;
-        } else {
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                `Error grouping SQL Server instances by deployment type. Invalid deployment type: ${deploymentType}`
-            );
-        }
-        if (!acc[deploymentType]) {
-            acc[deploymentType] = [];
-        }
+        let { deploymentType } = instance || {};
 
-        try {
-            const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } = parseSqlUsageParams(instance);
-            instance.totalIops = totalIops;
-            instance.totalThroughput = totalThroughput;
-            instance.totalStorage = totalStorage;
-            instance.totalSecondaryStorage = totalSecondaryStorage;
-            acc[deploymentType].push({ ...instance });
-            // TODO: For handling errors any instance with error will be not added in the DB oand not considered for assessment revisit this
-        } catch (error) {
-            logger.error(`Error parsing SQL instance details: ${error}`);
+        if (!isEmpty(deploymentType)) {
+            if (deploymentType.toLowerCase() === 'standalone') {
+                deploymentType = DATABASE_DEPLOYMENT_TYPE.Standalone;
+            } else if (deploymentType.toLowerCase() === 'aoag') {
+                deploymentType = DATABASE_DEPLOYMENT_TYPE.AOAG;
+            } else if (deploymentType.toLowerCase() === 'fci') {
+                deploymentType = DATABASE_DEPLOYMENT_TYPE.FCI;
+            }
+            if (!acc[deploymentType]) {
+                acc[deploymentType] = [];
+            }
+
+            try {
+                const { totalIops, totalThroughput, totalStorage, totalSecondaryStorage } =
+                    parseSqlUsageParams(instance);
+                instance.totalIops = totalIops;
+                instance.totalThroughput = totalThroughput;
+                instance.totalStorage = totalStorage;
+                instance.totalSecondaryStorage = totalSecondaryStorage;
+                acc[deploymentType].push({ ...instance });
+                // TODO: For handling errors any instance with error will be not added in the DB oand not considered for assessment revisit this
+            } catch (error) {
+                logger.error(`Error parsing SQL instance details: ${error}`);
+            }
         }
         return acc;
     }, {});
@@ -493,32 +652,22 @@ async function fetchInstanceTypesByRetry(
         ({ InstanceTypes: instanceTypes } =
             (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
     }
-
     return instanceTypes?.[0]?.InstanceType; // TODO: fetch cheapest instance type instead of first item in the list
 }
 
 async function analyzeOnpremData(
     accountId: string,
     data: OnPremCollectionObjectV1,
-    snapShotInfo?: StorageSavingsRequestBodyType,
+    snapshotInfo?: StorageSavingsRequestBodyType,
     region?: string,
     adHocRequest: boolean = false
 ) {
-    logger.info('Analyzing OnPrem Data', { accountId, snapShotInfo, region, adHocRequest });
-
-    let clonedCopiesCount;
-    let monthlyChangeRatePercentage;
-    let snapshotFrequency;
-    if (snapShotInfo) {
-        snapshotFrequency = snapShotInfo.snapshotFrequency;
-        clonedCopiesCount = snapShotInfo.clonedCopiesCount;
-        monthlyChangeRatePercentage = snapShotInfo.monthlyChangeRatePercentage;
-    }
+    logger.info('Analyzing OnPrem Data', { accountId, snapshotInfo, region, adHocRequest });
 
     // Analyze OnPrem data
     const { windowsConfig, sqlServerInfo } = data;
 
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(region || DEFAULT_AWS_REGION, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
+    region = region || DEFAULT_AWS_REGION;
 
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
@@ -528,80 +677,14 @@ async function analyzeOnpremData(
         const instanceIds = instances.map(instance => instance.instanceGuid);
         const resourceId = generateUniqueId(accountId, instanceIds, hostIds);
 
-        const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region || DEFAULT_AWS_REGION, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
-        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(instances);
-
-        if (!currentInstanceType || !recommendedInstanceType) {
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                'Error deriving instance requirements. Could not find instance type matching requirements.'
-            );
-        }
-
-        const ec2Instances = deriveEc2InstanceListForMarketing(instances, currentInstanceType);
-        const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(instances, recommendedInstanceType);
-
-        const [existingConfigData, recommendedConfigData, calculations] = await Promise.all([
-            getStorageSavingsResponse(
-                accountId,
-                clonedCopiesCount,
-                deploymentType,
-                monthlyChangeRatePercentage,
-                ec2Instances,
-                currentInstanceType,
-                currentLicenseEdition
-            ),
-            getStorageSavingsResponse(
-                accountId,
-                clonedCopiesCount,
-                deploymentType,
-                monthlyChangeRatePercentage,
-                ec2InstancesRecommended,
-                recommendedInstanceType,
-                recommendedLicenseEdition
-            ),
-            getManualModeStorageSavingsCalculationMetrics(accountId, region || DEFAULT_AWS_REGION, {
-                clonedCopiesCount: 1,
-                sqlServerDeploymentType: deploymentType,
-                monthlyChangeRatePercentage: 8,
-                ec2Instances,
-                sqlServerEdition: currentLicenseEdition,
-                snapshotFrequency: snapshotFrequency || 'Daily'
-            })
-        ]);
-
-        const {
-            compute: { existing: existingCompute } = {},
-            license: { existing: existingLicense } = {},
-            ebs,
-            fsx,
-            multi,
-            totalSummary: { existing: existingTotalSummary } = {}
-        } = existingConfigData;
-
-        const {
-            compute: { recommended: recommendedCompute } = {},
-            license: { recommended: recommendedLicense } = {},
-            totalSummary: { recommended: recommendedTotalSummary } = {}
-        } = recommendedConfigData;
-
-        const storageSavings = {
-            compute: {
-                existing: existingCompute,
-                recommended: recommendedCompute
-            },
-            license: {
-                existing: existingLicense,
-                recommended: recommendedLicense
-            },
-            ebs,
-            fsx,
-            multi,
-            totalSummary: {
-                existing: existingTotalSummary,
-                recommended: recommendedTotalSummary
-            }
-        };
+        const { storageSavings, calculations } = await getStorageSavingsResponse(
+            accountId,
+            region,
+            deploymentType,
+            windowsConfig,
+            instances,
+            snapshotInfo
+        );
         response.push({ accountId, resourceId, storageSavings, calculations });
         if (!adHocRequest) {
             // Update the record in the database as part of the initial report analysis only
@@ -666,7 +749,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
-        // await saveReportInReportingRegistry(accountId, fileName, data);
+        await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error handling OnPrem TCO data upload. ${error}`;
@@ -747,7 +830,7 @@ interface EBSClassification {
 }
 
 function getEbsDisks(instance: SqlInstanceDetails, classification: string = 'primary') {
-    logger.info('Getting EBS Disks', { instance, classification });
+    logger.info('Getting EBS Disks', { instance: instance?.sqlInstanceName, classification });
     // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
     try {
         let {
@@ -921,8 +1004,10 @@ function deriveInstanceRequirements(
     let totalMemory = 0;
     sqlInstancesDetails.forEach(sqlInstance => {
         try {
-            const { cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
-            totalCpuCount += Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
+            const { noOfVcpusInUse, cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
+            totalCpuCount +=
+                noOfVcpusInUse ||
+                Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
             // Assuming memUtilization is a JSO N string with memory details
             const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
             totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
@@ -995,13 +1080,17 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
     const currentLicenseEdition = enterpriseUsageResults.some(
         ({ sqlVersionStr }) => sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)
     )
-        ? 'Enterprise Edition'
-        : 'Standard Edition';
+        ? ENTERPRISE_EDITION
+        : STANDARD_EDITION;
     const isUsingEnterpriseFeature = enterpriseUsageResults.some(
         ({ isUsingAnyEnterpriseFeature }) => isUsingAnyEnterpriseFeature
     );
-    const recommendedLicenseEdition = isUsingEnterpriseFeature ? 'Enterprise Edition' : 'Standard Edition';
-    return { currentLicenseEdition, recommendedLicenseEdition };
+    const recommendedLicenseEdition = isUsingEnterpriseFeature ? ENTERPRISE_EDITION : STANDARD_EDITION;
+    const finding =
+        currentLicenseEdition === ENTERPRISE_EDITION && !isUsingEnterpriseFeature
+            ? FINDING.NOT_OPTIMIZED
+            : FINDING.OPTIMIZED;
+    return { currentLicenseEdition, recommendedLicenseEdition, finding };
 }
 
 async function getIndividualOnPremDatabaseResource(
@@ -1154,7 +1243,7 @@ async function getOnPremResourceExploreSavings(
 
                         return {
                             ...detail,
-                            ...(noOfVcpusInUse && { noOfVcpusInUse: noOfVcpusInUse.toString() }),
+                            ...(noOfVcpusInUse && { noOfVcpusInUse }),
                             ...(networkPerformance && { networkPerformance }),
                             ...(memory && { memory }),
                             ...(totalIops && { totalIops }),
@@ -1177,12 +1266,8 @@ async function getOnPremResourceExploreSavings(
                     };
                 } catch (error) {
                     const errorMessage = `Error updating SQL instance details based on request. ${error}`;
-                    logger.error({ detail, errorMessage });
-                    return {
-                        ...(detail.instanceGuid ? { sqlInstanceId: detail.instanceGuid } : {}),
-                        ...(detail.sqlInstanceName ? { sqlInstanceName: detail.sqlInstanceName } : {}),
-                        errorMessage
-                    };
+                    logger.warn({ errorMessage, detail });
+                    return undefined; // Storage savings will not be calculated for this instance as it has an error
                 }
             });
 
