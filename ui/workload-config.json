@@ -46,7 +46,7 @@
                 "bluexpTo": "/fsxdb/explore-savings-fsxw"
             },
             {
-                "label": "Microsoft SQL Server on On-Premises",
+                "label": "Microsoft SQL Server on on-Premises",
                 "to": "/databases/explore-savings-on-premise",
                 "bluexpTo": "/fsxdb/explore-savings-on-premise"
             }
