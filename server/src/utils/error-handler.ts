@@ -100,7 +100,21 @@ function handleValidationError(
             },
             ''
         );
+        message = message
+            .split(',')
+            .map(err => err.trim())
+            .reduce(
+                (acc, cur) => {
+                    if (!acc.includes(cur)) {
+                        acc.push(cur);
+                    }
+                    return acc;
+                },
+                ['Error:']
+            )
+            .join(', ');
         reply.status(code).send({ message: `${message}: ${allowedValuesMessage.trim()}` });
+    } else {
+        reply.status(code).send({ message });
     }
-    reply.status(code).send({ message });
 }
