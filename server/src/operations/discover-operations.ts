@@ -1878,7 +1878,7 @@ async function unmanageDatabaseInstance(
             undefined,
             undefined,
             getServerNameWithHostname(
-                resourceDetails?.resource_name || undefined,
+                resourceDetails?.resource_name ?? undefined,
                 instanceDetails?.database_instance_name
             )
         );

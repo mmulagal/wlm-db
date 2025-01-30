@@ -692,7 +692,15 @@ function getServerNameWithHostname(sqlServerName?: string, instanceName?: string
             instanceName = instanceName.replace(sqlServerName, '');
         }
     }
-    return instanceName && sqlServerName ? `${sqlServerName}\\${instanceName}` : (DEFAULT_INSTANCE_NAME as string);
+
+    if (instanceName && sqlServerName) {
+        return `${sqlServerName}\\${instanceName}`;
+    }
+    if (sqlServerName) {
+        return `${sqlServerName}`;
+    }
+
+    return `${DEFAULT_INSTANCE_NAME}`;
 }
 
 async function decompressSSMResponse(response: string) {
