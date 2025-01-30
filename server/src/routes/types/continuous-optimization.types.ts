@@ -147,7 +147,7 @@ const AdditionalRssConfigParameterDriftResponse = Type.Optional(
                 adapterName: Type.String(),
                 rssEnabled: Type.Boolean(),
                 rssProfile: Type.String(),
-                baseProcessorNumber: Type.Number(),
+                baseProcessorNumber: Type.Number({ nullable: true }),
                 numberOfReceiveQueues: Type.Number()
             })
         ),
