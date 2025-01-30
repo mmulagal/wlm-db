@@ -17,20 +17,28 @@ const SqlInstanceDetailsRequestObject = Type.Object({
     memory: Type.Number(),
     networkPerformance: Type.String({ enum: [NETWORK_PERF.UP_TO_10, NETWORK_PERF.ABOVE_10] }),
     totalIops: Type.Optional(Type.Number()),
-    totalThroughput: Type.Optional(Type.Number())
+    totalThroughput: Type.Optional(Type.Number({ description: 'Throughput in mbps' })),
+    totalStorage: Type.Optional(Type.Number({ description: 'Storage in bytes' }))
 });
 
 type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;
 
-const SqlInstanceDetailsResponseObject = Type.Composite([
-    SqlInstanceDetailsRequestObject,
+const SqlInstanceDetailsResponseObject = Type.Union([
+    Type.Composite([
+        SqlInstanceDetailsRequestObject,
+        Type.Object({
+            sqlInstanceName: Type.String(),
+            noOfDatabases: Type.Number(),
+            sqlEdition: Type.String(),
+            sqlVersion: Type.String(),
+            totalStorage: Type.Optional(Type.Number()),
+            isReadReplica: Type.Optional(Type.Boolean())
+        })
+    ]),
     Type.Object({
-        sqlInstanceName: Type.String(),
-        noOfDatabases: Type.Number(),
-        sqlEdition: Type.String(),
-        sqlVersion: Type.String(),
-        totalStorage: Type.Optional(Type.Number()),
-        isReadReplica: Type.Optional(Type.Boolean())
+        sqlInstanceId: Type.Optional(Type.String()),
+        sqlInstanceName: Type.Optional(Type.String()),
+        errorMessage: Type.Optional(Type.String())
     })
 ]);
 
@@ -53,7 +61,8 @@ const OnPremTcoExploreSavingsRequestBody = Type.Object({
 const OnPremTcoResourceObject = Type.Object({
     resourceId: Type.String(),
     resourceName: Type.String(),
-    deploymentModel: Type.String()
+    deploymentModel: Type.String(),
+    creationTime: Type.Number()
 });
 
 const OnPremTcoExploreSavingsResponse = Type.Composite([
@@ -89,5 +98,6 @@ export {
     OnPremTcoExploreSavingsRequestBody,
     OnPremTcoExploreSavingsResponse,
     SqlInstanceDetailsRequestObjectType,
+    OnPremDatabaseResourceObject,
     OnPremDatabaseResourcesObjectType
 };

@@ -80,6 +80,7 @@ export interface ExploreSavingsSliceEntities {
     snapshotLoading: boolean;
     storageSavingsOnPremResponse: any;
     storageSavingsOnPremLoading: boolean;
+    onPremNetworkPerformance: any;
 }
 
 export interface StorageSavingsInterface {

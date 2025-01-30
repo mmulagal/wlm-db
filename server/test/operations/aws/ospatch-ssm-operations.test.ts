@@ -5,7 +5,11 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../../src/operations/aws/ospatch-ssm-operations';
+import {
+    getAvailablePatches,
+    getInstancesPatchStatus,
+    runAwsPatchBaseline
+} from '../../../src/operations/aws/ospatch-ssm-operations';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -21,5 +25,10 @@ describe('OS Patch SSM operations', () => {
         const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2', 'i-test-ec2-3'];
         const response = await getInstancesPatchStatus(credentialsId, 'us-east-1', instanceIds);
         expect(response?.length).toEqual(instanceIds.length);
+    });
+
+    it('Get available patches', async () => {
+        const response = await getAvailablePatches('us-east-1');
+        expect(response?.length).toBeGreaterThan(0);
     });
 });

@@ -65,7 +65,7 @@ import { DeploymentDetails } from '../../utils/common-types';
 const logger = getLogger();
 
 const MASTER_STACK_NAME_PATTERN =
-    /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment|VpcEndpointStack.*)/;
+    /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PGSQLStandaloneStack|PostStackDeployment|VpcEndpointStack.*)/;
 
 async function getSqsMessages(region: string, queueUrl: string) {
     logger.info('Get SQS messages', { region, queueUrl });
@@ -606,10 +606,11 @@ async function processCloudFormationMessages() {
                                                                   )
                                                                 : [{ instanceName: 'postgresql' }];
 
-                                                        const instanceNames = deployedInstances.map(
-                                                            (instance: { instanceName: string }) =>
-                                                                instance.instanceName
-                                                        );
+                                                        const instanceNames =
+                                                            deployedInstances?.map(
+                                                                (instance: { instanceName: string }) =>
+                                                                    instance.instanceName
+                                                            ) || [];
 
                                                         await Promise.all(
                                                             instanceNames.map(async (instanceName: string) => {

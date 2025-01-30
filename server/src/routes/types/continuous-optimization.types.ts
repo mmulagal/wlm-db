@@ -3,12 +3,15 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     OPTIMIZE_SIZING_CONFIGS,
+    OptimizeComputeParams,
     OptimizeOperatingSystemParams,
-    OptimizeStorageConfigs
+    OptimizeStorageConfigs,
+    OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 
 const SizingViolationResponse = Type.Object({
-    dataAccessPath: Type.Optional(Type.String()),
+    databases: Type.Optional(Type.Array(Type.String())),
+    dataAccessPath: Type.Optional(Type.Array(Type.String())),
     dataDriveTotalSizeMB: Type.Optional(Type.Number()),
     logAccessPath: Type.Optional(Type.String()),
     logDriveTotalSizeMB: Type.Optional(Type.Number()),
@@ -111,6 +114,32 @@ const AdditionalHostOsParameterDriftResponse = Type.Optional(
     })
 );
 
+const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
+    Type.Object({
+        missingPatchesInEc2Instances: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    criticalMissingPatchesCount: Type.Number(),
+                    importantMissingPatchesCount: Type.Optional(Type.Number()),
+                    ec2InstanceId: Type.String(),
+                    missingPatchesCount: Type.Number(),
+                    missingPatchDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                classification: Type.String(),
+                                kbId: Type.String(),
+                                severity: Type.String(),
+                                state: Type.String(),
+                                title: Type.String()
+                            })
+                        )
+                    )
+                })
+            )
+        )
+    })
+);
+
 const AdditionalRssConfigParameterDriftResponse = Type.Optional(
     Type.Object({
         rssAdapters: Type.Array(
@@ -118,7 +147,7 @@ const AdditionalRssConfigParameterDriftResponse = Type.Optional(
                 adapterName: Type.String(),
                 rssEnabled: Type.Boolean(),
                 rssProfile: Type.String(),
-                baseProcessorNumber: Type.Number(),
+                baseProcessorNumber: Type.Number({ nullable: true }),
                 numberOfReceiveQueues: Type.Number()
             })
         ),
@@ -145,6 +174,9 @@ type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 const RssConfigDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalRssConfigParameterDriftResponse]);
 type RssConfigDriftResponseType = Static<typeof RssConfigDriftResponse>;
 
+const MSSQLPatchDriftResponse = Type.Intersect([ParameterDriftResponse, AdditionalMSSQLPatchParameterDriftResponse]);
+type MSSQLPatchDriftResponseType = Static<typeof MSSQLPatchDriftResponse>;
+
 const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
     errorMessage: Type.String()
@@ -166,7 +198,8 @@ const DriftAssessmentResponse = Type.Object({
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
-    maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
+    mssqlPatch: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -196,6 +229,24 @@ type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
 
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
 
+const BulkOptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    instances: Type.Array(
+        Type.Object({
+            id: Type.String({ minLength: 1 }),
+            configurations: Type.Array(OptimizeStorageRequestParams)
+        })
+    )
+});
+
+type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
+
+const BulkOptimizeStorageRequestBody = Type.Object({
+    databaseHosts: Type.Array(BulkOptimizePerHostRequestBody)
+});
+
+type BulkOptimizeStorageRequestBodyType = Static<typeof BulkOptimizeStorageRequestBody>;
+
 const OptimizeComputeRequestBody = Type.Object({
     instanceType: Type.String()
 });
@@ -207,6 +258,13 @@ const OptimizeSizingRequestBody = Type.Object({
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
+const OptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+    instanceType: Type.Optional(Type.String())
+});
+type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
+
 const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
 });
@@ -216,6 +274,24 @@ const DriftAssessmentResponsePerAccount = Type.Object({
     assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
     nextToken: Type.Optional(Type.String())
 });
+
+const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
+    type: Type.Enum({
+        ...OPTIMIZE_SIZING_CONFIGS,
+        ...OptimizeOperatingSystemParams,
+        ...OptimizeStorageTierParams,
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+
+type BulkOptimizeGeneralPerHostRequestBodyType = Static<typeof BulkOptimizeGeneralPerHostRequestBody>;
+
+const BulkOptimizeGeneralRequestBody = Type.Object({
+    hostsToOptimize: Type.Array(BulkOptimizeGeneralPerHostRequestBody)
+});
+
+type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
 
 export {
     DriftAssessmentResponse,
@@ -236,5 +312,14 @@ export {
     OptimizeSizingRequestBodyType,
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
-    DriftAssessmentResponsePerAccount
+    DriftAssessmentResponsePerAccount,
+    MSSQLPatchDriftResponseType,
+    BulkOptimizeStorageRequestBody,
+    BulkOptimizeStorageRequestBodyType,
+    BulkOptimizePerHostRequestBodyType,
+    BulkOptimizeGeneralRequestBody,
+    BulkOptimizeGeneralRequestBodyType,
+    OptimizePerHostRequestBody,
+    OptimizePerHostRequestBodyType,
+    BulkOptimizeGeneralPerHostRequestBodyType
 };

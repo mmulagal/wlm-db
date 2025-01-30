@@ -134,12 +134,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     snapshotLoading: false,
     selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
     computeInformation: {},
-    storagePerformance: {
-        primaryData: { totalStorageAmount: '', iops: '', throughput: '' },
-        primaryLog: { totalStorageAmount: '', iops: '', throughput: '' },
-        secondaryData: { totalStorageAmount: '', iops: '', throughput: '' },
-        secondaryLog: { totalStorageAmount: '', iops: '', throughput: '' }
-    },
+    storagePerformance: {},
+    onPremNetworkPerformance: {},
     storageSavingsOnPremResponse: {},
     storageSavingsOnPremLoading: false
 };
@@ -155,6 +151,12 @@ const exploreSavingsSlice = createSlice({
             state.onPremiseDataLoading = action.payload;
         },
         setStoragePerformance(state, action: PayloadAction<any>) {
+            if (!state.storagePerformance[action.payload.type]) {
+                state.storagePerformance[action.payload.type] = {};
+            }
+            if (!state.storagePerformance[action.payload.type][action.payload.mode]) {
+                state.storagePerformance[action.payload.type][action.payload.mode] = {};
+            }
             state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
         },
         setComputeInformation(state, action: PayloadAction<any>) {
@@ -165,6 +167,9 @@ const exploreSavingsSlice = createSlice({
                 state.computeInformation[action.payload.type][action.payload.mode] = {};
             }
             state.computeInformation[action.payload.type][action.payload.mode] = action.payload.value;
+        },
+        setOnPremNetworkPerformance(state, action: PayloadAction<any>) {
+            state.onPremNetworkPerformance = action.payload;
         },
         setSelectedExploreSavingsTab: (state, action: PayloadAction<any>) => {
             state.selectedExploreSavingsTab = action.payload;
@@ -443,6 +448,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualFSXIOPS = 6000;
             state.selectedManualFSXThroughput = 128;
             state.requestedPayload = {};
+            state.computeInformation = {};
+            state.storagePerformance = {};
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -476,6 +483,7 @@ export const {
     setOnPremiseDataLoading,
     setStoragePerformance,
     setComputeInformation,
+    setOnPremNetworkPerformance,
     setSelectedExploreSavingsTab,
     setRequestedRegion,
     addManualRegionsList,

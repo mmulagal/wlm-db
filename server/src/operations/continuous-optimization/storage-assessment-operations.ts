@@ -84,32 +84,59 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const optimisedDrives: SizingViolationResponseType[] = [];
 
     const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
+
+    const filteredDriveDetails: LogDriveDetails[] = driveDetails.reduce((acc: LogDriveDetails[], driveDetail) => {
+        // Case 1: Log drive is shared by multiple databases
+        // Case 2: Log drive is shared by multiple data drives possibly from different databases
+        // Both the cases are handled here
+        const logDrive = acc.find(el => el.diskNumber === driveDetail.diskNumber);
+        if (logDrive) {
+            // Add all data drives to the same log drive - DBS-4838
+            if (!driveDetail.dataAccessPath.includes(logDrive.dataAccessPath)) {
+                logDrive.dataAccessPath += `,${driveDetail.dataAccessPath}`;
+            }
+            if (!driveDetail.databaseName.includes(logDrive.databaseName)) {
+                logDrive.databaseName += `,${driveDetail.databaseName}`;
+            }
+            logDrive.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
+        } else {
+            // There is already a log drive with the same databaseName
+            const logDriveItem = acc.find(el => el.databaseName === driveDetail.databaseName);
+            if (!logDriveItem) {
+                acc.push(driveDetail);
+            }
+        }
+        return acc;
+    }, []);
+
     const currentSizePercentForAllVolumes: number[] = [];
-    driveDetails.forEach((drive: LogDriveDetails) => {
+    filteredDriveDetails.forEach((drive: LogDriveDetails) => {
         let { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (isNull(logDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
             logDriveTotalSizeMB = 0;
             dataDriveTotalSizeMB = 0;
         }
-        drive = {
+        const formattedDriveInfo = {
             ...drive,
             dataDriveTotalSizeMB,
-            logDriveTotalSizeMB
+            logDriveTotalSizeMB,
+            dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
+            databases: [...new Set(drive.databaseName.split(','))]
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
-            ignoredDrives.push(drive as SizingViolationResponseType);
+            ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
         } else if (dataAccessPath !== logAccessPath) {
             const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
             currentSizePercentForAllVolumes.push(logToDriveSizePercent);
             if (logToDriveSizePercent > 30) {
-                overProvisionedDrives.push(drive as SizingViolationResponseType);
+                overProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             } else if (logToDriveSizePercent < 20) {
-                underProvisionedDrives.push(drive as SizingViolationResponseType);
+                underProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             } else {
-                optimisedDrives.push(drive as SizingViolationResponseType);
+                optimisedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             }
         } else {
-            ignoredDrives.push(drive as SizingViolationResponseType);
+            ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
         }
     });
     key = 'log-drive-size';
@@ -209,7 +236,7 @@ async function getHeadroomDrift(credentialsId: string, region: string, fileSyste
     const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
     const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
     const status =
-        headroomPercent < 35
+        headroomPercent < 95 // For testing
             ? AssessmentStatus.UNDER_PROVISIONED
             : headroomPercent > 100 &&
               ssdStorageCapacityInBytes &&

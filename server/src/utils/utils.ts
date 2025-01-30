@@ -681,6 +681,13 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
     return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
 }
 
+/**
+ * Returns formatted instance name with hostname for MSSQL
+ */
+function getServerNameWithHostname(sqlServerName: string = DEFAULT_INSTANCE_NAME, instanceName?: string) {
+    return instanceName && sqlServerName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
+}
+
 async function decompressSSMResponse(response: string) {
     logger.debug('Decompressing SSM response', { response });
 
@@ -762,6 +769,7 @@ function getSubJobDescriptions(dbEngineType: string) {
 
     const subJobDescriptions: SubJobDescriptions = {
         SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        PGSQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
         SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
         NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
         ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
@@ -870,5 +878,6 @@ export {
     getRegionDetails,
     calculateFsxStorageCapacityForHeadroomOptimization,
     getSubJobDescriptions,
-    parsePgSqlInstanceInfo
+    parsePgSqlInstanceInfo,
+    getServerNameWithHostname
 };

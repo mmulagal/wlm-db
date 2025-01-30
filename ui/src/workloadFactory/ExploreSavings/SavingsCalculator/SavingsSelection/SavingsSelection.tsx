@@ -259,17 +259,27 @@ const SavingsSelection = ({ printState }: any) => {
                             className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
                         />
 
-                        <TextField
-                            label={GENERAL.NUMBER_OF_CLONED_COPIES}
-                            isDisabled={loading}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                setNoOfClonedCopies(numVal);
-                            }}
-                            value={noOfClonedCopies}
-                            className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
-                            error={errorForClonedCopiesCount()}
-                        />
+                        {printState && (
+                            <div className={styles.mockInputClone}>
+                                <DsTypography variant="Regular_14" className={styles.mockLabel}>
+                                    {GENERAL.NUMBER_OF_CLONED_COPIES}
+                                </DsTypography>
+                                <div className={styles.inputField}>{noOfClonedCopies}</div>
+                            </div>
+                        )}
+                        {!printState && (
+                            <TextField
+                                label={GENERAL.NUMBER_OF_CLONED_COPIES}
+                                isDisabled={loading}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    setNoOfClonedCopies(numVal);
+                                }}
+                                value={noOfClonedCopies}
+                                className={`${styles.widthSetOnPrem} savings-calculator-input-fields`}
+                                error={errorForClonedCopiesCount()}
+                            />
+                        )}
                     </div>
 
                     <div className={`${styles.secondRow} ${styles.infoCenter}`}>

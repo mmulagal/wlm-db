@@ -1,9 +1,15 @@
 <#
+===============================================================================
+        NETAPP BLUEXP WORKLOAD FACTORY - ONPREM TCO COLLECTOR
+        Version 1.0.0
+        Copyright (c) 2025 NetApp, Inc. All rights reserved.
+===============================================================================
+ 
 .SYNOPSIS
 Collects detailed information about the Windows system and SQL Server instances on a specified remote computer.
 
 .DESCRIPTION
-This PowerShell script, `OnPremTCOCollector.ps1`, collects comprehensive data about the Windows operating system and SQL Server instances on a specified remote computer. 
+This PowerShell script, `SQLServerDataCollector.ps1`, collects comprehensive data about the Windows operating system and SQL Server instances on a specified remote computer. 
 The script gathers information such as OS edition, CPU count, RAM size, network configuration, disk details, and SQL Server instance details. 
 The collected data is output in JSON format, which can be used for further analysis or reporting.
 
@@ -13,7 +19,7 @@ The collected data is output in JSON format, which can be used for further analy
 # - Network connectivity to the remote computer
 
 .USAGE
-1. Download the script file `OnPremTCOCollector.ps1`.
+1. Download the script file `SQLServerDataCollector.ps1`.
 2. Open PowerShell with administrative privileges.
 3. Navigate to the directory where the script is downloaded.
 4. Run the script with the required parameters.
@@ -25,7 +31,7 @@ The collected data is output in JSON format, which can be used for further analy
 (Optional) SQL Server username for authentication. If not specified, Windows Authentication will be used.
 
 .EXAMPLE
-.\OnPremTCOCollector.ps1 -instanceNames "MSSQLSERVER", "MSSQLSERVER1" -SqlUserName "sa"
+.\SQLServerDataCollector.ps1 -instanceNames "MSSQLSERVER", "MSSQLSERVER1" -SqlUserName "sa"
 This example runs the script to collect data from the "MSSQLSERVER" and "MSSQLSERVER1" SQL Server instances using the SQL Server username "sa" for authentication.
 
 .NOTES
@@ -52,7 +58,7 @@ function Get-FCIName {
         [string]$sqlServerNameToFind
     )
 
-    $ipResources = Get-ClusterResource | Where-Object {$_.ResourceType -eq "IP Address"} -ErrorAction SilentlyContinue
+    $ipResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object {$_.ResourceType -eq "IP Address"}
 
     $filteredResources = $ipResources | Where-Object {
         $_.OwnerGroup -match "^SQL Server \(([^)]+)\)"
@@ -74,7 +80,7 @@ function Invoke-SQLQuery {
         [string]$SqlPassword
     )
 
-    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 "
+    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 -s `",`" "
 
     if (![string]::IsNullOrEmpty($SqlUserName) -and ![string]::IsNullOrEmpty($SqlPassword)) {
         $sqlcmd += " -U $SqlUserName -P $SqlPassword"
@@ -171,6 +177,38 @@ function GetClusterNodeDetails {
     return $nodeDetails
 }
 
+# Function to get AOAG partner details
+function Get-AoagPartnerDetails{
+    param(
+        [string]$instanceName
+    )
+
+    $partnerInstanceResults = @{}
+    ForEach ($queryKey in $queries.Keys) {
+        $query = $queries[$queryKey]
+        # Execute the query using the verified SQL credentials
+        $output = Invoke-SQLQuery -QueryKey $queryKey -Query $query -InstanceName $instanceName -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
+        if ($output) {
+            $partnerInstanceResults[$queryKey] = $output           
+        } else {
+            
+            $partnerInstanceResults[$queryKey] = @{ "error" = "Error running query '$queryKey' on instance $aoagPartnerInstance" } | ConvertTo-Json
+        }
+    }
+        $partnerInstanceResults['deploymentType'] = 'AOAG'
+        $partnerInstanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instanceName -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        $partnerInstanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instanceName -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
+        $partnerInstanceResults["isReadReplica"] = Invoke-SQLQuery -Query $isReadReplicaQuery -InstanceName $instanceName -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+
+        $filteredInstanceName = $instanceName.Split('\')[-1]
+        $partnerInstanceResults['sqlInstanceName'] = $filteredInstanceName
+        $partnerInstanceResults.Remove('isClustered')
+        $partnerInstanceResults.Remove('isHadrEnabled')
+
+    return $partnerInstanceResults
+
+}
+
 # Collect basic host information
 $osEdition = (Get-WmiObject -Class Win32_OperatingSystem).Caption
 $cpuCount = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
@@ -237,6 +275,7 @@ if($belongsToCluster){
 else{
     $windowsName = hostname
     $windowsConfig.Add("windowsSystemName", $windowsName)
+    $windowsConfig.Add("clusterNodeNames", @($windowsName))
 }
 
 # Collect SQL Server instances
@@ -293,7 +332,10 @@ SET NOCOUNT ON;SELECT @@VERSION AS SQLServerVersion;
 "@
 
     noOfDatabases = @"
-SET NOCOUNT ON; SELECT count(name) FROM sys.databases;
+SET NOCOUNT ON;
+SELECT COUNT(name) AS DatabaseCount
+FROM sys.databases
+WHERE name NOT IN ('tempdb', 'model', 'msdb');
 "@
 
     collation = @"
@@ -439,47 +481,72 @@ WHERE status = 'VISIBLE ONLINE';
 
     storageDetailsByDb = @"
 SET NOCOUNT ON;
+
 WITH db_size_cte AS (
     SELECT 
         database_id,
         type,
         size * 8 / 1024 AS size_mb, 
-        physical_name
+        physical_name,
+        file_id
     FROM 
         sys.master_files
 ),
 db_space_cte AS (
     SELECT 
         database_id,
-        SUM(CASE WHEN type = 0 THEN size_mb ELSE 0 END) AS data_size_mb,
-        SUM(CASE WHEN type = 1 THEN size_mb ELSE 0 END) AS log_size_mb,
-        MAX(physical_name) AS physical_name
+        type,
+        size_mb,
+        physical_name,
+        file_id
     FROM 
         db_size_cte
+),
+drive_info_cte AS (
+    SELECT 
+        ds.database_id,
+        ds.type,
+        ds.size_mb,
+        ds.physical_name,
+        LEFT(ds.physical_name, CHARINDEX(':', ds.physical_name)) AS driveLetter,
+        vs.total_bytes / 1048576 AS driveTotalSizeMb,
+        vs.available_bytes / 1048576 AS driveAvailableSizeMb,
+        ds.file_id
+    FROM 
+        db_space_cte ds
+    CROSS APPLY 
+        sys.dm_os_volume_stats(ds.database_id, ds.file_id) vs
+),
+aggregated_db_info AS (
+    SELECT 
+        d.name AS databaseName,
+        SUM(CASE WHEN ds.type = 0 THEN ds.size_mb ELSE 0 END) AS dataSizeMb,
+        SUM(CASE WHEN ds.type = 1 THEN ds.size_mb ELSE 0 END) AS logSizeMb,
+        SUM(ds.size_mb) AS allocatedSizeMb,
+        ds.driveLetter,
+        ds.driveTotalSizeMb,
+        ds.driveAvailableSizeMb
+    FROM 
+        sys.databases d
+    JOIN 
+        drive_info_cte ds ON d.database_id = ds.database_id
+    WHERE 
+        d.name NOT IN ('tempdb', 'model', 'msdb')
     GROUP BY 
-        database_id
+        d.name, ds.driveLetter, ds.driveTotalSizeMb, ds.driveAvailableSizeMb
 )
 SELECT 
-    d.name AS databaseName,
-    ds.data_size_mb + ds.log_size_mb AS allocatedSizeMb, 
-    ds.data_size_mb AS dataSizeMb,
-    ds.log_size_mb AS logSizeMb,
-    (CAST(FILEPROPERTY(mf.file_id, 'SpaceUsed') AS INT) * 8 / 1024) AS usedDataSizeMb,
-    LEFT(ds.physical_name, CHARINDEX(':', ds.physical_name)) AS driveLetter,
-    vs.total_bytes / 1048576 AS driveTotalSizeMb,
-    vs.available_bytes / 1048576 AS driveAvailableSizeMb 
+    databaseName,
+    allocatedSizeMb, 
+    dataSizeMb,
+    logSizeMb,
+    driveLetter,
+    driveTotalSizeMb,
+    driveAvailableSizeMb
 FROM 
-    sys.databases d
-JOIN 
-    db_space_cte ds ON d.database_id = ds.database_id
-JOIN 
-    sys.master_files mf ON d.database_id = mf.database_id AND mf.type = 0
-CROSS APPLY 
-    sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
-WHERE 
-    d.name NOT IN ('tempdb', 'master', 'model', 'msdb')
+    aggregated_db_info
 ORDER BY 
-    d.name FOR JSON PATH
+    databaseName, driveLetter FOR JSON PATH;
 "@ 
 
 }
@@ -519,16 +586,9 @@ ForEach ($instance in $finalInstancesList) {
         # Execute the query using the verified SQL credentials
         $output = Invoke-SQLQuery -QueryKey $queryKey -Query $query -InstanceName $instance -SqlUsername $verifiedSqlUsername -SqlPassword $verifiedSqlPassword
         if ($output) {
-            try {
-                # Attempt to convert the output from JSON and back to JSON to standardize the format
-                $tempOutput = $output[0] | ConvertFrom-Json
-                $jsonOutput = $tempOutput | ConvertTo-Json -Depth 4
-                $instanceResults[$queryKey] = $jsonOutput
-            }
-            catch {
-                # If conversion fails, store the raw output
-                $instanceResults[$queryKey] = $output
-            }
+            $jsonResp = $output -join ""
+            $jsonResp = $jsonResp.Trim()
+            $instanceResults[$queryKey] = $jsonResp
         } else {
             Write-Output "Error running query '$queryKey' on instance $instance"
             $instanceResults[$queryKey] = @{ "error" = "Error running query '$queryKey' on instance $instance" } | ConvertTo-Json
@@ -567,11 +627,11 @@ ForEach ($instance in $finalInstancesList) {
         $ownerNodeQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS [primary] FOR JSON PATH; "
         $instanceResults["ownerNodes"] = Invoke-SQLQuery -Query $ownerNodeQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
         $aoagReadReplicaQuery = "SET NOCOUNT ON; SELECT  
-        d.name AS database_name,
-        drs.replica_id,
-        ar.replica_server_name,
-        drs.synchronization_state_desc,
-        ars.role_desc AS replica_role
+        d.name AS databaseName,
+        drs.replica_id AS replicaId,
+        ar.replica_server_name AS replicaServerName,
+        drs.synchronization_state_desc AS syncStateDesc,
+        ars.role_desc AS replicaRole
         FROM 
             sys.dm_hadr_database_replica_states drs
         JOIN 
@@ -586,7 +646,28 @@ ForEach ($instance in $finalInstancesList) {
             d.name FOR JSON PATH;  
         "
         $instanceResults["aoagReadReplica"] = Invoke-SQLQuery -Query $aoagReadReplicaQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword 
-       
+        
+         $aoagPartnerInstanceQuery = " SET NOCOUNT ON;
+            SELECT DISTINCT
+                ar.replica_server_name
+            FROM 
+                sys.dm_hadr_availability_replica_states ars
+            JOIN 
+                sys.availability_replicas ar ON ars.replica_id = ar.replica_id;"
+
+        $aoagPartnerInstance = Invoke-SQLQuery -Query $aoagPartnerInstanceQuery -InstanceName $instance -SqlUsername $SqlUserName -SqlPassword $SqlPassword
+        # Split the response into lines
+        $replicaNames = $aoagPartnerInstance -split "`n"
+
+        # Filter out the instance name that matches $instanceName
+        $filteredNames = $replicaNames | Where-Object { $_ -ne $instance }
+
+        foreach ($name in $filteredNames) { 
+            # Get the AOAG partner details for each partner instance
+            $partnerInstanceResults = Get-AoagPartnerDetails -instanceName $name
+            $results += $partnerInstanceResults
+         }
+
         break
         }
         default {
@@ -623,8 +704,8 @@ $finalOutput['windowsConfig'] = $windowsConfig
 # Add SQL Server information to the final output
 $finalOutput['sqlServerInfo'] = $results
 
-# Convert the final output to JSON with a depth of 8
-$jsonResults = $finalOutput | ConvertTo-Json -Depth 8
+# Convert the final output to JSON with a depth of 15
+$jsonResults = $finalOutput | ConvertTo-Json -Depth 15
 
 # Define the output file path
 $outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("TCOResponse-" + $dateString + ".json")

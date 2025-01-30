@@ -28,6 +28,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
     MICROSOFT_SQL: 'Microsoft SQL',
@@ -670,6 +671,8 @@ export const GENERAL = {
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
     CREATE_TEMPLATE: 'Create template',
+    ONPREM_CREATE_TEMPLATE_DISABLE:
+        'This configuration is not supported by our deployment wizard. Manual deployment is possible.',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
@@ -1217,10 +1220,12 @@ export const GENERAL = {
     OS_NOTE_POINT_TWO:
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
+    SQL_COLLATION_NOTE:
+        'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
-        'The script is a data collection tool based on PowerShell that gathers and then uploads SQL Server configuration and performance data to Workload Factory. The migration advisor assesses the data and plans FSx for ONTAP deployment for your SQL Server environment.',
+        'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     RSS_CONFIGURATION: 'Network adapter settings',
@@ -1232,7 +1237,7 @@ export const GENERAL = {
     LICENSE_SQL_SERVER: 'License',
     APPLICATION: 'Application (SQL Server)',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        'Total managed instances include only those whose assessment has been completed and are currently online.'
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };
 
 export const CODE_VIEWER = {

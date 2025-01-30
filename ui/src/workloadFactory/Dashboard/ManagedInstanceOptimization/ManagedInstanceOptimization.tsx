@@ -34,15 +34,14 @@ const ManagedInstanceOptimization = ({ openAccordion, setOpenAccordion }: any) =
     return (
         <div className={styles.managedInstance}>
             <div className={styles.headSection}>
-                <div className={styles.ManageInstanceTooltipSection}>
-                    <DsTypography variant="Regular_16" className={styles.title}>
-                        Managed instances optimization score
-                    </DsTypography>
+                <DsTypography variant="Regular_16" className={styles.title}>
+                    Managed instances optimization score
+                </DsTypography>
 
+                <div className={styles.ManageInstanceTooltipSection}>
+                    {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
                     <TooltipInfo>{GENERAL.MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP}</TooltipInfo>
                 </div>
-
-                {allmssqlHostAssessmentLoading && <FlashingDotsLoader />}
             </div>
 
             {windowSize.width > 1700 && (

@@ -93,7 +93,6 @@ import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
-import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 type Tab = {
     tab: string;
@@ -196,9 +195,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
-                    //This logic yet to decide
-                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
-                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+
+                    dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
+                    setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
             } else {
                 if (!isWorkloadFactory) {
@@ -451,7 +450,10 @@ const HeaderComponent = ({ tab }: Tab) => {
     const checkConditionForHeaderComponent = () => {
         if (
             statusChk ||
-            (!statusChk && (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW))
+            (!statusChk &&
+                (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM))
         ) {
             return true;
         } else {
@@ -720,7 +722,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                     autoPosition: true,
                                                     items: [
                                                         {
-                                                            id: '1',
+                                                            id: 'wlm-db-deploy-mssql-host',
                                                             label: 'Microsoft SQL Server',
                                                             onClick: () => {
                                                                 dispatch(setDatabaseHostEntryPoint('database'));
@@ -749,7 +751,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                             className: 'mssql-deployment-button'
                                                         },
                                                         {
-                                                            id: '2',
+                                                            id: 'wlm-db-deploy-pgsql-host',
                                                             label: 'PostgreSQL Server',
                                                             onClick: () => {
                                                                 dispatch(setDatabaseHostEntryPoint('database'));

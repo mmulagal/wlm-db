@@ -56,15 +56,6 @@ const DatabaseListTable = () => {
         );
     };
 
-    const protectionColumnText = (cellData: string) => {
-        if (cellData === GENERAL.PROTECTED) {
-            //To do this logic will change when api return new value
-            return GENERAL.CRASH_CONSISTENT;
-        } else {
-            return cellData;
-        }
-    };
-
     const EncryptionColDefs: ColumnProps[] = [
         {
             Header: GENERAL.DATABASE_NAME,
@@ -149,7 +140,7 @@ const DatabaseListTable = () => {
                                             }}
                                         />
                                     )}
-                                    <Typography variant="Regular_14">{protectionColumnText(cellData)}</Typography>
+                                    <Typography variant="Regular_14">{cellData}</Typography>
                                 </div>
                                 {protectedByList?.length > 0 && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>

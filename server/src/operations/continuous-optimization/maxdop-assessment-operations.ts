@@ -87,13 +87,15 @@ async function calculateMaxDOPDrift(
 
         const { current, recommendedMaxDOP, status } = maxDOPAssessment;
         const recommendationMessage =
-            'For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16';
+            status === AssessmentStatus.NOT_OPTIMIZED
+                ? 'For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.'
+                : 'Your MSSQL instance is optimized with the recommended MAXDOP settings for optimal performance.';
 
         const maxDOPResponse: ParameterDriftResponseType = {
             name: 'maxdop',
             status: status as AssessmentStatus,
             recommended: recommendedMaxDOP,
-            severity: SEVERITY.CRITICAL,
+            severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             current: current.toString(),
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]

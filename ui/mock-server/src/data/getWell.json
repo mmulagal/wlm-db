@@ -324,9 +324,16 @@
         "rssAdapters": [
           {
             "adapterName": "Ethernet 3",
-            "rssEnabled": false,
-            "rssProfile": "",
+            "rssEnabled": true,
+            "rssProfile": "test",
             "baseProcessorNumber": 2,
+            "numberOfReceiveQueues": 32
+          },
+          {
+            "adapterName": "Ethernet 4",
+            "rssEnabled": true,
+            "rssProfile": "test",
+            "baseProcessorNumber": 3,
             "numberOfReceiveQueues": 32
           }
         ],
@@ -380,7 +387,8 @@
                 "ec2InstanceId": "i-07e76a4b916548dc0",
                 "operationStartTime": 551,
                 "operationEndTime": 115,
-                "securityNonCompliantCount": 1
+                "securityNonCompliantCount": 1,
+                "otherNonCompliantCount": 1
             }
         ]
     },
@@ -393,13 +401,51 @@
         "tags": ["Performance efficiency"],
         "current": 3
     },
-    "microsoftSqlPatch" : {
-        "name": "microsoft-sql-patch",
-        "status": "optimized",
-        "recommended": 4,
+    "mssqlPatch" : {
+        "name": "mssql-patch",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "missingPatchesInEc2Instances": [
+          {
+            "ec2InstanceId": "i-p9o5n2m4l8k6j7h",
+            "criticalMissingPatchesCount": 0,
+            "importantMissingPatchesCount": 1,
+            "missingPatchesCount": 1,
+            "missingPatchDetails": [
+              {
+                "classification": "SecurityUpdates",
+                "severity": "Important",
+                "state": "Missing",
+                "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                "kbId": "KB5044099"
+              }
+            ]
+          },
+          {
+            "ec2InstanceId": "i-p9o5n2m4l8k6byol",
+            "criticalMissingPatchesCount": 0,
+            "importantMissingPatchesCount": 1,
+            "missingPatchesCount": 1,
+            "missingPatchDetails": [
+              {
+                "classification": "SecurityUpdates",
+                "severity": "Important",
+                "state": "Missing",
+                "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
+                "kbId": "KB5044099"
+              }
+            ]
+          }
+        ],
         "severity": "critical",
-        "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
-        "tags": ["Security", "Reliability"],
-        "current": 3
+        "recommendation": "Critical (0) and important (2) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.",
+        "tags": [
+          "Security",
+          "Reliability"
+        ],
+        "objectsInViolation": [
+          "i-p9o5n2m4l8k6j7h",
+          "i-p9o5n2m4l8k6byol"
+        ]
     }
 }

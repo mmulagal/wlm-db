@@ -118,7 +118,9 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     }}
                 >
                     <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.first}</DsTypography>
-                    <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.second}</DsTypography>
+                    {data?.descriptionRssConfig?.second && (
+                        <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.second}</DsTypography>
+                    )}
                     {data?.descriptionRssConfig?.points?.map(perPoint => {
                         return (
                             <div className={styles.points}>

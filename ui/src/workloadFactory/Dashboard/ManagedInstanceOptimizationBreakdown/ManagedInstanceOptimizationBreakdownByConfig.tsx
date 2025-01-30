@@ -4,8 +4,8 @@ import BarComponent from '../BarComponent/BarComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../utils/consts';
-import { setSelectedConfig, setSelectedConfigSummary } from '../../../store/workloadFactory/databaseHomeSlice';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import { setSelectedConfig } from '../../../store/workloadFactory/databaseHomeSlice';
 import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
@@ -13,6 +13,7 @@ import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/Dat
 import { GENERAL } from '../../../utils/appConstants';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setOptimizeInnerpageSummary } from '../../GetWell/GetWellUtils';
 
 const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean | any) => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
@@ -23,63 +24,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedConfig(type));
-        let configKey = '';
-        switch (type) {
-            case 'Storage tier':
-                configKey = 'storageTier';
-                break;
-            case 'File system headroom':
-                configKey = 'fileSystemHeadroom';
-                break;
-            case 'Log drive size':
-                configKey = 'logDriveSize';
-                break;
-            case 'TempDB drive size':
-                configKey = 'tempdbDriveSize';
-                break;
-            case 'Data files (.mdf)':
-                configKey = 'userDataFiles';
-                break;
-            case 'Log files (.ldf)':
-                configKey = 'logFiles';
-                break;
-            case 'TempDB placement':
-                configKey = 'tempdbPlacement';
-                break;
-            case 'ONTAP':
-                configKey = 'ontapConfiguration';
-                break;
-            case 'Operating system':
-                configKey = 'operatingSystem';
-                break;
-            case GENERAL.COMPUTE_RIGHTSIZING:
-                configKey = 'computeRightsizing';
-                break;
-            case GENERAL.OPERATING_SYSTEM_PATCH:
-                configKey = 'operatingSystemPatch';
-                break;
-            case GENERAL.RSS_CONFIGURATION:
-                configKey = 'rssConfiguration';
-                break;
-            case GENERAL.LICENSE_SQL_SERVER:
-                configKey = 'applicationSqlServer';
-                break;
-            case GENERAL.MICROSOFT_SQL_PATCH:
-                configKey = 'microsoftSqlPatch';
-                break;
-            case GENERAL.MAXDOP_PATCH:
-                configKey = 'maxdopPatch';
-                break;
-        }
-        const optimizedInstances = configData[configKey] || 0;
-        dispatch(
-            setSelectedConfigSummary({
-                optimizedInstances: optimizedInstances,
-                notOptimizedInstances: configData?.total - optimizedInstances,
-                optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
-                severity: configData?.severityObj?.[configKey] || ''
-            })
-        );
+        setOptimizeInnerpageSummary(type, configData, dispatch);
     };
 
     const configData = useMemo(() => {
@@ -108,10 +53,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Storage tier']?.length || 0) / (configData.total || 1)) *
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
+                                (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Storage tier']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -121,13 +67,14 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('Storage tier');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
                             }}
+                            data-testid="wlm-db-optimize-storage-tier"
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.storageTier === configData?.total ||
-                                inProgressOptimizationData['Storage tier']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
                             }
                         >
                             Optimize
@@ -146,11 +93,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['File system headroom']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['File system headroom']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -159,14 +106,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="wlm-db-optimize-file-system-headroom"
                             onClick={() => {
-                                handleOptimize('File system headroom');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM);
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.fileSystemHeadroom === configData?.total ||
-                                inProgressOptimizationData['File system headroom']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
                             }
                         >
                             Optimize
@@ -185,10 +133,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Log drive size']?.length || 0) / (configData.total || 1)) *
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
+                                (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Log drive size']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -198,13 +147,14 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             variant="secondary"
                             isThin={true}
                             onClick={() => {
-                                handleOptimize('Log drive size');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE);
                             }}
+                            data-testid="wlm-db-optimize-log-drive-size"
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.logDriveSize === configData?.total ||
-                                inProgressOptimizationData['Log drive size']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
                             }
                         >
                             Optimize
@@ -223,11 +173,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['TempDB drive size']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['TempDB drive size']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -236,14 +186,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="wlm-db-optimize-temdb-drive-size"
                             onClick={() => {
-                                handleOptimize('TempDB drive size');
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE);
                             }}
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
                                 configData?.tempdbDriveSize === configData?.total ||
-                                inProgressOptimizationData['TempDB drive size']?.length > 0
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
                             }
                         >
                             Optimize
@@ -262,11 +213,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Data files (.mdf)']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Data files (.mdf)']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -279,7 +230,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-data-files"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -298,11 +253,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['Log files (.ldf)']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['Log files (.ldf)']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -315,7 +270,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton data-testid="wlm-db-optimize-log-files" variant="secondary" isDisabled={true}>
                                     Optimize
                                 </DsButton>
                             </div>
@@ -326,7 +281,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
-                        headingText="TempDB placement"
+                        headingText={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
                         percentage={Math.round(((configData.tempdbPlacement || 0) / (configData.total || 1)) * 100)}
                         beforeOutOf={configData.tempdbPlacement}
                         afterOutOf={configData.total}
@@ -334,11 +289,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.['TempDB placement']?.length || 0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
                                 (configData.total || 1)) *
                                 100
                         )}
-                        loading={inProgressOptimizationData['TempDB placement']?.length > 0}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0}
                     />
 
                     <SeparatorComponent variant="vertical" height="60px" />
@@ -351,7 +306,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-temdb-placement"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -380,6 +339,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="wlm-db-optimize-ontap"
                             onClick={() => {
                                 handleOptimize('ONTAP');
                             }}
@@ -417,6 +377,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="wlm-db-optimize-operating-system"
                             onClick={() => {
                                 handleOptimize('Operating system');
                             }}
@@ -455,6 +416,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         <DsButton
                             variant="secondary"
                             isThin={true}
+                            data-testid="wlm-db-optimize-compute-right-sizing"
                             onClick={() => {
                                 handleOptimize(GENERAL.COMPUTE_RIGHTSIZING);
                             }}
@@ -498,7 +460,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-operating-system-patch"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -533,7 +499,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-rss-configuration"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -570,7 +540,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-license-sql-server"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -582,8 +556,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.MICROSOFT_SQL_PATCH}
-                        percentage={Math.round(((configData.microsoftSqlPatch || 0) / (configData.total || 1)) * 100)}
-                        beforeOutOf={configData.microsoftSqlPatch}
+                        percentage={Math.round(((configData.mssqlPatch || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.mssqlPatch}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
@@ -605,7 +579,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-microsoft-sql-server"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -640,7 +618,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             height="30px"
                         >
                             <div>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    data-testid="wlm-db-optimize-maxdop-patch"
+                                    variant="secondary"
+                                    isDisabled={true}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>

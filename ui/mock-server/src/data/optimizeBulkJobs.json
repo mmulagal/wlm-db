@@ -1,0 +1,850 @@
+{
+    "id": "1234",
+    "accountId": "account-3JuDht6X",
+    "name": "Optimize storage tier",
+    "status": "WARNING",
+    "resourceName": "account-3JuDht6X",
+    "type": "OPTIMIZATION",
+    "startTime": 1737707353000,
+    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+    "region": {
+        "code": "us-east-1",
+        "name": "US East (N. Virginia)"
+    },
+    "description": "Optimize storage tier",
+    "endTime": 1737707385000,
+    "subJobs": [
+        {
+            "region": {
+                "code": "us-east-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "91d8422c-d940-456f-87b3-5a48503b063a",
+            "accountId": "account-3JuDht6X",
+            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "status": "COMPLETED",
+            "hostsToOptimize": [
+                {
+                    "resourceId": "resource-id-3",
+                    "optimizationType": "mpio-enabled",
+                    "sqlServerInstances": [
+                        "31"
+                    ]
+                }
+            ],
+            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "type": "OPTIMIZATION",
+            "startTime": 1737707355000,
+            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+            "description": "Optimization completed for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "parentJobId": "ab4a9fd1-71d3-4b80-835b-dc779fece5f3",
+            "endTime": 1737707357000,
+            "subJobs": [
+                {
+                    "id": "a7b77df6-c232-4db4-98ca-d01d0df7a50b",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "OPTIMIZATION",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "name": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "description": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "startTime": 1737707355000,
+                    "endTime": 1737707357000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "91d8422c-d940-456f-87b3-5a48503b063a"
+                },
+                {
+                    "id": "132ca13f-fbac-40fd-a04b-b5c064a83fa2",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "ASSESSMENT",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "name": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "description": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-SupplierManagement. Review detailed findings and recommendations in.;{\"hostName\":\"SQL-Managed-Host-Prod\",\"resourceId\":\"41e0b734-e322-446c-99f7-d0ad035c4923\",\"databaseInstanceId\":\"26334da8-85f2-4d2f-9942-953200966ba6\",\"databaseInstanceName\":\"PROD-SupplierManagement\",\"sqlServerDeploymentType\":\"MSSQL\"}",
+                    "startTime": 1737707357000,
+                    "endTime": 1737707362000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "91d8422c-d940-456f-87b3-5a48503b063a",
+                    "subJobs": [
+                        {
+                            "id": "e810a672-60d6-44d3-9441-cfb3063ed019",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                            "name": "Storage configuration assessment",
+                            "description": "Storage configuration assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        },
+                        {
+                            "id": "b232db7f-e407-42a4-8a13-bcceaef632ee",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                            "name": "Storage sizing assessment",
+                            "description": "Storage sizing assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        },
+                        {
+                            "id": "a6b8c24b-da9d-4cc0-86a6-f3f1dcfc0d64",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                            "name": "Storage layout assessment",
+                            "description": "Storage layout assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        },
+                        {
+                            "id": "447c53f9-2d0e-4723-8a5d-77e06a52fbbc",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "FAILED",
+                            "resourceName": "SQL-Managed-Host-Prod",
+                            "name": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod in EC2 instance i-8BLZ9YTM81PDDKFMV",
+                            "description": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod",
+                            "error": "Error while performing maxDOP assessment. TypeError: Cannot read properties of undefined (reading 'toString')",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707362000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "region": {
+                "code": "us-east-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "7668df69-5afa-4ce9-9745-05a0f611c7f4",
+            "accountId": "account-3JuDht6X",
+            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "status": "FAILED",
+            "hostsToOptimize": [
+                {
+                    "resourceId": "resource-id-3",
+                    "optimizationType": "mpio-enabled",
+                    "sqlServerInstances": [
+                        "32"
+                    ]
+                }
+            ],
+            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "type": "OPTIMIZATION",
+            "startTime": 1737707355000,
+            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+            "description": "Optimization completed for SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "parentJobId": "ab4a9fd1-71d3-4b80-835b-dc779fece5f3",
+            "endTime": 1737707357000,
+            "subJobs": [
+                {
+                    "id": "67efe346-2f3d-418c-abe2-f5b62bb47abe",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "ASSESSMENT",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "name": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "description": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\MSSQLSERVER. Review detailed findings and recommendations in.;{\"hostName\":\"SQL-Managed-Host-Prod\",\"resourceId\":\"41e0b734-e322-446c-99f7-d0ad035c4923\",\"databaseInstanceId\":\"cbcf1cc7-8fcc-435e-a701-a8d406277a24\",\"databaseInstanceName\":\"MSSQLSERVER\",\"sqlServerDeploymentType\":\"MSSQL\"}",
+                    "startTime": 1737707357000,
+                    "endTime": 1737707363000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "7668df69-5afa-4ce9-9745-05a0f611c7f4",
+                    "subJobs": [
+                        {
+                            "id": "94f8e0ce-9bcf-4ebd-a7c3-79106a30598d",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                            "name": "Storage configuration assessment",
+                            "description": "Storage configuration assessment",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707360000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        },
+                        {
+                            "id": "73881efa-4af9-4775-80cd-9508b5d8f244",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                            "name": "Storage layout assessment",
+                            "description": "Storage layout assessment",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707360000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        },
+                        {
+                            "id": "65c02c92-9add-4170-9667-1d9a1dae81b5",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                            "name": "Storage sizing assessment",
+                            "description": "Storage sizing assessment",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707360000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        },
+                        {
+                            "id": "241069d6-9ce4-4164-9b3b-cab976c5a19b",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod",
+                            "name": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod in EC2 instance i-8BLZ9YTM81PDDKFMV",
+                            "description": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod",
+                            "startTime": 1737707361000,
+                            "endTime": 1737707363000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        }
+                    ]
+                },
+                {
+                    "id": "2af6f6f6-5041-4e80-99ac-eb685a1de875",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "OPTIMIZATION",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "name": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "description": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "startTime": 1737707355000,
+                    "endTime": 1737707357000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "7668df69-5afa-4ce9-9745-05a0f611c7f4"
+                }
+            ]
+        },
+        {
+            "region": {
+                "code": "us-east-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "4429c2cb-fc75-42ab-b06c-0bb4857282f8",
+            "accountId": "account-3JuDht6X",
+            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "status": "COMPLETED",
+            "hostsToOptimize": [
+                {
+                    "resourceId": "resource-id-3",
+                    "optimizationType": "mpio-enabled",
+                    "sqlServerInstances": [
+                        "33"
+                    ]
+                }
+            ],
+            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "type": "OPTIMIZATION",
+            "startTime": 1737707355000,
+            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+            "description": "Optimization completed for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "parentJobId": "ab4a9fd1-71d3-4b80-835b-dc779fece5f3",
+            "endTime": 1737707357000,
+            "subJobs": [
+                {
+                    "id": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "ASSESSMENT",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "name": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "description": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-MarketingCampaigns. Review detailed findings and recommendations in.;{\"hostName\":\"SQL-Managed-Host-Prod\",\"resourceId\":\"41e0b734-e322-446c-99f7-d0ad035c4923\",\"databaseInstanceId\":\"84a56ca9-b10e-4ada-8b06-3451daaa3993\",\"databaseInstanceName\":\"PROD-MarketingCampaigns\",\"sqlServerDeploymentType\":\"MSSQL\"}",
+                    "startTime": 1737707357000,
+                    "endTime": 1737707362000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "4429c2cb-fc75-42ab-b06c-0bb4857282f8",
+                    "subJobs": [
+                        {
+                            "id": "d1721c3b-dabd-4524-a84d-833545110618",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "FAILED",
+                            "resourceName": "SQL-Managed-Host-Prod",
+                            "name": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod in EC2 instance i-8BLZ9YTM81PDDKFMV",
+                            "description": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod",
+                            "error": "Error while performing maxDOP assessment. TypeError: Cannot read properties of undefined (reading 'toString')",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707362000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        },
+                        {
+                            "id": "c52d6720-55c4-4ab2-81a3-c204c3089c74",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                            "name": "Storage layout assessment",
+                            "description": "Storage layout assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        },
+                        {
+                            "id": "9089a8c7-6b1c-468e-9ee2-90bde965d381",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                            "name": "Storage sizing assessment",
+                            "description": "Storage sizing assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        },
+                        {
+                            "id": "13e5904d-98b6-4575-97ea-2d220e563cdc",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                            "name": "Storage configuration assessment",
+                            "description": "Storage configuration assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        }
+                    ]
+                },
+                {
+                    "id": "394f2467-4e06-4051-8fbf-c9b9c6b2ccb5",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "OPTIMIZATION",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "name": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "description": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "startTime": 1737707355000,
+                    "endTime": 1737707357000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "4429c2cb-fc75-42ab-b06c-0bb4857282f8"
+                }
+            ]
+        },
+        {
+            "region": {
+                "code": "us-east-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "91d8422c-d940-456f-87b3-5a48503b063a",
+            "accountId": "account-3JuDht6X",
+            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "status": "COMPLETED",
+            "hostsToOptimize": [
+                {
+                    "resourceId": "resource-id-4",
+                    "optimizationType": "mpio-enabled",
+                    "sqlServerInstances": [
+                        "41"
+                    ]
+                }
+            ],
+            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "type": "OPTIMIZATION",
+            "startTime": 1737707355000,
+            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+            "description": "Optimization completed for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+            "parentJobId": "ab4a9fd1-71d3-4b80-835b-dc779fece5f3",
+            "endTime": 1737707357000,
+            "subJobs": [
+                {
+                    "id": "a7b77df6-c232-4db4-98ca-d01d0df7a50b",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "OPTIMIZATION",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "name": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "description": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "startTime": 1737707355000,
+                    "endTime": 1737707357000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "91d8422c-d940-456f-87b3-5a48503b063a"
+                },
+                {
+                    "id": "132ca13f-fbac-40fd-a04b-b5c064a83fa2",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "ASSESSMENT",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "name": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                    "description": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-SupplierManagement. Review detailed findings and recommendations in.;{\"hostName\":\"SQL-Managed-Host-Prod\",\"resourceId\":\"41e0b734-e322-446c-99f7-d0ad035c4923\",\"databaseInstanceId\":\"26334da8-85f2-4d2f-9942-953200966ba6\",\"databaseInstanceName\":\"PROD-SupplierManagement\",\"sqlServerDeploymentType\":\"MSSQL\"}",
+                    "startTime": 1737707357000,
+                    "endTime": 1737707362000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "91d8422c-d940-456f-87b3-5a48503b063a",
+                    "subJobs": [
+                        {
+                            "id": "e810a672-60d6-44d3-9441-cfb3063ed019",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                            "name": "Storage configuration assessment",
+                            "description": "Storage configuration assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        },
+                        {
+                            "id": "b232db7f-e407-42a4-8a13-bcceaef632ee",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                            "name": "Storage sizing assessment",
+                            "description": "Storage sizing assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        },
+                        {
+                            "id": "a6b8c24b-da9d-4cc0-86a6-f3f1dcfc0d64",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-SupplierManagement",
+                            "name": "Storage layout assessment",
+                            "description": "Storage layout assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        },
+                        {
+                            "id": "447c53f9-2d0e-4723-8a5d-77e06a52fbbc",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "FAILED",
+                            "resourceName": "SQL-Managed-Host-Prod",
+                            "name": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod in EC2 instance i-8BLZ9YTM81PDDKFMV",
+                            "description": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod",
+                            "error": "Error while performing maxDOP assessment. TypeError: Cannot read properties of undefined (reading 'toString')",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707362000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "132ca13f-fbac-40fd-a04b-b5c064a83fa2"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "region": {
+                "code": "us-east-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "7668df69-5afa-4ce9-9745-05a0f611c7f4",
+            "accountId": "account-3JuDht6X",
+            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "status": "FAILED",
+            "hostsToOptimize": [
+                {
+                    "resourceId": "resource-id-4",
+                    "optimizationType": "mpio-enabled",
+                    "sqlServerInstances": [
+                        "42"
+                    ]
+                }
+            ],
+            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "type": "OPTIMIZATION",
+            "startTime": 1737707355000,
+            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+            "description": "Optimization completed for SQL-Managed-Host-Prod\\MSSQLSERVER",
+            "parentJobId": "ab4a9fd1-71d3-4b80-835b-dc779fece5f3",
+            "endTime": 1737707357000,
+            "subJobs": [
+                {
+                    "id": "67efe346-2f3d-418c-abe2-f5b62bb47abe",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "ASSESSMENT",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "name": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "description": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\MSSQLSERVER. Review detailed findings and recommendations in.;{\"hostName\":\"SQL-Managed-Host-Prod\",\"resourceId\":\"41e0b734-e322-446c-99f7-d0ad035c4923\",\"databaseInstanceId\":\"cbcf1cc7-8fcc-435e-a701-a8d406277a24\",\"databaseInstanceName\":\"MSSQLSERVER\",\"sqlServerDeploymentType\":\"MSSQL\"}",
+                    "startTime": 1737707357000,
+                    "endTime": 1737707363000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "7668df69-5afa-4ce9-9745-05a0f611c7f4",
+                    "subJobs": [
+                        {
+                            "id": "94f8e0ce-9bcf-4ebd-a7c3-79106a30598d",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                            "name": "Storage configuration assessment",
+                            "description": "Storage configuration assessment",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707360000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        },
+                        {
+                            "id": "73881efa-4af9-4775-80cd-9508b5d8f244",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                            "name": "Storage layout assessment",
+                            "description": "Storage layout assessment",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707360000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        },
+                        {
+                            "id": "65c02c92-9add-4170-9667-1d9a1dae81b5",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                            "name": "Storage sizing assessment",
+                            "description": "Storage sizing assessment",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707360000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        },
+                        {
+                            "id": "241069d6-9ce4-4164-9b3b-cab976c5a19b",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod",
+                            "name": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod in EC2 instance i-8BLZ9YTM81PDDKFMV",
+                            "description": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod",
+                            "startTime": 1737707361000,
+                            "endTime": 1737707363000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "67efe346-2f3d-418c-abe2-f5b62bb47abe"
+                        }
+                    ]
+                },
+                {
+                    "id": "2af6f6f6-5041-4e80-99ac-eb685a1de875",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "OPTIMIZATION",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "name": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "description": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\MSSQLSERVER",
+                    "startTime": 1737707355000,
+                    "endTime": 1737707357000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "7668df69-5afa-4ce9-9745-05a0f611c7f4"
+                }
+            ]
+        },
+        {
+            "region": {
+                "code": "us-east-1",
+                "name": "US East (N. Virginia)"
+            },
+            "id": "4429c2cb-fc75-42ab-b06c-0bb4857282f8",
+            "accountId": "account-3JuDht6X",
+            "name": "Optimize storage-tier for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "status": "COMPLETED",
+            "hostsToOptimize": [
+                {
+                    "resourceId": "resource-id-4",
+                    "optimizationType": "mpio-enabled",
+                    "sqlServerInstances": [
+                        "43"
+                    ]
+                }
+            ],
+            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "type": "OPTIMIZATION",
+            "startTime": 1737707355000,
+            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+            "description": "Optimization completed for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+            "parentJobId": "ab4a9fd1-71d3-4b80-835b-dc779fece5f3",
+            "endTime": 1737707357000,
+            "subJobs": [
+                {
+                    "id": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "ASSESSMENT",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "name": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "description": "Microsoft SQL Server storage assessment for instance SQL-Managed-Host-Prod\\PROD-MarketingCampaigns. Review detailed findings and recommendations in.;{\"hostName\":\"SQL-Managed-Host-Prod\",\"resourceId\":\"41e0b734-e322-446c-99f7-d0ad035c4923\",\"databaseInstanceId\":\"84a56ca9-b10e-4ada-8b06-3451daaa3993\",\"databaseInstanceName\":\"PROD-MarketingCampaigns\",\"sqlServerDeploymentType\":\"MSSQL\"}",
+                    "startTime": 1737707357000,
+                    "endTime": 1737707362000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "4429c2cb-fc75-42ab-b06c-0bb4857282f8",
+                    "subJobs": [
+                        {
+                            "id": "d1721c3b-dabd-4524-a84d-833545110618",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "FAILED",
+                            "resourceName": "SQL-Managed-Host-Prod",
+                            "name": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod in EC2 instance i-8BLZ9YTM81PDDKFMV",
+                            "description": "Microsoft SQL server MaxDOP assessment for SQL-Managed-Host-Prod",
+                            "error": "Error while performing maxDOP assessment. TypeError: Cannot read properties of undefined (reading 'toString')",
+                            "startTime": 1737707360000,
+                            "endTime": 1737707362000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        },
+                        {
+                            "id": "c52d6720-55c4-4ab2-81a3-c204c3089c74",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                            "name": "Storage layout assessment",
+                            "description": "Storage layout assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        },
+                        {
+                            "id": "9089a8c7-6b1c-468e-9ee2-90bde965d381",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                            "name": "Storage sizing assessment",
+                            "description": "Storage sizing assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        },
+                        {
+                            "id": "13e5904d-98b6-4575-97ea-2d220e563cdc",
+                            "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                            "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                            "region": {
+                                "name": "US East (N. Virginia)",
+                                "code": "us-east-1"
+                            },
+                            "type": "ASSESSMENT",
+                            "status": "COMPLETED",
+                            "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                            "name": "Storage configuration assessment",
+                            "description": "Storage configuration assessment",
+                            "startTime": 1737707359000,
+                            "endTime": 1737707359000,
+                            "initiator": "SYSTEM",
+                            "parentJobId": "fe8b93a4-31f9-4df7-b9a0-df424059f9aa"
+                        }
+                    ]
+                },
+                {
+                    "id": "394f2467-4e06-4051-8fbf-c9b9c6b2ccb5",
+                    "accountId": "account-3JuDht6X_auth0|61bb137f7b600a0113d82baf",
+                    "credentialsId": "ab8d27d8-8236-4504-a61d-baf0fca69bc4",
+                    "region": {
+                        "name": "US East (N. Virginia)",
+                        "code": "us-east-1"
+                    },
+                    "type": "OPTIMIZATION",
+                    "status": "COMPLETED",
+                    "resourceName": "SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "name": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "description": "Set volume tiering-policy to snapshot-only and cloud-retrieval-policy to promote for SQL-Managed-Host-Prod\\PROD-MarketingCampaigns",
+                    "startTime": 1737707355000,
+                    "endTime": 1737707357000,
+                    "initiator": "SYSTEM",
+                    "parentJobId": "4429c2cb-fc75-42ab-b06c-0bb4857282f8"
+                }
+            ]
+        }
+    ]
+}

@@ -15,9 +15,9 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
 import { useEffect, useState } from 'react';
-import { getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
-import tcoScript from '../../../script/OnPremTCOCollector1.ps1?raw';
+import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
 
 import FileUpload from './FileUpload';
 import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
@@ -65,6 +65,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     message: 'Invalid file type. Please upload a JSON file.'
                 })
             );
+            event.target.value = ''; // Clear the file input
             return;
         }
         // Validate the file size (should be <= 2 MB)
@@ -77,6 +78,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     message: `File size exceeds ${maxSizeInMB} MB. Please upload a smaller file.`
                 })
             );
+            event.target.value = ''; // Clear the file input
             return;
         }
 
@@ -88,6 +90,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     message: 'Invalid file name. File name must start with "TCOResponse-".'
                 })
             );
+            event.target.value = ''; // Clear the file input
             return;
         }
 
@@ -111,6 +114,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                     message: 'File is already uploaded.'
                                 })
                             );
+                            event.target.value = ''; // Clear the file input
                         }, 3000);
                     } else {
                         // Parse the JSON data
@@ -144,13 +148,27 @@ const ExploreSavingsOnPremiseTable = () => {
                                         if (status === JOB_MONITORING_STATUS.COMPLETED) {
                                             fetchOnPremData(true);
                                             setIsUploadLoading(false);
-
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                                    message: 'File is uploaded successfully.'
+                                                })
+                                            );
+                                            event.target.value = ''; // Clear the file input
                                             clearInterval(jobInterval);
                                         } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                             if (onPremiseData) {
                                                 setTableData(onPremiseData);
                                             }
+
                                             setIsUploadLoading(false);
+                                            dispatch(
+                                                addNotification({
+                                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                                    message: jobRes?.data?.error || 'Error uploading file.'
+                                                })
+                                            );
+                                            event.target.value = ''; // Clear the file input
                                             clearInterval(jobInterval);
                                         }
                                     });
@@ -159,7 +177,9 @@ const ExploreSavingsOnPremiseTable = () => {
                                 if (onPremiseData) {
                                     setTableData(onPremiseData);
                                 }
+
                                 setIsUploadLoading(false);
+                                event.target.value = ''; // Clear the file input
                             }
                         } else {
                             dispatch(
@@ -168,6 +188,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                     message: 'No data found in the file.'
                                 })
                             );
+                            event.target.value = ''; // Clear the file input
                         }
                     }
                 } catch (error) {
@@ -177,6 +198,7 @@ const ExploreSavingsOnPremiseTable = () => {
                             message: 'Error parsing JSON: ' + error
                         })
                     );
+                    event.target.value = ''; // Clear the file input
                 }
             };
 
@@ -225,7 +247,7 @@ const ExploreSavingsOnPremiseTable = () => {
             id: '1',
             isSortable: true,
             isSticky: true,
-            width: '345px',
+            width: '245px',
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.resourceName;
                 return (
@@ -239,8 +261,8 @@ const ExploreSavingsOnPremiseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'deploymentModel',
             id: '2',
-            width: '345px',
-            filterOptions: getFilterOptions(tableData, 'serverInstallationMode'),
+            width: '245px',
+            filterOptions: getFilterOptions(tableData, 'deploymentModel'),
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -248,16 +270,12 @@ const ExploreSavingsOnPremiseTable = () => {
 
         {
             Header: 'SQL server instances',
-            accessor: 'totalInstance',
+            accessor: 'instanceNameList',
             id: '4',
             width: '345px',
-            filterOptions: getFilterOptions(tableData, 'totalInstance'),
+            isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
-                const instanceNames =
-                    rowData?.sqlServerInstances?.map(
-                        (detail: { sqlInstanceName: string }) => detail?.sqlInstanceName
-                    ) || [];
-                const truncatedItems = getTruncatedItems(instanceNames);
+                const truncatedItems = getTruncatedItems(cellData);
 
                 return (
                     <div>
@@ -278,6 +296,8 @@ const ExploreSavingsOnPremiseTable = () => {
                                                 <Typography variant="Regular_14">{item}</Typography>
                                             ))}
                                             trigger="hover"
+                                            interactive={true}
+                                            delayHide={200}
                                             container={
                                                 <Typography variant="Regular_14" className={styles.colorText}>
                                                     {`+ ${truncatedItems?.remaining.length}`}
@@ -296,7 +316,7 @@ const ExploreSavingsOnPremiseTable = () => {
             }
         },
         {
-            Header: 'OnPrem nodes',
+            Header: 'On-premises nodes',
             accessor: 'onPremisesNodes',
             id: '5',
             width: '347px',
@@ -324,6 +344,8 @@ const ExploreSavingsOnPremiseTable = () => {
                                                 <Typography variant="Regular_14">{item}</Typography>
                                             ))}
                                             trigger="hover"
+                                            interactive={true}
+                                            delayHide={200}
                                             container={
                                                 <Typography variant="Regular_14" className={styles.colorText}>
                                                     {`+ ${truncatedItems?.remaining.length}`}
@@ -339,6 +361,15 @@ const ExploreSavingsOnPremiseTable = () => {
                         {!cellData ? GENERAL.NOT_AVAILABLE : ''}
                     </div>
                 );
+            }
+        },
+        {
+            Header: 'Data collection time',
+            accessor: 'creationTime',
+            id: '6',
+            width: '200px',
+            renderCell: (cellData: string) => {
+                return <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>;
             }
         },
 
@@ -389,7 +420,7 @@ const ExploreSavingsOnPremiseTable = () => {
     const handleDownload = async () => {
         // getDownloadFn([{ input: tcoScript, name: 'list-vms.ps1' }]);
 
-        const fileProps = [{ input: tcoScript, name: 'tco-script.ps1' }];
+        const fileProps = [{ input: tcoScript, name: 'SQLServerDataCollector.ps1' }];
 
         const files = fileProps.map(
             ({ name, input }) =>

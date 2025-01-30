@@ -84,7 +84,7 @@ interface SqlInstanceDetails {
     noOfDatabases: string;
     ownerNodes: string;
     sqlInstanceName: string;
-    sqlVersion: string[];
+    sqlVersion: string;
     storageDetailsByDb: string;
     sqlEdition: string;
     iops: string;
@@ -92,12 +92,16 @@ interface SqlInstanceDetails {
     vcpusPerInstance: string;
     cpuUtilization: string;
     deploymentType: string;
+    isReadReplica?: string;
+    aoagReadReplica?: string;
+    // Below items are not part of the report, but added for the purpose of TCO calculation in the backend
     networkPerformance?: string;
     totalIops?: number;
     totalThroughput?: number;
     totalStorage?: number;
-    isReadReplica?: string;
+    totalSecondaryStorage?: number;
     memory?: number;
+    noOfVcpusInUse?: number;
 }
 
 interface OnPremCollectionObjectV1 {

@@ -3,11 +3,11 @@ import {
     parseCpuUtilization,
     parseMemoryUtilization,
     parseLicenceUsageDetails,
-    parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
     convertToDate,
-    generateUniqueId
+    generateUniqueId,
+    parseAoagReadReplica
 } from '../../../src/utils/onprem-tco/onprem-tco-utils';
 
 describe('onprem-tco-utils', () => {
@@ -20,11 +20,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid CPU utilization', () => {
-        expect(
+        expect(() => {
             parseCpuUtilization(
                 '{\r\n    "error":  "Error running query \\u0027cpuUtilization\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid memory utilization array', () => {
@@ -35,11 +35,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid memory utilization', () => {
-        expect(
+        expect(() => {
             parseMemoryUtilization(
                 '{\r\n    "error":  "Error running query \\u0027memUtilization\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid licence usage details array', () => {
@@ -51,28 +51,11 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid license usage details', () => {
-        expect(
+        expect(() => {
             parseLicenceUsageDetails(
                 '{\r\n    "error":  "Error running query \\u0027licenceUsageDetails\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
-    });
-
-    it('should join array of strings', () => {
-        const response = parseSqlVersion([
-            'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-            '\tOct  8 2022 05:58:25 ',
-            '\tCopyright (C) 2022 Microsoft Corporation',
-            '\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-            ''
-        ]);
-        expect(response?.includes('nterprise')).toBeDefined();
-    });
-
-    it('invalid sql version', () => {
-        expect(
-            parseSqlVersion('{\r\n    "error":  "Error running query \\u0027sqlVersion\\u0027 on instance FCI12"\r\n}')
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid IOPS array', () => {
@@ -86,9 +69,9 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid IOPS', () => {
-        expect(
-            parseIops('{\r\n    "error":  "Error running query \\u0027iops\\u0027 on instance FCI12"\r\n}')
-        ).toBeUndefined();
+        expect(() => {
+            parseIops('{\r\n    "error":  "Error running query \\u0027iops\\u0027 on instance FCI12"\r\n}');
+        }).toThrowError(/Error/);
     });
 
     it('should parse valid storage details array', () => {
@@ -108,13 +91,34 @@ describe('onprem-tco-utils', () => {
     });
 
     it('invalid storage details', () => {
-        expect(
+        expect(() => {
             parseStorageDetailsByDb(
                 '{\r\n    "error":  "Error running query \\u0027iops\\u0027 on instance FCI12"\r\n}'
-            )
-        ).toBeUndefined();
+            );
+        }).toThrowError(/Error/);
     });
 
+    it('should parse valid AOAG details array', () => {
+        const input =
+            '[{"databaseName":"AOAGDB22","replicaId":"4B08A481-D542-4168-9B1B-976CA6B1B1DE","replicaServerName":"WLMDBAOAG1\\AOAG1_NODE1","syncStateDesc":"SYNCHRONIZED","replicaRole":"SECONDARY"},{"databaseName":"AOAGDB22_DB2","replicaId":"9CECFD61-8D8F-4953-AB8F-6DCAFE1DB035","replicaServerName":"WLMDBAOAG1\\AOAG1_NODE1","syncStateDesc":"SYNCHRONIZED","replicaRole":"SECONDARY"}]';
+
+        expect(parseAoagReadReplica(input)).toEqual([
+            {
+                databaseName: 'AOAGDB22',
+                replicaId: '4B08A481-D542-4168-9B1B-976CA6B1B1DE',
+                replicaServerName: 'WLMDBAOAG1\\AOAG1_NODE1',
+                syncStateDesc: 'SYNCHRONIZED',
+                replicaRole: 'SECONDARY'
+            },
+            {
+                databaseName: 'AOAGDB22_DB2',
+                replicaId: '9CECFD61-8D8F-4953-AB8F-6DCAFE1DB035',
+                replicaServerName: 'WLMDBAOAG1\\AOAG1_NODE1',
+                syncStateDesc: 'SYNCHRONIZED',
+                replicaRole: 'SECONDARY'
+            }
+        ]);
+    });
     it('should convert valid date string to Date object', () => {
         const dateString = '20230101123000';
         const expectedDate = new Date(2023, 0, 1, 12, 30, 0);

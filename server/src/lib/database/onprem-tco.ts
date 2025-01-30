@@ -41,7 +41,7 @@ async function removeOnPremTcoReportData(
 
     return prisma.client.onprem_tco_reports.deleteMany({
         where: {
-            OR: [
+            AND: [
                 ...(id ? [{ id: { in: id } }] : []),
                 ...(accountId ? [{ account_id: accountId }] : []),
                 ...(resourceIdList ? [{ resource_id: { in: resourceIdList } }] : []),
@@ -76,10 +76,11 @@ async function listOnPremDatabaseResources(
     pageSize?: number,
     nextToken?: string,
     resourceId?: string,
+    timestamp?: Date,
     sort: string = 'creation_time',
     sortOrder: string = 'desc'
 ) {
-    logger.info('Listing on-prem database resources', { accountId, databaseType, pageSize, nextToken });
+    logger.info('Listing on-prem database resources', { accountId, databaseType, pageSize, nextToken, timestamp });
 
     accountId = checkAccount(accountId);
 
@@ -87,7 +88,8 @@ async function listOnPremDatabaseResources(
         where: {
             account_id: accountId,
             database_type: databaseType,
-            ...(resourceId && { resource_id: resourceId })
+            ...(resourceId && { resource_id: resourceId }),
+            ...(timestamp && { creation_time: timestamp })
         },
         orderBy: [
             {

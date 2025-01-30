@@ -24,6 +24,14 @@ const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
   'C:\\SSM\\Script-Version.txt'
 `;
 
+const SQL_PERMISSIONS: string = `
+'VIEW ANY DEFINITION',
+'ALTER ANY DATABASE',
+'CONTROL SERVER',
+'CREATE ANY DATABASE',
+'VIEW SERVER STATE'
+`;
+
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
     // Ref: https://learn.microsoft.com/en-AU/troubleshoot/sql/releases/download-and-install-latest-updates#sql-server-2022
     [9, 2005],
@@ -334,6 +342,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
+    $sqlPermissions = @(${SQL_PERMISSIONS})
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
@@ -408,10 +417,12 @@ const HOST_AND_SQL_INFO_PS1 = [
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
           $editionDBCountMachineInfoGuid = $null
+          $existingPermissions = $null
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
 
           try {
-            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
+            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
             $responseObject['windowsAuthentication'] = $?
   
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
@@ -423,7 +434,8 @@ const HOST_AND_SQL_INFO_PS1 = [
             try {
               $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
+                  $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
                   if ($? -eq $False) {
                     $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
@@ -441,6 +453,18 @@ const HOST_AND_SQL_INFO_PS1 = [
             $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
             $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
             $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
+
+            $missingPermissions = @()
+            if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
+              $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
+              foreach ($permission in $sqlPermissions) {
+              if($existingPermissionsAsList -notcontains $permission){
+                $missingPermissions += $permission
+                }
+              }
+            }
+            $responseObject['missingSqlPermissions'] = $missingPermissions
+
 
             $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
               if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
@@ -635,12 +659,12 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           }
           If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
             If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider. "
+              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
             }
           }
           If ((Get-PackageProvider -Name NuGet).version -lt [System.version]"2.8.5.201") {
             If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider. "
+              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
             }
           }
 

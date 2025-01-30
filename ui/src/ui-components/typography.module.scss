@@ -153,3 +153,91 @@
 .on-color {
     color: var(--text-on-color);
 }
+
+.base {
+    height: 56px;
+    box-shadow: 2px 2px 6px 0 var(--main-background);
+    background-color: var(--header-service-bg);
+    border-bottom: 1px solid var(--header-separator-2);
+    padding-left: 40px;
+    padding-right: 40px;
+    z-index: 15;
+    display: flex;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.service {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin-right: 60px;
+
+    svg {
+        width: 32px;
+        height: 32px;
+        margin-right: 16px;
+    }
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+
+    > .breadcrumbs-container {
+        position: absolute;
+        top: 72px;
+        margin-left: 40px;
+        z-index: 1;
+    }
+
+    &:empty {
+        background-color: var(--main-background);
+    }
+}
+
+.content {
+    overflow: auto;
+    position: relative;
+    flex-grow: 1;
+    @include mixins.standard-scroll($width: 11px);
+
+    &:not(.white) {
+        background-color: var(--main-background);
+
+        .sticky-container {
+            background-color: var(--main-background);
+        }
+    }
+
+    &.white {
+        background-color: var(--content-background);
+    }
+
+    > .breadcrumbs-container {
+        padding-top: 24px;
+        padding-left: 40px;
+        padding-bottom: 16px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    > .breadcrumbs-container + .container {
+        padding-top: 0;
+    }
+}
+
+.baseCard {
+    box-shadow: 2px 2px 6px 0 var(--main-background);
+    background-color: var(--content-background);
+
+    @include mixins.standard-scroll($width: 11px);
+
+    &.flex {
+        display: flex;
+        flex-direction: column;
+    }
+}

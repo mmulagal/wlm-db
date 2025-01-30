@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import moment from 'moment';
 import getLogger from '../logger';
 import { generateHash } from '../utils';
@@ -12,12 +13,14 @@ function parseCpuUtilization(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
         if (typeof value === 'string' && !Number.isNaN(Number(value))) {
             return Number(value);
         }
-        logger.error(`Error parsing cpuUtilization: ${error}`);
+        const errorMessage = `Error parsing cpuUtilization: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -32,9 +35,11 @@ function parseMemoryUtilization(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing memUtilization: ${error}`);
+        const errorMessage = `Error parsing memUtilization: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -49,9 +54,11 @@ function parseLicenceUsageDetails(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing licenceUsageDetails: ${error}`);
+        const errorMessage = `Error parsing licenceUsageDetails: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -59,17 +66,18 @@ function parseSqlVersion(value: string | string[]) {
     if (Array.isArray(value)) {
         return value.join(',');
     }
-
     try {
-        const parsedValue = JSON.parse(value);
-        if (Array.isArray(parsedValue)) {
-            return parsedValue.join(',');
+        if (typeof value === 'object') {
+            const parsedValue = JSON.parse(value);
+            if (parsedValue.error) {
+                logger.error(`Error: ${parsedValue.error}`);
+                throw parsedValue?.error;
+            }
         }
-        if (typeof parsedValue === 'object' && parsedValue.error) {
-            logger.error(`Error: ${parsedValue.error}`);
-        }
+        return value.replace(/\t/g, ' ') || '';
     } catch (error) {
-        logger.error(`Error parsing sqlVersion: ${error}`);
+        const errorMessage = `Error parsing sqlVersion: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -87,9 +95,11 @@ function parseIops(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing iops: ${error}`);
+        const errorMessage = `Error parsing iops: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -113,9 +123,38 @@ function parseStorageDetailsByDb(value: string) {
         }
         if (typeof parsedValue === 'object' && parsedValue.error) {
             logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
         }
     } catch (error) {
-        logger.error(`Error parsing storageDetailsByDb: ${error}`);
+        const errorMessage = `Error parsing storageDetailsByDb: ${error}`;
+        throw createError(500, errorMessage);
+    }
+}
+
+function parseAoagReadReplica(value: string) {
+    try {
+        const correctedValue = value.replace(/\\/g, '\\\\');
+        const parsedValue = JSON.parse(correctedValue);
+        if (
+            Array.isArray(parsedValue) &&
+            parsedValue.every(
+                item =>
+                    'databaseName' in item &&
+                    'replicaId' in item &&
+                    'replicaServerName' in item &&
+                    'syncStateDesc' in item &&
+                    'replicaRole' in item
+            )
+        ) {
+            return parsedValue;
+        }
+        if (typeof parsedValue === 'object' && parsedValue.error) {
+            logger.error(`Error: ${parsedValue.error}`);
+            throw parsedValue?.error;
+        }
+    } catch (error) {
+        const errorMessage = `Error parsing aoagReadReplica: ${error}`;
+        throw createError(500, errorMessage);
     }
 }
 
@@ -136,6 +175,7 @@ export {
     parseSqlVersion,
     parseIops,
     parseStorageDetailsByDb,
+    parseAoagReadReplica,
     convertToDate,
     generateUniqueId
 };

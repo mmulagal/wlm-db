@@ -220,8 +220,9 @@ describe('Modify jobs', () => {
     it('should fail to modify a job invalid Job Id', async () => {
         try {
             await updateJob(ACCOUNT_ID, 'a', 'modified-description', JOBSTATUS.COMPLETED);
-        } catch (error: any) {
-            expect(error?.meta?.cause).toEqual('Record to update not found.');
+        } catch (error: unknown) {
+            const typedError = error as { meta?: { cause?: string } };
+            expect(typedError.meta?.cause).toEqual('Record to update not found.');
         }
     });
 });
@@ -350,7 +351,7 @@ describe('Group jobs', async () => {
         const response = await groupJobsByTimeAndStatus(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
-            undefined,
+            job.region,
             Date.now() - THIRTY_DAYS,
             Date.now()
         );

@@ -1,6 +1,6 @@
 import { listOnPremDatabaseResources } from '../../src/lib/database/onprem-tco';
 import {
-    checkEnterpriseUsage,
+    getLicenseRecommendations,
     deriveEbsVolumesListForMarketing,
     deriveHostConfigBasedInstanceType,
     deriveInstanceRequirements,
@@ -24,13 +24,8 @@ const reportData = {
             ownerNodes:
                 '[{"nodeName":"WLMDBFCI3","nodeRole":"Standby"},{"nodeName":"WLMDBFCI4","nodeRole":"Standby"},{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
             sqlInstanceName: 'FCI23NEW',
-            sqlVersion: [
-                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                '\tOct  8 2022 05:58:25 ',
-                '\tCopyright (C) 2022 Microsoft Corporation',
-                '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                ''
-            ],
+            sqlVersion:
+                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
             storageDetailsByDb:
                 '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":26605,"driveAvailableSizeMb":25509}]',
             sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -48,13 +43,8 @@ const reportData = {
             noOfDatabases: '5',
             ownerNodes: '[{"nodeName":"WLMDBFCI4","nodeRole":"Standby"},{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
             sqlInstanceName: 'FCI24NEW',
-            sqlVersion: [
-                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                '\tOct  8 2022 05:58:25 ',
-                '\tCopyright (C) 2022 Microsoft Corporation',
-                '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                ''
-            ],
+            sqlVersion:
+                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
             storageDetailsByDb:
                 '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"K:","driveTotalSizeMb":27629,"driveAvailableSizeMb":27004}]',
             sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -67,18 +57,13 @@ const reportData = {
         {
             instanceGuid: 'E7A86AFB-12D4-4A69-8942-43E548CAD2B3',
             licenceUsageDetails:
-                '[{"IsUsingFeature":,"FeatureDescription":"SQL Server has \u003e 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]                                                                                                                                                                                                                             ',
+                '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]                                                                                                                                                                                                                             ',
             memUtilization: '[{"used":482873344,"total":8588910592,"remaining":8106037248,"percentUsed":5}]',
             noOfDatabases: '5',
             ownerNodes: '[{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
             sqlInstanceName: 'STD1NEW',
-            sqlVersion: [
-                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                '\tOct  8 2022 05:58:25 ',
-                '\tCopyright (C) 2022 Microsoft Corporation',
-                '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                ''
-            ],
+            sqlVersion:
+                'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
             storageDetailsByDb:
                 '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"F:","driveTotalSizeMb":26605,"driveAvailableSizeMb":25509}]',
             sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -212,7 +197,7 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should derive the correct instance type based on host config', async () => {
-        const instanceType = await deriveHostConfigBasedInstanceType(reportData.windowsConfig, DEFAULT_AWS_REGION);
+        const instanceType = await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, reportData.windowsConfig);
         expect(instanceType).toEqual('m2.xlarge');
     });
 
@@ -231,20 +216,23 @@ describe('onPrem TCO operations', () => {
             }
         ];
 
-        const ebsVolumes = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo);
-        expect(ebsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
-        expect(ebsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
-        expect(ebsVolumes?.length).toEqual(expectedEbsVolumes.length);
+        const { primaryEbsVolumes } = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo) || {};
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
+        expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 
     it('should derive the correct instance type based on SQL usage', async () => {
-        const instanceType = await deriveSqlUsageBasedInstanceType(reportData.sqlServerInfo);
+        const instanceType = await deriveSqlUsageBasedInstanceType(DEFAULT_AWS_REGION, reportData.sqlServerInfo);
         expect(instanceType).toEqual('m2.xlarge');
     });
 
     it('should return false if any SQL instance is not using enterprise features', () => {
-        const result = checkEnterpriseUsage(reportData.sqlServerInfo);
-        expect(result).toBe(false);
+        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(
+            reportData.sqlServerInfo
+        );
+        expect(currentLicenseEdition).toBeDefined();
+        expect(recommendedLicenseEdition).toBeDefined();
     });
 
     it('should return true if any SQL instance is using enterprise features', () => {
@@ -252,19 +240,14 @@ describe('onPrem TCO operations', () => {
             {
                 instanceGuid: 'E7A86AFB-12D4-4A69-8942-43E548CAD458',
                 licenceUsageDetails:
-                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":1,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]                                                                                                                                                                                                                             ',
+                    '[{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 128 GB Memory"},{"IsUsingFeature":0,"FeatureDescription":"SQL Server has \u003e 48 vCPU"},{"IsUsingFeature":0,"FeatureDescription":"Tempdb metadata memory-optimized is enabled"},{"IsUsingFeature":0,"FeatureDescription":"User Databases are using Enterprise Level Features"},{"IsUsingFeature":0,"FeatureDescription":"You are using asynchronous mirroring"},{"IsUsingFeature":0,"FeatureDescription":"You are using peer-to-peer replication"},{"IsUsingFeature":0,"FeatureDescription":"You are using R or Python extensions"},{"IsUsingFeature":0,"FeatureDescription":"You are using Resource Governor"},{"IsUsingFeature":0,"FeatureDescription":"You have Asynchronous commit Replicas"},{"IsUsingFeature":0,"FeatureDescription":"You have read-only Replicas"}]',
                 memUtilization: '[{"used":474525696,"total":8588910592,"remaining":8114384896,"percentUsed":5}]',
                 noOfDatabases: '5',
                 ownerNodes:
                     '[{"nodeName":"WLMDBFCI4","nodeRole":"Standby"},{"nodeName":"WLMDBFCI2","nodeRole":"Primary"}]',
                 sqlInstanceName: 'FCI24NEW',
-                sqlVersion: [
-                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ',
-                    '\tOct  8 2022 05:58:25 ',
-                    '\tCopyright (C) 2022 Microsoft Corporation',
-                    '\tEnterprise (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
-                    ''
-                ],
+                sqlVersion:
+                    'Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Evaluation Edition (64-bit) on Windows Server 2022 Standard 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)',
                 storageDetailsByDb:
                     '[{"databaseName":"test","allocatedSizeMb":16,"dataSizeMb":8,"logSizeMb":8,"driveLetter":"K:","driveTotalSizeMb":27629,"driveAvailableSizeMb":27004}]',
                 sqlEdition: 'Enterprise Evaluation Edition (64-bit)',
@@ -275,14 +258,14 @@ describe('onPrem TCO operations', () => {
                 deploymentType: 'fci'
             }
         ];
-        const result = checkEnterpriseUsage(sqlServerInfo);
-        expect(result).toBe(true);
+        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(sqlServerInfo);
+        expect(recommendedLicenseEdition).toEqual('Standard Edition');
+        expect(currentLicenseEdition).toEqual('Standard Edition');
     });
 
     it('should derive the correct instance requirements based on SQL instance details', () => {
         const expectedRequirements = {
             ArchitectureTypes: ['x86_64'],
-            InstanceGenerations: ['current'],
             VirtualizationTypes: ['hvm'],
             InstanceRequirements: {
                 VCpuCount: {
@@ -290,13 +273,14 @@ describe('onPrem TCO operations', () => {
                     Max: 4
                 },
                 MemoryMiB: {
-                    Min: 512
+                    Min: 8192
                 },
                 CpuManufacturers: ['intel', 'amazon-web-services'],
-                AllowedInstanceTypes: ['m*', 'c*', 'r*']
-                // NetworkBandwidthGbps: {
-                //     Max: 10
-                // }
+                InstanceGenerations: ['current'],
+                AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+                NetworkBandwidthGbps: {
+                    Max: 10
+                }
             }
         };
 

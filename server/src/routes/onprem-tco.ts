@@ -4,26 +4,32 @@ import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import castRequest from './utils';
 import {
-    DownloadOnPremTcoCollectorScriptSchema,
+    DownloadSqlServerDataCollectorScriptSchema,
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GeneratePayloadInternal,
     DeleteReportInternal,
-    OnpremTcoExploreSavingsSchema
+    OnpremTcoExploreSavingsSchema,
+    GetOnPremDatabaseResourceSchema
 } from './schemas/onprem-tco-schema';
 import {
-    downloadOnpremTcoCollectorScript,
+    downloadSqlServerDataCollectorScript,
     uploadOnpremTcoData,
     getOnPremDatabaseResources,
     generatePayload,
     deleteOnPremTcoReportResourceRecord,
-    getOnPremResourceExploreSavings
+    getOnPremResourceExploreSavings,
+    getIndividualOnPremDatabaseResource
 } from '../operations/onprem-tco-operations';
 import { MSSQL } from '../utils/consts';
 
 export default function onPremTcoRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-    fastify.register(fastifyMultipart);
+    fastify.register(fastifyMultipart, {
+        limits: {
+            fileSize: 500 * 1024 * 1024 // 500 MB
+        }
+    });
     const API_PATH_ON_PREM_TCO = '/v1/mssql/onprem-tco';
 
     if (process.env.NODE_ENV !== 'production') {
@@ -71,13 +77,13 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${API_PATH_ON_PREM_TCO}/collector`,
-        { schema: DownloadOnPremTcoCollectorScriptSchema },
+        { schema: DownloadSqlServerDataCollectorScriptSchema },
         async (request: FastifyRequest, reply) => {
             const {
                 params: { accountId }
             } = castRequest(request);
 
-            const response = await downloadOnpremTcoCollectorScript(accountId, MSSQL);
+            const response = await downloadSqlServerDataCollectorScript(accountId, MSSQL);
             return reply.send(response);
         }
     );
@@ -106,6 +112,19 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
             } = castRequest(request);
 
             const response = await getOnPremDatabaseResources(accountId, MSSQL, pageSize, nextToken);
+            return reply.send(response);
+        }
+    );
+
+    server.get(
+        `${API_PATH_ON_PREM_TCO}/resources/:resourceId`,
+        { schema: GetOnPremDatabaseResourceSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, resourceId }
+            } = castRequest(request);
+
+            const response = await getIndividualOnPremDatabaseResource(accountId, resourceId, MSSQL);
             return reply.send(response);
         }
     );

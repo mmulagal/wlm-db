@@ -11,6 +11,7 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
 import {
+    ASSESSMENT_CONFIG_NAMES,
     GETWELL_STATUS,
     GETWELL_VALUES,
     GW_CONFIG_OPTIMIZE_NA,
@@ -22,6 +23,7 @@ import { useDispatch } from 'react-redux';
 import {
     setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -330,7 +332,32 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
             let listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security }
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
+                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
+            ];
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '30px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
+            let listObj = [
+                { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
+                { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
             ];
             return (
                 <div className={styles.tooltipContainer}>
@@ -410,12 +437,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+        } else if (
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ) {
             apiCall = optimizeStorageSizing;
             payload = {
                 type: [cardData?.id]
             };
-        } else if (type === 'Storage tier') {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
             payload = null;
         } else {
@@ -495,6 +526,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
@@ -528,7 +567,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={'innerPage'}
                 hidePrimaryButton={
-                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
+                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }

@@ -1765,7 +1765,7 @@
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
             "InstanceIds": [
-                "i-0880a21327284f67c"
+                "i-07e76a4b916548dc0"
             ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
@@ -1784,7 +1784,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
