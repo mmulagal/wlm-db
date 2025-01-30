@@ -551,7 +551,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
             # Case when database has multiple drives
             if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
-            $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { $_.accessPaths[0] }
+            $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0) {$_.accessPaths[0]} }
             if ($logVolumeLunDetails) {
                 if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
                 foreach($logVolumeLunDetail in $logVolumeLunDetails) {
