@@ -10,6 +10,7 @@ import {
 } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { NETWORK_PERFORMANCE_OPTIONS } from '../../../../../utils/consts';
 
 const ComputeInputComponent = ({ data, index, printState }: any) => {
     const dispatch = useDispatch();
@@ -76,7 +77,7 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
     }, []);
 
     useEffect(() => {
-        if (data?.networkPerformance) {
+        if (!onPremNetworkPerformance) {
             dispatch(
                 setOnPremNetworkPerformance(
                     data?.networkPerformance === 'upTo10'
@@ -130,6 +131,13 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
                     isClearable={false}
                     onChange={(selectedOptions: any): void => {
                         dispatch(setOnPremNetworkPerformance(selectedOptions));
+                        dispatch(
+                            setOnPremStorageAndComputeInfo({
+                                type: data?.sqlInstanceName,
+                                mode: 'networkPerformance',
+                                value: NETWORK_PERFORMANCE_OPTIONS?.[selectedOptions?.value] || 'upTo10'
+                            })
+                        );
                     }}
                     isDisabled={index !== 0}
                     isSearchable={false}
