@@ -372,7 +372,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Network adapter settings recommendation',
             descriptionRssConfig: {
-                first: 'Proper configuration of Receive Side Scaling (RSS) is essential for optimal network performance in Microsoft SQL Server \ninstances. RSS distributes network processing across multiple processors, preventing bottlenecks and enhancing system \nperformance.',
+                first: 'Accurate configuration of receive side scaling (RSS) is essential for optimal network performance in Microsoft SQL Server \ninstances. RSS distributes network processing across multiple processors, preventing bottlenecks and enhancing system \nperformance.',
                 second: 'Recommended RSS settings:',
                 points: [
                     'Disable TCP Offloading Features: Ensure all TCP offloading features are disabled.',
@@ -380,7 +380,7 @@ export const cardDataDefault: GwCardDataInterface = {
                     'RSS Profile: Set to NUMAStatic.',
                     'Base Processor Number: Set to 2.'
                 ],
-                last: 'Following these settings will improve the performance and reliability of your MSSQL instances.'
+                last: 'Following these settings will improve the performance and reliability of your Microsoft SQL Server instances.'
             }
         },
         tags: ['Performance efficiency'],
@@ -502,11 +502,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'MAXDOP assessment recommendation',
             descriptionRssConfig: {
-                first: 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nAccurate MAXDOP configuration enhances performance and efficiency.',
-                points: [
-                    'For OLTP workloads, set MAXDOP to 8 or fewer.',
-                    'For OLAP workloads, adjust accordingly. Avoid setting MAXDOP to 0 to prevent excessive parallelism and contention.'
-                ]
+                first: 'Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. \nAccurate MAXDOP configuration enhances performance and efficiency. Setting MAXDOP to 4, 8, or 16 generally \nprovides the best results in most use cases. We recommend that you test your workload and monitor for any \nparallelism-related wait types such as CXPACKET.'
             }
         },
         tags: ['Performance efficiency']
