@@ -29,7 +29,8 @@ import {
     derivePropertiesFromARN,
     isDemo,
     decompressSSMResponse,
-    retryWithDelay
+    retryWithDelay,
+    getServerNameWithHostname
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -1876,7 +1877,10 @@ async function unmanageDatabaseInstance(
         updateLongRunningAuditGroup(
             undefined,
             undefined,
-            `${resourceDetails?.resource_name}\\${instanceDetails?.database_instance_name}`
+            getServerNameWithHostname(
+                resourceDetails?.resource_name || undefined,
+                instanceDetails?.database_instance_name
+            )
         );
 
         await deleteDatabaseInstance(accountId, credentialsId, resourceId, databaseInstanceIds);
