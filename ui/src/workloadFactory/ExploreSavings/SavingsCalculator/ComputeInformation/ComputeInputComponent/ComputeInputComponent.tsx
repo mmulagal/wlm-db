@@ -1,21 +1,27 @@
-import { DsTypography, TextField } from '@netapp/design-system';
+import { TextField } from '@netapp/design-system';
 import styles from './ComputeInputComponent.module.scss';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
 import {
-    setComputeInformation,
-    setOnPremNetworkPerformance
+    setOnPremNetworkPerformance,
+    setOnPremStorageAndComputeInfo
 } from '../../../../../store/workloadFactory/exploreSavingsSlice';
-import { formatFractionalNumber, generateOptionType } from '../../../../../utils/utilityFunctions';
-import { GIB_IN_BYTE } from '../../../../../utils/consts';
+import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
 const ComputeInputComponent = ({ data, index, printState }: any) => {
     const dispatch = useDispatch();
 
-    const [numberOfCpu, setNumberOfCpu] = useState<any>(data?.noOfVcpusInUse);
+    useEffect(() => {
+        if (data) {
+            setNumberOfCpu(data?.noOfVcpusInUse);
+            setMemory(data?.memory);
+        }
+    }, [data]);
+
+    const [numberOfCpu, setNumberOfCpu] = useState<any>(null);
 
     const [numberOfCpuSearch, setNumberOfCpuSearch] = useSearchDebounce(1000);
 
@@ -27,16 +33,18 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
     }, [numberOfCpu]);
 
     useEffect(() => {
-        dispatch(
-            setComputeInformation({
-                type: data?.sqlInstanceName,
-                mode: 'noOfVcpusInUse',
-                value: numberOfCpuSearch
-            })
-        );
+        if (numberOfCpuSearch !== null && numberOfCpuSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'noOfVcpusInUse',
+                    value: numberOfCpuSearch
+                })
+            );
+        }
     }, [numberOfCpuSearch]);
 
-    const [memory, setMemory] = useState<any>(Number(data?.memory || 0) / GIB_IN_BYTE);
+    const [memory, setMemory] = useState<any>(null);
 
     const [memorySearch, setMemorySearch] = useSearchDebounce(1000);
 
@@ -46,13 +54,15 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
     }, [memory]);
 
     useEffect(() => {
-        dispatch(
-            setComputeInformation({
-                type: data?.sqlInstanceName,
-                mode: 'memory',
-                value: memorySearch
-            })
-        );
+        if (memorySearch !== null && memorySearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'memory',
+                    value: memorySearch
+                })
+            );
+        }
     }, [memorySearch]);
 
     const generateNetworkPerfOptions = useMemo<optionType[]>((): optionType[] => {
@@ -76,11 +86,6 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
             );
         }
     }, [generateNetworkPerfOptions]);
-
-    useEffect(() => {
-        setNumberOfCpu(data?.noOfVcpusInUse);
-        setMemory(formatFractionalNumber(Number(data?.memory || 0) / GIB_IN_BYTE, 3));
-    }, [data]);
 
     return (
         <div className={styles.computeInputComponent}>

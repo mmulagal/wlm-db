@@ -2,6 +2,8 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../store/store';
 import {
     setDisableState,
+    setMonthlyChangeRate,
+    setOnPremStorageAndComputeInfoFull,
     setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
@@ -18,7 +20,11 @@ import {
     StorageSavingsInterface,
     ViewCalculationsInterface
 } from '../../utils/types/exploreSavingsType';
-import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatFractionalNumberForCost,
+    formatNumberWithCustomComma
+} from '../../utils/utilityFunctions';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -35,12 +41,47 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
 
     dispatch(setDisableState(true));
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-    dispatch(setSelectedInstanceId(''));
-    dispatch(setSelectedOnPremHostId(rowData?.resourceId));
-    dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
-    dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
-    setESInstanceOnPremData(rowData, dispatch);
+    dispatch(setMonthlyChangeRate(3));
+
+    if (rowData?.sqlServerInstances?.length) {
+        let storagePerfAndCompute: any = {};
+        rowData?.sqlServerInstances?.map((instance: any) => {
+            if (!storagePerfAndCompute?.[instance?.sqlInstanceName]) {
+                storagePerfAndCompute[instance?.sqlInstanceName] = {};
+            }
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalStorage'] = formatFractionalNumber(
+                Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalIops'] = formatFractionalNumber(
+                instance?.totalIops,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalThroughput'] = formatFractionalNumber(
+                instance?.totalThroughput,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['noOfVcpusInUse'] = instance?.noOfVcpusInUse;
+            storagePerfAndCompute[instance?.sqlInstanceName]['memory'] = formatFractionalNumber(
+                Number(instance?.memory || 0) / GIB_IN_BYTE,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceName'] = instance?.sqlInstanceName;
+            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceId'] = instance?.sqlInstanceId;
+            storagePerfAndCompute[instance?.sqlInstanceName]['networkPerformance'] =
+                rowData?.sqlServerInstances?.[0]?.networkPerformance;
+        });
+        dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+    }
+
+    setTimeout(() => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+        dispatch(setSelectedInstanceId(''));
+        dispatch(setSelectedOnPremHostId(rowData?.resourceId));
+        dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
+        dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
+        setESInstanceOnPremData(rowData, dispatch);
+    }, 500);
 };
 
 export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
