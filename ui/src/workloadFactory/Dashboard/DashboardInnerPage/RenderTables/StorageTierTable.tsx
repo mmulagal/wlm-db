@@ -124,7 +124,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         disptach(setSelectedRowsForOptimize(rowsData));
 
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData);
+            checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 

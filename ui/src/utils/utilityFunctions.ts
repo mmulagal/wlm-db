@@ -37,7 +37,11 @@ import store from '../store/store';
 import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
-import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
+import {
+    addInitialData,
+    initialDBHomepageState,
+    setSelectedRowsForOptimize
+} from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
@@ -1059,7 +1063,7 @@ function getLastXDays(val: number) {
     return dates;
 }
 
-export const checkBoxHandle = (tableData: any, rowsData: any) => {
+export const checkBoxHandle = (tableData: any, rowsData: any, dispatch: any) => {
     if (!rowsData || rowsData.length === 0) return;
 
     rowsData.forEach((row: any) => {
@@ -1071,6 +1075,7 @@ export const checkBoxHandle = (tableData: any, rowsData: any) => {
     tableData.count = 0;
     //@ts-ignore
     tableData.allSelected = false;
+    dispatch(setSelectedRowsForOptimize([]));
 };
 
 // Getting the last 7 days
