@@ -537,9 +537,9 @@ const getMappedOntapVolumesScript = (
                         SET @JSONData = (SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                         INNER JOIN sys.databases d ON mf.database_id = d.database_id
                         CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-                        WHERE vs.volume_mount_point != 'C:\\'
-                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-                        AND d.name IN ('master', 'model', 'msdb', 'tempdb')
+                        WHERE vs.volume_mount_point collate SQL_Latin1_General_CP1_CI_AS != 'C:\\'
+                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) collate SQL_Latin1_General_CP1_CI_AS = 'MDF'
+                        AND d.name collate SQL_Latin1_General_CP1_CI_AS IN ('master', 'model', 'msdb', 'tempdb')
                         FOR JSON PATH)
                         SELECT @JSONData;
 "@
@@ -557,9 +557,9 @@ const getMappedOntapVolumesScript = (
                         CROSS APPLY 
                             sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE 
-                            vs.volume_mount_point != 'C:\\'
-                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-                            AND d.name IN ('master', 'model', 'msdb', 'tempdb')
+                            vs.volume_mount_point collate SQL_Latin1_General_CP1_CI_AS != 'C:\\'
+                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) collate SQL_Latin1_General_CP1_CI_AS = 'MDF'
+                            AND d.name collate SQL_Latin1_General_CP1_CI_AS IN ('master', 'model', 'msdb', 'tempdb')
                         FOR JSON PATH)
                         SELECT @JSONData;
 "@
@@ -569,9 +569,9 @@ const getMappedOntapVolumesScript = (
                         DECLARE @JSONData nvarchar(max)
                         SET @JSONData = (SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                         CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-                        WHERE vs.volume_mount_point != 'C:\\'
-                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
-                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                        WHERE vs.volume_mount_point collate SQL_Latin1_General_CP1_CI_AS != 'C:\\'
+                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) collate SQL_Latin1_General_CP1_CI_AS = 'MDF'
+                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) collate SQL_Latin1_General_CP1_CI_AS != 'TEMPDB'
                         FOR JSON PATH)
                         SELECT @JSONData;
 "@
@@ -582,8 +582,8 @@ const getMappedOntapVolumesScript = (
                             DECLARE @JSONData nvarchar(max)
                             SET @JSONData = (SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-                            WHERE vs.volume_mount_point != 'C:\\'
-                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB'
+                            WHERE vs.volume_mount_point collate SQL_Latin1_General_CP1_CI_AS != 'C:\\'
+                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) collate SQL_Latin1_General_CP1_CI_AS != 'TEMPDB'
                             FOR JSON PATH)
                             SELECT @JSONData;
 "@
@@ -601,8 +601,8 @@ const getMappedOntapVolumesScript = (
                         CROSS APPLY 
                             sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE 
-                            vs.volume_mount_point != 'C:\\'
-                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF'
+                            vs.volume_mount_point collate SQL_Latin1_General_CP1_CI_AS != 'C:\\'
+                            AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) collate SQL_Latin1_General_CP1_CI_AS = 'MDF'
                         FOR JSON PATH)
                         SELECT @JSONData;
 "@
@@ -620,7 +620,7 @@ const getMappedOntapVolumesScript = (
                         CROSS APPLY 
                             sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE 
-                            vs.volume_mount_point != 'C:\\'
+                            vs.volume_mount_point collate SQL_Latin1_General_CP1_CI_AS != 'C:\\'
                         FOR JSON PATH)
                         SELECT @JSONData;
 "@
