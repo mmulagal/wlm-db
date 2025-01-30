@@ -121,7 +121,8 @@ const SqlServerInstanceInfo = Type.Object({
                 )
             })
         )
-    )
+    ),
+    missingSqlPermissions: Type.Optional(Type.Array(Type.String({ description: 'Missing SQL permissions' })))
 });
 
 const DiscoverResponseInfo = Type.Object({
