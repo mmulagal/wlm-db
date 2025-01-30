@@ -100,7 +100,27 @@ function handleValidationError(
             },
             ''
         );
+
+        /**
+         * In case of multiple error on same JSON node, fastify throws multiple errors for same node. next line should remove dupicates.
+         * The issue can be seen in cases where a JSON node is validated against an enum.
+         * For example: the error message:
+         * "body/assessments/0/configurationName must be equal to constant, body/assessments/0/configurationName must be equal to constant,  body/assessments/0/configurationName must match a schema in anyOf: prop1, prop2"
+         * Will be reduced to :
+         * "body/assessments/0/configurationName must be equal to constant, body/assessments/0/configurationName must match a schema in anyOf: prop1, prop2"
+         */
+        message = message
+            .split(',')
+            .map(err => err.trim())
+            .reduce((acc: string[], cur) => {
+                if (!acc.includes(cur)) {
+                    acc.push(cur);
+                }
+                return acc;
+            }, [])
+            .join(', ');
         reply.status(code).send({ message: `${message}: ${allowedValuesMessage.trim()}` });
+    } else {
+        reply.status(code).send({ message });
     }
-    reply.status(code).send({ message });
 }

@@ -101,6 +101,7 @@ interface SqlInstanceDetails {
     totalStorage?: number;
     totalSecondaryStorage?: number;
     memory?: number;
+    noOfVcpusInUse?: number;
 }
 
 interface OnPremCollectionObjectV1 {

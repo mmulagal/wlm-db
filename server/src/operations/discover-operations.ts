@@ -626,7 +626,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerDeploymentType,
                         windowsOsVersion,
                         windowsClusterName,
-                        windowsClusterNodes
+                        windowsClusterNodes,
+                        missingSqlPermissions
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -665,7 +666,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         ),
                         ...(databaseCount && { databaseCount }),
                         ...(windowsClusterName && { windowsClusterName }),
-                        ...(windowsClusterNodes && { windowsClusterNodes })
+                        ...(windowsClusterNodes && { windowsClusterNodes }),
+                        ...(missingSqlPermissions && { missingSqlPermissions })
                     });
                 }
             }
@@ -1641,6 +1643,7 @@ async function manageSqlServerV2(
         }
 
         const { count, items } = discoverDetails;
+
         if (count <= 0) {
             precheckErrorList.push(
                 'Only existing instances in running state, have Microsoft Windows as host operating system, architecture is x86_64, and hosting SQL Server 2016 above can be managed.'
@@ -1811,10 +1814,17 @@ async function manageSqlServerV2(
                         };
                         await createDatabaseInstanceConfigData([instanceConfigDataRecord]);
                     }
+
+                    let errorMessage = '';
+                    if (sqlInstanceInfo.missingSqlPermissions && sqlInstanceInfo.missingSqlPermissions?.length > 0) {
+                        errorMessage = `SQL Instance permissions ${sqlInstanceInfo.missingSqlPermissions} are required for managing the resource.`;
+                    }
+
                     itemsStatus.push({
                         databaseInstanceName: dbInst,
                         databaseInstanceGuid: serverGuid,
-                        status: 'success'
+                        status: 'success',
+                        errorMessage
                     });
                 } catch (error) {
                     itemsStatus.push({
