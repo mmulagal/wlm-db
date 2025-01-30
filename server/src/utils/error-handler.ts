@@ -103,15 +103,12 @@ function handleValidationError(
         message = message
             .split(',')
             .map(err => err.trim())
-            .reduce(
-                (acc, cur) => {
-                    if (!acc.includes(cur)) {
-                        acc.push(cur);
-                    }
-                    return acc;
-                },
-                ['Error:']
-            )
+            .reduce((acc: string[], cur) => {
+                if (!acc.includes(cur)) {
+                    acc.push(cur);
+                }
+                return acc;
+            }, [])
             .join(', ');
         reply.status(code).send({ message: `${message}: ${allowedValuesMessage.trim()}` });
     } else {
