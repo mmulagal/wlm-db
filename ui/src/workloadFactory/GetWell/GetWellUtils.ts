@@ -380,7 +380,7 @@ export const cardDataDefault: GwCardDataInterface = {
                     'RSS Profile: Set to NUMAStatic.',
                     'Base Processor Number: Set to 2.'
                 ],
-                last: 'Following these settings will improve the performance and reliability of your Microsoft SQL Server instances.'
+                last: 'Following these settings will improve the performance and reliability of your Microsoft SQL Server instances. We suggest that \nyou test the recommended settings to determine performance improvements before making changes to your production environment.'
             }
         },
         tags: ['Performance efficiency'],
