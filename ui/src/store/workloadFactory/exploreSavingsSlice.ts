@@ -441,6 +441,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualFSXIOPS = 6000;
             state.selectedManualFSXThroughput = 128;
             state.requestedPayload = {};
+            state.onPremNetworkPerformance = null;
+            state.onPremStorageAndComputeInfo = {};
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
