@@ -1022,7 +1022,7 @@ function deriveInstanceRequirements(
         }
     });
 
-    requiredVcpuCount = Math.max(requiredVcpuCount, totalCpuCount / totalSqlInstances); // Taking average of the total CPU count of all instances as the required vCPU count
+    requiredVcpuCount = Math.max(requiredVcpuCount, Math.ceil(totalCpuCount / totalSqlInstances)); // Taking average of the total CPU count of all instances as the required vCPU count
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 
     return {
