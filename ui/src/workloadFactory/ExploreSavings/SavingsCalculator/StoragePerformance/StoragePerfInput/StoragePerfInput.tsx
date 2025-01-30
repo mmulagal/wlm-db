@@ -3,18 +3,16 @@ import styles from './StoragePerfInput.module.scss';
 import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
-import { setStoragePerformance } from '../../../../../store/workloadFactory/exploreSavingsSlice';
-import { GIB_IN_BYTE } from '../../../../../utils/consts';
-import { formatFractionalNumber } from '../../../../../utils/utilityFunctions';
+import { setOnPremStorageAndComputeInfo } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 
 const StoragePerfInput = ({ data, printState }: any) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
         if (data) {
-            setTotalStorageAmount(formatFractionalNumber(Number(data?.totalStorage || 0) / GIB_IN_BYTE, 3));
-            setIOPS(formatFractionalNumber(data?.totalIops, 3));
-            setThroughput(formatFractionalNumber(data?.totalThroughput, 3));
+            setTotalStorageAmount(data?.totalStorage);
+            setIOPS(data?.totalIops);
+            setThroughput(data?.totalThroughput);
         }
     }, [data]);
 
@@ -28,13 +26,15 @@ const StoragePerfInput = ({ data, printState }: any) => {
     }, [totalStorageAmount]);
 
     useEffect(() => {
-        dispatch(
-            setStoragePerformance({
-                type: data?.sqlInstanceName,
-                mode: 'storage',
-                value: totalStorageAmountSearch
-            })
-        );
+        if (totalStorageAmountSearch !== null && totalStorageAmountSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'totalStorage',
+                    value: totalStorageAmountSearch
+                })
+            );
+        }
     }, [totalStorageAmountSearch]);
 
     const [iops, setIOPS] = useState<any>(null);
@@ -47,13 +47,15 @@ const StoragePerfInput = ({ data, printState }: any) => {
     }, [iops]);
 
     useEffect(() => {
-        dispatch(
-            setStoragePerformance({
-                type: data?.sqlInstanceName,
-                mode: 'iops',
-                value: iopsSearch
-            })
-        );
+        if (iopsSearch !== null && iopsSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'totalIops',
+                    value: iopsSearch
+                })
+            );
+        }
     }, [iopsSearch]);
 
     const [throughput, setThroughput] = useState<any>(null);
@@ -66,13 +68,15 @@ const StoragePerfInput = ({ data, printState }: any) => {
     }, [throughput]);
 
     useEffect(() => {
-        dispatch(
-            setStoragePerformance({
-                type: data?.sqlInstanceName,
-                mode: 'throughput',
-                value: throughputSearch
-            })
-        );
+        if (throughputSearch !== null && throughputSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'totalThroughput',
+                    value: throughputSearch
+                })
+            );
+        }
     }, [throughputSearch]);
 
     return (

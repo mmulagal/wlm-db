@@ -119,7 +119,7 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
 
         dispatch(setSelectedRowsForOptimize(rowsData));
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData);
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 

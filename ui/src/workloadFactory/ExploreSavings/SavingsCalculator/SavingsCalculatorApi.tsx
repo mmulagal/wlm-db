@@ -79,12 +79,10 @@ const SavingsCalculatorApi = () => {
         selectedHostDetails,
         selectedOnPremHostId,
         selectedOnPremRegion,
-        selectedOnPremHostDetails,
-        computeInformation,
-        storagePerformance,
         requestedPayload,
         requestedRegion,
-        onPremNetworkPerformance
+        onPremNetworkPerformance,
+        onPremStorageAndComputeInfo
     } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
@@ -153,26 +151,22 @@ const SavingsCalculatorApi = () => {
             };
         }
 
-        if (computeInformation) {
+        if (onPremStorageAndComputeInfo) {
             let computeInfo: any = [];
-            Object.keys(computeInformation).forEach(key => {
-                const value = computeInformation[key];
-                const storagevalue = storagePerformance?.[key];
-                let perInst = selectedOnPremHostDetails?.sqlServerInstances?.find(
-                    (inst: any) => inst?.sqlInstanceName === key
-                );
-                if (perInst) {
-                    computeInfo.push({
-                        sqlInstanceId: perInst?.sqlInstanceId,
-                        noOfVcpusInUse: value?.noOfVcpusInUse || 0,
-                        memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
-                        networkPerformance:
-                            NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || ''] || 'upTo10',
-                        totalIops: storagevalue?.iops || 0,
-                        totalThroughput: storagevalue?.throughput || 0,
-                        totalStorage: Number(storagevalue?.storage || 0) * GIB_IN_BYTE
-                    });
-                }
+            Object.keys(onPremStorageAndComputeInfo).forEach(key => {
+                const value = onPremStorageAndComputeInfo[key];
+                computeInfo.push({
+                    sqlInstanceId: value?.sqlInstanceId,
+                    noOfVcpusInUse: value?.noOfVcpusInUse || 0,
+                    memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
+                    networkPerformance:
+                        (onPremNetworkPerformance?.value
+                            ? NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || '']
+                            : value?.networkPerformance) || 'upTo10',
+                    totalIops: value?.totalIops || 0,
+                    totalThroughput: value?.totalThroughput || 0,
+                    totalStorage: Number(value?.totalStorage || 0) * GIB_IN_BYTE
+                });
             });
             if (computeInfo) {
                 payload = {
@@ -517,8 +511,7 @@ const SavingsCalculatorApi = () => {
         selectedSnapshotFrequency,
         numberOfClonedCopies,
         monthlyChangeRate,
-        computeInformation,
-        storagePerformance,
+        onPremStorageAndComputeInfo,
         selectedOnPremRegion,
         onPremNetworkPerformance
     ]);

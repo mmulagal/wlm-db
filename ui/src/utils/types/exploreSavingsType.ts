@@ -9,10 +9,8 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
-    storagePerformance: any;
     onPremiseData: any;
     onPremiseDataLoading: boolean;
-    computeInformation: any;
     selectedExploreSavingsTab: string;
     selectedManualFSXThroughput: number;
     selectedManualFSXIOPS: number;
@@ -81,6 +79,7 @@ export interface ExploreSavingsSliceEntities {
     storageSavingsOnPremResponse: any;
     storageSavingsOnPremLoading: boolean;
     onPremNetworkPerformance: any;
+    onPremStorageAndComputeInfo: any;
 }
 
 export interface StorageSavingsInterface {

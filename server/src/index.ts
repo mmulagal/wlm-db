@@ -111,7 +111,7 @@ interface Headers {
 
 await initiateSecrets();
 logger.info('Secrets initiated');
-
+logger.info('=========ALL ENV VARIABLES=========', process.env);
 logger.info('Initializing app');
 const app = fastify({
     trustProxy: true,
