@@ -995,19 +995,24 @@ function deriveInstanceRequirements(
     const totalSqlInstances = sqlInstancesDetails.length;
     logger.info('Deriving Instance Requirements', { sqlInstancesDetails: totalSqlInstances });
 
-    let requiredVcpuCount = 4;
     let requiredMemory = 8192; // 8 GiB as minimum memory requirement for database workloads
 
     let networkPerformance = NETWORK_PERF.UP_TO_10;
 
-    let totalCpuCount = 0;
     let totalMemory = 0;
+    let maxVcpuCount = 4;
+    let minVcpuCount = 4;
     sqlInstancesDetails.forEach(sqlInstance => {
         try {
             const { noOfVcpusInUse, cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
-            totalCpuCount +=
+            const vcpusUsed =
                 noOfVcpusInUse ||
                 Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
+
+            // Taking the maximum and minimum vCPU count of all instances as the required vCPU count
+            maxVcpuCount = Math.max(maxVcpuCount, noOfVcpusInUse ?? 4);
+            minVcpuCount = Math.min(Math.max(vcpusUsed, minVcpuCount), noOfVcpusInUse ?? 4);
+
             // Assuming memUtilization is a JSO N string with memory details
             const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
             totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
@@ -1022,14 +1027,13 @@ function deriveInstanceRequirements(
         }
     });
 
-    requiredVcpuCount = Math.max(requiredVcpuCount, Math.ceil(totalCpuCount / totalSqlInstances)); // Taking average of the total CPU count of all instances as the required vCPU count
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 
     return {
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: requiredVcpuCount },
+            VCpuCount: { Min: minVcpuCount, Max: maxVcpuCount },
             MemoryMiB: { Min: requiredMemory },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
             AllowedInstanceTypes: ['m*', 'c*', 'r*'],
