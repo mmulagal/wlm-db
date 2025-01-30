@@ -339,7 +339,7 @@ async function getStorageSavingsResponse(
     });
     const currentInstanceType = await deriveHostConfigBasedInstanceType(region, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
     const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
-    const { currentLicenseEdition, recommendedLicenseEdition, finding } = getLicenseRecommendations(instances);
+    const { currentLicenseEdition, recommendedLicenseEdition, finding } = getOnpremLicenseRecommendations(instances);
 
     if (!currentInstanceType || !recommendedInstanceType) {
         throw createError(
@@ -1051,24 +1051,23 @@ function deriveInstanceRequirements(
 }
 
 // This approach assumes that if any of the features are being used in any one of the SQL server instance, it is considered as using an enterprise feature.
-function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Getting license recommendations', { sqlInstancesDetails: sqlInstancesDetails.length });
+function getOnpremLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
+    logger.info('Getting onprem license recommendations', { sqlInstancesDetails: sqlInstancesDetails.length });
 
     const enterpriseUsageResults = compact(
         sqlInstancesDetails.map((instance: SqlInstanceDetails) => {
             try {
-                const { licenceUsageDetails, sqlVersion } = instance;
-                const sqlVersionStr = parseSqlVersion(sqlVersion || '') || '';
-                if (sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)) {
+                const { licenceUsageDetails, sqlEdition } = instance;
+                if (sqlEdition && isNonFreeEnterpriseEdition(sqlEdition)) {
                     const licenseFeatures = parseLicenceUsageDetails(licenceUsageDetails);
                     if (
                         licenseFeatures &&
                         licenseFeatures.some(({ IsUsingFeature }: { IsUsingFeature: number }) => IsUsingFeature === 1)
                     ) {
-                        return { sqlVersionStr, isUsingAnyEnterpriseFeature: true };
+                        return { sqlEdition, isUsingAnyEnterpriseFeature: true };
                     }
                 }
-                return { sqlVersionStr, isUsingAnyEnterpriseFeature: false };
+                return { sqlEdition, isUsingAnyEnterpriseFeature: false };
             } catch (error) {
                 logger.error(
                     `Error getting license recommendations for SQL instance ${instance.sqlInstanceName}`,
@@ -1079,19 +1078,13 @@ function getLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails[]) {
         })
     );
 
-    logger.info('>>ENTERPRISE USAGE RESULTS', enterpriseUsageResults);
-
-    const currentLicenseEdition = enterpriseUsageResults.some(
-        ({ sqlVersionStr }) => sqlVersionStr && isNonFreeEnterpriseEdition(sqlVersionStr)
-    )
-        ? ENTERPRISE_EDITION
-        : STANDARD_EDITION;
+    const [{ sqlEdition: currentLicenseEdition = STANDARD_EDITION }] = sqlInstancesDetails || {};
     const isUsingEnterpriseFeature = enterpriseUsageResults.some(
         ({ isUsingAnyEnterpriseFeature }) => isUsingAnyEnterpriseFeature
     );
     const recommendedLicenseEdition = isUsingEnterpriseFeature ? ENTERPRISE_EDITION : STANDARD_EDITION;
     const finding =
-        currentLicenseEdition === ENTERPRISE_EDITION && !isUsingEnterpriseFeature
+        isNonFreeEnterpriseEdition(currentLicenseEdition) && !isUsingEnterpriseFeature
             ? FINDING.NOT_OPTIMIZED
             : FINDING.OPTIMIZED;
     return { currentLicenseEdition, recommendedLicenseEdition, finding };
@@ -1341,7 +1334,7 @@ export {
     groupSqlServerInstancesByDeploymentType,
     deriveEbsVolumesListForMarketing,
     deriveSqlUsageBasedInstanceType,
-    getLicenseRecommendations,
+    getOnpremLicenseRecommendations,
     deriveInstanceRequirements,
     getOnPremResourceExploreSavings,
     saveReportInReportingRegistry
