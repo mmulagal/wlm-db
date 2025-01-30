@@ -769,6 +769,7 @@ function getSubJobDescriptions(dbEngineType: string) {
 
     const subJobDescriptions: SubJobDescriptions = {
         SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        PGSQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
         SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
         NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
         ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
