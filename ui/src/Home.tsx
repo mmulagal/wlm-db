@@ -104,7 +104,7 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                         />
                         <Route
-                            path={'/databases/storage-saving-calculator?type=ebs&mode=manual'}
+                            path={'/databases/storage-saving-calculator'}
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                         />
                         <Route
