@@ -293,7 +293,7 @@
           "existing": {
               "hoursInMonth": 730,
               "licenseIncluded": true,
-              "sqlServerEdition": "Standard Edition",
+              "sqlServerEdition": "Enterprise Edition",
               "licenseHourlyPrice": 0.6900000000000001,
               "licenseMonthlyPrice": 1503.7
           },
