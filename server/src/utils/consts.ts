@@ -1515,6 +1515,8 @@ const PGSQL_CW_CONFIG = `{
                                 }
 `;
 
+const SQL_CASE_INSENSITIVE = 'collate SQL_Latin1_General_CP1_CI_AS';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1835,5 +1837,6 @@ export {
     AWS_ERROR_CODES,
     CF_STACK_COUNT_QUOTACODE,
     DATABASE_INSTANCE_INDEX_MAPPING,
-    PGSQL_CW_CONFIG
+    PGSQL_CW_CONFIG,
+    SQL_CASE_INSENSITIVE
 };

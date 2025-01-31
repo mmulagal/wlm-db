@@ -1,3 +1,5 @@
+import { SQL_CASE_INSENSITIVE } from '../../../utils/consts';
+
 const SET_NOCOUNT = 'SET NOCOUNT ON;';
 const FOR_JSON_PATH = 'FOR JSON PATH';
 
@@ -50,11 +52,11 @@ const MEMORY_UTILISATION = `${SET_NOCOUNT} SELECT
                                     ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
                                     FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem ${FOR_JSON_PATH}`;
 
-const SERVER_GUID = `${SET_NOCOUNT} SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb' ${FOR_JSON_PATH}`;
+const SERVER_GUID = `${SET_NOCOUNT} SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name ${SQL_CASE_INSENSITIVE} = 'msdb' ${FOR_JSON_PATH}`;
 
 const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
 
-const SERVER_INSTALL_DATE = `${SET_NOCOUNT} SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' ${FOR_JSON_PATH}`;
+const SERVER_INSTALL_DATE = `${SET_NOCOUNT} SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name ${SQL_CASE_INSENSITIVE} = N'NT AUTHORITY\\SYSTEM' OR name ${SQL_CASE_INSENSITIVE} = N'NT AUTHORITY\\NETWORK SERVICE' ${FOR_JSON_PATH}`;
 const SERVER_PROPERTIES = ` ${SET_NOCOUNT} SELECT SERVERPROPERTY('Edition') AS ServerEdition, SERVERPROPERTY('IsClustered') as isClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, @@version AS serverDetails, @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
 const CLUSTER_NODES = `${SET_NOCOUNT} SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes ${FOR_JSON_PATH}`;
 const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
@@ -111,7 +113,7 @@ const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
     ON backupset.media_set_id = backupmedia.media_set_id
     WHERE backupmedia.device_type = 2
-    AND backupset.type = 'D' ${FOR_JSON_PATH}
+    AND backupset.type ${SQL_CASE_INSENSITIVE} = 'D' ${FOR_JSON_PATH}
 `;
 
 // Since TempDB is recreated every time, we can use that to calculate the our start up time hence database_id=2
@@ -173,7 +175,7 @@ const SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
     ON backupset.media_set_id = backupmedia.media_set_id
     WHERE backupmedia.device_type = 2
-    AND backupset.type = 'D' ${FOR_JSON_PATH}
+    AND backupset.type ${SQL_CASE_INSENSITIVE} = 'D' ${FOR_JSON_PATH}
 `;
 
 // Fetching the default data and log drives of the SQL server
@@ -213,7 +215,7 @@ const SERVER_DETAILS = `
         SERVERPROPERTY('Collation') AS ServerCollation
         ${FOR_JSON_PATH}`;
 
-const INSTANCE_GUID = `${SET_NOCOUNT} SELECT [service_broker_guid] as instance_guid FROM sys.databases WHERE [name] = N'msdb' ${FOR_JSON_PATH}`;
+const INSTANCE_GUID = `${SET_NOCOUNT} SELECT [service_broker_guid] as instance_guid FROM sys.databases WHERE [name] ${SQL_CASE_INSENSITIVE} = N'msdb' ${FOR_JSON_PATH}`;
 
 const ENTERPRISE_CHECK_QUERY = ` ${SET_NOCOUNT} IF(SELECT CASE WHEN CONVERT(sysname, SERVERPROPERTY('EngineEdition')) = '3' THEN 1 ELSE 0 END )=1
     BEGIN
@@ -323,7 +325,7 @@ const GET_SANDBOXES = `${SET_NOCOUNT}
 `;
 
 const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
-        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'ROWS'  FOR JSON AUTO`;
+        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc ${SQL_CASE_INSENSITIVE} = 'ROWS'  FOR JSON AUTO`;
 
 const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         SELECT 
@@ -336,7 +338,7 @@ const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         CROSS APPLY 
             sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
             
-        WHERE mf.name = 'master'
+        WHERE mf.name ${SQL_CASE_INSENSITIVE} = 'master'
         
         ORDER BY 
             dataDriveLetter ${FOR_JSON_PATH}
@@ -371,7 +373,7 @@ const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
 `;
 
 const INSTANCE_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
-        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'LOG'  FOR JSON AUTO`;
+        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc ${SQL_CASE_INSENSITIVE} = 'LOG'  FOR JSON AUTO`;
 
 const INSTANCE_TEMPDB_DRIVES_QUERY = `${SET_NOCOUNT}
         SELECT DISTINCT(SELECT LEFT(physical_name, 1))FROM tempdb.sys.database_files;`;
@@ -390,7 +392,7 @@ const INSTANCE_USER_DB_DRIVE_SIZES = `
         CROSS APPLY 
             sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
         WHERE 
-            d.database_id > 4 or d.name like '%msdb%'
+            d.database_id > 4 or d.name ${SQL_CASE_INSENSITIVE} like '%msdb%'
         ORDER BY 
             d.name ${FOR_JSON_PATH}`;
 
@@ -408,7 +410,7 @@ const INSTANCE_LOG_DB_DRIVE_SIZES = `
             CROSS APPLY 
                 sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
             WHERE 
-                d.database_id > 4 or d.name like '%msdb%'
+                d.database_id > 4 or d.name ${SQL_CASE_INSENSITIVE} like '%msdb%'
             ORDER BY 
                 d.name ${FOR_JSON_PATH}`;
 
