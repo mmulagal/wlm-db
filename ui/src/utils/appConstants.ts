@@ -28,6 +28,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
     MICROSOFT_SQL: 'Microsoft SQL',
@@ -670,6 +671,8 @@ export const GENERAL = {
     DB_CREATE_INSTANCE: 'Instance:',
     CREATE: 'Create',
     CREATE_TEMPLATE: 'Create template',
+    ONPREM_CREATE_TEMPLATE_DISABLE:
+        'This configuration is not supported by our deployment wizard. Manual deployment is possible.',
     DB_CREATE_NOTIFICATION: ['Creation of ', ' in ', ' is in progress. Track progress in '],
     SANDBOX_ACTIONS_NOTIFICATIONS: {
         IN_PROGRESS: {
@@ -1044,7 +1047,7 @@ export const GENERAL = {
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
     SAVINGS_HEADER: 'Microsoft SQL Server on Amazon Elastic Block Store (EBS) configuration.',
     SAVINGS_HEADER_FSX: 'Microsoft SQL Server on FSx for Windows configuration',
-    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on On-Premises configuration',
+    SAVINGS_ONPREM_HEADER: 'Microsoft SQL Server on-premises configuration',
     SAVINGS_MANUAL_TEXT:
         ' Select a Microsoft SQL Server on Amazon EC2 with EBS configuration so that we can compare your costs when using Microsoft SQL Server on FSx for ONTAP instead',
     SAVINGS_MANUAL_FSXW_TEXT:
@@ -1112,7 +1115,8 @@ export const GENERAL = {
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
     TEMPDB_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned tempDB drive size can not be optimized',
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
-    NOT_OPTIMIZED_SHARED_DRIVES: 'System is using shared drives for data and log files',
+    NOT_OPTIMIZED_SHARED_DRIVES:
+        'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
     ASSESSMENT_IN_PROGRESS: 'Assessment is still in progress.',
     ASSESSMENT_FOR_MANAGE: 'Optimization assessment is only supported for managed instances.',
     FSXN_OPTIMIZE_SUPPORTED:
@@ -1216,18 +1220,24 @@ export const GENERAL = {
     OS_NOTE_POINT_TWO:
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
+    SQL_COLLATION_NOTE:
+        'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
     OPTIMIZATION_NOT_SUPPORTED: 'Coming soon',
-    OPTIMIZATION_IN_PROGRESS: 'You’ll be able to optimize after the current optimization operation ends.',
+    OPTIMIZATION_IN_PROGRESS: 'You/’ll be able to optimize after the current optimization operation ends.',
     ONPREM_TOOLTIP:
         'The migration advisor SQL Server data collector is a lightweight data collection tool which is based on PowerShell. It gathers both SQL Server configuration and performance data for the most accurate plan design.',
     CLEAR_ALL: 'Clear all',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    RSS_CONFIGURATION: 'Network adapter settings',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
+    MICROSOFT_SQL_PATCH: 'Microsoft SQL Server patch',
+    MAXDOP_PATCH: 'MAXDOP',
     RIGHTSIZING_TOOLTIP:
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
-    APPLICATION_SQL_SERVER: 'Application (SQL Server)',
+    LICENSE_SQL_SERVER: 'License',
+    APPLICATION: 'Application (SQL Server)',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
-        'Total managed instances include only those whose assessment has been completed and are currently online.'
+        "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };
 
 export const CODE_VIEWER = {
@@ -1335,5 +1345,9 @@ export const GETWELL_DIALOG_CONTENT = {
         'This process will require a temporary downtime of your SQL Server EC2 instance. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
         'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
     ],
-    COMPUTE_RS_LAST_POINT: 'This action will impact all SQL instances and any other application running on the host.'
+    COMPUTE_RS_LAST_POINT: [
+        'Compute rightsizing optimization involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
+        'AWS resize limitations',
+        ' for limitations on changing instance types.'
+    ]
 };

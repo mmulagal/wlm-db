@@ -1,13 +1,15 @@
 import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
-    DEFAULT_DATA_DRIVE_SIZE,
+    COMPUTE_OPTIMIZE_LOG_PATH,
+    DISCOVER_OPERATION_LOG_PATH,
+    SIZING_OPERATIONS_LOG_PATH,
+    STORAGE_ASSESSMENT_LOG_PATH
+} from './const';
+import {
     INSTANCE_DATA_DRIVES_QUERY,
-    INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
-    INSTANCE_DEFAULT_LOG_DRIVES_QUERY,
     INSTANCE_LOG_DB_DRIVE_SIZES,
     INSTANCE_LOG_DRIVES_QUERY,
-    INSTANCE_TEMPDB_DRIVES_QUERY,
     INSTANCE_USER_DB_DRIVE_SIZES,
     TEMPDB_DRIVE_SIZE
 } from './queries';
@@ -15,13 +17,16 @@ import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './s
 
 const GET_ONTAP_LUN_DETAILS = (params: OntapRequestParams) => `
 #Get ONTAP LUN details Script
+Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue';
 $FSxID = '${params.fsxId}'
 $FSxRegion = '${params.region}'
 $apiEndpoint = '${params.apiEndpoint}'
+Write-Information "Getting LUN details for FSxID: $FSxID, FSxRegion: $FSxRegion"
 ${ontapRestRequest}
 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
 $ontapResponse | ConvertTo-Json
+Stop-Transcript | Out-Null
 `;
 
 const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
@@ -50,7 +55,7 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             join sys.databases db
             on db.database_id = mf.database_id
             CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-            where db.database_id > 4
+            where db.database_id > 4 or db.name = 'msdb'
             FOR JSON PATH)
             SELECT @JSON
             ;
@@ -103,7 +108,6 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             return $responseObject
         }
     
-        ${ontapRestRequest}
         Function Get-LunFromSerialNumber($responseObject) {
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
     
@@ -174,14 +178,23 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
         if($sqlAuthEnabled) {
             ${readSsmParameter(instanceRecord.name)}
         }
-        ${slqcmdExecutionTemplate}
+
         $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
         $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
-        $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
 
-        if([string]::IsNullOrEmpty($combinedResponse)) {
-            throw "No user databases found."
+         if(([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") -and ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL")) { 
+            throw "Unable to fetch details of user databases and tempdb"
         }
+        elseif([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") {
+            $combinedResponse = ($queryResponseForTempDb | ConvertFrom-Json) | ConvertTo-Json
+        }
+        elseif ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL") {
+            $combinedResponse = ($queryResponse | ConvertFrom-Json) | ConvertTo-Json
+        }
+        else {
+            $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
+        }
+        
         $responseObject = Get-SerialNumberOfWinVolumes $combinedResponse
         $responseObject = Get-LunFromSerialNumber $responseObject
        
@@ -230,7 +243,6 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
         $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
     }
 
-    ${slqcmdExecutionTemplate}
     
     if($sqlAuthEnabled) {
         ${readSsmParameter(instance)}
@@ -238,54 +250,69 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     
     ${INSTANCE_NETAPP_DRIVES}
     
-    $instanceDefaultDataDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName" 
-
+    # Get all data drives and check if they are NetApp drives
     $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceDrivesList = @()
     $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
     $netappDataDrives = Get-MappedDrives  $instanceDrivesList
-
-    $instanceDefaultLogDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DEFAULT_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-
+    Write-Information "NetApp data drives: $netappDataDrives"
+    
+    # Get all log drives and check if they are NetApp drives
     $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceDrivesList = @()
     $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
     $netappLogDrives = Get-MappedDrives  $instanceDrivesList
+    Write-Information "NetApp log drives: $netappLogDrives"
 
     $instanceAllDataDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_USER_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     $instanceAllLogDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
     
+    $allDriveDetails = @()
     foreach ($dataDrive in $instanceAllDataDrivesSizes) {
         if($netappDataDrives -contains $dataDrive.dataDriveLetter) {
-            $logDrive = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq $dataDrive.databaseName }
-            if (($logDrive) -and ($netappLogDrives -contains $logDrive.logDriveLetter)) {
-                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
-                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
-                $dataDrive | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
+            $logDrives = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq $dataDrive.databaseName }
+            if ($logDrives) {
+                if(-Not ($logDrives -is [array])) {
+                    $logDrives = @($logDrives)
+                }
+                foreach ($logDrive in $logDrives) {
+                    if ($netappLogDrives -notcontains $logDrive.logDriveLetter) {
+                        continue
+                        }
+                    $driveObject = New-Object PSObject
+                    #Copy each property from the source object to the new object
+                    foreach ($property in $dataDrive.PSObject.Properties) {
+                        $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
+                    }
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveLetter" -Value $logDrive.logDriveLetter 
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "logDrivePath" -Value $logDrive.logDrivePath
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "logDriveTotalSizeMB" -Value $logDrive.logDriveTotalSizeMB
+                    $allDriveDetails += $driveObject
+                }
                 }
             } 
         }
     
-    $instanceTempdbDrivedetails =  Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_TEMPDB_DRIVES_QUERY}" -InstanceName "$instanceServiceName"
-    $defaultDataDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${DEFAULT_DATA_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
-    $defaultTempDBDriveSize = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
-    foreach ($drive in $defaultTempDBDriveSize) {
-        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveSize.dataDriveLetter 
-        $drive | Add-Member -MemberType NoteProperty -Name "dataDriveTotalSizeMB" -Value $defaultDataDriveSize.dataDriveTotalSizeMB
+    $defaultDataDriveDetails = $instanceAllDataDrivesSizes | Where-Object { $_.databaseName -eq 'msdb' }
+    $defaultLogDriveDetails = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq 'msdb' }
+    $defaultTempDBDriveDetails = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    foreach ($drive in $defaultTempDBDriveDetails) {
+        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveDetails.dataDriveLetter 
+        $drive | Add-Member -MemberType NoteProperty -Name "dataDriveTotalSizeMB" -Value $defaultDataDriveDetails.dataDriveTotalSizeMB
     }
 
     $defaultDataDrive = 'shared-drive'
-    if(($instanceDefaultDataDrivedetails -notcontains $instanceDefaultLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultDataDrivedetails )) {
+    if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
     $defaultDataDrive = 'separate-drive'
     }
     
     $defaultLogDrive = 'shared-drive'
-    if(($instanceDefaultDataDrivedetails -notcontains $instanceDefaultLogDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultLogDrivedetails )) {
+    if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter )) {
     $defaultLogDrive = 'separate-drive'
     }
     
     $tempdbDrive = 'shared-drive'
-    if(($instanceTempdbDrivedetails -notcontains $instanceDefaultDataDrivedetails) -and ($instanceTempdbDrivedetails -notcontains $instanceDefaultLogDrivedetails)) {
+    if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
     $tempdbDrive = 'separate-drive'
     }
 
@@ -367,6 +394,18 @@ function Test-IscsiSessions {
 
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     `#Get Storage Configuration Assessment
+
+    ${slqcmdExecutionTemplate}
+
+    # Define the path of the directory you want to create
+    $LogFilesPath = "C:\\cfn\\log"
+    # Check if the directory exists
+    if (-not (Test-Path -Path $LogFilesPath -PathType Container)) {
+        New-Item -Path $LogFilesPath -ItemType Directory
+    } 
+    
+    Start-Transcript -Path ${STORAGE_ASSESSMENT_LOG_PATH} -Append | Out-Null
+
     $DriftAssessmentData = @{}
     $DriftAssessmentData['errors'] = @{}
     $sqlInstance = "${instanceRecord.name}"
@@ -379,23 +418,24 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
 
+    Write-Information "Getting storage configuration assessment for FSxID: $FSxID, FSxRegion: $FSxRegion, SqlInstance: $sqlInstance"
+
     # Build sql instance service name
     $instanceServiceName = "$env:COMPUTERNAME"
     if ($sqlInstance -ne 'MSSQLSERVER') {
         $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
     }
+    Write-Information "SQL Service Instance Name: $instanceServiceName"
 
-    $DriftAssessmentData['filesystemId'] = $FSxID
-    
     ${ontapRestRequest}
 
-
+    $DriftAssessmentData['filesystemId'] = $FSxID
     $APIEndpoint = '/storage/volumes'
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
     $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
     
-    
     # Volume details
+    Write-Information "Getting ONTAP volume details for UUIDs: $MappedVolumeUuids"
     try{
         if([string]::IsNullOrEmpty($MappedVolumeUuids)) {
             throw "Unable to fetch ONTAP volumes details as the mapped volume UUIDs are either null or empty."
@@ -429,14 +469,20 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $SvmNames += $perVolumeData.svm.name
         }
         $DriftAssessmentData['volumes'] = @($($VolumeList))
-    } catch {$DriftAssessmentData['errors']['volumes'] = $_.Exception.Message}
+    } catch {
+     Write-Information "Error occurred while fetching ONTAP volume details. Error: $_.Exception.Message"
+     $DriftAssessmentData['errors']['volumes'] = $_.Exception.Message
+     }
     
     # Volume footprint details
     $SvmNamesWithDelimiter = $SvmNames -join '|'
     $APIEndpoint = '/private/cli/volume/show-footprint'
     $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
     $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
-
+    
+    Write-Information "Getting ONTAP volume footprint details for volumes: ${instanceRecord.mappedVolumeNames?.join(
+        '|'
+    )}"
     try{
         if([string]::IsNullOrEmpty($MappedVolumeNames)) {
             throw "Unable to fetch ONTAP volumes details as the mapped volume names are either null or empty."
@@ -446,21 +492,24 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
         $isPerformanceTier100Percent = $true
         # loop through each volume and get data
-        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent
+        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
         foreach ($perVolumeData in $Volumes) {
         if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
                 $isPerformanceTier100Percent = $false
                 break
         }
         }
-    } catch {$DriftAssessmentData['errors']['sizing'] = $_.Exception.Message}
+    } catch {
+      Write-Information "Error occurred while fetching ONTAP volume footprint details. Error: $_.Exception.Message"
+     $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
+     }
     
    
     # Lun details
     $APIEndpoint = '/storage/luns'
     $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
     $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
-    
+    Write-Information "Getting ONTAP LUN details for LUNs: ${instanceRecord.mappedLunNames?.join('|')}"
     try{
         if([string]::IsNullOrEmpty($MappedLunNames)) {
             throw "Unable to fetch ONTAP lun details as the mapped lun names are either null or empty."
@@ -482,35 +531,57 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $LunsList += $($perLunRow)
         }
         $DriftAssessmentData['luns'] = @($($LunsList))
-    } catch {$DriftAssessmentData['errors']['luns'] = $_.Exception.Message}
+    } catch {
+     Write-Information "Error occurred while fetching ONTAP LUN details. Error: $_.Exception.Message"
+     $DriftAssessmentData['errors']['luns'] = $_.Exception.Message
+     }
     
 
     # gather storage layout data
+    Write-Information "Gathering storage layout data"
+    $consolidatedDriveDetails = @()
     try{
         ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
 
         ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
         
-        foreach ($drive in $instanceAllDataDrivesSizes) {
+        $consolidatedDriveDetails = @()
+        foreach ($drive in $allDriveDetails) {
             $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
+            $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
+            # Case when database has multiple drives
+            if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
+            $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0) {$_.accessPaths[0]} }
             if ($logVolumeLunDetails) {
-                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetails.ontapVolumeUuid 
-                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetails.ontapVolumeName
-                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetails.lunUuid
-                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetails.svmName
-                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetails.diskNumber
-                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetails.lunSerialNumber
-                if($logVolumeLunDetails.accessPaths -and $logVolumeLunDetails.accessPaths.Count -gt 0) {
-                    $drive | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetails.accessPaths[0]
+                if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
+                foreach($logVolumeLunDetail in $logVolumeLunDetails) {
+                    
+                    $driveObject = New-Object PSObject
+                    # Copy each property from the source object to the new object
+                    foreach ($property in $drive.PSObject.Properties) {
+                        $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
+                        }
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetail.svmName
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetail.diskNumber
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetail.lunSerialNumber
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths        
+                    if($logVolumeLunDetail.accessPaths -and $logVolumeLunDetail.accessPaths.Count -gt 0) {
+                        $driveObject | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetail.accessPaths[0]
+                        }
+                    $consolidatedDriveDetails += $driveObject
                     }
                 }
-            $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }
-            if($dataVolumeLunDetails -and $dataVolumeLunDetails.accessPaths -and $dataVolumeLunDetails.accessPaths.Count -gt 0) {
-                $drive | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataVolumeLunDetails.accessPaths[0]         
-                }   
+            else {
+                $consolidatedDriveDetails += $drive
+                }
             }
+            
+            
         
-        foreach ($drive in $defaultTempDBDriveSize) {
+        foreach ($drive in $defaultTempDBDriveDetails) {
             $tempdbVolumeLunDetails = $responseObject.tempDb
             if ($tempdbVolumeLunDetails) {
                 $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $tempdbVolumeLunDetails.ontapVolumeUuid 
@@ -531,8 +602,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         
         $DriftAssessmentData['sizing'] = @{
                                         'performance-tier' = @($PerformanceTierPercent);
-                                        'data-log-drive-details' = @($($instanceAllDataDrivesSizes));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveSize);
+                                        'data-log-drive-details' = @($($consolidatedDriveDetails));
+                                        'data-tempdb-drive-details' = $($defaultTempDBDriveDetails);
                                         }
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
@@ -575,6 +646,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         } catch {$DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message}
     
     try{
+        $filteredDataDrives = $instanceAllDataDrivesSizes | ForEach-Object -MemberName dataDriveLetter
+        $filteredLogDrives = $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
         $AllDrives = $($filteredDataDrives; $filteredLogDrives)
         $AllDrives = $AllDrives | select -Unique
         $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
@@ -596,13 +669,15 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
 const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     #Storage Optimization Script
+    Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
+
     $WarningPreference = 'SilentlyContinue';
     $FSxID = '${params.fsxId}'
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
     $apiBody = '${params.apiBody}'
-
+    Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
     $newBody = $apiBody | ConvertFrom-Json
@@ -613,6 +688,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
 
     $ontapResponse | ConvertTo-Json
     
+    Stop-Transcript | Out-Null
 `;
 
 const RESCAN_EXTEND_LUN = (diskSerialNumber: string) => `
@@ -651,6 +727,7 @@ Write-Output $jsonResult
 `;
 
 const CHECK_NODE_STATUS = (nodeName: string) => `
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     #Check Node Status
     Function Check-NodeStatus {
         param (
@@ -662,16 +739,20 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
             # Get the specific cluster node
             $node = Get-ClusterNode -Name $NodeName
             
+            Write-Information "Testing connection to node $NodeName"
             # Check if the node is "Up" and Test-Connection succeeds
             if ($node.State -eq "Up" -and (Test-Connection -ComputerName $NodeName -Count 1 -Quiet)) {
                 $result = @{ status = 'success' }
             } else {
                 $result = @{ status = 'failed' }
+                Write-Information "Failed to connect to node $NodeName"
             }
         } catch {
             # Handle any errors that occur
+            Write-Error "Error occurred while checking node status: $_.Exception.Message"
             $result = @{ status = 'failed'; error = $_.Exception.Message }
         } finally {
+            Stop-Transcript | Out-Null
             # Convert the result to JSON
             $result | ConvertTo-Json -Compress
         }
@@ -682,6 +763,7 @@ const CHECK_NODE_STATUS = (nodeName: string) => `
 
 const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
 #Move Cluster Groups
+Start-Transcript -Path ${COMPUTE_OPTIMIZE_LOG_PATH} -Append | Out-Null
 Function Move-AllClusterGroups {
     param (
         [Parameter(Mandatory = $true)]
@@ -695,6 +777,7 @@ Function Move-AllClusterGroups {
         $clusterGroups = Get-ClusterGroup
         
         # Iterate over each cluster group
+        Write-Information "Moving cluster groups to node $TargetNodeName"
         $clusterGroups | ForEach-Object {
             if ($_.Name -match "SQL Server") {
                 $clusterGroupName = $_.Name
@@ -711,15 +794,19 @@ Function Move-AllClusterGroups {
                     # Update status and error in case of failure
                     $groupResult.status = 'failed'
                     $groupResult.error = $_.Exception.Message
+                    Write-Error "Error occurred while moving cluster group $clusterGroupName: $_.Exception.Message"
                 }
+                Write-Information "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
                 # Add group result to result array
                 $result += $groupResult
             }
         }
     } catch {
         # Handle any errors that occur
+        Write-Error "Error occurred while moving cluster groups: $_.Exception.Message"
         $result = @(@{ status = 'failed'; error = $_.Exception.Message })
     } finally {
+        Stop-Transcript | Out-Null
         # Convert the result to JSON and output
         $jsonResult = $result | ConvertTo-Json -Compress
         Write-Output $jsonResult
@@ -731,10 +818,120 @@ Write-Output $jsonResult
 
 const GET_CLUSTER_NODE_NAMES = () => `
     #Get cluster node names 
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $currentNode = hostname
     $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name;
     $ownerNode = (Get-ClusterGroup -Name 'SQL Server*').OwnerNode | Select-Object -ExpandProperty Name;
     @{currentNode= $currentNode;clusterNodes = $clusterNodes;ownerNode = $ownerNode;} | ConvertTo-Json
+    Write-Information "Cluster nodes: $clusterNodes with owner node: $ownerNode"
+    Stop-Transcript | Out-Null
+
+`;
+
+const GET_RSS_CONFIG_DETAILS = () => `
+    #Get RSS Configuration Details
+
+    $rssAdapters = Get-NetAdapterRss
+    $result = @()
+
+    foreach ($rssAdapter in $rssAdapters) {
+        $result += [PSCustomObject]@{
+            adapterName = $rssAdapter.Name
+            rssEnabled = $rssAdapter.Enabled
+            rssProfile = $rssAdapter.Profile -as [string]
+            baseProcessorNumber = $rssAdapter.BaseProcessorNumber
+            numberOfReceiveQueues = $rssAdapter.NumberOfReceiveQueues
+        }
+    }
+
+    $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+    $tcpOffloadState = (Get-NetOffloadGlobalSetting).Chimney
+
+    # Combine the results
+    $result = [PSCustomObject]@{
+        adapters = $result
+        vcpuCount = $vcpus
+        tcpOffloadState = $tcpOffloadState -as [string]
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
+const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+    $result = @{}
+    try {
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.WaitForStatus('Running', '00:00:20')
+
+        $SQLService = Get-Service -Name "${serviceName}"
+        if ($SQLService.Status -eq 'Running') { 
+            $result = @{ status = $SQLService.Status }
+            return
+        }
+
+        $SQLService.Start()
+        
+        $SQLService.WaitForStatus('Running', '00:00:20')
+        $result = @{ status = (Get-Service -Name "${serviceName}").Status }
+    } catch {
+        $result = @{ status = 'failed'; error = $_.Exception.Message }
+    } finally {
+        $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Output $jsonResult
+    }
+`;
+
+const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
+    # Get vCPU and MAXDOP Details
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+
+ 
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+         
+    }
+
+    ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+
+    $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
+    $maxDopResult = Call-SqlCmd -SqlCredential $sqlCredential -Query "sp_configure 'max degree of parallelism'" -InstanceName "$ServerInstanceName"
+
+    # Initialize maxDop to 0
+    $maxDop = "0"
+
+    # Check if maxDopResult is not empty and parse the result to extract the run_value
+    if ($maxDopResult) {
+        $maxDop = $maxDopResult | Select-String -Pattern 'max degree of parallelism' | ForEach-Object {
+            if ($_ -match '(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)') {
+                $matches[4]
+            }
+        } | Select-Object -First 1
+    }
+
+    # Check if maxDop is empty or null, set to 0 if it is
+    if (-not $maxDop) {
+        $maxDop = "0"
+    }
+
+    $result = [PSCustomObject]@{
+        vcpuCount = $vcpus
+        maxDOP = $maxDop
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
 `;
 
 export {
@@ -744,5 +941,8 @@ export {
     CHECK_NODE_STATUS,
     RESCAN_EXTEND_LUN,
     MOVE_ALL_CLUSTER_GROUPS,
-    GET_CLUSTER_NODE_NAMES
+    GET_CLUSTER_NODE_NAMES,
+    GET_RSS_CONFIG_DETAILS,
+    CHECK_RUNNING_STATUS_WITH_RESTART,
+    GET_VCPU_AND_MAXDOP_DETAILS
 };

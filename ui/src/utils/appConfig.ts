@@ -13,6 +13,7 @@ import {
     updatePathname,
     updateResourceId,
     updateResourceName,
+    updateUserMetaData,
     updateWorkspaceId
 } from '../store/authSlice';
 import { DATABASE_SERVICE_PATH, WORKLOADS } from './consts';
@@ -92,7 +93,8 @@ const useInitialize = () => {
 
     useBlueXP({
         onReady: (initialData: any) => {
-            const { accessToken, accountId, isDemoMode, features } = initialData;
+            const { accessToken, accountId, isDemoMode, features, userMetadata } = initialData;
+            dispatch(updateUserMetaData(userMetadata));
             dispatch(updateFeatures(features));
             dispatch(updateAuthSuccess({ accessToken: accessToken }));
             dispatch(updateAccountId(accountId));

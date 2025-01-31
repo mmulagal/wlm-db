@@ -1,9 +1,11 @@
 import { DsTypography } from '@netapp/design-system';
 import styles from './StoragePerformance.module.scss';
 import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
-// import ComputeInputComponent from './StoragePerformance.moodule.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
-const StoragePerformance = () => {
+const StoragePerformance = ({ printState }: any) => {
+    const { onPremStorageAndComputeInfo }: any = useAppSelector(state => state.exploreSavings);
+
     return (
         <div className={styles.storagePerf}>
             <DsTypography style={{ marginBottom: '8px' }} variant="Regular_14">
@@ -20,37 +22,20 @@ const StoragePerformance = () => {
                         <DsTypography variant="Semibold_14">IOPS</DsTypography>
                     </div>
                     <div className={styles.col4}>
-                        <DsTypography variant="Semibold_14">Throughput</DsTypography>
+                        <DsTypography variant="Semibold_14">Throughput (MB/s)</DsTypography>
                     </div>
                 </div>
 
-                <div className={styles.row1} style={{ marginTop: '-8px' }}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Primary - data</DsTypography>
+                {Object.keys(onPremStorageAndComputeInfo).map((key: any, index: any) => (
+                    <div key={index} className={styles.row1} style={{ marginTop: '-8px' }}>
+                        <div className={styles.col1}>
+                            <DsTypography variant="Regular_14">
+                                {onPremStorageAndComputeInfo[key]?.sqlInstanceName}
+                            </DsTypography>
+                        </div>
+                        <StoragePerfInput printState={printState} data={onPremStorageAndComputeInfo[key]} />
                     </div>
-                    <StoragePerfInput type="primaryData" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Primary - log</DsTypography>
-                    </div>
-                    <StoragePerfInput type="primaryLog" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Secondary - data</DsTypography>
-                    </div>
-                    <StoragePerfInput type="secondaryData" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">Secondary - log</DsTypography>
-                    </div>
-                    <StoragePerfInput type="secondaryLog" />
-                </div>
+                ))}
             </div>
         </div>
     );

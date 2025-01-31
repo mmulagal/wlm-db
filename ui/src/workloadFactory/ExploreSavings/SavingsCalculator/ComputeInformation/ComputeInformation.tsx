@@ -1,8 +1,11 @@
-import { DsTypography, TextField } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import styles from './ComputeInformation.module.scss';
 import ComputeInputComponent from './ComputeInputComponent/ComputeInputComponent';
+import { useAppSelector } from '../../../../store/storeHooks';
 
-const ComputeInformation = () => {
+const ComputeInformation = ({ printState }: any) => {
+    const { onPremStorageAndComputeInfo }: any = useAppSelector(state => state.exploreSavings);
+
     return (
         <div className={styles.computeInformation}>
             <DsTypography style={{ marginBottom: '8px' }} variant="Regular_14">
@@ -22,27 +25,20 @@ const ComputeInformation = () => {
                         <DsTypography variant="Semibold_14">Network performance</DsTypography>
                     </div>
                 </div>
-
-                <div className={styles.row1} style={{ marginTop: '-8px' }}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">SQL_ins1</DsTypography>
+                {Object.keys(onPremStorageAndComputeInfo).map((key: any, index: any) => (
+                    <div key={index} className={styles.row1} style={{ marginTop: '-8px' }}>
+                        <div className={styles.col1}>
+                            <DsTypography variant="Regular_14">
+                                {onPremStorageAndComputeInfo[key]?.sqlInstanceName}
+                            </DsTypography>
+                        </div>
+                        <ComputeInputComponent
+                            data={onPremStorageAndComputeInfo[key]}
+                            index={index}
+                            printState={printState}
+                        />
                     </div>
-                    <ComputeInputComponent type="SQL_ins1" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">SQL_ins12</DsTypography>
-                    </div>
-                    <ComputeInputComponent type="SQL_ins2" />
-                </div>
-
-                <div className={styles.row1}>
-                    <div className={styles.col1}>
-                        <DsTypography variant="Regular_14">SQL_ins3</DsTypography>
-                    </div>
-                    <ComputeInputComponent type="SQL_ins3" />
-                </div>
+                ))}
             </div>
         </div>
     );

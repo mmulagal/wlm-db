@@ -773,7 +773,10 @@ Resources:
                                   - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        c-create-fsxparameter:
+                        c-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            waitAfterCompletion: forever
+                        d-create-fsxparameter:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Create-FsxParameter.ps1 -FSxID '

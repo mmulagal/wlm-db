@@ -25,6 +25,10 @@ export interface GetWellSliceInterface {
     regionFromJM: string;
     landingFrom: string;
     inProgressOptimizationData: any;
+    inProgressHostData: any;
+    jobToInstanceMap: any;
+    jobToInstanceMapForBulk: any;
+    recommendedInstanceInBulk?: any;
 }
 
 interface CountBreakDown {
@@ -50,14 +54,25 @@ export interface AssessmentResponseInterface {
         layout?: PerConfigInterface[];
     };
     compute?: PerConfigInterface;
+    rssConfig?: PerConfigInterface;
     license?: PerConfigInterface;
     hostOsPatch?: PerConfigInterface;
+    mssqlPatch?: PerConfigInterface;
+    maxDOP?: PerConfigInterface;
 }
 
 export interface HostAssessmentResponseInterface {
     databaseInstanceId: string;
     assessments?: AssessmentResponseInterface;
     error?: string;
+}
+
+export interface RSSConfigAdapterInterface {
+    adapterName?: string;
+    rssProfile?: string;
+    rssEnabled?: boolean;
+    baseProcessorNumber?: string;
+    numberOfReceiveQueues?: string;
 }
 
 export interface PerConfigInterface {
@@ -82,7 +97,42 @@ export interface PerConfigInterface {
         operationStartTime?: number;
         operationEndTime?: number;
         securityNonCompliantCount?: number;
+        otherNonCompliantCount?: number;
     }>;
+    missingPatchesInEc2Instances?: Array<{
+        ec2InstanceId?: string;
+        criticalMissingPatchesCount?: number;
+        importantMissingPatchesCount?: number;
+        missingPatchesCount?: number;
+        missingPatchDetails?: Array<{
+            classification?: string;
+            severity?: string;
+            state?: string;
+            title?: string;
+            kbId?: string;
+        }>;
+    }>;
+    rssAdapters?: Array<RSSConfigAdapterInterface>;
+    tcpOffloadState?: string;
+    recommendedAdapterSettings?: {
+        recommendedRssProfile?: string;
+        recommendedBaseProcessorNumber?: string;
+        recommendedReceiveQueues?: string;
+    };
+    sizingViolations?: {
+        overProvisionedDrives?: Array<PerDriveObjInterface>;
+        underProvisionedDrives?: Array<PerDriveObjInterface>;
+        ignoredDrives?: Array<PerDriveObjInterface>;
+    };
+}
+
+export interface PerDriveObjInterface {
+    databaseName?: string;
+    logDriveLetter?: string;
+    dataDriveLetter?: string;
+    logDrivePercent?: number;
+    logDriveTotalSizeMB?: number;
+    dataDriveTotalSizeMB?: number;
 }
 
 export interface GwCardDataInterface {
@@ -116,11 +166,23 @@ export interface GwPerConfigCardInterface {
         description?: string;
         values?: string[] | undefined;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
+        descriptionRssConfig?: {
+            first?: string;
+            second?: string;
+            points?: string[];
+            last?: string;
+        };
         info?: string;
     };
     tags: string[];
     category?: string;
     id?: string;
+    rssOptimizedRows?: {
+        [key: string]: string;
+    };
+    rssOptimizedValues?: {
+        [key: string]: string;
+    };
 }
 
 export interface GwSqlServerInstanceInterface {

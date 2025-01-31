@@ -21,6 +21,7 @@ import { listSsmCommands } from '../../lib/aws/ssm';
 import { callSsmExecution } from '../aws/ssm-operations';
 
 const logger = getLogger();
+const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
 
 async function checkIfWindowsUpdateCatalogReachable(
     accountId: string,
@@ -197,8 +198,10 @@ async function managedHostOsPatchAssessment(
     } catch (error) {
         errorMessage = `Error while performing host OS patch assessment. ${error}`;
         logger.error(errorMessage);
-
         jobStatus = JOBSTATUS.FAILED;
+        if ((error as Error).message.includes(PATCH_ASSESSMENT_IN_PROGRESS)) {
+            jobStatus = JOBSTATUS.WARNING;
+        }
     } finally {
         await updateJobDetails(accountId, hostOsAssessmentJobId, {
             endTime: Date.now(),
@@ -282,6 +285,7 @@ async function runOsPatchAssessment(
                 ({
                     BaselineId: baselineId,
                     CriticalNonCompliantCount: criticalNonCompliantCount,
+                    OtherNonCompliantCount: otherNonCompliantCount,
                     InstanceId: ec2InstanceId,
                     OperationStartTime: operationStartTime,
                     OperationEndTime: operationEndTime,
@@ -290,6 +294,7 @@ async function runOsPatchAssessment(
                 }) => ({
                     baselineId: baselineId ?? '',
                     criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
+                    otherNonCompliantCount: otherNonCompliantCount ?? 0,
                     ec2InstanceId: ec2InstanceId ?? '',
                     operationStartTime: operationStartTime ? new Date(operationStartTime).getMilliseconds() : 0,
                     operationEndTime: operationEndTime ? new Date(operationEndTime).getMilliseconds() : 0,
@@ -300,11 +305,29 @@ async function runOsPatchAssessment(
 
             return hostOsPatchAssessment;
         }
-        throw createError(
-            `Another patch assessment is already in progress on ${clusterNodeInstanceIds?.join(',')} in ${region}`
-        );
+        throw createError(`${PATCH_ASSESSMENT_IN_PROGRESS} on ${clusterNodeInstanceIds?.join(',')} in ${region}`);
     }
     throw createError('No instances found to run the host OS patch baseline');
 }
 
-export { calculateHostOsPatchDrift, managedHostOsPatchAssessment };
+async function updatePatchBaselineStatusForHost(
+    accountId: string,
+    databaseHostId: string,
+    hostOsPatchAssessment?: HostOsPatchAssessmentObject[]
+) {
+    const resources = (await listResources(accountId, databaseHostId)) || [];
+
+    if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
+        resources.forEach(async ({ metadata }) => {
+            const metaObj = metadata as unknown as Metadata;
+            const existingAssessmentData = metaObj.assessment;
+            metaObj.assessment = {
+                ...existingAssessmentData,
+                hostOsPatch: hostOsPatchAssessment
+            };
+            updateResourceMetaData(accountId, undefined, databaseHostId, metaObj);
+        });
+    }
+}
+
+export { calculateHostOsPatchDrift, managedHostOsPatchAssessment, updatePatchBaselineStatusForHost };

@@ -453,6 +453,7 @@ const InventoryApisV2 = () => {
                     nextToken: nextToken
                 });
                 if (runningCredId === credIdRef.current && runningRegionId === regionIdRef.current) {
+                    dispatch(setResetManagedData(false));
                     if (result && !result?.error) {
                         result?.data?.items?.map((perRow: any) => {
                             if (perRow?.ec2InstanceId) {

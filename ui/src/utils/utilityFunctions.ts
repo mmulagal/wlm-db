@@ -14,6 +14,7 @@ import {
     DETECT_HOST_VAR,
     DISABLED_STATE,
     ENABLED_STATE,
+    ERR_MSG_TO_CHECK,
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
     FSX_DEPLOYMENT_MODE,
@@ -36,7 +37,11 @@ import store from '../store/store';
 import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
-import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
+import {
+    addInitialData,
+    initialDBHomepageState,
+    setSelectedRowsForOptimize
+} from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
@@ -107,7 +112,7 @@ export const getTruncatedItems = (items: any) => {
         //@ts-ignore
         const itemWidth = context.measureText(item + ', ').width;
         //@ts-ignore
-        if (totalWidth + itemWidth <= 261 || maxItemsToShow.length === 0) {
+        if (totalWidth + itemWidth <= 180 || maxItemsToShow.length === 0) {
             maxItemsToShow.push(item);
             totalWidth += itemWidth;
         } else {
@@ -278,6 +283,15 @@ export const requiredFieldError = (inputString: string) => {
     }
 };
 
+export const errorMessagesToBlock = (errorMsg: string) => {
+    for (const msg of ERR_MSG_TO_CHECK) {
+        if (errorMsg.includes(msg)) {
+            return true;
+        }
+    }
+    return false;
+};
+
 export const customErrorMessages = (inputString: string, endpoint: string) => {
     if (!inputString) {
         return null;
@@ -412,7 +426,7 @@ export function roundOffNumber(number: any) {
         roundOffNumber = Math.round(Number(number));
     }
     return roundOffNumber;
-};
+}
 
 export function formatNumberWithCustomComma(number: any, roundOffRequired: boolean = true) {
     let roundOffNumber;
@@ -1049,6 +1063,21 @@ function getLastXDays(val: number) {
     return dates;
 }
 
+export const checkBoxHandle = (tableData: any, rowsData: any, dispatch: any) => {
+    if (!rowsData || rowsData.length === 0) return;
+
+    rowsData.forEach((row: any) => {
+        //@ts-ignore
+        tableData.rows[row.id] = false;
+    });
+
+    //@ts-ignore
+    tableData.count = 0;
+    //@ts-ignore
+    tableData.allSelected = false;
+    dispatch(setSelectedRowsForOptimize([]));
+};
+
 // Getting the last 7 days
 export const lastSevenDays = getLastXDays(7).reverse();
 
@@ -1607,6 +1636,8 @@ export const setTabInfoFOrBXP = (tab: string) => {
             return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case '/fsxdb/explore-savings-fsxw':
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
+        case '/fsxdb/explore-savings-on-premise':
+            return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case '/fsxdb/storage-saving-calculator':
             return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':

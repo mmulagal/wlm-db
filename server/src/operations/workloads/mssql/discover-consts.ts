@@ -1,6 +1,6 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
 import { compressResponse } from './common-templates';
-import { GOOGLE_DNS } from './const';
+import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -22,6 +22,14 @@ const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
   'C:\\SSM\\Invoke-virtualmount.ps1',
   'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
   'C:\\SSM\\Script-Version.txt'
+`;
+
+const SQL_PERMISSIONS: string = `
+'VIEW ANY DEFINITION',
+'ALTER ANY DATABASE',
+'CONTROL SERVER',
+'CREATE ANY DATABASE',
+'VIEW SERVER STATE'
 `;
 
 const SQL_SERVER_VERSION_TO_YEAR = new Map<number, number>([
@@ -334,6 +342,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $MappedDrivesWithPath, $RegistryErrors = GetSMBMappedDrivesWithPath
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
+    $sqlPermissions = @(${SQL_PERMISSIONS})
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
@@ -408,10 +417,12 @@ const HOST_AND_SQL_INFO_PS1 = [
         Get-Command -Type Application sqlcmd > $null 2> $null
         If ($? -eq $True) {
           $editionDBCountMachineInfoGuid = $null
+          $existingPermissions = $null
           $serverInstance = If ($isDefaultInstance) { "$Env:ComputerName" } Else { "$Env:ComputerName\\$instanceName" }
 
           try {
-            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
+            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
             $responseObject['windowsAuthentication'] = $?
   
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
@@ -423,7 +434,8 @@ const HOST_AND_SQL_INFO_PS1 = [
             try {
               $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
               if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb'" 2> $null
+                  $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
+                  $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
                   $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
                   if ($? -eq $False) {
                     $responseObject['failureInfo'] += "\${instanceName}: Failed to get drive letters of databases. Reason: $sqlInstanceDriveLetterList\`n"
@@ -441,6 +453,18 @@ const HOST_AND_SQL_INFO_PS1 = [
             $responseObject['databaseCount'] = $editionDBCountMachineInfoGuid[2]
             $responseObject['sqlServerName'] = $editionDBCountMachineInfoGuid[3]
             $responseObject['serverGuid'] = $editionDBCountMachineInfoGuid[4]
+
+            $missingPermissions = @()
+            if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
+              $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
+              foreach ($permission in $sqlPermissions) {
+              if($existingPermissionsAsList -notcontains $permission){
+                $missingPermissions += $permission
+                }
+              }
+            }
+            $responseObject['missingSqlPermissions'] = $missingPermissions
+
 
             $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
               if ($DiskTargetInfoMap.Keys -contains $sqlInstanceDriveLetterOrPath) {
@@ -481,24 +505,30 @@ const HOST_AND_SQL_INFO_PS1 = [
 
 const CLUSTER_NETWORK_IP_INFO_PS1 = [
     `
+  Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
+  
   $ErrorActionPreference = "Stop"
   $responseObject = @{}
   $scriptStartTime = Get-Date
   $clusterNetworkIps = $null
   
   try {
+    Write-Information "Discovering cluster network IPs"
     $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
     if ($clusterServiceStatus -eq "Running") {
       $clusterNetworkIps = (Get-ClusterNetworkInterface).Ipv4Addresses
       $responseObject['clusterNetworkIps'] = $clusterNetworkIps
+      Write-Information "Cluster network IPs: $clusterNetworkIps"
     } else {
+      Write-Information "No running clusters found"
       $responseObject['clusterNetworkIps'] = @()
     }
   } catch {
     # Prevent any possible errors from clobbering JSON output
     $responseObject['failureInfo'] = $_.Exception.Message
   } finally {
+    Stop-Transcript | Out-Null
     $scriptEndTime = Get-Date
     $responseObject['scriptExecutionTime'] = (($scriptEndTime - $scriptStartTime).TotalMilliseconds)
     Echo $responseObject | ConvertTo-Json -Compress
@@ -627,10 +657,14 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
           If (-Not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           }
-          
           If (-Not (Find-PackageProvider -Name 'Nuget' -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force)) {
-            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
-              throw "Failed to install NuGet package provider. "
+            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
+            }
+          }
+          If ((Get-PackageProvider -Name NuGet).version -lt [System.version]"2.8.5.201") {
+            If (-Not (Install-PackageProvider -Name 'NuGet' -MinimumVersion 2.8.5.201 -Force -ForceBootstrap -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)) {
+              throw "Failed to install NuGet package provider, Error: $($Error[0].Exception.Message)"
             }
           }
 
@@ -639,7 +673,7 @@ const INSTALL_WF_POWERSHELL_PREREQS_PS1 = (requiredModules: string, s3SignedURL:
                 Install-Module -Name netapp.ontap -Force -AllowClobber -SkipPublisherCheck -RequiredVersion $PSToolkitRequiredVersion -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
               }
               else {
-                Install-Module -Name $moduleName -SkipPublisherCheck -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+                Install-Module -Name $moduleName -Force -AllowClobber -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
               }
           }
       }Else{

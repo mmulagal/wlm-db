@@ -565,7 +565,7 @@ async function getServicesWithNoEndpoint(
             : [];
     const missingRoutesInS3 =
         routeTableIds && !isEmpty(routeTableIds)
-            ? routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0)
+            ? [...new Set(routeTableIds.filter(rt => routeTableIdsInS3Endpoint.indexOf(rt) < 0))]
             : [];
 
     const availableEndpoints = !isEmpty(endpoints)
@@ -709,9 +709,9 @@ async function getInstanceTypesFromInstanceRequirementsForManagedInstances(
         };
 
         const { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
-            credentialsId,
             region,
-            params
+            params,
+            credentialsId
         );
 
         const requiredInstanceTypes = compact(
@@ -799,9 +799,9 @@ async function getInstanceTypesFromInstanceRequirements(
                 }
             };
             let { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
-                credentialsId,
                 region,
-                params
+                params,
+                credentialsId
             );
             if (isEmpty(instanceTypes)) {
                 /* As the CPU reduces, memory required also reduces. Network configuration remains the same for a wide range of cpu-memory configurations.
@@ -820,9 +820,9 @@ async function getInstanceTypesFromInstanceRequirements(
                 );
                 params.InstanceRequirements.MemoryMiB = { Min: 1024 }; // changing the min memory requirement to 1GB as MemoryMiB is a required field in SDK request
                 ({ InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
-                    credentialsId,
                     region,
-                    params
+                    params,
+                    credentialsId
                 ));
             }
             const requiredInstanceTypes = compact(

@@ -10,7 +10,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-resourceSummary",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -28,7 +30,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-memoryCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -46,7 +50,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-resourceSummary",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -64,7 +70,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-storageSummary",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -82,7 +90,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-diskSize",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -100,7 +110,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-diskData",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -118,7 +130,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-dbSummary1",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -136,7 +150,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-dbSummary2",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -154,7 +170,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-dbSummary3",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -172,7 +190,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-dbSummary4",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -190,7 +210,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-dbCount",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -208,7 +230,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-tablesCount",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -226,7 +250,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-tablesList",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -244,7 +270,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serNodes",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -262,7 +290,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-clusterName",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -280,7 +310,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-clusterNodes",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -298,7 +330,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serCluster",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -316,7 +350,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serState",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -334,7 +370,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-noOfConn",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -352,7 +390,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serVer",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -370,7 +410,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serGUID",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -388,7 +430,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serName",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -406,7 +450,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-serverIoLatency",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -424,7 +470,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-nativeSqlBackup",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -442,7 +490,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-nativeSqlBackupDatabases",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -460,7 +510,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-ontapSnapshotCount",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -478,7 +530,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-ontapMappedVolumes",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -496,7 +550,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-performanceMetrics",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -514,7 +570,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-installDate",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -532,7 +590,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-ServerEdition",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -552,7 +612,9 @@
             "CommandId": "7f937c8c-3f95-460b-ad99-788b354bffa8",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2024-02-18T16:58:41.365Z",
-            "InstanceId": ["i-006dfc76b11ef264e"],
+            "InstanceId": [
+                "i-006dfc76b11ef264e"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -570,7 +632,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-getDriveInfo",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -588,7 +652,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-getDefaultDriveLetters",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -606,7 +672,9 @@
             "CommandId": "f3cb24b5-725a-2345-bc46-createDB",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -624,7 +692,9 @@
             "CommandId": "f3cb24b5-725a-2345-abc46-configureLuns",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -642,7 +712,9 @@
             "CommandId": "f3cb24b5-725a-2345-abd46-newDBInitialise",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -660,7 +732,9 @@
             "CommandId": "f3cb24b5-725a-2345-abd46-cleanUpDB",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -678,7 +752,9 @@
             "CommandId": "f3cb24b5-725a-2345-abd46-checkDBExists",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -696,7 +772,9 @@
             "CommandId": "f3cb24b5-725a-2345-abd46-serverDetails",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -714,7 +792,9 @@
             "CommandId": "f3cb24b5-725a-2345-abd46-resourceUtilization",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -732,7 +812,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-getCollationDetails",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -750,7 +832,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-getActiveNodeDriveDetails",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -768,7 +852,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-getStandbyNodeDriveList",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -786,7 +872,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -804,7 +892,9 @@
             "CommandId": "a271a4a7-3693-41bb-8c31-ontapSandboxVolumesSavings",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -822,7 +912,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -840,7 +932,9 @@
             "CommandId": "f3cb24b5-725a-475c-bc46-instanceDetails",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -858,7 +952,9 @@
             "CommandId": "551b3294-d372-4335-85df-b95a28de6f79-getDbVolumeLunMapping",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -876,7 +972,9 @@
             "CommandId": "585f55b2-3bea-474a-a29e-15532e59a314-createCloneVolume",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -894,7 +992,9 @@
             "CommandId": "7a5f55b2-3bea-174a-a29e-15532e59a314-invokeVirtualMount",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -912,7 +1012,9 @@
             "CommandId": "0b2f55b2-3bea-174a-a29e-15532e59a112-createCloneDb",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -930,7 +1032,9 @@
             "CommandId": "a91f55b2-3bea-174a-a29e-15532e59a1b4-addExtendedProperties",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -948,7 +1052,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-cleanupOntapResource",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -966,7 +1072,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-mountPointQueryCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -984,7 +1092,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-detachDbAndAcessPathQuery",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1002,7 +1112,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-deleteExtendedProperties",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1020,7 +1132,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSplitEstimateCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1038,7 +1152,9 @@
             "CommandId": "f171a4a7-3693-41bb-8c31-getActiveDirectory",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1056,7 +1172,9 @@
             "CommandId": "f171a4a7-3693-41bb-8c31-enterpriseFeatureUsageCheckCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1074,7 +1192,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getInstanceGuid",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1092,7 +1212,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrity",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1110,7 +1232,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-dbCountParamasV2Command",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1128,7 +1252,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getMappedVolumesAndSandboxMetadata",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1146,7 +1272,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1164,7 +1292,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1182,7 +1312,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getConnectionInfoCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1200,7 +1332,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkSrciptUpdateCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1218,7 +1352,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1236,7 +1372,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1254,7 +1392,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-rescanAndExtendLogLunCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1272,7 +1412,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkNodeStatusCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1290,7 +1432,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-moveClusterGroupsCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1308,7 +1452,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getLunDetailsCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1326,7 +1472,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1344,7 +1492,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-setMpioPolicyCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1362,7 +1512,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioSessionsCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1380,7 +1532,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-remediateMpioSessionsCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1398,7 +1552,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-validateMpioInstallationCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1416,7 +1572,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-enableMpioAndConfigureCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1447,7 +1605,9 @@
             "DocumentVersion": "$DEFAULT",
             "ErrorCount": 0,
             "ExpiresAfter": "2024-12-13T05:27:09.030Z",
-            "InstanceIds": ["i-07e76a4b916548dc0"],
+            "InstanceIds": [
+                "i-07e76a4b916548dc0"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "NotificationConfig": {
@@ -1459,7 +1619,9 @@
             "OutputS3KeyPrefix": "",
             "OutputS3Region": "ap-southeast-1",
             "Parameters": {
-                "Operation": ["Scan"]
+                "Operation": [
+                    "Scan"
+                ]
             },
             "RequestedDateTime": "2024-12-12T22:27:09.030Z",
             "ServiceRole": "",
@@ -1482,7 +1644,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-assessmentConfigData",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1500,7 +1664,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-testConnectionCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1518,7 +1684,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlInstanceInfoCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1536,7 +1704,9 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlStorageSavingsCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",
@@ -1554,7 +1724,69 @@
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldbCountCommand",
             "DocumentName": "AWS-RunPowerShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
-            "InstanceIds": ["i-0880a21327284f67c"],
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getRssConfigAssessmentCommand": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-rssConfigAssessmentDataCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-rssConfigAssessmentDataCommand",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "checkRunningStatusCommand": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": [
+                "i-07e76a4b916548dc0"
+            ],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getMaxDopAssessmentCommand": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand",
+            "DocumentName": "AWS-RunPowerShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": [
+                "i-0880a21327284f67c"
+            ],
             "MaxConcurrency": "50",
             "MaxErrors": "0",
             "OutputS3Region": "ap-southeast-1",

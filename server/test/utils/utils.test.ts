@@ -14,7 +14,8 @@ import {
     fsxStorageCapacityBreakdown,
     convertGiBToBytes,
     calculateFsxnStorageCapacity,
-    getRegionDetails
+    getRegionDetails,
+    getServerNameWithHostname
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -123,5 +124,14 @@ describe(' Secrets Manager string', () => {
         expect(getRegionDetails('42').name).toBeDefined();
         expect(getRegionDetails('42').name).toBe('');
         expect(getRegionDetails('eu-west-1')).toEqual({ name: 'Europe (Ireland)', code: 'eu-west-1' });
+    });
+
+    it('should return formatted instance name or default values', () => {
+        const instanceName = 'test-instance';
+        const hostname = 'test-hostname';
+        expect(getServerNameWithHostname(hostname, instanceName)).toBe('test-hostname\\test-instance');
+        expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
+        expect(getServerNameWithHostname(hostname)).toBe('test-hostname');
+        expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
     });
 });

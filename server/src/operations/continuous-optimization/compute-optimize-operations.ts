@@ -6,12 +6,13 @@ import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
     CHECK_NODE_STATUS,
+    CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_CLUSTER_NODE_NAMES,
     MOVE_ALL_CLUSTER_GROUPS
 } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { updateJobDetails } from '../database/job-operations';
-import { isDemo, sqlResponseParsing } from '../../utils/utils';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
 import getLogger from '../../utils/logger';
@@ -27,9 +28,10 @@ import {
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/discover-consts';
 import { calculateComputeDrift } from './compute-assessment-operations';
-import { handleOptimizeJobCreation } from './assessment-utils';
+import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import { getInstanceInfo } from '../database/database-operations';
+import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -57,6 +59,7 @@ async function handleComputeRemediation(
     let subJobErrorMessage;
 
     let anySubJobFailed = false;
+    let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
     try {
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -69,6 +72,10 @@ async function handleComputeRemediation(
 
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            formattedInstanceName = getServerNameWithHostname(
+                resourceDetails[0]?.resource_name || undefined,
+                instanceDetail?.database_instance_name
+            );
             const { fsxn_ids: fsxId, fsx_svm_id: svmDetails } = instanceDetail as unknown as DatabaseInstance;
             const svmDetailsObject = svmDetails as Record<string, string>;
             const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
@@ -108,13 +115,14 @@ async function handleComputeRemediation(
                         );
 
                         instanceIdsList.push(...clusterNodeInstanceIds);
+                        await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
 
                         // run elastic IP address; spot instance and autoscaling instance check for all nodes in the cluster; throws error if any node has does not meets the criteria
                         const preReqJobId = await handleOptimizeJobCreation(
                             accountId,
                             credentialsId,
                             region,
-                            instanceName,
+                            formattedInstanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Prerequisite check for compute optimization of secondary nodes.',
                             'Prerequisite check for compute optimization of secondary nodes.',
@@ -145,7 +153,7 @@ async function handleComputeRemediation(
                             accountId,
                             credentialsId,
                             region,
-                            instanceName,
+                            formattedInstanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Modify instance type for secondary nodes in the cluster',
                             `Modify instance type of SQL nodes ${nonPrimaryNodeInstanceIds.join(
@@ -217,7 +225,7 @@ async function handleComputeRemediation(
                             accountId,
                             credentialsId,
                             region,
-                            instanceName,
+                            formattedInstanceName,
                             JOBTYPE.OPTIMIZATION,
                             'Transfer cluster node ownership from primary to another node in the cluster',
                             `Transfer cluster node ownership from ${ownerNode} to ${targetNodeName} in the cluster. Cluster node ownership transfers to a healthy node in the cluster.`,
@@ -261,7 +269,7 @@ async function handleComputeRemediation(
                     accountId,
                     credentialsId,
                     region,
-                    instanceName,
+                    formattedInstanceName,
                     JOBTYPE.OPTIMIZATION,
                     'Prerequisite check for compute optimization in SQL node',
                     'Prerequisite check for compute optimization of SQL node.',
@@ -289,7 +297,7 @@ async function handleComputeRemediation(
                 accountId,
                 credentialsId,
                 region,
-                instanceName,
+                formattedInstanceName,
                 JOBTYPE.OPTIMIZATION,
                 'Modify instance type for primary node in the cluster',
                 `Modify instance type of SQL node ${activeNodeInstanceId} to ${instanceType}.To modify, instance will be stopped,modified and restarted.`,
@@ -328,7 +336,7 @@ async function handleComputeRemediation(
                     accountId,
                     credentialsId,
                     region,
-                    instanceName,
+                    formattedInstanceName,
                     JOBTYPE.OPTIMIZATION,
                     'Transfer node ownership back to primary node in the cluster',
                     'Transfer node ownership back to primary node in the cluster',
@@ -357,13 +365,43 @@ async function handleComputeRemediation(
                     throw error;
                 }
             }
+
+            const checkRunningResponse = await checkRunningStatus(
+                accountId,
+                jobId,
+                instanceName,
+                region,
+                credentialsId,
+                activeNodeInstanceId
+            );
+
+            if (!checkRunningResponse.running) {
+                subJobErrorMessage = checkRunningResponse.error;
+                anySubJobFailed = true;
+                throw checkRunningResponse.error;
+            }
+
+            // update metadata after successful optimization
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+            const { compute: { findingReasonCodes = [], recommendationOptions = [] } = {} } =
+                existingAssessmentData || {};
+            (metadata as unknown as Metadata).assessment = {
+                ...existingAssessmentData,
+                compute: {
+                    finding: AssessmentStatus.OPTIMIZED,
+                    findingReasonCodes,
+                    currentInstanceType: instanceType,
+                    recommendationOptions
+                }
+            };
+            await updateResourceMetaData(accountId, credentialsId, resourceId, metadata);
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
                 updatedMetadata.isComputeOptimized = true;
                 await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
             }
-            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS, undefined, formattedInstanceName);
             return;
         }
 
@@ -374,7 +412,7 @@ async function handleComputeRemediation(
         logger.error(errorMessage);
 
         jobStatus = JOBSTATUS.FAILED;
-        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage, formattedInstanceName);
     } finally {
         const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {
@@ -385,13 +423,79 @@ async function handleComputeRemediation(
     }
 }
 
+async function checkRunningStatus(
+    accountId: string,
+    parentJobId: string,
+    instanceName: string,
+    region: string,
+    credentialsId: string,
+    activeNodeInstanceId: string
+) {
+    logger.info('Checking running status', {
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        parentJobId,
+        activeNodeInstanceId
+    });
+
+    const checkRunningJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        JOBTYPE.ASSESSMENT,
+        'Checking running status of the service',
+        'Checking running status of the service',
+        parentJobId
+    );
+
+    const rawStatusResponse = await callSsmExecution(
+        credentialsId,
+        region,
+        [CHECK_RUNNING_STATUS_WITH_RESTART(instanceName)],
+        activeNodeInstanceId,
+        'Checking running status of the service',
+        accountId,
+        undefined,
+        '300'
+    );
+
+    let statusResponse: { status: string; error?: string };
+    try {
+        const cleanStatusResponse = rawStatusResponse.replaceAll('\r\n', '')?.replaceAll('\\r\\n', '');
+        statusResponse = JSON.parse(cleanStatusResponse);
+    } catch (error) {
+        logger.error('Error parsing query response:', rawStatusResponse);
+        return { running: false, error: 'Error parsing SSM query response' };
+    }
+
+    if (statusResponse.status !== 'Running') {
+        await updateJobDetails(accountId, checkRunningJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: statusResponse.error
+        });
+        return { running: false, error: statusResponse.error };
+    }
+
+    await updateJobDetails(accountId, checkRunningJobId, {
+        status: JOBSTATUS.COMPLETED,
+        endTime: Date.now()
+    });
+
+    return { running: true, error: '' };
+}
+
 export default async function optimizeCompute(
     accountId: string,
     credentialsId: string,
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    instanceType: string
+    instanceType: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info('Optimizing compute', {
         accountId,
@@ -439,6 +543,16 @@ export default async function optimizeCompute(
     const resourceDetails = await listResources(accountId, databaseHostId, credentialsId, region);
 
     const [{ resource_name: resourceName, metadata }] = resourceDetails;
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: 'compute-rightsizing',
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -446,7 +560,9 @@ export default async function optimizeCompute(
         resourceName!,
         JOBTYPE.OPTIMIZATION,
         `Optimize EC2 compute for ${resourceName}`,
-        `Optimize EC2 compute for ${resourceName}`
+        `Optimize EC2 compute for ${resourceName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     handleComputeRemediation(
@@ -478,15 +594,20 @@ async function moveClusterGroupOwnership(
         targetNodeName,
         activeNodeInstanceId
     });
-    const resp = await callSsmExecution(
-        credentialsId,
-        region,
-        [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
-        activeNodeInstanceId,
-        'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
-        undefined,
-        undefined,
-        '300'
+    const resp = await retryWithDelay(
+        callSsmExecution.bind(
+            null,
+            credentialsId,
+            region,
+            [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
+            activeNodeInstanceId,
+            'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
+            undefined,
+            undefined,
+            '300'
+        ),
+        3,
+        5000
     );
 
     let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
@@ -547,15 +668,20 @@ async function updateDnsSettings(
         jobId
     );
     try {
-        return await callSsmExecution(
-            credentialsId,
-            region,
-            [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
-            instanceId,
-            'Sets the DNS server addresses for all network adapters to the specified addresses.',
-            accountId,
-            undefined,
-            '300'
+        return await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
+                instanceId,
+                'Sets the DNS server addresses for all network adapters to the specified addresses.',
+                accountId,
+                undefined,
+                '300'
+            ),
+            3,
+            5000
         );
     } catch (error) {
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
@@ -622,15 +748,20 @@ async function handleIscsiSessions(
     let errorMessage = '';
     try {
         const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
-            ec2InstanceId,
-            'Enable MPIO and configure ISCSI sessions',
-            accountId,
-            false,
-            '300'
+        await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
+                ec2InstanceId,
+                'Enable MPIO and configure ISCSI sessions',
+                accountId,
+                false,
+                '300'
+            ),
+            3,
+            5000
         );
     } catch (error) {
         errorMessage = `Failed to update ISCSI sessions for ${ec2InstanceId}. ${error}`;
@@ -704,3 +835,5 @@ async function updateNodeInstanceType(
         throw createError(500, errorMessage);
     }
 }
+
+export { handleComputeRemediation };

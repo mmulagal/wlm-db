@@ -10,11 +10,20 @@ import { useAppSelector } from '../../../store/storeHooks';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogContent from './DialogContent/DialogContent';
-import { GETWELL_STATUS, GETWELL_VALUES, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    GETWELL_STATUS,
+    GETWELL_VALUES,
+    GW_CONFIG_OPTIMIZE_NA,
+    GW_TOOLTIP_KEYS_MAPPING,
+    WLF_TABS
+} from '../../../utils/consts';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
+    setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -45,7 +54,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
-    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -88,23 +97,34 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     }, [cardData]);
 
     const disableOptimizeButtonTooltip = useMemo(() => {
-        if (cardData?.id === 'headroom' && cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) {
+        if (
+            cardData?.id === 'headroom' &&
+            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
+        ) {
             return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'log-drive-size' &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'tempdb-drive-size' &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
+                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
+                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             (cardData?.id === 'tempdb-drive-size' ||
                 cardData?.id === 'log-drive-size' ||
                 cardData?.id === 'headroom') &&
-            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED
+            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
+            !cardData?.sizingViolations?.underProvisionedDrives?.length &&
+            cardData?.sizingViolations?.ignoredDrives?.length
         ) {
             return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
         } else {
@@ -130,6 +150,47 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return;
         }
+    };
+
+    const tooltipRssListSection = (
+        listObj: { key: string; value: string }[],
+        secListObj: { key: string; value: string }[]
+    ) => {
+        return (
+            <div className={styles.tooltipLevel}>
+                {listObj?.map((item: any, index: number) => {
+                    return (
+                        <div key={index}>
+                            <div className={styles.rowrss}>
+                                <div className={styles.firstPart}>
+                                    <DsTypography variant="Semibold_13">{item.key}</DsTypography>
+                                </div>
+
+                                <div className={styles.secondPart}>
+                                    <div className={styles.secSubPart}>
+                                        <DsTypography variant="Regular_13">
+                                            {GETWELL_VALUES?.[item.value || ''] || item?.value}
+                                        </DsTypography>
+                                    </div>
+
+                                    {secListObj && (
+                                        <>
+                                            <div className={styles.seperator} />
+                                            <div className={styles.secSubPart}>
+                                                <DsTypography variant="Regular_13">
+                                                    {`${secListObj[index]?.value}` || ' '}
+                                                </DsTypography>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            {index !== listObj.length - 1 && <div className={styles.tooltipSeparator} />}
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
     const tooltipListSection = (listObj: { key: string; value: string }[], valWidth: string) => {
@@ -271,7 +332,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
             let listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
-                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security }
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
+                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
             ];
             return (
                 <div className={styles.tooltipContainer}>
@@ -289,6 +351,62 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     )}
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
+            let listObj = [
+                { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
+                { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
+            ];
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '30px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_three?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.block_one?.value === GENERAL.RSS_CONFIGURATION) {
+            let listObj: any = [];
+            let secListObj: any = [];
+            Object.keys(cardData?.rssOptimizedRows).forEach((key: any) => {
+                listObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedRows?.[key] });
+                secListObj.push({ key: GW_TOOLTIP_KEYS_MAPPING[key], value: cardData?.rssOptimizedValues?.[key] });
+            });
+            let value = '';
+            if (cardData?.block_three?.value && cardData?.block_three?.value === 1) {
+                value = '1 Finding';
+            } else {
+                value = (cardData?.block_three?.value || 0) + ' Findings';
+            }
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_three?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipRssListSection(listObj, secListObj)}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {value}
                     </DsTypography>
                 </div>
             );
@@ -319,12 +437,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
+        } else if (
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ) {
             apiCall = optimizeStorageSizing;
             payload = {
                 type: [cardData?.id]
             };
-        } else if (type === 'Storage tier') {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
             payload = null;
         } else {
@@ -352,6 +474,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
                 [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+            })
+        );
+        dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
         formatGetWellData(dispatch);
@@ -398,6 +526,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     </Button>
                 </div>
             );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
             handleOptimizeStorageJob(
                 res,
                 { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
@@ -431,7 +567,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 }}
                 customClass={'innerPage'}
                 hidePrimaryButton={
-                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
+                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
                     cardData?.missingPermissions &&
                     cardData?.missingPermissions.length > 0
                 }

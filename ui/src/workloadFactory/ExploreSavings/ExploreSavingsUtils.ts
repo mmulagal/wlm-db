@@ -2,10 +2,14 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../store/store';
 import {
     setDisableState,
+    setMonthlyChangeRate,
+    setOnPremStorageAndComputeInfoFull,
     setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
     setSelectedInstanceId,
+    setSelectedOnPremHostDetails,
+    setSelectedOnPremHostId,
     setSelectedServerName
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
@@ -16,13 +20,13 @@ import {
     StorageSavingsInterface,
     ViewCalculationsInterface
 } from '../../utils/types/exploreSavingsType';
-import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatFractionalNumberForCost,
+    formatNumberWithCustomComma
+} from '../../utils/utilityFunctions';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
-    const deploymentModel = (() => {
-        return rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase();
-    })();
-
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {
@@ -37,11 +41,47 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
 
     dispatch(setDisableState(true));
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-    dispatch(setSelectedInstanceId(rowData?.id));
-    dispatch(setSelectedDeploymentModel(deploymentModel));
-    dispatch(setSelectedServerName(rowData?.name || GENERAL.ES_SERVER_NAME));
-    setESInstanceData(rowData, dispatch);
+    dispatch(setMonthlyChangeRate(3));
+
+    if (rowData?.sqlServerInstances?.length) {
+        let storagePerfAndCompute: any = {};
+        rowData?.sqlServerInstances?.map((instance: any) => {
+            if (!storagePerfAndCompute?.[instance?.sqlInstanceName]) {
+                storagePerfAndCompute[instance?.sqlInstanceName] = {};
+            }
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalStorage'] = formatFractionalNumber(
+                Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalIops'] = formatFractionalNumber(
+                instance?.totalIops,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalThroughput'] = formatFractionalNumber(
+                instance?.totalThroughput,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['noOfVcpusInUse'] = instance?.noOfVcpusInUse;
+            storagePerfAndCompute[instance?.sqlInstanceName]['memory'] = formatFractionalNumber(
+                Number(instance?.memory || 0) / GIB_IN_BYTE,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceName'] = instance?.sqlInstanceName;
+            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceId'] = instance?.sqlInstanceId;
+            storagePerfAndCompute[instance?.sqlInstanceName]['networkPerformance'] =
+                rowData?.sqlServerInstances?.[0]?.networkPerformance;
+        });
+        dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+    }
+
+    setTimeout(() => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+        dispatch(setSelectedInstanceId(''));
+        dispatch(setSelectedOnPremHostId(rowData?.resourceId));
+        dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
+        dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
+        setESInstanceOnPremData(rowData, dispatch);
+    }, 500);
 };
 
 export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
@@ -116,6 +156,24 @@ export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFact
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+};
+
+export const setESInstanceOnPremData = (data: any, dispatch: any) => {
+    let serverInstallationMode = data?.deploymentModel;
+    if (data?.deploymentModel === GENERAL.AOAG) {
+        serverInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+    }
+
+    dispatch(
+        setSelectedOnPremHostDetails({
+            ...data,
+            totalInstance: data?.sqlServerInstances?.length || 0,
+            recommendedInstance: {
+                serverInstallationMode: serverInstallationMode,
+                serverVersion: data?.sqlServerInstances?.[0]?.sqlVersion
+            }
+        })
+    );
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {

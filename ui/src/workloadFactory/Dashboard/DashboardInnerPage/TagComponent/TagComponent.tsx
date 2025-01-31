@@ -5,6 +5,7 @@ import styles from './TagComponent.module.scss';
 import Tag from '../../../../common/Tag/Tag';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
 type TagComponentProps = {
     tagHeight: string;
@@ -16,25 +17,25 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
 
     useEffect(() => {
         switch (selectedConfig) {
-            case 'Storage tier':
-            case 'File system headroom':
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 setTagData(['Performance efficiency']);
                 break;
 
-            case 'Log drive size':
-            case 'TempDB drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 setTagData(['Operational excellence']);
                 break;
 
-            case 'Data files (.mdf)':
-            case 'Log files (.ldf)':
-            case 'TempDB placement':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 setTagData(['Performance efficiency', 'Operational excellence']);
                 break;
 
             case 'ONTAP':
             case 'Operating system':
-            case 'Compute rightsizing':
+            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 setTagData([
                     'Performance efficiency',
                     'Operational excellence',

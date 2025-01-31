@@ -501,6 +501,8 @@ type EBSCostCalculationRespType = Static<typeof EBSCostCalculationResp>;
 type EBSCloneCostCalculationRespType = Static<typeof EBSCloneCostCalculationResp>;
 type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 
+type ManualModeInstancesType = Static<typeof ManualModeInstances>;
+
 export {
     InternalUpdateInstRecQueryString,
     EbsCostCalculationType,
@@ -527,5 +529,6 @@ export {
     EBSCostCalculationRespType,
     EBSCloneCostCalculationRespType,
     EBSSnapshotCalculationRespType,
-    StorageSavingsCalculationsMetricsType
+    StorageSavingsCalculationsMetricsType,
+    ManualModeInstancesType
 };

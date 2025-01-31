@@ -377,25 +377,27 @@ async function handleInstanceRecommendation(
                     hoursInMonth: HOURS_IN_MONTH,
                     licenseIncluded: isAwsLicenseIncluded
                 })),
-                recommendationOptions: instanceRecommendations?.map(({ instanceType, pricingDetails }) => {
-                    const basePrice = pricingDetails?.NA?.pricePerUnit;
-                    const price = pricingDetails[recommendedSqlLicenseType]?.pricePerUnit;
-                    const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(basePrice);
-                    const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(price);
-                    return {
-                        instanceType,
-                        price,
-                        basePrice,
-                        computeMonthlyPrice,
-                        instanceMonthlyPrice,
-                        licenseMonthlyPrice: isAwsLicenseIncluded
-                            ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
-                                ? instanceMonthlyPrice - computeMonthlyPrice
-                                : undefined
-                            : monthlySqlByolCostPerHost || 0,
-                        hoursInMonth: HOURS_IN_MONTH
-                    };
-                }),
+                recommendationOptions: instanceRecommendations
+                    ?.filter(({ instanceType }) => instanceType !== existingInstanceType)
+                    ?.map(({ instanceType, pricingDetails }) => {
+                        const basePrice = pricingDetails?.NA?.pricePerUnit;
+                        const price = pricingDetails[recommendedSqlLicenseType]?.pricePerUnit;
+                        const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(basePrice);
+                        const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(price);
+                        return {
+                            instanceType,
+                            price,
+                            basePrice,
+                            computeMonthlyPrice,
+                            instanceMonthlyPrice,
+                            licenseMonthlyPrice: isAwsLicenseIncluded
+                                ? computeMonthlyPrice !== undefined && instanceMonthlyPrice !== undefined
+                                    ? instanceMonthlyPrice - computeMonthlyPrice
+                                    : undefined
+                                : monthlySqlByolCostPerHost || 0,
+                            hoursInMonth: HOURS_IN_MONTH
+                        };
+                    }),
                 message: recommendationMessage
             };
         } else {

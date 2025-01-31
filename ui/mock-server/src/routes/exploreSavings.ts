@@ -5,6 +5,7 @@ import ViewCalculations from '../data/viewCalculations.json';
 import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 import UploadScript from '../data/uploadScript.json';
 import ExploreSavingsOnPrem from '../data/exploreSavingsOnPrem.json';
+import OnPremCalculations from '../data/onPremCalculations.json';
 
 const router = require('express').Router();
 
@@ -17,10 +18,16 @@ router.post(
     }
 );
 
-router.get(`${BASE_URL}/v1/mssql/onprem-tco`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/mssql/onprem-tco/resources`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, ExploreSavingsOnPrem);
-    }, 5000);
+    }, 1000);
+});
+
+router.post(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId/explore-savings`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, OnPremCalculations);
+    }, 1000);
 });
 
 router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/ebs`, async (req: {}, res: any) => {

@@ -1,10 +1,14 @@
 import config from 'config';
+import { WLMDB } from './consts';
 
 enum AssessmentCategories {
     STORAGE = 'storage',
     COMPUTE = 'compute',
     LICENSE = 'license',
-    HOST_OS_PATCH = 'host-os-patch'
+    HOST_OS_PATCH = 'host-os-patch',
+    RSS_CONFIG = 'rss-config',
+    MAXDOP = 'maxdop',
+    MSSQL_PATCH = 'mssql-patch'
 }
 
 enum AssessmentTriggeredBy {
@@ -17,8 +21,7 @@ enum AssessmentStatus {
     NOT_OPTIMIZED = 'not-optimized',
     UNDER_PROVISIONED = 'under-provisioned',
     OVER_PROVISIONED = 'over-provisioned',
-    ANALYZING = 'analyzing',
-    NOT_APPLICABLE = 'not-applicable'
+    ANALYZING = 'analyzing'
 }
 
 enum AwsWellArchitecturedPillars {
@@ -31,6 +34,8 @@ enum AwsWellArchitecturedPillars {
 
 const VOLUME = 'volume';
 const LUN = 'lun';
+
+const NUMASTATIC = 'NUMAStatic';
 
 // Redis
 const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || '127.0.0.1:6379';
@@ -69,10 +74,25 @@ enum OptimizeOperatingSystemParams {
     MPIO_ENABLE = 'mpio-enabled'
 }
 
+enum OptimizeStorageTierParams {
+    STORAGE_TIER = 'storage-tier'
+}
+
+enum OptimizeComputeParams {
+    COMPUTE = 'compute'
+}
+
 enum OPTIMIZE_SIZING_CONFIGS {
     HEADROOM = 'headroom',
     LOG_DRIVE_SIZE = 'log-drive-size',
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
+}
+
+enum OPTIMIZATION_CATEGORIES {
+    STORAGE_TIER = 'storage-tier',
+    STORAGE_SIZING = 'storage-sizing',
+    OPERATING_SYSTEM = 'operating-system',
+    COMPUTE = 'compute'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -161,6 +181,18 @@ const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
 const TEST_CONNECTION_COMMAND =
     'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
+
+// ONPREM CONTINUOUS OPTIMIZATION
+const OP_TCO_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/on-prem-tco.zip`;
+const REPORTING_BUCKET = config.get('reporting.bucket-name') as string;
+
+const NETWORK_PERF = {
+    UP_TO_10: 'upTo10',
+    ABOVE_10: 'above10'
+};
+
+const ONPREM_TCO_CREDENTIALS_ID = 'ONPREM_TCO_CREDENTIALS_ID';
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -180,5 +212,13 @@ export {
     REDIS_SCHEMA,
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
-    STORAGE_OPTIMIZE_JOB_PARAM
+    OP_TCO_COLLECTOR_SCRIPT_PATH,
+    REPORTING_BUCKET,
+    STORAGE_OPTIMIZE_JOB_PARAM,
+    NUMASTATIC,
+    OptimizeStorageTierParams,
+    OptimizeComputeParams,
+    NETWORK_PERF,
+    ONPREM_TCO_CREDENTIALS_ID,
+    OPTIMIZATION_CATEGORIES
 };

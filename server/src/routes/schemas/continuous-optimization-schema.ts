@@ -14,7 +14,9 @@ import {
     OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
-    DriftAssessmentResponsePerAccount
+    DriftAssessmentResponsePerAccount,
+    BulkOptimizeStorageRequestBody,
+    BulkOptimizeGeneralRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -150,6 +152,35 @@ const DriftAssessmentPerAccount = {
     }
 };
 
+const BulkOptimizeStorageSchema = {
+    ...resourceRequest,
+    summary: 'Optimize storage configuration parameters',
+    description: OptimizeStorageSchemaDescription,
+    params: CredentialsIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkOptimizeStorageRequestBody,
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
+const BulkOptimizeGeneralSchema = {
+    ...resourceRequest,
+    summary: 'Optimize storage-sizing/mpio settings/storage-tier/compute settings',
+    description:
+        'Optimize storage-sizing/mpio settings/storage-tier/compute parameters as per the best practice for selected database instances.',
+    params: CredentialsIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkOptimizeGeneralRequestBody,
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -159,5 +190,7 @@ export {
     OptimizeOperatingSystemSchema,
     DriftAssessmentPerHost,
     OptimizeStorageTierSchema,
-    DriftAssessmentPerAccount
+    DriftAssessmentPerAccount,
+    BulkOptimizeStorageSchema,
+    BulkOptimizeGeneralSchema
 };

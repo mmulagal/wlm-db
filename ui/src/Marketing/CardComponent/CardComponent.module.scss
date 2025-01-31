@@ -1,0 +1,30 @@
+.cardComponent {
+    width: 792px;
+    height: 192px;
+    padding: 40px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: var(--content-background);
+
+    .row1 {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+    }
+}
+
+@media screen and (min-width: 1700px) and (max-width: 1800px) {
+    .cardComponent {
+        width: 740px;
+        height: 192px;
+    }
+}
+
+@media screen and (min-width: 1350px) and (max-width: 1700px) {
+    .cardComponent {
+        width: 700px;
+        height: 192px;
+    }
+}

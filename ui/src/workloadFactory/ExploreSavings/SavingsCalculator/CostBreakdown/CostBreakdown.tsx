@@ -60,7 +60,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                     <div>{data?.type}</div>
                                 </div>
                             ) : (
-                                data?.type
+                                <div style={{ whiteSpace: 'nowrap' }}>{data?.type}</div>
                             )}
                         </Text>
                     </GridItem>
@@ -159,7 +159,8 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 >
                                     {' '}
                                     {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
                                         ? GENERAL.ES_MSSQL_EBS
                                         : GENERAL.ES_MSSQL_FSXW}
                                 </Text>

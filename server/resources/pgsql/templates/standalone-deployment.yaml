@@ -173,36 +173,7 @@ Resources:
                     files:
                         /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
                             content: !Sub |
-                                {
-                                    "agent": {
-                                        "metrics_collection_interval": 5,
-                                        "run_as_user": "cwagent",
-                                        "region": "${AWS::Region}"
-                                    },
-                                    "logs": {
-                                        "logs_collected": {
-                                            "files": {
-                                                "collect_list": [
-                                                    {
-                                                        "file_path": "/var/log/cfn-*.log",
-                                                        "log_group_name": "${ParentStackName}",
-                                                        "log_stream_name": "{instance_id}"
-                                                    },
-                                                    {
-                                                        "file_path": "/home/ec2-user/cfn/log/*.log",
-                                                        "log_group_name": "${ParentStackName}",
-                                                        "log_stream_name": "{instance_id}"
-                                                    },
-                                                    {
-                                                        "file_path": "/var/log/netapp_wf/*.log",
-                                                        "log_group_name": "${ParentStackName}",
-                                                        "log_stream_name": "{instance_id}"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
+                                {{{ PgsqlCloudWatchConfig }}}
                             mode: '000644'
                             owner: cwagent
                             group: cwagent
@@ -245,6 +216,11 @@ Resources:
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
+                        /home/ec2-user/cfn/pgvector.zip:
+                            source: {{{ PGSQLPackages }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-change-to-sudo-user:
@@ -277,6 +253,9 @@ Resources:
                             waitAfterCompletion: 0
                         g-unpack-fsx-certificates:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                            waitAfterCompletion: 0
+                        h-unpack-pgvector:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn
                             waitAfterCompletion: 0
                 Configure:
                     commands:

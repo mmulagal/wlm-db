@@ -71,6 +71,7 @@ const PotentialSavings = () => {
                     <DsButton
                         variant="secondary"
                         isThin={true}
+                        data-testid="wlm-db-potential-savings"
                         onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
                         isDisabled={loading}
                     >
@@ -80,7 +81,7 @@ const PotentialSavings = () => {
             </div>
 
             {windowSize.width < 1700 && (
-                <DsTypography style={{ margin: '20px 0 -20px 40px' }} variant="Regular_13">
+                <DsTypography style={{ margin: '20px 0 -20px 40px' }} variant="Semibold_13">
                     (Elastic Block Store (EBS) & FSx for Windows File Server)
                 </DsTypography>
             )}
@@ -135,8 +136,7 @@ const PotentialSavings = () => {
                     <div className={styles.subContent}>
                         <div className={styles.loaderText}>
                             <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
-                                $
-                                {formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
+                                ${formatNumberWithCustomComma(potentialSavingsValues?.savings || 0)}
                             </DsTypography>
                             {loading && <DsFlashingDotsLoader />}
                         </div>

@@ -4,13 +4,20 @@ import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { FINDINGS, GETWELL_STATUS, STATUS_CONST, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DsTypography, useDialog, DsButton, Button, Popover } from '@netapp/design-system';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import { useEffect, useState } from 'react';
-import { cardDataDefault, formatGetWellData, handleOptimizeStorageJob } from '../../GetWell/GetWellUtils';
+import {
+    cardDataDefault,
+    checkIfDisableForOptimize,
+    formatGetWellData,
+    handleOptimizeStorageJob,
+    nameToIdConfigMapping,
+    setOptimizeInnerpageSummary
+} from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import StorageTierTable from './RenderTables/StorageTierTable';
 import FileSystemHeadroomTable from './RenderTables/FileSystemHeadroom';
@@ -31,7 +38,10 @@ import {
     useOptimizeComputeConfigMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
-    useOptimizeStorageTierMutation
+    useOptimizeStorageTierMutation,
+    useOptimizeStorageSizingForBulkMutation,
+    useOptimizeStorageTierForBulkMutation,
+    useOptimizeComputeConfigForBulkMutation
 } from '../../../utils/apiService';
 import {
     setGwDatabaseInstance,
@@ -39,19 +49,24 @@ import {
     setGwDatabaseStorageType,
     setGwHostname,
     setGwResourceId,
+    setInProgressHostData,
     setInProgressOptimizationData,
+    setJobToInstanceMap,
+    setJobToInstanceMapForBulk,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
+import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
-    const { cardData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
+    const { allmssqlHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
@@ -69,48 +84,160 @@ const DashboardInnerPage = () => {
     });
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
+    const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
+    const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const callOptimizeApi = (type: any, rowData?: any) => {
-        let payload: null | object = {};
+    const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
+        let payload: null | object | any = {};
         let apiCall = null;
         const state = store.getState();
-        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData } = state.getWellOptimize;
+        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData, recommendedInstanceInBulk } =
+            state.getWellOptimize;
         const { headerSelectedCred, headerSelectedRegion } = state.headers;
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
-            apiCall = optimizeComputeConfig;
-            const { selectedRecommendedInstance } = state.getWellOptimize;
-            payload = {
-                instanceType: selectedRecommendedInstance?.value
-            };
-        } else if (type === 'Log drive size' || type === 'File system headroom' || type === 'TempDB drive size') {
-            apiCall = optimizeStorageSizing;
-            payload = {
-                type:
-                    type === 'Log drive size'
-                        ? 'log-drive-size'
-                        : type === 'File system headroom'
-                        ? 'headroom'
-                        : 'tempdb-drive-size'
-            };
-        } else if (type === 'Storage tier') {
-            apiCall = optimizeStorageTier;
-            payload = null;
+            if (operation === 'bulk') {
+                apiCall = optimizeComputeConfigForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'compute',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<
+                                            string,
+                                            { id: string; sqlServerInstances: string[]; instanceType: string }
+                                        >,
+                                        {
+                                            databaseHostId,
+                                            instanceId,
+                                            hostName
+                                        }: { databaseHostId: string; instanceId: string; hostName: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = {
+                                                id: databaseHostId,
+                                                sqlServerInstances: [],
+                                                instanceType: recommendedInstanceInBulk?.[hostName]?.value || ''
+                                            };
+                                        }
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeComputeConfig;
+                const { selectedRecommendedInstance } = state.getWellOptimize;
+                payload = {
+                    instanceType: selectedRecommendedInstance?.value
+                };
+            }
+        } else if (
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ) {
+            if (operation === 'bulk') {
+                apiCall = optimizeStorageSizingForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type:
+                                type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
+                                    ? 'log-drive-size'
+                                    : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+                                    ? 'headroom'
+                                    : 'tempdb-drive-size',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
+                                        }
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeStorageSizing;
+                payload = {
+                    type:
+                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
+                            ? 'log-drive-size'
+                            : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+                            ? 'headroom'
+                            : 'tempdb-drive-size'
+                };
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
+            if (operation === 'bulk') {
+                apiCall = optimizeStorageTierForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'storage-tier',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
+                                        { databaseHostId, instanceId }: { databaseHostId: string; instanceId: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = { id: databaseHostId, sqlServerInstances: [] };
+                                        }
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeStorageTier;
+                payload = null;
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
-            payload = {
-                assessments: [
-                    {
-                        configurationName: type,
-                        objectsToOptimize: []
-                    }
-                ]
-            };
+            if (operation === 'bulk') {
+                payload = {
+                    databaseHosts: []
+                };
+            } else {
+                payload = {
+                    assessments: [
+                        {
+                            configurationName: type,
+                            objectsToOptimize: []
+                        }
+                    ]
+                };
+            }
         }
 
         // call optimize api
@@ -118,23 +245,39 @@ const DashboardInnerPage = () => {
         dispatch(
             setOptimizingData({
                 ...optimizingData,
-                [type === 'Log drive size'
-                    ? 'log-drive-size'
-                    : type === 'File system headroom'
-                    ? 'headroom'
-                    : type === 'TempDB drive size'
-                    ? 'tempdb-drive-size'
-                    : type === 'Storage tier'
-                    ? 'performance-tier'
-                    : 'compute-rightsizing']: 'optimizing'
+                [nameToIdConfigMapping(type)]: 'optimizing'
             })
         );
-        dispatch(
-            setInProgressOptimizationData({
-                ...inProgressOptimizationData,
-                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
-            })
-        );
+        if (operation === 'bulk') {
+            const hostIds = payload.hostsToOptimize[0].databaseHosts.map((host: any) => host.id);
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: [...(inProgressHostData[type] || []), ...hostIds]
+                })
+            );
+            const instances = payload.hostsToOptimize[0].databaseHosts.flatMap((host: any) => host.sqlServerInstances);
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: [...(inProgressOptimizationData[type] || []), ...instances]
+                })
+            );
+        } else {
+            dispatch(
+                setInProgressHostData({
+                    ...inProgressHostData,
+                    [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+                })
+            );
+            dispatch(
+                setInProgressOptimizationData({
+                    ...inProgressOptimizationData,
+                    [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+                })
+            );
+        }
+
         formatGetWellData(dispatch, rowData?.assessments);
         dispatch(
             addNotification({
@@ -157,13 +300,26 @@ const DashboardInnerPage = () => {
             })
         );
 
-        apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
-            payload: payload
-        }).then((res: any) => {
+        let apiData = {};
+        if (operation === 'bulk') {
+            apiData = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                payload: payload
+            };
+        } else {
+            apiData = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                payload: payload
+            };
+        }
+
+        apiCall(apiData).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {type} failed to optimize.
@@ -179,15 +335,70 @@ const DashboardInnerPage = () => {
                     </Button>
                 </div>
             );
-            handleOptimizeStorageJob(
-                res,
-                { id: cardData?.id, name: type, hostId: selectedResourceId, instanceId: selectedDatabaseInstance },
-                failedMsgData,
-                getJobDetailApi,
-                dispatch,
-                type
-            );
+            if (!res.error) {
+                if (operation === 'bulk') {
+                    dispatch(
+                        setJobToInstanceMapForBulk({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: payload?.hostsToOptimize[0]
+                        })
+                    );
+                } else {
+                    dispatch(
+                        setJobToInstanceMap({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                        })
+                    );
+                }
+            }
+            if (operation === 'bulk') {
+                handleOptimizeStorageJob(
+                    res,
+                    {},
+                    failedMsgData,
+                    getJobDetailApi,
+                    dispatch,
+                    type,
+                    operation,
+                    getBulkInstanceList(payload?.hostsToOptimize, type)
+                );
+            } else {
+                handleOptimizeStorageJob(
+                    res,
+                    {
+                        id: nameToIdConfigMapping(type),
+                        name: type,
+                        hostId: selectedResourceId,
+                        instanceId: selectedDatabaseInstance
+                    },
+                    failedMsgData,
+                    getJobDetailApi,
+                    dispatch,
+                    type,
+                    operation
+                );
+            }
         });
+    };
+
+    const getBulkInstanceList = (jobData: any[], name: string) => {
+        const instanceList: any = [];
+
+        jobData.forEach(({ type, databaseHosts }) => {
+            databaseHosts.forEach((host: any) => {
+                host.sqlServerInstances.forEach((instanceId: string) => {
+                    instanceList.push({
+                        id: type,
+                        name: name,
+                        hostId: host.id,
+                        instanceId: instanceId
+                    });
+                });
+            });
+        });
+
+        return instanceList;
     };
 
     const optimizeAction = (rowData: any) => {
@@ -205,7 +416,7 @@ const DashboardInnerPage = () => {
         dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
     };
 
-    const handleDialog = (type: string, rowData: any) => {
+    const handleDialog = (type: string, rowData: any, operation?: string) => {
         setDialog(
             <DialogComponent
                 header={`${type} optimization`}
@@ -215,19 +426,23 @@ const DashboardInnerPage = () => {
                         recommendationOptions={rowData?.recommendationOptions}
                         missingPermissions={rowData?.missingPermissions}
                         recommendedSizeInGib={rowData?.recommendedSizeInGib}
+                        bulkRecommendationOptions={rowData}
+                        operation={operation}
                     />
                 }
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    callOptimizeApi(type, rowData);
+                    callOptimizeApi(type, rowData, operation);
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
                 customClass={'innerPage'}
                 hidePrimaryButton={
-                    (type === 'File system headroom' || type === 'Log drive size' || type === 'TempDB drive size') &&
+                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
                     rowData?.missingPermissions &&
                     rowData?.missingPermissions.length > 0
                 }
@@ -236,8 +451,15 @@ const DashboardInnerPage = () => {
     };
 
     useEffect(() => {
+        if (selectedConfig) {
+            const configData = getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
+            setOptimizeInnerpageSummary(selectedConfig, configData, dispatch);
+        }
+    }, [allmssqlHostAssessmentData]);
+
+    useEffect(() => {
         switch (selectedConfig) {
-            case 'Storage tier':
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -252,7 +474,7 @@ const DashboardInnerPage = () => {
                 });
 
                 break;
-            case 'File system headroom':
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -267,7 +489,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'Log drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -283,7 +505,7 @@ const DashboardInnerPage = () => {
                 });
                 break;
 
-            case 'TempDB drive size':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -298,7 +520,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'Data files (.mdf)':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -312,7 +534,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'Log files (.ldf)':
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -326,7 +548,7 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case 'TempDB placement':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -399,7 +621,21 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
-            case GENERAL.APPLICATION_SQL_SERVER:
+            case GENERAL.RSS_CONFIGURATION:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.rss_config?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.LICENSE_SQL_SERVER:
                 setValueCardData({
                     optimizationScore: selectedConfigSummary.optimizationScore,
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
@@ -413,10 +649,38 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
+                    }
+                });
+                break;
+            case GENERAL.MAXDOP_PATCH:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '184px',
+                    tagHeight: '281px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.maxdop?.recommendation?.description
+                    }
+                });
+                break;
         }
-    }, [selectedConfig]);
+    }, [selectedConfig, selectedConfigSummary]);
 
-    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any) => {
+    const lastColDetails = (name: string, data?: any, inProgressOptimizationData?: any, inProgressHostData?: any) => {
         return {
             id: '4',
             Header: '',
@@ -424,42 +688,12 @@ const DashboardInnerPage = () => {
             isSticky: true,
             width: '318px',
             renderCell: (cellData: any, rowData: any) => {
-                let isDisabled = false;
-                let errorMessage = '';
-                if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
-                    isDisabled = true;
-                    errorMessage = GENERAL.ONLINE_INSTANCE_ASSESS;
-                } else if (
-                    !rowData?.assessmentStatus ||
-                    rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
-                ) {
-                    isDisabled = true;
-                    errorMessage = name + ' ' + GENERAL.NO_ASSESSMENT_DATA;
-                } else if (
-                    name === 'Log drive size' &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
-                ) {
-                    isDisabled = true;
-                    errorMessage = GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
-                } else if (
-                    name === 'TempDB drive size' &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
-                ) {
-                    isDisabled = true;
-                    errorMessage = GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
-                } else if (
-                    name === 'File system headroom' &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase()
-                ) {
-                    isDisabled = true;
-                    errorMessage = GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
-                } else if (
-                    (name === 'Log drive size' || name === 'TempDB drive size' || name === 'File system headroom') &&
-                    rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase()
-                ) {
-                    isDisabled = true;
-                    errorMessage = GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
-                }
+                let { isDisabled, errorMessage } = checkIfDisableForOptimize(
+                    inProgressHostData,
+                    name,
+                    rowData,
+                    selectedRowsForOptimize
+                );
                 const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
                 return (
                     <div className={styles.buttonContainer}>
@@ -468,18 +702,7 @@ const DashboardInnerPage = () => {
                                 <OptimizeInProgressIcon />
                                 <DsTypography variant="Semibold_14">Optimizing</DsTypography>
                             </div>
-                        ) : !isDisabled ? (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                onClick={() => {
-                                    optimizeAction(rowData);
-                                    handleDialog(name, rowData);
-                                }}
-                            >
-                                Optimize
-                            </DsButton>
-                        ) : (
+                        ) : isDisabled && errorMessage ? (
                             <Popover
                                 popoverClass={CommonStyles['popover']}
                                 isAppendedToBody={true}
@@ -493,6 +716,18 @@ const DashboardInnerPage = () => {
                                     </DsButton>
                                 }
                             />
+                        ) : (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                isDisabled={isDisabled}
+                                onClick={() => {
+                                    optimizeAction(rowData);
+                                    handleDialog(name, rowData, 'single');
+                                }}
+                            >
+                                Optimize
+                            </DsButton>
                         )}
                     </div>
                 );
@@ -501,27 +736,27 @@ const DashboardInnerPage = () => {
     };
 
     const handleBulkAction = (type: string, rowData: any) => {
-        optimizeAction(rowData[0]);
-        handleDialog(type, rowData[0]);
+        // optimizeAction(rowData[0]);
+        handleDialog(type, rowData, 'bulk');
     };
 
     const renderTable = () => {
         switch (selectedConfig) {
-            case 'Storage tier':
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return <StorageTierTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'File system headroom':
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 return <FileSystemHeadroomTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'Log drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return <LogDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'TempDB drive size':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 return <TempDBDriveSizeTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'Data files (.mdf)':
+            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return <UserDataFilesTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'Log files (.ldf)':
+            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return <LogFileTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'TempDB placement':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 return <TempDBPlacement lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
-            case 'Compute rightsizing':
+            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return <ComputeRightSizingTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case 'ONTAP':
                 return <OntapConfig />;
@@ -529,6 +764,7 @@ const DashboardInnerPage = () => {
                 return <OperatingSystemTable />;
         }
     };
+
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
@@ -542,15 +778,28 @@ const DashboardInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Optimize configuration (${selectedConfig})`
+                                title: `Optimize configuration (${selectedConfig})`,
+                                dataTestId: 'wlm-db-optimize-configuration'
                             }
                         ]}
                     />
                 </div>
 
                 <div className={styles.headingSection}>
-                    <DsTypography variant="Semibold_20">{selectedConfig}</DsTypography>
-                    <DsTypography variant="Semibold_16">Manage instance optimization</DsTypography>
+                    <DsTypography
+                        data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
+                        variant="Semibold_20"
+                    >
+                        {selectedConfig}
+                    </DsTypography>
+                    <DsTypography
+                        data-testid={`wlm-db-manage-instance-optimization-heading-for-${selectedConfig
+                            .toLowerCase()
+                            .replace(/ /g, '-')}`}
+                        variant="Semibold_16"
+                    >
+                        Manage instance optimization
+                    </DsTypography>
                 </div>
 
                 <div className={styles.mainSection}>

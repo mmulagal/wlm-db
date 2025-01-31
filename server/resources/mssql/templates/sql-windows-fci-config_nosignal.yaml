@@ -642,8 +642,8 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - '''"'
                             waitAfterCompletion: 0
-                        h-restart-computer:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                        h-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
                             waitAfterCompletion: forever
                 ontapconfig:
                     commands:
@@ -950,6 +950,8 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - "' -NetBIOSName '"
                                   - !Ref 'SqlFSxServerNetBIOSName1'
+                                  - "' -ClusterName '"
+                                  - !Ref 'SqlFSxFCIName'
                                   - '''"'
                             waitAfterCompletion: '0'
                         m-update-sqltag:
@@ -1309,8 +1311,8 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName2'
                                   - '''"'
                             waitAfterCompletion: forever
-                        h-restart-computer:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                        h-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
                             waitAfterCompletion: forever
                 ontapconfig:
                     commands:

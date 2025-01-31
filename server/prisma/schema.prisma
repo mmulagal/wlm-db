@@ -106,6 +106,7 @@ model job {
   parent_job_id             String?   @db.VarChar(40)
   initiator                 String    @db.VarChar(80)@default("SYSTEM")
   last_update_time          DateTime? @updatedAt @db.DateTime(3)
+  metadata                  Json?     @default("{}")
 
   @@index([id], map: "k_wlmdb_job_id")
   @@index([account_id], map: "k_wlmdb_job_account_id")
@@ -180,6 +181,23 @@ model database_instance_config_data{
   @@index([resource_id], map: "k_wlmdb_database_instance_config_data_resource_id")
 }
 
+model onprem_tco_reports {
+  id                       String                   @id @default(uuid()) @db.VarChar(40)
+  resource_id              String                   @db.VarChar(255)
+  account_id               String                   @db.VarChar(64)
+  database_type            DATABASE_TYPE            @default(mssql)
+  database_deployment_type DATABASE_DEPLOYMENT_TYPE
+  host_config              Json?                    @default("{}")
+  database_instances_data  Json?                    @default("{}")
+  assessment_data          Json?                    @default("{}")
+  creation_time            DateTime                 @default(now())
+  version                  String                   @db.VarChar(64)
+
+  @@unique([account_id, resource_id, creation_time], name: "uk_wlmdb_onprem_tco_reports", map: "uk_wlmdb_onprem_tco_reports")
+  @@index([account_id], name: "k_wlmdb_onprem_tco_reports_account_id")
+  @@index([resource_id], map: "k_wlmdb_onprem_tco_reports_resource_id")
+}
+
 enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED
@@ -242,6 +260,7 @@ enum SOURCE {
 enum DATABASE_DEPLOYMENT_TYPE {
   Standalone
   FCI
+  AOAG
 }
 
 enum DATABASE_TYPE {

@@ -3,14 +3,22 @@ import styles from './StoragePerfInput.module.scss';
 import { useEffect, useState } from 'react';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { useDispatch } from 'react-redux';
-import { setStoragePerformance } from '../../../../../store/workloadFactory/exploreSavingsSlice';
+import { setOnPremStorageAndComputeInfo } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 
-const StoragePerfInput = ({ type }: any) => {
+const StoragePerfInput = ({ data, printState }: any) => {
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (data) {
+            setTotalStorageAmount(data?.totalStorage);
+            setIOPS(data?.totalIops);
+            setThroughput(data?.totalThroughput);
+        }
+    }, [data]);
 
     const [totalStorageAmount, setTotalStorageAmount] = useState<any>(null);
 
-    const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(300);
+    const [totalStorageAmountSearch, setTotalStorageAmountSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -18,18 +26,20 @@ const StoragePerfInput = ({ type }: any) => {
     }, [totalStorageAmount]);
 
     useEffect(() => {
-        dispatch(
-            setStoragePerformance({
-                type: type,
-                mode: 'totalStorageAmount',
-                value: totalStorageAmountSearch
-            })
-        );
+        if (totalStorageAmountSearch !== null && totalStorageAmountSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'totalStorage',
+                    value: totalStorageAmountSearch
+                })
+            );
+        }
     }, [totalStorageAmountSearch]);
 
     const [iops, setIOPS] = useState<any>(null);
 
-    const [iopsSearch, setIOPSSearch] = useSearchDebounce(300);
+    const [iopsSearch, setIOPSSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -37,18 +47,20 @@ const StoragePerfInput = ({ type }: any) => {
     }, [iops]);
 
     useEffect(() => {
-        dispatch(
-            setStoragePerformance({
-                type: type,
-                mode: 'iops',
-                value: iopsSearch
-            })
-        );
+        if (iopsSearch !== null && iopsSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'totalIops',
+                    value: iopsSearch
+                })
+            );
+        }
     }, [iopsSearch]);
 
     const [throughput, setThroughput] = useState<any>(null);
 
-    const [throughputSearch, setThroughputSearch] = useSearchDebounce(300);
+    const [throughputSearch, setThroughputSearch] = useSearchDebounce(1000);
 
     //use effect for no of cpu details
     useEffect(() => {
@@ -56,49 +68,72 @@ const StoragePerfInput = ({ type }: any) => {
     }, [throughput]);
 
     useEffect(() => {
-        dispatch(
-            setStoragePerformance({
-                type: type,
-                mode: 'throughput',
-                value: throughputSearch
-            })
-        );
+        if (throughputSearch !== null && throughputSearch !== undefined) {
+            dispatch(
+                setOnPremStorageAndComputeInfo({
+                    type: data?.sqlInstanceName,
+                    mode: 'totalThroughput',
+                    value: throughputSearch
+                })
+            );
+        }
     }, [throughputSearch]);
 
     return (
         <div className={styles.computeInputComponent}>
             <div className={styles.col2}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setTotalStorageAmount(numVal);
-                    }}
-                    placeholder={''}
-                    value={totalStorageAmount}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{totalStorageAmount}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setTotalStorageAmount(numVal);
+                        }}
+                        placeholder={''}
+                        value={totalStorageAmount || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col3}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setIOPS(numVal);
-                    }}
-                    placeholder={''}
-                    value={iops}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{iops}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setIOPS(numVal);
+                        }}
+                        placeholder={''}
+                        value={iops || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
             <div className={styles.col4}>
-                <TextField
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setThroughput(numVal);
-                    }}
-                    placeholder={''}
-                    value={throughput}
-                    className={styles.keyField}
-                />
+                {printState && (
+                    <div className={styles.mockInputClone}>
+                        <div className={styles.inputField}>{throughput}</div>
+                    </div>
+                )}
+                {!printState && (
+                    <TextField
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setThroughput(numVal);
+                        }}
+                        placeholder={''}
+                        value={throughput || ''}
+                        className={styles.keyField}
+                    />
+                )}
             </div>
         </div>
     );

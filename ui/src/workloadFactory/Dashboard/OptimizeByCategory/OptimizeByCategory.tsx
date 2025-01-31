@@ -27,6 +27,7 @@ import store from '../../../store/store';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import CategoryDialogComponent from '../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
+import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
@@ -77,6 +78,7 @@ const OptimizeByCategory = () => {
                 }}
                 customClass={styles.dialog}
                 primaryButtonDisabled={!tableData || tableData.length === 0 || !isOnlineInstance}
+                testId="wlm-db-not optimize-instance-continue-button"
             />
         );
     };
@@ -94,6 +96,7 @@ const OptimizeByCategory = () => {
                         isThin={true}
                         onClick={() => handleClick()}
                         isDisabled={allmssqlHostAssessmentLoading}
+                        data-testid="wlm-db-optimize-instances-by-category"
                     >
                         Optimize
                     </DsButton>
@@ -144,10 +147,12 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">Application</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.APPLICATION}</DsTypography>
                         </div>
                     </div>
                 </div>
+
+                <div className={styles.optimizeSeparator} />
 
                 <div className={styles.topSection}>
                     <div className={styles.tile1}>

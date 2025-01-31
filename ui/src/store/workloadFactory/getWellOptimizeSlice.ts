@@ -23,7 +23,11 @@ const initialState: GetWellSliceInterface = {
     credIdFromJM: '',
     regionFromJM: '',
     landingFrom: '',
-    inProgressOptimizationData: {}
+    inProgressOptimizationData: {},
+    inProgressHostData: {},
+    jobToInstanceMap: {},
+    jobToInstanceMapForBulk: [],
+    recommendedInstanceInBulk: {}
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -88,6 +92,7 @@ const getWellOptimizeSlice = createSlice({
             state.optimizingData = null;
             state.optimizingInstanceData = false;
             state.selectedRecommendedInstance = null;
+            state.recommendedInstanceInBulk = {};
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -109,11 +114,27 @@ const getWellOptimizeSlice = createSlice({
         },
         setInProgressOptimizationData: (state, action: PayloadAction<any>) => {
             state.inProgressOptimizationData = action.payload;
+        },
+        setInProgressHostData: (state, action: PayloadAction<any>) => {
+            state.inProgressHostData = action.payload;
+        },
+        setJobToInstanceMap: (state, action: PayloadAction<any>) => {
+            state.jobToInstanceMap = action.payload;
+        },
+        setJobToInstanceMapForBulk: (state, action: PayloadAction<any>) => {
+            state.jobToInstanceMapForBulk = action.payload;
+        },
+        setRecommendedInstanceInBulk: (state, action: PayloadAction<any>) => {
+            if (!state.recommendedInstanceInBulk[action.payload.type]) {
+                state.recommendedInstanceInBulk[action.payload.type] = {};
+            }
+            state.recommendedInstanceInBulk[action.payload.type] = action.payload.value;
         }
     }
 });
 
 export const {
+    setJobToInstanceMapForBulk,
     setLandingFrom,
     setCredIdFromJM,
     setRegionFromJM,
@@ -135,7 +156,10 @@ export const {
     setOptimizingData,
     setOptimizingInstanceData,
     setSelectedRecommendedInstance,
-    setInProgressOptimizationData
+    setInProgressOptimizationData,
+    setInProgressHostData,
+    setJobToInstanceMap,
+    setRecommendedInstanceInBulk
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

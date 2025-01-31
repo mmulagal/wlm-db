@@ -28,6 +28,7 @@ type DialogProps = {
     primaryButtonDisabled?: boolean;
     hidePrimaryButton?: boolean;
     primaryButtonTooltip?: string;
+    testId?: string;
 };
 
 const DialogComponent = ({
@@ -41,7 +42,8 @@ const DialogComponent = ({
     customClass,
     primaryButtonDisabled = false,
     hidePrimaryButton = false,
-    primaryButtonTooltip = ''
+    primaryButtonTooltip = '',
+    testId
 }: DialogProps) => {
     const { closeDialog } = useDialog();
 
@@ -147,6 +149,7 @@ const DialogComponent = ({
                         isLoading={primaryButtonLoad}
                         onClick={primaryButtonClick}
                         title={primaryButtonTooltip}
+                        data-testid={testId}
                     >
                         {primaryButton}
                     </Button>

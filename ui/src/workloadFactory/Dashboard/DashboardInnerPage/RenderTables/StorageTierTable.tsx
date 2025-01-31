@@ -1,16 +1,21 @@
-import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import BulkActionContainer from './BulkActionContainer';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import FirstColumnComponent from './FirstColumnCoponent';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
+import {
+    disableOptimizeCheckBoxForErrCase,
+    disableOptimizeCheckBoxForOptimizeCase
+} from '../../../GetWell/GetWellUtils';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -23,7 +28,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
         state => state.inventoryV2
     );
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -41,14 +46,8 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                             performanceTier: performanceTierObj?.current,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: performanceTierObj?.status,
-                            data: instanceData,
-                            cellProps: {
-                                isDisabled:
-                                    optimizingInstanceData &&
-                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
-                                selectionProps: undefined
-                            }
+                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
+                            data: instanceData
                         });
                     }
                 }
@@ -59,7 +58,20 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
             storageTierAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
-    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts, optimizingInstanceData]);
+    }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
+
+    // Update tableData when selection changes
+    const updatedTableData = useMemo(() => {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+            return disableOptimizeCheckBoxForOptimizeCase(
+                tableData,
+                ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                selectedRowsForOptimize
+            );
+        } else {
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
+        }
+    }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -71,46 +83,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
             isSticky: true,
             width: '310px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div>
-                        <DsTypography variant="Semibold_14">
-                            {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
-                        {!rowData?.loadingStatus && (
-                            <div className={styles.statusContainer}>
-                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
-                                    ></div>
-                                )}
-                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
-                                    ></div>
-                                )}
-                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
-                                    ></div>
-                                )}
-                                <DsTypography variant="Regular_13">
-                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                        ? INVENTORY_STATUS.ONLINE
-                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                        ? INVENTORY_STATUS.OFFLINE
-                                        : rowData?.status}
-                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
-                                </DsTypography>
-                            </div>
-                        )}
-                    </div>
-                );
+                return <FirstColumnComponent rowData={rowData} />;
             }
         },
         {
@@ -130,40 +103,33 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Storage tier', {}, inProgressOptimizationData)
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
-        //@ts-ignore
-        selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
 
     useEffect(() => {
-        const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
-        disptach(setSelectedRowsForOptimize(rows));
-        if (rows.length === 1 && optimizingInstanceData) {
-            //To do here ids will come
-            // //@ts-ignore
-            // tableProps.selectionState.rows['41'] = false;
-            // //@ts-ignore
-            // tableProps.selectionState.count = 0;
-            // //@ts-ignore
-            // tableProps.selectionState.allSelected = false;
+        disptach(setSelectedRowsForOptimize(rowsData));
+
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+            checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
-    }, [tableProps.selectionState, optimizingInstanceData]);
+    }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction('Storage tier', selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>
@@ -173,7 +139,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length === 1 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

@@ -322,9 +322,6 @@ const GET_SANDBOXES = `${SET_NOCOUNT}
     ${FOR_JSON_PATH}) as sandboxes
 `;
 
-const INSTANCE_DEFAULT_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
-        SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS varchar(38)),1);`;
-
 const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
         select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'ROWS'  FOR JSON AUTO`;
 
@@ -372,9 +369,6 @@ const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
             ORDER BY 
                 tempdbDriveLetter ${FOR_JSON_PATH}
 `;
-
-const INSTANCE_DEFAULT_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
-        SELECT LEFT(CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS varchar(38)),1);`;
 
 const INSTANCE_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
         select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc = 'LOG'  FOR JSON AUTO`;
@@ -453,8 +447,6 @@ export {
     DEFAULT_DATA_DRIVE_SIZE,
     DEFAULT_LOG_DRIVE_SIZE,
     TEMPDB_DRIVE_SIZE,
-    INSTANCE_DEFAULT_DATA_DRIVES_QUERY,
-    INSTANCE_DEFAULT_LOG_DRIVES_QUERY,
     INSTANCE_USER_DB_DRIVE_SIZES,
     INSTANCE_LOG_DB_DRIVE_SIZES
 };

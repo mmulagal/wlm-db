@@ -8,17 +8,14 @@
     "apiDocUrl": "<%=process.env.SWAGGER%>",
     "stageIntegrations": [
         {
-            "path": "/marketing",
-            "renderType": "iframe/v2",
-            "iframeUrl": "https://workloads.netapp.com/database-workloads"
-        },
-        {
             "path": "/",
             "renderType": "iframe/v2",
             "iframeUrl": "/wlmdb/index.html"
         }
     ],
     "homepage": {
+        "marketingUrl": "/databases/marketing",
+        "marketingBlueXPUrl": "/fsxdb/marketing",
         "description": "Detect your existing database estate on AWS, assess potential cost savings by moving to FSx for ONTAP, deploy databases end-to-end with built-in best practices for optimization, and automate thin cloning for CI/CD pipelines.",
         "mainPrimaryCtaDropdownLabel": "Deploy host",
         "secondaryCtaLabel": "Go to Databases inventory",
@@ -49,7 +46,7 @@
                 "bluexpTo": "/fsxdb/explore-savings-fsxw"
             },
             {
-                "label": "Microsoft SQL Server on On-Premises",
+                "label": "Microsoft SQL Server on-premises",
                 "to": "/databases/explore-savings-on-premise",
                 "bluexpTo": "/fsxdb/explore-savings-on-premise"
             }

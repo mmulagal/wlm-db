@@ -11,9 +11,11 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     loading: false,
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: '',
+    selectedOnPremHostId: '',
     selectedPartnerInstanceId: '',
     selectedServerName: '',
     selectedHostDetails: {},
+    selectedOnPremHostDetails: {},
     selectedPartnerHostDetails: {},
     getPartnerHostDetailsLoading: false,
     storageSavingsResponse: {},
@@ -25,6 +27,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     viewCalculationsLoading: false,
     savingsCalculatorFrom: null,
     selectedManualRegion: null,
+    selectedOnPremRegion: null,
     selectedManualDeploymentModel: null,
     monthlyBYOLCost: '',
     manualMonthlyDescription: '',
@@ -44,7 +47,13 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
         manualRegionsLoading: false,
         manualRegionsError: null
     },
+    getOnPremRegionList: {
+        onPremRegionsData: null,
+        onPremRegionsLoading: false,
+        onPremRegionsError: null
+    },
     onPremiseData: null,
+    onPremiseDataLoading: false,
     volumeFilledStatus: false,
     secondaryVolumeFilledStatus: false,
     manualTCOVolumeTypes: {
@@ -124,17 +133,10 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualFSXThroughput: 128,
     snapshotLoading: false,
     selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
-    computeInformation: {
-        SQL_ins1: { vCPUsInUse: '', memory: '', networkPerformance: '' },
-        SQL_ins2: { vCPUsInUse: '', memory: '', networkPerformance: '' },
-        SQL_ins3: { vCPUsInUse: '', memory: '', networkPerformance: '' }
-    },
-    storagePerformance: {
-        primaryData: { totalStorageAmount: '', iops: '', throughput: '' },
-        primaryLog: { totalStorageAmount: '', iops: '', throughput: '' },
-        secondaryData: { totalStorageAmount: '', iops: '', throughput: '' },
-        secondaryLog: { totalStorageAmount: '', iops: '', throughput: '' }
-    }
+    onPremStorageAndComputeInfo: {},
+    onPremNetworkPerformance: null,
+    storageSavingsOnPremResponse: {},
+    storageSavingsOnPremLoading: false
 };
 
 const exploreSavingsSlice = createSlice({
@@ -144,11 +146,23 @@ const exploreSavingsSlice = createSlice({
         setOnPremiseData(state, action: PayloadAction<any>) {
             state.onPremiseData = action.payload;
         },
-        setStoragePerformance(state, action: PayloadAction<any>) {
-            state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
+        setOnPremiseDataLoading(state, action: PayloadAction<any>) {
+            state.onPremiseDataLoading = action.payload;
         },
-        setComputeInformation(state, action: PayloadAction<any>) {
-            state.computeInformation[action.payload.type][action.payload.mode] = action.payload.value;
+        setOnPremStorageAndComputeInfo(state, action: PayloadAction<any>) {
+            if (!state.onPremStorageAndComputeInfo[action.payload.type]) {
+                state.onPremStorageAndComputeInfo[action.payload.type] = {};
+            }
+            if (!state.onPremStorageAndComputeInfo[action.payload.type][action.payload.mode]) {
+                state.onPremStorageAndComputeInfo[action.payload.type][action.payload.mode] = {};
+            }
+            state.onPremStorageAndComputeInfo[action.payload.type][action.payload.mode] = action.payload.value;
+        },
+        setOnPremStorageAndComputeInfoFull(state, action: PayloadAction<any>) {
+            state.onPremStorageAndComputeInfo = action.payload;
+        },
+        setOnPremNetworkPerformance(state, action: PayloadAction<any>) {
+            state.onPremNetworkPerformance = action.payload;
         },
         setSelectedExploreSavingsTab: (state, action: PayloadAction<any>) => {
             state.selectedExploreSavingsTab = action.payload;
@@ -178,7 +192,7 @@ const exploreSavingsSlice = createSlice({
             state.requestedPayload = action.payload;
         },
         setRequestedRegion: (state, action: PayloadAction<any>) => {
-            state.requestedPayload = action.payload;
+            state.requestedRegion = action.payload;
         },
         setVolumeFilledStatus: (state, action: PayloadAction<any>) => {
             state.volumeFilledStatus = action.payload;
@@ -197,6 +211,12 @@ const exploreSavingsSlice = createSlice({
         },
         setManualRegionsLoading: (state, action: PayloadAction<any>) => {
             state.getManualRegionsList.manualRegionsLoading = action.payload;
+        },
+        addOnPremRegionsList: (state, action: PayloadAction<any>) => {
+            state.getOnPremRegionList.onPremRegionsData = action.payload;
+        },
+        setOnPremRegionsLoading: (state, action: PayloadAction<any>) => {
+            state.getOnPremRegionList.onPremRegionsLoading = action.payload;
         },
         setVolumeTypeOperation(state, action: PayloadAction<any>) {
             state.manualTCOVolumeTypes[action.payload.type][action.payload.mode] = action.payload.value;
@@ -235,6 +255,9 @@ const exploreSavingsSlice = createSlice({
         setSelectedRegionFromManualTCO(state, action: PayloadAction<any>) {
             state.selectedManualRegion = action.payload;
         },
+        setSelectedOnPremRegion(state, action: PayloadAction<any>) {
+            state.selectedOnPremRegion = action.payload;
+        },
         setSavingsCalculatorFrom(state, action: PayloadAction<any>) {
             state.savingsCalculatorFrom = action.payload;
         },
@@ -259,6 +282,9 @@ const exploreSavingsSlice = createSlice({
         setSelectedInstanceId(state, action: PayloadAction<any>) {
             state.selectedInstanceId = action.payload;
         },
+        setSelectedOnPremHostId(state, action: PayloadAction<any>) {
+            state.selectedOnPremHostId = action.payload;
+        },
         setSelectedPartnerInstanceId(state, action: PayloadAction<any>) {
             state.selectedPartnerInstanceId = action.payload;
         },
@@ -267,6 +293,9 @@ const exploreSavingsSlice = createSlice({
         },
         setSelectedHostDetails(state, action: PayloadAction<any>) {
             state.selectedHostDetails = action.payload;
+        },
+        setSelectedOnPremHostDetails(state, action: PayloadAction<any>) {
+            state.selectedOnPremHostDetails = action.payload;
         },
         setSelectedPartnerHostDetails(state, action: PayloadAction<any>) {
             state.selectedPartnerHostDetails = action.payload;
@@ -315,6 +344,7 @@ const exploreSavingsSlice = createSlice({
             state.selectedCloneRefresh = null;
             state.monthlyChangeRate = 8;
             state.selectedInstanceId = '';
+            state.selectedOnPremHostId = '';
             state.selectedPartnerInstanceId = '';
             state.selectedServerName = '';
             state.selectedHostDetails = {};
@@ -393,6 +423,7 @@ const exploreSavingsSlice = createSlice({
                 }
             };
             state.selectedManualRegion = null;
+            state.selectedOnPremRegion = null;
             state.selectedManualDeploymentModel = null;
             state.selectedManualServerEdition = null;
             state.getManualInstanceTypeList = {
@@ -410,6 +441,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualFSXIOPS = 6000;
             state.selectedManualFSXThroughput = 128;
             state.requestedPayload = {};
+            state.onPremNetworkPerformance = null;
+            state.onPremStorageAndComputeInfo = {};
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -428,14 +461,20 @@ const exploreSavingsSlice = createSlice({
         },
         setSnapshotLoading(state, action: PayloadAction<any>) {
             state.snapshotLoading = action.payload;
+        },
+        setStorageSavingsOnPremResponse(state, action: PayloadAction<any>) {
+            state.storageSavingsOnPremResponse = action.payload;
+        },
+        setStorageSavingsOnPremLoading(state, action: PayloadAction<any>) {
+            state.storageSavingsOnPremLoading = action.payload;
         }
     }
 });
 
 export const {
     setOnPremiseData,
-    setStoragePerformance,
-    setComputeInformation,
+    setOnPremiseDataLoading,
+    setOnPremNetworkPerformance,
     setSelectedExploreSavingsTab,
     setRequestedRegion,
     addManualRegionsList,
@@ -464,6 +503,7 @@ export const {
     setSelectedMonthlyBYOLCost,
     setSelectedDeploymentModelForManualTCO,
     setSelectedRegionFromManualTCO,
+    setSelectedOnPremRegion,
     setSelectedSnapshotFrequency,
     setNumberOfClonedCopies,
     setSelectedCloneRefresh,
@@ -472,9 +512,11 @@ export const {
     setSelectedVolumeTabForSecondary,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
+    setSelectedOnPremHostId,
     setSelectedPartnerInstanceId,
     setSelectedServerName,
     setSelectedHostDetails,
+    setSelectedOnPremHostDetails,
     setSelectedPartnerHostDetails,
     setGetPartnerHostDetailsLoading,
     setStorageSavingsResponse,
@@ -487,7 +529,13 @@ export const {
     setViewCalculationsLoading,
     setSavingsCalculatorFrom,
     setRecommendedTargetInstance,
-    setSnapshotLoading
+    setSnapshotLoading,
+    setStorageSavingsOnPremResponse,
+    setStorageSavingsOnPremLoading,
+    addOnPremRegionsList,
+    setOnPremRegionsLoading,
+    setOnPremStorageAndComputeInfo,
+    setOnPremStorageAndComputeInfoFull
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

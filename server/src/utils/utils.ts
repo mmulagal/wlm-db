@@ -681,6 +681,28 @@ function getOriginalDatabaseInstanceName(instanceName: string | undefined): stri
     return instanceName?.split('\\')?.[1] || DEFAULT_INSTANCE_NAME;
 }
 
+/**
+ * Returns formatted instance name with hostname for MSSQL
+ */
+function getServerNameWithHostname(sqlServerName?: string, instanceName?: string) {
+    if (isDemo()) {
+        // In ssm-scope, the instance name is appended with the hostname. (like below)
+        // instanceName: "MSSQL$SQL-Managed-Host-ProdPROD-MarketingCampaigns"
+        if (sqlServerName && instanceName && instanceName !== DEFAULT_INSTANCE_NAME) {
+            instanceName = instanceName.replace(sqlServerName, '');
+        }
+    }
+
+    if (instanceName && sqlServerName) {
+        return `${sqlServerName}\\${instanceName}`;
+    }
+    if (sqlServerName) {
+        return `${sqlServerName}`;
+    }
+
+    return `${DEFAULT_INSTANCE_NAME}`;
+}
+
 async function decompressSSMResponse(response: string) {
     logger.debug('Decompressing SSM response', { response });
 
@@ -762,6 +784,7 @@ function getSubJobDescriptions(dbEngineType: string) {
 
     const subJobDescriptions: SubJobDescriptions = {
         SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        PGSQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
         SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
         NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
         ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
@@ -870,5 +893,6 @@ export {
     getRegionDetails,
     calculateFsxStorageCapacityForHeadroomOptimization,
     getSubJobDescriptions,
-    parsePgSqlInstanceInfo
+    parsePgSqlInstanceInfo,
+    getServerNameWithHostname
 };

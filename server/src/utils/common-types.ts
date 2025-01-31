@@ -42,10 +42,53 @@ interface HostOsPatchAssessmentObject {
         title?: string;
     }[];
 }
+
+interface MSSQLPatchAssessmentObject {
+    criticalMissingPatchesCount: number;
+    ec2InstanceId: string;
+    importantMissingPatchesCount: number;
+    missingPatchesCount: number;
+    missingPatchDetails?: {
+        classification?: string;
+        kbId?: string;
+        severity?: string;
+        state?: string;
+        title?: string;
+    }[];
+}
+
+interface RssAdapter {
+    adapterName: string;
+    rssEnabled: boolean;
+    rssProfile: string;
+    baseProcessorNumber: number;
+    numberOfReceiveQueues: number;
+}
+
+interface RssConfigAssesment {
+    rssConfigFinding: string;
+    recommendedAdapterSettings?: {
+        recommendedReceiveQueues: number;
+        recommendedRssProfile: string;
+        recommendedBaseProcessorNumber: number;
+    };
+    rssAdapters?: RssAdapter[];
+    tcpOffloadState: string;
+}
+
+interface MaxDOPAssesment {
+    current: string;
+    recommendedMaxDOP: string;
+    status: string;
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
+    rssConfig?: RssConfigAssesment;
+    maxDOP?: MaxDOPAssesment;
+    mssqlPatch?: MSSQLPatchAssessmentObject[];
 }
 interface Metadata {
     node1InstanceId: string;
@@ -288,6 +331,7 @@ interface LogDriveDetails {
     ontapVolumeUuid: string;
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
+    diskNumber: number;
 }
 
 interface TempDbDriveDetails {
@@ -455,7 +499,10 @@ export {
     ComputeAssessment,
     LicenseAssessment,
     HostOsPatchAssessmentObject,
+    MSSQLPatchAssessmentObject,
     OptimizeMpioIscsiSessionsParams,
     SessionsCountPerIscsiTarget,
-    PgSqlInstanceDetails
+    PgSqlInstanceDetails,
+    RssConfigAssesment,
+    MaxDOPAssesment
 };

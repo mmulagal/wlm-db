@@ -1,16 +1,22 @@
-import { Table, useTable, TableTopBar, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './RenderTables.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo, useEffect } from 'react';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getFilterOptions, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
-import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import { setEnableFilter, setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
+import FirstColumnComponent from './FirstColumnCoponent';
+import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
+import {
+    disableOptimizeCheckBoxForErrCase,
+    disableOptimizeCheckBoxForOptimizeCase
+} from '../../../GetWell/GetWellUtils';
+
 interface StorageTierTableProps {
     lastColDetails: any;
     handleBulkAction: any;
@@ -21,8 +27,8 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
     );
-    const { optimizingInstanceData, inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
-    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { selectedRowsForOptimize, enableFilter } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -45,16 +51,10 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             findingReasons: `${computeRightSizingObj?.objectsInViolation?.length || 0} Findings`,
                             id: instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: computeRightSizingObj?.status,
+                            assessmentStatus: GETWELL_VALUES[computeRightSizingObj?.status],
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,
                             isMissingPermissions: computeMissingPermissions,
-                            data: instanceData,
-                            cellProps: {
-                                isDisabled:
-                                    optimizingInstanceData &&
-                                    selectedRowsForOptimize[0]?.id === instanceData?.databaseInstanceId,
-                                selectionProps: undefined
-                            }
+                            data: instanceData
                         });
                     }
                 }
@@ -67,6 +67,45 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
+    const updatedTableData = useMemo(() => {
+        if (
+            selectedRowsForOptimize.length > 0 &&
+            !inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length
+        ) {
+            const selectedDatabaseHostId = selectedRowsForOptimize[0].databaseHostId;
+            // If no rows are selected, reset `isDisabled` for all rows
+            return tableData.map((row: any) => {
+                const isSameDatabaseHostId = row.databaseHostId === selectedDatabaseHostId;
+                const isAlreadySelected = selectedRowsForOptimize.some((selectedRow: any) => selectedRow.id === row.id);
+                return {
+                    ...row,
+                    cellProps: {
+                        ...row.cellProps,
+                        isDisabled: !isSameDatabaseHostId && !isAlreadySelected, // Disable rows with a different databaseHostId
+                        selectionProps: {
+                            title:
+                                !isSameDatabaseHostId && !isAlreadySelected
+                                    ? 'You can select multiple instances associated with the same host.'
+                                    : '',
+                            titleProps: {
+                                placement: 'bottom'
+                            }
+                        }
+                    }
+                };
+            });
+        }
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
+            return disableOptimizeCheckBoxForOptimizeCase(
+                tableData,
+                ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+                selectedRowsForOptimize
+            );
+        } else {
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING);
+        }
+    }, [selectedRowsForOptimize, inProgressOptimizationData, tableData]);
+
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'SQL Server instance name ',
@@ -77,46 +116,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             isSticky: true,
             width: '310px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div>
-                        <DsTypography variant="Semibold_14">
-                            {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
-                        {!rowData?.loadingStatus && (
-                            <div className={styles.statusContainer}>
-                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}
-                                    ></div>
-                                )}
-                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}
-                                    ></div>
-                                )}
-                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                    <div
-                                        className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}
-                                    ></div>
-                                )}
-                                <DsTypography variant="Regular_13">
-                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                        ? INVENTORY_STATUS.ONLINE
-                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                        ? INVENTORY_STATUS.OFFLINE
-                                        : rowData?.status}
-                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
-                                </DsTypography>
-                            </div>
-                        )}
-                    </div>
-                );
+                return <FirstColumnComponent rowData={rowData} />;
             }
         },
         {
@@ -124,7 +124,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             accessor: 'hostName',
             id: '2',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: getFilterOptions(updatedTableData, 'hostName')
         },
         {
             Header: 'Finding reasons',
@@ -136,39 +136,46 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails('Compute rightsizing', {}, inProgressOptimizationData)
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
         //@ts-ignore
-        selectAllProps: false,
+        selectAllProps: {
+            isDisabled: enableFilter,
+            title:
+                enableFilter &&
+                'Multi-select is available for instances associated with the same host. To activate the multi-select checkbox, first filter the host column.'
+        },
         //@ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
         columns: TableColDefs,
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
-    useEffect(() => {
-        const rows = getSelectedFromSelectionState(tableProps.selectionState, tableData);
 
-        dispatch(setSelectedRowsForOptimize(rows));
-        if (rows.length === 1 && optimizingInstanceData) {
-            //To do here ids will come
-            // //@ts-ignore
-            // tableProps.selectionState.rows['41'] = false;
-            // //@ts-ignore
-            // tableProps.selectionState.count = 0;
-            // //@ts-ignore
-            // tableProps.selectionState.allSelected = false;
+    useEffect(() => {
+        if (tableProps.filterState?.columns[2]?.activeCount === 1) {
+            dispatch(setEnableFilter(false));
+        } else {
+            dispatch(setEnableFilter(true));
         }
-    }, [tableProps.selectionState, optimizingInstanceData]);
+    }, [tableProps.filterState]);
+    useEffect(() => {
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+        dispatch(setSelectedRowsForOptimize(rowsData));
+
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
+        }
+    }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction('Compute rightsizing', selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>
@@ -178,7 +185,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length === 1 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

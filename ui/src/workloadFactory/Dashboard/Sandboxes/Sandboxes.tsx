@@ -75,7 +75,11 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox(GENERAL.ONE_THIRTY_DAYS)}>
+                            <DsButton
+                                data-testid="wlm-db-view-zero-thirty"
+                                type="text"
+                                onClick={() => redirectToSandbox(GENERAL.ONE_THIRTY_DAYS)}
+                            >
                                 View
                             </DsButton>
                         </div>
@@ -114,7 +118,11 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox(GENERAL.THIRTY_SIXTY_DAYS)}>
+                            <DsButton
+                                data-testid="wlm-db-view-thirtyOne-sixty"
+                                type="text"
+                                onClick={() => redirectToSandbox(GENERAL.THIRTY_SIXTY_DAYS)}
+                            >
                                 View
                             </DsButton>
                         </div>
@@ -153,7 +161,11 @@ const Sandboxes = () => {
                             )}
                             <SeparatorComponent variant="vertical" height="16px" />
 
-                            <DsButton type="text" onClick={() => redirectToSandbox(GENERAL.SIXTY_PLUS_DAYS)}>
+                            <DsButton
+                                data-testid="wlm-db-view-sixtyOne-plus"
+                                type="text"
+                                onClick={() => redirectToSandbox(GENERAL.SIXTY_PLUS_DAYS)}
+                            >
                                 View
                             </DsButton>
                         </div>

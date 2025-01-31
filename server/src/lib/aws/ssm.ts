@@ -23,7 +23,11 @@ import {
     DescribeInstancePatchesCommandOutput,
     PatchComplianceData,
     ListCommandsCommand,
-    ListCommandsCommandInput
+    ListCommandsCommandInput,
+    DescribeAvailablePatchesCommand,
+    DescribeAvailablePatchesCommandInput,
+    DescribeAvailablePatchesCommandOutput,
+    Patch
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -193,6 +197,29 @@ async function describeInstancePatches(
     return allPatches;
 }
 
+async function describeAvailablePatches(
+    region: string,
+    params: DescribeAvailablePatchesCommandInput
+): Promise<Patch[]> {
+    logger.info('Describe Available Patches', { region, params });
+
+    const ssmClient = await getSSMClient(region);
+    let allPatches: Patch[] = [];
+    let nextToken: string | undefined;
+
+    do {
+        const { Patches: patches = [], NextToken }: DescribeAvailablePatchesCommandOutput = await ssmClient.send(
+            new DescribeAvailablePatchesCommand({ ...params, NextToken: nextToken })
+        );
+        logger.debug('describeAvailablePatches response', patches);
+        allPatches = allPatches.concat(patches);
+        nextToken = NextToken;
+    } while (nextToken);
+
+    logger.debug('all MSSQL available patches', allPatches);
+    return allPatches;
+}
+
 export {
     getSSMClient,
     sendSSMCommand,
@@ -204,5 +231,6 @@ export {
     getParameter,
     deleteParameters,
     describeInstancePatchStates,
-    describeInstancePatches
+    describeInstancePatches,
+    describeAvailablePatches
 };

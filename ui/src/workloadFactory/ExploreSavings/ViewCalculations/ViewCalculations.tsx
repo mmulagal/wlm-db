@@ -113,7 +113,8 @@ const ViewCalculations = ({ statusCheck }: any) => {
                         </div>
 
                         {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) && (
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {GENERAL.MS_EBS_CALCULATION}

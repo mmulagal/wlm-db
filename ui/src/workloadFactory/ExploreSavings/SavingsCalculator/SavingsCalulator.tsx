@@ -39,11 +39,11 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import ComputeInformation from './ComputeInformation/ComputeInformation';
 import StoragePerformance from './StoragePerformance/StoragePerformance';
 import OnPremRegion from './OnPremRegion/OnPremRegion';
+import downloadPdfEmail from '../../../common/emailPDF';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
-    // const [disableState, setDisableState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
 
     const {
@@ -60,7 +60,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         selectedExploreSavingsTab
     } = useAppSelector(state => state.exploreSavings);
 
-    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
@@ -84,16 +84,34 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         }
     }, [viewCalculationsResponse]);
 
+    const sendEmail = async () => {
+        const elem = document.getElementById('export-pdf') as HTMLElement;
+        var options = {
+            filename: `SavingsCalculator.pdf`,
+            compression: 'MEDIUM'
+        };
+        const report = await downloadPdfEmail(elem, options, true, () => {});
+        const formData = new FormData();
+        formData.append('file', report, 'document.pdf');
+        formData.append('userEmail', userMetadata?.email);
+        formData.append('emailSubject', 'FSXw');
+        // uploadFile(formData).then((resp) => {
+        //     console.log(‘succes’)
+        // }).catch(err => notificationContext({
+
+        // }))
+    };
+
     const printDocument = () => {
         setPrintState(true);
         setTimeout(() => {
             const elem = document.getElementById('export-pdf') as HTMLElement;
             var options = {
-                filename: `SavingsCalculator.pdf`,
+                filename: `SavingsCalculator-${Date.now()}.pdf`,
                 compression: 'MEDIUM'
             };
-             //@ts-ignore
-             downloadPdf(elem, options, (pdf: any) => {
+            //@ts-ignore
+            downloadPdf(elem, options, (pdf: any) => {
                 setPrintState(false);
                 dispatch(
                     addNotification({
@@ -102,7 +120,6 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     })
                 );
             });
-           
         }, 10);
     };
 
@@ -161,15 +178,25 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <div style={{ marginBottom: '40px' }}></div>
                     )}
 
-                    <div className={styles.savingsHeading}>
+                    <div
+                        className={
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                                ? `${styles.savingsHeading} ${styles.savingsHeadingOnPremise}`
+                                : styles.savingsHeading
+                        }
+                    >
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
                         <div />
                     </div>
 
                     <div
-                        className={styles.contentArea}
+                        className={
+                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                                ? `${styles.contentArea} ${styles.contentAreaOnPremise}`
+                                : styles.contentArea
+                        }
                         style={{
-                            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '1607px' : '1336px'
+                            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '1607px ' : '1336px'
                         }}
                     >
                         {/* Left side code here */}
@@ -227,8 +254,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <OnPremRegion />
                                     <SavingsSelectedHost />
                                     <InstanceInformation />
-                                    <ComputeInformation />
-                                    <StoragePerformance />
+                                    <ComputeInformation printState={printState} />
+                                    <StoragePerformance printState={printState} />
                                     <SavingsSelection printState={printState} />
                                 </>
                             </div>
@@ -268,11 +295,17 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     </div>
 
                     {/* Accordion here */}
+
                     <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
                 </div>
 
                 {/* last section */}
-                <ExportPDF printDocument={printDocument} disableState={disableState} isMutliFsx={isMutliFsx} />
+                <ExportPDF
+                    printDocument={printDocument}
+                    disableState={disableState}
+                    isMutliFsx={isMutliFsx}
+                    sendEmail={sendEmail}
+                />
             </div>
         </div>
     );

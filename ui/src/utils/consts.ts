@@ -64,11 +64,15 @@ export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.neta
 export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
 
 //Retry API on gateway timeout
-export const API_MAX_RETRIES = 2;
+export const API_MAX_RETRIES = 3;
+export const MIN_RETRY_DELAY = 5000;
 
 //License URL
 export const LICENSE_URL =
     'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-setting-up.html#launch-wizard-custom-ami';
+
+//AWS resize URL
+export const AWS_RESIZE_URL = 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resize-limitations.html';
 
 // Regions code list in a fixed order
 export const REGIONS_CODE_LIST = [
@@ -735,17 +739,49 @@ export const GETWELL_CONFIG: any = {
     'tempdb-drive-size': 'tempdb_drive_size',
     headroom: 'file_system_headroom',
     'tempdb-files-location': 'tempdb_files',
-    'default-log-files-location': 'transaction_log_files',
-    'default-data-files-location': 'user_data_files',
+    'log-files-location': 'transaction_log_files',
+    'data-files-location': 'user_data_files',
     'compute-rightsizing': 'compute_rightsizing',
+    'rss-config': 'rss_config',
     'sql-license': 'sql_licenses',
-    'host-os-patch': 'host_os_patch'
+    'host-os-patch': 'host_os_patch',
+    'mssql-patch': 'microsoft_sql_patch',
+    maxdop: 'maxdop'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
     'Data files (.mdf) placement',
     'Log files (.ldf) placement',
     'TempDB placement',
-    'Licenses', // Licenses is for Application (SQL Server)
-    GENERAL.OPERATING_SYSTEM_PATCH
+    GENERAL.LICENSE_SQL_SERVER,
+    GENERAL.OPERATING_SYSTEM_PATCH,
+    GENERAL.RSS_CONFIGURATION,
+    GENERAL.MICROSOFT_SQL_PATCH,
+    GENERAL.MAXDOP_PATCH
 ];
+
+export const GW_TOOLTIP_KEYS_MAPPING: any = {
+    rssProfile: 'RSS profile',
+    rssStatus: 'RSS status',
+    baseProcessorNumber: 'Base processor number',
+    receiveQueues: 'Receive Queues',
+    tcpOffloading: 'TCP Offloading Features'
+};
+
+export const NETWORK_PERFORMANCE_OPTIONS: any = {
+    'Up to 10 Gbps': 'upTo10',
+    'Above 10 Gbps': 'above10'
+};
+
+export const ERR_MSG_TO_CHECK = ['does not match schema definition.'];
+
+export const ASSESSMENT_CONFIG_NAMES = {
+    STORAGE_TIER: 'Storage tier',
+    FILE_SYSTEM_HEADROOM: 'File system headroom',
+    LOG_DRIVE_SIZE: 'Log drive size',
+    TEMPDB_DRIVE_SIZE: 'TempDB drive size',
+    DATA_FILES_MDF: 'Data files (.mdf)',
+    LOG_FILES_LDF: 'Log files (.ldf)',
+    TEMPDB_PLACEMENT: 'TempDB placement',
+    COMPUTE_RIGHTSIZING: 'Compute rightsizing'
+};

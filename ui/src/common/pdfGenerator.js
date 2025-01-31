@@ -1,5 +1,6 @@
 import domToImage from 'dom-to-image';
-import { PDFDocument, rgb } from 'pdf-lib';
+//@ts-ignore
+import { jsPDF } from 'jspdf';
 
 let _cloneNode = (node, javascriptEnabled) => {
     let child;
@@ -92,6 +93,11 @@ const downloadPdf = (dom, options, cb) => {
     let scaleObj;
     let style;
     const transformOrigin = 'top left';
+    const pdfOptions = {
+        orientation: 'p',
+        unit: 'pt',
+        format: 'a4'
+    };
 
     ({
         filename,
@@ -159,6 +165,38 @@ const downloadPdf = (dom, options, cb) => {
         }
     }
 
+    Array.prototype.forEach.call(elements, el => {
+        let clientRect;
+        let endPage;
+        let nPages;
+        let pad;
+        let rules;
+        let startPage;
+        rules = {
+            before: false,
+            after: false,
+            avoid: true
+        };
+        clientRect = el.getBoundingClientRect();
+        if (rules.avoid && !rules.before) {
+            startPage = Math.floor(clientRect.top / pageHeightPx);
+            endPage = Math.floor(clientRect.bottom / pageHeightPx);
+            nPages = Math.abs(clientRect.bottom - clientRect.top) / pageHeightPx;
+            if (endPage !== startPage && nPages <= 1) {
+                rules.before = true;
+            }
+            if (rules.before) {
+                pad = _createElement('div', {
+                    style: {
+                        display: 'block',
+                        height: `${pageHeightPx - (clientRect.top % pageHeightPx)}px`
+                    }
+                });
+                return el.parentNode.insertBefore(pad, el);
+            }
+        }
+    });
+
     filterFn = ({ classList, tagName }) => {
         let cName;
         let j;
@@ -218,17 +256,19 @@ const downloadPdf = (dom, options, cb) => {
                 img.onerror = error => reject(error);
             });
         })
-        .then(async canvas => {
+        .then(canvas => {
             let h;
+            let imgData;
             let nPages;
+            let page;
             let pageCanvas;
             let pageCtx;
             let pageHeight;
+            let pdf;
             let pxFullHeight;
             let w;
             document.body.removeChild(overlay);
-
-            const pdfDoc = await PDFDocument.create();
+            pdf = new jsPDF(pdfOptions);
             pxFullHeight = canvas.height;
             nPages = Math.ceil(pxFullHeight / pageHeightPx);
             pageHeight = a4Height;
@@ -236,8 +276,8 @@ const downloadPdf = (dom, options, cb) => {
             pageCtx = pageCanvas.getContext('2d');
             pageCanvas.width = canvas.width;
             pageCanvas.height = pageHeightPx;
-
-            for (let page = 0; page < nPages; page++) {
+            page = 0;
+            while (page < nPages) {
                 if (page === nPages - 1 && pxFullHeight % pageHeightPx !== 0) {
                     pageCanvas.height = pxFullHeight % pageHeightPx;
                     pageHeight = (pageCanvas.height * a4Width) / pageCanvas.width;
@@ -247,40 +287,28 @@ const downloadPdf = (dom, options, cb) => {
                 pageCtx.fillStyle = 'white';
                 pageCtx.fillRect(0, 0, w, h);
                 pageCtx.drawImage(canvas, 0, page * pageHeightPx, w, h, 0, 0, w, h);
-
                 if (_isCanvasBlank(pageCanvas)) {
+                    ++page;
                     continue;
                 }
-
-                const imgData = pageCanvas.toDataURL('image/PNG');
-                const pdfPage = pdfDoc.addPage([a4Width, a4Height]);
-                const imgBytes = await fetch(imgData).then(res => res.arrayBuffer());
-                const imgEmbed = await pdfDoc.embedPng(imgBytes);
-                pdfPage.drawImage(imgEmbed, {
-                    x: 0,
-                    y: pdfPage.getHeight() - pageHeight,
-                    width: a4Width,
-                    height: pageHeight
-                });
+                if (page) {
+                    pdf.addPage();
+                }
+                imgData = pageCanvas.toDataURL('image/PNG');
+                pdf.addImage(imgData, 'PNG', 0, 0, a4Width, pageHeight, undefined, compression);
+                ++page;
             }
-
-            const pdfBytes = await pdfDoc.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-
             if (typeof cb === 'function') {
-                cb(pdfDoc);
+                cb(pdf);
             }
+            return pdf.save(filename);
         })
         .catch(error => {
             document.body.removeChild(overlay);
             if (typeof cb === 'function') {
                 cb(null);
             }
-            console.error(error);
+            return console.error(error);
         });
 };
 

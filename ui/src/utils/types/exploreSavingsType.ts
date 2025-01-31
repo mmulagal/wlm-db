@@ -9,9 +9,8 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
-    storagePerformance: any;
     onPremiseData: any;
-    computeInformation: any;
+    onPremiseDataLoading: boolean;
     selectedExploreSavingsTab: string;
     selectedManualFSXThroughput: number;
     selectedManualFSXIOPS: number;
@@ -31,9 +30,11 @@ export interface ExploreSavingsSliceEntities {
     loading: boolean;
     unmanagedExploreSavingsHost: Array<any>;
     selectedInstanceId: string;
+    selectedOnPremHostId: string;
     selectedPartnerInstanceId: string;
     selectedServerName: string;
     selectedHostDetails: any;
+    selectedOnPremHostDetails: any;
     selectedPartnerHostDetails: any;
     getPartnerHostDetailsLoading: boolean;
     storageSavingsResponse: StorageSavingsInterface;
@@ -45,6 +46,7 @@ export interface ExploreSavingsSliceEntities {
     viewCalculationsLoading: boolean;
     savingsCalculatorFrom: string | null;
     selectedManualRegion: any;
+    selectedOnPremRegion: any;
     selectedManualDeploymentModel: string | any;
     monthlyBYOLCost: string;
     manualMonthlyDescription: string;
@@ -65,10 +67,19 @@ export interface ExploreSavingsSliceEntities {
         manualRegionsLoading: false;
         manualRegionsError: null;
     };
+    getOnPremRegionList: {
+        onPremRegionsData: null;
+        onPremRegionsLoading: false;
+        onPremRegionsError: null;
+    };
     manualTCOVolumeTypes: any;
     volumeFilledStatus: boolean;
     recommendedTargetInstance: string;
     snapshotLoading: boolean;
+    storageSavingsOnPremResponse: any;
+    storageSavingsOnPremLoading: boolean;
+    onPremNetworkPerformance: any;
+    onPremStorageAndComputeInfo: any;
 }
 
 export interface StorageSavingsInterface {

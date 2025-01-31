@@ -5,14 +5,11 @@ import GetWellAccJson from '../data/getWellAcc.json';
 
 const router = require('express').Router();
 
-router.get(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/assessment`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, GetWellAccJson);
-        }, 20);
-    }
-);
+router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, GetWellAccJson);
+    }, 20);
+});
 
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/assessment`,
@@ -56,6 +53,15 @@ router.post(
 );
 
 router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/storage-sizing`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: '1234' });
+        }, 2000);
+    }
+);
+
+router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-operating-system`,
     async (req: {}, res: any) => {
         setTimeout(() => {
@@ -74,7 +80,25 @@ router.post(
 );
 
 router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/compute`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: '1234' });
+        }, 2000);
+    }
+);
+
+router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: '1234' });
+        }, 2000);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/storage-tier`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });

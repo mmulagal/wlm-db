@@ -16,6 +16,47 @@ type HeadingLevels = '40' | '32' | '24' | '20' | '16' | 40 | 32 | 24 | 20 | 16;
 
 type TextLevels = '12' | '13' | '14' | 12 | 13 | 14;
 
+export const Card = ({
+    children,
+    className,
+    style,
+    hasHoverEffect,
+    Component = 'div',
+    flex,
+    ...rest
+}: {
+    children: any;
+    className?: string;
+    hasHoverEffect?: boolean;
+    Component?: any;
+    style?: any;
+    flex?: boolean;
+}) => {
+    return (
+        <Component className={classNames(styles.baseCard, className, { [styles.flex]: flex })} style={style} {...rest}>
+            {children}
+        </Component>
+    );
+};
+
+export const Content = ({
+    className,
+    style,
+    children,
+    white
+}: {
+    className?: string;
+    style?: any;
+    children: any;
+    white?: boolean;
+}) => {
+    return (
+        <section className={classNames(styles.content, className, { [styles['white']]: white })} style={style}>
+            {children}
+        </section>
+    );
+};
+
 export const Heading = ({
     children,
     level = '24',
@@ -64,6 +105,29 @@ export const Heading = ({
         <div role="heading" className={_className} {...rest}>
             {children}
         </div>
+    );
+};
+
+export const Page = ({ className, style, children }: { className?: string; style?: any; children: any }) => {
+    return (
+        <div className={classNames(styles.page, className)} style={style}>
+            {children}
+        </div>
+    );
+};
+
+export const TabHeader = ({ logo, Icon, label, children }: any) => {
+    return (
+        <header className={styles.base}>
+            <div className={styles['service']}>
+                {/* {logo && <SVG src={logo}/>}
+            {Icon && <Icon/>} */}
+                <Heading level={20} style={{ color: 'var(--text-primary' }}>
+                    {label}
+                </Heading>
+            </div>
+            {children}
+        </header>
     );
 };
 

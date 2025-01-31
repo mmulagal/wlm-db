@@ -30,7 +30,9 @@ import {
     convertToBytes,
     getResourceNameFromTags,
     calculateFsxStorageCapacityForHeadroomOptimization,
-    sleep
+    sleep,
+    retryWithDelay,
+    getServerNameWithHostname
 } from '../utils/utils';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -75,7 +77,7 @@ import {
     getLogVolumeDrift,
     getTempDbVolumeDrift
 } from './continuous-optimization/storage-assessment-operations';
-import { handleOptimizeJobCreation } from './continuous-optimization/assessment-utils';
+import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
 
@@ -208,23 +210,23 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
     logger.info(`Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${optimizationTargets}`);
     const jobDescription = `Optimize storage for ${serverNameWithHostName}`;
 
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Optimize storage for ${serverNameWithHostName}`,
-        description: jobDescription,
-        startTime: Date.now(),
-        type: JOBTYPE.OPTIMIZATION,
-        status: JOBSTATUS.IN_PROGRESS,
-        resourceName: serverNameWithHostName,
-        parentJobId
-    });
+    for (const data of optimizationTargets) {
+        const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+            name: `Optimize storage for ${serverNameWithHostName}`,
+            description: jobDescription,
+            startTime: Date.now(),
+            type: JOBTYPE.OPTIMIZATION,
+            status: JOBSTATUS.IN_PROGRESS,
+            resourceName: serverNameWithHostName,
+            parentJobId
+        });
 
-    logger.debug(`Job created with id ${jobId}`);
-    let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let newJobError;
-    let newJobDescription;
+        logger.debug(`Job created with id ${jobId}`);
 
-    try {
-        for (const data of optimizationTargets) {
+        let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+        let newJobError;
+        let newJobDescription;
+        try {
             const { configurationName, objectsToOptimize } = data;
             const configKey = Object.keys(optimizationConfigs).find(
                 key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
@@ -252,12 +254,10 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 apiQueryFilter,
                 apiBody
             });
-            const resp = await callSsmExecution(
-                credentialsId,
-                region,
-                [ssmCommand],
-                activeNodeInstanceId!,
-                jobDescription
+            const resp = await retryWithDelay(
+                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+                3,
+                5000
             );
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
@@ -283,19 +283,19 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 newJobDescription = optimizeMessage;
                 newJobStatus = JOBSTATUS.COMPLETED;
             }
+        } catch (error) {
+            const errorMessage = `Error while optimizing storage ${error}`;
+            logger.error(errorMessage);
+            newJobStatus = JOBSTATUS.FAILED;
+            newJobError = errorMessage;
+        } finally {
+            await updateJobDetails(accountId, jobId, {
+                status: newJobStatus,
+                endTime: Date.now(),
+                error: newJobError,
+                description: newJobDescription
+            });
         }
-    } catch (error) {
-        const errorMessage = `Error while optimizing storage ${error}`;
-        logger.error(errorMessage);
-        newJobStatus = JOBSTATUS.FAILED;
-        newJobError = errorMessage;
-    } finally {
-        await updateJobDetails(accountId, jobId, {
-            status: newJobStatus,
-            endTime: Date.now(),
-            error: newJobError,
-            description: newJobDescription
-        });
     }
 }
 
@@ -382,10 +382,12 @@ async function getSvmNameFromId(credentialsId: string, region: string, fsxId: st
     return svmName;
 }
 
-async function optimizeStorage(params: OptimizeStorageParams) {
+async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?: string) {
     const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
     logger.info(
-        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${optimizationTargets}`
+        `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${JSON.stringify(
+            optimizationTargets
+        )}`
     );
 
     if (optimizationTargets && optimizationTargets.length === 0) {
@@ -413,7 +415,8 @@ async function optimizeStorage(params: OptimizeStorageParams) {
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         `Optimize storage for ${serverNameWithHostName}`,
-        `Optimize storage for ${serverNameWithHostName}`
+        `Optimize storage for ${serverNameWithHostName}`,
+        bulkOptimizeJobId
     );
 
     const svmDetailsObject = svmDetails as Record<string, string>;
@@ -710,12 +713,17 @@ async function resizeLun(
     const ssmComment = 'Optimizing storage';
     const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
     try {
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand, rescanExtendLunSsmCommand],
-            activeNodeInstanceId,
-            ssmComment
+        await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand, rescanExtendLunSsmCommand],
+                activeNodeInstanceId,
+                ssmComment
+            ),
+            3,
+            5000
         );
     } catch (error) {
         throw createError(400, `Error while resizing LUN ${error}`);
@@ -1031,17 +1039,14 @@ async function tempDbDriveOptimization(
     return { jobStatus, errorMessage };
 }
 
-function getServerNameWithHostname(sqlServerName: string, instanceName: string) {
-    return instanceName && sqlServerName ? `${sqlServerName}\\${instanceName}` : (sqlServerName as string);
-}
-
 async function optimizeSizing(
     accountId: string,
     credentialsId: string,
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    types: OPTIMIZE_SIZING_CONFIGS[]
+    types: OPTIMIZE_SIZING_CONFIGS[],
+    masterOptimizeParentId?: string
 ) {
     logger.info('Optimizing sizing ', { accountId, credentialsId, region, databaseHostId, databaseInstanceId, types });
 
@@ -1071,6 +1076,12 @@ async function optimizeSizing(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
     }
 
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            { optimizationType: types[0], resourceId: databaseHostId, sqlServerInstances: [databaseInstanceId] }
+        ]
+    };
+
     const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
     const jobId = await handleOptimizeJobCreation(
         accountId,
@@ -1079,7 +1090,9 @@ async function optimizeSizing(
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         `Optimize ${types} sizing for ${serverNameWithHostName}`,
-        `Optimize ${types} sizing for ${serverNameWithHostName}`
+        `Optimize ${types} sizing for ${serverNameWithHostName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     modifySizingAttributes(
@@ -1215,12 +1228,17 @@ async function setMpioPolicyToRoundRobin(
         // Set MPIO policy to Round Robin
         const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams, runningOnPrimaryNode);
         const ssmComment = 'Remediate MPIO policy';
-        await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            ssmComment
+        await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                ssmComment
+            ),
+            3,
+            5000
         );
     } catch (error) {
         const errorMessage = `Error while setting MPIO policy to Round Robin ${error}`;
@@ -1385,14 +1403,19 @@ async function configureMpio(
     );
 
     try {
-        const response = await callSsmExecution(
-            credentialsId,
-            region,
-            [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            jobDescription,
-            accountId,
-            false
+        const response = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                jobDescription,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
         const { status, error } = sqlResponseParsing(response);
         if (status === 'failed') {
@@ -1632,14 +1655,19 @@ async function validateMpioSessions(
     try {
         const ssmCommand = MPIO_ISCSI_SESSIONS(iscsiTargetAddresses);
         const ssmComment = 'Remediate MPIO ICSI session';
-        const validateMpioSessionsResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            ssmComment,
-            accountId,
-            false
+        const validateMpioSessionsResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                ssmComment,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
         parsedResponse = sqlResponseParsing(validateMpioSessionsResponse);
         jobStatus = JOBSTATUS.COMPLETED;
@@ -1700,14 +1728,19 @@ async function remediateMpioSessions(
     let parsedResponse;
     try {
         const ssmCommand = REMEDIATE_MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams.currentMpioSessionsCount);
-        const remediateResponse = await callSsmExecution(
-            credentialsId,
-            region,
-            [ssmCommand],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            jobDescription,
-            accountId,
-            false
+        const remediateResponse = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                [ssmCommand],
+                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                jobDescription,
+                accountId,
+                false
+            ),
+            3,
+            5000
         );
         parsedResponse = sqlResponseParsing(remediateResponse);
         jobStatus = parsedResponse.every((address: { status: string }) => address.status === 'success')
@@ -1880,7 +1913,8 @@ async function optimizeOperatingSystemSettings(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    configurationName: string
+    configurationName: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info(
         `Optimizing operating system settings for ${accountId}, ${credentialsId} ${databaseHostId} ${databaseInstanceId} in ${region} for configuration ${configurationName}`
@@ -1956,6 +1990,15 @@ async function optimizeOperatingSystemSettings(
             : configurationName === OptimizeOperatingSystemParams.MPIO_ENABLE
             ? `Enable MPIO and configure for MPIO iSCSI sessions ${serverNameWithHostName}`
             : '';
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: configurationName,
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
@@ -1963,7 +2006,9 @@ async function optimizeOperatingSystemSettings(
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         jobDescription,
-        jobDescription
+        jobDescription,
+        masterOptimizeParentId,
+        jobMetadata
     );
     switch (configurationName) {
         case OptimizeOperatingSystemParams.MPIO_POLICY: {
@@ -2167,7 +2212,11 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
             apiQueryFilter,
             apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
         });
-        const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription);
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+            3,
+            5000
+        );
         const parsedResp = sqlResponseParsing(resp);
         const objectsOptimized = parsedResp.num_records || 0;
 
@@ -2243,10 +2292,11 @@ async function optimizeStorageTier(
     credentialsId: string,
     region: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    masterOptimizeParentId?: string
 ) {
     logger.info(
-        `Optimizing storage tier for ${accountId}, ${credentialsId}, ${region}, ${databaseHostId}, ${databaseInstanceId}`
+        `Optimizing storage tier for ${accountId}, ${credentialsId}, ${region}, ${databaseHostId}, ${databaseInstanceId}, ${masterOptimizeParentId}`
     );
 
     const {
@@ -2261,6 +2311,16 @@ async function optimizeStorageTier(
         serverNameWithHostName,
         instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: 'storage-tier',
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
     // check whether any jobs on the same resource running
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
@@ -2269,7 +2329,9 @@ async function optimizeStorageTier(
         serverNameWithHostName,
         JOBTYPE.OPTIMIZATION,
         `Optimize storage-tier for ${serverNameWithHostName}`,
-        `Optimize storage-tier for ${serverNameWithHostName}`
+        `Optimize storage-tier for ${serverNameWithHostName}`,
+        masterOptimizeParentId,
+        jobMetadata
     );
 
     const svmDetailsObject = svmDetails as Record<string, string>;
@@ -2376,6 +2438,7 @@ async function triggerAssessmentAfterOptimization(
         endTime: Date.now(),
         description: `Optimization completed for ${serverNameWithHostName}`
     });
+
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 

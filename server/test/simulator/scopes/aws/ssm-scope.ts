@@ -15,6 +15,7 @@ import {
     DeleteParametersCommand,
     DescribeInstancePatchStatesCommand,
     DescribeInstancePatchesCommand,
+    DescribeAvailablePatchesCommand,
     ListCommandsCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -32,6 +33,7 @@ import getParameerResponse from '../../responses/aws/ssm-get-parameter.json';
 import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.json';
 import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-states.json';
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
+import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
 import { DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
@@ -82,7 +84,12 @@ import {
     CHECK_IF_MPIO_INSTALLED,
     ENABLE_MPIO_AND_CONFIGURE
 } from '../../../../src/operations/workloads/mssql/mpio-remediation-scripts';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
+import {
+    CHECK_RUNNING_STATUS_WITH_RESTART,
+    GET_RSS_CONFIG_DETAILS,
+    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
+    GET_VCPU_AND_MAXDOP_DETAILS
+} from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
@@ -531,6 +538,18 @@ const pgsqlInstanceInfo = {
     commands: [getPgsqlInstanceData('wlmdb-data-1234')]
 };
 
+const rssConfigAssessmentSsm = {
+    commands: [GET_RSS_CONFIG_DETAILS()]
+};
+
+const checkRunningStatus = {
+    commands: [CHECK_RUNNING_STATUS_WITH_RESTART('$env:computername')]
+};
+
+const maxDOPAssessmentSsm = {
+    commands: [GET_VCPU_AND_MAXDOP_DETAILS('MSSQLSERVER', false)]
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -744,7 +763,13 @@ ssmMock
     .on(SendCommandCommand, params => {
         return /#Get cluster node names/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getClusterNodeNames'));
+    .resolves(getSampleCommandResponse('getClusterNodeNames'))
+    .on(SendCommandCommand, { Parameters: rssConfigAssessmentSsm })
+    .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand)
+    .on(SendCommandCommand, { Parameters: checkRunningStatus })
+    .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
+    .on(SendCommandCommand, { Parameters: maxDOPAssessmentSsm })
+    .resolves(listSendCommandCommandResponse.getMaxDopAssessmentCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -965,7 +990,19 @@ ssmMock
             'getClusterNodeNames',
             '{    "currentNode":  "sqlnode1-44317", "ownerNode":  "sqlnode1-44317",    "clusterNodes":  [                         "sqlnode1-44317",                         "sqlnode2-44317"                     ]}'
         )
-    );
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-rssConfigAssessmentDataCommand'
+    })
+    .resolves(getCommandInvocationResponse.rssConfigAssessmentDataCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand'
+    })
+    .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
+    })
+    .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
@@ -985,6 +1022,7 @@ ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: Describ
     return response;
 });
 ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse);
+ssmMock.on(DescribeAvailablePatchesCommand).resolves(describeAvailablePatchesResponse);
 ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) => {
     const instanceId = command.InstanceId;
     if (instanceId?.includes('inProgress')) {

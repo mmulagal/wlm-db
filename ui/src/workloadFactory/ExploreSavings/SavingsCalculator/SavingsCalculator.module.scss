@@ -22,6 +22,10 @@
         justify-content: space-between;
     }
 
+    .savingsHeadingOnPremise {
+        width: 1607px;
+    }
+
     .contentArea {
         width: 1336px;
         margin: 0 auto;
@@ -62,6 +66,9 @@
             overflow-x: unset;
         }
     }
+    .contentAreaOnPremise {
+        width: 1607px;
+    }
 
     .selectionArea {
         margin: 0 auto;
@@ -99,10 +106,14 @@
             width: 1128px;
         }
 
+        .savingsHeadingOnPremise {
+            width: 1407px !important;
+        }
+
         .contentArea {
-            width: 1128px;
+            width: 1128px !important;
             .firstContainer {
-                width: 648px;
+                width: 648px !important;
                 height: 1356px;
                 max-height: 1356px;
 
@@ -111,17 +122,25 @@
                 }
             }
 
+            .onPremiseContainer {
+                height: 1356px;
+                max-height: 1356px;
+            }
+
             .secondContainer {
                 width: 456px;
             }
         }
 
+        .contentAreaOnPremise {
+            width: 1407px !important;
+        }
         .selectionArea {
             width: 1128px;
         }
 
         .selectionAreaOnPrem {
-            width: 1128px;
+            width: 1407px;
         }
 
         [class*='mssqlAccordion'] {
