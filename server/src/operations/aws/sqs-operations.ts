@@ -673,9 +673,14 @@ async function processCloudFormationMessages() {
                                                                     instanceDetails.databaseInstanceName = instanceName;
                                                                 }
 
-                                                                await upsertDatabaseInstance(
+                                                                // TO-DO: for debugging DBS-4089, remove later
+                                                                const databaseInstance = await upsertDatabaseInstance(
                                                                     accountId,
                                                                     instanceDetails
+                                                                );
+                                                                logger.info(
+                                                                    'DBS-4089: upsert successful:',
+                                                                    databaseInstance
                                                                 );
                                                             })
                                                         );
