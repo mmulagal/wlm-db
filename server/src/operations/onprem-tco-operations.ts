@@ -1041,19 +1041,17 @@ function deriveInstanceRequirements(
     let networkPerformance = NETWORK_PERF.UP_TO_10;
 
     let totalMemory = 0;
+    let totalCpuCount = 0;
     let maxVcpuCount = 4;
-    let minVcpuCount = 4;
+    let minVcpuCount: number = -1;
     sqlInstancesDetails.forEach(sqlInstance => {
         try {
             const { noOfVcpusInUse, cpuUtilization, memUtilization, vcpusPerInstance } = sqlInstance;
-            const vcpusUsed =
+            const instanceCpuUsage =
                 noOfVcpusInUse ||
                 Math.ceil(((parseCpuUtilization(cpuUtilization) || 0) / 100) * Number(vcpusPerInstance!));
-
-            // Taking the maximum and minimum vCPU count of all instances as the required vCPU count
-            maxVcpuCount = Math.max(maxVcpuCount, noOfVcpusInUse ?? 4);
-            minVcpuCount = Math.min(Math.max(vcpusUsed, minVcpuCount), noOfVcpusInUse ?? 4);
-
+            totalCpuCount += instanceCpuUsage;
+            minVcpuCount = minVcpuCount !== -1 ? Math.min(minVcpuCount, instanceCpuUsage) : instanceCpuUsage;
             // Assuming memUtilization is a JSO N string with memory details
             const [memoryDetails] = parseMemoryUtilization(memUtilization) || [];
             totalMemory += memoryDetails?.used ? Math.round(memoryDetails.used / (1024 * 1024)) : 0; // Convert bytes to MiB
@@ -1067,6 +1065,10 @@ function deriveInstanceRequirements(
             });
         }
     });
+
+    const avgVcpuCount = totalCpuCount / totalSqlInstances;
+    maxVcpuCount = Math.max(maxVcpuCount, avgVcpuCount);
+    minVcpuCount = Math.max(minVcpuCount, 4);
 
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 
