@@ -279,7 +279,7 @@ async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, stora
             instanceMonthlyPrice: Number.isSafeInteger(existingCompute?.instanceMonthlyPrice)
                 ? existingCompute.instanceMonthlyPrice * nodeCount
                 : existingCompute.instanceMonthlyPrice,
-            machineDetails: Array(nodeCount).fill(existingCompute.machineDetails).flat()
+            machineDetails: Array(nodeCount).fill(existingCompute.machineDetails[0]).flat()
         };
 
         const adjustedRecommendedCompute = {
@@ -293,7 +293,7 @@ async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, stora
             instanceMonthlyPrice: Number.isSafeInteger(recommendedCompute?.instanceMonthlyPrice)
                 ? recommendedCompute.instanceMonthlyPrice * nodeCount
                 : recommendedCompute.instanceMonthlyPrice,
-            machineDetails: Array(nodeCount).fill(recommendedCompute.machineDetails).flat()
+            machineDetails: Array(nodeCount).fill(recommendedCompute.machineDetails[0]).flat()
         };
 
         const adjustedExistingLicense = {
