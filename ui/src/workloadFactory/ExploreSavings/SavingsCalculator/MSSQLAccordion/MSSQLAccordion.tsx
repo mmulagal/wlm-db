@@ -31,7 +31,7 @@ import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../.
 const TableLayout = ({ data, type }: any) => {
     return (
         <Grid className={styles['fsx-table-column']} style={{ marginBottom: 3 }}>
-            <GridItem lg={type === WLF_TABS.MSSQL_ON_PREMISES ? '3' : '4'}>
+            <GridItem lg={'4'}>
                 <Text>{data.label}</Text>
             </GridItem>
             <GridItem lg="3">
@@ -39,7 +39,7 @@ const TableLayout = ({ data, type }: any) => {
                     {data.value}
                 </Text>
             </GridItem>
-            <GridItem lg={type === WLF_TABS.MSSQL_ON_PREMISES ? '6' : '5'}>
+            <GridItem lg={'5'}>
                 <Text>{data.text}</Text>
                 {data?.text2 && <Text style={{ padding: '0', marginTop: '-15px' }}>{data?.text2}</Text>}
             </GridItem>

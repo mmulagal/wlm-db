@@ -92,10 +92,10 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
         const logDrive = acc.find(el => el.diskNumber === driveDetail.diskNumber);
         if (logDrive) {
             // Add all data drives to the same log drive - DBS-4838
-            if (!driveDetail.dataAccessPath.includes(logDrive.dataAccessPath)) {
+            if (!driveDetail.dataAccessPath?.includes(logDrive.dataAccessPath)) {
                 logDrive.dataAccessPath += `,${driveDetail.dataAccessPath}`;
             }
-            if (!driveDetail.databaseName.includes(logDrive.databaseName)) {
+            if (!driveDetail.databaseName?.includes(logDrive.databaseName)) {
                 logDrive.databaseName += `,${driveDetail.databaseName}`;
             }
             logDrive.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;

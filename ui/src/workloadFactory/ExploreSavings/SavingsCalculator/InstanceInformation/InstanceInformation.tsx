@@ -81,7 +81,7 @@ const InstanceInformation = () => {
     useEffect(() => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             const findingsLicenseData =
-                storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
+                storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
             const findingsDbModel = selectedOnPremHostDetails?.deploymentModel?.includes(GENERAL.AOAG)
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;

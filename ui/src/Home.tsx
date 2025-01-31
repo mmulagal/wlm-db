@@ -104,6 +104,10 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                         />
                         <Route
+                            path={'/databases/storage-saving-calculator'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                        />
+                        <Route
                             path={'/databases/explore-savings-fsxw'}
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
                         />
