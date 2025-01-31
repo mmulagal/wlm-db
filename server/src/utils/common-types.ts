@@ -384,6 +384,9 @@ interface StorageAssessment {
         'mpio-policy': string;
         'iscsi-sessions': string;
         'ntfs-allocation': string;
+        'tempdb-files-location': string;
+        'default-log-files-location': string;
+        'default-data-files-location': string;
     };
 }
 

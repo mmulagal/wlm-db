@@ -381,6 +381,7 @@ async function calculateStorageDrift(
         }
     });
 
+    // Complete layout and sizing assessment failure
     if (errors && errors.layout) {
         driftAssessmentData.layout.push(
             { name: 'data-files-location', errorMessage: errors.layout },
@@ -405,7 +406,12 @@ async function calculateStorageDrift(
         });
 
         let goldenData = layoutConfigData.find(data => data.parameter === 'tempdb-files-location');
-        if (!isEmpty(goldenData)) {
+        if (errors && !isEmpty(errors['tempdb-files-location'])) {
+            driftAssessmentData.layout.push({
+                name: 'tempdb-files-location',
+                errorMessage: errors['tempdb-files-location']
+            });
+        } else if (!isEmpty(goldenData)) {
             const status =
                 goldenData?.value === tempdbFilesLocationAssessment
                     ? AssessmentStatus.OPTIMIZED
