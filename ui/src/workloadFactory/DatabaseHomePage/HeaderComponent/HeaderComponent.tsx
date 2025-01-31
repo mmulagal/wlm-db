@@ -388,6 +388,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Credential"
                         isSearchable={generateAWSAccounts.length > 5}
                         options={generateAWSAccounts}
+                        className={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? styles.regionSelect : ''}
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
@@ -426,6 +427,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Region"
                         isSearchable={generateRegionsData.length > 5}
                         options={generateRegionsData}
+                        className={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? styles.regionSelect : ''}
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||

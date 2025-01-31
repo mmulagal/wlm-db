@@ -45,7 +45,6 @@ export default defineConfig({
     },
     build: {
         outDir: 'build',
-        minify: shouldUseSourceMap ? false : true,
         sourcemap: shouldUseSourceMap
     },
     css: {
