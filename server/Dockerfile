@@ -1,20 +1,19 @@
 FROM node:alpine3.20
 
-RUN apk update 
-# && apk upgrade --no-cache libcrypto3 libssl3
-# RUN mkdir -p /log
-# # Create a new user "netappuser" with UID 1000 and group name "netappgroup"
-# RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+RUN mkdir -p /log
+# Create a new user "netappuser" with UID 1000 and group name "netappgroup"
+RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
 
-# WORKDIR /opt/netapp/wlmdb
+WORKDIR /opt/netapp/wlmdb
 
-# # Change ownership of the working directory to the new user
-# RUN chown -R netappuser:netappgroup /opt/netapp/wlmdb
-# RUN chmod 777 /log
-# RUN chown -R netappuser:netappgroup /log
+# Change ownership of the working directory to the new user
+RUN chown -R netappuser:netappgroup /opt/netapp/wlmdb
+RUN chmod 777 /log
+RUN chown -R netappuser:netappgroup /log
 
-# # Switch to the new user
-# USER netappuser
+# Switch to the new user
+USER netappuser
 
 COPY package.json ./
 COPY package-lock.json ./
@@ -41,9 +40,9 @@ COPY prisma ./prisma/
 COPY patches ./patches/
 
 # Switch to the root user to change the permissions
-# USER root
-# RUN chown -R netappuser:netappgroup ./resources/mssql
-# USER netappuser
+USER root
+RUN chown -R netappuser:netappgroup ./resources/mssql
+USER netappuser
 
 RUN npm ci --omit=dev
 
