@@ -490,7 +490,6 @@ const getMappedOntapVolumesScript = (
 
     # Define the path of the directory you want to create
     $LogFilesPath = "C:\\cfn\\log"
-    $MappedVolumesErrorFile = 'C:\\cfn\\log\\mapped_volumes_err.log'
 
     # Check if the directory exists
     if (-not (Test-Path -Path $LogFilesPath -PathType Container)) {
@@ -626,7 +625,7 @@ const getMappedOntapVolumesScript = (
 "@
                     }
                 }
-
+                $MappedVolumesErrorFile = "C:\\cfn\\log\\mapped_volumes_err_$serverInstanceName.log"
                 if ($sqlCredential.useSqlAuth -eq $True) {
                     $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlquery -y 0;
                 } else {
