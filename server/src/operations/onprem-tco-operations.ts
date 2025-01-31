@@ -237,12 +237,16 @@ async function saveReportInWlmdbDatabase(
                 report.resource_id
             );
             if (existingReport.items.some(item => item.creationTime === report.creation_time.getTime())) {
-                logger.error(`Report with the same resource ID ${report.resource_id} and timestamp already exists.`);
+                logger.error(
+                    `Report already generated for the collected SQL Server data. Report with the same resource ID ${
+                        report.resource_id
+                    } and timestamp ${convertToDate(timestamp)} already exists.`
+                );
                 reports.splice(reports.indexOf(report), 1);
             }
         }
         if (reports.length === 0) {
-            throw new Error('Report with the same resource ID and timestamp already exists.');
+            throw new Error('Report already generated for the collected SQL Server data.');
         }
 
         return createOnPremTcoReportData(reports);
@@ -588,7 +592,8 @@ function deriveEbsVolumesListForMarketing(region: string, sqlInstancesDetails: S
 
         return { primaryEbsVolumes, secondaryEbsVolumes };
     } catch (error) {
-        logger.error(`Error deriving EBS Volumes List for ${sqlInstancesDetails}`, error);
+        const errorMessage = `Error deriving EBS Volumes List ${error}`;
+        throw errorMessage;
     }
 }
 
@@ -601,7 +606,9 @@ function deriveEc2InstanceListForMarketing(
 
     const { primaryEbsVolumes, secondaryEbsVolumes } =
         deriveEbsVolumesListForMarketing(region, sqlInstancesDetails) || {};
-
+    if (isEmpty(primaryEbsVolumes)) {
+        throw createError('Unable to fetch primary database volumes');
+    }
     const ec2Instances = [
         {
             ec2InstanceDescription: 'Primary',
@@ -808,7 +815,7 @@ async function handleOnpremTcoDataUpload(
         await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
-        const uploadErrorMessage = `Error handling OnPrem TCO data upload. ${error}`;
+        const uploadErrorMessage = `Error uploading  SQL Server collector data. ${error}`;
         logger.error({ accountId, jobId, uploadErrorMessage });
         uploadJobError = uploadErrorMessage;
         uploadJobStatus = JOBSTATUS.FAILED;
@@ -825,7 +832,7 @@ async function handleOnpremTcoDataUpload(
 }
 
 async function uploadOnpremTcoData(accountId: string, databaseType: string, fileName: string, fileContent: string) {
-    logger.info('Uploading OnPrem TCO Data', { accountId, databaseType, fileName, fileContent });
+    logger.info('Uploading SQL Server collector data', { accountId, databaseType, fileName, fileContent });
 
     try {
         const compressedUint8Array = Uint8Array.from(
@@ -871,7 +878,7 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         if (error instanceof Error) {
             throw error;
         }
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error uploading OnPrem TCO data. ${error}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error uploading SQL Server collector data. ${error}`);
     }
 }
 
@@ -912,10 +919,9 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
             }
         }
         if (avgVolumeSizePerDb > 16 * 1024 || avgIopsPerDb > 256000 || avgThroughputPerDb > 4000) {
-            logger.warn(
-                'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s'
-            );
-            return;
+            const errorMessage =
+                'Unsupported configuration; volume size is greater than 16 TiB or IOPS > 256,000 or Throughput > 4,000 MB/s';
+            throw errorMessage;
         }
         let ebsType = 'gp3';
         if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
@@ -942,7 +948,8 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
             isPrimary: classification !== 'secondary' // if it is not secondary, it is primary by default because marketing API expects atleast primary volumes
         };
     } catch (error) {
-        logger.error('Error getting EBS Disks', error);
+        const errorMessage = `Error getting EBS Disks for ${instance?.sqlInstanceName} ${error}`;
+        throw errorMessage;
     }
 }
 
@@ -977,16 +984,16 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
     let totalIops = instance?.totalIops;
     let totalThroughput = instance?.totalThroughput;
 
-    if (Number.isNaN(totalIops) || Number.isNaN(totalThroughput)) {
+    if (Number.isNaN(Number(totalIops)) || Number.isNaN(Number(totalThroughput))) {
         const [iops] = parseIops(instance?.iops || '') || [];
 
-        if (Number.isNaN(totalIops)) {
+        if (Number.isNaN(Number(totalIops))) {
             const writeIops = parseFloat(iops?.writeIops?.trim());
             const readIops = parseFloat(iops?.readIops?.trim());
             totalIops = writeIops + readIops;
         }
 
-        if (Number.isNaN(totalThroughput)) {
+        if (Number.isNaN(Number(totalThroughput))) {
             const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
             const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
             totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
@@ -994,15 +1001,13 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
     }
 
     let totalStorage = instance?.totalStorage;
-    let totalSecondaryStorage = instance?.totalSecondaryStorage;
-    if (Number.isNaN(totalStorage)) {
-        totalStorage =
-            primaryDatabases.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
+    let totalSecondaryStorage = !isEmpty(secondaryDatabases) ? instance?.totalSecondaryStorage : undefined;
+    if (Number.isNaN(Number(totalStorage))) {
+        totalStorage = primaryDatabases.reduce((acc, db) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
     }
 
-    if (Number.isNaN(totalSecondaryStorage)) {
-        totalSecondaryStorage =
-            secondaryDatabases.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
+    if (Number.isNaN(Number(totalSecondaryStorage)) && !isEmpty(secondaryDatabases)) {
+        totalSecondaryStorage = secondaryDatabases.reduce((acc, db) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
     }
 
     const [memoryDetails] = parseMemoryUtilization(instance?.memUtilization || '') || [];
@@ -1391,5 +1396,6 @@ export {
     deriveSqlUsageBasedInstanceType,
     getOnpremLicenseRecommendations,
     deriveInstanceRequirements,
-    getOnPremResourceExploreSavings
+    getOnPremResourceExploreSavings,
+    saveReportInReportingRegistry
 };
