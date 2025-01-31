@@ -401,7 +401,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                         isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
                                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
@@ -443,7 +444,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
                         isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
                                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
