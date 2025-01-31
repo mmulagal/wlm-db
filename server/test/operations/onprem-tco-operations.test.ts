@@ -216,9 +216,10 @@ describe('onPrem TCO operations', () => {
             }
         ];
 
-        const { primaryEbsVolumes } = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo) || {};
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
+        const { primaryEbsVolumes } =
+            deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, reportData.sqlServerInfo) || {};
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp3')?.throughput).toBeDefined();
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp3')?.volumeIops).toBeDefined();
         expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 

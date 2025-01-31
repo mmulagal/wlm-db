@@ -10,7 +10,15 @@ import {
     VirtualizationType
 } from '@aws-sdk/client-ec2';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
-import { AWS_REGIONS, DEFAULT_AWS_REGION, FINDING, HttpErrorCodes, MSSQL, WLMDB } from '../utils/consts';
+import {
+    AWS_REGIONS,
+    DEFAULT_AWS_REGION,
+    FINDING,
+    HttpErrorCodes,
+    IO2_AVAILABLE_REGIONS,
+    MSSQL,
+    WLMDB
+} from '../utils/consts';
 import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
@@ -348,8 +356,8 @@ async function getStorageSavingsResponse(
         );
     }
 
-    const ec2Instances = deriveEc2InstanceListForMarketing(instances, currentInstanceType);
-    const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(instances, recommendedInstanceType);
+    const ec2Instances = deriveEc2InstanceListForMarketing(region, instances, currentInstanceType);
+    const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(region, instances, recommendedInstanceType);
 
     const { clonedCopiesCount = 1, monthlyChangeRatePercentage = 8, snapshotFrequency = 'Daily' } = snapshotInfo || {};
 
@@ -509,20 +517,54 @@ function processEbsDisks(disks: EBSClassification[]) {
     });
 
     return Array.from(ebsTypeCountMap.values()).map(
-        ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => ({
-            volumeType,
-            volumeNumber,
-            storageAmount: Math.max(storageAmount, convertGiBToBytes(1)), // Minimum volume size is 1 GiB
-            volumeIops: volumeType === 'gp3' ? Math.max(volumeIops, 3000) : volumeIops, // Minimum IOPS is 3000
-            throughput: volumeType === 'gp3' ? Math.max(throughput, 125) : throughput // Minimum throughput is 125
-        })
+        ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => {
+            const volumeIopsPerVolume = volumeIops / volumeNumber;
+            const throughputPerVolume = throughput / volumeNumber;
+            const storageAmountPerVolume = storageAmount / volumeNumber;
+            volumeIops = 0;
+            throughput = 0;
+            storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(1)); // Minimum volume size is 1 GiB
+            switch (volumeType) {
+                case 'io2':
+                case 'io1': {
+                    storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(4)); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.max(volumeIopsPerVolume, 100); // Minimum IOPS is 100
+                    break;
+                }
+                case 'st1': {
+                    storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(125)); // Minimum volume size is 125 GiB for st1
+                    break;
+                }
+                case 'gp3':
+                default: {
+                    volumeIops = Math.max(volumeIops, 3000); // Minimum IOPS is 3000
+                    throughput = Math.max(throughputPerVolume, 125); // Minimum throughput is 125
+                    storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(1)); // Minimum volume size is 1 GiB
+                    break;
+                }
+            }
+
+            return {
+                volumeType,
+                volumeNumber,
+                storageAmount,
+                volumeIops,
+                throughput
+            };
+        }
     );
 }
 
-function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving EBS Volumes List', { sqlInstancesDetails: sqlInstancesDetails.length });
+function deriveEbsVolumesListForMarketing(region: string, sqlInstancesDetails: SqlInstanceDetails[]) {
+    logger.info('Deriving EBS Volumes List', { region, sqlInstancesDetails: sqlInstancesDetails.length });
     try {
-        const ebsDisks = classifyDisksToEBS(sqlInstancesDetails);
+        let ebsDisks: EBSClassification[] = [];
+        sqlInstancesDetails.forEach((instance: SqlInstanceDetails) => {
+            ebsDisks.push(getEbsDisks(region, instance, 'primary')!);
+            ebsDisks.push(getEbsDisks(region, instance, 'secondary')!);
+        });
+
+        ebsDisks = compact(ebsDisks);
 
         const primaryEbsDisks = ebsDisks.filter(({ isPrimary }) => isPrimary);
         const secondaryEbsDisks = ebsDisks.filter(({ isPrimary }) => !isPrimary);
@@ -539,12 +581,14 @@ function deriveEbsVolumesListForMarketing(sqlInstancesDetails: SqlInstanceDetail
 }
 
 function deriveEc2InstanceListForMarketing(
+    region: string,
     sqlInstancesDetails: SqlInstanceDetails[],
     instanceType: string
 ): ManualModeInstancesType {
     logger.info('Deriving EC2 Instance List for Marketing', { sqlInstancesDetails: sqlInstancesDetails.length });
 
-    const { primaryEbsVolumes, secondaryEbsVolumes } = deriveEbsVolumesListForMarketing(sqlInstancesDetails) || {};
+    const { primaryEbsVolumes, secondaryEbsVolumes } =
+        deriveEbsVolumesListForMarketing(region, sqlInstancesDetails) || {};
 
     const ec2Instances = [
         {
@@ -630,7 +674,7 @@ async function fetchInstanceTypesByRetry(
     if (
         !instanceTypes &&
         instanceRequirements.InstanceRequirements?.MemoryMiB &&
-        !isEmpty(instanceRequirements.InstanceRequirements.MemoryMiB.Min)
+        Number.isInteger(instanceRequirements.InstanceRequirements.MemoryMiB.Min)
     ) {
         logger.info(
             'No instance types matching requirements after removing network bandwidth. Resetting minimum memory to minimum possible and trying again.'
@@ -643,7 +687,7 @@ async function fetchInstanceTypesByRetry(
     if (
         !instanceTypes &&
         instanceRequirements.InstanceRequirements?.VCpuCount &&
-        !isEmpty(instanceRequirements.InstanceRequirements.VCpuCount.Max)
+        Number.isInteger(instanceRequirements.InstanceRequirements.VCpuCount.Max)
     ) {
         logger.info(
             'No instance types matching requirements after resetting minimum memory. Removing maximum CPU criteria and trying again.'
@@ -829,8 +873,8 @@ interface EBSClassification {
     isPrimary: boolean;
 }
 
-function getEbsDisks(instance: SqlInstanceDetails, classification: string = 'primary') {
-    logger.info('Getting EBS Disks', { instance: instance?.sqlInstanceName, classification });
+function getEbsDisks(region: string, instance: SqlInstanceDetails, classification: string = 'primary') {
+    logger.info('Getting EBS Disks', { region, instance: instance?.sqlInstanceName, classification });
     // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
     try {
         let {
@@ -864,7 +908,11 @@ function getEbsDisks(instance: SqlInstanceDetails, classification: string = 'pri
         let ebsType = 'gp3';
         if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 64000 && avgThroughputPerDb <= 4000) {
             // 4000 MB/s
-            ebsType = 'io2';
+            if (IO2_AVAILABLE_REGIONS.includes(region)) {
+                ebsType = 'io2';
+            } else {
+                ebsType = 'io1';
+            }
         } else if (avgVolumeSizePerDb > 4 && avgIopsPerDb >= 16000 && avgThroughputPerDb <= 1000) {
             // 1000 MB/s
             ebsType = 'io1';
@@ -906,18 +954,6 @@ function getDatabaseClassifications(sqlInstancesDetails: SqlInstanceDetails) {
     };
 }
 
-function classifyDisksToEBS(sqlInstancesDetails: SqlInstanceDetails[]): EBSClassification[] {
-    logger.info('Classifying Disks to EBS', { sqlInstancesDetails });
-
-    const ebsDisks: EBSClassification[] = [];
-    sqlInstancesDetails.forEach((instance: SqlInstanceDetails) => {
-        ebsDisks.push(getEbsDisks(instance, 'primary')!);
-        ebsDisks.push(getEbsDisks(instance, 'secondary')!);
-    });
-
-    return compact(ebsDisks);
-}
-
 function parseSqlUsageParams(instance: SqlInstanceDetails) {
     logger.debug('Parsing SQL Usage Parameters', { instance });
 
@@ -929,27 +965,32 @@ function parseSqlUsageParams(instance: SqlInstanceDetails) {
     let totalIops = instance?.totalIops;
     let totalThroughput = instance?.totalThroughput;
 
-    if (isEmpty(totalIops) || isEmpty(totalThroughput)) {
+    if (Number.isNaN(totalIops) || Number.isNaN(totalThroughput)) {
         const [iops] = parseIops(instance?.iops || '') || [];
 
-        if (isEmpty(totalIops)) {
+        if (Number.isNaN(totalIops)) {
             const writeIops = parseFloat(iops?.writeIops?.trim());
             const readIops = parseFloat(iops?.readIops?.trim());
             totalIops = writeIops + readIops;
         }
 
-        if (isEmpty(totalThroughput)) {
+        if (Number.isNaN(totalThroughput)) {
             const writeBytes = parseFloat(iops?.writeBytesPerSec?.trim());
             const readBytes = parseFloat(iops?.readBytesPerSec?.trim());
             totalThroughput = readBytes / writeBytes / 1024 / 1024; // Convert to MB/s
         }
     }
 
-    let totalStorage;
-    const totalSecondaryStorage = undefined;
-    if (isEmpty(totalStorage)) {
+    let totalStorage = instance?.totalStorage;
+    let totalSecondaryStorage = instance?.totalSecondaryStorage;
+    if (Number.isNaN(totalStorage)) {
         totalStorage =
             primaryDatabases.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
+    }
+
+    if (Number.isNaN(totalSecondaryStorage)) {
+        totalSecondaryStorage =
+            secondaryDatabases.reduce((acc: number, db: StorageDetailByDB) => acc + db.allocatedSizeMb, 0) / 1024; // Convert to GiB
     }
 
     const [memoryDetails] = parseMemoryUtilization(instance?.memUtilization || '') || [];
