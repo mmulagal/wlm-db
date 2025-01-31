@@ -164,8 +164,13 @@ const Home = () => {
                                 path={'/databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
+
                             <Route
                                 path={'/fsxdb/explore-savings-ebs'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
+                                path={'/fsxdb/storage-saving-calculator'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route
