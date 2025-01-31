@@ -1621,6 +1621,7 @@ export const isClusteredWithSelectedInstance = (val: any) => {
 };
 
 export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
+    const state = store.getState();
     switch (tab) {
         case '/fsxdb/dashboard':
             return WLF_TABS.DASHBOARD;
@@ -1639,7 +1640,9 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
         case '/fsxdb/explore-savings-on-premise':
             return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case '/fsxdb/storage-saving-calculator':
-            console.log('coming here', statusData);
+            if (state?.exploreSavings.selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+                return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
+            }
             return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':
         case '/fsxdb/job-monitoring':
