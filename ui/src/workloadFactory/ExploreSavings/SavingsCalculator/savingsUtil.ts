@@ -218,7 +218,7 @@ export const calculatedFSXData = (fsxData: any, storageType: string, selectedExp
                 : GENERAL.NOT_AVAILABLE,
             text:
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `For Fci: According to On-Premises total capacity of primary database volumes.`
+                    ? `According to on-premises total capacity of primary database volumes.`
                     : `According to ${storageType} total capacity of primary database volumes.`
         },
 
@@ -334,7 +334,9 @@ export const MSSQLServerInstanceForOnPremise = (sqlData: any, storageType: strin
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
             text: sqlData?.editionUpgradeCheck
-                ? `Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.`
+                ? sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                    ? `Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.`
+                    : `Enterprise features are not in use. Standalone is selected as the deployment mode because it doesn’t require an Enterprise license.`
                 : `The selected database edition is based on the source on-premises SQL Server database.`
         },
         {

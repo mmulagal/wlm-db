@@ -1620,7 +1620,7 @@ export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 };
 
-export const setTabInfoFOrBXP = (tab: string) => {
+export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
     switch (tab) {
         case '/fsxdb/dashboard':
             return WLF_TABS.DASHBOARD;
@@ -1639,6 +1639,7 @@ export const setTabInfoFOrBXP = (tab: string) => {
         case '/fsxdb/explore-savings-on-premise':
             return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case '/fsxdb/storage-saving-calculator':
+            console.log('coming here', statusData);
             return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':
         case '/fsxdb/job-monitoring':

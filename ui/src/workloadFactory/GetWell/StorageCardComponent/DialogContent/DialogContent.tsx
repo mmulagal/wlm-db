@@ -41,7 +41,9 @@ const DialogContent = ({
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         recommendationOptions?.map((option: any) => {
-            let label2 = 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%';
+            let label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
+                ? 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%'
+                : '';
             options.push(generateOptionType(option?.instanceType, option?.instanceType, label2, false, ''));
         });
         if (options.length > 1) {
@@ -53,7 +55,9 @@ const DialogContent = ({
     const generateRecommendedInstanceTypesForHost = (instance: any) => {
         let options: optionType[] = [];
         instance?.recommendationOptions?.map((option: any) => {
-            let label2 = 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%';
+            let label2 = option?.savingsOpportunity?.savingsOpportunityPercentage
+                ? 'Savings opportunity: ' + option?.savingsOpportunity?.savingsOpportunityPercentage + '%'
+                : '';
             options.push(generateOptionType(option?.instanceType, option?.instanceType, label2, false, ''));
         });
         if (options.length > 1 && !recommendedInstanceInBulk?.[instance?.hostName]) {
