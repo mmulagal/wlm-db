@@ -1,4 +1,4 @@
-# On-Prem TCO Data Collection Script
+# SQL Server Data Collection Script
 
 ## Overview
 
@@ -7,7 +7,7 @@ This PowerShell script, `SQLServerDataCollector.ps1`, collects detailed informat
 ## Prerequisites
 
 -   PowerShell 3.0 or later
--   Necessary permissions to access WMI and SQL Server on the remote computer
+-   Necessary permissions to access Windows Management Instrumentation (WMI) and SQL Server on the remote computer
 -   Network connectivity to the remote computer
 
 ## Usage
@@ -18,12 +18,12 @@ This PowerShell script, `SQLServerDataCollector.ps1`, collects detailed informat
 4. Run the script without any parameters to assess all instances with Windows configuration.
 5. Run the script by passing the SQL instances to be assessed using the `-InstanceNames` parameter.
 6. Run the script by passing the SQL username with the `-SqlUserName` parameter for instances with SQL authentication specified with the `-InstanceNames` parameter.
-7. Run the script with the required parameters.
+7. Run the script with the following required parameters: `-InstanceNames`and `-SqlUserName`.
 
 ### Parameters
 
--   `-InstanceNames`: (Optional) Array of SQL Server instance names to query.
--   `-SqlUserName`: (Optional) SQL Server username for authentication.
+-   `-InstanceNames`: (Optional) Array of SQL Server instance names to query. If not specified, the script will attempt to gather information from all available SQL Server instances on the remote computer
+-   `-SqlUserName`: (Optional) SQL Server username for authentication. If not specified, Windows Authentication will be used.
 
 ### Example
 

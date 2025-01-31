@@ -82,12 +82,12 @@ const ExploreSavingsOnPremiseTable = () => {
             return;
         }
 
-        // Validate the file name (should start with "TCOResponse-")
-        if (!selectedFile.name.startsWith('TCOResponse-') && !isDemoMode) {
+        // Validate the file name (should start with "SQLServerDataResponse-")
+        if (!selectedFile.name.startsWith('SQLServerDataResponse-') && !isDemoMode) {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: 'Invalid file name. File name must start with "TCOResponse-".'
+                    message: 'Invalid file name. File name must start with "SQLServerDataResponse-".'
                 })
             );
             event.target.value = ''; // Clear the file input
