@@ -303,7 +303,8 @@
               "sqlServerEdition": "Standard Edition",
               "licenseHourlyPrice": 0.6900000000000001,
               "licenseMonthlyPrice": 503.7
-          }
+          },
+          "finding": "OPTIMIZED"
       },
       "totalSummary": {
           "existing": 2778.4300000001,
