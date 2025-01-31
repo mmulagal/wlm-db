@@ -369,12 +369,6 @@ const HeaderComponent = ({ tab }: Tab) => {
         );
     };
 
-    useEffect(() => {
-        console.log('selectedHeaderTab', selectedHeaderTab);
-        console.log('selectedExploreSavingsTab', selectedExploreSavingsTab);
-        console.log('tabInfo', tabInfo);
-    }, [selectedHeaderTab, selectedExploreSavingsTab, tabInfo]);
-
     const selectComponents = () => {
         return (
             <div className={styles.content}>
