@@ -1,14 +1,13 @@
 locals {
-  adsg_not_selected     = var.domain_member_sg_id == "" ? true : false
   log_feature_enabled   = var.enable_cloudwatch_log_feature == true ? "true" : "false"
   ontap_security_groups = split(",", var.ontap_security_group_id)
-  group_set             = local.adsg_not_selected ? concat([var.workload_security_group_id], local.ontap_security_groups) : concat([var.workload_security_group_id], local.ontap_security_groups, [var.domain_member_sg_id])
+  group_set             = local.ontap_security_groups
   node_type             = var.sql_node_name == "SQL-Node-1" ? "Primary" : "Secondary"
   tagName               = (var.sql_node_name == "SQL-Node" || var.sql_node_name == "SQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
 
-  user_data = templatefile("${path.module}/user_data.ps1", {
-    sql_node_initialization_s3_url = var.sql_node_initialization_s3_url
-    region                         = var.sql_node_aws_location
+  user_data = templatefile("${path.module}/user_data.sh", {
+    pgsql_node_initialization_s3_url = var.pgsql_node_initialization_s3_url
+    aws_region                         = var.sql_node_aws_location
     log_feature_enabled            = local.log_feature_enabled
     deployment_name                = var.deployment_name
     sql_server_name                = var.sql_server_name
@@ -16,31 +15,11 @@ locals {
     fsx_data_volume_name           = var.fsx_data_volume_name
     fsx_log_volume_name            = var.fsx_log_volume_name
     fsx_file_system_id             = var.fsx_file_system_id
-    # fsx_temp_db_volume_name        = var.fsx_temp_db_volume_name
-    # fsx_quorum_volume_name         = var.fsx_quorum_volume_name
-    # fsx_data_lun_size              = var.fsx_data_lun_size
-    sql_igroup_name                = var.sql_igroup_name
-    fsx_volume_snapshot_policy     = var.fsx_volume_snapshot_policy
-    # ad_dns_ip_addresses            = var.ad_dns_ip_addresses
-    # domain_dns_name                = var.domain_dns_name
-    # domain_admin_user              = var.domain_admin_user
-    sql_admin_accounts             = var.sql_admin_accounts
-    sql_collation                  = var.sql_collation
-
-    sql_node_name                  = var.sql_node_name
-    is_standalone                  = var.is_standalone
-    workload_security_group_id     = var.workload_security_group_id
-    # mssql_media_bucket_name        = var.mssql_media_bucket_name
-    ami_id                         = var.ami_id
-    # mssql_media_path_key           = var.mssql_media_path_key
-    # sql_fsx_ws_fc_name             = var.sql_fsx_ws_fc_name
-    # sql_fsx_fci_name               = var.sql_fsx_fci_name
-    sql_fsx_server_net_bios_name   = var.sql_fsx_server_net_bios_name
-    sql_fsx_server_net_bios_name_2 = var.sql_fsx_server_net_bios_name_2
-    network_interface_1_id         = var.network_interface_1_id
-    network_interface_2_id         = var.network_interface_2_id
-    private_subnet1_id             = var.private_subnet1_id
-    private_subnet2_id             = var.private_subnet2_id
+    fsx_svm_id                     =var.fsx_svm_id
+    sql_service_account_password   = var.sql_service_account_password
+    sql_version                    = var.sql_version
+    fsx_aggr_name                  = var.fsx_aggr_name
+    fsx_svm_uuid=var.fsx_svm_uuid
   })
 }
 

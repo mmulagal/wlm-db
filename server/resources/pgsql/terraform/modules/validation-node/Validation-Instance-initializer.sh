@@ -208,11 +208,11 @@ main() {
     create_folders "/home/ec2-user/cfn/scripts" "/var/log/netapp_wf" || exit 1
     configure_cloudwatch "${aws_region}" "${deployment_name}" || exit 1
 
-    download_file ""
-    download_file ""
-    download_file ""
-    download_file ""
-    download_file ""
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/verify-signature.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=389ec99807ca2b33446ed5c82a7e047bd46e1d08253d5a63dc6cd4c9e19a42cb&X-Amz-SignedHeaders=host&x-id=GetObject"
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/unzip-archive.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=bcd83461621a89f63b5a7763efb6399f3e950cf02202bfaf4a6abbed960d554a&X-Amz-SignedHeaders=host&x-id=GetObject"
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/validation.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=89dd44021ff69a95f89926ebc78b38327a335da4f384b84b60e59ea3185abccd&X-Amz-SignedHeaders=host&x-id=GetObject""
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/fsx_certs.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=6240c3d984c34ed07104f3c4b818097dde27f89382f6a0b773369c8714efb94e&X-Amz-SignedHeaders=host&x-id=GetObject"
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/signig_files.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=cef53fe7ed1d069baabedd409de7835cb2380e725f76a32e584871cfec7eb81e&X-Amz-SignedHeaders=host&x-id=GetObject"
     verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" || exit 1
     verify_and_extract "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" || exit 1
     verify_and_extract "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.sig" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.pub" "ValidationNode1" "${deployment_name}" || exit 1

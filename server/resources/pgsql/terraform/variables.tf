@@ -544,3 +544,47 @@ variable "validation_node_initialization_s3_url" {
     error_message = "The validation_node_initialization_s3_url value must not be empty."
   }
 }
+
+variable "ec2_role_name" {
+  description = "EC2 instance role name."
+  type        = string
+}
+
+# variable "sql_igroup_name" {
+#   description = "igroup name for the SQL Server."
+#   type        = string
+# }
+
+# variable "sql_collation" {
+#   description = "Collation for the SQL Server."
+#   type        = string
+# }
+
+variable "pgsql_node_initialization_s3_url" {
+  description = "The URL of the S3 initialization url"
+  type        = string
+}
+# variable "instance_type" {
+#   description = "EC2 instance type for the workload instances."
+#   type        = string
+# }
+
+variable "number_of_nodes" {
+  description = "The number of SQL Server nodes to create."
+  type        = string
+}
+
+variable "fsx_aggr_name" {
+  description = "Aggregate FSx for ONTAP file system."
+  type        = string
+}
+
+variable "fsx_svm_uuid" {
+  description = "UUID of the FSx Storage Virtual Machine"
+  type        = string
+}
+
+variable "fsx_svm_id" {
+  description = "ID of the FSx Storage Virtual Machine"
+  type        = string
+}
