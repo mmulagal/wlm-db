@@ -134,36 +134,41 @@ async function initiateComputeLicenseAssessmentCollection(
                 resourceName,
                 jobId
             );
-
-            // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
-            let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
-            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            const { compute: { recommendationOptions: existingRecommendationOptions } = {} } =
-                existingAssessmentData || {};
-            if (
-                existingRecommendationOptions &&
-                !isEmpty(existingRecommendationOptions) &&
-                recommendationOptions &&
-                !isEmpty(recommendationOptions)
-            ) {
-                const existingRecommendationInstanceTypes = existingRecommendationOptions.map(
-                    ({ instanceType }) => instanceType
-                );
-                const newRecommendationInstanceTypes = recommendationOptions.map(({ instanceType }) => instanceType);
+            if (computeAssessment) {
+                // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
+                let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
+                const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+                const { compute: { recommendationOptions: existingRecommendationOptions } = {} } =
+                    existingAssessmentData || {};
                 if (
-                    existingRecommendationInstanceTypes.every(instanceType =>
-                        newRecommendationInstanceTypes.includes(instanceType)
-                    )
+                    existingRecommendationOptions &&
+                    !isEmpty(existingRecommendationOptions) &&
+                    recommendationOptions &&
+                    !isEmpty(recommendationOptions)
                 ) {
-                    finding = AssessmentStatus.OPTIMIZED;
-                    findingReasonCodes = [];
+                    const existingRecommendationInstanceTypes = existingRecommendationOptions.map(
+                        ({ instanceType }) => instanceType
+                    );
+                    const newRecommendationInstanceTypes = recommendationOptions.map(
+                        ({ instanceType }) => instanceType
+                    );
+                    if (
+                        existingRecommendationInstanceTypes.every(instanceType =>
+                            newRecommendationInstanceTypes.includes(instanceType)
+                        )
+                    ) {
+                        finding = AssessmentStatus.OPTIMIZED;
+                        findingReasonCodes = [];
+                    }
                 }
+                computeAssessment = {
+                    ...computeAssessment,
+                    finding,
+                    findingReasonCodes
+                };
+            } else {
+                logger.warn('No compute assessment data found');
             }
-            computeAssessment = {
-                ...computeAssessment,
-                finding,
-                findingReasonCodes
-            };
         }
         if (fields?.includes(AssessmentCategories.HOST_OS_PATCH)) {
             hostOsPatchAssessment = await managedHostOsPatchAssessment(
