@@ -134,6 +134,36 @@ async function initiateComputeLicenseAssessmentCollection(
                 resourceName,
                 jobId
             );
+
+            // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
+            let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
+            const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+            const { compute: { recommendationOptions: existingRecommendationOptions } = {} } =
+                existingAssessmentData || {};
+            if (
+                existingRecommendationOptions &&
+                !isEmpty(existingRecommendationOptions) &&
+                recommendationOptions &&
+                !isEmpty(recommendationOptions)
+            ) {
+                const existingRecommendationInstanceTypes = existingRecommendationOptions.map(
+                    ({ instanceType }) => instanceType
+                );
+                const newRecommendationInstanceTypes = recommendationOptions.map(({ instanceType }) => instanceType);
+                if (
+                    existingRecommendationInstanceTypes.every(instanceType =>
+                        newRecommendationInstanceTypes.includes(instanceType)
+                    )
+                ) {
+                    finding = AssessmentStatus.OPTIMIZED;
+                    findingReasonCodes = [];
+                }
+            }
+            computeAssessment = {
+                ...computeAssessment,
+                finding,
+                findingReasonCodes
+            };
         }
         if (fields?.includes(AssessmentCategories.HOST_OS_PATCH)) {
             hostOsPatchAssessment = await managedHostOsPatchAssessment(
