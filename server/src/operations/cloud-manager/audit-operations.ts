@@ -24,6 +24,8 @@ import {
     UpdateAuditGroupSchema,
     UpdateAuditGroupSchemaType
 } from '../../routes/schemas/audit-schema';
+import castRequest from '../../routes/utils';
+import { getStorageSizingSchemaDesc } from '../../utils/storage-sizing-schema';
 
 const logger = getLogger();
 
@@ -93,9 +95,15 @@ async function createAuditGroup(request: FastifyRequest) {
 
         const { schema } = request.routeOptions;
         if (!isEmpty(schema)) {
+            let actionName = schema?.description || 'internal';
+            if (request.url.includes('/optimize/storage-sizing')) {
+                const { body: castedBody } = castRequest(request);
+                actionName = getStorageSizingSchemaDesc(castedBody?.type);
+            }
+
             const auditGroup: CreateAuditGroupSchemaType = {
                 startTime: Date.now(),
-                actionName: schema?.description || 'internal',
+                actionName,
                 status: AUDIT_PENDING_STATUS,
                 requestId: request.id,
                 serviceName: TIMELINE_SERVICE_NAME,
