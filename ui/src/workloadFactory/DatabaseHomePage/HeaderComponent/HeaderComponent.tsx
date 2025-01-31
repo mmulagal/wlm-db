@@ -369,23 +369,6 @@ const HeaderComponent = ({ tab }: Tab) => {
         );
     };
 
-    useEffect(() => {
-        console.log('selectedHeaderTab', selectedHeaderTab);
-        console.log('selectedExploreSavingsTab', selectedExploreSavingsTab);
-        console.log(
-            'condition 1',
-            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
-        );
-        console.log(
-            'condition 2',
-            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-        );
-    }, [selectedHeaderTab, selectedExploreSavingsTab]);
-
     const selectComponents = () => {
         return (
             <div className={styles.content}>
@@ -411,12 +394,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
-                        isDisabled={
-                            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
-                        }
+                        isDisabled={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES}
                     />
                 </div>
 
@@ -454,12 +432,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
-                        isDisabled={
-                            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
-                                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
-                        }
+                        isDisabled={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES}
                     />
                 </div>
             </div>
