@@ -257,6 +257,8 @@ async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, stora
     logger.info('Adjusting Compute License Cost for Multiple Nodes', { nodeCount, storageSavings, calculations });
 
     const {
+        ebs,
+        fsx,
         compute: { existing: existingCompute, recommended: recommendedCompute },
         license: { existing: existingLicense, recommended: recommendedLicense, finding }
     } = storageSavings;
@@ -314,6 +316,16 @@ async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, stora
                 existing: adjustedExistingLicense,
                 recommended: adjustedRecommendedLicense,
                 finding
+            },
+            totalSummary: {
+                existing:
+                    Number(ebs.total || 0) +
+                    Number(adjustedExistingCompute.computeMonthlyPrice || 0) +
+                    Number(adjustedExistingLicense.licenseMonthlyPrice || 0),
+                recommended:
+                    Number(fsx.total || 0) +
+                    Number(adjustedRecommendedCompute.computeMonthlyPrice || 0) +
+                    Number(adjustedRecommendedLicense.licenseMonthlyPrice || 0)
             }
         };
 
