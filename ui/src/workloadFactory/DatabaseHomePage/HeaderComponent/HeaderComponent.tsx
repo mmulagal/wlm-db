@@ -195,7 +195,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
-
+                    console.log('coming here inside if else in header');
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
                     setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
@@ -368,6 +368,23 @@ const HeaderComponent = ({ tab }: Tab) => {
             </div>
         );
     };
+
+    useEffect(() => {
+        console.log('selectedHeaderTab', selectedHeaderTab);
+        console.log('selectedExploreSavingsTab', selectedExploreSavingsTab);
+        console.log(
+            'condition 1',
+            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+        );
+        console.log(
+            'condition 2',
+            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) &&
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        );
+    }, [selectedHeaderTab, selectedExploreSavingsTab]);
 
     const selectComponents = () => {
         return (

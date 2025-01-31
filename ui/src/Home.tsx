@@ -55,7 +55,7 @@ const Home = () => {
                         } else if (msg?.data?.payload?.pathname === '/fsxdb/marketing') {
                             navigate('../fsxdb/marketing');
                         } else {
-                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
                             navigate('../fsxdb');
                             dispatch(setSelectedHeaderTab(tabInfo));
                         }
