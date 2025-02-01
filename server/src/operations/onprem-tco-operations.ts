@@ -649,8 +649,8 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: 4, Max: maxVCpuCount },
-            MemoryMiB: { Min: minMemoryMiB },
+            VCpuCount: { Min: 4, Max: Math.ceil(maxVCpuCount) },
+            MemoryMiB: { Min: Math.ceil(minMemoryMiB) },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
 
             AllowedInstanceTypes: ['m*', 'c*', 'r*']
@@ -812,7 +812,6 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
-        await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error uploading  SQL Server collector data. ${error}`;
@@ -1093,8 +1092,8 @@ function deriveInstanceRequirements(
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
         InstanceRequirements: {
-            VCpuCount: { Min: minVcpuCount, Max: maxVcpuCount },
-            MemoryMiB: { Min: requiredMemory },
+            VCpuCount: { Min: Math.ceil(minVcpuCount), Max: Math.ceil(maxVcpuCount) },
+            MemoryMiB: { Min: Math.ceil(requiredMemory) },
             CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
             AllowedInstanceTypes: ['m*', 'c*', 'r*'],
             InstanceGenerations: [InstanceGeneration.CURRENT],
