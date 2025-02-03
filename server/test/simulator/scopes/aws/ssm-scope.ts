@@ -88,7 +88,9 @@ import {
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_RSS_CONFIG_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
-    GET_VCPU_AND_MAXDOP_DETAILS
+    GET_VCPU_AND_MAXDOP_DETAILS,
+    GET_INSTALLED_MSSQL_VERSION,
+    GET_INSTALLED_SQL_PATCHES
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
@@ -550,6 +552,14 @@ const maxDOPAssessmentSsm = {
     commands: [GET_VCPU_AND_MAXDOP_DETAILS('MSSQLSERVER', false)]
 };
 
+const getInstalledSQLVersion = {
+    commands: [GET_INSTALLED_MSSQL_VERSION()]
+};
+
+const getInstalledSQLPatches = {
+    commands: [GET_INSTALLED_SQL_PATCHES()]
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -769,7 +779,11 @@ ssmMock
     .on(SendCommandCommand, { Parameters: checkRunningStatus })
     .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
     .on(SendCommandCommand, { Parameters: maxDOPAssessmentSsm })
-    .resolves(listSendCommandCommandResponse.getMaxDopAssessmentCommand);
+    .resolves(listSendCommandCommandResponse.getMaxDopAssessmentCommand)
+    .on(SendCommandCommand, { Parameters: getInstalledSQLVersion })
+    .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
+    .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
+    .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1002,7 +1016,15 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
     })
-    .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse);
+    .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installedSQLPatchesCommand'
+    })
+    .resolves(getCommandInvocationResponse.getInstalledSQLPatchesCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-InstalledSQLVersionCommand'
+    })
+    .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

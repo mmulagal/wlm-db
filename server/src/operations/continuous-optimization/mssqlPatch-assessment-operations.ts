@@ -6,11 +6,18 @@ import getLogger from '../../utils/logger';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getAvailablePatches, getMissingPatchDetails } from '../aws/ospatch-ssm-operations';
+import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/ospatch-ssm-operations';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject } from '../../utils/common-types';
+import { extractKbNumber } from '../../utils/utils';
 
 const logger = getLogger();
+
+interface InstalledPatches {
+    DisplayName: string;
+    DisplayVersion: string;
+    InstallDate: string;
+}
 
 async function calculateMSSQLPatchDrift(
     accountId: string,
@@ -170,37 +177,44 @@ async function runMSSQLPatchAssessment(
     const clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
 
     if (!isEmpty(clusterNodeInstanceIds)) {
-        const [availableCriticalSQLPatches, instanceMissingPatchDetails] = await Promise.all([
-            getAvailablePatches(region),
-            getMissingPatchDetails(credentialsId, region, clusterNodeInstanceIds)
+        const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
+            getAvailablePatches(credentialsId, region, clusterNodeInstanceIds),
+            getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds)
         ]);
 
         const availableCriticalSQLPatchesList = availableCriticalSQLPatches || [];
-        const instanceMissingPatchDetailsList = instanceMissingPatchDetails || [];
+        const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
 
         // Check if any of the missing patches are part of the available critical patches
-        const missingCriticalSqlPatches = instanceMissingPatchDetailsList?.map(({ instanceId, missingPatches }) => {
-            const missingPatchDetails = missingPatches
-                ?.filter(missingPatch =>
-                    availableCriticalSQLPatchesList?.some(
-                        availablePatch => availablePatch.KbNumber === missingPatch.KBId
-                    )
-                )
-                .map(
-                    ({
-                        Classification: classification,
-                        Severity: severity,
-                        State: state,
-                        Title: title,
-                        KBId: kbId
-                    }) => ({
-                        classification,
-                        severity,
-                        state,
-                        title,
-                        kbId
-                    })
-                );
+        const missingCriticalSqlPatches = instanceInstalledPatchDetailsList?.map(({ instanceId, installedPatches }) => {
+            const installedPatchKbNumbers = installedPatches
+                .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
+                .filter((kbNumber: string | null) => kbNumber !== null);
+
+            // Find the available patches for the current instance
+            const availablePatchesForInstance =
+                availableCriticalSQLPatchesList.find(availablePatch => availablePatch.instanceId === instanceId)
+                    ?.availablePatches || [];
+
+            const missingPatches = availablePatchesForInstance.filter(
+                availablePatch => !installedPatchKbNumbers.includes(availablePatch.KbNumber)
+            );
+
+            const missingPatchDetails = missingPatches?.map(
+                ({
+                    Classification: classification,
+                    MsrcSeverity: severity,
+                    ReleaseDate: releaseDate,
+                    Title: title,
+                    KbNumber: kbId
+                }) => ({
+                    classification,
+                    severity,
+                    releaseDate,
+                    title,
+                    kbId
+                })
+            );
 
             return {
                 instanceId,
