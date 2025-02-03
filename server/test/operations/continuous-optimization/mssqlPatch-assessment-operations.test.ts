@@ -57,7 +57,8 @@ describe('MSSql Patch assessment operations', () => {
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
             'i-07e76a4b916548dc0',
-            true
+            true,
+            'i-07e76a4b916548dc0'
         );
         expect(result).toBeDefined();
     });

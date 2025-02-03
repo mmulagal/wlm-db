@@ -9,46 +9,38 @@ import {
 
 const logger = getLogger();
 
-async function getAvailablePatches(credentialsId: string, region: string, instanceIds: string[]) {
-    logger.info('Get Available Patch Details', { credentialsId, region, instanceIds });
+async function getAvailablePatches(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Get Available Patch Details', { credentialsId, region, instanceId });
 
-    return Promise.all(
-        instanceIds.map(async instanceId => {
-            const sqlServerYear = await getTheMSSqlversion(credentialsId, region, instanceId);
+    const sqlServerYear = await getTheMSSqlversion(credentialsId, region, instanceId);
 
-            const params = {
-                Filters: [
-                    {
-                        Key: 'PATCH_SET',
-                        Values: ['APPLICATION']
-                    },
-                    {
-                        Key: 'PRODUCT_FAMILY',
-                        Values: ['SQL Server']
-                    },
-                    {
-                        Key: 'MSRC_SEVERITY',
-                        Values: ['Important', 'Critical']
-                    },
-                    {
-                        Key: 'CLASSIFICATION',
-                        Values: ['SecurityUpdates']
-                    },
-                    {
-                        Key: 'PRODUCT',
-                        Values: [`Microsoft SQL Server ${sqlServerYear}`]
-                    }
-                ]
-            };
+    const params = {
+        Filters: [
+            {
+                Key: 'PATCH_SET',
+                Values: ['APPLICATION']
+            },
+            {
+                Key: 'PRODUCT_FAMILY',
+                Values: ['SQL Server']
+            },
+            {
+                Key: 'MSRC_SEVERITY',
+                Values: ['Important', 'Critical']
+            },
+            {
+                Key: 'CLASSIFICATION',
+                Values: ['SecurityUpdates']
+            },
+            {
+                Key: 'PRODUCT',
+                Values: [`Microsoft SQL Server ${sqlServerYear}`]
+            }
+        ]
+    };
 
-            const availablePatches = (await describeAvailablePatches(region, params)) || {};
-
-            return {
-                instanceId,
-                availablePatches
-            };
-        })
-    );
+    const availablePatches = (await describeAvailablePatches(region, params)) || {};
+    return availablePatches;
 }
 
 async function getTheMSSqlversion(credentialsId: string, region: string, instanceId: string) {
