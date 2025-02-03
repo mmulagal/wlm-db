@@ -2,6 +2,7 @@ import { StatusRes } from './databaseHomeTypes';
 import { Credentials, Regions } from './mssqlTypes';
 
 export interface HeaderTypeEntities {
+    multiSelectData: any;
     headerSelectedCred: any;
     headerSelectedRegion: any;
     headerSelectedMultiCred: any;

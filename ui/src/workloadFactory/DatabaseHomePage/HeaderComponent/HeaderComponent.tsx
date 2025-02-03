@@ -115,8 +115,13 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
 
-    const { headerSelectedCred, headerSelectedMultiCred, headerSelectedMultiRegion, headerSelectedRegion } =
-        useAppSelector(state => state.headers);
+    const {
+        headerSelectedCred,
+        headerSelectedMultiCred,
+        headerSelectedMultiRegion,
+        headerSelectedRegion,
+        multiSelectData
+    } = useAppSelector(state => state.headers);
     const [pendingQueriesLength, setPendingQueriesLength] = useState(0);
     const [currentCred, setCurrentCred] = useState<string | null>(null);
     const [currentRegion, setCurrentRegion] = useState<string | null>(null);
@@ -361,6 +366,13 @@ const HeaderComponent = ({ tab }: Tab) => {
             return 0;
         }
     }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
+
+    // Function to check if all APIs are completed for a cred-region set
+    const isApiCompletedForSet = (cred: string, region: string) => {
+        const key = `${cred}/${region}`;
+        const apiResponses = multiSelectData[key] || {};
+        return ['api1', 'api2', 'api3', 'api4', 'api5'].every(api => apiResponses[api] !== undefined);
+    };
 
     // Compute total queries count and initialize queue
     useEffect(() => {

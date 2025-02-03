@@ -22,13 +22,22 @@ const initialHeaderState: HeaderTypeEntities = {
         statusError: null
     },
     refreshTime: null,
-    dashboardRefresh: false
+    dashboardRefresh: false,
+    multiSelectData: {}
 };
 
 const headersSlice = createSlice({
     name: 'headers',
     initialState: initialHeaderState,
     reducers: {
+        setMultiSelectData(state, action: PayloadAction<any>) {
+            const { cred, region, apiName, response } = action.payload;
+            const key = `${cred}/${region}`;
+            if (!state.multiSelectData[key]) {
+                state.multiSelectData[key] = {};
+            }
+            state.multiSelectData[key][apiName] = response;
+        },
         setHeaderSelectedCred(state, action: PayloadAction<any>) {
             state.headerSelectedCred = action.payload;
         },
@@ -60,6 +69,7 @@ const headersSlice = createSlice({
 });
 
 export const {
+    setMultiSelectData,
     setHeaderSelectedCred,
     setHeaderSelectedMultiCred,
     setHeaderSelectedRegion,
