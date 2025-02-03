@@ -10,6 +10,8 @@ import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPa
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject } from '../../utils/common-types';
 import { extractKbNumber } from '../../utils/utils';
+import { HttpErrorCodes } from '../../utils/consts';
+import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -44,13 +46,26 @@ async function calculateMSSQLPatchDrift(
             patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
         } else {
             const { node1InstanceId, node2InstanceId } = metadataObject;
+            const { activeNodeInstanceId } = await getActiveSqlNode(
+                credentialsId,
+                region,
+                node1InstanceId,
+                node2InstanceId
+            );
+
+            if (!activeNodeInstanceId) {
+                logger.error('Active node instance id not found');
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Active node instance id not found');
+            }
+
             patchAssessment = await runMSSQLPatchAssessment(
                 accountId,
                 credentialsId,
                 region,
                 databaseHostId,
                 node1InstanceId,
-                !!node2InstanceId // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                !!node2InstanceId, // assumption: if both node1 and node2 instance ids are present, then it is a cluster
+                activeNodeInstanceId
             );
             logger.info('Patch assessment result while calculating', patchAssessment);
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -135,7 +150,8 @@ async function managedHostMSSQLPatchAssessment(
             region,
             databaseHostId,
             activeNodeInstanceId,
-            isPartOfCluster
+            isPartOfCluster,
+            activeNodeInstanceId
         );
         logger.info('managed host mssql patch response', patchAssessment);
     } catch (error) {
@@ -160,7 +176,8 @@ async function runMSSQLPatchAssessment(
     region: string,
     databaseHostId: string,
     nodeInstanceId: string,
-    isPartOfCluster: boolean = false
+    isPartOfCluster: boolean = false,
+    activeNodeInstanceId: string
 ) {
     logger.info('Running MsSql Patch assessment', {
         accountId,
@@ -168,7 +185,8 @@ async function runMSSQLPatchAssessment(
         region,
         databaseHostId,
         nodeInstanceId,
-        isPartOfCluster
+        isPartOfCluster,
+        activeNodeInstanceId
     });
 
     const clusterNodeDetails = isPartOfCluster
@@ -178,7 +196,7 @@ async function runMSSQLPatchAssessment(
 
     if (!isEmpty(clusterNodeInstanceIds)) {
         const [availableCriticalSQLPatches, instanceInstalledPatchDetails] = await Promise.all([
-            getAvailablePatches(credentialsId, region, clusterNodeInstanceIds),
+            getAvailablePatches(credentialsId, region, activeNodeInstanceId),
             getInstalledSQLPatchDetails(credentialsId, region, clusterNodeInstanceIds)
         ]);
 
@@ -191,12 +209,7 @@ async function runMSSQLPatchAssessment(
                 .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
                 .filter((kbNumber: string | null) => kbNumber !== null);
 
-            // Find the available patches for the current instance
-            const availablePatchesForInstance =
-                availableCriticalSQLPatchesList.find(availablePatch => availablePatch.instanceId === instanceId)
-                    ?.availablePatches || [];
-
-            const missingPatches = availablePatchesForInstance.filter(
+            const missingPatches = availableCriticalSQLPatchesList.filter(
                 availablePatch => !installedPatchKbNumbers.includes(availablePatch.KbNumber)
             );
 

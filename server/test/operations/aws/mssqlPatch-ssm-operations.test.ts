@@ -15,8 +15,7 @@ const credentialsId = `${faker.string.alpha(20)}`;
 
 describe('MSSQL Patch SSM operations', () => {
     it('Get available patches', async () => {
-        const instanceIds = ['i-test-ec2-1', 'i-test-ec2-2'];
-        const response = await getAvailablePatches(credentialsId, 'us-east-1', instanceIds);
+        const response = await getAvailablePatches(credentialsId, 'us-east-1', 'i-test-ec2-1');
         expect(response?.length).toBeGreaterThan(0);
     });
 
