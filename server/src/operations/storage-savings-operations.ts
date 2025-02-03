@@ -789,22 +789,25 @@ async function getStorageSavingsCalculationMetrics(
 async function performManualModeStorageSavingsCalculations(
     accountId: string,
     region: string,
-    params: ManualStorageSavingsRequestBodyType
+    params: ManualStorageSavingsRequestBodyType,
+    nodeCount: number = 2
 ) {
     logger.info('Getting manual mode storage savings calculations ', {
         accountId,
         region,
-        params
+        params,
+        nodeCount
     });
     const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
 
     if (marketingRequestBody?.instances) {
+        // EBS flow
         const { ebsTotal, fsx, single, multi } = await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(
             accountId,
             marketingRequestBody
         );
 
-        const { compute, license } = await manualModeComputeLicenseDetails(region, params);
+        const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
 
         const singleFsxCalculationData = single?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
@@ -848,13 +851,15 @@ async function performManualModeStorageSavingsCalculations(
             }
         };
     }
+    // EBS flow ends
 
+    // FSXw flow
     const resp = await getManualModeStorageSavings<ManualModeFsxwComparisonResponse>(accountId, marketingRequestBody);
 
     const { fsx_calculation: fsxCalculation, fsx, fsxw } = resp;
     const fsxCalculationData = fsxCalculation ? handleMarketingApiFsxCalculationObject(fsxCalculation) : undefined;
 
-    const { compute, license } = await manualModeComputeLicenseDetails(region, params);
+    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
 
     return {
         compute,
@@ -881,20 +886,23 @@ async function performManualModeStorageSavingsCalculations(
                 Number(license?.recommended?.licenseMonthlyPrice || 0)
         }
     };
+    // FSXw flow ends
 }
 
 async function getManualModeStorageSavingsCalculationMetrics(
     accountId: string,
     region: string,
-    params: ManualStorageSavingsRequestBodyType
+    params: ManualStorageSavingsRequestBodyType,
+    nodeCount: number = 2
 ): Promise<StorageSavingsMetricsCalculationsResponseType> {
     logger.info('Getting manual mode storage savings calculation metrics ', {
         accountId,
         region,
-        params
+        params,
+        nodeCount
     });
 
-    const { compute, license } = await manualModeComputeLicenseDetails(region, params);
+    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
 
     const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
 
