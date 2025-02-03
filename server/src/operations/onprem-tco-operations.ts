@@ -19,7 +19,7 @@ import {
     MSSQL,
     WLMDB
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -72,8 +72,6 @@ import {
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
@@ -242,6 +240,7 @@ async function saveReportInWlmdbDatabase(
                         report.resource_id
                     } and timestamp ${convertToDate(timestamp)} already exists.`
                 );
+
                 reports.splice(reports.indexOf(report), 1);
             }
         }
@@ -1277,7 +1276,7 @@ async function getOnPremResourceExploreSavings(
 
     const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
 
-    if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
+    if (sqlInstanceData || snapShotInfo) {
         try {
             const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
                 try {
