@@ -130,7 +130,7 @@ describe(' Secrets Manager string', () => {
         const instanceName = 'test-instance';
         const hostname = 'test-hostname';
         expect(getServerNameWithHostname(hostname, instanceName)).toBe('test-hostname\\test-instance');
-        expect(getServerNameWithHostname(undefined, instanceName)).toBe('MSSQLSERVER\\test-instance');
+        expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
         expect(getServerNameWithHostname(hostname)).toBe('test-hostname');
         expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
     });

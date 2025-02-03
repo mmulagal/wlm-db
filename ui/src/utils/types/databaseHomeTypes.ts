@@ -153,6 +153,7 @@ export interface AggregatedCostsRes {
 }
 
 export interface DatabaseHostsEntities {
+    enableFilter: boolean;
     selectedRowsForOptimize: Array<string> | any;
     selectedTab: string;
     getJobsSummary: {
@@ -183,7 +184,7 @@ export interface DatabaseHostsEntities {
         ebsCost: number;
         fsxwCost: number;
         fsxnCost: number;
-        savings: number,
+        savings: number;
         savingsPercent: any;
         noSavings: boolean;
     };

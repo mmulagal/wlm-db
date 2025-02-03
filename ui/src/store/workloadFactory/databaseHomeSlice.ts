@@ -75,6 +75,7 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         range: ''
     },
     selectedRowsForOptimize: [],
+    enableFilter: true,
     potentialSavingsValues: {
         loading: false,
         ebsCost: 0,
@@ -90,6 +91,9 @@ const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setEnableFilter: (state, action: PayloadAction<any>) => {
+            state.enableFilter = action.payload;
+        },
         setSelectedRowsForOptimize: (state, action: PayloadAction<any>) => {
             state.selectedRowsForOptimize = action.payload;
         },
@@ -142,6 +146,7 @@ const databaseHomeSlice = createSlice({
 });
 
 export const {
+    setEnableFilter,
     setSelectedRowsForOptimize,
     selectedTabSelection,
     addJobsSummary,

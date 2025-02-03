@@ -195,7 +195,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
-
+                    console.log('coming here inside if else in header');
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
                     setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
@@ -388,17 +388,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Credential"
                         isSearchable={generateAWSAccounts.length > 5}
                         options={generateAWSAccounts}
+                        className={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? styles.regionSelect : ''}
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
-                        isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
-                        }
+                        isDisabled={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES}
                     />
                 </div>
 
@@ -430,17 +427,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Region"
                         isSearchable={generateRegionsData.length > 5}
                         options={generateRegionsData}
+                        className={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? styles.regionSelect : ''}
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                             selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
                             selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
                         }
-                        isDisabled={
-                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
-                        }
+                        isDisabled={selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES}
                     />
                 </div>
             </div>

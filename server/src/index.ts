@@ -111,7 +111,6 @@ interface Headers {
 
 await initiateSecrets();
 logger.info('Secrets initiated');
-
 logger.info('Initializing app');
 const app = fastify({
     trustProxy: true,

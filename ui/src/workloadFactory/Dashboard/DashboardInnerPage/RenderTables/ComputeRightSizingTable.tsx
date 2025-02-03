@@ -6,9 +6,9 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useMemo, useEffect } from 'react';
-import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getFilterOptions, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
-import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import { setEnableFilter, setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
@@ -28,7 +28,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         state => state.inventoryV2
     );
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
-    const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
+    const { selectedRowsForOptimize, enableFilter } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let storageTierAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
@@ -81,13 +81,11 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                     ...row,
                     cellProps: {
                         ...row.cellProps,
-                        isDisabled:
-                            (!isSameDatabaseHostId && (!isAlreadySelected || isAlreadySelected)) ||
-                            row?.status !== 'Up', // Disable rows with a different databaseHostId
+                        isDisabled: !isSameDatabaseHostId && !isAlreadySelected, // Disable rows with a different databaseHostId
                         selectionProps: {
                             title:
-                                !isSameDatabaseHostId && (!isAlreadySelected || isAlreadySelected)
-                                    ? 'Same host instances can be optimized together'
+                                !isSameDatabaseHostId && !isAlreadySelected
+                                    ? 'You can select multiple instances associated with the same host.'
                                     : '',
                             titleProps: {
                                 placement: 'bottom'
@@ -126,7 +124,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
             accessor: 'hostName',
             id: '2',
             width: '320px',
-            filterOptions: 'auto'
+            filterOptions: getFilterOptions(updatedTableData, 'hostName')
         },
         {
             Header: 'Finding reasons',
@@ -143,7 +141,12 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
 
     const tableProps = useTable({
         //@ts-ignore
-        selectAllProps: false,
+        selectAllProps: {
+            isDisabled: enableFilter,
+            title:
+                enableFilter &&
+                'Multi-select is available for instances associated with the same host. To activate the multi-select checkbox, first filter the host column.'
+        },
         //@ts-ignore
         manageColumnsProps: false,
         isHorizontalScroll: false,
@@ -154,33 +157,21 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
         selectionType: 'multiple',
         defaultSelectedRows: []
     });
+
+    useEffect(() => {
+        if (tableProps.filterState?.columns[2]?.activeCount === 1) {
+            dispatch(setEnableFilter(false));
+        } else {
+            dispatch(setEnableFilter(true));
+        }
+    }, [tableProps.filterState]);
     useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+        dispatch(setSelectedRowsForOptimize(rowsData));
 
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData);
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
-        if (rowsData.length > 0 && tableProps?.selectionState?.allSelected) {
-            //@ts-ignore
-            const hostId = rowsData[0]?.databaseHostId;
-            rowsData.forEach((row: any, index: number) => {
-                if (row?.databaseHostId !== hostId) {
-                    //@ts-ignore
-                    tableProps.selectionState.rows[row.id] = false;
-                }
-            });
-
-            rowsData
-                .slice()
-                .reverse()
-                .forEach((row: any, index, arr) => {
-                    const actualIndex = arr.length - 1 - index; // Get the actual index in the original array
-                    if (row?.databaseHostId !== hostId) {
-                        rowsData.splice(actualIndex, 1);
-                    }
-                });
-        }
-        dispatch(setSelectedRowsForOptimize(rowsData));
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {

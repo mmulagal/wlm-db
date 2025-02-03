@@ -55,7 +55,7 @@ const Home = () => {
                         } else if (msg?.data?.payload?.pathname === '/fsxdb/marketing') {
                             navigate('../fsxdb/marketing');
                         } else {
-                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname);
+                            const tabInfo = setTabInfoFOrBXP(msg?.data?.payload?.pathname, statusData);
                             navigate('../fsxdb');
                             dispatch(setSelectedHeaderTab(tabInfo));
                         }
@@ -101,6 +101,10 @@ const Home = () => {
                         />
                         <Route
                             path={'/databases/explore-savings-ebs'}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                        />
+                        <Route
+                            path={'/databases/storage-saving-calculator'}
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                         />
                         <Route
@@ -160,8 +164,13 @@ const Home = () => {
                                 path={'/databases/explore-savings-ebs'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
+
                             <Route
                                 path={'/fsxdb/explore-savings-ebs'}
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            />
+                            <Route
+                                path={'/fsxdb/storage-saving-calculator'}
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
                             />
                             <Route

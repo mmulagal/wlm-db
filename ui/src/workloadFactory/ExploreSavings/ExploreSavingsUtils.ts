@@ -2,6 +2,8 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import store from '../../store/store';
 import {
     setDisableState,
+    setMonthlyChangeRate,
+    setOnPremStorageAndComputeInfoFull,
     setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
     setSelectedHostDetails,
@@ -18,7 +20,11 @@ import {
     StorageSavingsInterface,
     ViewCalculationsInterface
 } from '../../utils/types/exploreSavingsType';
-import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../utils/utilityFunctions';
+import {
+    formatFractionalNumber,
+    formatFractionalNumberForCost,
+    formatNumberWithCustomComma
+} from '../../utils/utilityFunctions';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -35,12 +41,47 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
 
     dispatch(setDisableState(true));
-    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-    dispatch(setSelectedInstanceId(''));
-    dispatch(setSelectedOnPremHostId(rowData?.resourceId));
-    dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
-    dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
-    setESInstanceOnPremData(rowData, dispatch);
+    dispatch(setMonthlyChangeRate(3));
+
+    if (rowData?.sqlServerInstances?.length) {
+        let storagePerfAndCompute: any = {};
+        rowData?.sqlServerInstances?.map((instance: any) => {
+            if (!storagePerfAndCompute?.[instance?.sqlInstanceName]) {
+                storagePerfAndCompute[instance?.sqlInstanceName] = {};
+            }
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalStorage'] = formatFractionalNumber(
+                Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalIops'] = formatFractionalNumber(
+                instance?.totalIops,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['totalThroughput'] = formatFractionalNumber(
+                instance?.totalThroughput,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['noOfVcpusInUse'] = instance?.noOfVcpusInUse;
+            storagePerfAndCompute[instance?.sqlInstanceName]['memory'] = formatFractionalNumber(
+                Number(instance?.memory || 0) / GIB_IN_BYTE,
+                3
+            );
+            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceName'] = instance?.sqlInstanceName;
+            storagePerfAndCompute[instance?.sqlInstanceName]['sqlInstanceId'] = instance?.sqlInstanceId;
+            storagePerfAndCompute[instance?.sqlInstanceName]['networkPerformance'] =
+                rowData?.sqlServerInstances?.[0]?.networkPerformance;
+        });
+        dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+    }
+
+    setTimeout(() => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+        dispatch(setSelectedInstanceId(''));
+        dispatch(setSelectedOnPremHostId(rowData?.resourceId));
+        dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
+        dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
+        setESInstanceOnPremData(rowData, dispatch);
+    }, 500);
 };
 
 export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
@@ -895,85 +936,101 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
         ) {
             deploymentModelValue = selectedManualDeploymentModel?.value;
         }
-        let recommendeRow: any = null;
-        if (recommendedTargetInstance) {
-            recommendeRow = data?.compute?.recommended?.recommendationOptions?.filter(
-                perRow => perRow?.instanceType === recommendedTargetInstance
-            );
-        }
-        if (recommendeRow && recommendeRow?.length) {
-            // For standalone compute and license cost is added only 1 time
-            if (deploymentModelValue.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-                let recommendedTotal =
-                    Number(data?.totalSummary?.recommended || 0) -
-                    Number(data?.compute?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) -
-                    Number(data?.compute?.recommended?.machineDetails?.[0]?.licenseMonthlyPrice || 0) +
-                    Number(recommendeRow?.[0]?.computeMonthlyPrice || 0) +
-                    Number(recommendeRow?.[0]?.licenseMonthlyPrice || 0);
-                result = {
-                    ...data,
-                    recommendedInstance: recommendeRow?.[0],
-                    totalSummary: {
-                        ...data?.totalSummary,
-                        recommendedTotal: recommendedTotal
-                    }
-                };
-            } else {
-                // For AOAG compute and license cost is added 2 times for each node
-                let recommendedTotal =
-                    Number(data?.totalSummary?.recommended || 0) -
-                    Number(data?.compute?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) * 2 -
-                    Number(data?.compute?.recommended?.machineDetails?.[0]?.licenseMonthlyPrice || 0) * 2 +
-                    Number(recommendeRow?.[0]?.computeMonthlyPrice || 0) * 2 +
-                    Number(recommendeRow?.[0]?.licenseMonthlyPrice || 0) * 2;
-                result = {
-                    ...data,
-                    recommendedInstance: {
-                        ...recommendeRow?.[0],
-                        licenseMonthlyPrice: (recommendeRow?.[0]?.licenseMonthlyPrice || 0) * 2,
-                        computeMonthlyPrice: (recommendeRow?.[0]?.computeMonthlyPrice || 0) * 2
-                    },
-                    totalSummary: {
-                        ...data?.totalSummary,
-                        recommendedTotal: recommendedTotal
-                    }
-                };
-            }
+
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            result = {
+                ...data,
+                recommendedInstance: {
+                    ...data?.compute?.recommended?.machineDetails?.[0],
+                    licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
+                    computeMonthlyPrice: data?.compute?.recommended?.computeMonthlyPrice
+                },
+                totalSummary: {
+                    ...data?.totalSummary,
+                    recommendedTotal: Number(data?.totalSummary?.recommended || 0)
+                }
+            };
         } else {
-            if (data?.license?.existing?.sqlServerEdition === data?.license?.recommended?.sqlServerEdition) {
-                result = {
-                    ...data,
-                    recommendedInstance: {
-                        ...data?.compute?.recommended?.machineDetails?.[0],
-                        licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
-                        computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
-                    },
-                    totalSummary: {
-                        ...data?.totalSummary,
-                        recommendedTotal:
-                            Number(data?.totalSummary?.recommended || 0) -
-                            Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
-                            Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
-                            Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
-                            Number(data?.license?.existing?.licenseMonthlyPrice || 0)
-                    }
-                };
+            let recommendeRow: any = null;
+            if (recommendedTargetInstance) {
+                recommendeRow = data?.compute?.recommended?.recommendationOptions?.filter(
+                    perRow => perRow?.instanceType === recommendedTargetInstance
+                );
+            }
+            if (recommendeRow && recommendeRow?.length) {
+                // For standalone compute and license cost is added only 1 time
+                if (deploymentModelValue.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                    let recommendedTotal =
+                        Number(data?.totalSummary?.recommended || 0) -
+                        Number(data?.compute?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) -
+                        Number(data?.compute?.recommended?.machineDetails?.[0]?.licenseMonthlyPrice || 0) +
+                        Number(recommendeRow?.[0]?.computeMonthlyPrice || 0) +
+                        Number(recommendeRow?.[0]?.licenseMonthlyPrice || 0);
+                    result = {
+                        ...data,
+                        recommendedInstance: recommendeRow?.[0],
+                        totalSummary: {
+                            ...data?.totalSummary,
+                            recommendedTotal: recommendedTotal
+                        }
+                    };
+                } else {
+                    // For AOAG compute and license cost is added 2 times for each node
+                    let recommendedTotal =
+                        Number(data?.totalSummary?.recommended || 0) -
+                        Number(data?.compute?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) * 2 -
+                        Number(data?.compute?.recommended?.machineDetails?.[0]?.licenseMonthlyPrice || 0) * 2 +
+                        Number(recommendeRow?.[0]?.computeMonthlyPrice || 0) * 2 +
+                        Number(recommendeRow?.[0]?.licenseMonthlyPrice || 0) * 2;
+                    result = {
+                        ...data,
+                        recommendedInstance: {
+                            ...recommendeRow?.[0],
+                            licenseMonthlyPrice: (recommendeRow?.[0]?.licenseMonthlyPrice || 0) * 2,
+                            computeMonthlyPrice: (recommendeRow?.[0]?.computeMonthlyPrice || 0) * 2
+                        },
+                        totalSummary: {
+                            ...data?.totalSummary,
+                            recommendedTotal: recommendedTotal
+                        }
+                    };
+                }
             } else {
-                result = {
-                    ...data,
-                    recommendedInstance: {
-                        ...data?.compute?.recommended?.machineDetails?.[0],
-                        licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
-                        computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
-                    },
-                    totalSummary: {
-                        ...data?.totalSummary,
-                        recommendedTotal:
-                            Number(data?.totalSummary?.recommended || 0) -
-                            Number(data?.compute?.recommended?.computeMonthlyPrice || 0) +
-                            Number(data?.compute?.existing?.computeMonthlyPrice || 0)
-                    }
-                };
+                if (data?.license?.existing?.sqlServerEdition === data?.license?.recommended?.sqlServerEdition) {
+                    result = {
+                        ...data,
+                        recommendedInstance: {
+                            ...data?.compute?.recommended?.machineDetails?.[0],
+                            licenseMonthlyPrice: data?.license?.existing?.licenseMonthlyPrice,
+                            computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
+                        },
+                        totalSummary: {
+                            ...data?.totalSummary,
+                            recommendedTotal:
+                                Number(data?.totalSummary?.recommended || 0) -
+                                Number(data?.compute?.recommended?.computeMonthlyPrice || 0) -
+                                Number(data?.license?.recommended?.licenseMonthlyPrice || 0) +
+                                Number(data?.compute?.existing?.computeMonthlyPrice || 0) +
+                                Number(data?.license?.existing?.licenseMonthlyPrice || 0)
+                        }
+                    };
+                } else {
+                    result = {
+                        ...data,
+                        recommendedInstance: {
+                            ...data?.compute?.recommended?.machineDetails?.[0],
+                            licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
+                            computeMonthlyPrice: data?.compute?.existing?.computeMonthlyPrice
+                        },
+                        totalSummary: {
+                            ...data?.totalSummary,
+                            recommendedTotal:
+                                Number(data?.totalSummary?.recommended || 0) -
+                                Number(data?.compute?.recommended?.computeMonthlyPrice || 0) +
+                                Number(data?.compute?.existing?.computeMonthlyPrice || 0)
+                        }
+                    };
+                }
             }
         }
     } else {

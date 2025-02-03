@@ -127,7 +127,7 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
 
         dispatch(setSelectedRowsForOptimize(rowsData));
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData);
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 

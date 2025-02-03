@@ -86,8 +86,7 @@ try {
             Write-Output "Error while configuring max dop using server instance name: $_."
             if ($Using:ClusterName -ne '') {
                 try {
-                    $connectionString = "Server=$Using:ClusterName;Integrated Security=True;TrustServerCertificate=True;"
-                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ConnectionString $connectionString
+                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ServerInstance $Using:ClusterName
                     Write-Output "Max dop configured using cluster name."
                 }
                 catch {

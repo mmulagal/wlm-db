@@ -118,7 +118,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
 
         dispatch(setSelectedRowsForOptimize(rowsData));
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData);
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 

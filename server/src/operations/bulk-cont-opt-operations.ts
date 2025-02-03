@@ -231,8 +231,8 @@ async function handleBulkComputeOptimization(
                                 credentialsId,
                                 region,
                                 databaseHostId,
+                                sqlServerInstances[0], // Since compute remediation is at host level. It is okay to pick one instance.
                                 instanceType as string,
-                                sqlServerInstances[0],
                                 masterOptimizeParentId
                             );
                         } catch (error: any) {

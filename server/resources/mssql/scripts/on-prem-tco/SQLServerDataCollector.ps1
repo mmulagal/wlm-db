@@ -1,6 +1,6 @@
 <#
 ===============================================================================
-        NETAPP BLUEXP WORKLOAD FACTORY - ONPREM TCO COLLECTOR
+        NETAPP BLUEXP WORKLOAD FACTORY - SQL SERVER DATA COLLECTOR
         Version 1.0.0
         Copyright (c) 2025 NetApp, Inc. All rights reserved.
 ===============================================================================
@@ -708,10 +708,10 @@ $finalOutput['sqlServerInfo'] = $results
 $jsonResults = $finalOutput | ConvertTo-Json -Depth 15
 
 # Define the output file path
-$outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("TCOResponse-" + $dateString + ".json")
+$outputFilePath = Join-Path -Path $PSScriptRoot -ChildPath ("SQLServerDataResponse-" + $dateString + ".json")
 
 # Write the JSON results to the output file
 $jsonResults | Out-File -FilePath $outputFilePath 
 
 # Output a completion message with the file path
-Write-Output "TCO data collection completed. Output file path: $outputFilePath"
+Write-Output "SQL Server data collection completed. Output file path: $outputFilePath"

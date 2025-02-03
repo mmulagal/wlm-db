@@ -37,7 +37,11 @@ import store from '../store/store';
 import { DatabaseHostItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 import { databaseHomeApi } from './apiService';
-import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
+import {
+    addInitialData,
+    initialDBHomepageState,
+    setSelectedRowsForOptimize
+} from '../store/workloadFactory/databaseHomeSlice';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
@@ -1059,7 +1063,7 @@ function getLastXDays(val: number) {
     return dates;
 }
 
-export const checkBoxHandle = (tableData: any, rowsData: any) => {
+export const checkBoxHandle = (tableData: any, rowsData: any, dispatch: any) => {
     if (!rowsData || rowsData.length === 0) return;
 
     rowsData.forEach((row: any) => {
@@ -1071,6 +1075,7 @@ export const checkBoxHandle = (tableData: any, rowsData: any) => {
     tableData.count = 0;
     //@ts-ignore
     tableData.allSelected = false;
+    dispatch(setSelectedRowsForOptimize([]));
 };
 
 // Getting the last 7 days
@@ -1615,7 +1620,8 @@ export const isClusteredWithSelectedInstance = (val: any) => {
     return 'isClusteredWithSelectedInstance' in val ? !val.isClusteredWithSelectedInstance : false;
 };
 
-export const setTabInfoFOrBXP = (tab: string) => {
+export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
+    const state = store.getState();
     switch (tab) {
         case '/fsxdb/dashboard':
             return WLF_TABS.DASHBOARD;
@@ -1634,6 +1640,9 @@ export const setTabInfoFOrBXP = (tab: string) => {
         case '/fsxdb/explore-savings-on-premise':
             return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
         case '/fsxdb/storage-saving-calculator':
+            if (state?.exploreSavings.selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+                return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
+            }
             return WLF_TABS.SAVINGS_CALCULATOR;
         case '/fsxdb/jobMonitoring':
         case '/fsxdb/job-monitoring':
