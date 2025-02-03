@@ -6,7 +6,7 @@ import getLogger from '../../utils/logger';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
 import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/ospatch-ssm-operations';
+import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import { Metadata, MSSQLPatchAssessmentObject } from '../../utils/common-types';
 import { extractKbNumber } from '../../utils/utils';
