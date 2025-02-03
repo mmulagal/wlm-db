@@ -1,4 +1,4 @@
-import { optionType } from '@netapp/design-system/dist/components/Select';
+import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import { get, sortBy, compact, uniqBy, map } from 'lodash';
 import numeral from 'numeral';
@@ -51,6 +51,10 @@ export interface OptionsWithData extends optionType {
     data?: Object;
 }
 
+export interface OptionsWitMultipleData extends optionTypeMulti {
+    data?: Object;
+}
+
 export const generateOptionType = (
     value: string | any,
     label: string | any,
@@ -63,6 +67,25 @@ export const generateOptionType = (
         value: value,
         label: label,
         label2: label2,
+        isDisabled: isDisabled,
+        disabledTitle: disabledTitle,
+        data: data
+    };
+    return option;
+};
+
+export const generateMultipleOptionType = (
+    value: string | any,
+    label: string | any,
+    id: string | number,
+    isDisabled: boolean,
+    disabledTitle: string,
+    data?: Object
+) => {
+    const option: OptionsWitMultipleData = {
+        value: value,
+        label: label,
+        id: id,
         isDisabled: isDisabled,
         disabledTitle: disabledTitle,
         data: data

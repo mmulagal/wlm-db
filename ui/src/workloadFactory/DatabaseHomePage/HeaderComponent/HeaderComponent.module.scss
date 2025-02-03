@@ -459,6 +459,16 @@
             display: flex;
             gap: 24px;
 
+            .multiSelect {
+                [class*='dsTextFieldFrame'] {
+                    width: 240px !important;
+                }
+
+                [class*='dsDropDownList '] {
+                    width: 400px !important;
+                }
+            }
+
             button {
                 --button-min-width: 160px;
                 --button-height: 32px;

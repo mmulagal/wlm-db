@@ -4,6 +4,8 @@ import { Credentials, Regions } from './mssqlTypes';
 export interface HeaderTypeEntities {
     headerSelectedCred: any;
     headerSelectedRegion: any;
+    headerSelectedMultiCred: any;
+    headerSelectedMultiRegion: any;
     getCredentials: {
         credentialData: Credentials[] | null;
         credentialLoading: false;

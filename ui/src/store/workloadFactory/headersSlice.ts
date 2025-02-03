@@ -4,6 +4,8 @@ import { HeaderTypeEntities } from '../../utils/types/headerTypes';
 const initialHeaderState: HeaderTypeEntities = {
     headerSelectedCred: null,
     headerSelectedRegion: null,
+    headerSelectedMultiCred: null,
+    headerSelectedMultiRegion: null,
     getCredentials: {
         credentialData: null,
         credentialLoading: false,
@@ -30,6 +32,12 @@ const headersSlice = createSlice({
         setHeaderSelectedCred(state, action: PayloadAction<any>) {
             state.headerSelectedCred = action.payload;
         },
+        setHeaderSelectedMultiCred(state, action: PayloadAction<any>) {
+            state.headerSelectedMultiCred = action.payload;
+        },
+        setHeaderSelectedMultiRegion(state, action: PayloadAction<any>) {
+            state.headerSelectedMultiRegion = action.payload;
+        },
         setHeaderSelectedRegion(state, action: PayloadAction<any>) {
             state.headerSelectedRegion = action.payload;
         },
@@ -53,7 +61,9 @@ const headersSlice = createSlice({
 
 export const {
     setHeaderSelectedCred,
+    setHeaderSelectedMultiCred,
     setHeaderSelectedRegion,
+    setHeaderSelectedMultiRegion,
     addCredentialsHeaderList,
     addRegionsHeaderList,
     addStatus,

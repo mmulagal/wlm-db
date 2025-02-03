@@ -5,19 +5,20 @@ import {
     BlueXPListeners,
     DsBlueXpMenu,
     DsButton,
+    DsSelect,
     DsTypography,
     Popover,
     SelectField,
     Typography,
     postBlueXPMessage
 } from '@netapp/design-system';
-import { optionType } from '@netapp/design-system/dist/components/Select';
+import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import {
-    apiDOCURL,
     checkValueSavedForCred,
     checkValueSavedForRegion,
+    generateMultipleOptionType,
     generateOptionType,
     getCurrentDateTime,
     handleURL,
@@ -35,6 +36,8 @@ import HeaderComponentApi from './HeaderComponentApis';
 import {
     setDashboardRefresh,
     setHeaderSelectedCred,
+    setHeaderSelectedMultiCred,
+    setHeaderSelectedMultiRegion,
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
@@ -83,16 +86,13 @@ import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import GetWell from '../../GetWell/GetWell';
-import {
-    addAllMssqlHostAssessmentData,
-    setIsRefreshed,
-    setSelectedHeaderTab
-} from '../../../store/workloadFactory/inventoryV2Slice';
+import { setIsRefreshed, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
+import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
 
 type Tab = {
     tab: string;
@@ -102,6 +102,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
+    const [pendingQueriesCounter, setPendingQueriesCounter] = useState(0);
     const { fetchOnPremData } = useOnPremData();
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -113,8 +114,14 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+
+    const { headerSelectedCred, headerSelectedMultiCred, headerSelectedMultiRegion, headerSelectedRegion } =
+        useAppSelector(state => state.headers);
+    const [pendingQueriesLength, setPendingQueriesLength] = useState(0);
+    const [currentCred, setCurrentCred] = useState<string | null>(null);
+    const [currentRegion, setCurrentRegion] = useState<string | null>(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [queue, setQueue] = useState<any>([]);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
@@ -244,6 +251,33 @@ const HeaderComponent = ({ tab }: Tab) => {
         return options;
     }, [credentialData]);
 
+    //Function to generate the options for Multi Select Field
+    const generateAccounts = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
+        const options: optionTypeMulti[] = [];
+        credentialData?.map((val: any, idx: number) => {
+            const credValue = `${val.name} | ${GENERAL.HEADER_ACCOUNT_ID}: ${val.providerAccountId}`;
+
+            const option = generateMultipleOptionType(credValue, credValue, idx, false, '', val);
+            options.push(option);
+        });
+        dispatch(setHeaderSelectedMultiCred([options[0]]));
+        return options;
+    }, [credentialData]);
+
+    //Function to generate the options for Multi Select Field
+    const generateRegionsForMultiSelect = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
+        const options: optionTypeMulti[] = [];
+        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        sortedRegionsData?.map((val: any, idx: number) => {
+            const regionValue = `${val.regionName} | ${val.regionCode}`;
+
+            const option = generateMultipleOptionType(regionValue, regionValue, idx, false, '', val);
+            options.push(option);
+        });
+        dispatch(setHeaderSelectedMultiRegion([options[0]]));
+        return options;
+    }, [regionsData]);
+
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const sortedRegionsData = regionsSort(regionsData?.regions || []);
@@ -310,6 +344,80 @@ const HeaderComponent = ({ tab }: Tab) => {
         dispatch(setSelectedRegionData(option));
     }, [headerSelectedRegion]);
 
+    // Calculate total queries length
+    const queriesLength = useMemo(() => {
+        if (
+            headerSelectedMultiCred &&
+            headerSelectedMultiCred.length > 0 &&
+            headerSelectedMultiRegion &&
+            headerSelectedMultiRegion.length > 0
+        ) {
+            if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
+                const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+                setPendingQueriesCounter(total);
+                setPendingQueriesLength(total);
+                return total;
+            }
+            return 0;
+        }
+    }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
+
+    // Compute total queries count and initialize queue
+    useEffect(() => {
+        if (
+            headerSelectedMultiCred &&
+            headerSelectedMultiCred.length > 0 &&
+            headerSelectedMultiRegion &&
+            headerSelectedMultiRegion.length > 0
+        ) {
+            if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
+                const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+                setPendingQueriesCounter(total);
+                setPendingQueriesLength(total);
+
+                const newQueue = [];
+                for (let cred of headerSelectedMultiCred) {
+                    for (let region of headerSelectedMultiRegion) {
+                        newQueue.push({ cred, region });
+                    }
+                }
+                setQueue(newQueue);
+                setCurrentIndex(0); // Reset index when cred/region changes
+            }
+        }
+    }, [headerSelectedMultiCred, headerSelectedMultiRegion]);
+
+    // Process next set when API completion flag changes
+    useEffect(() => {
+        if (queue.length > 0 && currentIndex < queue.length) {
+            if (currentIndex === 0 || true) {
+                //true is the flag for API call
+                const { cred, region } = queue[currentIndex];
+
+                // Set current cred and region
+                setCurrentCred(cred?.data?.name || '');
+                setCurrentRegion(region?.value);
+
+                // Dispatch API call for the current set
+                //Dispatch logic here
+
+                // Reduce pending counters
+
+                setPendingQueriesLength(prev => Math.max(0, prev - 1));
+
+                // Wait for the API completion before moving to next set
+                setTimeout(() => {
+                    if (true) {
+                        //true is the flag for API call
+                        setCurrentIndex(prev => prev + 1);
+                    }
+                }, 5000);
+            }
+        } else {
+            setPendingQueriesCounter(0);
+        }
+    }, [currentIndex, queue]); //Add Api call flag here
+
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
@@ -365,6 +473,90 @@ const HeaderComponent = ({ tab }: Tab) => {
                         </div>
                     }
                 />
+            </div>
+        );
+    };
+
+    const labelForMultiSelectCred = () => {
+        if (headerSelectedMultiCred && headerSelectedMultiCred.length === 1) {
+            const credValue = headerSelectedMultiCred[0]?.value;
+            return credValue;
+        } else if (headerSelectedMultiCred && headerSelectedMultiCred.length > 1) {
+            return `${headerSelectedMultiCred.length} credentials selected`;
+        } else {
+            return 'All credentials selected';
+        }
+    };
+
+    const labelForMultiSelectRegion = () => {
+        if (headerSelectedMultiRegion && headerSelectedMultiRegion.length === 1) {
+            const credValue = `Region: ${headerSelectedMultiRegion[0]?.value}`;
+            return credValue;
+        } else if (headerSelectedMultiRegion && headerSelectedMultiRegion.length > 1) {
+            return `${headerSelectedMultiRegion.length} regions selected`;
+        } else {
+            return 'All regions selected';
+        }
+    };
+
+    const selectMultipleComponents = () => {
+        return (
+            <div className={styles.content}>
+                <div className={styles.firstSelect}>
+                    <DsSelect
+                        isLoading={credentialLoading}
+                        title=""
+                        formatLabel={() => labelForMultiSelectCred()}
+                        selectedOptionIds={
+                            headerSelectedMultiCred && headerSelectedMultiCred.length > 0
+                                ? headerSelectedMultiCred.map((cred: any) => cred?.id)
+                                : []
+                        }
+                        className={styles.multiSelect}
+                        //@ts-ignore
+                        options={generateAccounts}
+                        selectionType="multi"
+                        isWithActions={true}
+                        variant="underline"
+                        onSelect={(option: any) => {
+                            dispatch(setHeaderSelectedMultiCred(option));
+                        }}
+                        placeholder="No credentials selected"
+                        isCleanable={false}
+                        isSelectAll={true}
+                        dropDown={{
+                            isCloseOnClickOutside: true
+                        }}
+                    />
+                </div>
+
+                <div className={styles.secondSelect}>
+                    <DsSelect
+                        isLoading={regionsLoading}
+                        title=""
+                        className={styles.multiSelect}
+                        formatLabel={() => labelForMultiSelectRegion()}
+                        //@ts-ignore
+                        options={generateRegionsForMultiSelect}
+                        selectedOptionIds={
+                            headerSelectedMultiRegion && headerSelectedMultiRegion.length > 0
+                                ? headerSelectedMultiRegion.map((region: any) => region?.id)
+                                : []
+                        }
+                        selectionType="multi"
+                        isWithActions={true}
+                        placeholder="No regions selected"
+                        variant="underline"
+                        onSelect={(option: any) => {
+                            dispatch(setHeaderSelectedMultiRegion(option));
+                        }}
+                        isCleanable={false}
+                        isSelectAll={true}
+                        dropDown={{
+                            isCloseOnClickOutside: true
+                        }}
+                    />
+                </div>
             </div>
         );
     };
@@ -705,7 +897,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <div className={styles.dashboardSection}>
                             <div className={!setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
                                 <div className={!setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
-                                    {selectComponents()}
+                                    {/* {selectComponents()} */}
+                                    {selectMultipleComponents()}
                                     <div className={styles.content}>
                                         <>
                                             <DsButton
@@ -874,6 +1067,16 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <ViewCalculations statusCheck={statusChk} />
                     )}
                 </div>
+
+                {pendingQueriesCounter > 0 && (
+                    <FetchingDataNotification
+                        queriesLength={queriesLength}
+                        pendingQueriesCounter={pendingQueriesCounter}
+                        pendingQueriesLength={pendingQueriesLength}
+                        regions={currentRegion}
+                        credentials={currentCred}
+                    />
+                )}
             </div>
         )
     );
