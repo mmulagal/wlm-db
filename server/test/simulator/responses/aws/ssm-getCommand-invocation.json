@@ -2114,7 +2114,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"sqlVersion\":\"Microsoft SQL Server 2019 (RTM-CU19) (KB5023049) - 15.0.4298.1 (X64) \\n\\tJan 27 2023 16:44:09 \\n\\tCopyright (C) 2019 Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 \\u003cX64\\u003e (Build 17763: ) (Hypervisor)\\n\"}\r\n",
+        "StandardOutputContent": "[{\"version\":\"Microsoft SQL Server 2019 (RTM-CU19) (KB5023049) - 15.0.4298.1 (X64) \\n\\tJan 27 2023 16:44:09 \\n\\tCopyright (C) 2019 Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 \\u003cX64\\u003e (Build 17763: ) (Hypervisor)\\n\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

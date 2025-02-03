@@ -11,6 +11,7 @@ import {
     INSTANCE_LOG_DB_DRIVE_SIZES,
     INSTANCE_LOG_DRIVES_QUERY,
     INSTANCE_USER_DB_DRIVE_SIZES,
+    SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
@@ -1068,18 +1069,7 @@ const GET_INSTALLED_SQL_PATCHES = () => `
 
 const GET_INSTALLED_MSSQL_VERSION = () => `
     # Get the installed SQL Server version
-    Import-Module SQLPS -ErrorAction Stop
-    $instanceName = "$env:COMPUTERNAME"
-    
-    $sql = "SELECT @@VERSION AS Version"
-    $version = Invoke-Sqlcmd -Query $sql
-    
-    $result = [PSCustomObject]@{
-        sqlVersion = $version.Version
-    }
-
-    $jsonResult = $result | ConvertTo-Json -Compress
-    Write-Output $jsonResult
+    Sqlcmd -Q ${SERVER_VERSION} -y 0
 `;
 
 export {
