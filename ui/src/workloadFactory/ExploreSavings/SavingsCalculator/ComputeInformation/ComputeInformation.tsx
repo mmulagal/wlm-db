@@ -1,19 +1,10 @@
-import { DsTypography, TextField } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import styles from './ComputeInformation.module.scss';
 import ComputeInputComponent from './ComputeInputComponent/ComputeInputComponent';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useState } from 'react';
-import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 const ComputeInformation = ({ printState }: any) => {
-    const [instanceData, setInstanceData] = useState([]);
-    const { savingsCalculatorFrom, selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
-
-    useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            setInstanceData(selectedOnPremHostDetails?.sqlServerInstances || []);
-        }
-    }, [selectedOnPremHostDetails]);
+    const { onPremStorageAndComputeInfo }: any = useAppSelector(state => state.exploreSavings);
 
     return (
         <div className={styles.computeInformation}>
@@ -34,12 +25,18 @@ const ComputeInformation = ({ printState }: any) => {
                         <DsTypography variant="Semibold_14">Network performance</DsTypography>
                     </div>
                 </div>
-                {instanceData?.map((instance: any, index: number) => (
+                {Object.keys(onPremStorageAndComputeInfo).map((key: any, index: any) => (
                     <div key={index} className={styles.row1} style={{ marginTop: '-8px' }}>
                         <div className={styles.col1}>
-                            <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {onPremStorageAndComputeInfo[key]?.sqlInstanceName}
+                            </DsTypography>
                         </div>
-                        <ComputeInputComponent data={instance} index={index} printState={printState} />
+                        <ComputeInputComponent
+                            data={onPremStorageAndComputeInfo[key]}
+                            index={index}
+                            printState={printState}
+                        />
                     </div>
                 ))}
             </div>

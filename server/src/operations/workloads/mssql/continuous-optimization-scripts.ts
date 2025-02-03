@@ -15,6 +15,27 @@ import {
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
+const JSON_CHECK = `
+        function Test-ValidJson {
+            param (
+            [Parameter(Mandatory = $true)]
+            [object]$JsonString
+        )
+
+        try {
+            # Ensure the input is a string
+            $JsonString = [string]$JsonString
+
+            # Attempt to convert the string to a JSON object
+            $null = $JsonString | ConvertFrom-Json
+            return $true
+        }
+        catch {
+            return $false
+        }
+        }
+    `;
+
 const GET_ONTAP_LUN_DETAILS = (params: OntapRequestParams) => `
 #Get ONTAP LUN details Script
 Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
@@ -250,22 +271,58 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     
     ${INSTANCE_NETAPP_DRIVES}
     
+    $driveDetailsErrors = @{}
     # Get all data drives and check if they are NetApp drives
-    $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceAllDataDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_DATA_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  
+    if(-Not ([string]::IsNullOrEmpty($instanceAllDataDrives)) -and (Test-ValidJson -JsonString $instanceAllDataDrives) ) {
+        $instanceAllDataDrives = $instanceAllDataDrives | ConvertFrom-Json
+    }
+    else {
+        Write-Information "Error occurred while fetching data drives. Error: $instanceAllDataDrives"
+        $driveDetailsErrors["instanceDataDrivesError"] = $instanceAllDataDrives  -join ' ,'
+        $instanceAllDataDrives = @()
+    }
+
     $instanceDrivesList = @()
     $instanceAllDataDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
     $netappDataDrives = Get-MappedDrives  $instanceDrivesList
     Write-Information "NetApp data drives: $netappDataDrives"
     
     # Get all log drives and check if they are NetApp drives
-    $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    $instanceAllLogDrives = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DRIVES_QUERY}" -InstanceName "$instanceServiceName"  
+    if(-Not ([string]::IsNullOrEmpty($instanceAllLogDrives)) -and (Test-ValidJson -JsonString $instanceAllLogDrives) ) {
+        $instanceAllLogDrives = $instanceAllLogDrives | ConvertFrom-Json
+    }
+    else {
+        Write-Information "Error occurred while fetching log drives. Error: $instanceAllLogDrives"
+        $driveDetailsErrors["instanceLogDrivesError"] = $instanceAllLogDrives  -join ' ,'
+        $instanceAllLogDrives = @()
+    }
     $instanceDrivesList = @()
     $instanceAllLogDrives | ForEach-Object -Process {$instanceDrivesList += $_.drives}
     $netappLogDrives = Get-MappedDrives  $instanceDrivesList
     Write-Information "NetApp log drives: $netappLogDrives"
 
-    $instanceAllDataDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_USER_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
-    $instanceAllLogDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    
+    $instanceAllDataDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_USER_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName" 
+    if(-Not ([string]::IsNullOrEmpty($instanceAllDataDrivesSizes)) -and (Test-ValidJson -JsonString $instanceAllDataDrivesSizes) ) {
+        $instanceAllDataDrivesSizes = $instanceAllDataDrivesSizes | ConvertFrom-Json
+    }
+    else {
+        Write-Information "Error occurred while fetching data drive size. Error: $instanceAllDataDrivesSizes"
+        $driveDetailsErrors["instanceDataDriveSizeError"] = $instanceAllDataDrivesSizes  -join ' ,'
+        $instanceAllDataDrivesSizes = @()
+    }
+
+    $instanceAllLogDrivesSizes = Call-SqlCmd -SqlCredential $sqlCredential -Query "${INSTANCE_LOG_DB_DRIVE_SIZES}" -InstanceName "$instanceServiceName" 
+    if(-Not ([string]::IsNullOrEmpty($instanceAllLogDrivesSizes)) -and (Test-ValidJson -JsonString $instanceAllLogDrivesSizes) ) {
+        $instanceAllLogDrivesSizes = $instanceAllLogDrivesSizes | ConvertFrom-Json
+    }
+    else {
+        Write-Information "Error occurred while fetching log drive size. Error: $instanceAllLogDrivesSizes"
+        $driveDetailsErrors["instanceLogDriveSizeError"] = $instanceAllLogDrivesSizes  -join ' ,'
+        $instanceAllLogDrivesSizes = @()
+    }
     
     $allDriveDetails = @()
     foreach ($dataDrive in $instanceAllDataDrivesSizes) {
@@ -295,7 +352,17 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     
     $defaultDataDriveDetails = $instanceAllDataDrivesSizes | Where-Object { $_.databaseName -eq 'msdb' }
     $defaultLogDriveDetails = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq 'msdb' }
-    $defaultTempDBDriveDetails = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  | ConvertFrom-Json
+    
+    $defaultTempDBDriveDetails = Call-SqlCmd -SqlCredential $sqlCredential -Query "${TEMPDB_DRIVE_SIZE}" -InstanceName "$instanceServiceName"  
+    if(-Not ([string]::IsNullOrEmpty($defaultTempDBDriveDetails)) -and (Test-ValidJson -JsonString $defaultTempDBDriveDetails) ) {
+        $defaultTempDBDriveDetails = $defaultTempDBDriveDetails | ConvertFrom-Json
+    }
+    else {
+        Write-Information "Error occurred while fetching tempdb drive size. Error: $defaultTempDBDriveDetails"
+        $driveDetailsErrors["instanceTempDBDriveError"] = $defaultTempDBDriveDetails -join ' ,'
+        $defaultTempDBDriveDetails = @()
+    }
+
     foreach ($drive in $defaultTempDBDriveDetails) {
         $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveDetails.dataDriveLetter 
         $drive | Add-Member -MemberType NoteProperty -Name "dataDriveTotalSizeMB" -Value $defaultDataDriveDetails.dataDriveTotalSizeMB
@@ -394,6 +461,8 @@ function Test-IscsiSessions {
 
 const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     `#Get Storage Configuration Assessment
+
+    ${JSON_CHECK}
 
     ${slqcmdExecutionTemplate}
 
@@ -594,17 +663,43 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 
             }
         
-        $DriftAssessmentData['layout'] = @{
-                                        'default-data-files-location' = $defaultDataDrive;
-                                        'default-log-files-location' = $defaultLogDrive;
-                                        'tempdb-files-location' = $tempdbDrive;
-                                        'user-database-layout' = $($responseObject);}
         
-        $DriftAssessmentData['sizing'] = @{
-                                        'performance-tier' = @($PerformanceTierPercent);
-                                        'data-log-drive-details' = @($($consolidatedDriveDetails));
-                                        'data-tempdb-drive-details' = $($defaultTempDBDriveDetails);
-                                        }
+        $DriftAssessmentData['layout'] = @{}
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
+            $DriftAssessmentData['errors']['tempdb-files-location'] = $driveDetailsErrors["instanceTempDBDriveError"]
+        }
+        else {
+            $DriftAssessmentData['layout']['tempdb-files-location'] = $tempdbDrive
+        }
+        
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceDataDrivesError"] ))) {
+            $DriftAssessmentData['errors']['default-data-files-location'] = $driveDetailsErrors["instanceDataDrivesError"]
+        }
+        else {
+            $DriftAssessmentData['layout']['default-data-files-location'] =  $defaultDataDrive;
+        }
+
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceLogDrivesError"] ))) {
+            $DriftAssessmentData['errors']['default-log-files-location'] = $driveDetailsErrors["instanceLogDrivesError"]
+        }
+        else {
+            $DriftAssessmentData['layout']['default-log-files-location'] =  $defaultLogDrive;
+        }
+
+        $DriftAssessmentData['layout']['user-database-layout'] = $($responseObject)
+
+
+        $DriftAssessmentData['sizing'] = @{}
+        if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
+            $DriftAssessmentData['errors']['data-tempdb-drive-details'] = $driveDetailsErrors["instanceTempDBDriveError"]
+        }
+        else {
+            $DriftAssessmentData['sizing']['data-tempdb-drive-details'] = $($defaultTempDBDriveDetails);
+        }
+
+        $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierPercent);
+        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($consolidatedDriveDetails));
+        
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
         $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message

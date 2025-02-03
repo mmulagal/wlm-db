@@ -97,7 +97,7 @@ async function calculateMaxDOPDrift(
             recommended: recommendedMaxDOP,
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
-            current: current.toString(),
+            current: current?.toString(),
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
         };
         return maxDOPResponse;
@@ -210,7 +210,7 @@ async function runMaxDOPAssessment(
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     return {
-        current: maxDOP.toString(),
+        current: maxDOP?.toString(),
         recommendedMaxDOP,
         status: optimizationStatus
     };

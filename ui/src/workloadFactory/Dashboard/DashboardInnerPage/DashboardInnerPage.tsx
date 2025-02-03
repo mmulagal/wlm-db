@@ -778,7 +778,8 @@ const DashboardInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Optimize configuration (${selectedConfig})`
+                                title: `Optimize configuration (${selectedConfig})`,
+                                dataTestId: 'wlm-db-optimize-configuration'
                             }
                         ]}
                     />

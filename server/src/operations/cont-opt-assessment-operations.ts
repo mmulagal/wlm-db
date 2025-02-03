@@ -357,22 +357,33 @@ async function driftAssessmentDataCollection(
         fields
     });
 
-    let fieldsValues: Array<string> = [AssessmentCategories.STORAGE, AssessmentCategories.MAXDOP];
-
+    let shouldRunStorageAssessment = false;
+    let shouldRunComputeAssessment = false;
+    let shouldRunLicenseAssessment = false;
+    let shouldRunHostOsPatchAssessment = false;
+    let shouldRunRssConfigAssessment = false;
+    let shouldRunMAXDOPAssessment = false;
+    let shouldRunMSSQLPatchAssessment = false;
+    let fieldsValues: string | string[] = [];
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+        shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+        shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+        shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+        shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
+        shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
+        shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
+        shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
+    } else {
+        shouldRunStorageAssessment = true;
+        shouldRunComputeAssessment = true;
+        shouldRunLicenseAssessment = true;
+        shouldRunHostOsPatchAssessment = true;
+        shouldRunRssConfigAssessment = true;
+        shouldRunMAXDOPAssessment = true;
+        shouldRunMSSQLPatchAssessment = true;
     }
-
-    const shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
-    const shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-    const shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-    const shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
-    const shouldRunHostOsPatchAssessment = fieldsValues?.includes(
-        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-    );
-    const shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
-    const shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
 
     if (shouldRunStorageAssessment) {
         await initiateStorageAssessmentCollection(
@@ -648,18 +659,33 @@ async function hostLevelDriftData(
         fields
     });
 
-    const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    const shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
-    const shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
-    const shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
-        AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
-    );
-    const shouldCalculateRssConfigAssessment = fieldsValues?.includes(
-        AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
-    );
-    const shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
-        AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
-    );
+    let shouldCalculateComputeAssessment = false;
+    let shouldCalculateLicenseAssessment = false;
+    let shouldCalculateHostOsPatchAssessment = false;
+    let shouldCalculateRssConfigAssessment = false;
+    let shouldCalculateMSSQLPatchAssessment = false;
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+        shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
+        shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
+        shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
+            AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase()
+        );
+        shouldCalculateRssConfigAssessment = fieldsValues?.includes(
+            AssessmentCategories.RSS_CONFIG.toLocaleLowerCase()
+        );
+        shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
+            AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
+        );
+    } else {
+        shouldCalculateComputeAssessment = true;
+        shouldCalculateLicenseAssessment = true;
+        shouldCalculateHostOsPatchAssessment = true;
+        shouldCalculateRssConfigAssessment = true;
+        shouldCalculateMSSQLPatchAssessment = true;
+    }
 
     const [
         computeAssessmentResponse,

@@ -133,9 +133,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualFSXThroughput: 128,
     snapshotLoading: false,
     selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
-    computeInformation: {},
-    storagePerformance: {},
-    onPremNetworkPerformance: {},
+    onPremStorageAndComputeInfo: {},
+    onPremNetworkPerformance: null,
     storageSavingsOnPremResponse: {},
     storageSavingsOnPremLoading: false
 };
@@ -150,23 +149,17 @@ const exploreSavingsSlice = createSlice({
         setOnPremiseDataLoading(state, action: PayloadAction<any>) {
             state.onPremiseDataLoading = action.payload;
         },
-        setStoragePerformance(state, action: PayloadAction<any>) {
-            if (!state.storagePerformance[action.payload.type]) {
-                state.storagePerformance[action.payload.type] = {};
+        setOnPremStorageAndComputeInfo(state, action: PayloadAction<any>) {
+            if (!state.onPremStorageAndComputeInfo[action.payload.type]) {
+                state.onPremStorageAndComputeInfo[action.payload.type] = {};
             }
-            if (!state.storagePerformance[action.payload.type][action.payload.mode]) {
-                state.storagePerformance[action.payload.type][action.payload.mode] = {};
+            if (!state.onPremStorageAndComputeInfo[action.payload.type][action.payload.mode]) {
+                state.onPremStorageAndComputeInfo[action.payload.type][action.payload.mode] = {};
             }
-            state.storagePerformance[action.payload.type][action.payload.mode] = action.payload.value;
+            state.onPremStorageAndComputeInfo[action.payload.type][action.payload.mode] = action.payload.value;
         },
-        setComputeInformation(state, action: PayloadAction<any>) {
-            if (!state.computeInformation[action.payload.type]) {
-                state.computeInformation[action.payload.type] = {};
-            }
-            if (!state.computeInformation[action.payload.type][action.payload.mode]) {
-                state.computeInformation[action.payload.type][action.payload.mode] = {};
-            }
-            state.computeInformation[action.payload.type][action.payload.mode] = action.payload.value;
+        setOnPremStorageAndComputeInfoFull(state, action: PayloadAction<any>) {
+            state.onPremStorageAndComputeInfo = action.payload;
         },
         setOnPremNetworkPerformance(state, action: PayloadAction<any>) {
             state.onPremNetworkPerformance = action.payload;
@@ -448,8 +441,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedManualFSXIOPS = 6000;
             state.selectedManualFSXThroughput = 128;
             state.requestedPayload = {};
-            state.computeInformation = {};
-            state.storagePerformance = {};
+            state.onPremNetworkPerformance = null;
+            state.onPremStorageAndComputeInfo = {};
         },
         setSelectedDeploymentModel(state, action: PayloadAction<any>) {
             state.selectedDeploymentModel = action.payload;
@@ -481,8 +474,6 @@ const exploreSavingsSlice = createSlice({
 export const {
     setOnPremiseData,
     setOnPremiseDataLoading,
-    setStoragePerformance,
-    setComputeInformation,
     setOnPremNetworkPerformance,
     setSelectedExploreSavingsTab,
     setRequestedRegion,
@@ -542,7 +533,9 @@ export const {
     setStorageSavingsOnPremResponse,
     setStorageSavingsOnPremLoading,
     addOnPremRegionsList,
-    setOnPremRegionsLoading
+    setOnPremRegionsLoading,
+    setOnPremStorageAndComputeInfo,
+    setOnPremStorageAndComputeInfoFull
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

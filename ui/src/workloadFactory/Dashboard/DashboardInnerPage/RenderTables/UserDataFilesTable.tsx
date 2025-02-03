@@ -120,7 +120,7 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
 
         dispatch(setSelectedRowsForOptimize(rowsData));
         if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length) {
-            checkBoxHandle(tableProps.selectionState, rowsData);
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 

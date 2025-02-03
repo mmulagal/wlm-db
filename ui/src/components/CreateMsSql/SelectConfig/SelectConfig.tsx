@@ -26,8 +26,6 @@ const SelectConfig = ({ isDisabled = false, wizardType }: SC) => {
     useEffect(() => {
         if (wizardType === WIZARD_TYPE.PGSQL) {
             dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
-        } else {
-            dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
         }
     }, []);
 

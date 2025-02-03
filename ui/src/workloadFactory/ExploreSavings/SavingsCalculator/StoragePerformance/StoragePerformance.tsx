@@ -4,7 +4,7 @@ import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 const StoragePerformance = ({ printState }: any) => {
-    const { selectedOnPremHostDetails }: any = useAppSelector(state => state.exploreSavings);
+    const { onPremStorageAndComputeInfo }: any = useAppSelector(state => state.exploreSavings);
 
     return (
         <div className={styles.storagePerf}>
@@ -26,12 +26,14 @@ const StoragePerformance = ({ printState }: any) => {
                     </div>
                 </div>
 
-                {selectedOnPremHostDetails?.sqlServerInstances?.map((instance: any, index: number) => (
+                {Object.keys(onPremStorageAndComputeInfo).map((key: any, index: any) => (
                     <div key={index} className={styles.row1} style={{ marginTop: '-8px' }}>
                         <div className={styles.col1}>
-                            <DsTypography variant="Regular_14">{instance?.sqlInstanceName}</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {onPremStorageAndComputeInfo[key]?.sqlInstanceName}
+                            </DsTypography>
                         </div>
-                        <StoragePerfInput printState={printState} data={instance} />
+                        <StoragePerfInput printState={printState} data={onPremStorageAndComputeInfo[key]} />
                     </div>
                 ))}
             </div>
