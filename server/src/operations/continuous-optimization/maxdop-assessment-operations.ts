@@ -129,7 +129,7 @@ async function managedHostsMaxDOPAssessment(
         parentJobId
     });
 
-    const { id: rssConfigAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+    const { id: maxDopAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: `Microsoft SQL server MaxDOP assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
         description: `Microsoft SQL server MaxDOP assessment for ${resourceName}`,
         resourceName,
@@ -160,7 +160,7 @@ async function managedHostsMaxDOPAssessment(
 
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        await updateJobDetails(accountId, rssConfigAssessmentJobId, {
+        await updateJobDetails(accountId, maxDopAssessmentJobId, {
             endTime: Date.now(),
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage

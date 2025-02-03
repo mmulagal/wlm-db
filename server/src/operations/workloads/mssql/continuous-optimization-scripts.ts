@@ -1029,6 +1029,38 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     Write-Output $jsonResult
 `;
 
+const GET_INSTALLED_SQL_PATCHES = () => `
+    # Get the list of installed patches
+    $installedPatches = Get-ChildItem -Path HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall |
+        Get-ItemProperty |
+        Where-Object {($_.DisplayName -like "Hotfix*SQL*") -or ($_.DisplayName -like "Service Pack*SQL*")} |
+        Select-Object -Property DisplayName, DisplayVersion, InstallDate
+
+    # Prepare the result
+    $result = [PSCustomObject]@{
+        installedPatches = $installedPatches
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
+const GET_INSTALLED_MSSQL_VERSION = () => `
+    # Get the installed SQL Server version
+    Import-Module SQLPS -ErrorAction Stop
+    $instanceName = "$env:COMPUTERNAME"
+    
+    $sql = "SELECT @@VERSION AS Version"
+    $version = Invoke-Sqlcmd -Query $sql
+    
+    $result = [PSCustomObject]@{
+        sqlVersion = $version.Version
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -1039,5 +1071,7 @@ export {
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
     CHECK_RUNNING_STATUS_WITH_RESTART,
-    GET_VCPU_AND_MAXDOP_DETAILS
+    GET_VCPU_AND_MAXDOP_DETAILS,
+    GET_INSTALLED_SQL_PATCHES,
+    GET_INSTALLED_MSSQL_VERSION
 };

@@ -779,6 +779,16 @@ function calculateFsxStorageCapacityForHeadroomOptimization(
     return newFsxStorageCapacityGiB;
 }
 
+function extractKbNumber(displayName: string): string | null {
+    const match = displayName.match(/(KB\d+)/);
+    return match ? match[1] : null;
+}
+
+function extractVersionYear(sqlVersion: string) {
+    const match = sqlVersion.match(/Microsoft SQL Server (\d{4})/);
+    return match ? match[1] : 'Unknown';
+}
+
 function getSubJobDescriptions(dbEngineType: string) {
     logger.info('Get sub job descriptions', { dbEngineType });
 
@@ -894,5 +904,7 @@ export {
     calculateFsxStorageCapacityForHeadroomOptimization,
     getSubJobDescriptions,
     parsePgSqlInstanceInfo,
-    getServerNameWithHostname
+    getServerNameWithHostname,
+    extractKbNumber,
+    extractVersionYear
 };
