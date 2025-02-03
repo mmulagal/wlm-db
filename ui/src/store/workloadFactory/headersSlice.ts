@@ -31,12 +31,20 @@ const headersSlice = createSlice({
     initialState: initialHeaderState,
     reducers: {
         setMultiSelectData(state, action: PayloadAction<any>) {
-            const { cred, region, apiName, response } = action.payload;
+            const { cred, region, apiName, response, status } = action.payload;
             const key = `${cred}/${region}`;
             if (!state.multiSelectData[key]) {
-                state.multiSelectData[key] = {};
+                state.multiSelectData[key] = { data: { response: {}, status: false } };
             }
-            state.multiSelectData[key][apiName] = response;
+
+            // Store API response and update completion status in a single object
+            state.multiSelectData[key].data = {
+                response: { ...state.multiSelectData[key].data.response, [apiName]: response },
+                status: status
+            };
+        },
+        resetMultiSelectData(state) {
+            state.multiSelectData = {};
         },
         setHeaderSelectedCred(state, action: PayloadAction<any>) {
             state.headerSelectedCred = action.payload;
@@ -69,6 +77,7 @@ const headersSlice = createSlice({
 });
 
 export const {
+    resetMultiSelectData,
     setMultiSelectData,
     setHeaderSelectedCred,
     setHeaderSelectedMultiCred,

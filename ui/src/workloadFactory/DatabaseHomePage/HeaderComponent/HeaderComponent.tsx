@@ -370,8 +370,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     // Function to check if all APIs are completed for a cred-region set
     const isApiCompletedForSet = (cred: string, region: string) => {
         const key = `${cred}/${region}`;
-        const apiResponses = multiSelectData[key] || {};
-        return ['api1', 'api2', 'api3', 'api4', 'api5'].every(api => apiResponses[api] !== undefined);
+        return multiSelectData[key]?.data?.status === true;
     };
 
     // Compute total queries count and initialize queue
@@ -402,7 +401,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     // Process next set when API completion flag changes
     useEffect(() => {
         if (queue.length > 0 && currentIndex < queue.length) {
-            if (currentIndex === 0 || true) {
+            const { cred, region } = queue[currentIndex];
+            if (currentIndex === 0 || isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode)) {
                 //true is the flag for API call
                 const { cred, region } = queue[currentIndex];
 
@@ -419,7 +419,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 // Wait for the API completion before moving to next set
                 setTimeout(() => {
-                    if (true) {
+                    if (isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode)) {
                         //true is the flag for API call
                         setCurrentIndex(prev => prev + 1);
                     }
@@ -428,7 +428,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         } else {
             setPendingQueriesCounter(0);
         }
-    }, [currentIndex, queue]); //Add Api call flag here
+    }, [multiSelectData, currentIndex, queue]); //Add Api call flag here
 
     const handleClick = (value: string) => {
         setSelectedTab(value);

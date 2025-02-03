@@ -58,6 +58,7 @@ import { EBS_PROTECTED_OPTIONS, INSTANCE_API_FIELDS, SNAPSHOT_FREQUENCY } from '
 import { GENERAL } from '../../utils/appConstants';
 import { setPotentialSavingsValues } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
+import { setMultiSelectData } from '../../store/workloadFactory/headersSlice';
 
 const InventoryApisV2 = () => {
     const dispatch = useAppDispatch();
@@ -242,6 +243,16 @@ const InventoryApisV2 = () => {
                             setManagedHostListLoading(false);
                             dispatch(setIsManagedHostListLoading(false));
                             setManagedHostList(managedList);
+                            //Sample dispatch
+                            // dispatch(
+                            //     setMultiSelectData({
+                            //         cred: runningCredId,
+                            //         region: runningRegionId,
+                            //         apiName: 'managedHostList',
+                            //         response: managedList,
+                            //         status: true
+                            //     })
+                            // );
                         }
                     } else {
                         setManagedHostListLoading(false);
