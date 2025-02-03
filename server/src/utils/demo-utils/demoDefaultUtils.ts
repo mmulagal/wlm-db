@@ -33,9 +33,6 @@ import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations
 import { instanceDemoData } from './instancesResponse';
 import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import { AssessmentCategories } from '../continous-optimization-consts';
-// import { createOnPremTcoReportData } from '../../lib/database/onprem-tco';
-// import { uploadOnpremTcoData } from '../../operations/onprem-tco-operations';
-// import uploadOnpremTcoData from '../../operations/onprem-tco-operations';
 
 const logger = getLogger();
 
