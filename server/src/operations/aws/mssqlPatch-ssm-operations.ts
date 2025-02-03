@@ -53,9 +53,9 @@ async function getTheMSSqlversion(credentialsId: string, region: string, instanc
         instanceId,
         'Get Installed SQL version'
     );
-    const parsedResponse = sqlResponseParsing(response);
-    const { sqlVersion } = parsedResponse;
-    const versionYear = extractVersionYear(sqlVersion);
+    const [parsedResponse] = sqlResponseParsing(response);
+    const { version } = parsedResponse;
+    const versionYear = extractVersionYear(version);
 
     return versionYear;
 }
