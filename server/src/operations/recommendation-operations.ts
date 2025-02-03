@@ -463,15 +463,19 @@ async function checkComputeOptimizerEnrollmentStatus(accountId: string, credenti
     }
 }
 
-async function manualModeComputeLicenseDetails(region: string, params: ManualStorageSavingsRequestBodyType) {
-    logger.info('Getting manual mode compute and license details ', { region, params });
+async function manualModeComputeLicenseDetails(
+    region: string,
+    params: ManualStorageSavingsRequestBodyType,
+    nodeCount: number = 2
+) {
+    logger.info('Getting manual mode compute and license details ', { region, params, nodeCount });
 
     const { sqlServerDeploymentType, sqlServerEdition, monthlySqlByolCost, ec2Instances } = params;
 
     let instanceTypes = ec2Instances.map((instance: { ec2InstanceType: any }) => instance.ec2InstanceType);
 
-    if (sqlServerDeploymentType === 'FCI') {
-        instanceTypes = [...instanceTypes, ...instanceTypes];
+    if (sqlServerDeploymentType?.toLowerCase() === 'fci' || sqlServerDeploymentType?.toLowerCase() === 'aoag') {
+        instanceTypes = instanceTypes.length === nodeCount ? instanceTypes : Array(nodeCount).fill(instanceTypes[0]);
     }
 
     const existingInstanceTypesPricingDetails = await deriveInstanceCountPricingDetails(instanceTypes, region);
