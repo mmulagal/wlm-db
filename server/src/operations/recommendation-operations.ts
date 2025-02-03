@@ -544,7 +544,9 @@ async function manualModeComputeLicenseDetails(
                 basePrice: priceWithoutLicense,
                 computeMonthlyPrice,
                 instanceMonthlyPrice,
-                licenseMonthlyPrice: getMonthlyPriceFromHourlyPrice(existingLicensePrice),
+                licenseMonthlyPrice: instanceTypes.length
+                    ? getMonthlyPriceFromHourlyPrice(existingLicensePrice)! / instanceTypes.length
+                    : undefined,
                 hoursInMonth: HOURS_IN_MONTH,
                 licenseIncluded
             };
