@@ -369,18 +369,39 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
 
     $defaultDataDrive = 'shared-drive'
+    if($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) 
+    {
+        $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
+        Write-Information "Data drive is not a NetApp drive. $defaultDataDriveDetails"
+    }
+    else {
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
     $defaultDataDrive = 'separate-drive'
     }
+    } 
     
+   if($netappDataDrives -notcontains $defaultLogDriveDetails.logDriveLetter) 
+    {
+        $driveDetailsErrors["instanceLogDrivesError"] = "Log drive is not a NetApp drive."
+        Write-Information "Log drive is not a NetApp drive. $defaultLogDriveDetails"
+    }
+    else {
     $defaultLogDrive = 'shared-drive'
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter )) {
     $defaultLogDrive = 'separate-drive'
     }
+   }
     
     $tempdbDrive = 'shared-drive'
+    if($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) 
+    {
+        $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
+        Write-Information "TempDB drive is not a NetApp drive. $defaultTempDBDriveDetails"
+    }
+    else {
     if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
     $tempdbDrive = 'separate-drive'
+    }
     }
 
 `;
