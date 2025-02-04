@@ -242,6 +242,7 @@ async function saveReportInWlmdbDatabase(
                         report.resource_id
                     } and timestamp ${convertToDate(timestamp)} already exists.`
                 );
+
                 reports.splice(reports.indexOf(report), 1);
             }
         }
@@ -255,94 +256,6 @@ async function saveReportInWlmdbDatabase(
         HttpErrorCodes.INTERNAL_SERVER_ERROR,
         'Error saving report in WLMDB database. No SQL Server instances or database host data found in the uploaded report.'
     );
-}
-
-async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, storageSavings: any, calculations: any) {
-    logger.info('Adjusting Compute License Cost for Multiple Nodes', { nodeCount, storageSavings, calculations });
-
-    const {
-        ebs,
-        fsx,
-        compute: { existing: existingCompute, recommended: recommendedCompute },
-        license: { existing: existingLicense, recommended: recommendedLicense, finding }
-    } = storageSavings;
-    if (
-        !isEmpty(existingCompute) &&
-        !isEmpty(recommendedCompute) &&
-        !isEmpty(existingLicense) &&
-        !isEmpty(recommendedLicense)
-    ) {
-        const adjustedExistingCompute = {
-            ...existingCompute,
-            computeHourlyPrice: Number.isSafeInteger(existingCompute?.computeHourlyPrice)
-                ? existingCompute.computeHourlyPrice * nodeCount
-                : existingCompute.computeHourlyPrice,
-            computeMonthlyPrice: Number.isSafeInteger(existingCompute?.computeMonthlyPrice)
-                ? existingCompute.computeMonthlyPrice * nodeCount
-                : existingCompute.computeMonthlyPrice,
-            instanceMonthlyPrice: Number.isSafeInteger(existingCompute?.instanceMonthlyPrice)
-                ? existingCompute.instanceMonthlyPrice * nodeCount
-                : existingCompute.instanceMonthlyPrice,
-            machineDetails: Array(nodeCount).fill(existingCompute.machineDetails[0]).flat()
-        };
-
-        const adjustedRecommendedCompute = {
-            ...recommendedCompute,
-            computeHourlyPrice: Number.isSafeInteger(recommendedCompute?.computeHourlyPrice)
-                ? recommendedCompute.computeHourlyPrice * nodeCount
-                : recommendedCompute.computeHourlyPrice,
-            computeMonthlyPrice: Number.isSafeInteger(recommendedCompute?.computeMonthlyPrice)
-                ? recommendedCompute.computeMonthlyPrice * nodeCount
-                : recommendedCompute.computeMonthlyPrice,
-            instanceMonthlyPrice: Number.isSafeInteger(recommendedCompute?.instanceMonthlyPrice)
-                ? recommendedCompute.instanceMonthlyPrice * nodeCount
-                : recommendedCompute.instanceMonthlyPrice,
-            machineDetails: Array(nodeCount).fill(recommendedCompute.machineDetails[0]).flat()
-        };
-
-        const adjustedExistingLicense = {
-            ...existingLicense,
-            licenseMonthlyPrice: existingLicense.licenseMonthlyPrice * nodeCount
-        };
-
-        const adjustedRecommendedLicense = {
-            ...recommendedLicense,
-            licenseMonthlyPrice: recommendedLicense.licenseMonthlyPrice * nodeCount
-        };
-
-        const adjustedStorageSavings = {
-            ...storageSavings,
-            compute: {
-                existing: adjustedExistingCompute,
-                recommended: adjustedRecommendedCompute
-            },
-            license: {
-                existing: adjustedExistingLicense,
-                recommended: adjustedRecommendedLicense,
-                finding
-            },
-            totalSummary: {
-                existing:
-                    Number(ebs.total || 0) +
-                    Number(adjustedExistingCompute.computeMonthlyPrice || 0) +
-                    Number(adjustedExistingLicense.licenseMonthlyPrice || 0),
-                recommended:
-                    Number(fsx.total || 0) +
-                    Number(adjustedRecommendedCompute.computeMonthlyPrice || 0) +
-                    Number(adjustedRecommendedLicense.licenseMonthlyPrice || 0)
-            }
-        };
-
-        const adjustedCalculations = {
-            ...calculations,
-            existingComputeCalculation: adjustedExistingCompute,
-            recommendedComputeCalculation: adjustedRecommendedCompute,
-            existingLicenseCalculation: adjustedExistingLicense,
-            recommendedLicenseCalculation: adjustedRecommendedLicense
-        };
-
-        return { storageSavings: adjustedStorageSavings, calculations: adjustedCalculations };
-    }
 }
 
 async function getStorageSavingsResponse(
@@ -383,28 +296,51 @@ async function getStorageSavingsResponse(
         monthlyChangeRatePercentage,
         sqlServerDeploymentType
     };
+
+    const nodeCount = windowsConfig.nodeDetails.length;
+
     const [existingConfigData, existingConfigCalculations, recommendedConfigData, recommendedConfigCalculations] =
         await Promise.all([
-            performManualModeStorageSavingsCalculations(accountId, region, {
-                ...params,
-                ec2Instances,
-                sqlServerEdition: currentLicenseEdition
-            }),
-            getManualModeStorageSavingsCalculationMetrics(accountId, region, {
-                ...params,
-                ec2Instances,
-                sqlServerEdition: currentLicenseEdition
-            }),
-            performManualModeStorageSavingsCalculations(accountId, region, {
-                ...params,
-                ec2Instances: ec2InstancesRecommended,
-                sqlServerEdition: recommendedLicenseEdition
-            }),
-            getManualModeStorageSavingsCalculationMetrics(accountId, region, {
-                ...params,
-                ec2Instances: ec2InstancesRecommended,
-                sqlServerEdition: recommendedLicenseEdition
-            })
+            performManualModeStorageSavingsCalculations(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances,
+                    sqlServerEdition: currentLicenseEdition
+                },
+                nodeCount
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances,
+                    sqlServerEdition: currentLicenseEdition
+                },
+                nodeCount
+            ),
+            performManualModeStorageSavingsCalculations(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances: ec2InstancesRecommended,
+                    sqlServerEdition: recommendedLicenseEdition
+                },
+                nodeCount
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances: ec2InstancesRecommended,
+                    sqlServerEdition: recommendedLicenseEdition
+                },
+                nodeCount
+            )
         ]);
 
     const {
@@ -423,7 +359,7 @@ async function getStorageSavingsResponse(
         totalSummary: { recommended: recommendedTotalSummary } = {}
     } = recommendedConfigData;
 
-    let storageSavings = {
+    const storageSavings = {
         compute: {
             existing: existingCompute,
             recommended: recommendedCompute
@@ -445,20 +381,12 @@ async function getStorageSavingsResponse(
 
     const { recommendedComputeCalculation, recommendedLicenseCalculation } = recommendedConfigCalculations;
 
-    let calculations = {
+    const calculations = {
         ...existingConfigCalculations,
         recommendedComputeCalculation,
         recommendedLicenseCalculation
     };
 
-    if (
-        sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ||
-        sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.FCI
-    ) {
-        const nodeCount = windowsConfig.nodeDetails.length;
-        ({ storageSavings, calculations } =
-            (await adjustComputeLicenseCostForMultipleNodes(nodeCount, storageSavings, calculations)) || {});
-    }
     return { storageSavings, calculations };
 }
 
@@ -812,6 +740,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
+        await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error uploading  SQL Server collector data. ${error}`;

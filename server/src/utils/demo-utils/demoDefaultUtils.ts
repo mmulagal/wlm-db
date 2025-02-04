@@ -340,6 +340,7 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
 
     if (isEmpty(configs)) {
         logger.info('Creating demo and templates');
+
         createConfigurations(accountId, DEMO_AWS_ACCOUNT_ID, credentialsId);
         const onPremData = onPremRecords(accountId);
         createOnPremTcoReportData(onPremData);
