@@ -11,6 +11,7 @@ import {
     INSTANCE_LOG_DB_DRIVE_SIZES,
     INSTANCE_LOG_DRIVES_QUERY,
     INSTANCE_USER_DB_DRIVE_SIZES,
+    SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
@@ -369,18 +370,39 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
 
     $defaultDataDrive = 'shared-drive'
+    if($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) 
+    {
+        $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
+        Write-Information "Data drive is not a NetApp drive. $defaultDataDriveDetails"
+    }
+    else {
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
     $defaultDataDrive = 'separate-drive'
     }
+    } 
     
+   if($netappDataDrives -notcontains $defaultLogDriveDetails.logDriveLetter) 
+    {
+        $driveDetailsErrors["instanceLogDrivesError"] = "Log drive is not a NetApp drive."
+        Write-Information "Log drive is not a NetApp drive. $defaultLogDriveDetails"
+    }
+    else {
     $defaultLogDrive = 'shared-drive'
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter )) {
     $defaultLogDrive = 'separate-drive'
     }
+   }
     
     $tempdbDrive = 'shared-drive'
+    if($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) 
+    {
+        $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
+        Write-Information "TempDB drive is not a NetApp drive. $defaultTempDBDriveDetails"
+    }
+    else {
     if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
     $tempdbDrive = 'separate-drive'
+    }
     }
 
 `;
@@ -1047,18 +1069,7 @@ const GET_INSTALLED_SQL_PATCHES = () => `
 
 const GET_INSTALLED_MSSQL_VERSION = () => `
     # Get the installed SQL Server version
-    Import-Module SQLPS -ErrorAction Stop
-    $instanceName = "$env:COMPUTERNAME"
-    
-    $sql = "SELECT @@VERSION AS Version"
-    $version = Invoke-Sqlcmd -Query $sql
-    
-    $result = [PSCustomObject]@{
-        sqlVersion = $version.Version
-    }
-
-    $jsonResult = $result | ConvertTo-Json -Compress
-    Write-Output $jsonResult
+    Sqlcmd -Q "${SERVER_VERSION}" -y 0
 `;
 
 export {

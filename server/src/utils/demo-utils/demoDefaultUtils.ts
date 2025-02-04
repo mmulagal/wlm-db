@@ -11,7 +11,12 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
-import { saveFciConfigurationData, savePGSQLConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
+import {
+    onPremRecords,
+    saveFciConfigurationData,
+    savePGSQLConfigurationData,
+    saveStandaloneConfigurationData
+} from './demoMockdata';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -33,6 +38,7 @@ import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations
 import { instanceDemoData } from './instancesResponse';
 import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import { AssessmentCategories } from '../continous-optimization-consts';
+import { createOnPremTcoReportData } from '../../lib/database/onprem-tco';
 
 const logger = getLogger();
 
@@ -336,6 +342,8 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
         logger.info('Creating demo and templates');
 
         createConfigurations(accountId, DEMO_AWS_ACCOUNT_ID, credentialsId);
+        const onPremData = onPremRecords(accountId);
+        createOnPremTcoReportData(onPremData);
 
         createDemoResourcesPerRegion(accountId, credentialsId, DEMO_DEFAULT_REGION, DEMO_AWS_ACCOUNT_ID);
     }

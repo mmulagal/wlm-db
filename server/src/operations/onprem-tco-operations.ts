@@ -19,7 +19,7 @@ import {
     MSSQL,
     WLMDB
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -72,6 +72,8 @@ import {
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
+
+const isDemoFlow = isDemo();
 
 const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
@@ -256,94 +258,6 @@ async function saveReportInWlmdbDatabase(
     );
 }
 
-async function adjustComputeLicenseCostForMultipleNodes(nodeCount: number, storageSavings: any, calculations: any) {
-    logger.info('Adjusting Compute License Cost for Multiple Nodes', { nodeCount, storageSavings, calculations });
-
-    const {
-        ebs,
-        fsx,
-        compute: { existing: existingCompute, recommended: recommendedCompute },
-        license: { existing: existingLicense, recommended: recommendedLicense, finding }
-    } = storageSavings;
-    if (
-        !isEmpty(existingCompute) &&
-        !isEmpty(recommendedCompute) &&
-        !isEmpty(existingLicense) &&
-        !isEmpty(recommendedLicense)
-    ) {
-        const adjustedExistingCompute = {
-            ...existingCompute,
-            computeHourlyPrice: Number.isSafeInteger(existingCompute?.computeHourlyPrice)
-                ? existingCompute.computeHourlyPrice * nodeCount
-                : existingCompute.computeHourlyPrice,
-            computeMonthlyPrice: Number.isSafeInteger(existingCompute?.computeMonthlyPrice)
-                ? existingCompute.computeMonthlyPrice * nodeCount
-                : existingCompute.computeMonthlyPrice,
-            instanceMonthlyPrice: Number.isSafeInteger(existingCompute?.instanceMonthlyPrice)
-                ? existingCompute.instanceMonthlyPrice * nodeCount
-                : existingCompute.instanceMonthlyPrice,
-            machineDetails: Array(nodeCount).fill(existingCompute.machineDetails[0]).flat()
-        };
-
-        const adjustedRecommendedCompute = {
-            ...recommendedCompute,
-            computeHourlyPrice: Number.isSafeInteger(recommendedCompute?.computeHourlyPrice)
-                ? recommendedCompute.computeHourlyPrice * nodeCount
-                : recommendedCompute.computeHourlyPrice,
-            computeMonthlyPrice: Number.isSafeInteger(recommendedCompute?.computeMonthlyPrice)
-                ? recommendedCompute.computeMonthlyPrice * nodeCount
-                : recommendedCompute.computeMonthlyPrice,
-            instanceMonthlyPrice: Number.isSafeInteger(recommendedCompute?.instanceMonthlyPrice)
-                ? recommendedCompute.instanceMonthlyPrice * nodeCount
-                : recommendedCompute.instanceMonthlyPrice,
-            machineDetails: Array(nodeCount).fill(recommendedCompute.machineDetails[0]).flat()
-        };
-
-        const adjustedExistingLicense = {
-            ...existingLicense,
-            licenseMonthlyPrice: existingLicense.licenseMonthlyPrice * nodeCount
-        };
-
-        const adjustedRecommendedLicense = {
-            ...recommendedLicense,
-            licenseMonthlyPrice: recommendedLicense.licenseMonthlyPrice * nodeCount
-        };
-
-        const adjustedStorageSavings = {
-            ...storageSavings,
-            compute: {
-                existing: adjustedExistingCompute,
-                recommended: adjustedRecommendedCompute
-            },
-            license: {
-                existing: adjustedExistingLicense,
-                recommended: adjustedRecommendedLicense,
-                finding
-            },
-            totalSummary: {
-                existing:
-                    Number(ebs.total || 0) +
-                    Number(adjustedExistingCompute.computeMonthlyPrice || 0) +
-                    Number(adjustedExistingLicense.licenseMonthlyPrice || 0),
-                recommended:
-                    Number(fsx.total || 0) +
-                    Number(adjustedRecommendedCompute.computeMonthlyPrice || 0) +
-                    Number(adjustedRecommendedLicense.licenseMonthlyPrice || 0)
-            }
-        };
-
-        const adjustedCalculations = {
-            ...calculations,
-            existingComputeCalculation: adjustedExistingCompute,
-            recommendedComputeCalculation: adjustedRecommendedCompute,
-            existingLicenseCalculation: adjustedExistingLicense,
-            recommendedLicenseCalculation: adjustedRecommendedLicense
-        };
-
-        return { storageSavings: adjustedStorageSavings, calculations: adjustedCalculations };
-    }
-}
-
 async function getStorageSavingsResponse(
     accountId: string,
     region: string,
@@ -382,28 +296,51 @@ async function getStorageSavingsResponse(
         monthlyChangeRatePercentage,
         sqlServerDeploymentType
     };
+
+    const nodeCount = windowsConfig.nodeDetails.length;
+
     const [existingConfigData, existingConfigCalculations, recommendedConfigData, recommendedConfigCalculations] =
         await Promise.all([
-            performManualModeStorageSavingsCalculations(accountId, region, {
-                ...params,
-                ec2Instances,
-                sqlServerEdition: currentLicenseEdition
-            }),
-            getManualModeStorageSavingsCalculationMetrics(accountId, region, {
-                ...params,
-                ec2Instances,
-                sqlServerEdition: currentLicenseEdition
-            }),
-            performManualModeStorageSavingsCalculations(accountId, region, {
-                ...params,
-                ec2Instances: ec2InstancesRecommended,
-                sqlServerEdition: recommendedLicenseEdition
-            }),
-            getManualModeStorageSavingsCalculationMetrics(accountId, region, {
-                ...params,
-                ec2Instances: ec2InstancesRecommended,
-                sqlServerEdition: recommendedLicenseEdition
-            })
+            performManualModeStorageSavingsCalculations(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances,
+                    sqlServerEdition: currentLicenseEdition
+                },
+                nodeCount
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances,
+                    sqlServerEdition: currentLicenseEdition
+                },
+                nodeCount
+            ),
+            performManualModeStorageSavingsCalculations(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances: ec2InstancesRecommended,
+                    sqlServerEdition: recommendedLicenseEdition
+                },
+                nodeCount
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                region,
+                {
+                    ...params,
+                    ec2Instances: ec2InstancesRecommended,
+                    sqlServerEdition: recommendedLicenseEdition
+                },
+                nodeCount
+            )
         ]);
 
     const {
@@ -422,7 +359,7 @@ async function getStorageSavingsResponse(
         totalSummary: { recommended: recommendedTotalSummary } = {}
     } = recommendedConfigData;
 
-    let storageSavings = {
+    const storageSavings = {
         compute: {
             existing: existingCompute,
             recommended: recommendedCompute
@@ -444,20 +381,12 @@ async function getStorageSavingsResponse(
 
     const { recommendedComputeCalculation, recommendedLicenseCalculation } = recommendedConfigCalculations;
 
-    let calculations = {
+    const calculations = {
         ...existingConfigCalculations,
         recommendedComputeCalculation,
         recommendedLicenseCalculation
     };
 
-    if (
-        sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ||
-        sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.FCI
-    ) {
-        const nodeCount = windowsConfig.nodeDetails.length;
-        ({ storageSavings, calculations } =
-            (await adjustComputeLicenseCostForMultipleNodes(nodeCount, storageSavings, calculations)) || {});
-    }
     return { storageSavings, calculations };
 }
 
@@ -811,6 +740,7 @@ async function handleOnpremTcoDataUpload(
     let uploadJobError;
     try {
         await saveReportInWlmdbDatabase(accountId, databaseType as DATABASE_TYPE, data);
+        await saveReportInReportingRegistry(accountId, fileName, data);
         await handleOnpremTcoDataAnalysis(accountId, jobId, data);
     } catch (error) {
         const uploadErrorMessage = `Error uploading  SQL Server collector data. ${error}`;
@@ -1276,7 +1206,7 @@ async function getOnPremResourceExploreSavings(
 
     const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
 
-    if (sqlInstanceData || snapShotInfo) {
+    if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
         try {
             const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
                 try {

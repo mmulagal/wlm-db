@@ -79,14 +79,14 @@ try {
     $SetupMaxDOPPs = {
         $sql = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', " + $Using:dop + "; RECONFIGURE WITH OVERRIDE; "
         try {
-            Import-Module SQLPS
             Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ServerInstance $Using:ServerInstanceName
         }
         catch {
             Write-Output "Error while configuring max dop using server instance name: $_."
             if ($Using:ClusterName -ne '') {
                 try {
-                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ServerInstance $Using:ClusterName
+                    $connectionString = "Server=$Using:ClusterName;Integrated Security=True;TrustServerCertificate=True;"
+                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ConnectionString $connectionString
                     Write-Output "Max dop configured using cluster name."
                 }
                 catch {

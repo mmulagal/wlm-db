@@ -363,7 +363,7 @@ const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
                 mf.physical_name AS tempdbDrivePath,
                 ISNULL(vs.total_bytes / 1048576, 0) AS tempdbDriveTotalSizeMB
             FROM 
-                tempDB.sys.sysfiles d
+                tempdb.sys.sysfiles d
             JOIN
                 sys.master_files mf ON d.name = mf.name AND d.name = 'tempdev'
             CROSS APPLY 
