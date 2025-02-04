@@ -174,7 +174,7 @@ async function handleComputeRemediation(
                                     fsxId,
                                     svmId,
                                     changeInstanceTypeJobId,
-                                    instanceName
+                                    formattedInstanceName
                                 );
                             }
                             logger.info('Instance type updated for all secondary nodes in the cluster');
@@ -313,7 +313,7 @@ async function handleComputeRemediation(
                     fsxId,
                     svmId,
                     updateInstanceTypeJobId,
-                    instanceName
+                    formattedInstanceName
                 ); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.COMPLETED,
@@ -372,7 +372,8 @@ async function handleComputeRemediation(
                 instanceName,
                 region,
                 credentialsId,
-                activeNodeInstanceId
+                activeNodeInstanceId,
+                formattedInstanceName
             );
 
             if (!checkRunningResponse.running) {
@@ -429,7 +430,8 @@ async function checkRunningStatus(
     instanceName: string,
     region: string,
     credentialsId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    formattedInstanceName: string
 ) {
     logger.info('Checking running status', {
         accountId,
@@ -444,7 +446,7 @@ async function checkRunningStatus(
         accountId,
         credentialsId,
         region,
-        instanceName,
+        formattedInstanceName,
         JOBTYPE.ASSESSMENT,
         'Checking running status of the service',
         'Checking running status of the service',
