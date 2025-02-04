@@ -428,6 +428,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                     if (isApiCompletedForSet(cred?.data?.credentialsId, region?.data?.regionCode)) {
                         //true is the flag for API call
                         setCurrentIndex(prev => prev + 1);
+                    } else {
+                        setPendingQueriesCounter(0);
                     }
                 }, 5000);
             }
