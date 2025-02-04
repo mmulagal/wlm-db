@@ -76,22 +76,9 @@ async function calculateMSSQLPatchDrift(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
-        const allMissingPatchDetails: PatchDetail[] =
-            patchAssessment
-                ?.flatMap(instance => instance.missingPatchDetails)
-                .filter((patch): patch is PatchDetail => patch !== undefined) || [];
-
-        // Find unique missing patches by KbNumber
-        const uniqueMissingPatches: PatchDetail[] = allMissingPatchDetails.filter(
-            (patch, index, self) => index === self.findIndex(p => p.kbId === patch.kbId)
-        );
-
-        // Calculate critical and important patches count based on unique missing patches
-        const criticalPatchesCount: number = uniqueMissingPatches.filter(patch => patch.severity === 'Critical').length;
-        const importantPatchesCount: number = uniqueMissingPatches.filter(
-            patch => patch.severity === 'Important'
-        ).length;
-
+        // Find unique missing patches by KbNumber with Critical and Important patch counts
+        const { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount } =
+            getUniqueMissingPatchesAndCountSeverities(patchAssessment);
         const status: AssessmentStatus =
             uniqueMissingPatches.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
@@ -274,6 +261,37 @@ async function runMSSQLPatchAssessment(
         return patchAssessmentObjects;
     }
     throw createError('No instances found to run the mssql patch assessment');
+}
+
+function getUniqueMissingPatchesAndCountSeverities(patchAssessment: MSSQLPatchAssessmentObject[]): {
+    uniqueMissingPatches: PatchDetail[];
+    criticalPatchesCount: number;
+    importantPatchesCount: number;
+} {
+    const seenKbIds = new Set<string>();
+    const uniqueMissingPatches: PatchDetail[] = [];
+    let criticalPatchesCount = 0;
+    let importantPatchesCount = 0;
+
+    for (const instance of patchAssessment) {
+        if (instance.missingPatchDetails) {
+            for (const patch of instance.missingPatchDetails) {
+                if (patch.kbId && !seenKbIds.has(patch.kbId)) {
+                    seenKbIds.add(patch.kbId);
+                    uniqueMissingPatches.push(patch);
+
+                    // Count severities
+                    if (patch.severity === 'Critical') {
+                        criticalPatchesCount += 1;
+                    } else if (patch.severity === 'Important') {
+                        importantPatchesCount += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount };
 }
 
 export { managedHostMSSQLPatchAssessment, calculateMSSQLPatchDrift, runMSSQLPatchAssessment };
