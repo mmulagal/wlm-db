@@ -790,13 +790,15 @@ async function performManualModeStorageSavingsCalculations(
     accountId: string,
     region: string,
     params: ManualStorageSavingsRequestBodyType,
-    nodeCount: number = 2
+    nodeCount: number = 2,
+    isOnpremTcoFlow: boolean = false
 ) {
     logger.info('Getting manual mode storage savings calculations ', {
         accountId,
         region,
         params,
-        nodeCount
+        nodeCount,
+        isOnpremTcoFlow
     });
     const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
 
@@ -807,7 +809,7 @@ async function performManualModeStorageSavingsCalculations(
             marketingRequestBody
         );
 
-        const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
+        const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
 
         const singleFsxCalculationData = single?.fsx_calculation
             ? handleMarketingApiFsxCalculationObject(single.fsx_calculation)
@@ -893,16 +895,18 @@ async function getManualModeStorageSavingsCalculationMetrics(
     accountId: string,
     region: string,
     params: ManualStorageSavingsRequestBodyType,
-    nodeCount: number = 2
+    nodeCount: number = 2,
+    isOnpremTcoFlow: boolean = false
 ): Promise<StorageSavingsMetricsCalculationsResponseType> {
     logger.info('Getting manual mode storage savings calculation metrics ', {
         accountId,
         region,
         params,
-        nodeCount
+        nodeCount,
+        isOnpremTcoFlow
     });
 
-    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
+    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
 
     const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
 
