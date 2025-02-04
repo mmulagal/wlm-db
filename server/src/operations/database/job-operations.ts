@@ -426,8 +426,13 @@ async function updateLongRunningResourcePrepareJobs() {
     }
 }
 
-async function updateParentJobStatus(accountId: string, parentId: string, errorMsg?: string) {
-    logger.info('Updating parent job', { accountId, parentId });
+async function updateParentJobStatus(
+    accountId: string,
+    parentId: string,
+    useWarningJobNameCondition: boolean = false,
+    errorMsg?: string
+) {
+    logger.info('Updating parent job', { accountId, parentId, useWarningJobNameCondition });
 
     const parentJob = await getJobDetails(accountId, parentId);
 
@@ -444,18 +449,26 @@ async function updateParentJobStatus(accountId: string, parentId: string, errorM
             ? JOBSTATUS.FAILED
             : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
             ? JOBSTATUS.COMPLETED
-            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+            : useWarningJobNameCondition &&
+              allSubJobs.some(
+                  job => job.status === JOBSTATUS.FAILED && job.name?.includes('Clean up resources for sandbox')
+              )
             ? JOBSTATUS.WARNING
+            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
+            ? JOBSTATUS.FAILED
             : JOBSTATUS.IN_PROGRESS;
+
         const modifiedJobData = {
             status: jobStatus,
             endTime: Date.now(),
             ...(errorMsg ? { error: errorMsg } : {})
         };
+
         if (jobStatus !== JOBSTATUS.IN_PROGRESS) {
             await updateJobDetails(accountId, parentId, modifiedJobData);
             return;
         }
+
         await sleep(30000);
     }
 }
