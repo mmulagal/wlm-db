@@ -103,12 +103,18 @@ async function calculateMSSQLPatchDrift(
         const objectsInViolation: string[] =
             status === AssessmentStatus.NOT_OPTIMIZED ? patchAssessment?.map(({ ec2InstanceId }) => ec2InstanceId) : [];
 
+        // Determine severity based on patch counts
+        let severity = SEVERITY.CRITICAL; // Default to CRITICAL
+        if (criticalPatchesCount === 0 && importantPatchesCount > 0) {
+            severity = SEVERITY.WARNING;
+        }
+
         return {
             name: 'mssql-patch',
             status: status as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
             missingPatchesInEc2Instances: patchAssessment,
-            severity: SEVERITY.CRITICAL,
+            severity,
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
             objectsInViolation
