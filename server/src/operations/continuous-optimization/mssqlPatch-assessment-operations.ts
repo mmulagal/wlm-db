@@ -8,7 +8,7 @@ import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../u
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
-import { Metadata, MSSQLPatchAssessmentObject } from '../../utils/common-types';
+import { Metadata, MSSQLPatchAssessmentObject, PatchDetail } from '../../utils/common-types';
 import { extractKbNumber } from '../../utils/utils';
 import { HttpErrorCodes } from '../../utils/consts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
@@ -35,7 +35,7 @@ async function calculateMSSQLPatchDrift(
     });
     let errorMessage = '';
     try {
-        let patchAssessment;
+        let patchAssessment: MSSQLPatchAssessmentObject[] = [];
 
         const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
         const metadataObject = metadata as unknown as Metadata;
@@ -76,20 +76,31 @@ async function calculateMSSQLPatchDrift(
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
 
-        const criticalPatchesCount =
-            patchAssessment?.reduce((count, instance) => count + (instance.criticalMissingPatchesCount || 0), 0) || 0;
-        const importantPatchesCount =
-            patchAssessment?.reduce((count, instance) => count + (instance.importantMissingPatchesCount || 0), 0) || 0;
+        const allMissingPatchDetails: PatchDetail[] =
+            patchAssessment
+                ?.flatMap(instance => instance.missingPatchDetails)
+                .filter((patch): patch is PatchDetail => patch !== undefined) || [];
 
-        const status = patchAssessment?.some(instance => (instance?.missingPatchDetails?.length ?? 0) > 0)
-            ? AssessmentStatus.NOT_OPTIMIZED
-            : AssessmentStatus.OPTIMIZED;
+        // Find unique missing patches by KbNumber
+        const uniqueMissingPatches: PatchDetail[] = allMissingPatchDetails.filter(
+            (patch, index, self) => index === self.findIndex(p => p.kbId === patch.kbId)
+        );
 
-        const recommendationMessage =
+        // Calculate critical and important patches count based on unique missing patches
+        const criticalPatchesCount: number = uniqueMissingPatches.filter(patch => patch.severity === 'Critical').length;
+        const importantPatchesCount: number = uniqueMissingPatches.filter(
+            patch => patch.severity === 'Important'
+        ).length;
+
+        const status: AssessmentStatus =
+            uniqueMissingPatches.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+
+        const recommendationMessage: string =
             status === AssessmentStatus.NOT_OPTIMIZED
                 ? `Critical (${criticalPatchesCount}) and important (${importantPatchesCount}) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.`
                 : 'Your MSSQL instance is up-to-date with all critical and important patches applied.';
-        const objectsInViolation =
+
+        const objectsInViolation: string[] =
             status === AssessmentStatus.NOT_OPTIMIZED ? patchAssessment?.map(({ ec2InstanceId }) => ec2InstanceId) : [];
 
         return {
@@ -178,7 +189,7 @@ async function runMSSQLPatchAssessment(
     nodeInstanceId: string,
     isPartOfCluster: boolean = false,
     activeNodeInstanceId: string
-) {
+): Promise<MSSQLPatchAssessmentObject[]> {
     logger.info('Running MsSql Patch assessment', {
         accountId,
         credentialsId,
@@ -213,7 +224,7 @@ async function runMSSQLPatchAssessment(
                 availablePatch => !installedPatchKbNumbers.includes(availablePatch.KbNumber)
             );
 
-            const missingPatchDetails = missingPatches?.map(
+            const missingPatchDetails: PatchDetail[] = missingPatches?.map(
                 ({
                     Classification: classification,
                     MsrcSeverity: severity,
@@ -221,11 +232,11 @@ async function runMSSQLPatchAssessment(
                     Title: title,
                     KbNumber: kbId
                 }) => ({
-                    classification,
-                    severity,
-                    releaseDate,
-                    title,
-                    kbId
+                    classification: classification || '',
+                    severity: severity || '',
+                    releaseDate: typeof releaseDate === 'string' ? releaseDate : releaseDate?.toISOString(),
+                    title: title || '',
+                    kbId: kbId || ''
                 })
             );
 
@@ -236,21 +247,23 @@ async function runMSSQLPatchAssessment(
         });
 
         // Create the MSSQLPatchAssessmentObject structure
-        const patchAssessmentObjects = missingCriticalSqlPatches?.map(({ instanceId, missingPatchDetails }) => {
-            const criticalMissingPatchesCount =
-                missingPatchDetails?.filter(patch => patch.severity === 'Critical').length || 0;
-            const importantMissingPatchesCount =
-                missingPatchDetails?.filter(patch => patch.severity === 'Important').length || 0;
-            const missingPatchesCount = missingPatchDetails?.length || 0;
+        const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = missingCriticalSqlPatches?.map(
+            ({ instanceId, missingPatchDetails }) => {
+                const criticalMissingPatchesCount =
+                    missingPatchDetails?.filter(patch => patch.severity === 'Critical').length || 0;
+                const importantMissingPatchesCount =
+                    missingPatchDetails?.filter(patch => patch.severity === 'Important').length || 0;
+                const missingPatchesCount = missingPatchDetails?.length || 0;
 
-            return {
-                ec2InstanceId: instanceId,
-                criticalMissingPatchesCount,
-                importantMissingPatchesCount,
-                missingPatchesCount,
-                missingPatchDetails
-            };
-        });
+                return {
+                    ec2InstanceId: instanceId,
+                    criticalMissingPatchesCount,
+                    importantMissingPatchesCount,
+                    missingPatchesCount,
+                    missingPatchDetails
+                };
+            }
+        );
 
         return patchAssessmentObjects;
     }
