@@ -368,9 +368,6 @@ const HeaderComponent = ({ tab }: Tab) => {
             </div>
         );
     };
-    useEffect(() => {
-        console.log(selectedHeaderTab);
-    }, [selectedHeaderTab]);
 
     const selectComponents = () => {
         return (
@@ -392,20 +389,23 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isSearchable={generateAWSAccounts.length > 5}
                         options={generateAWSAccounts}
                         className={
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                                 ? styles.regionSelect
                                 : ''
                         }
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                         }
                         isDisabled={
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                         }
                     />
                 </div>
@@ -439,20 +439,23 @@ const HeaderComponent = ({ tab }: Tab) => {
                         isSearchable={generateRegionsData.length > 5}
                         options={generateRegionsData}
                         className={
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                                 ? styles.regionSelect
                                 : ''
                         }
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                         }
                         isDisabled={
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                         }
                     />
                 </div>
