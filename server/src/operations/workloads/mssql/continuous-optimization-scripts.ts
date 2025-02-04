@@ -1069,7 +1069,7 @@ const GET_INSTALLED_SQL_PATCHES = () => `
 
 const GET_INSTALLED_MSSQL_VERSION = () => `
     # Get the installed SQL Server version
-    Sqlcmd -Q ${SERVER_VERSION} -y 0
+    Sqlcmd -Q "${SERVER_VERSION}" -y 0
 `;
 
 export {
