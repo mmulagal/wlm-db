@@ -370,7 +370,13 @@ const HeaderComponent = ({ tab }: Tab) => {
     // Function to check if all APIs are completed for a cred-region set
     const isApiCompletedForSet = (cred: string, region: string) => {
         const key = `${cred}/${region}`;
-        return multiSelectData[key]?.data?.status === true;
+        const apiResponses = multiSelectData?.[key];
+
+        // Ensure there are API responses stored
+        if (!apiResponses) return false;
+
+        // Check if all APIs for this set have status === true
+        return Object.values(apiResponses).every((api: any) => api.status === true);
     };
 
     // Compute total queries count and initialize queue
