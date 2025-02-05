@@ -20,6 +20,29 @@
         width: 1336px;
         display: flex;
         justify-content: space-between;
+        position: relative;
+        align-items: center;
+    }
+
+    .card {
+        position: absolute; /* Ensure the card doesn't push content down */
+        z-index: 10; /* Make it appear above other content */
+        width: 300px; /* Set the width of the card */
+        padding: 16px; /* Add padding inside the card */
+        background: white; /* Card background color */
+        border: 1px solid #ddd; /* Light border for card */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        border-radius: 8px; /* Rounded corners */
+    }
+
+    .card button {
+        background: #4caf50; /* Green button */
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background 0.2s ease-in-out;
     }
 
     .savingsHeadingOnPremise {

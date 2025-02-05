@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
-import { BlueXPListeners, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -13,8 +13,9 @@ import InstanceInformation from './InstanceInformation/InstanceInformation';
 import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
+import { ReactComponent as CalculateIcon } from '../../../assets/ic_calculateicon.svg';
 import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import ExportPDF from './ExportPDF/ExportPDF';
 import downloadPdf from '../../../common/pdfGenerator';
@@ -40,11 +41,14 @@ import ComputeInformation from './ComputeInformation/ComputeInformation';
 import StoragePerformance from './StoragePerformance/StoragePerformance';
 import OnPremRegion from './OnPremRegion/OnPremRegion';
 import downloadPdfEmail from '../../../common/emailPDF';
+import CalculateSavingCard from './CalculateSavingCard/CalculateSavingCard';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
     const [printState, setPrintState] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
+    const buttonRef: any = useRef(null);
+    const [isCardOpen, setIsCardOpen] = useState(false);
 
     const {
         savingsCalculatorFrom,
@@ -138,6 +142,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             return styles.selectionArea;
         }
     };
+
+    const handleOpenCard = () => {
+        setIsCardOpen(!isCardOpen);
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -186,7 +194,18 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         }
                     >
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
-                        <div />
+                        <DsButton
+                            ref={buttonRef}
+                            onClick={() => {
+                                handleOpenCard();
+                            }}
+                            type="text"
+                            icon={<CalculateIcon />}
+                        >
+                            Calculate savings based on existing resources
+                        </DsButton>
+
+                        {isCardOpen && <CalculateSavingCard buttonRef={buttonRef} setIsCardOpen={setIsCardOpen} />}
                     </div>
 
                     <div

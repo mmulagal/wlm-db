@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { ReactComponent as Download } from '@netapp/icons/ic_download.svg';
 import { ReactComponent as Calculate } from '../../../../assets/ic_calculate.svg';
+import { ReactComponent as Email } from '../../../../assets/ic_email.svg';
 import { WLF_TABS } from '../../../../utils/consts';
 import styles from './ExportPDF.module.scss';
 import { DsTypography } from '@netapp/design-system';
@@ -72,6 +73,28 @@ const ExportPDF = ({ printDocument, disableState, sendEmail }: any) => {
                 </DsTypography>
             </div>
 
+            <div
+                className={
+                    loading || disableState || !viewCalculationsResponse
+                        ? `${styles.insideContainer} ${styles.disabled}`
+                        : styles.insideContainer
+                }
+            >
+                <div>
+                    <Email />
+                </div>
+                <DsTypography
+                    variant="Semibold_14"
+                    className={styles.text}
+                    onClick={() =>
+                        loading || disableState || !viewCalculationsResponse ? () => {} : handleSendEmail()
+                    }
+                    id="es-export-pdf"
+                >
+                    Send by Email
+                </DsTypography>
+            </div>
+
             {isDemoMode && (
                 <>
                     <div
@@ -128,29 +151,6 @@ const ExportPDF = ({ printDocument, disableState, sendEmail }: any) => {
                     </div>
                 </>
             )}
-
-            {/* <div
-                className={
-                    loading || disableState || !viewCalculationsResponse
-                        ? `${styles.insideContainer} ${styles.disabled}`
-                        : styles.insideContainer
-                }
-            >
-                <div>
-                    <Download />
-                </div>
-                <DsTypography
-                    variant="Semibold_14"
-                    className={styles.text}
-                    style={{ width: '180px' }}
-                    onClick={() =>
-                        loading || disableState || !viewCalculationsResponse ? () => {} : handleSendEmail()
-                    }
-                    id="es-export-pdf"
-                >
-                    Send by Email
-                </DsTypography>
-            </div> */}
         </div>
     );
 };
