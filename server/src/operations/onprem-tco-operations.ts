@@ -55,7 +55,8 @@ import {
     generateUniqueId,
     parseStorageDetailsByDb,
     parseAoagReadReplica,
-    parseSqlVersion
+    parseSqlVersion,
+    getPowerOfTwoVcpuCount
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
@@ -309,7 +310,8 @@ async function getStorageSavingsResponse(
                     ec2Instances,
                     sqlServerEdition: currentLicenseEdition
                 },
-                nodeCount
+                nodeCount,
+                true
             ),
             getManualModeStorageSavingsCalculationMetrics(
                 accountId,
@@ -319,7 +321,8 @@ async function getStorageSavingsResponse(
                     ec2Instances,
                     sqlServerEdition: currentLicenseEdition
                 },
-                nodeCount
+                nodeCount,
+                true
             ),
             performManualModeStorageSavingsCalculations(
                 accountId,
@@ -329,7 +332,8 @@ async function getStorageSavingsResponse(
                     ec2Instances: ec2InstancesRecommended,
                     sqlServerEdition: recommendedLicenseEdition
                 },
-                nodeCount
+                sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2, // We recommend 2 node FCI for SQL Server
+                true
             ),
             getManualModeStorageSavingsCalculationMetrics(
                 accountId,
@@ -339,7 +343,8 @@ async function getStorageSavingsResponse(
                     ec2Instances: ec2InstancesRecommended,
                     sqlServerEdition: recommendedLicenseEdition
                 },
-                nodeCount
+                sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2, // We recommend 2 node FCI for SQL Server
+                true
             )
         ]);
 
@@ -572,6 +577,8 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
             minMemoryMiB = ramSizeInMiB;
         }
     });
+
+    maxVCpuCount = getPowerOfTwoVcpuCount(maxVCpuCount);
 
     const instanceRequirements = {
         ArchitectureTypes: [ArchitectureType.x86_64],
@@ -1014,6 +1021,9 @@ function deriveInstanceRequirements(
     const avgVcpuCount = totalCpuCount / totalSqlInstances;
     maxVcpuCount = Math.max(maxVcpuCount, avgVcpuCount);
     minVcpuCount = Math.max(minVcpuCount, 4);
+
+    // Need to have a number between min and max which is a power of 2 or recommendation will fail as all EC2 instances have vCPUs in powers of 2
+    maxVcpuCount = getPowerOfTwoVcpuCount(maxVcpuCount);
 
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 

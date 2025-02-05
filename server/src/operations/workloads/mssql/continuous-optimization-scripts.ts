@@ -976,6 +976,7 @@ const GET_RSS_CONFIG_DETAILS = () => `
 `;
 
 const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
+    Start-Transcript -Path ${DISCOVER_OPERATION_LOG_PATH} -Append | Out-Null
     $result = @{}
     try {
         $SQLService = Get-Service -Name "${serviceName}"
@@ -998,8 +999,11 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
         $result = @{ status = (Get-Service -Name "${serviceName}").Status }
     } catch {
         $result = @{ status = 'failed'; error = $_.Exception.Message }
+        Write-Information "Error occurred while checking service status: $_.Exception.Message"
     } finally {
         $jsonResult = $result | ConvertTo-Json -Compress
+        Write-Information "Service status: $($result.status)"
+        Stop-Transcript | Out-Null
         Write-Output $jsonResult
     }
 `;

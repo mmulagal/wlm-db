@@ -91,7 +91,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
-                [statusType]: [...(inProgressOptimizationData[statusType] || []), selectedDatabaseInstance]
+                [statusType]: [
+                    ...(inProgressOptimizationData[statusType] || []),
+                    selectedResourceId + '_' + selectedDatabaseInstance
+                ]
             })
         );
         dispatch(

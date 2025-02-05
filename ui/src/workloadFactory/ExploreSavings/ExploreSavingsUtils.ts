@@ -238,7 +238,7 @@ export const formatViewCalcInstance = (
     computeDetails: any,
     licenseDetails: any
 ) => {
-    let instanceTypelist = [];
+    let instanceTypelist: any = [];
     if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
         instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
     } else {
@@ -261,32 +261,22 @@ export const formatViewCalcInstance = (
                 }
             ];
         } else {
-            return [
-                {
-                    instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
-                    computeHourlyPrice: `$${formatNumbers(computeDetails?.[0]?.price)}`,
-                    computeMonthlyPrice: `$${formatNumbers(computeDetails?.[0]?.computeMonthlyPrice)}`,
-                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.instanceMonthlyPrice)}`,
+            const detailsList: any = [];
+            computeDetails?.forEach((detail: any, index: number) => {
+                detailsList.push({
+                    instanceType: detail?.instanceType || instanceTypelist?.[index] || GENERAL.NOT_AVAILABLE,
+                    computeHourlyPrice: `$${formatNumbers(detail?.price)}`,
+                    computeMonthlyPrice: `$${formatNumbers(detail?.computeMonthlyPrice)}`,
+                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(detail?.instanceMonthlyPrice)}`,
                     sqlEdition:
                         licenseDetails?.sqlServerEdition ||
                         selectedHostDetails?.databaseServer?.serverEdition ||
                         GENERAL.NOT_AVAILABLE,
                     sqlLicense: licenseDetails?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
-                },
-                {
-                    instanceType: computeDetails?.[1]?.instanceType || instanceTypelist?.[1] || GENERAL.NOT_AVAILABLE,
-                    computeHourlyPrice: `$${formatNumbers(computeDetails?.[1]?.price)}`,
-                    computeMonthlyPrice: `$${formatNumbers(computeDetails?.[1]?.computeMonthlyPrice)}`,
-                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[1]?.instanceMonthlyPrice)}`,
-                    sqlEdition:
-                        licenseDetails?.sqlServerEdition ||
-                        selectedHostDetails?.databaseServer?.serverEdition ||
-                        GENERAL.NOT_AVAILABLE,
-                    sqlLicense: licenseDetails?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(computeDetails?.[1]?.hoursInMonth)
-                }
-            ];
+                    hoursInAMonth: formatNumbers(detail?.hoursInMonth)
+                });
+            });
+            return detailsList;
         }
     })();
     return instanceCalculationData;
@@ -357,12 +347,9 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
         } else {
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
-            );
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.instanceMonthlyPrice || 0
-            );
+            viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.map((instance: any) => {
+                cost += Number(instance?.instanceMonthlyPrice || 0);
+            });
         }
         cost += ebsViewCalculationData?.ebsSnapshotCalculation?.totalEbsSnapshotCostValue || 0;
         cost += ebsViewCalculationData?.ebsCloneCalculation?.totalCloneMonthlyCostValue || 0;
@@ -380,12 +367,9 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
         } else {
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
-            );
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.instanceMonthlyPrice || 0
-            );
+            viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.map((instance: any) => {
+                cost += Number(instance?.instanceMonthlyPrice || 0);
+            });
         }
         cost += Number(viewCalculationsResponse?.fsxwCloneCalculation?.totalCloneMonthlyCost || 0);
         cost += Number(
@@ -410,12 +394,9 @@ export const formatViewCalcData = (
                 viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
             );
         } else {
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
-            );
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[1]?.instanceMonthlyPrice || 0
-            );
+            viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.map((instance: any) => {
+                cost += Number(instance?.instanceMonthlyPrice || 0);
+            });
         }
         return formatFractionalNumberForCost(cost, 2);
     })();
@@ -425,8 +406,9 @@ export const formatViewCalcData = (
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
         } else {
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[1]?.instanceMonthlyPrice || 0);
+            viewCalculationsResponse?.recommendedInstance?.map((instance: any) => {
+                cost += Number(instance?.instanceMonthlyPrice || 0);
+            });
         }
         return formatFractionalNumberForCost(cost, 2);
     })();
@@ -436,8 +418,9 @@ export const formatViewCalcData = (
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
         } else {
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
-            cost += Number(viewCalculationsResponse?.recommendedInstance?.[1]?.instanceMonthlyPrice || 0);
+            viewCalculationsResponse?.recommendedInstance?.map((instance: any) => {
+                cost += Number(instance?.instanceMonthlyPrice || 0);
+            });
         }
         cost += Number(viewCalculationsResponse?.fsxOntapCalculation?.totalThroughputAndIopsMonthly || 0);
         cost += Number(viewCalculationsResponse?.fsxOntapCalculation?.totalMonthlyStorageCharge || 0);

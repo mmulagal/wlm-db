@@ -20,8 +20,6 @@ async function readSecretFromSecretManager(name: string) {
             })
         );
 
-        logger.info('>>>>>>>>>>>>>>>>Secrets read from secret manager:', response?.SecretString);
-
         const secrets = JSON.parse(response.SecretString || '{}');
         return secrets[name];
     } catch (error) {

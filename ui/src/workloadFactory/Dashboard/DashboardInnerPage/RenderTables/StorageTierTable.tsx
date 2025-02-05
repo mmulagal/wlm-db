@@ -44,7 +44,7 @@ const StorageTierTable = ({ lastColDetails, handleBulkAction }: StorageTierTable
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             performanceTier: performanceTierObj?.current,
-                            id: instanceData?.databaseInstanceId,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
                             data: instanceData

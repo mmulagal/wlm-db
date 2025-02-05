@@ -466,7 +466,8 @@ async function checkComputeOptimizerEnrollmentStatus(accountId: string, credenti
 async function manualModeComputeLicenseDetails(
     region: string,
     params: ManualStorageSavingsRequestBodyType,
-    nodeCount: number = 2
+    nodeCount: number = 2,
+    isOnpremTcoFlow: boolean = false
 ) {
     logger.info('Getting manual mode compute and license details ', { region, params, nodeCount });
 
@@ -572,7 +573,8 @@ async function manualModeComputeLicenseDetails(
         computeDetails,
         licenseDetails,
         existingInstanceTypesPricingDetails,
-        awsInstanceLicenseMonthlyPrice!
+        awsInstanceLicenseMonthlyPrice!,
+        isOnpremTcoFlow
     );
 
     return {
@@ -591,7 +593,7 @@ function updateRecommendedComputeMachineDetails(recommendedComputeDetails: any, 
     const recommendedMachineDetails = cloneDeep(recommendedComputeDetails?.machineDetails);
     if (!isEmpty(recommendedMachineDetails)) {
         recommendedMachineDetails.forEach((machineDetail: any) => {
-            machineDetail.licenseMonthlyPrice = licenseMonthlyPrice;
+            machineDetail.licenseMonthlyPrice = licenseMonthlyPrice! / recommendedMachineDetails.length;
         });
         return recommendedMachineDetails;
     }
@@ -607,7 +609,8 @@ function handleManualModeRecommendations(
         string,
         { count: number; pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } }
     >,
-    awsInstanceLicenseMonthlyPrice?: number
+    awsInstanceLicenseMonthlyPrice?: number,
+    isOnpremTcoFlow: boolean = false
 ) {
     logger.info('Handling manual mode recommendations ', {
         sqlServerDeploymentType,
@@ -616,7 +619,8 @@ function handleManualModeRecommendations(
         existingComputeDetails,
         existingLicenseDetails,
         existingInstanceTypePricingDetails,
-        awsInstanceLicenseMonthlyPrice
+        awsInstanceLicenseMonthlyPrice,
+        isOnpremTcoFlow
     });
     const existingInstanceHourlyPriceWithoutLicense = getPricingByLicenseType('NA', existingInstanceTypePricingDetails);
 
@@ -629,8 +633,14 @@ function handleManualModeRecommendations(
         SqlServerDeploymentModel.SQL_AOAG_SHORT === sqlServerDeploymentType &&
         sqlServerEdition?.toLowerCase().includes('enterprise')
     ) {
-        // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
-        const instanceHourlyPrice = getPricingByLicenseType('SQL Std', existingInstanceTypePricingDetails);
+        const licenseType = isNonFreeEnterpriseEdition(sqlServerEdition) ? SQL_ENT : SQL_STD;
+        let instanceHourlyPrice;
+        if (isOnpremTcoFlow) {
+            instanceHourlyPrice = getPricingByLicenseType(licenseType, existingInstanceTypePricingDetails);
+        } else {
+            // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
+            instanceHourlyPrice = getPricingByLicenseType(SQL_STD, existingInstanceTypePricingDetails);
+        }
         awsInstanceLicenseMonthlyPrice =
             instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
                 ? (instanceHourlyPrice - existingInstanceHourlyPriceWithoutLicense) * HOURS_IN_MONTH
@@ -654,9 +664,14 @@ function handleManualModeRecommendations(
         recommendedComputeDetails.machineDetails = recommendedMachineDetails;
         recommendedLicenseDetails.licenseMonthlyPrice = licenseMonthlyPrice;
         recommendedLicenseDetails.licenseIncluded = true;
-        recommendedLicenseDetails.sqlServerEdition = 'Standard Edition';
-        recommendedLicenseDetails.message =
-            'Downgrade Enterprise Edition to Standard Edition if you are not using any of the enterprise features';
+        if (isOnpremTcoFlow) {
+            recommendedLicenseDetails.sqlServerEdition = sqlServerEdition;
+        } else {
+            // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
+            recommendedLicenseDetails.sqlServerEdition = 'Standard Edition';
+            recommendedLicenseDetails.message =
+                'Downgrade Enterprise Edition to Standard Edition if you are not using any of the enterprise features';
+        }
     }
 
     // As per requirement DBS-2753 : In case of BYOL License, please suggest the equivalent license included cost, in case it's cheaper than the BYOL cost mentioned. otherwise, do not compare SQL License costs and mention N/A in the cost breakdown.

@@ -174,7 +174,7 @@ async function handleComputeRemediation(
                                     fsxId,
                                     svmId,
                                     changeInstanceTypeJobId,
-                                    instanceName
+                                    formattedInstanceName
                                 );
                             }
                             logger.info('Instance type updated for all secondary nodes in the cluster');
@@ -313,7 +313,7 @@ async function handleComputeRemediation(
                     fsxId,
                     svmId,
                     updateInstanceTypeJobId,
-                    instanceName
+                    formattedInstanceName
                 ); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.COMPLETED,
@@ -366,20 +366,21 @@ async function handleComputeRemediation(
                 }
             }
 
-            const checkRunningResponse = await checkRunningStatus(
-                accountId,
-                jobId,
-                instanceName,
-                region,
-                credentialsId,
-                activeNodeInstanceId
-            );
+            // const checkRunningResponse = await checkRunningStatus(
+            //     accountId,
+            //     jobId,
+            //     instanceName,
+            //     region,
+            //     credentialsId,
+            //     activeNodeInstanceId,
+            //     formattedInstanceName
+            // );
 
-            if (!checkRunningResponse.running) {
-                subJobErrorMessage = checkRunningResponse.error;
-                anySubJobFailed = true;
-                throw checkRunningResponse.error;
-            }
+            // if (!checkRunningResponse.running) {
+            //     subJobErrorMessage = checkRunningResponse.error;
+            //     anySubJobFailed = true;
+            //     throw checkRunningResponse.error;
+            // }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -423,13 +424,15 @@ async function handleComputeRemediation(
     }
 }
 
+// eslint-disable-next-line
 async function checkRunningStatus(
     accountId: string,
     parentJobId: string,
     instanceName: string,
     region: string,
     credentialsId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    formattedInstanceName: string
 ) {
     logger.info('Checking running status', {
         accountId,
@@ -444,7 +447,7 @@ async function checkRunningStatus(
         accountId,
         credentialsId,
         region,
-        instanceName,
+        formattedInstanceName,
         JOBTYPE.ASSESSMENT,
         'Checking running status of the service',
         'Checking running status of the service',

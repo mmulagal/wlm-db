@@ -48,9 +48,12 @@ const AppNotification = ({ notifications, onClose }: AppNotificationParams) => {
                 notification.notificationType === NOTIFICATION_TYPES.SUCCESS ||
                 notification.notificationType === NOTIFICATION_TYPES.INFO
             ) {
-                const timer = setTimeout(() => {
-                    onClose(idx, notifications.messages.length);
-                }, 8000);
+                const timer = setTimeout(
+                    () => {
+                        onClose(idx, notifications.messages.length);
+                    },
+                    notification.notificationType === NOTIFICATION_TYPES.SUCCESS ? 8000 : 20000
+                );
 
                 timers.push(timer);
             }

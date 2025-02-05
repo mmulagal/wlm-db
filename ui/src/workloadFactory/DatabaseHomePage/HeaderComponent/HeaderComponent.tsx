@@ -71,6 +71,7 @@ import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCal
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
 import {
+    addExploreSavingsInitialData,
     setSavingsCalculatorFrom,
     setSavingsCalculatorRefresh
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -441,6 +442,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
+        dispatch(addExploreSavingsInitialData(null));
         handleURL(value, isWorkloadFactory);
     };
 
