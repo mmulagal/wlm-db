@@ -61,7 +61,9 @@ export const TableLayout = ({ data }: any) => {
                 <Text>{data.value}</Text>
             </GridItem>
             <GridItem lg="5">
-                {data?.label === 'Total monthly cost' || data?.label === 'Total snapshot monthly cost' ? (
+                {data?.label === 'Total monthly cost' ||
+                data?.label === 'Total snapshot monthly cost' ||
+                data?.label === 'Clones total monthly cost' ? (
                     <Text style={{ margin: '0', padding: '0' }}>{data.text}</Text>
                 ) : (
                     <Text>{data.text}</Text>

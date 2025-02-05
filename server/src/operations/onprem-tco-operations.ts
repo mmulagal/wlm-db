@@ -309,7 +309,8 @@ async function getStorageSavingsResponse(
                     ec2Instances,
                     sqlServerEdition: currentLicenseEdition
                 },
-                nodeCount
+                nodeCount,
+                true
             ),
             getManualModeStorageSavingsCalculationMetrics(
                 accountId,
@@ -319,7 +320,8 @@ async function getStorageSavingsResponse(
                     ec2Instances,
                     sqlServerEdition: currentLicenseEdition
                 },
-                nodeCount
+                nodeCount,
+                true
             ),
             performManualModeStorageSavingsCalculations(
                 accountId,
@@ -329,7 +331,8 @@ async function getStorageSavingsResponse(
                     ec2Instances: ec2InstancesRecommended,
                     sqlServerEdition: recommendedLicenseEdition
                 },
-                nodeCount
+                sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2, // We recommend 2 node FCI for SQL Server
+                true
             ),
             getManualModeStorageSavingsCalculationMetrics(
                 accountId,
@@ -339,7 +342,8 @@ async function getStorageSavingsResponse(
                     ec2Instances: ec2InstancesRecommended,
                     sqlServerEdition: recommendedLicenseEdition
                 },
-                nodeCount
+                sqlServerDeploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2, // We recommend 2 node FCI for SQL Server
+                true
             )
         ]);
 
