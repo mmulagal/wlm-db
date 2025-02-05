@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    selectedInventoryTab: string;
     breadCrumbSelectedFrom: string;
     defaultFilterOptions: {} | any;
     optimizeFilterTags: [] | any;

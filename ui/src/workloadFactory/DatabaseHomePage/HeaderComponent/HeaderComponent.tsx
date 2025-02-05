@@ -131,8 +131,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
-    const newDashboardItem = localStorage.getItem('newDashboard');
-    const setFlagForNewDashboard = newDashboardItem ? JSON.parse(newDashboardItem) : null;
+    const multiCred = localStorage.getItem('multiCred');
+    const setFlagForMultiCred = multiCred ? JSON.parse(multiCred) : null;
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
@@ -939,10 +939,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={!setFlagForNewDashboard ? styles.spaceAreaTemp : styles.spaceArea}>
-                                <div className={!setFlagForNewDashboard ? styles.contentAreaTemp : styles.contentArea}>
-                                    {/* {selectComponents()} */}
-                                    {selectMultipleComponents()}
+                            <div className={styles.spaceArea}>
+                                <div className={styles.contentArea}>
+                                    {!setFlagForMultiCred && selectComponents()}
+                                    {setFlagForMultiCred && selectMultipleComponents()}
                                     <div className={styles.content}>
                                         <>
                                             <DsButton
