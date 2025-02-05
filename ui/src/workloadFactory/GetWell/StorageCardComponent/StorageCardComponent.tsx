@@ -473,7 +473,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
-                [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+                [type]: [
+                    ...(inProgressOptimizationData[type] || []),
+                    selectedResourceId + '_' + selectedDatabaseInstance
+                ]
             })
         );
         dispatch(

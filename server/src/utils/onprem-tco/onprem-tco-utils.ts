@@ -168,6 +168,15 @@ function generateUniqueId(accountId: string, instanceIds: string[], hostIds: str
     return generateHash(combinedString);
 }
 
+function getPowerOfTwoVcpuCount(maxVcpuCount: number) {
+    logger.info(`Check and update max vcpu count to power of 2 ${maxVcpuCount}`);
+    const isATwoPowerValue = Number.isInteger(Math.log2(maxVcpuCount));
+    if (!isATwoPowerValue) {
+        maxVcpuCount = 2 ** Math.ceil(Math.log2(maxVcpuCount));
+    }
+    return maxVcpuCount;
+}
+
 export {
     parseCpuUtilization,
     parseMemoryUtilization,
@@ -177,5 +186,6 @@ export {
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     convertToDate,
-    generateUniqueId
+    generateUniqueId,
+    getPowerOfTwoVcpuCount
 };

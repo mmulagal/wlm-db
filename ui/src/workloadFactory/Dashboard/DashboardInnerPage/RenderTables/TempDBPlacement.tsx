@@ -39,7 +39,7 @@ const TempDBPlacement = ({ lastColDetails, handleBulkAction }: any) => {
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             tempDBPlacement: tempDbPlacementObj?.current,
-                            id: instanceData?.databaseInstanceId,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[tempDbPlacementObj?.status],
                             data: instanceData

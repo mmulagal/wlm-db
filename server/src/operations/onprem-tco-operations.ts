@@ -55,7 +55,8 @@ import {
     generateUniqueId,
     parseStorageDetailsByDb,
     parseAoagReadReplica,
-    parseSqlVersion
+    parseSqlVersion,
+    getPowerOfTwoVcpuCount
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
@@ -577,6 +578,8 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         }
     });
 
+    maxVCpuCount = getPowerOfTwoVcpuCount(maxVCpuCount);
+
     const instanceRequirements = {
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
@@ -1018,6 +1021,9 @@ function deriveInstanceRequirements(
     const avgVcpuCount = totalCpuCount / totalSqlInstances;
     maxVcpuCount = Math.max(maxVcpuCount, avgVcpuCount);
     minVcpuCount = Math.max(minVcpuCount, 4);
+
+    // Need to have a number between min and max which is a power of 2 or recommendation will fail as all EC2 instances have vCPUs in powers of 2
+    maxVcpuCount = getPowerOfTwoVcpuCount(maxVcpuCount);
 
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 

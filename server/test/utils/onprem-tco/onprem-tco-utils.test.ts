@@ -7,7 +7,8 @@ import {
     parseStorageDetailsByDb,
     convertToDate,
     generateUniqueId,
-    parseAoagReadReplica
+    parseAoagReadReplica,
+    getPowerOfTwoVcpuCount
 } from '../../../src/utils/onprem-tco/onprem-tco-utils';
 
 describe('onprem-tco-utils', () => {
@@ -131,6 +132,14 @@ describe('onprem-tco-utils', () => {
         const id = generateUniqueId('account1', instanceIds, hostIds);
 
         expect(id).toBeDefined();
+    });
+
+    it('should return the same value if maxVcpuCount is already a power of 2', () => {
+        expect(getPowerOfTwoVcpuCount(8)).toBe(8);
+    });
+
+    it('should update maxVcpuCount to the next power of 2 if it is not a power of 2', () => {
+        expect(getPowerOfTwoVcpuCount(10)).toBe(16);
     });
 });
 /* eslint-enable no-useless-escape */
