@@ -42,7 +42,7 @@ const getActionName = (request: FastifyRequest) => {
             if (body && body?.type && body.assessments.length > 0) {
                 let param = storageConfigDescriptions[body.assessments[0]?.configurationName];
                 param = param ? `(${param})` : '';
-                return `Optimize storage parameters${param} as per the best practice for the selected database instance.`;
+                return `Optimize storage parameters ${param} as per the best practice for the selected database instance.`;
             }
             break;
         }
@@ -51,7 +51,7 @@ const getActionName = (request: FastifyRequest) => {
             if (body && body.configurationName) {
                 let param = storageOSDescriptions[body.configurationName];
                 param = param ? `(${param})` : '';
-                return `Optimize MPIO settings${param} parameters as per the best practice for the selected database instance.`;
+                return `Optimize MPIO settings ${param} parameters as per the best practice for the selected database instance.`;
             }
             break;
         }
