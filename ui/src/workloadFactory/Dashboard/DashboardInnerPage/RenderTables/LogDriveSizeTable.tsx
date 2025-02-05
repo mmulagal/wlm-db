@@ -44,7 +44,7 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             percentDataDriveSize: logDriveSizeObj?.current,
-                            id: instanceData?.databaseInstanceId,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[logDriveSizeObj?.status],
                             sizingViolations: logDriveSizeObj?.sizingViolations,

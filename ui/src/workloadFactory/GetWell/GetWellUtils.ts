@@ -1403,8 +1403,9 @@ const updateProgressForBulk = (
             ...inProgressOptimizationData,
             [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
                 const jobInstances =
-                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => host.sqlServerInstances) || [];
-
+                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
+                        host.sqlServerInstances.map((instance: any) => `${host.id}_${instance}`)
+                    ) || [];
                 return !jobInstances.includes(instanceId);
             })
         })
@@ -1436,7 +1437,8 @@ const updateProgressForSingle = (
         setInProgressOptimizationData({
             ...inProgressOptimizationData,
             [type]: inProgressOptimizationData?.[type]?.filter(
-                (instanceId: any) => instanceId !== jobToInstanceMap[jobId]?.instanceId
+                (instanceId: any) =>
+                    instanceId !== jobToInstanceMap[jobId]?.hostId + '_' + jobToInstanceMap[jobId]?.instanceId
             )
         })
     );
@@ -1710,6 +1712,7 @@ export const handleOptimizeStorageJob = (
         } else {
             let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
             let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
+            let selectedResourceId = state.getWellOptimize.selectedResourceId || '';
             dispatch(
                 setOptimizingData({
                     ...optimizingData,
@@ -1720,14 +1723,14 @@ export const handleOptimizeStorageJob = (
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
                     [type]: inProgressOptimizationData?.[type]?.filter(
-                        (instanceId: any) => instanceId !== selectedDatabaseInstance
+                        (instanceId: any) => instanceId !== selectedResourceId + '_' + selectedDatabaseInstance
                     )
                 })
             );
             dispatch(
                 setInProgressHostData({
                     ...inProgressHostData,
-                    [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedDatabaseInstance)
+                    [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedResourceId)
                 })
             );
             formatGetWellData(dispatch);
