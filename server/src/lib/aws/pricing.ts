@@ -1,6 +1,6 @@
 import {
     PricingClient,
-    GetProductsCommand,
+    paginateGetProducts,
     GetProductsCommandInput,
     GetProductsCommandOutput
 } from '@aws-sdk/client-pricing';
@@ -37,11 +37,21 @@ async function getProducts(
         ap-south-1
     */
     const pricingClient = new PricingClient({ region: AWS_PRICING_REGION });
-    const command = new GetProductsCommand(productFilters);
 
-    const pricingResult = await pricingClient.send(command);
+    const paginator = paginateGetProducts({ client: pricingClient }, productFilters);
 
-    if (!isEmpty(pricingResult)) {
+    const pricingResult: GetProductsCommandOutput = { PriceList: [], $metadata: { httpStatusCode: 200 } };
+
+    for await (const page of paginator) {
+        if (isEmpty(pricingResult.$metadata.requestId) && page?.$metadata) {
+            pricingResult.$metadata = page.$metadata;
+        }
+        if (page?.PriceList) {
+            pricingResult.PriceList = pricingResult.PriceList?.concat(page.PriceList);
+        }
+    }
+
+    if (!isEmpty(pricingResult?.PriceList)) {
         logger.debug('Writing pricing information to cache');
 
         writeToCache(AWS_PRICING_TYPE, productsHashKey, pricingResult);
