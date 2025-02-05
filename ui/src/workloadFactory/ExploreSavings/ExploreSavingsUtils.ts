@@ -262,7 +262,7 @@ export const formatViewCalcInstance = (
             ];
         } else {
             const detailsList: any = [];
-            computeDetails.forEach((detail: any, index: number) => {
+            computeDetails?.forEach((detail: any, index: number) => {
                 detailsList.push({
                     instanceType: detail?.instanceType || instanceTypelist?.[index] || GENERAL.NOT_AVAILABLE,
                     computeHourlyPrice: `$${formatNumbers(detail?.price)}`,
