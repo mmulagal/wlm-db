@@ -48,13 +48,15 @@ interface MSSQLPatchAssessmentObject {
     ec2InstanceId: string;
     importantMissingPatchesCount: number;
     missingPatchesCount: number;
-    missingPatchDetails?: {
-        classification?: string;
-        kbId?: string;
-        severity?: string;
-        state?: string;
-        title?: string;
-    }[];
+    missingPatchDetails?: PatchDetail[];
+}
+
+interface PatchDetail {
+    classification?: string;
+    severity?: string;
+    releaseDate?: string;
+    title?: string;
+    kbId?: string;
 }
 
 interface RssAdapter {
@@ -507,5 +509,6 @@ export {
     SessionsCountPerIscsiTarget,
     PgSqlInstanceDetails,
     RssConfigAssesment,
-    MaxDOPAssesment
+    MaxDOPAssesment,
+    PatchDetail
 };
