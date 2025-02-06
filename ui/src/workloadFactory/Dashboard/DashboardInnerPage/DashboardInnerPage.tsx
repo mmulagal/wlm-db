@@ -256,11 +256,15 @@ const DashboardInnerPage = () => {
                     [type]: [...(inProgressHostData[type] || []), ...hostIds]
                 })
             );
-            const instances = payload.hostsToOptimize[0].databaseHosts.flatMap((host: any) => host.sqlServerInstances);
+            const hostinstances = payload.hostsToOptimize.flatMap((host: any) =>
+                host.databaseHosts.flatMap((databaseHost: any) =>
+                    databaseHost.sqlServerInstances.map((instance: any) => `${databaseHost.id}_${instance}`)
+                )
+            );
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: [...(inProgressOptimizationData[type] || []), ...instances]
+                    [type]: [...(inProgressOptimizationData[type] || []), ...hostinstances]
                 })
             );
         } else {
@@ -273,7 +277,10 @@ const DashboardInnerPage = () => {
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+                    [type]: [
+                        ...(inProgressOptimizationData[type] || []),
+                        selectedResourceId + '_' + selectedDatabaseInstance
+                    ]
                 })
             );
         }
@@ -694,7 +701,7 @@ const DashboardInnerPage = () => {
                     rowData,
                     selectedRowsForOptimize
                 );
-                const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
+                const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.id);
                 return (
                     <div className={styles.buttonContainer}>
                         {isInProgress ? (

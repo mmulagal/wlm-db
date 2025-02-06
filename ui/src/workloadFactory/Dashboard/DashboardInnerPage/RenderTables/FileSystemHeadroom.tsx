@@ -43,7 +43,7 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             fileSystemHeadroom: headroomObj?.current,
-                            id: instanceData?.databaseInstanceId,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[headroomObj?.status],
                             sizingViolations: headroomObj?.sizingViolations,

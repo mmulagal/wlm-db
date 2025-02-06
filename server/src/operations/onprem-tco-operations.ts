@@ -19,7 +19,7 @@ import {
     MSSQL,
     WLMDB
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -55,7 +55,8 @@ import {
     generateUniqueId,
     parseStorageDetailsByDb,
     parseAoagReadReplica,
-    parseSqlVersion
+    parseSqlVersion,
+    getPowerOfTwoVcpuCount
 } from '../utils/onprem-tco/onprem-tco-utils';
 import { isNonFreeEnterpriseEdition } from './recommendation-operations';
 import {
@@ -72,8 +73,6 @@ import {
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
@@ -577,6 +576,8 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         }
     });
 
+    maxVCpuCount = getPowerOfTwoVcpuCount(maxVCpuCount);
+
     const instanceRequirements = {
         ArchitectureTypes: [ArchitectureType.x86_64],
         VirtualizationTypes: [VirtualizationType.hvm],
@@ -1019,6 +1020,9 @@ function deriveInstanceRequirements(
     maxVcpuCount = Math.max(maxVcpuCount, avgVcpuCount);
     minVcpuCount = Math.max(minVcpuCount, 4);
 
+    // Need to have a number between min and max which is a power of 2 or recommendation will fail as all EC2 instances have vCPUs in powers of 2
+    maxVcpuCount = getPowerOfTwoVcpuCount(maxVcpuCount);
+
     requiredMemory = Math.max(requiredMemory, totalMemory / totalSqlInstances); // Taking average of the total memory of all instances as the required memory
 
     return {
@@ -1210,7 +1214,7 @@ async function getOnPremResourceExploreSavings(
 
     const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
 
-    if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
+    if (sqlInstanceData || snapShotInfo) {
         try {
             const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
                 try {
