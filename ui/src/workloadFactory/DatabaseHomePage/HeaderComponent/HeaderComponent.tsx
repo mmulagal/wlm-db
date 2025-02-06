@@ -939,8 +939,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={styles.spaceArea}>
-                                <div className={styles.contentArea}>
+                            <div className={styles.spaceAreaTemp}>
+                                <div className={styles.contentAreaTemp}>
                                     {!setFlagForMultiCred && selectComponents()}
                                     {setFlagForMultiCred && selectMultipleComponents()}
                                     <div className={styles.content}>
