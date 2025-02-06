@@ -207,52 +207,52 @@ async function runMSSQLPatchAssessment(
         const availableCriticalSQLPatchesList = availableCriticalSQLPatches || [];
         const instanceInstalledPatchDetailsList = instanceInstalledPatchDetails || [];
 
-        // Check if any of the missing patches are part of the available critical patches
-        const missingCriticalSqlPatches = instanceInstalledPatchDetailsList?.map(({ instanceId, installedPatches }) => {
-            const installedPatchKbNumbers = installedPatches
-                .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
-                .filter((kbNumber: string | null) => kbNumber !== null);
-
-            const missingPatches = availableCriticalSQLPatchesList.filter(
-                availablePatch => !installedPatchKbNumbers.includes(availablePatch.KbNumber)
-            );
-
-            const missingPatchDetails: PatchDetail[] = missingPatches?.map(
-                ({
-                    Classification: classification,
-                    MsrcSeverity: severity,
-                    ReleaseDate: releaseDate,
-                    Title: title,
-                    KbNumber: kbId
-                }) => ({
-                    classification: classification || '',
-                    severity: severity || '',
-                    releaseDate: typeof releaseDate === 'string' ? releaseDate : releaseDate?.toISOString(),
-                    title: title || '',
-                    kbId: kbId || ''
-                })
-            );
-
-            return {
-                instanceId,
-                missingPatchDetails
-            };
-        });
-
         // Create the MSSQLPatchAssessmentObject structure
-        const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = missingCriticalSqlPatches?.map(
-            ({ instanceId, missingPatchDetails }) => {
-                const criticalMissingPatchesCount =
-                    missingPatchDetails?.filter(patch => patch.severity === 'Critical').length || 0;
-                const importantMissingPatchesCount =
-                    missingPatchDetails?.filter(patch => patch.severity === 'Important').length || 0;
-                const missingPatchesCount = missingPatchDetails?.length || 0;
+        const patchAssessmentObjects: MSSQLPatchAssessmentObject[] = instanceInstalledPatchDetailsList.map(
+            ({ instanceId, installedPatches }) => {
+                const installedPatchKbNumbers = new Set(
+                    installedPatches
+                        .map((patch: InstalledPatches) => extractKbNumber(patch.DisplayName))
+                        .filter((kbNumber: string | null) => kbNumber !== null)
+                );
+
+                const missingPatchDetails: PatchDetail[] = [];
+                let criticalMissingPatchesCount = 0;
+                let importantMissingPatchesCount = 0;
+
+                for (const availablePatch of availableCriticalSQLPatchesList) {
+                    if (!installedPatchKbNumbers.has(availablePatch.KbNumber)) {
+                        const {
+                            Classification: classification = '',
+                            MsrcSeverity: severity = '',
+                            ReleaseDate: releaseDate,
+                            Title: title = '',
+                            KbNumber: kbId = ''
+                        } = availablePatch;
+
+                        const patchDetail: PatchDetail = {
+                            classification,
+                            severity,
+                            releaseDate: typeof releaseDate === 'string' ? releaseDate : releaseDate?.toISOString(),
+                            title,
+                            kbId
+                        };
+
+                        missingPatchDetails.push(patchDetail);
+
+                        if (patchDetail.severity === 'Critical') {
+                            criticalMissingPatchesCount += 1;
+                        } else if (patchDetail.severity === 'Important') {
+                            importantMissingPatchesCount += 1;
+                        }
+                    }
+                }
 
                 return {
                     ec2InstanceId: instanceId,
                     criticalMissingPatchesCount,
                     importantMissingPatchesCount,
-                    missingPatchesCount,
+                    missingPatchesCount: missingPatchDetails.length,
                     missingPatchDetails
                 };
             }
