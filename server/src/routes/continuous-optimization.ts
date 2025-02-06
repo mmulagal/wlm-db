@@ -21,7 +21,10 @@ import {
     DriftAssessmentPerHost,
     OptimizeStorageTierSchema,
     DriftAssessmentPerAccount,
-    BulkOptimizeGeneralSchema
+    BulkOptimizeStorageSizingSchema,
+    BulkOptimizeOperatingSystemSchema,
+    BulkOptimizeStorageTierSchema,
+    BulkOptimizeComputeSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -214,7 +217,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
         })
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-sizing`,
-            { schema: BulkOptimizeGeneralSchema },
+            { schema: BulkOptimizeStorageSizingSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region },
@@ -233,7 +236,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-operating-system`,
-            { schema: BulkOptimizeGeneralSchema },
+            { schema: BulkOptimizeOperatingSystemSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region },
@@ -252,7 +255,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/storage-tier`,
-            { schema: BulkOptimizeGeneralSchema },
+            { schema: BulkOptimizeStorageTierSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region },
@@ -271,7 +274,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/compute`,
-            { schema: BulkOptimizeGeneralSchema },
+            { schema: BulkOptimizeComputeSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region },
