@@ -33,6 +33,7 @@ import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlic
 import { SQL_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../../utils/consts';
 import SecurityGroup from '../../CreateMsSql/AwsSettings/SecurityGroup/SecurityGroup';
 import StorageCapacity from '../../CreateMsSql/InfrastructureSettings/StorageCapacity/StorageCapacity';
+import PreviewDefaultPostgres from '../PreviewDefaultPostgre/PreviewDefaultPostgre';
 
 function PostgressLayout() {
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
@@ -50,7 +51,7 @@ function PostgressLayout() {
     return (
         <>
             <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']} ${styles.protectLayout}`}>
-                <SelectConfig isDisabled={true} wizardType={WIZARD_TYPE.PGSQL} />
+                <SelectConfig isDisabled={false} wizardType={WIZARD_TYPE.PGSQL} />
                 <AccordionController isGrouped>
                     {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                         <div className={styles['header-buttons']}>
@@ -83,7 +84,7 @@ function PostgressLayout() {
                     <AwsAccount />
                     <RegionVpc />
                     <AvailabilityZone wizardType={WIZARD_TYPE.PGSQL} />
-                    <SecurityGroup />
+                    {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SecurityGroup />}
 
                     <Typography
                         style={{
@@ -95,9 +96,9 @@ function PostgressLayout() {
                         {GENERAL.APPLICATION_SETTINGS}
                     </Typography>
                     <>
-                        <PostgreOperatingSystem />
-                        <PostgreVersion />
-                        <PostgreServerName />
+                        {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <PostgreOperatingSystem />}
+                        {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <PostgreVersion />}
+                        {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <PostgreServerName />}
                         <DatabaseCredentials wizardType={WIZARD_TYPE.PGSQL} />
                     </>
 
@@ -125,17 +126,21 @@ function PostgressLayout() {
                     </Typography>
 
                     <>
-                        <InstanceType />
+                        {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <InstanceType />}
                         <FSxNSystem />
-                        <SnapshotPolicy />
+                        {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SnapshotPolicy />}
                         <StorageCapacity wizardType={WIZARD_TYPE.PGSQL} />
-                        <ProvisionedIOPS />
-                        <ThroughputCapacity />
-                        <Encryption />
-                        <Tags />
-                        <SimpleNotificationService />
-                        <CloudWatch wizardType={WIZARD_TYPE.PGSQL} />
-                        <ResourceRollBack />
+                        {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                            <>
+                                <ProvisionedIOPS />
+                                <ThroughputCapacity />
+                                <Encryption />
+                                <Tags />
+                                <SimpleNotificationService />
+                                <CloudWatch wizardType={WIZARD_TYPE.PGSQL} />
+                                <ResourceRollBack />
+                            </>
+                        )}
                     </>
 
                     <>
@@ -149,7 +154,7 @@ function PostgressLayout() {
                             {GENERAL.SUMMARY}
                         </Typography>
                     </>
-
+                    {selectedConfig === SELECT_CONFIG.EASY_CREATE && <PreviewDefaultPostgres />}
                     <EstimatedCost wizardType={WIZARD_TYPE.PGSQL} />
                     <div style={{ marginBottom: '40px' }} />
                 </AccordionController>

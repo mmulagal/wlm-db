@@ -24,6 +24,7 @@ import {
     JOB_MONITORING_STATUS,
     JOB_MONITORING_TYPE,
     PENDING_DELETION,
+    POSTGRE_USERNAME,
     PRODUCTION,
     RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
@@ -416,6 +417,20 @@ export const displayFormattedValue = (value: number, msg: string) => {
 
 export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
+};
+
+export const generateRandomPGSQLName = () => {
+    return POSTGRE_USERNAME;
+};
+
+export const generatePGSQLOperatingSystem = () => {
+    return {
+        value: 'Amazon Linux 2023 AMI',
+        label: 'Amazon Linux 2023 AMI',
+        label2: 'Amazon Linux 2023 AMI',
+        isDisabled: false,
+        disabledTitle: ''
+    };
 };
 
 export function roundOffNumber(number: any) {
@@ -1551,6 +1566,10 @@ export const checkValueSavedForRegion = (options: any, value: any) => {
     }
     return containsValue;
 };
+
+export interface HashTable<T> {
+    [key: string]: T;
+}
 
 //Function to check if array includes an object or not
 export const checkValueSavedForCred = (options: any, value: any) => {
