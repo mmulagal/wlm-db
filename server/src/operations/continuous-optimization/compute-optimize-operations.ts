@@ -366,21 +366,21 @@ async function handleComputeRemediation(
                 }
             }
 
-            const checkRunningResponse = await checkRunningStatus(
-                accountId,
-                jobId,
-                instanceName,
-                region,
-                credentialsId,
-                activeNodeInstanceId,
-                formattedInstanceName
-            );
+            // const checkRunningResponse = await checkRunningStatus(
+            //     accountId,
+            //     jobId,
+            //     instanceName,
+            //     region,
+            //     credentialsId,
+            //     activeNodeInstanceId,
+            //     formattedInstanceName
+            // );
 
-            if (!checkRunningResponse.running) {
-                subJobErrorMessage = checkRunningResponse.error;
-                anySubJobFailed = true;
-                throw checkRunningResponse.error;
-            }
+            // if (!checkRunningResponse.running) {
+            //     subJobErrorMessage = checkRunningResponse.error;
+            //     anySubJobFailed = true;
+            //     throw checkRunningResponse.error;
+            // }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
@@ -838,4 +838,4 @@ async function updateNodeInstanceType(
     }
 }
 
-export { handleComputeRemediation };
+export { handleComputeRemediation, checkRunningStatus };

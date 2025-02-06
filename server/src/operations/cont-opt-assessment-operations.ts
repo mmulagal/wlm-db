@@ -376,6 +376,7 @@ async function driftAssessmentDataCollection(
         shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
         shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
     } else {
+        fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
         shouldRunStorageAssessment = true;
         shouldRunComputeAssessment = true;
         shouldRunLicenseAssessment = true;
