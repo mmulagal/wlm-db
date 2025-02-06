@@ -1079,8 +1079,6 @@ function getOnpremLicenseRecommendations(sqlInstancesDetails: SqlInstanceDetails
         ({ isUsingAnyEnterpriseFeature }) => isUsingAnyEnterpriseFeature
     );
     const recommendedLicenseEdition = isUsingEnterpriseFeature ? ENTERPRISE_EDITION : STANDARD_EDITION;
-    const test = isNonFreeEnterpriseEdition(currentLicenseEdition);
-    logger.info(test);
     const finding =
         isNonFreeEnterpriseEdition(currentLicenseEdition) && !isUsingEnterpriseFeature
             ? FINDING.NOT_OPTIMIZED
