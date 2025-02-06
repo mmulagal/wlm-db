@@ -1501,7 +1501,7 @@ async function startCleanup(
     const cleanupJob = await registerJob(accountId, credentialsId, region, {
         description: `Clean up resources for sandbox ${destDetails.database} in the database instance ${destDetails.resourceName}\\${destDetails.databaseInstanceName}`,
         startTime: Date.now(),
-        name: `Clean up resources for sandbox ${destDetails.database}`, // This exact name is used to mark the parent job status as failed if any of the child job fails
+        name: `Clean up resources for sandbox ${destDetails.database}`,
         status,
         type: JOBTYPE.SANDBOX,
         resourceName: destDetails.database,
@@ -2315,7 +2315,7 @@ async function performLifecycleUpdate(
         }
     } finally {
         // check any of the sub job has failure if so udpate the paraent job as warning which is completed with failure in status shown
-        await updateParentJobStatus(accountId, parentJobId, true, errorMsg);
+        await updateParentJobStatus(accountId, parentJobId, errorMsg);
     }
 }
 
