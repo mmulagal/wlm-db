@@ -1112,7 +1112,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                 </div>
 
-                {pendingQueriesCounter > 0 && (
+                {pendingQueriesCounter > 0 && setFlagForMultiCred && (
                     <FetchingDataNotification
                         queriesLength={queriesLength}
                         pendingQueriesCounter={pendingQueriesCounter}
