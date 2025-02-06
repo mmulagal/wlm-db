@@ -16,7 +16,7 @@ fsx_svm_uuid="${fsx_svm_uuid}"
 log_feature_enabled="true" # Set to false if CloudWatch Logs feature is disabled
 script_dir="/home/ec2-user/cfn/scripts"
 log_file="$script_dir/pgsql-Instance-initializer.sh"
-pgsql_node_initialization_s3_url= "${pgsql_node_initialization_s3_url}"
+pgsql_node_initialization_s3_url="${pgsql_node_initialization_s3_url}"
 
 
 
@@ -41,7 +41,7 @@ instance_id=$(get_instance_id)
 echo "Got the Instance ID: $instance_id"
 
 # Download the initialization script
-curl -o "$script_dir/pgsql-Instance-initializer.sh" "$validation_node_initialization_s3_url"
+curl -o "$script_dir/pgsql-Instance-initializer.sh" "$pgsql_node_initialization_s3_url"
 chmod +x "$script_dir/pgsql-Instance-initializer.sh"
 
 # Construct the command to execute the initialization script

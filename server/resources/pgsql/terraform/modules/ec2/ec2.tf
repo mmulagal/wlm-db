@@ -7,7 +7,7 @@ locals {
 
   user_data = templatefile("${path.module}/user_data.sh", {
     pgsql_node_initialization_s3_url = var.pgsql_node_initialization_s3_url
-    aws_region                         = var.sql_node_aws_location
+    aws_region                     = var.sql_node_aws_location
     log_feature_enabled            = local.log_feature_enabled
     deployment_name                = var.deployment_name
     sql_server_name                = var.sql_server_name
@@ -19,7 +19,7 @@ locals {
     sql_service_account_password   = var.sql_service_account_password
     sql_version                    = var.sql_version
     fsx_aggr_name                  = var.fsx_aggr_name
-    fsx_svm_uuid=var.fsx_svm_uuid
+    fsx_svm_uuid                   =var.fsx_svm_uuid
   })
 }
 
@@ -66,12 +66,11 @@ resource "aws_instance" "sql_node" {
     create = "90m"
   }
 
-  # tags = merge(
-  #   {
-  #     Name = local.tagName
-  #   },
-  #   var.is_standalone ? {} : { FCIName = var.sql_fsx_fci_name, FCIRole = local.node_type }
-  # )
+  tags = (
+    {
+      Name = local.tagName
+    }
+  )
 }
 
 

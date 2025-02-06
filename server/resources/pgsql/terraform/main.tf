@@ -51,6 +51,9 @@ provider "aws" {
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
+  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter]
+
+
   vpc_id                     = var.vpc_id
   vpc_cidr = var.vpc_cidr
   aws_profile = var.aws_profile
@@ -166,8 +169,8 @@ module "standalone_sql_node" {
   aws_profile                    = var.aws_profile
   sql_version                    = var.sql_version
   sql_service_account_password    = var.sql_service_account_password
-  fsx_svm_id                       = var.fsx_svm_id
-  fsx_aggr_name                     = var.fsx_aggr_name
-  fsx_svm_uuid                      = var.fsx_svm_uuid
+  fsx_svm_id                      = local.existing_ontap_fsx ? var.fsx_svm_id : module.fsxn_standalone[0].fsx_svm_id // may be the output of the fsx if its new
+  fsx_aggr_name                   = var.fsx_aggr_name
+  fsx_svm_uuid                    = local.existing_ontap_fsx ? var.fsx_svm_uuid : module.fsxn_standalone[0].fsx_svm_uuid // may be the output of the fsx if its new
   number_of_nodes                 = var.number_of_nodes
 }

@@ -8,10 +8,10 @@ subnet_id=$3
 perform_fsx_check=$4
 fsx_file_system_id=$5
 
-
-
 get_instance_id() {
-    curl -s http://169.254.169.254/latest/meta-data/instance-id
+    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+    instance_id=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+    echo "$instance_id"
 }
 
 # Function to tag the instance
@@ -25,31 +25,12 @@ tag_instance() {
 }
 
 # Function to install SSM Agent and CloudWatch Agent
-# install_agents() {
-#     local region=$1
-#     local ssm_agent_url="https://s3.${region}.amazonaws.com/amazon-ssm-${region}/latest/linux_amd64/amazon-ssm-agent.rpm"
-#     local cloudwatch_agent_package="amazon-cloudwatch-agent.x86_64"
-
-#     echo "Installing SSM Agent from ${ssm_agent_url}"
-#     if ! sudo yum install -y "${ssm_agent_url}"; then
-#         echo "Error installing SSM Agent"
-#         exit 1
-#     fi
-
-#     echo "Installing CloudWatch Agent"
-#     if ! sudo yum install -y "${cloudwatch_agent_package}"; then
-#         echo "Error installing CloudWatch Agent"
-#         exit 1
-#     fi
-# }
-
-
 install_agents() {
     local region=$1
 
     if [ -z "$region" ]; then
         echo "Region is not set. Exiting."
-        exit 1
+        return 1
     fi
 
     local ssm_agent_url="https://s3.${region}.amazonaws.com/amazon-ssm-${region}/latest/linux_amd64/amazon-ssm-agent.rpm"
@@ -62,15 +43,16 @@ install_agents() {
     echo "Installing SSM Agent from ${ssm_agent_url}"
     if ! sudo yum install -y "${ssm_agent_url}"; then
         echo "Error installing SSM Agent"
-        exit 1
+        return 1
     fi
 
     echo "Installing CloudWatch Agent"
     if ! sudo yum install -y "${cloudwatch_agent_package}"; then
         echo "Error installing CloudWatch Agent"
-        exit 1
+        return 1
     fi
 }
+
 # Function to create deployment folders
 create_folders() {
     local folders=("$@")
@@ -78,7 +60,7 @@ create_folders() {
         echo "Creating folder ${folder}"
         if ! mkdir -p "${folder}"; then
             echo "Error creating folder ${folder}"
-            exit 1
+            return 1
         fi
     done
 }
@@ -125,7 +107,7 @@ EOF
 
     if ! sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:"${config_file}" -s; then
         echo "Error configuring CloudWatch Logs"
-        exit 1
+        return 1
     fi
 }
 
@@ -137,7 +119,7 @@ download_file() {
     echo "Downloading ${url} to ${dest}"
     if ! wget -O "${dest}" "${url}"; then
         echo "Error downloading ${url}"
-        exit 1
+        return 1
     fi
     chmod 755 "${dest}"
 }
@@ -151,15 +133,11 @@ verify_and_extract() {
     local resource_id=$5
     local deployment_name=$6
 
-    # echo "Verifying and extracting ${source}"
-    # if ! /home/ec2-user/cfn/scripts/verify-signature.sh -f "${source}" -s "${signature}" -p "${pub_key}" -r "${resource_id}" -n "${deployment_name}"; then
-    #     echo "Error verifying ${source}"
-    #     exit 1
-    # fi
+    echo "Verifying and extracting with inputs: source=${source}, dest=${dest}, signature=${signature}, pub_key=${pub_key}, resource_id=${resource_id}, deployment_name=${deployment_name}"
 
     if ! /home/ec2-user/cfn/scripts/unzip-archive.sh -s "${source}" -d "${dest}"; then
         echo "Error extracting ${source}"
-        exit 1
+        return 1
     fi
 }
 
@@ -170,13 +148,11 @@ validate_vpc() {
     local deployment_name=$3
     local resource_id=$4
 
-    echo "Validating VPC"
+    echo "Validating VPC with inputs: subnet_id=${subnet_id}, region=${region}, deployment_name=${deployment_name}, resource_id=${resource_id}"
 
-    if /home/ec2-user/cfn/scripts/validation/validate-vpc.sh "${subnet_id}" "${region}" "${deployment_name}" "${resource_id}"; then
-        echo "VPC validation completed successfully."
-    else
+    if ! /home/ec2-user/cfn/scripts/validation/validate-vpc.sh "${subnet_id}" "${region}" "${deployment_name}" "${resource_id}"; then
         echo "Error occurred during VPC validation."
-        exit 1
+        return 1
     fi
 }
 
@@ -188,39 +164,48 @@ validate_fsx_connectivity() {
     local deployment_name=$4
     local resource_id=$5
 
-    echo "Validating FSx connectivity"
+    echo "Validating FSx connectivity with inputs: perform_fsx_check=${perform_fsx_check}, fsx_file_system_id=${fsx_file_system_id}, region=${region}, deployment_name=${deployment_name}, resource_id=${resource_id}"
 
-    if /home/ec2-user/cfn/scripts/validation/validate-fsx.sh -e "${perform_fsx_check}" -f "${fsx_file_system_id}" -r "${region}" -n "${deployment_name}" -p "${deployment_name}" -s "${resource_id}"; then
-        echo "FSx connectivity validation completed successfully."
-    else
+    if ! /home/ec2-user/cfn/scripts/validation/validate-fsx.sh -e "${perform_fsx_check}" -f "${fsx_file_system_id}" -r "${region}" -n "${deployment_name}" -p "${deployment_name}" -s "${resource_id}"; then
         echo "Error occurred during FSx connectivity validation."
-        exit 1
+        return 1
     fi
 }
+
+handle_error() {
+    local instance_id=$1
+    echo "Handling error for instance_id: ${instance_id}"
+    tag_instance "${instance_id}" "user_data" "failed"
+    exit 1
+}
+
 # Main script execution
 main() {
     local instance_id
     instance_id=$(get_instance_id)
+    echo "Got the Instance ID: $instance_id"
 
-    trap 'tag_instance "${instance_id}" "user_data" "failed"' ERR
+    #Trap any error and call the handle_error function
+    trap 'handle_error "${instance_id}"' ERR
 
-    install_agents "${aws_region}" || exit 1
-    create_folders "/home/ec2-user/cfn/scripts" "/var/log/netapp_wf" || exit 1
-    configure_cloudwatch "${aws_region}" "${deployment_name}" || exit 1
+    install_agents "${aws_region}" 
+    create_folders "/home/ec2-user/cfn/scripts" "/var/log/netapp_wf" 
+    configure_cloudwatch "${aws_region}" "${deployment_name}" 
 
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/verify-signature.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=389ec99807ca2b33446ed5c82a7e047bd46e1d08253d5a63dc6cd4c9e19a42cb&X-Amz-SignedHeaders=host&x-id=GetObject"
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/unzip-archive.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=bcd83461621a89f63b5a7763efb6399f3e950cf02202bfaf4a6abbed960d554a&X-Amz-SignedHeaders=host&x-id=GetObject"
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/validation.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=89dd44021ff69a95f89926ebc78b38327a335da4f384b84b60e59ea3185abccd&X-Amz-SignedHeaders=host&x-id=GetObject""
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/fsx_certs.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=6240c3d984c34ed07104f3c4b818097dde27f89382f6a0b773369c8714efb94e&X-Amz-SignedHeaders=host&x-id=GetObject"
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/signig_files.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250130%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250130T053518Z&X-Amz-Expires=604800&X-Amz-Signature=cef53fe7ed1d069baabedd409de7835cb2380e725f76a32e584871cfec7eb81e&X-Amz-SignedHeaders=host&x-id=GetObject"
-    verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" || exit 1
-    verify_and_extract "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" || exit 1
-    verify_and_extract "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.sig" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.pub" "ValidationNode1" "${deployment_name}" || exit 1
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/verify-signature.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=af981074d7801b9bd4822da61ff158c6d086ed5fbcac0a7814b73036694bb62a&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/verify-signature.sh"
 
-    validate_vpc "${subnet_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" || exit 1
-    validate_fsx_connectivity "${perform_fsx_check}" "${fsx_file_system_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" || exit 1
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/unzip-archive.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=94f23b11171bce555ddd5a5ba2a76a0afc4241d39aa4bf5c47959dd5390b8f9d&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/unzip-archive.sh" 
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/validation.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=22f4b8fc503b480d0779ec765671ee3812c6515989e25cdca98a1c8c0331bef1&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/validation.zip" 
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/fsx_certs.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=508736c57d698a326c37a88f4ea7ca4fd1345836e014c927dcdecab0347f2ece&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/fsx_certs.zip" 
+    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/signig_files.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=443bbe64cd8768b6912e05c627e52f4a960cf8eaedf012e9f5df05f20331798d&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/signig_files.zip" 
+    verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
+    verify_and_extract "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
+    verify_and_extract "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.sig" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.pub" "ValidationNode1" "${deployment_name}" 
+
+    validate_vpc "${subnet_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" 
+    validate_fsx_connectivity "${perform_fsx_check}" "${fsx_file_system_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" 
 
     tag_instance "${instance_id}" "user_data" "completed"
 }
 
-main "$@"¸
+main "$@"

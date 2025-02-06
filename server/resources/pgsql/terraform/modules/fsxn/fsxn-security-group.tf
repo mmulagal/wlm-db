@@ -34,6 +34,7 @@ resource "aws_security_group" "ontap_security_group" {
       { from_port = 161, to_port = 162, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 635, to_port = 635, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 137, to_port = 137, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
+      { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = ["202.3.121.6/32"] },
     ]
 
     content {
@@ -42,5 +43,19 @@ resource "aws_security_group" "ontap_security_group" {
       protocol    = ingress.value.protocol
       cidr_blocks = ingress.value.cidr_blocks
     }
+  }
+
+   egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    ipv6_cidr_blocks = ["::/0"]
   }
 }
