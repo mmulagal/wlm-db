@@ -8,11 +8,11 @@ import {
     setPgDBNameValue,
     setVPCSelectedValue
 } from '../../store/mssql/msSqlActionSlice';
-import { FORM_OPTIONS, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
-import { PgsqlRequestBody, TagObj } from '../../utils/types/mssqlTypes';
-import { dbPassVal, fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../utils/utilityFunctions';
+import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
+import { TagObj } from '../../utils/types/mssqlTypes';
+import { fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
-import { GENERAL } from '../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
 
 const createPgsqlPayload = (state: any) => {
     let payload;
@@ -142,7 +142,12 @@ const createPgsqlPayload = (state: any) => {
             snapshotPolicy: selectedSnapshotPolicy || ''
         },
         sqlConfiguration: {
-            sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
+            sqlDeploymentMode:
+                state.mssqlForm.selectConfig === SELECT_CONFIG.EASY_CREATE
+                    ? 'ha'
+                    : state.mssqlForm.dbDeploymentModel?.value === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                    ? 'ha'
+                    : 'standalone',
             sqlServerName: state.postgreForm.postgreServerName || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
             serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
@@ -161,7 +166,6 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
     dispatch(setCreateHit(Math.random()));
     if (state.auth.isDemoMode) {
         payload = createPgsqlPayload(state);
-        console.log('Deploy Payload', payload);
     } else {
         const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
 
@@ -174,7 +178,7 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
             (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE &&
                 (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
                     !state.mssqlForm.availabilityZones.selectedSubnetNode1));
-        
+
         const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
 
         const fsxStateValue =
