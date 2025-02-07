@@ -442,48 +442,53 @@ function processEbsDisks(disks: EBSClassification[]) {
         }
     >();
 
-    disks.forEach((disk: EBSClassification) => {
-        if (ebsTypeCountMap.has(disk.ebsType)) {
-            const existing = ebsTypeCountMap.get(disk.ebsType)!;
-            ebsTypeCountMap.set(disk.ebsType, {
-                volumeType: disk.ebsType,
-                volumeNumber: existing.volumeNumber + disk.numDatabases,
-                storageAmount: existing.storageAmount + disk.avgVolumeSizePerDb,
-                volumeIops: existing.volumeIops + disk.avgIopsPerDb,
-                throughput: existing.throughput + disk.avgThroughputPerDb
-            });
-        } else {
-            ebsTypeCountMap.set(disk.ebsType, {
-                volumeType: disk.ebsType,
-                volumeNumber: disk.numDatabases,
-                storageAmount: disk.avgVolumeSizePerDb,
-                volumeIops: disk.avgIopsPerDb,
-                throughput: disk.avgThroughputPerDb
-            });
-        }
-    });
+    disks
+        .filter(disk => disk.numDatabases > 0)
+        .forEach((disk: EBSClassification) => {
+            if (ebsTypeCountMap.has(disk.ebsType)) {
+                const existing = ebsTypeCountMap.get(disk.ebsType)!;
+                ebsTypeCountMap.set(disk.ebsType, {
+                    volumeType: disk.ebsType,
+                    volumeNumber: existing.volumeNumber + disk.numDatabases,
+                    storageAmount: existing.storageAmount + disk.totalVolumeSizePerDb,
+                    volumeIops: existing.volumeIops + disk.totalIopsPerDb,
+                    throughput: existing.throughput + disk.totalThroughputPerDb
+                });
+            } else {
+                ebsTypeCountMap.set(disk.ebsType, {
+                    volumeType: disk.ebsType,
+                    volumeNumber: disk.numDatabases,
+                    storageAmount: disk.totalVolumeSizePerDb,
+                    volumeIops: disk.totalIopsPerDb,
+                    throughput: disk.totalThroughputPerDb
+                });
+            }
+        });
 
     return Array.from(ebsTypeCountMap.values()).map(
         ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => {
+            const avgStorageAmountPerDiskType = storageAmount / volumeNumber;
+            const avgVolumeIopsPerDiskType = volumeIops / volumeNumber;
+            const avgThroughputPerDiskType = throughput / volumeNumber;
             volumeIops = 0;
             throughput = 0;
-            storageAmount = Math.max(storageAmount, 1); // Minimum volume size is 1 GiB
+            storageAmount = Math.max(avgStorageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
             switch (volumeType) {
                 case 'io2':
                 case 'io1': {
-                    storageAmount = Math.max(storageAmount, 4); // Minimum volume size is 4 GiB for io1
-                    volumeIops = Math.max(volumeIops, 100); // Minimum IOPS is 100
+                    storageAmount = Math.max(avgStorageAmountPerDiskType, 4); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.max(avgVolumeIopsPerDiskType, 100); // Minimum IOPS is 100
                     break;
                 }
                 case 'st1': {
-                    storageAmount = Math.max(storageAmount, 125); // Minimum volume size is 125 GiB for st1
+                    storageAmount = Math.max(avgStorageAmountPerDiskType, 125); // Minimum volume size is 125 GiB for st1
                     break;
                 }
                 case 'gp3':
                 default: {
-                    volumeIops = Math.max(volumeIops, 3000); // Minimum IOPS is 3000
-                    throughput = Math.max(throughput, 125); // Minimum throughput is 125
-                    storageAmount = Math.max(storageAmount, 1); // Minimum volume size is 1 GiB
+                    volumeIops = Math.max(avgVolumeIopsPerDiskType, 3000); // Minimum IOPS is 3000
+                    throughput = Math.max(avgThroughputPerDiskType, 125); // Minimum throughput is 125
+                    storageAmount = Math.max(avgStorageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
                     break;
                 }
             }
@@ -815,10 +820,10 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
 interface EBSClassification {
     instanceName: string;
     numDatabases: number;
-    avgIopsPerDb: number;
-    avgThroughputPerDb: number;
+    totalIopsPerDb: number;
+    totalThroughputPerDb: number;
     ebsType: string;
-    avgVolumeSizePerDb: number;
+    totalVolumeSizePerDb: number;
     isPrimary: boolean;
 }
 
@@ -871,10 +876,10 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
         return {
             instanceName: instance.sqlInstanceName,
             numDatabases,
-            avgIopsPerDb,
-            avgThroughputPerDb,
+            totalIopsPerDb: avgIopsPerDb * numDatabases,
+            totalThroughputPerDb: avgThroughputPerDb * numDatabases,
             ebsType,
-            avgVolumeSizePerDb,
+            totalVolumeSizePerDb: avgVolumeSizePerDb * numDatabases,
             isPrimary: classification !== 'secondary' // if it is not secondary, it is primary by default because marketing API expects atleast primary volumes
         };
     } catch (error) {
