@@ -83,7 +83,9 @@ function PostgressLayout() {
                     </div>
                     <AwsAccount />
                     <RegionVpc />
-                    <AvailabilityZone wizardType={WIZARD_TYPE.PGSQL} />
+                    <div className={styles['pgsql-availability-zone']}>
+                        <AvailabilityZone wizardType={WIZARD_TYPE.PGSQL} />
+                    </div>
                     {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SecurityGroup />}
 
                     <Typography
