@@ -133,12 +133,6 @@ const PreviewDefaultPostgres = () => {
             id: '3'
         },
         {
-            accordionName: GENERAL.DATABASE_EDITION,
-            defaultValue: GENERAL.SQL_SERVER_STANDARD_EDITION,
-            editable: GENERAL.NO,
-            id: '4'
-        },
-        {
             accordionName: GENERAL.POSTGRE_VERSON,
             defaultValue: postGreVersion?.value,
             editable: GENERAL.PD_UPGRADED_MANUALLY,
@@ -155,7 +149,7 @@ const PreviewDefaultPostgres = () => {
         { accordionName: GENERAL.SNAPSHOT_POLICY, defaultValue: GENERAL.DAILY_RETENTION, editable: 'Yes', id: '18' },
         {
             accordionName: GENERAL.PROVISIONED_IOPS,
-            defaultValue: iopsValue || GENERAL.AUTOMATIC,
+            defaultValue: GENERAL.AUTOMATIC,
             editable: GENERAL.YES,
             id: '10'
         },
