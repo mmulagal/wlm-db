@@ -16,7 +16,7 @@ import {
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
-import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { AuditStatus, ASSESSMENT_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
 import {
@@ -278,7 +278,7 @@ async function initiateStorageAssessmentCollection(
         ssmComment,
         accountId,
         false,
-        CUSTOM_SSM_EXECUTION_TIMEOUT
+        ASSESSMENT_SSM_EXECUTION_TIMEOUT
     );
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
