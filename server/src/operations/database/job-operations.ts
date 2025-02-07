@@ -458,8 +458,10 @@ async function updateParentJobStatus(
             )
         ) {
             jobStatus = JOBSTATUS.WARNING;
-        } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+        } else if (isSandboxJob && allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
             jobStatus = JOBSTATUS.FAILED;
+        } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+            jobStatus = JOBSTATUS.WARNING;
         } else {
             jobStatus = JOBSTATUS.IN_PROGRESS;
         }
