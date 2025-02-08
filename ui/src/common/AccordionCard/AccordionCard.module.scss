@@ -1,0 +1,91 @@
+$basePadding: 0 32px 0 40px;
+
+.base {
+    box-shadow: 2px 2px 6px 0 var(--drop-shadow);
+    background-color: var(--content-background);
+    .header {
+        align-items: center;
+        display: grid;
+        grid-template-columns: max-content 1fr max-content max-content max-content;
+        grid-column-gap: 24px;
+        height: 72px;
+        padding: $basePadding;
+        width: 100%;
+        user-select: text;
+        text-align: left;
+        box-sizing: border-box;
+
+        &.hoverable:hover {
+            background-color: var(--hover-background);
+        }
+
+        &.disabled {
+            cursor: not-allowed;
+        }
+
+        &.clickable {
+            cursor: pointer;
+
+            .accordionChevron {
+                cursor: pointer;
+            }
+        }
+
+        .title {
+            padding-right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            .selection {
+                display: flex;
+            }
+        }
+        .multi-value {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+
+            > span:not(:last-child) {
+                margin-right: 16px;
+            }
+
+            > span:not(:first-child) {
+                padding-left: 16px;
+                border-left: 1px solid var(--border);
+                line-height: 1;
+            }
+        }
+    }
+    .accordion-card-content {
+        padding: $basePadding;
+        padding-bottom: 24px;
+    }
+    .animation {
+        transition: height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+}
+
+.accordion-table {
+    &.is-grouped {
+        .base {
+            border-bottom: 1px solid var(--border);
+        }
+    }
+
+    &:not(.is-grouped) {
+        .base {
+            margin-bottom: 8px;
+        }
+    }
+}
+
+.loader {
+    display: flex;
+    align-items: center;
+
+    > :first-child {
+        margin-right: 14px;
+    }
+}

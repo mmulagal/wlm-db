@@ -46,6 +46,7 @@ export const GENERAL = {
     DATABASE_DEPLOYMENT_MODEL: 'Database deployment model',
     DATABASE_EDITION: 'Database edition',
     DATABASE_VERSION: 'Database version',
+    POSTGRE_VERSON: 'PostgreSQL version',
     LICENSE: 'License',
     SQL_SERVER_INSTALL_TYPE: 'SQL Server install type',
     DATABASE_NAME: 'Database name',
