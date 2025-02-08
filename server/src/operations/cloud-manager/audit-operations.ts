@@ -24,7 +24,7 @@ import {
     UpdateAuditGroupSchema,
     UpdateAuditGroupSchemaType
 } from '../../routes/schemas/audit-schema';
-import { getActionName } from '../../utils/audit-action-names';
+import getActionName from '../../utils/audit-action-names';
 
 const logger = getLogger();
 

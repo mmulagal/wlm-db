@@ -19,7 +19,7 @@ import {
     MSSQL,
     WLMDB
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, isDemo, sizeInGigaBytes } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -73,8 +73,6 @@ import {
 const { getPreSignedUrl } = preSignedUrl;
 
 const logger = getLogger();
-
-const isDemoFlow = isDemo();
 
 const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
@@ -467,28 +465,25 @@ function processEbsDisks(disks: EBSClassification[]) {
 
     return Array.from(ebsTypeCountMap.values()).map(
         ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => {
-            const volumeIopsPerVolume = volumeIops / volumeNumber;
-            const throughputPerVolume = throughput / volumeNumber;
-            const storageAmountPerVolume = storageAmount / volumeNumber;
             volumeIops = 0;
             throughput = 0;
-            storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(1)); // Minimum volume size is 1 GiB
+            storageAmount = Math.max(storageAmount, 1); // Minimum volume size is 1 GiB
             switch (volumeType) {
                 case 'io2':
                 case 'io1': {
-                    storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(4)); // Minimum volume size is 4 GiB for io1
-                    volumeIops = Math.max(volumeIopsPerVolume, 100); // Minimum IOPS is 100
+                    storageAmount = Math.max(storageAmount, 4); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.max(volumeIops, 100); // Minimum IOPS is 100
                     break;
                 }
                 case 'st1': {
-                    storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(125)); // Minimum volume size is 125 GiB for st1
+                    storageAmount = Math.max(storageAmount, 125); // Minimum volume size is 125 GiB for st1
                     break;
                 }
                 case 'gp3':
                 default: {
                     volumeIops = Math.max(volumeIops, 3000); // Minimum IOPS is 3000
-                    throughput = Math.max(throughputPerVolume, 125); // Minimum throughput is 125
-                    storageAmount = Math.max(storageAmountPerVolume, convertGiBToBytes(1)); // Minimum volume size is 1 GiB
+                    throughput = Math.max(throughput, 125); // Minimum throughput is 125
+                    storageAmount = Math.max(storageAmount, 1); // Minimum volume size is 1 GiB
                     break;
                 }
             }
@@ -496,7 +491,7 @@ function processEbsDisks(disks: EBSClassification[]) {
             return {
                 volumeType,
                 volumeNumber,
-                storageAmount,
+                storageAmount: convertGiBToBytes(storageAmount),
                 volumeIops,
                 throughput
             };
@@ -1216,7 +1211,7 @@ async function getOnPremResourceExploreSavings(
 
     const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
 
-    if ((sqlInstanceData || snapShotInfo) && !isDemoFlow) {
+    if (sqlInstanceData || snapShotInfo) {
         try {
             const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
                 try {
@@ -1236,6 +1231,8 @@ async function getOnPremResourceExploreSavings(
                             totalStorage: incomingTotalStorage
                         } = instanceData;
 
+                        const primaryDbRatio = numDatabases / (numDatabases + numDatabasesSecondary);
+                        const secondaryDbRatio = numDatabasesSecondary / (numDatabases + numDatabasesSecondary);
                         return {
                             ...detail,
                             ...(noOfVcpusInUse && { noOfVcpusInUse }),
@@ -1245,12 +1242,11 @@ async function getOnPremResourceExploreSavings(
                             ...(totalThroughput && { totalThroughput }),
                             ...(numDatabases &&
                                 incomingTotalStorage && {
-                                    totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') / numDatabases
+                                    totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * primaryDbRatio
                                 }),
                             ...(numDatabasesSecondary &&
                                 incomingTotalStorage && {
-                                    totalSecondaryStorage:
-                                        sizeInGigaBytes(incomingTotalStorage, 'B') / numDatabasesSecondary
+                                    totalSecondaryStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * secondaryDbRatio
                                 }),
                             deploymentType
                         };
