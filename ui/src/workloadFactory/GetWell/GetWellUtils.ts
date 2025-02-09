@@ -410,7 +410,7 @@ export const cardDataDefault: GwCardDataInterface = {
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
-                'Whenever possible, apply the latest patches to ensure security and stability. \nApplying the latest patch helps protect your SQL server databases from vulnerabilities and significantly improves overall system reliability.'
+                'Whenever possible, apply the latest patches to ensure security and stability. Applying the latest patch helps protect your SQL \nserver databases from vulnerabilities and significantly improves overall system reliability.'
         },
         tags: ['Security', 'Reliability']
     },
