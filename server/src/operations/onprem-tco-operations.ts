@@ -470,17 +470,20 @@ function processEbsDisks(disks: EBSClassification[]) {
         });
 
     return Array.from(ebsTypeCountMap.values()).map(
-        ({ volumeType, volumeNumber, storageAmount: storageAmountPerDiskType, volumeIops = 0, throughput = 0 }) => {
+        ({ volumeType, volumeNumber, storageAmount: storageAmountPerDiskType, volumeIops, throughput }) => {
             let storageAmount = Math.max(storageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
             switch (volumeType) {
                 case 'io2':
                 case 'io1': {
                     storageAmount = Math.max(storageAmountPerDiskType, 4); // Minimum volume size is 4 GiB for io1
                     volumeIops = Math.max(volumeIops, 100); // Minimum IOPS is 100
+                    throughput = 0; // Throughput is not applicable for io1
                     break;
                 }
                 case 'st1': {
                     storageAmount = Math.max(storageAmountPerDiskType, 125); // Minimum volume size is 125 GiB for st1
+                    volumeIops = 0; // IOPS is not applicable for st1
+                    throughput = 0; // Minimum throughput is 125
                     break;
                 }
                 case 'gp3':
