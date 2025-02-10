@@ -45,7 +45,7 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             percentDataDriveSize: tempdbDriveSizeObj?.current,
-                            id: instanceData?.databaseInstanceId,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[tempdbDriveSizeObj?.status],
                             sizingViolations: tempdbDriveSizeObj?.sizingViolations,

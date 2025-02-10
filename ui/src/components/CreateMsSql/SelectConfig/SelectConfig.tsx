@@ -23,14 +23,6 @@ const SelectConfig = ({ isDisabled = false, wizardType }: SC) => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
-    useEffect(() => {
-        if (wizardType === WIZARD_TYPE.PGSQL) {
-            dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
-        } else {
-            dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
-        }
-    }, []);
-
     const clickHandler = (val: string) => {
         dispatch(setSelectConfig(val));
         dispatch(setIsWizardTouched(true));

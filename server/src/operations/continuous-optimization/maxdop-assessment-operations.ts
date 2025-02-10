@@ -97,7 +97,7 @@ async function calculateMaxDOPDrift(
             recommended: recommendedMaxDOP,
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
-            current: current.toString(),
+            current: current?.toString(),
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
         };
         return maxDOPResponse;
@@ -129,7 +129,7 @@ async function managedHostsMaxDOPAssessment(
         parentJobId
     });
 
-    const { id: rssConfigAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
+    const { id: maxDopAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
         name: `Microsoft SQL server MaxDOP assessment for ${resourceName} in EC2 instance ${activeNodeInstanceId}`,
         description: `Microsoft SQL server MaxDOP assessment for ${resourceName}`,
         resourceName,
@@ -160,7 +160,7 @@ async function managedHostsMaxDOPAssessment(
 
         jobStatus = JOBSTATUS.FAILED;
     } finally {
-        await updateJobDetails(accountId, rssConfigAssessmentJobId, {
+        await updateJobDetails(accountId, maxDopAssessmentJobId, {
             endTime: Date.now(),
             status: jobStatus || JOBSTATUS.COMPLETED,
             error: errorMessage
@@ -210,7 +210,7 @@ async function runMaxDOPAssessment(
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     return {
-        current: maxDOP.toString(),
+        current: maxDOP?.toString(),
         recommendedMaxDOP,
         status: optimizationStatus
     };

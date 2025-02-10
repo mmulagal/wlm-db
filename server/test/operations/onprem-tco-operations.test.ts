@@ -1,6 +1,6 @@
 import { listOnPremDatabaseResources } from '../../src/lib/database/onprem-tco';
 import {
-    getLicenseRecommendations,
+    getOnpremLicenseRecommendations,
     deriveEbsVolumesListForMarketing,
     deriveHostConfigBasedInstanceType,
     deriveInstanceRequirements,
@@ -216,9 +216,10 @@ describe('onPrem TCO operations', () => {
             }
         ];
 
-        const { primaryEbsVolumes } = deriveEbsVolumesListForMarketing(reportData.sqlServerInfo) || {};
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.throughput).toBeUndefined();
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp2')?.volumeIops).toBeUndefined();
+        const { primaryEbsVolumes } =
+            deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, reportData.sqlServerInfo) || {};
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp3')?.throughput).toBeDefined();
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp3')?.volumeIops).toBeDefined();
         expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 
@@ -228,7 +229,7 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should return false if any SQL instance is not using enterprise features', () => {
-        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(
+        const { currentLicenseEdition, recommendedLicenseEdition } = getOnpremLicenseRecommendations(
             reportData.sqlServerInfo
         );
         expect(currentLicenseEdition).toBeDefined();
@@ -258,9 +259,9 @@ describe('onPrem TCO operations', () => {
                 deploymentType: 'fci'
             }
         ];
-        const { currentLicenseEdition, recommendedLicenseEdition } = getLicenseRecommendations(sqlServerInfo);
+        const { currentLicenseEdition, recommendedLicenseEdition } = getOnpremLicenseRecommendations(sqlServerInfo);
         expect(recommendedLicenseEdition).toEqual('Standard Edition');
-        expect(currentLicenseEdition).toEqual('Standard Edition');
+        expect(currentLicenseEdition).toEqual('Enterprise Evaluation Edition (64-bit)');
     });
 
     it('should derive the correct instance requirements based on SQL instance details', () => {

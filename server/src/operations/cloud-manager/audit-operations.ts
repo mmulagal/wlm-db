@@ -24,6 +24,7 @@ import {
     UpdateAuditGroupSchema,
     UpdateAuditGroupSchemaType
 } from '../../routes/schemas/audit-schema';
+import getActionName from '../../utils/audit-action-names';
 
 const logger = getLogger();
 
@@ -95,7 +96,7 @@ async function createAuditGroup(request: FastifyRequest) {
         if (!isEmpty(schema)) {
             const auditGroup: CreateAuditGroupSchemaType = {
                 startTime: Date.now(),
-                actionName: schema?.description || 'internal',
+                actionName: getActionName(request) || schema?.description || 'internal',
                 status: AUDIT_PENDING_STATUS,
                 requestId: request.id,
                 serviceName: TIMELINE_SERVICE_NAME,

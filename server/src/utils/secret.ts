@@ -19,6 +19,7 @@ async function readSecretFromSecretManager(name: string) {
                 VersionStage: 'AWSCURRENT' // VersionStage defaults to AWSCURRENT if unspecified
             })
         );
+
         const secrets = JSON.parse(response.SecretString || '{}');
         return secrets[name];
     } catch (error) {
@@ -37,6 +38,7 @@ export default async function initiateSecrets() {
                 SECRETS[secretName] = secret;
                 if (secretName === SECRETS_MANAGER_KEYS.DATABASE_URL) {
                     process.env[SECRETS_MANAGER_KEYS.DATABASE_URL] = secret || process.env.DATABASE_URL;
+                    logger.info('<initiateSecrets> DATABASE_URL:', process.env.DATABASE_URL);
                 }
             }
         })

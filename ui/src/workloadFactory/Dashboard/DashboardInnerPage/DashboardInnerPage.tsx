@@ -60,6 +60,11 @@ import {
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import MaxDopTable from './RenderTables/MaxDopTable';
+import MicrosoftSQLPatchTable from './RenderTables/MicrosoftSQLPatchTable';
+import LicenseTable from './RenderTables/LicenseTable';
+import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
+import OSPatchTable from './RenderTables/OSPatchTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -256,11 +261,15 @@ const DashboardInnerPage = () => {
                     [type]: [...(inProgressHostData[type] || []), ...hostIds]
                 })
             );
-            const instances = payload.hostsToOptimize[0].databaseHosts.flatMap((host: any) => host.sqlServerInstances);
+            const hostinstances = payload.hostsToOptimize.flatMap((host: any) =>
+                host.databaseHosts.flatMap((databaseHost: any) =>
+                    databaseHost.sqlServerInstances.map((instance: any) => `${databaseHost.id}_${instance}`)
+                )
+            );
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: [...(inProgressOptimizationData[type] || []), ...instances]
+                    [type]: [...(inProgressOptimizationData[type] || []), ...hostinstances]
                 })
             );
         } else {
@@ -273,7 +282,10 @@ const DashboardInnerPage = () => {
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: [...(inProgressOptimizationData[type] || []), selectedDatabaseInstance]
+                    [type]: [
+                        ...(inProgressOptimizationData[type] || []),
+                        selectedResourceId + '_' + selectedDatabaseInstance
+                    ]
                 })
             );
         }
@@ -613,8 +625,8 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.host_os_patch?.recommendation?.description
@@ -627,11 +639,11 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '450px',
+                    tagHeight: '547px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.rss_config?.recommendation?.description
+                        descriptionRssConfig: cardDataDefault?.rss_config?.recommendation?.descriptionRssConfig
                     }
                 });
                 break;
@@ -641,12 +653,9 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.sql_licenses?.recommendation?.description
-                    }
+                    cardHeight: '228px',
+                    tagHeight: '325px',
+                    data: cardDataDefault?.sql_licenses?.recommendation
                 });
                 break;
             case GENERAL.MICROSOFT_SQL_PATCH:
@@ -655,8 +664,8 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '160px',
+                    tagHeight: '257px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
@@ -669,11 +678,11 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '216px',
+                    tagHeight: '313px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.maxdop?.recommendation?.description
+                        description: cardDataDefault?.maxdop?.recommendation?.descriptionRssConfig?.first
                     }
                 });
                 break;
@@ -694,7 +703,7 @@ const DashboardInnerPage = () => {
                     rowData,
                     selectedRowsForOptimize
                 );
-                const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.instanceId);
+                const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.id);
                 return (
                     <div className={styles.buttonContainer}>
                         {isInProgress ? (
@@ -762,6 +771,16 @@ const DashboardInnerPage = () => {
                 return <OntapConfig />;
             case 'Operating system':
                 return <OperatingSystemTable />;
+            case 'MAXDOP':
+                return <MaxDopTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                return <MicrosoftSQLPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.LICENSE_SQL_SERVER:
+                return <LicenseTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.RSS_CONFIGURATION:
+                return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
 

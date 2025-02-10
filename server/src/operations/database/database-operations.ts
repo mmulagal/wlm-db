@@ -30,8 +30,15 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
     logger.info('Load individual saved config ', accountId);
     try {
         const [
-            { user, creation_time: creationTime, data, name, modified_time: modifiedTime, database_type: databaseType }
-        ] = await listConfig(accountId, id);
+            {
+                user = '',
+                creation_time: creationTime,
+                data,
+                name = '',
+                modified_time: modifiedTime,
+                database_type: databaseType
+            } = {}
+        ] = (await listConfig(accountId, id)) || [];
         return {
             accountId,
             id,

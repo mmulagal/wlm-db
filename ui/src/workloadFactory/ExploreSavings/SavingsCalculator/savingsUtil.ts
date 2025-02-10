@@ -218,7 +218,7 @@ export const calculatedFSXData = (fsxData: any, storageType: string, selectedExp
                 : GENERAL.NOT_AVAILABLE,
             text:
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                    ? `For Fci: According to On-Premises total capacity of primary database volumes.`
+                    ? `According to on-premises total capacity of primary database volumes.`
                     : `According to ${storageType} total capacity of primary database volumes.`
         },
 
@@ -334,7 +334,9 @@ export const MSSQLServerInstanceForOnPremise = (sqlData: any, storageType: strin
             label: 'Database edition',
             value: sqlData?.serverEdition || GENERAL.NOT_AVAILABLE,
             text: sqlData?.editionUpgradeCheck
-                ? `Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.`
+                ? sqlData?.serverInstallationMode?.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                    ? `Enterprise features are not in use. Failover cluster instance (FCI) is selected as the deployment mode because it doesn’t require an Enterprise license.`
+                    : `Enterprise features are not in use. Standalone is selected as the deployment mode because it doesn’t require an Enterprise license.`
                 : `The selected database edition is based on the source on-premises SQL Server database.`
         },
         {
@@ -369,84 +371,53 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
         storageType = GENERAL.FSX_FOR_WINDOWS;
     }
+    const machineDetailsList = [];
+
+    viewCalculation?.fsxInstanceCalculation?.forEach((calculation: any, index: number) => {
+        machineDetailsList.push(
+            { label: `Machine ${index + 1} specification` },
+            {
+                label: 'Instance type',
+                value: `${calculation?.instanceType}`,
+                text:
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                        ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                        : ''
+            },
+            {
+                label: 'SQL edition',
+                value: `${calculation?.sqlEdition}`,
+                text: ''
+            },
+            {
+                label: 'SQL license included',
+                value: `${calculation?.sqlLicense}`,
+                text: ''
+            },
+            { label: `Machine ${index + 1} pricing calculations` },
+            {
+                label: 'Instance hourly price',
+                value: `${calculation?.computeHourlyPrice}`,
+                text: 'Instance hourly price with SQL license included'
+            },
+            {
+                label: `EC2 machine${index + 1} cost`,
+                value: `${calculation?.instanceMonthlyPrice}`,
+                text: `Instance hourly price x number of hours in a month = ${calculation?.computeHourlyPrice} x ${calculation?.hoursInAMonth}`
+            }
+        );
+    });
+
+    machineDetailsList.push({
+        label: 'EC2 machines total cost',
+        value: `$${viewCalculation?.totalFsxEc2MachineCost}`,
+        text: ''
+    });
+
     return {
         Ec2InstanceCalculation:
             deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                ? [
-                      {
-                          label: 'Machine 1 specification'
-                      },
-                      {
-                          label: 'Instance type',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceType}`,
-                          text:
-                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                  : ''
-                      },
-                      {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.sqlEdition}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.sqlLicense}`,
-                          text: ''
-                      },
-                      {
-                          label: 'Machine 1 pricing calculations'
-                      },
-                      {
-                          label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: 'Instance hourly price with SQL license included'
-                      },
-                      {
-                          label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[0]?.hoursInAMonth}`
-                      },
-                      {
-                          label: 'Machine 2 specification'
-                      },
-                      {
-                          label: 'Instance type',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceType}`,
-                          text:
-                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                  : ''
-                      },
-                      {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.sqlEdition}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.sqlLicense}`,
-                          text: ''
-                      },
-                      {
-                          label: 'Machine 2 pricing calculations'
-                      },
-                      {
-                          label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.computeHourlyPrice}`,
-                          text: 'Instance hourly price with SQL license included'
-                      },
-                      {
-                          label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.fsxInstanceCalculation?.[1]?.hoursInAMonth}`
-                      },
-                      {
-                          label: 'EC2 machines total cost',
-                          value: `$${viewCalculation.totalFsxEc2MachineCost}`,
-                          text: ''
-                      }
-                  ]
+                ? machineDetailsList
                 : [
                       {
                           label: 'Machine 1 specification'
@@ -824,84 +795,54 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
     ) {
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
+
+    const machineDetailsList = [];
+
+    viewCalculation?.ebsInstanceCalculation?.forEach((calculation: any, index: number) => {
+        machineDetailsList.push(
+            { label: `Machine ${index + 1} specification` },
+            {
+                label: 'Instance type',
+                value: `${calculation?.instanceType}`,
+                text:
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                        ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                        : ''
+            },
+            {
+                label: 'SQL edition',
+                value: `${calculation?.sqlEdition}`,
+                text: ''
+            },
+            {
+                label: 'SQL license included',
+                value: `${calculation?.sqlLicense}`,
+                text: ''
+            },
+            { label: `Machine ${index + 1} pricing calculations` },
+            {
+                label: 'Instance hourly price',
+                value: `${calculation?.computeHourlyPrice}`,
+                text: 'Instance hourly price with SQL license included'
+            },
+            {
+                label: `EC2 machine${index + 1} cost`,
+                value: `${calculation?.instanceMonthlyPrice}`,
+                text: `Instance hourly price x number of hours in a month = ${calculation?.computeHourlyPrice} x ${calculation?.hoursInAMonth}`
+            }
+        );
+    });
+
+    machineDetailsList.push({
+        label: 'Total EC2 machines cost',
+        value: `$${viewCalculation?.totalEBSEc2MachineCost}`,
+        text: ''
+    });
+
     return {
         Ec2InstanceCalculation:
             deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                ? [
-                      {
-                          label: 'Machine 1 specification'
-                      },
-                      {
-                          label: 'Instance type',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceType}`,
-                          text:
-                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                  : ''
-                      },
-                      {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.sqlEdition}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.sqlLicense}`,
-                          text: ''
-                      },
-                      {
-                          label: 'Machine 1 pricing calculations'
-                      },
-                      {
-                          label: 'Instance hourly price',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: 'Instance hourly pricing with SQL license included'
-                      },
-                      {
-                          label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[0]?.hoursInAMonth}`
-                      },
-                      {
-                          label: 'Machine 2 specification'
-                      },
-                      {
-                          label: 'Instance type',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceType}`,
-                          text:
-                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                  : ''
-                      },
-                      {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.sqlEdition}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.sqlLicense}`,
-                          text: ''
-                      },
-                      {
-                          label: 'Machine 2 pricing calculations'
-                      },
-                      {
-                          label: 'Instance hourly price',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice}`,
-                          text: 'Instance hourly pricing with SQL license included'
-                      },
-                      {
-                          label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.ebsInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.ebsInstanceCalculation?.[1]?.hoursInAMonth}`
-                      },
-                      {
-                          label: 'Total EC2 machines cost',
-                          value: `$${viewCalculation.totalEBSEc2MachineCost}`,
-                          text: ''
-                      }
-                  ]
+                ? machineDetailsList
                 : [
                       {
                           label: 'Machine 1 specification'
@@ -1284,78 +1225,50 @@ export const viewCalculationForFsxw = (viewCalculation: any, selectedDeploymentM
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
 
+    const machineDetailsList = [];
+
+    viewCalculation?.fsxwInstanceCalculation?.forEach((calculation: any, index: number) => {
+        machineDetailsList.push(
+            { label: `Machine ${index + 1} specification` },
+            {
+                label: 'Instance type',
+                value: `${calculation?.instanceType}`,
+                text: ''
+            },
+            {
+                label: 'SQL edition',
+                value: `${calculation?.sqlEdition}`,
+                text: ''
+            },
+            {
+                label: 'SQL license included',
+                value: `${calculation?.sqlLicense}`,
+                text: ''
+            },
+            { label: `Machine ${index + 1} pricing calculations` },
+            {
+                label: 'Instance hourly price',
+                value: `${calculation?.computeHourlyPrice}`,
+                text: 'Instance hourly price with SQL license included'
+            },
+            {
+                label: `EC2 machine${index + 1} cost`,
+                value: `${calculation?.instanceMonthlyPrice}`,
+                text: `Instance hourly price x number of hours in a month = ${calculation?.computeHourlyPrice} x ${calculation?.hoursInAMonth}`
+            }
+        );
+    });
+
+    machineDetailsList.push({
+        label: 'Total EC2 machines cost',
+        value: `$${viewCalculation?.totalFsxwEc2MachineCost}`,
+        text: ''
+    });
+
     return {
         Ec2InstanceCalculation:
             deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                ? [
-                      {
-                          label: 'Machine 1 specification'
-                      },
-                      {
-                          label: 'Instance type',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.instanceType}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.sqlEdition}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.sqlLicense}`,
-                          text: ''
-                      },
-                      {
-                          label: 'Machine 1 pricing calculations'
-                      },
-                      {
-                          label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: 'Instance hourly pricing with SQL license included'
-                      },
-                      {
-                          label: 'EC2 machine1 cost',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[0]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxwInstanceCalculation?.[0]?.computeHourlyPrice} x ${viewCalculation.fsxwInstanceCalculation?.[0]?.hoursInAMonth}`
-                      },
-                      {
-                          label: 'Machine 2 specification'
-                      },
-                      {
-                          label: 'Instance type',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.instanceType}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.sqlEdition}`,
-                          text: ''
-                      },
-                      {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.sqlLicense}`,
-                          text: ''
-                      },
-                      {
-                          label: 'Machine 2 pricing calculations'
-                      },
-                      {
-                          label: 'Instance hourly price',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.computeHourlyPrice}`,
-                          text: 'Instance hourly pricing with SQL license included'
-                      },
-                      {
-                          label: 'EC2 machine2 cost',
-                          value: `${viewCalculation.fsxwInstanceCalculation?.[1]?.instanceMonthlyPrice}`,
-                          text: `Instance hourly price x number of hours in a month = ${viewCalculation.fsxwInstanceCalculation?.[1]?.computeHourlyPrice} x ${viewCalculation.fsxwInstanceCalculation?.[1]?.hoursInAMonth}`
-                      },
-                      {
-                          label: 'Total EC2 machines cost',
-                          value: `$${viewCalculation.totalFsxwEc2MachineCost}`,
-                          text: ''
-                      }
-                  ]
+                ? machineDetailsList
                 : [
                       {
                           label: 'Machine 1 specification'

@@ -2062,5 +2062,61 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "getInstalledSQLPatchesCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
+        "Comment": "Get MaxDOP and VCPU details",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT2.193S",
+        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
+        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
+        "InstanceId": "i-05978dd409ce8e0e6",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"installedPatches\":[{\"DisplayName\":\"Hotfix 4003 for SQL Server 2019 (KB4527376) (64-bit)\",\"DisplayVersion\":\"15.0.4003.23\",\"InstallDate\":\"20200205\"},{\"DisplayName\":\"Hotfix 4033 for SQL Server 2019 (KB4548597) (64-bit)\",\"DisplayVersion\":\"15.0.4033.1\",\"InstallDate\":\"20200415\"},{\"DisplayName\":\"Hotfix 4043 for SQL Server 2019 (KB4552255) (64-bit)\",\"DisplayVersion\":\"15.0.4043.16\",\"InstallDate\":\"20200715\"},{\"DisplayName\":\"Hotfix 4053 for SQL Server 2019 (KB4563110) (64-bit)\",\"DisplayVersion\":\"15.0.4053.23\",\"InstallDate\":\"20200812\"},{\"DisplayName\":\"Hotfix 4073 for SQL Server 2019 (KB4577194) (64-bit)\",\"DisplayVersion\":\"15.0.4073.23\",\"InstallDate\":\"20201112\"},{\"DisplayName\":\"Hotfix 4083 for SQL Server 2019 (KB4583459) (64-bit)\",\"DisplayVersion\":\"15.0.4083.2\",\"InstallDate\":\"20210210\"},{\"DisplayName\":\"Hotfix 4102 for SQL Server 2019 (KB5000642) (64-bit)\",\"DisplayVersion\":\"15.0.4102.2\",\"InstallDate\":\"20210311\"},{\"DisplayName\":\"Hotfix 4123 for SQL Server 2019 (KB5001090) (64-bit)\",\"DisplayVersion\":\"15.0.4123.1\",\"InstallDate\":\"20210512\"},{\"DisplayName\":\"Hotfix 4138 for SQL Server 2019 (KB5003249) (64-bit)\",\"DisplayVersion\":\"15.0.4138.2\",\"InstallDate\":\"20210811\"},{\"DisplayName\":\"Hotfix 4153 for SQL Server 2019 (KB5004524) (64-bit)\",\"DisplayVersion\":\"15.0.4153.1\",\"InstallDate\":\"20210915\"},{\"DisplayName\":\"Hotfix 4178 for SQL Server 2019 (KB5005679) (64-bit)\",\"DisplayVersion\":\"15.0.4178.1\",\"InstallDate\":\"20211215\"},{\"DisplayName\":\"Hotfix 4188 for SQL Server 2019 (KB5007182) (64-bit)\",\"DisplayVersion\":\"15.0.4188.2\",\"InstallDate\":\"20220112\"},{\"DisplayName\":\"Hotfix 4198 for SQL Server 2019 (KB5008996) (64-bit)\",\"DisplayVersion\":\"15.0.4198.2\",\"InstallDate\":\"20220309\"},{\"DisplayName\":\"Hotfix 4223 for SQL Server 2019 (KB5011644) (64-bit)\",\"DisplayVersion\":\"15.0.4223.1\",\"InstallDate\":\"20220511\"},{\"DisplayName\":\"Hotfix 4236 for SQL Server 2019 (KB5014353) (64-bit)\",\"DisplayVersion\":\"15.0.4236.7\",\"InstallDate\":\"20220713\"},{\"DisplayName\":\"Hotfix 4249 for SQL Server 2019 (KB5016394) (64-bit)\",\"DisplayVersion\":\"15.0.4249.2\",\"InstallDate\":\"20220914\"},{\"DisplayName\":\"Hotfix 4261 for SQL Server 2019 (KB5017593) (64-bit)\",\"DisplayVersion\":\"15.0.4261.1\",\"InstallDate\":\"20221110\"},{\"DisplayName\":\"Hotfix 4298 for SQL Server 2019 (KB5023049) (64-bit)\",\"DisplayVersion\":\"15.0.4298.1\",\"InstallDate\":\"20250128\"},{\"DisplayName\":\"Hotfix 4312 for SQL Server 2019 (KB5024276) (64-bit)\",\"DisplayVersion\":\"15.0.4312.2\",\"InstallDate\":\"20230511\"},{\"DisplayName\":\"Hotfix 4316 for SQL Server 2019 (KB5025808) (64-bit)\",\"DisplayVersion\":\"15.0.4316.3\",\"InstallDate\":\"20230712\"},{\"DisplayName\":\"Hotfix 4322 for SQL Server 2019 (KB5027702) (64-bit)\",\"DisplayVersion\":\"15.0.4322.2\",\"InstallDate\":\"20230913\"},{\"DisplayName\":\"Hotfix 4335 for SQL Server 2019 (KB5030333) (64-bit)\",\"DisplayVersion\":\"15.0.4335.1\",\"InstallDate\":\"20231213\"},{\"DisplayName\":\"Hotfix 4345 for SQL Server 2019 (KB5031908) (64-bit)\",\"DisplayVersion\":\"15.0.4345.5\",\"InstallDate\":\"20240110\"},{\"DisplayName\":\"Hotfix 4355 for SQL Server 2019 (KB5033688) (64-bit)\",\"DisplayVersion\":\"15.0.4355.3\",\"InstallDate\":\"20240313\"},{\"DisplayName\":\"Hotfix 4365 for SQL Server 2019 (KB5035123) (64-bit)\",\"DisplayVersion\":\"15.0.4365.2\",\"InstallDate\":\"20240515\"},{\"DisplayName\":\"Hotfix 4375 for SQL Server 2019 (KB5037331) (64-bit)\",\"DisplayVersion\":\"15.0.4375.4\",\"InstallDate\":\"20240710\"},{\"DisplayName\":\"Hotfix 4385 for SQL Server 2019 (KB5039747) (64-bit)\",\"DisplayVersion\":\"15.0.4385.2\",\"InstallDate\":\"20240814\"},{\"DisplayName\":\"Hotfix 4390 for SQL Server 2019 (KB5042749) (64-bit)\",\"DisplayVersion\":\"15.0.4390.2\",\"InstallDate\":\"20240911\"},{\"DisplayName\":\"Hotfix 4395 for SQL Server 2019 (KB5046060) (64-bit)\",\"DisplayVersion\":\"15.0.4395.2\",\"InstallDate\":\"20241009\"},{\"DisplayName\":\"Hotfix 4410 for SQL Server 2019 (KB5046860) (64-bit)\",\"DisplayVersion\":\"15.0.4410.1\",\"InstallDate\":\"20241114\"},{\"DisplayName\":\"Hotfix 4415 for SQL Server 2019 (KB5049235) (64-bit)\",\"DisplayVersion\":\"15.0.4415.2\",\"InstallDate\":\"20241212\"}]}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getInstalledSQLVersionCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
+        "Comment": "Get MaxDOP and VCPU details",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT2.193S",
+        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
+        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
+        "InstanceId": "i-05978dd409ce8e0e6",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"version\":\"Microsoft SQL Server 2019 (RTM-CU19) (KB5023049) - 15.0.4298.1 (X64) \\n\\tJan 27 2023 16:44:09 \\n\\tCopyright (C) 2019 Microsoft Corporation\\n\\tStandard Edition (64-bit) on Windows Server 2019 Datacenter 10.0 \\u003cX64\\u003e (Build 17763: ) (Hypervisor)\\n\"}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

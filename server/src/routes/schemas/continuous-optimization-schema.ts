@@ -15,7 +15,6 @@ import {
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
-    BulkOptimizeStorageRequestBody,
     BulkOptimizeGeneralRequestBody
 } from '../types/continuous-optimization.types';
 
@@ -56,7 +55,7 @@ const DriftAssessmentPerHost = {
 
 const TriggerDriftAssessmentSchema = {
     ...resourceRequest,
-    summary: 'Trigger assessment',
+    summary: 'Trigger assessment for a database instance',
     description: 'Trigger assessment for best practice misalignments on a managed database instance',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
@@ -73,7 +72,7 @@ const OptimizeStorageSchemaDescription =
 
 const OptimizeStorageSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage',
+    summary: 'Optimize storage for a database instance',
     description: OptimizeStorageSchemaDescription,
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
@@ -87,7 +86,7 @@ const OptimizeStorageSchema = {
 
 const OptimizeSizingSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage sizing',
+    summary: 'Optimize storage sizing for a database instance',
     description: 'Optimize sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeSizingRequestBody,
@@ -101,7 +100,7 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Optimize compute',
+    summary: 'Optimize compute for a database instance',
     description: 'Optimize compute as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
@@ -115,7 +114,7 @@ const OptimizeComputeSchema = {
 
 const OptimizeOperatingSystemSchema = {
     ...resourceRequest,
-    summary: 'Optimize MPIO settings',
+    summary: 'Optimize MPIO settings for a database instance',
     description: 'Optimize MPIO settings parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
@@ -129,7 +128,7 @@ const OptimizeOperatingSystemSchema = {
 
 const OptimizeStorageTierSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage-tier settings',
+    summary: 'Optimize storage-tier settings for a database instance',
     description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
@@ -152,25 +151,8 @@ const DriftAssessmentPerAccount = {
     }
 };
 
-const BulkOptimizeStorageSchema = {
-    ...resourceRequest,
-    summary: 'Optimize storage configuration parameters',
-    description: OptimizeStorageSchemaDescription,
-    params: CredentialsIdParams,
-    tags: [RouteTags.ASSESSMENT],
-    body: BulkOptimizeStorageRequestBody,
-    response: {
-        200: Type.Object({
-            jobId: Type.String()
-        })
-    }
-};
-
 const BulkOptimizeGeneralSchema = {
     ...resourceRequest,
-    summary: 'Optimize storage-sizing/mpio settings/storage-tier/compute settings',
-    description:
-        'Optimize storage-sizing/mpio settings/storage-tier/compute parameters as per the best practice for selected database instances.',
     params: CredentialsIdParams,
     tags: [RouteTags.ASSESSMENT],
     body: BulkOptimizeGeneralRequestBody,
@@ -181,6 +163,29 @@ const BulkOptimizeGeneralSchema = {
     }
 };
 
+const BulkOptimizeStorageSizingSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize storage-sizing',
+    description: 'Optimize storage-sizing as per the best practice for selected database instances.'
+};
+
+const BulkOptimizeOperatingSystemSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize MPIO settings',
+    description: 'Optimize mpio settings parameters as per the best practice for selected database instances.'
+};
+
+const BulkOptimizeStorageTierSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize storage-tier',
+    description: 'Optimize storage-tier parameters as per the best practice for selected database instances.'
+};
+
+const BulkOptimizeComputeSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize compute',
+    description: 'Optimize compute parameters as per the best practice for selected database instances.'
+};
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -191,6 +196,8 @@ export {
     DriftAssessmentPerHost,
     OptimizeStorageTierSchema,
     DriftAssessmentPerAccount,
-    BulkOptimizeStorageSchema,
-    BulkOptimizeGeneralSchema
+    BulkOptimizeStorageSizingSchema,
+    BulkOptimizeOperatingSystemSchema,
+    BulkOptimizeStorageTierSchema,
+    BulkOptimizeComputeSchema
 };

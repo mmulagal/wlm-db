@@ -537,6 +537,25 @@ const AWS_REGIONS = new Map<string, string>([
     ['ca-west-1', 'Canada (Calgary)']
 ]);
 
+const IO2_AVAILABLE_REGIONS = [
+    'us-east-2',
+    'us-east-1',
+    'us-west-1',
+    'us-west-2',
+    'ap-east-1',
+    'ap-south-1',
+    'ap-northeast-2',
+    'ap-southeast-1',
+    'ap-southeast-2',
+    'ap-northeast-1',
+    'ca-central-1',
+    'eu-central-1',
+    'eu-west-1',
+    'eu-west-2',
+    'eu-north-1',
+    'me-south-1'
+]; // https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html Considerations io2 Block Express volumes are available in the following Regions: US East (Ohio) | US East (N. Virginia) | US West (N. California) | US West (Oregon) | Asia Pacific (Hong Kong) | Asia Pacific (Mumbai) | Asia Pacific (Seoul) | Asia Pacific (Singapore) | Asia Pacific (Sydney) | Asia Pacific (Tokyo) | Canada (Central) | Europe (Frankfurt) | Europe (Ireland) | Europe (London) | Europe (Stockholm) | Middle East (Bahrain).
+
 const WLMDB = 'wlmdb';
 const INITIALIZER = 'initializer';
 const MSSQL = 'mssql';
@@ -1223,6 +1242,7 @@ const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '600';
 
 const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
 
@@ -1515,9 +1535,12 @@ const PGSQL_CW_CONFIG = `{
                                 }
 `;
 
+const SQL_CASE_INSENSITIVE = 'collate SQL_Latin1_General_CP1_CI_AS';
+
 export {
     WLMDB,
     AWS_REGIONS,
+    IO2_AVAILABLE_REGIONS,
     AWS_RESOURCES_ACTION_MAP,
     SERVICE_QUOTAS_ACTION_NAMES,
     SERVICE_QUOTAS,
@@ -1835,5 +1858,7 @@ export {
     AWS_ERROR_CODES,
     CF_STACK_COUNT_QUOTACODE,
     DATABASE_INSTANCE_INDEX_MAPPING,
-    PGSQL_CW_CONFIG
+    PGSQL_CW_CONFIG,
+    SQL_CASE_INSENSITIVE,
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT
 };

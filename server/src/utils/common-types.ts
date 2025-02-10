@@ -48,13 +48,15 @@ interface MSSQLPatchAssessmentObject {
     ec2InstanceId: string;
     importantMissingPatchesCount: number;
     missingPatchesCount: number;
-    missingPatchDetails?: {
-        classification?: string;
-        kbId?: string;
-        severity?: string;
-        state?: string;
-        title?: string;
-    }[];
+    missingPatchDetails?: PatchDetail[];
+}
+
+interface PatchDetail {
+    classification?: string;
+    severity?: string;
+    releaseDate?: string;
+    title?: string;
+    kbId?: string;
 }
 
 interface RssAdapter {
@@ -384,6 +386,9 @@ interface StorageAssessment {
         'mpio-policy': string;
         'iscsi-sessions': string;
         'ntfs-allocation': string;
+        'tempdb-files-location': string;
+        'default-log-files-location': string;
+        'default-data-files-location': string;
     };
 }
 
@@ -504,5 +509,6 @@ export {
     SessionsCountPerIscsiTarget,
     PgSqlInstanceDetails,
     RssConfigAssesment,
-    MaxDOPAssesment
+    MaxDOPAssesment,
+    PatchDetail
 };

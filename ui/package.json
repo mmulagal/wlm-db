@@ -17,6 +17,7 @@
         "fflate": "^0.8.2",
         "jspdf": "^2.5.2",
         "jszip": "^3.10.1",
+        "react-collapse": "^5.1.1",
         "classnames": "^2.2.6",
         "lodash": "^4.17.14",
         "moment": "^2.30.1",
@@ -33,10 +34,10 @@
         "sanitize-html": "^2.14.0",
         "style-inject": "^0.3.0",
         "vite": "^6.0.7",
-        "vite-plugin-css-injected-by-js": "^3.5.2",
         "vite-plugin-eslint": "^1.8.1",
         "vite-tsconfig-paths": "^5.1.4",
-        "web-vitals": "^4.2.4"
+        "web-vitals": "^4.2.4",
+        "uuid": "^9.0.0"
     },
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 VITE_APP_USE_CM_FORWARDER=false vite",
@@ -84,10 +85,12 @@
         "ejs": "^3.1.9",
         "eslint": "^9.18.0",
         "eslint-config-react-app": "^7.0.1",
+        "@types/react-collapse": "^5.0.1",
         "jest-teamcity-reporter": "^0.9.0",
         "jsdom": "^25.0.1",
         "sass": "^1.83.0",
         "typescript": "^5.7.3",
+        "@types/uuid": "^9.0.3",
         "vite-plugin-version-mark": "^0.1.4",
         "vitest": "^2.1.8"
     },

@@ -68,6 +68,7 @@ import SavingsCalculator from '../../ExploreSavings/SavingsCalculator/SavingsCal
 import ViewCalculations from '../../ExploreSavings/ViewCalculations/ViewCalculations';
 import SavingsCalculatorApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorApi';
 import {
+    addExploreSavingsInitialData,
     setSavingsCalculatorFrom,
     setSavingsCalculatorRefresh
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -195,7 +196,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                             replace: true
                         }
                     });
-
+                    console.log('coming here inside if else in header');
                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM));
                     setExploreSavingsSubTab(WLF_TABS.EXPLORE_SAVINGS_ONPREM, dispatch);
                 }
@@ -313,6 +314,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
+        dispatch(addExploreSavingsInitialData(null));
         handleURL(value, isWorkloadFactory);
     };
 
@@ -388,16 +390,24 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Credential"
                         isSearchable={generateAWSAccounts.length > 5}
                         options={generateAWSAccounts}
+                        className={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                                ? styles.regionSelect
+                                : ''
+                        }
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                         }
                         isDisabled={
                             (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                         }
                     />
                 </div>
@@ -430,16 +440,24 @@ const HeaderComponent = ({ tab }: Tab) => {
                         placeholder="Select a Region"
                         isSearchable={generateRegionsData.length > 5}
                         options={generateRegionsData}
+                        className={
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+                                ? styles.regionSelect
+                                : ''
+                        }
                         isReadOnly={
                             selectedHeaderTab === WLF_TABS.OVERVIEW ||
                             selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
-                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                            selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                         }
                         isDisabled={
                             (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
                                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                            selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
                         }
                     />
                 </div>

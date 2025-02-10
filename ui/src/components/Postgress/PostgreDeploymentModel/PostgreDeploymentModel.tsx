@@ -7,15 +7,21 @@ import { useDispatch } from 'react-redux';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
-import { setPostgreDeploymentType } from '../../../store/postgre/postgreFormSlice';
+import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlice';
 
 const PostgreDeploymentModel = () => {
     const dispatch = useDispatch();
-    const deploymentModel = useAppSelector(state => state.postgreForm.postgreDeploymentType);
+    const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     //Set the Header text here
     const setHeader = () => {
-        return <Typography variant="Regular_14">{deploymentModel}</Typography>;
+        return (
+            <Typography variant="Regular_14">
+                {deploymentModel?.label === GENERAL.FAILOVER_CLUSTER
+                    ? GENERAL.HIGH_AVAILABILITY
+                    : GENERAL.STANDALONE_INSTANCE}
+            </Typography>
+        );
     };
     return (
         <div className={styles['db-deployment']}>
@@ -28,9 +34,14 @@ const PostgreDeploymentModel = () => {
                     <Typography>
                         <div className={styles.failOver}>
                             <RadioButton
-                                isChecked={deploymentModel === GENERAL.STANDALONE_INSTANCE}
+                                isChecked={deploymentModel?.label === GENERAL.SINGLE_INSTANCE}
                                 onChange={() => {
-                                    dispatch(setPostgreDeploymentType(GENERAL.STANDALONE_INSTANCE));
+                                    dispatch(
+                                        setSelectedDBDeploymentModel({
+                                            label: GENERAL.SINGLE_INSTANCE,
+                                            value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                                        })
+                                    );
                                 }}
                                 children={GENERAL.STANDALONE_INSTANCE}
                                 className={styles.radio}
@@ -44,13 +55,17 @@ const PostgreDeploymentModel = () => {
 
                         <div className={styles.failOver}>
                             <RadioButton
-                                isChecked={deploymentModel === GENERAL.HIGH_AVAILABILITY}
+                                isChecked={deploymentModel?.label === GENERAL.FAILOVER_CLUSTER}
                                 onChange={() => {
-                                    dispatch(setPostgreDeploymentType(GENERAL.HIGH_AVAILABILITY));
+                                    dispatch(
+                                        setSelectedDBDeploymentModel({
+                                            label: GENERAL.FAILOVER_CLUSTER,
+                                            value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                                        })
+                                    );
                                 }}
                                 children={GENERAL.HIGH_AVAILABILITY}
                                 className={styles.radio}
-                                isDisabled={true}
                             />
                             <Typography
                                 variant="Regular_14"

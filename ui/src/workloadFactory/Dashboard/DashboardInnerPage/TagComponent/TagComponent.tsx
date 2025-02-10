@@ -6,6 +6,7 @@ import Tag from '../../../../common/Tag/Tag';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type TagComponentProps = {
     tagHeight: string;
@@ -19,6 +20,8 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+            case 'MAXDOP':
+            case GENERAL.RSS_CONFIGURATION:
                 setTagData(['Performance efficiency']);
                 break;
 
@@ -27,10 +30,22 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Operational excellence']);
                 break;
 
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                setTagData(['Security']);
+                break;
+
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 setTagData(['Performance efficiency', 'Operational excellence']);
+                break;
+
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                setTagData(['Reliability', 'Security']);
+                break;
+
+            case GENERAL.LICENSE_SQL_SERVER:
+                setTagData(['Cost optimization']);
                 break;
 
             case 'ONTAP':

@@ -49,7 +49,7 @@ const ComputeRightSizingTable = ({ lastColDetails, handleBulkAction }: StorageTi
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             findingReasons: `${computeRightSizingObj?.objectsInViolation?.length || 0} Findings`,
-                            id: instanceData?.databaseInstanceId,
+                            id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[computeRightSizingObj?.status],
                             recommendationOptions: computeRightSizingObj?.recommendationOptions,

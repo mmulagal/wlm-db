@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import getLogger from '../../utils/logger';
 import { executeSSMDocumentMultipleInstances } from './ssm-operations';
-import { describeAvailablePatches, describeInstancePatchStates, describeInstancePatches } from '../../lib/aws/ssm';
+import { describeInstancePatchStates, describeInstancePatches } from '../../lib/aws/ssm';
 
 const logger = getLogger();
 
@@ -106,32 +106,4 @@ async function getInstancesPatchStatus(credentialsId: string, region: string, in
     }
 }
 
-async function getAvailablePatches(region: string) {
-    logger.info('Get Available Patch Details', { region });
-
-    const params = {
-        Filters: [
-            {
-                Key: 'PATCH_SET',
-                Values: ['APPLICATION']
-            },
-            {
-                Key: 'PRODUCT_FAMILY',
-                Values: ['SQL Server']
-            },
-            {
-                Key: 'MSRC_SEVERITY',
-                Values: ['Important', 'Critical']
-            },
-            {
-                Key: 'CLASSIFICATION',
-                Values: ['SecurityUpdates']
-            }
-        ]
-    };
-    const availablePatches = (await describeAvailablePatches(region, params)) || {};
-
-    return availablePatches;
-}
-
-export { runAwsPatchBaseline, getInstancesPatchStatus, getAvailablePatches, getMissingPatchDetails };
+export { runAwsPatchBaseline, getInstancesPatchStatus, getMissingPatchDetails };

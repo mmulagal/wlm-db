@@ -79,7 +79,6 @@ try {
     $SetupMaxDOPPs = {
         $sql = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', " + $Using:dop + "; RECONFIGURE WITH OVERRIDE; "
         try {
-            Import-Module SQLPS
             Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $sql -ServerInstance $Using:ServerInstanceName
         }
         catch {

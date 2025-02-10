@@ -11,12 +11,12 @@ type ValueCardProps = {
 const ValueCard = ({ optimizationScore, optimizedInstances, notOptimizedInstances, severity }: ValueCardProps) => {
     return (
         <div className={styles.valueCard}>
-            <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
+            {/* <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
                     {optimizationScore}
                 </DsTypography>
                 <DsTypography variant="Regular_14">Optimization score</DsTypography>
-            </div>
+            </div> */}
 
             <div className={styles.block} style={{ borderRight: '1px solid var(--border' }}>
                 <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>

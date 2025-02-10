@@ -120,19 +120,17 @@ const AdditionalMSSQLPatchParameterDriftResponse = Type.Optional(
             Type.Array(
                 Type.Object({
                     criticalMissingPatchesCount: Type.Number(),
-                    importantMissingPatchesCount: Type.Optional(Type.Number()),
+                    importantMissingPatchesCount: Type.Number(),
                     ec2InstanceId: Type.String(),
                     missingPatchesCount: Type.Number(),
-                    missingPatchDetails: Type.Optional(
-                        Type.Array(
-                            Type.Object({
-                                classification: Type.String(),
-                                kbId: Type.String(),
-                                severity: Type.String(),
-                                state: Type.String(),
-                                title: Type.String()
-                            })
-                        )
+                    missingPatchDetails: Type.Array(
+                        Type.Object({
+                            classification: Type.String(),
+                            kbId: Type.String(),
+                            severity: Type.String(),
+                            releaseDate: Type.String(),
+                            title: Type.String()
+                        })
                     )
                 })
             )
@@ -199,7 +197,7 @@ const DriftAssessmentResponse = Type.Object({
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    mssqlPatch: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
