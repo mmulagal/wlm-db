@@ -24,7 +24,7 @@ import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
 import {
-    OP_TCO_COLLECTOR_SCRIPT_PATH,
+    SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH,
     REPORTING_BUCKET,
     NETWORK_PERF,
     ONPREM_TCO_CREDENTIALS_ID
@@ -182,7 +182,7 @@ async function downloadSqlServerDataCollectorScript(accountId: string, databaseT
     logger.info('Downloading SQL Server data collector Script', { accountId, databaseType });
 
     const bucketname = getArtifactsRegionBucketName(DEFAULT_AWS_REGION);
-    const url = await getPreSignedUrl(DEFAULT_AWS_REGION, bucketname, OP_TCO_COLLECTOR_SCRIPT_PATH);
+    const url = await getPreSignedUrl(DEFAULT_AWS_REGION, bucketname, SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH);
     return {
         url
     };
