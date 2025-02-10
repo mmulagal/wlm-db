@@ -60,6 +60,7 @@ const JobMonitoringTable = React.memo(() => {
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
@@ -77,12 +78,17 @@ const JobMonitoringTable = React.memo(() => {
 
     const tableFullData = useMemo(() => {
         return jobsList.map((job: any) => {
+            const matchingEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
+
             return {
                 ...job,
-                regions: `${job?.region?.name} | ${job?.region?.code}`
+                regions: `${job?.region?.name} | ${job?.region?.code}`,
+                credName: matchingEntry ? matchingEntry.name : 'NA',
+                providerAccountId: matchingEntry ? matchingEntry.providerAccountId : 'NA'
             };
         });
-    }, [jobsList]);
+    }, [jobsList, credentialData]);
 
     const menuItems = (row: any) => {
         return [
@@ -223,46 +229,6 @@ const JobMonitoringTable = React.memo(() => {
         }
     }, [jmJobsList, jmJobsListLoading, jmJobsListError]);
 
-    const lastColDetails = () => {
-        return {
-            id: '10',
-            Header: '',
-            accessor: 'name',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'goToCf') {
-                                        handleGoToCfClick(cellData);
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            },
-            showHide: true,
-            width: '57px',
-            isSticky: true
-        };
-    };
-
     const ExpandedRow = useCallback(({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
         return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
@@ -396,14 +362,14 @@ const JobMonitoringTable = React.memo(() => {
         {
             id: '8',
             Header: 'AWS credentials',
-            accessor: 'credentialsId',
+            accessor: 'credName',
             filterOptions: 'auto',
             width: '250px'
         },
         {
             id: '9',
             Header: 'AWS Account',
-            accessor: 'accountId',
+            accessor: 'providerAccountId',
             filterOptions: 'auto',
             width: '200px'
         },
@@ -468,7 +434,7 @@ const JobMonitoringTable = React.memo(() => {
         pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: jobsListLoading,
+        isLazyLoading: jobsListLoading || credentialLoading,
         isManagedColumns: true,
         initialColumnState: initialJobMonitorColState,
         manageColumnsProps: {
