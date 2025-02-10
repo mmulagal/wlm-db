@@ -5,7 +5,7 @@
     "private": true,
     "type": "module",
     "dependencies": {
-        "@netapp/design-system": "1.5.19",
+        "@netapp/design-system": "1.5.24",
         "@netapp/icons": "^1.0.8",
         "@reduxjs/toolkit": "2.5.0",
         "@svgr/plugin-jsx": "^8.1.0",

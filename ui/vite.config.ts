@@ -6,7 +6,6 @@ import svgr from '@svgr/rollup';
 import eslint from 'vite-plugin-eslint';
 import { vitePluginVersionMark } from 'vite-plugin-version-mark';
 import { PRODUCTION } from './src/utils/consts';
-import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 
 // https://vitejs.dev/config/
 
@@ -27,7 +26,7 @@ export default defineConfig({
     plugins: [
         react(),
         eslint(),
-        cssInjectedByJsPlugin(),
+
         viteTsconfigPaths(),
         //@ts-ignore
         svgr({ plugins: ['@svgr/plugin-jsx'] }),
@@ -45,8 +44,18 @@ export default defineConfig({
     },
     build: {
         outDir: 'build',
-        sourcemap: shouldUseSourceMap
+        sourcemap: shouldUseSourceMap,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        return id.toString().split('node_modules/')[1].split('/')[0].toString();
+                    }
+                }
+            }
+        }
     },
+
     css: {
         preprocessorOptions: {
             scss: {

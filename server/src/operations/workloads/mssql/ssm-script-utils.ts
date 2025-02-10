@@ -625,7 +625,7 @@ const getMappedOntapVolumesScript = (
 "@
                     }
                 }
-                $MappedVolumesErrorFile = "C:\\cfn\\log\\mapped_volumes_err_$serverInstanceName.log"
+                $MappedVolumesErrorFile = "C:\\cfn\\log\\mapped_volumes_err_$serverInstanceName_$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds().toString()).log"
                 if ($sqlCredential.useSqlAuth -eq $True) {
                     $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlquery -y 0;
                 } else {

@@ -1,0 +1,79 @@
+{
+    "scriptVersion": "1.0.0",
+    "sqlServerInfo": [
+        {
+            "instanceGuid": "3CD4B457-0BE9-44F5-A8E5-8E44EB93D1DF",
+            "licenceUsageDetails": "[{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has \u003e 128 GB Memory\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has \u003e 48 vCPU\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"Tempdb metadata memory-optimized is enabled\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"User Databases are using Enterprise Level Features\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You are using asynchronous mirroring\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using peer-to-peer replication\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using R or Python extensions\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using Resource Governor\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You have Asynchronous commit Replicas\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You have read-only Replicas\"}]",
+            "memUtilization": "[{\"used\":9992437760,\"total\":17178845184,\"remaining\":7186407424,\"percentUsed\":58}]",
+            "noOfDatabases": "4",
+            "ownerNodes": "[{\"nodeName\":\"WLMDBFCINEW12\",\"nodeRole\":\"Primary\"},{\"nodeName\":\"WLMDBFCINEW11\",\"nodeRole\":\"Standby\"}]",
+            "sqlInstanceName": "MSSQLSERVER",
+            "sqlVersion": "Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Edition (64-bit) on Windows Server 2022 Datacenter 10.0 \u003cX64\u003e (Build 20348: ) (Hypervisor)",
+            "storageDetailsByDb": "[{\"databaseName\":\"DB1_ENG1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":5120,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":34084},{\"databaseName\":\"DB1_ENG1\",\"allocatedSizeMb\":102400,\"dataSizeMb\":0,\"logSizeMb\":1024,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":59262},{\"databaseName\":\"DB1_ENG1\",\"allocatedSizeMb\":512000,\"dataSizeMb\":5120,\"logSizeMb\":0,\"driveLetter\":\"G:\",\"driveTotalSizeMb\":61421,\"driveAvailableSizeMb\":54143},{\"databaseName\":\"DB1_ENG1\",\"allocatedSizeMb\":51200,\"dataSizeMb\":5120,\"logSizeMb\":0,\"driveLetter\":\"H:\",\"driveTotalSizeMb\":61421,\"driveAvailableSizeMb\":53119},{\"databaseName\":\"DB1_ENG2\",\"allocatedSizeMb\":10240,\"dataSizeMb\":1024,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":34084},{\"databaseName\":\"DB1_ENG2\",\"allocatedSizeMb\":10240,\"dataSizeMb\":0,\"logSizeMb\":1024,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":59262},{\"databaseName\":\"DB1_ENG2\",\"allocatedSizeMb\":20480,\"dataSizeMb\":2048,\"logSizeMb\":0,\"driveLetter\":\"G:\",\"driveTotalSizeMb\":61421,\"driveAvailableSizeMb\":54143},{\"databaseName\":\"DB1_ENG2\",\"allocatedSizeMb\":30720,\"dataSizeMb\":3072,\"logSizeMb\":0,\"driveLetter\":\"H:\",\"driveTotalSizeMb\":61421,\"driveAvailableSizeMb\":53119},{\"databaseName\":\"DB2_HR4\",\"allocatedSizeMb\":40960,\"dataSizeMb\":40960,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":34084},{\"databaseName\":\"DB2_HR4\",\"allocatedSizeMb\":20480,\"dataSizeMb\":0,\"logSizeMb\":20480,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":59262},{\"databaseName\":\"master\",\"allocatedSizeMb\":5,\"dataSizeMb\":4,\"logSizeMb\":1,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":81901,\"driveAvailableSizeMb\":34084}]",
+            "sqlEdition": "Enterprise Edition (64-bit)",
+            "iops": "[{\"writeIops\":\"      100000\",\"readIops\":\"      3000\",\"writeBytesPerSec\":\"            3602.15\",\"readBytesPerSec\":\"            850610000000.95\"}]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "vcpusPerInstance": "8",
+            "cpuUtilization": "4",
+            "deploymentType": "fci"
+        }
+    ],
+    "timestamp": "20250131114918",
+    "windowsConfig": {
+        "clusterNodeNames": ["WLMDBFCINEW11", "WLMDBFCINEW12"],
+        "nodeDetails": [
+            {
+                "ramSize": 16,
+                "hostId": "EFFE1E42-F45B-D755-970E-375B496CF6C1",
+                "networkConfiguration": [
+                    {
+                        "name": "Intel(R) 82574L Gigabit Network Connection",
+                        "speedMbps": 953.67431640625,
+                        "adapterType": "Ethernet 802.3"
+                    },
+                    {
+                        "name": "Microsoft Failover Cluster Virtual Adapter",
+                        "speedMbps": 9536.7431640625,
+                        "adapterType": "Ethernet 802.3"
+                    }
+                ],
+                "hostName": "WLMDBFCINEW11",
+                "driveDetails": {
+                    "value": "{\r\n    \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE0\",\r\n    \"model\":  \"VMware Virtual disk SCSI Disk Device\",\r\n    \"driveLetter\":  \"C:\"\r\n}",
+                    "PSComputerName": "WLMDBFCINEW11",
+                    "RunspaceId": "b6047d18-fff8-403f-9f75-66f4fac8c18d",
+                    "PSShowComputerName": true
+                },
+                "numberOfVcpus": 8,
+                "osEdition": "Microsoft Windows Server 2022 Datacenter"
+            },
+            {
+                "ramSize": 16,
+                "osEdition": "Microsoft Windows Server 2022 Datacenter",
+                "networkConfiguration": [
+                    {
+                        "name": "Intel(R) 82574L Gigabit Network Connection",
+                        "speedMbps": 953.67431640625,
+                        "adapterType": "Ethernet 802.3"
+                    },
+                    {
+                        "name": "Microsoft Failover Cluster Virtual Adapter",
+                        "speedMbps": 9536.7431640625,
+                        "adapterType": "Ethernet 802.3"
+                    }
+                ],
+                "hostName": "WLMDBFCINEW12",
+                "driveDetails": {
+                    "value": "[\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE0\",\r\n        \"model\":  \"VMware Virtual disk SCSI Disk Device\",\r\n        \"driveLetter\":  \"C:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE1\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"E:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE2\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"F:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE3\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"G:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE4\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"H:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE5\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"I:\"\r\n    }\r\n]",
+                    "PSComputerName": "WLMDBFCINEW12",
+                    "RunspaceId": "fdc4c1be-4309-4f44-ab3d-117af34acc67",
+                    "PSShowComputerName": true
+                },
+                "numberOfVcpus": 8,
+                "hostId": "FF551E42-5D98-83A6-7CE0-8EFF691ADB3D"
+            }
+        ],
+        "belongsToCluster": true,
+        "windowsSystemName": "TWONODEFCI"
+    }
+}

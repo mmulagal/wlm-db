@@ -1,0 +1,25 @@
+.preview-default {
+    .table {
+        --table-top-fixed: 0;
+        overflow: hidden;
+
+        margin-bottom: 10px;
+    }
+
+    .resourceContainer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .note {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+
+        svg {
+            position: relative;
+            top: 3px;
+        }
+    }
+}

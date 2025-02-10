@@ -941,8 +941,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                 <div className={styles.selectedTabSection}>
                     {selectedHeaderTab === WLF_TABS.DASHBOARD && (
                         <div className={styles.dashboardSection}>
-                            <div className={styles.spaceArea}>
-                                <div className={styles.contentArea}>
+                            <div className={styles.spaceAreaTemp}>
+                                <div className={styles.contentAreaTemp}>
                                     {!setFlagForMultiCred && selectComponents()}
                                     {setFlagForMultiCred && selectMultipleComponents()}
                                     <div className={styles.content}>
@@ -1116,7 +1116,8 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 {/* Will enable this once multi cred and region is ready
                  */}
-                {/* {pendingQueriesCounter > 0 && (
+
+                {/* pendingQueriesCounter > 0 && setFlagForMultiCred && (
                     <FetchingDataNotification
                         queriesLength={queriesLength}
                         pendingQueriesCounter={pendingQueriesCounter}

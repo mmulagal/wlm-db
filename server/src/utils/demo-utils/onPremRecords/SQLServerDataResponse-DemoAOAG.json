@@ -1,0 +1,154 @@
+{
+    "scriptVersion": "1.0.0",
+    "sqlServerInfo": [
+        {
+            "instanceGuid": "FF5408CC-54E1-45A4-BD84-99FD7CAF9777",
+            "licenceUsageDetails": "[{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has > 128 GB Memory\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has > 48 vCPU\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"Tempdb metadata memory-optimized is enabled\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"User Databases are using Enterprise Level Features\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You are using asynchronous mirroring\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using peer-to-peer replication\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using R or Python extensions\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using Resource Governor\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You have Asynchronous commit Replicas\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have Availability Groups with > 1 database\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have read-only Replicas\"}]",
+            "memUtilization": "[{\"used\":7745544192,\"total\":8588910592,\"remaining\":843366400,\"percentUsed\":90}]",
+            "noOfDatabases": "8",
+            "ownerNodes": "[{\"primary\":\"WLMDBAOAG2\"}]",
+            "sqlInstanceName": "AOAG1_NODE2",
+            "sqlVersion": [
+                "Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ",
+                "\tOct  8 2022 05:58:25 ",
+                "\tCopyright (C) 2022 Microsoft Corporation",
+                "\tEnterprise Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)",
+                ""
+            ],
+            "storageDetailsByDb": "[{\"databaseName\":\"AG2NORMALDB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"AG2NORMALDB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":25581,\"driveAvailableSizeMb\":25479},{\"databaseName\":\"AOAGDB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":8,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"AOAGDB22\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":8,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"AOAGDB22_DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"AOAGDB22_DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":25581,\"driveAvailableSizeMb\":25479},{\"databaseName\":\"DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":25581,\"driveAvailableSizeMb\":25479},{\"databaseName\":\"DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":25581,\"driveAvailableSizeMb\":25479},{\"databaseName\":\"DB3\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":76781,\"driveAvailableSizeMb\":76542},{\"databaseName\":\"DB3\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":25581,\"driveAvailableSizeMb\":25479},{\"databaseName\":\"master\",\"allocatedSizeMb\":7,\"dataSizeMb\":5,\"logSizeMb\":2,\"driveLetter\":\"C:\",\"driveTotalSizeMb\":29942,\"driveAvailableSizeMb\":8535}]",
+            "sqlEdition": "Enterprise Edition (64-bit)",
+            "aoagReadReplica": "[{\"databaseName\":\"AOAGDB1\",\"replicaId\":\"DF4954EE-EDE0-4C70-B085-1E666436CEFD\",\"replicaServerName\":\"WLMDBAOAG2\\\\AOAG1_NODE2\",\"syncStateDesc\":\"SYNCHRONIZED\",\"replicaRole\":\"SECONDARY\"},{\"databaseName\":\"DB1\",\"replicaId\":\"3362D24C-50C0-496E-A165-7AF9118B283B\",\"replicaServerName\":\"WLMDBAOAG2\\\\AOAG1_NODE2\",\"syncStateDesc\":\"SYNCHRONIZED\",\"replicaRole\":\"SECONDARY\"},{\"databaseName\":\"DB2\",\"replicaId\":\"3362D24C-50C0-496E-A165-7AF9118B283B\",\"replicaServerName\":\"WLMDBAOAG2\\\\AOAG1_NODE2\",\"syncStateDesc\":\"SYNCHRONIZED\",\"replicaRole\":\"SECONDARY\"},{\"databaseName\":\"DB3\",\"replicaId\":\"3362D24C-50C0-496E-A165-7AF9118B283B\",\"replicaServerName\":\"WLMDBAOAG2\\\\AOAG1_NODE2\",\"syncStateDesc\":\"SYNCHRONIZED\",\"replicaRole\":\"SECONDARY\"}]",
+            "iops": "[{\"writeIops\":\"      30\",\"readIops\":\"      3000\",\"writeBytesPerSec\":\"            7602.15\",\"readBytesPerSec\":\"            850610000000.95\"}]",
+            "collation": "SQL_Icelandic_Pref_CP1_CI_AS",
+            "vcpusPerInstance": "4",
+            "cpuUtilization": "8",
+            "deploymentType": "AOAG",
+            "isReadReplica": "True"
+        },
+        {
+            "instanceGuid": "72CD136C-1E2B-47A8-8253-5A6B1CF04FE5",
+            "licenceUsageDetails": "[{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has > 128 GB Memory\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has > 48 vCPU\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"Tempdb metadata memory-optimized is enabled\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"User Databases are using Enterprise Level Features\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You are using asynchronous mirroring\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using peer-to-peer replication\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using R or Python extensions\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using Resource Governor\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have Asynchronous commit Replicas\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have Availability Groups with > 1 database\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have read-only Replicas\"}]",
+            "memUtilization": "[{\"used\":16507834368,\"total\":17178845184,\"remaining\":671010816,\"percentUsed\":90}]",
+            "noOfDatabases": "2",
+            "ownerNodes": "[{\"primary\":\"WLMDBAOAG3\"}]",
+            "sqlInstanceName": "AOAG3",
+            "sqlVersion": [
+                "Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) ",
+                "\tOct  8 2022 05:58:25 ",
+                "\tCopyright (C) 2022 Microsoft Corporation",
+                "\tEnterprise Edition (64-bit) on Windows Server 2022 Datacenter 10.0 <X64> (Build 20348: ) (Hypervisor)",
+                ""
+            ],
+            "storageDetailsByDb": "[{\"databaseName\":\"AOAG3_DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":61421,\"driveAvailableSizeMb\":61311},{\"databaseName\":\"AOAG3_DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":61421,\"driveAvailableSizeMb\":61311},{\"databaseName\":\"master\",\"allocatedSizeMb\":5,\"dataSizeMb\":4,\"logSizeMb\":1,\"driveLetter\":\"C:\",\"driveTotalSizeMb\":101622,\"driveAvailableSizeMb\":82830}]",
+            "sqlEdition": "Enterprise Edition (64-bit)",
+            "aoagReadReplica": "[{\"databaseName\":\"AOAG3_DB1\",\"replicaId\":\"F1A38D89-BD91-497D-913E-5CE26BA27997\",\"replicaServerName\":\"WLMDBAOAG3\\\\AOAG3\",\"syncStateDesc\":\"SYNCHRONIZING\",\"replicaRole\":\"SECONDARY\"}]",
+            "iops": "[{\"writeIops\":\"      30\",\"readIops\":\"      3000\",\"writeBytesPerSec\":\"            7602.15\",\"readBytesPerSec\":\"            850610000000.95\"}]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "vcpusPerInstance": "8",
+            "cpuUtilization": "2",
+            "deploymentType": "AOAG",
+            "isReadReplica": "True"
+        },
+        {
+            "instanceGuid": "8828F984-B541-456E-8EBE-D37C4D57B239",
+            "licenceUsageDetails": "[{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has > 128 GB Memory\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"SQL Server has > 48 vCPU\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"Tempdb metadata memory-optimized is enabled\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"User Databases are using Enterprise Level Features\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You are using asynchronous mirroring\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using peer-to-peer replication\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using R or Python extensions\"},{\"IsUsingFeature\":0,\"FeatureDescription\":\"You are using Resource Governor\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have Asynchronous commit Replicas\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have Availability Groups with > 1 database\"},{\"IsUsingFeature\":1,\"FeatureDescription\":\"You have read-only Replicas\"}]",
+            "memUtilization": "[{\"used\":7504834560,\"total\":8588910592,\"remaining\":1084076032,\"percentUsed\":85}]",
+            "noOfDatabases": "9",
+            "ownerNodes": "[{\"primary\":\"WLMDBAOAG1\"}]",
+            "sqlInstanceName": "AOAG1_NODE1",
+            "sqlVersion": "Microsoft SQL Server 2022 (RTM) - 16.0.1000.6 (X64) \tOct  8 2022 05:58:25 \tCopyright (C) 2022 Microsoft Corporation\tEnterprise Edition (64-bit) on Windows Server 2022 Standard 10.0 <X64> (Build 20348: ) (Hypervisor)",
+            "storageDetailsByDb": "[{\"databaseName\":\"AG1NORMALDB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"AG1NORMALDB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":40941,\"driveAvailableSizeMb\":40793},{\"databaseName\":\"AOAG3_DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"AOAG3_DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":40941,\"driveAvailableSizeMb\":40793},{\"databaseName\":\"AOAGDB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":8,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"AOAGDB22\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":8,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"AOAGDB22_DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"AOAGDB22_DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":40941,\"driveAvailableSizeMb\":40793},{\"databaseName\":\"DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"DB1\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":40941,\"driveAvailableSizeMb\":40793},{\"databaseName\":\"DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"DB2\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":40941,\"driveAvailableSizeMb\":40793},{\"databaseName\":\"DB3\",\"allocatedSizeMb\":5120,\"dataSizeMb\":8,\"logSizeMb\":0,\"driveLetter\":\"E:\",\"driveTotalSizeMb\":87021,\"driveAvailableSizeMb\":86781},{\"databaseName\":\"DB3\",\"allocatedSizeMb\":5120,\"dataSizeMb\":0,\"logSizeMb\":8,\"driveLetter\":\"F:\",\"driveTotalSizeMb\":40941,\"driveAvailableSizeMb\":40793},{\"databaseName\":\"master\",\"allocatedSizeMb\":7,\"dataSizeMb\":5,\"logSizeMb\":2,\"driveLetter\":\"C:\",\"driveTotalSizeMb\":29942,\"driveAvailableSizeMb\":10236}]",
+            "sqlEdition": "Enterprise Edition (64-bit)",
+            "aoagReadReplica": "[{\"databaseName\":\"AOAGDB22\",\"replicaId\":\"4B08A481-D542-4168-9B1B-976CA6B1B1DE\",\"replicaServerName\":\"WLMDBAOAG1\\\\AOAG1_NODE1\",\"syncStateDesc\":\"SYNCHRONIZED\",\"replicaRole\":\"SECONDARY\"},{\"databaseName\":\"AOAGDB22_DB2\",\"replicaId\":\"9CECFD61-8D8F-4953-AB8F-6DCAFE1DB035\",\"replicaServerName\":\"WLMDBAOAG1\\\\AOAG1_NODE1\",\"syncStateDesc\":\"SYNCHRONIZED\",\"replicaRole\":\"SECONDARY\"}]",
+            "iops": "[{\"writeIops\":\"      60000\",\"readIops\":\"      300\",\"writeBytesPerSec\":\"            3602.15\",\"readBytesPerSec\":\"            850610000000.95\"}]",
+            "collation": "SQL_Romanian_CP1250_CS_AS",
+            "vcpusPerInstance": "4",
+            "cpuUtilization": "26",
+            "deploymentType": "AOAG",
+            "isReadReplica": "True"
+        }
+    ],
+    "timestamp": "20250131114349",
+    "windowsConfig": {
+        "clusterNodeNames": ["WLMDBAOAG1", "WLMDBAOAG2", "WLMDBAOAG3"],
+        "nodeDetails": [
+            {
+                "ramSize": 8,
+                "hostId": "3B791E42-87BF-0F62-A6B9-8879355A59BC",
+                "networkConfiguration": [
+                    {
+                        "name": "Intel(R) 82574L Gigabit Network Connection",
+                        "speedMbps": 953.67431640625,
+                        "adapterType": "Ethernet 802.3"
+                    },
+                    {
+                        "name": "Microsoft Failover Cluster Virtual Adapter",
+                        "speedMbps": 9536.7431640625,
+                        "adapterType": "Ethernet 802.3"
+                    }
+                ],
+                "hostName": "WLMDBAOAG1",
+                "driveDetails": {
+                    "value": "[\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE0\",\r\n        \"model\":  \"VMware Virtual disk SCSI Disk Device\",\r\n        \"driveLetter\":  \"C:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE1\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"E:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE2\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"F:\"\r\n    }\r\n]",
+                    "PSComputerName": "WLMDBAOAG1",
+                    "RunspaceId": "d42b88be-00d6-438f-b3fc-7497c1acb5ce",
+                    "PSShowComputerName": true
+                },
+                "numberOfVcpus": 4,
+                "osEdition": "Microsoft Windows Server 2022 Standard"
+            },
+            {
+                "ramSize": 8,
+                "osEdition": "Microsoft Windows Server 2022 Standard",
+                "networkConfiguration": [
+                    {
+                        "name": "Intel(R) 82574L Gigabit Network Connection",
+                        "speedMbps": 953.67431640625,
+                        "adapterType": "Ethernet 802.3"
+                    },
+                    {
+                        "name": "Microsoft Failover Cluster Virtual Adapter",
+                        "speedMbps": 9536.7431640625,
+                        "adapterType": "Ethernet 802.3"
+                    }
+                ],
+                "hostName": "WLMDBAOAG2",
+                "driveDetails": {
+                    "value": "[\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE0\",\r\n        \"model\":  \"VMware Virtual disk SCSI Disk Device\",\r\n        \"driveLetter\":  \"C:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE1\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"E:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE2\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"F:\"\r\n    }\r\n]",
+                    "PSComputerName": "WLMDBAOAG2",
+                    "RunspaceId": "b92e1156-449a-41a9-97f3-679e412dd94e",
+                    "PSShowComputerName": true
+                },
+                "numberOfVcpus": 4,
+                "hostId": "F5171E42-4C90-CCB7-ED0E-DAD2DC26DF09"
+            },
+            {
+                "ramSize": 16,
+                "osEdition": "Microsoft Windows Server 2022 Datacenter",
+                "networkConfiguration": [
+                    {
+                        "name": "Intel(R) 82574L Gigabit Network Connection",
+                        "speedMbps": 953.67431640625,
+                        "adapterType": "Ethernet 802.3"
+                    },
+                    {
+                        "name": "Microsoft Failover Cluster Virtual Adapter",
+                        "speedMbps": 9536.7431640625,
+                        "adapterType": "Ethernet 802.3"
+                    }
+                ],
+                "hostName": "WLMDBAOAG3",
+                "driveDetails": {
+                    "value": "[\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE2\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"F:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE0\",\r\n        \"model\":  \"VMware Virtual disk SCSI Disk Device\",\r\n        \"driveLetter\":  \"C:\"\r\n    },\r\n    {\r\n        \"deviceId\":  \"\\\\\\\\.\\\\PHYSICALDRIVE1\",\r\n        \"model\":  \"NETAPP LUN C-Mode SCSI Disk Device\",\r\n        \"driveLetter\":  \"E:\"\r\n    }\r\n]",
+                    "PSComputerName": "WLMDBAOAG3",
+                    "RunspaceId": "92576256-84ab-46eb-868a-5ad0db9c83aa",
+                    "PSShowComputerName": true
+                },
+                "numberOfVcpus": 8,
+                "hostId": "14DB1E42-579F-C010-0FA0-B115F6BFF8E2"
+            }
+        ],
+        "belongsToCluster": true,
+        "windowsSystemName": "NEWAOAGONPREM"
+    }
+}

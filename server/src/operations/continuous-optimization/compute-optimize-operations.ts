@@ -424,7 +424,6 @@ async function handleComputeRemediation(
     }
 }
 
-// eslint-disable-next-line
 async function checkRunningStatus(
     accountId: string,
     parentJobId: string,
@@ -839,4 +838,4 @@ async function updateNodeInstanceType(
     }
 }
 
-export { handleComputeRemediation };
+export { handleComputeRemediation, checkRunningStatus };

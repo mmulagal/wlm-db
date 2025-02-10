@@ -8,7 +8,8 @@ export const initialJobMonitorColState = {
         isRemovalDisabled: true
     },
     2: {
-        isHidden: false
+        isHidden: false,
+        isRemovalDisabled: true
     },
     3: {
         isHidden: false
