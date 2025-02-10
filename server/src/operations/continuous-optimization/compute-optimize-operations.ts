@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
-import { cloneDeep, compact, isEmpty } from 'lodash-es';
-import { DatabaseInstance, Metadata } from '../../utils/common-types';
+import { cloneDeep, compact, isEmpty, isNull } from 'lodash-es';
+import { DatabaseInstance, Metadata, NodeDetails } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
@@ -60,7 +60,9 @@ async function handleComputeRemediation(
 
     let anySubJobFailed = false;
     let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
+    let primaryNodeInstanceDetails: NodeDetails | null = null;
     try {
+        const modifiedInstancesNodeDetails = [];
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
@@ -149,6 +151,10 @@ async function handleComputeRemediation(
                             nodeId => nodeId !== activeNodeInstanceId
                         );
 
+                        [primaryNodeInstanceDetails] = clusterNodeDetails.filter(
+                            node => node.ec2InstanceId === activeNodeInstanceId
+                        );
+
                         const changeInstanceTypeJobId = await handleOptimizeJobCreation(
                             accountId,
                             credentialsId,
@@ -165,16 +171,18 @@ async function handleComputeRemediation(
                         try {
                             // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
                             for (const nodeId of nonPrimaryNodeInstanceIds) {
-                                await updateNodeInstanceType(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    nodeId,
-                                    instanceType,
-                                    fsxId,
-                                    svmId,
-                                    changeInstanceTypeJobId,
-                                    formattedInstanceName
+                                modifiedInstancesNodeDetails.push(
+                                    await updateNodeInstanceType(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        nodeId,
+                                        instanceType,
+                                        fsxId,
+                                        svmId,
+                                        changeInstanceTypeJobId,
+                                        formattedInstanceName
+                                    )
                                 );
                             }
                             logger.info('Instance type updated for all secondary nodes in the cluster');
@@ -184,6 +192,27 @@ async function handleComputeRemediation(
                                 endTime: Date.now()
                             });
                         } catch (error) {
+                            // In case of failure, revert the instance type change for the nodes that were successfully updated
+                            if (modifiedInstancesNodeDetails.length > 0) {
+                                for (const { ec2InstanceId, oldDnsAddresses } of modifiedInstancesNodeDetails) {
+                                    const oldInstanceType = clusterNodeDetails.filter(
+                                        node => node.ec2InstanceId === ec2InstanceId
+                                    )[0].ec2InstanceType;
+
+                                    await updateNodeInstanceType(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        ec2InstanceId,
+                                        oldInstanceType,
+                                        fsxId,
+                                        svmId,
+                                        formattedInstanceName,
+                                        undefined,
+                                        oldDnsAddresses
+                                    );
+                                }
+                            }
                             subJobErrorMessage = `Failed to update instance type for secondary nodes in the cluster, ${error}`;
                             await updateJobDetails(accountId, changeInstanceTypeJobId, {
                                 status: JOBSTATUS.FAILED,
@@ -304,22 +333,42 @@ async function handleComputeRemediation(
                 jobId
             );
             try {
-                await updateNodeInstanceType(
-                    accountId,
-                    credentialsId,
-                    region,
-                    activeNodeInstanceId,
-                    instanceType,
-                    fsxId,
-                    svmId,
-                    updateInstanceTypeJobId,
-                    formattedInstanceName
+                modifiedInstancesNodeDetails.push(
+                    await updateNodeInstanceType(
+                        accountId,
+                        credentialsId,
+                        region,
+                        activeNodeInstanceId,
+                        instanceType,
+                        fsxId,
+                        svmId,
+                        updateInstanceTypeJobId,
+                        formattedInstanceName
+                    )
                 ); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.COMPLETED,
                     endTime: Date.now()
                 });
             } catch (error) {
+                if (modifiedInstancesNodeDetails.length > 0 && !isNull(primaryNodeInstanceDetails)) {
+                    const { ec2InstanceId, oldDnsAddresses } = modifiedInstancesNodeDetails.filter(
+                        node => node.ec2InstanceId === primaryNodeInstanceDetails?.ec2InstanceId
+                    )[0];
+                    await updateNodeInstanceType(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        primaryNodeInstanceDetails?.ec2InstanceType,
+                        fsxId,
+                        svmId,
+                        formattedInstanceName,
+                        undefined,
+                        oldDnsAddresses
+                    );
+                }
+
                 subJobErrorMessage = `Failed to update instance type for primary node in the cluster, ${error}`;
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.FAILED,
@@ -654,21 +703,24 @@ async function updateDnsSettings(
     region: string,
     instanceId: string,
     dnsAddresses: string,
-    jobId: string,
-    instanceName: string
+    instanceName: string,
+    jobId?: string
 ) {
     logger.info('Updating DNS settings', { credentialsId, region, instanceId, dnsAddresses, jobId });
     let errorMessage = '';
-    const updateDnsJobId = await handleOptimizeJobCreation(
-        accountId,
-        credentialsId,
-        region,
-        instanceName,
-        JOBTYPE.OPTIMIZATION,
-        'Update DNS settings',
-        'Update DNS settings',
-        jobId
-    );
+    let updateDnsJobId = '';
+    if (jobId) {
+        updateDnsJobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            instanceName,
+            JOBTYPE.OPTIMIZATION,
+            'Update DNS settings',
+            'Update DNS settings',
+            jobId
+        );
+    }
     try {
         return await retryWithDelay(
             callSsmExecution.bind(
@@ -689,11 +741,13 @@ async function updateDnsSettings(
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
         logger.error(errorMessage);
     } finally {
-        await updateJobDetails(accountId, updateDnsJobId, {
-            status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
+        if (jobId && updateDnsJobId) {
+            await updateJobDetails(accountId, updateDnsJobId, {
+                status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
     }
 }
 
@@ -723,8 +777,8 @@ async function handleIscsiSessions(
     ec2InstanceId: string,
     fsxId: string,
     svmId: string,
-    jobId: string,
-    instanceName: string
+    instanceName: string,
+    jobId?: string
 ) {
     logger.info('Handling ISCSI sessions', {
         accountId,
@@ -737,16 +791,19 @@ async function handleIscsiSessions(
         instanceName
     });
 
-    const handleIscsiJobId = await handleOptimizeJobCreation(
-        accountId,
-        credentialsId,
-        region,
-        instanceName,
-        JOBTYPE.OPTIMIZATION,
-        'Check and update ISCSI sessions',
-        'Check and update ISCSI sessions to ensure ISCSI sessions are available after instance type change',
-        jobId
-    );
+    let handleIscsiJobId = '';
+    if (jobId) {
+        handleIscsiJobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            instanceName,
+            JOBTYPE.OPTIMIZATION,
+            'Check and update ISCSI sessions',
+            'Check and update ISCSI sessions to ensure ISCSI sessions are available after instance type change',
+            jobId
+        );
+    }
     let errorMessage = '';
     try {
         const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
@@ -769,11 +826,13 @@ async function handleIscsiSessions(
         errorMessage = `Failed to update ISCSI sessions for ${ec2InstanceId}. ${error}`;
         logger.error(errorMessage);
     } finally {
-        await updateJobDetails(accountId, handleIscsiJobId, {
-            status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
+        if (jobId && handleIscsiJobId) {
+            await updateJobDetails(accountId, handleIscsiJobId, {
+                status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
     }
 }
 
@@ -785,8 +844,9 @@ async function updateNodeInstanceType(
     instanceType: string,
     fsxId: string,
     svmId: string,
-    jobId: string,
-    instanceName: string
+    instanceName: string,
+    jobId?: string,
+    dnsAddresses?: string
 ) {
     logger.info('Handling node instance type change', {
         accountId,
@@ -799,7 +859,7 @@ async function updateNodeInstanceType(
     });
 
     try {
-        const oldDnsAddresses = await getCurrentDnsSettings(credentialsId, region, ec2InstanceId);
+        const oldDnsAddresses = dnsAddresses ?? (await getCurrentDnsSettings(credentialsId, region, ec2InstanceId));
         if (!isEmpty(oldDnsAddresses)) {
             await stopInstance(credentialsId, region, ec2InstanceId);
             if (!isDemo()) {
@@ -815,8 +875,8 @@ async function updateNodeInstanceType(
                     region,
                     ec2InstanceId,
                     oldDnsAddresses,
-                    jobId,
-                    instanceName
+                    instanceName,
+                    jobId
                 );
             }
             await handleIscsiSessions(
@@ -826,10 +886,11 @@ async function updateNodeInstanceType(
                 ec2InstanceId,
                 fsxId,
                 svmId,
-                jobId,
-                instanceName
+                instanceName,
+                jobId
             );
         }
+        return { ec2InstanceId, oldDnsAddresses };
     } catch (error) {
         const errorMessage = `Failed to update instance type for ${ec2InstanceId} to ${instanceType}. ${error}`;
 
