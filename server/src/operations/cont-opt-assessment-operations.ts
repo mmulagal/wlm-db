@@ -160,12 +160,13 @@ async function initiateComputeLicenseAssessmentCollection(
                         finding = AssessmentStatus.OPTIMIZED;
                         findingReasonCodes = [];
                     }
+
+                    computeAssessment = {
+                        ...computeAssessment,
+                        finding,
+                        findingReasonCodes
+                    };
                 }
-                computeAssessment = {
-                    ...computeAssessment,
-                    finding,
-                    findingReasonCodes
-                };
             } else {
                 logger.warn('No compute assessment data found');
             }
