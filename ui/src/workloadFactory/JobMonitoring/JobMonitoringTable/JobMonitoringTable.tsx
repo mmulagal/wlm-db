@@ -38,7 +38,7 @@ import {
     setSubJobsData,
     setSubJobsDataLoading
 } from '../../../store/workloadFactory/jobMonitoringSlice';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -46,7 +46,7 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 import { initialJobMonitorColState } from '../../../utils/manageColumnUtils';
 
-const JobMonitoringTable = () => {
+const JobMonitoringTable = React.memo(() => {
     const { setDialog } = useDialog();
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
@@ -74,6 +74,15 @@ const JobMonitoringTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+
+    const tableFullData = useMemo(() => {
+        return jobsList.map((job: any) => {
+            return {
+                ...job,
+                regions: `${job?.region?.name} | ${job?.region?.code}`
+            };
+        });
+    }, [jobsList]);
 
     const menuItems = (row: any) => {
         return [
@@ -388,25 +397,22 @@ const JobMonitoringTable = () => {
             id: '8',
             Header: 'AWS credentials',
             accessor: 'credentialsId',
-            isSortable: true,
+            filterOptions: 'auto',
             width: '250px'
         },
         {
             id: '9',
             Header: 'AWS Account',
             accessor: 'accountId',
-            isSortable: true,
+            filterOptions: 'auto',
             width: '200px'
         },
         {
             id: '11',
             Header: 'Region',
-            accessor: 'region',
-            isSortable: true,
-            width: '300px',
-            renderCell: (cellData: any) => {
-                return <DsTypography variant="Regular_14">{`${cellData?.name} | ${cellData?.code}`}</DsTypography>;
-            }
+            accessor: 'regions',
+            filterOptions: 'auto',
+            width: '300px'
         },
         {
             id: '5',
@@ -458,7 +464,7 @@ const JobMonitoringTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: JobsColDefs,
-        rows: jobsList,
+        rows: tableFullData,
         pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -595,6 +601,6 @@ const JobMonitoringTable = () => {
             </div>
         </>
     );
-};
+});
 
 export default JobMonitoringTable;

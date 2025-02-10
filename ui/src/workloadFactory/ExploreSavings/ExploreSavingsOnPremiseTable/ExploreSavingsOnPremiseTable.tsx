@@ -456,7 +456,7 @@ const ExploreSavingsOnPremiseTable = () => {
                         <div className={styles.commonAction}>
                             <Download />
                             <DsTypography onClick={handleDownload} variant="Semibold_14" className={styles.text}>
-                                Download script
+                                Download assessment script
                             </DsTypography>
                             <TooltipInfo placement="bottom" isAppendedToBody={true}>
                                 {GENERAL.ONPREM_TOOLTIP}
