@@ -1,0 +1,45 @@
+.base {
+  display: flex;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: var(--main-background);
+  padding: 16px 0;
+  box-shadow: 0 -10px 0 10px var(--main-background);
+  z-index: 2;
+  align-items: baseline;
+  box-sizing: border-box;
+  height: 68px;
+
+  .title {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+
+    .lazy-loading-indication {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      .lazy-loading{
+        margin-left: 8px;
+      }
+    }
+
+    .reset-button {
+      padding-left: 20px;
+    }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+
+    .export {
+      svg {
+        width: 21px;
+      }
+    }
+  }
+}

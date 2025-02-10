@@ -1,6 +1,7 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import { get, sortBy, compact, uniqBy, map } from 'lodash';
+import { css } from '@emotion/css';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
@@ -1431,6 +1432,45 @@ export const removePasswordInConfig = (payload: any) => {
         payload = { ...payload, fsxN: { ...payload.fsxN, fsxNPassword: '' } };
     }
     return payload;
+};
+
+const isLastSticky = (columns: any[], columnIndex: number) => {
+    return (
+        columns.every((column, index) => column.isSticky || index > columnIndex) && !columns[columnIndex + 1].isSticky
+    );
+};
+
+export const convertPxStringToNumber = (pxWidth: string): number => +pxWidth.slice(0, -2);
+
+const getLeft = (columns: any[], columnIndex: number) => {
+    const left = columns.reduce((acc, column, index) => {
+        if (index < columnIndex) {
+            acc += convertPxStringToNumber(column.width || '0px');
+        }
+        return acc;
+    }, 0);
+    return `${left}px`;
+};
+
+export const getStickyClass = (columns: any, columnIndex: number) => {
+    const column = columns[columnIndex];
+
+    if (!column.isSticky) {
+        return null;
+    }
+    const isStickyLeft = columnIndex < columns?.length / 2;
+    const isLast = isLastSticky(columns, columnIndex);
+    const stickyStyling = isStickyLeft
+        ? {
+              left: getLeft(columns, columnIndex),
+              ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
+          }
+        : {
+              right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
+          };
+    return css({
+        '&': stickyStyling
+    });
 };
 
 export const removeOldApisError = (data: any) => {
