@@ -76,6 +76,18 @@ const JobMonitoringTable = React.memo(() => {
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
 
+    const setRegion = (name: string, code: string) => {
+        if (name && code) {
+            return `${name} | ${code}`;
+        } else if (name && !code) {
+            return name;
+        } else if (!name && code) {
+            return code;
+        } else {
+            return GENERAL.NOT_AVAILABLE;
+        }
+    };
+
     const tableFullData = useMemo(() => {
         return jobsList.map((job: any) => {
             const matchingEntry =
@@ -83,7 +95,7 @@ const JobMonitoringTable = React.memo(() => {
 
             return {
                 ...job,
-                regions: `${job?.region?.name} | ${job?.region?.code}`,
+                regions: setRegion(job?.region?.name, job?.region?.code),
                 credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
                 providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
             };
