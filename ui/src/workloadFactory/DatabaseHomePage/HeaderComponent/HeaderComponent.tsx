@@ -94,6 +94,7 @@ import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInne
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
 import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
+import InventoryApis from '../../InventoryV2/InventoryApis';
 
 type Tab = {
     tab: string;
@@ -138,7 +139,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
     HeaderComponentApi();
-    InventoryApisV2();
+    // InventoryApisV2();
+    InventoryApis();
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();
@@ -1112,7 +1114,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     )}
                 </div>
 
-                {pendingQueriesCounter > 0 && (
+                {/* Will enable this once multi cred and region is ready
+                 */}
+                {/* {pendingQueriesCounter > 0 && (
                     <FetchingDataNotification
                         queriesLength={queriesLength}
                         pendingQueriesCounter={pendingQueriesCounter}
@@ -1120,7 +1124,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         regions={currentRegion}
                         credentials={currentCred}
                     />
-                )}
+                )} */}
             </div>
         )
     );

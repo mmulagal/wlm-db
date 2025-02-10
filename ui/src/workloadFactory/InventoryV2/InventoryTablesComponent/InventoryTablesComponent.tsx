@@ -1,12 +1,14 @@
 import { useAppSelector } from '../../../store/storeHooks';
+import HostTable from '../HostTable/HostTable';
+import InstancesTable from '../InstancesTable/InstancesTable';
 import styles from './InventoryTablesComponent.module.scss';
 
 const InventoryTablesComponent = () => {
     const { selectedInventoryTab } = useAppSelector(state => state.inventoryV2);
     return (
         <div className={styles['inventory-tables-component']}>
-            {selectedInventoryTab === 'Hosts' && <div>Render host table here </div>}
-            {selectedInventoryTab === 'Instances' && <div>Render Instances table here </div>}
+            {selectedInventoryTab === 'Hosts' && <HostTable />}
+            {selectedInventoryTab === 'Instances' && <InstancesTable />}
             {selectedInventoryTab === 'Databases' && <div>Render Databases table here </div>}
         </div>
     );

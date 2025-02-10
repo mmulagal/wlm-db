@@ -380,9 +380,6 @@ export const databaseHomeApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) => `v1/jobs/summary?startTime=${startTime}&endTime=${endTime}`
-            }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/cloudformation/template`,
@@ -1065,13 +1062,7 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const {
-    useGetJobsSummaryQuery,
-    useLazyGetJobsSummaryQuery,
-    useGetTemplatesMutation,
-    useGetTerraformSetupMutation,
-    useGetPgsqlTemplatesMutation
-} = databaseHomeApi;
+export const { useGetTemplatesMutation, useGetTerraformSetupMutation, useGetPgsqlTemplatesMutation } = databaseHomeApi;
 
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
     workloadFactoryResourceApiV2;

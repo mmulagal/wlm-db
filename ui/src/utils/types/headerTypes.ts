@@ -7,6 +7,8 @@ export interface HeaderTypeEntities {
     headerSelectedRegion: any;
     headerSelectedMultiCred: any;
     headerSelectedMultiRegion: any;
+    headerSelectedMultiCredIdsList: any;
+    headerSelectedMultiRegionIdsList: any;
     getCredentials: {
         credentialData: Credentials[] | null;
         credentialLoading: false;

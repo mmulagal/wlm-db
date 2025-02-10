@@ -7,10 +7,10 @@ import InventoryTablesComponent from './InventoryTablesComponent/InventoryTables
 const InventoryV2 = () => {
     return (
         <div className={styles.inventory}>
-            <InventoryHeaderSection />
+            {/* <InventoryHeaderSection /> */}
             <InventoryTab />
             <InventoryTablesComponent />
-            <InventoryTable />
+            {/* <InventoryTable /> */}
         </div>
     );
 };

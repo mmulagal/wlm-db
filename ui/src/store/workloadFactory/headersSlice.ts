@@ -6,6 +6,8 @@ const initialHeaderState: HeaderTypeEntities = {
     headerSelectedRegion: null,
     headerSelectedMultiCred: null,
     headerSelectedMultiRegion: null,
+    headerSelectedMultiCredIdsList: [], // This will store the list of selected credentials ids for comparison in API calls
+    headerSelectedMultiRegionIdsList: [], // This will store the list of selected region ids for comparison in API calls
     getCredentials: {
         credentialData: null,
         credentialLoading: false,
@@ -48,9 +50,15 @@ const headersSlice = createSlice({
         },
         setHeaderSelectedMultiCred(state, action: PayloadAction<any>) {
             state.headerSelectedMultiCred = action.payload;
+            action.payload?.forEach((item: any) => {
+                state.headerSelectedMultiCredIdsList.push(item?.data?.credentialsId);
+            });
         },
         setHeaderSelectedMultiRegion(state, action: PayloadAction<any>) {
             state.headerSelectedMultiRegion = action.payload;
+            action.payload?.forEach((item: any) => {
+                state.headerSelectedMultiRegionIdsList.push(item?.label2);
+            });
         },
         setHeaderSelectedRegion(state, action: PayloadAction<any>) {
             state.headerSelectedRegion = action.payload;
