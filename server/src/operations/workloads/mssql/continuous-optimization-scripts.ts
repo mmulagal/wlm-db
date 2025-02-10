@@ -915,7 +915,7 @@ Function Move-AllClusterGroups {
                     Write-Error "$errorMsg"
                     Write-Information "$errorMsg"
                 }
-                Write-Information "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
+                Write-Information "Status of moving cluster group: $clusterGroupName : $groupResult.status"
                 # Add group result to result array
                 $result += $groupResult
             }
