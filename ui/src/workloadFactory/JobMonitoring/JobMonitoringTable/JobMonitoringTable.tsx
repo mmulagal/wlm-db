@@ -83,7 +83,10 @@ const JobMonitoringTable = React.memo(() => {
 
             return {
                 ...job,
-                regions: `${job?.region?.name} | ${job?.region?.code}`,
+                regions:
+                    job?.region?.name && job?.region?.code
+                        ? `${job?.region?.name} | ${job?.region?.code}`
+                        : GENERAL.NOT_AVAILABLE,
                 credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
                 providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
             };
