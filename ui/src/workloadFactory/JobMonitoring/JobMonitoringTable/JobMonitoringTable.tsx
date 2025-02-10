@@ -84,8 +84,8 @@ const JobMonitoringTable = React.memo(() => {
             return {
                 ...job,
                 regions: `${job?.region?.name} | ${job?.region?.code}`,
-                credName: matchingEntry ? matchingEntry.name : 'NA',
-                providerAccountId: matchingEntry ? matchingEntry.providerAccountId : 'NA'
+                credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
+                providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
             };
         });
     }, [jobsList, credentialData]);
