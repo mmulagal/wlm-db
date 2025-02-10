@@ -45,6 +45,7 @@ const PostgreDeploymentModel = () => {
                                 }}
                                 children={GENERAL.STANDALONE_INSTANCE}
                                 className={styles.radio}
+                                data-testid="wlm-db-deployment-model-standalone"
                             />
                             <Typography variant="Regular_14" className={styles.failoverText}>
                                 {GENERAL.PGSQL_STANDALONE}
@@ -66,12 +67,9 @@ const PostgreDeploymentModel = () => {
                                 }}
                                 children={GENERAL.HIGH_AVAILABILITY}
                                 className={styles.radio}
+                                data-testid="wlm-db-deployment-model-high-availability"
                             />
-                            <Typography
-                                variant="Regular_14"
-                                className={styles.failoverText}
-                                style={{ color: 'var(--text-disabled)' }}
-                            >
+                            <Typography variant="Regular_14" className={styles.failoverText}>
                                 {GENERAL.PGSQL_HA}
                             </Typography>
                         </div>
