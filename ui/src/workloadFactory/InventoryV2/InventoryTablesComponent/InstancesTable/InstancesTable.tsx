@@ -8,11 +8,11 @@ import {
     useDialog,
     useTable
 } from '@netapp/design-system';
-import { useAppSelector } from '../../../store/storeHooks';
+import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../utils/apiService';
+import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import {
     detectFieldsValidation,
     getOptimizationStatus,
@@ -21,11 +21,11 @@ import {
     renderCellData,
     saveFsxInCredRegisteredObj,
     updateInstanceStatus
-} from '../InventoryUtilsV2';
-import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../utils/utilityFunctions';
-import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../utils/consts';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
-import store from '../../../store/store';
+} from '../../InventoryUtilsV2';
+import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import store from '../../../../store/store';
 import {
     setBreadCrumbSelectedFrom,
     setDetectManagePassword,
@@ -39,16 +39,16 @@ import {
     setSelectedHeaderTab,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
-} from '../../../store/workloadFactory/inventoryV2Slice';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import { GENERAL } from '../../../utils/appConstants';
+} from '../../../../store/workloadFactory/inventoryV2Slice';
+import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
+import { GENERAL } from '../../../../utils/appConstants';
 import {
     resetWorkloadFactoryResourceData,
     setSelectedDatabaseInstance,
     setSelectedDatabaseInstanceName,
     setSelectedHostname,
     setSelectedResourceId
-} from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+} from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
@@ -56,26 +56,26 @@ import {
     setGwHostname,
     setGwResourceId,
     setLandingFrom
-} from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { setIsDetectHostError, setIsDetectHostLoading } from '../../../store/mssql/msSqlActionSlice';
-import UndetectedSecondDialogV2 from '../InventoryTable/UndetectedSecondDialog/UndetectedSecondDialogV2';
-import UndetectedHostDialogContentV2 from '../InventoryTable/UndetectedHostDialogContent/UndetectedHostDialogContentV2';
-import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
+import UndetectedSecondDialogV2 from '../../InventoryTable/UndetectedSecondDialog/UndetectedSecondDialogV2';
+import UndetectedHostDialogContentV2 from '../../InventoryTable/UndetectedHostDialogContent/UndetectedHostDialogContentV2';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
+import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
     setDBHostName,
     setInstanceId,
     setInstanceName
-} from '../../../store/workloadFactory/createNewDBSlice';
-import { updateResourceId } from '../../../store/authSlice';
+} from '../../../../store/workloadFactory/createNewDBSlice';
+import { updateResourceId } from '../../../../store/authSlice';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import DotComponent from '../../../common/DotComponent/DotComponent';
-import SmallLoader from '../../../common/SmallLoader/SmallLoader';
-import styles from './InstancesTable.module.scss';
-import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
+import DotComponent from '../../../../common/DotComponent/DotComponent';
+import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
+import styles from '../InventoryTable.module.scss';
+import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 
 const InstancesTable = () => {
     const {

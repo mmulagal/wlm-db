@@ -1,8 +1,8 @@
-.hostTable {
+.inventoryTable {
     display: flex;
     justify-content: center;
     gap: 24px;
-    width: 100%;
+    width: 81%;
     max-width: 1607px;
     margin-top: 16px;
 
@@ -22,13 +22,6 @@
 
     .ec2Separator {
         border-bottom: 1px solid var(--border);
-    }
-
-    [class*='Table-module_row'] {
-        [class*='Table-module_cell']:nth-child(1) {
-            // box-shadow: 3px 2px 6px 0px var(--border);
-            border-right: 1px solid var(--border);
-        }
     }
 
     [class*='Table-module_scroll'] {
