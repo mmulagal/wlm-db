@@ -188,6 +188,46 @@ const JobMonitoringTable = React.memo(() => {
         { skip: skipApiCall }
     );
 
+    const lastColDetails = () => {
+        return {
+            id: '10',
+            Header: '',
+            accessor: 'name',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={menuItems(rowData)}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'goToCf') {
+                                        handleGoToCfClick(cellData);
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            },
+            showHide: true,
+            width: '57px',
+            isSticky: true
+        };
+    };
+
     // When download starts it will read timeInterval and start API call
     useEffect(() => {
         if (downloadJobsLoading && timeInterval && fromTime && toTime) {
@@ -436,7 +476,8 @@ const JobMonitoringTable = React.memo(() => {
                     </div>
                 );
             }
-        }
+        },
+        lastColDetails()
     ];
 
     const tableProps = useTable({
@@ -469,7 +510,7 @@ const JobMonitoringTable = React.memo(() => {
                                     setOpenedRow(null);
 
                                     if (menuId === 'goToCf') {
-                                        handleGoToCfClick(cellData);
+                                        handleGoToCfClick(rowData?.name);
                                     }
                                 }
                             }}
