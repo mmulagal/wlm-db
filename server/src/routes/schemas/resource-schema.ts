@@ -38,7 +38,8 @@ const GetManagedResourcesSchema = {
     params: AccountIdParams,
     querystring: ManageResourcesQueryString,
     summary: 'List managed resources',
-    description: 'List managed resources for the given account and region',
+    description:
+        'List managed resources for the given account and multiple optional regions, credentials and database type parameters',
     response: {
         200: ManageResourcesResponse
     }
