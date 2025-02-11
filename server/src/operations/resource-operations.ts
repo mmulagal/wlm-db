@@ -73,7 +73,7 @@ async function getManagedResources(
     pageSize?: number,
     clientNextToken?: string
 ): Promise<ManageResourcesResponseType> {
-    logger.info('Fetching managed resources for account', {
+    logger.info('Fetching managed resources for multiple parameters', {
         accountId,
         credentialsIds,
         regions,

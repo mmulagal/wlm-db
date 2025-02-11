@@ -286,7 +286,7 @@ async function getResourcesForMultipleParams(
     pageSize?: number,
     nextToken?: string
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
-    logger.info(' Get the Resources', {
+    logger.info('Get the Resources for params', {
         accountId,
         credentialsIds,
         regions,

@@ -364,7 +364,7 @@ async function listResourcesForMultipleParamas(
     pageSize?: number,
     nextToken?: string
 ) {
-    logger.info('Listing resources by credential IDs', {
+    logger.info('Listing resources for params', {
         accountId,
         resourceType,
         region,
