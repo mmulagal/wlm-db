@@ -1,5 +1,5 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import fastifyMultipart, { MultipartFile } from '@fastify/multipart';
+import { MultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import castRequest from './utils';

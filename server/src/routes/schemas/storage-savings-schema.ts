@@ -1,5 +1,3 @@
-import { Type } from '@sinclair/typebox';
-import { emailCalculations } from '../../operations/storage-savings-operations';
 import { RouteTags } from '../../utils/consts';
 import {
     StorageSavingsRequestParams,
@@ -8,10 +6,7 @@ import {
     StorageSavingsCalculationsMetricsResponse,
     ManualStorageSavingsRequestBody,
     ManualStorageSavingsRequestParams,
-    InternalUpdateInstRecQueryString,
-    EmailCalculationsRequestParams,
-    EmailCalculationsResponse,
-    EmailCalculationsRequestBody
+    InternalUpdateInstRecQueryString
 } from '../types/storage-savings.types';
 
 const internalUpdateRecommendationPreferenceSchema = {
@@ -116,21 +111,6 @@ const getFsxwManualStorageSavingsCalculationMetricsSchema = {
     }
 };
 
-const emailCalculationsSchema = {
-    tags: [RouteTags.STORAGE_SAVINGS],
-    summary: 'Send calculations email',
-    description: 'Sends email containing attachment with storage savings calculations',
-    params: EmailCalculationsRequestParams,
-    consumes: ['multipart/form-data'],
-    // body: EmailCalculationsRequestBody,
-    body: Type.Any(),
-    response: {
-        200: EmailCalculationsResponse,
-        400: EmailCalculationsResponse,
-        500: EmailCalculationsResponse
-    }
-};
-
 export {
     internalUpdateRecommendationPreferenceSchema,
     getEbsStorageSavingsSchema,
@@ -140,6 +120,5 @@ export {
     getFsxwStorageSavingsSchema,
     getFsxwStorageSavingsCalculationMetricsSchema,
     getFsxwManualStorageSavingsSchema,
-    getFsxwManualStorageSavingsCalculationMetricsSchema,
-    emailCalculationsSchema
+    getFsxwManualStorageSavingsCalculationMetricsSchema
 };

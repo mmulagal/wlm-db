@@ -503,24 +503,6 @@ type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 
 type ManualModeInstancesType = Static<typeof ManualModeInstances>;
 
-const EmailCalculationsRequestBody = Type.Object({
-    userEmail: Type.String({ description: 'Recipient email address' }),
-    // file: Type.String({ format: 'binary', description: 'Attachment file (PDF, max size 2MB)' }),
-    file: Type.Any(),
-    storageType: Type.String({ enum: ['ebs', 'fsxw', 'onprem'] })
-});
-const EmailCalculationsRequestParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    credentialsId: Type.String({ minLength: 1 }),
-    region: Type.String({ minLength: 1 }),
-    instanceId: Type.String({ minLength: 1 })
-});
-// type EmailCalculationsRequestBodyType = Static<typeof EmailCalculationsRequestBody>;
-const EmailCalculationsResponse = Type.Object({
-    message: Type.String()
-});
-type EmailCalculationsResponseType = Static<typeof EmailCalculationsResponse>;
-
 export {
     InternalUpdateInstRecQueryString,
     EbsCostCalculationType,
@@ -548,10 +530,5 @@ export {
     EBSCloneCostCalculationRespType,
     EBSSnapshotCalculationRespType,
     StorageSavingsCalculationsMetricsType,
-    ManualModeInstancesType,
-    EmailCalculationsRequestParams,
-    EmailCalculationsRequestBody,
-    // EmailCalculationsRequestBodyType,
-    EmailCalculationsResponse,
-    EmailCalculationsResponseType
+    ManualModeInstancesType
 };

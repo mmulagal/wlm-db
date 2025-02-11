@@ -7,7 +7,6 @@ import {
     EBSCloneCostCalculationRespType,
     EBSCostCalculationRespType,
     EBSSnapshotCalculationRespType,
-    EmailCalculationsResponseType,
     FsxCalculationRespType,
     FsxwCalculationRespType,
     FsxwCloneCalculationRespType,
@@ -34,7 +33,6 @@ import {
     ManualModeFsxwComparisonResponse,
     ManualModeMarketingRequestBody
 } from '../utils/marketing-types';
-import { sendEmail } from './aws/ses-operations';
 
 const logger = getLogger();
 
@@ -954,44 +952,10 @@ async function getManualModeStorageSavingsCalculationMetrics(
     };
 }
 
-async function emailCalculations(
-    acccountId: string,
-    fileBuffer: Buffer<ArrayBufferLike>,
-    fileName: string,
-    userEmail: string,
-    storageType: string
-): Promise<EmailCalculationsResponseType> {
-    logger.info('Emailing calculations', acccountId, fileName, userEmail, storageType);
-
-    const storageNames = {
-        ebs: 'Amazon EBS storage',
-        fsxw: 'FSx for ONTAP file systems',
-        onprem: 'On premises storage'
-    };
-    const storageName = storageNames[storageType as keyof typeof storageNames];
-    const subject = 'Calculation report was sent to you by email';
-    const content = `The attached report details the Total Cost of Ownership (TCO) savings comparing your database workloads to SQL Server using ${storageName}. The details in the report include calculations, cost estimations and recommendations to help you compare your storage environment with FSx for ONTAP and decide whether FSx for ONTAP is more cost efficient for your organization.`;
-    const fromEmail = '';
-
-    try {
-        await sendEmail(fromEmail, userEmail, subject, content, [{ filename: fileName, content: fileBuffer }]);
-    } catch (error) {
-        logger.error('Error sending email', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error sending email');
-    }
-
-    return { message: 'Email sent successfully' };
-}
-
-// Check email sending limit | caching redis
-// X: should we check if the email is a registered email
-// should we keep the sender email address in env or hardcoded
-
 export {
     getAoagPartnerNodesDetails,
     performStorageSavingsCalculations,
     getStorageSavingsCalculationMetrics,
     performManualModeStorageSavingsCalculations,
-    getManualModeStorageSavingsCalculationMetrics,
-    emailCalculations
+    getManualModeStorageSavingsCalculationMetrics
 };

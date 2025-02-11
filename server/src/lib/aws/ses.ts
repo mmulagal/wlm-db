@@ -1,20 +1,12 @@
 import { SendEmailCommand, SendEmailCommandInput, SendEmailCommandOutput, SESClient } from '@aws-sdk/client-ses';
 import getLogger from '../../utils/logger';
-import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 
 const logger = getLogger();
-const getSES = async (region: string, credentialsId?: string) => {
-    logger.debug('Getting SES client: ', region, credentialsId);
-    if (!credentialsId) {
-        return new SESClient({ region });
-    }
+const AWS_SES_REGION = 'us-east-1';
 
-    const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
-    const credentials = { accessKeyId, secretAccessKey, sessionToken };
-
-    return new SESClient({ credentials, region });
+const getSES = async () => {
+    logger.debug('Getting SES client');
+    return new SESClient({ region: AWS_SES_REGION });
 };
 
 const sendEmail = async (region: string, input: SendEmailCommandInput): Promise<SendEmailCommandOutput> => {
