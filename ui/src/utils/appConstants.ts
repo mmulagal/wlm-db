@@ -28,6 +28,8 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
+    POSTGRESQL_TYPE: 'PostgreSQL',
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',

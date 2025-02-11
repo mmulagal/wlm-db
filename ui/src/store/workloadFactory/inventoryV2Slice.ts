@@ -22,7 +22,7 @@ const initialInventoryV2State: InventorySliceData = {
         discoveredHostData: null,
         discoverHostLoading: false
     },
-    fsxCredentialStatusObj: null,
+    fsxCredentialStatusObj: {},
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
     perfMssqlInstancesData: null,

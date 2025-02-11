@@ -47,13 +47,23 @@ import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUti
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
 
+export const uniqueHostRow = (id: string, cred: string, region: string) => {
+    return id + '_' + cred + '_' + region;
+};
+
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
     if (!managedData) {
         return result;
     }
+    let state = store.getState();
+    const { credentialMapping, regionMapping } = state?.headers;
     Object.keys(managedData).map((key: string) => {
-        result = { ...result, ...{ [key]: formatManagedRows(managedData[key]) } };
+        let awsKeys = key.split('_');
+        result = {
+            ...result,
+            ...{ [key]: formatManagedRows(managedData[key], awsKeys, credentialMapping, regionMapping) }
+        };
     });
     return result;
 };
@@ -94,13 +104,19 @@ export const getInventoryDataCount = (data: { [key: string]: InventoryTableData 
     return result;
 };
 
-export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
+export const formatManagedRows = (
+    managedRow: ManagedHostsRowInterface,
+    keys: Array<string>,
+    credentialMapping: any,
+    regionMapping: any
+) => {
     let managedInstanceCount = managedInstancesCount(managedRow);
     let totalInstanceCount = managedRow?.databaseInstanceDetails?.length || 0;
     let ssmState = getSsmState(managedRow);
     let allocatedCapacity = getAllocatedCapacity(managedRow);
 
     const result = {
+        hostType: managedRow?.hostType,
         id: managedRow?.id,
         ec2InstanceId: managedRow?.nodeTopology?.ec2Details?.[0]?.id,
         ec2InstanceName: managedRow?.nodeTopology?.ec2Details?.[0]?.name,
@@ -126,7 +142,12 @@ export const formatManagedRows = (managedRow: ManagedHostsRowInterface) => {
         allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
         storageType: GENERAL.FSX_FOR_ONTAP,
         isDetected: true,
-        sqlServerInstances: formatInstanceData(managedRow)
+        sqlServerInstances: formatInstanceData(managedRow),
+        credentialId: keys?.[1],
+        regionId: keys?.[2],
+        credentialName: credentialMapping?.[keys?.[1]]?.name,
+        accountId: credentialMapping?.[keys?.[1]]?.providerAccountId,
+        regionName: regionMapping?.[keys?.[2]]?.regionName
     };
     return result;
 };
@@ -423,7 +444,9 @@ export const getPrimaryClusterNode = (
                     return (
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
                         perHost?.nodesList &&
-                        perHost.nodesList.includes(val)
+                        perHost.nodesList.includes(val) &&
+                        perHost?.credentialId === host?.credentialId &&
+                        perHost?.regionId === host?.regionId
                     );
                 });
                 // checking same vpc or not
@@ -449,16 +472,26 @@ export const getPrimaryClusterNode = (
 
                 if (isManagedNode1 || isManagedNode2) {
                     if (partnerNode?.ec2InstanceId) {
-                        removeRows.push(partnerNode?.ec2InstanceId);
+                        removeRows.push(
+                            uniqueHostRow(
+                                partnerNode?.ec2InstanceId,
+                                partnerNode?.credentialId || '',
+                                partnerNode?.regionId || ''
+                            )
+                        );
                     }
                     if (host?.ec2InstanceId) {
-                        removeRows.push(host?.ec2InstanceId);
+                        removeRows.push(
+                            uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
+                        );
                     }
                     return;
                 } else {
                     let combinedData = combineClusterData(host, partnerNode, removeRows);
                     if (combinedData) {
-                        clusterDiscoveredHost[combinedData?.key] = combinedData?.data;
+                        clusterDiscoveredHost[
+                            uniqueHostRow(combinedData?.key, host?.credentialId || '', host?.regionId || '')
+                        ] = combinedData?.data;
                         // clusterDiscoveredHost = {...clusterDiscoveredHost, [combinedData?.key] : combinedData?.data};
                     }
                 }
@@ -472,7 +505,9 @@ export const getPrimaryClusterNode = (
 
                 if (isManagedNode1) {
                     if (host?.ec2InstanceId) {
-                        removeRows.push(host?.ec2InstanceId);
+                        removeRows.push(
+                            uniqueHostRow(host?.ec2InstanceId, host?.credentialId || '', host?.regionId || '')
+                        );
                     }
                     return;
                 }
@@ -514,7 +549,9 @@ export const combineClusterData = (
     });
     if (primaryNode === node?.ec2InstanceId) {
         if (partner?.ec2InstanceId) {
-            removeRows.push(partner?.ec2InstanceId);
+            removeRows.push(
+                uniqueHostRow(partner?.ec2InstanceId, partner?.credentialId || '', partner?.regionId || '')
+            );
         }
         result = {
             key: primaryNode,
@@ -526,7 +563,7 @@ export const combineClusterData = (
         };
     } else {
         if (node?.ec2InstanceId) {
-            removeRows.push(node?.ec2InstanceId);
+            removeRows.push(uniqueHostRow(node?.ec2InstanceId, node?.credentialId || '', node?.regionId || ''));
         }
         result = {
             key: primaryNode,
@@ -587,23 +624,48 @@ export const formatDiscoveredInventoryData = (
     if (!discoveredData) {
         return result;
     }
+    let state = store.getState();
+    const { credentialMapping, regionMapping } = state?.headers;
     discoveredData?.map((perRow: DiscoverHostInterface) => {
-        if (removeRows.includes(perRow.ec2InstanceId)) {
+        if (
+            removeRows.includes(uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || ''))
+        ) {
             return;
         }
-        if (clusterDiscoveredHost?.[perRow.ec2InstanceId]) {
+        if (
+            clusterDiscoveredHost?.[
+                uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
+            ]
+        ) {
             result = {
                 ...result,
-                ...{ [perRow.ec2InstanceId]: formatDiscoveredRows(clusterDiscoveredHost[perRow.ec2InstanceId]) }
+                ...{
+                    [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                        formatDiscoveredRows(
+                            clusterDiscoveredHost[perRow.ec2InstanceId],
+                            credentialMapping,
+                            regionMapping
+                        )
+                }
             };
         } else {
-            result = { ...result, ...{ [perRow.ec2InstanceId]: formatDiscoveredRows(perRow) } };
+            result = {
+                ...result,
+                ...{
+                    [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
+                        formatDiscoveredRows(perRow, credentialMapping, regionMapping)
+                }
+            };
         }
     });
     return result;
 };
 
-export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
+export const formatDiscoveredRows = (
+    discoveredRow: DiscoverHostInterface,
+    credentialMapping: any,
+    regionMapping: any
+) => {
     let totalInstanceCount = discoveredRow?.sqlServerInstances?.length || 0;
     let ssmState = getDiscoverSsmState(discoveredRow);
     let perInstanceStatus = getDiscoveredPerInstanceStatus(discoveredRow, ssmState);
@@ -641,7 +703,10 @@ export const formatDiscoveredRows = (discoveredRow: DiscoverHostInterface) => {
         // estimatedUsageCost: {}, // Initially it will be blank
         // totalCost: '',
         // allocatedCapacity: '',
-        sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus)
+        sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus),
+        credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
+        accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
     };
     return result;
 };

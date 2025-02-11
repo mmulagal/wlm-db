@@ -1877,3 +1877,23 @@ export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): v
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
     }
 };
+
+export const makeCredMapping = (data: any) => {
+    let credMapping: HashTable<string> = {};
+    data?.map((cred: any) => {
+        if (cred?.credentialsId) {
+            credMapping[cred.credentialsId] = cred;
+        }
+    });
+    return credMapping;
+};
+
+export const makeRegionMapping = (data: any) => {
+    let regionMapping: HashTable<string> = {};
+    data?.map((region: any) => {
+        if (region?.regionCode) {
+            regionMapping[region.regionCode] = region;
+        }
+    });
+    return regionMapping;
+};

@@ -4,6 +4,8 @@ import { Credentials, Regions } from './mssqlTypes';
 export interface HeaderTypeEntities {
     multiSelectData: any;
     headerSelectedCred: any;
+    headerSelectedCredSandbox: any;
+    headerSelectedRegionSandbox: any;
     headerSelectedRegion: any;
     headerSelectedMultiCred: any;
     headerSelectedMultiRegion: any;
@@ -19,6 +21,8 @@ export interface HeaderTypeEntities {
         regionsLoading: false;
         regionsError: null;
     };
+    credentialMapping: any;
+    regionMapping: any;
     getStatus: {
         statusData: StatusRes | null;
         statusLoading: false;
@@ -26,4 +30,5 @@ export interface HeaderTypeEntities {
     };
     refreshTime: string | null;
     dashboardRefresh: boolean;
+    multiSelectStatus: any;
 }

@@ -268,7 +268,9 @@ const HeaderComponent = ({ tab }: Tab) => {
             const option = generateMultipleOptionType(credValue, credValue, idx, false, '', val);
             options.push(option);
         });
-        dispatch(setHeaderSelectedMultiCred([options[0]]));
+        if (setFlagForMultiCred && options.length > 0) {
+            dispatch(setHeaderSelectedMultiCred([options[0]]));
+        }
         return options;
     }, [credentialData]);
 
@@ -282,7 +284,9 @@ const HeaderComponent = ({ tab }: Tab) => {
             const option = generateMultipleOptionType(regionValue, regionValue, idx, false, '', val);
             options.push(option);
         });
-        dispatch(setHeaderSelectedMultiRegion([options[0]]));
+        if (setFlagForMultiCred && options.length > 0) {
+            dispatch(setHeaderSelectedMultiRegion([options[0]]));
+        }
         return options;
     }, [regionsData]);
 
@@ -1029,7 +1033,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
-                                    {selectComponents()}
+                                    {!setFlagForMultiCred && selectComponents()}
+                                    {setFlagForMultiCred && selectMultipleComponents()}
                                     <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
                             </div>
@@ -1100,7 +1105,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                         <>
                             <div className={styles.exploreSavingSection}>
                                 <div className={styles.contentArea}>
-                                    {selectComponents()}
+                                    {!setFlagForMultiCred && selectComponents()}
+                                    {setFlagForMultiCred && selectMultipleComponents()}
                                     <div className={styles.content}>{refreshComponent()}</div>
                                 </div>
                             </div>

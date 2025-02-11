@@ -251,6 +251,7 @@ export interface StorageInterface {
 
 export interface ManagedHostsRowInterface {
     id?: string;
+    hostType?: string;
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
@@ -383,6 +384,8 @@ export interface DiscoverHostInterface {
         cidrBlock?: string;
     };
     sqlServerInstances?: Array<SQLServerInstancesDiscovered>;
+    credentialId?: string;
+    regionId?: string;
 }
 
 export interface SQLServerInstancesDiscovered {

@@ -581,7 +581,7 @@ const HostTable = () => {
             renderCell: (cellData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{'Microsoft SQL Server'}</Typography>
+                        <Typography variant="Semibold_14">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
                     </div>
                 );
             }
@@ -707,7 +707,7 @@ const HostTable = () => {
         {
             id: '8',
             Header: 'AWS credentials',
-            accessor: 'awsCredentials',
+            accessor: 'credentialName',
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
@@ -717,7 +717,7 @@ const HostTable = () => {
         {
             id: '9',
             Header: 'AWS account',
-            accessor: 'awsAccount',
+            accessor: 'accountId',
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
@@ -727,7 +727,7 @@ const HostTable = () => {
         {
             id: '10',
             Header: 'Region',
-            accessor: 'region',
+            accessor: 'regionName',
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
