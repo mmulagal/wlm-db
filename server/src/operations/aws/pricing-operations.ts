@@ -23,7 +23,8 @@ import {
     SQL_SOFTWARE_TYPES,
     SQL_STD,
     HOURS_IN_MONTH,
-    EBS_ROOT_VOLUME
+    EBS_ROOT_VOLUME,
+    PRICING_LICENSE_KEYS
 } from '../../utils/consts';
 import { DEMO_PRODUCT_RATE } from '../../utils/demo-utils/demoMockdata';
 import getProducts from '../../lib/aws/pricing';
@@ -978,7 +979,11 @@ async function getSqlInstancePricingDetails(
         Object.entries(pricingDetails).length > 1
             ? Object.fromEntries(
                   Object.entries(pricingDetails)
-                      .filter(([, licenses]) => (licenseType ? licenses[licenseType] && licenses.NA : licenses.NA))
+                      .filter(([, licenses]) =>
+                          licenseType
+                              ? licenses[licenseType] && licenses[PRICING_LICENSE_KEYS.SQL_STD] && licenses.NA
+                              : licenses[PRICING_LICENSE_KEYS.SQL_STD] && licenses.NA
+                      )
                       .sort(([, licensesA], [, licensesB]) => {
                           const priceA = licensesA.NA ? licensesA.NA.pricePerUnit : Infinity;
                           const priceB = licensesB.NA ? licensesB.NA.pricePerUnit : Infinity;

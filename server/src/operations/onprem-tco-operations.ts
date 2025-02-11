@@ -280,7 +280,7 @@ async function getStorageSavingsResponse(
     const currentInstanceType = await deriveHostConfigBasedInstanceType(
         region,
         windowsConfig,
-        currentLicenseEdition?.toLowerCase().includes('enterprise') ? ENTERPRISE_EDITION : STANDARD_EDITION
+        isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
     ); // Instance type here is based on the host config; considered as existing instance type
     const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances, recommendedLicenseEdition); // Instance type here is based on the current usage as per the report; considered as recommended instance type
 
