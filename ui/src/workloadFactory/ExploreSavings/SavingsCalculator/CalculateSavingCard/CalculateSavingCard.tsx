@@ -34,17 +34,25 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
     };
 
     const navigateAddCredentials = () => {
-        postBlueXPMessage({
-            type: BlueXPListeners.navigate,
-            payload: {
-                pathname: `../../credentials/create?from=/databases/storage-saving-calculator?type=${
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ? 'ebs' : 'fsxw'
-                }&to=/databases/storage-saving-calculator/${
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ? 'ebs' : 'fsxw'
-                }`,
-                replace: true
-            }
-        });
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: `../../credentials/create?from=/databases/storage-saving-calculator?type=ebs
+                    &to=/databases/storage-saving-calculator/ebs`,
+                    replace: true
+                }
+            });
+        } else {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: `../../credentials/create?from=/databases/explore-savings-fsxw?type=fsxw
+                    &to=/databases/explore-savings-fsxw/fsxw`,
+                    replace: true
+                }
+            });
+        }
     };
     return (
         <div
