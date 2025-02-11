@@ -43,7 +43,7 @@ resource "aws_instance" "validation_node" {
 
 #Wait for user data to complete execution on the instance for mac and linux hosts
 resource "null_resource" "wait_for_tag_mac_or_linux" {
-  # count = var.operating_system == "Linux" ? 1 : 0
+  count = var.operating_system == "Linux" ? 1 : 0
 
   triggers = {
     instance_id = aws_instance.validation_node.id
@@ -55,14 +55,14 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
 }
 
 # # Wait for user data to complete execution on the instance for windows host
-# resource "null_resource" "wait_for_tag_windows" {
-#   count = var.operating_system == "Windows" ? 1 : 0
+resource "null_resource" "wait_for_tag_windows" {
+  count = var.operating_system == "Windows" ? 1 : 0
 
-#   triggers = {
-#     instance_id = aws_instance.validation_node.id
-#   }
+  triggers = {
+    instance_id = aws_instance.validation_node.id
+  }
 
-#   provisioner "local-exec" {
-#     command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name} ${var.aws_profile}"
-#   }
-# }
+  provisioner "local-exec" {
+    command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name} ${var.aws_profile}"
+  }
+}
