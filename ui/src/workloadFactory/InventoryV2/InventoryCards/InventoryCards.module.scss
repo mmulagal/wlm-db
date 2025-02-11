@@ -1,0 +1,22 @@
+.inventory-cards {
+    width: calc(83.33% - 4px);
+    display: flex;
+    gap: 24px;
+    margin-bottom: 40px;
+
+    .inventory-card {
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px 0px var(--border);
+        padding: 24px 40px;
+        width: calc(50% - 12px);
+        display: flex;
+        gap: 40px;
+
+        .contentArea {
+            width: calc(59.5%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+    }
+}

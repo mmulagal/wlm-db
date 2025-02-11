@@ -428,8 +428,8 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: 87%;
-                max-width: 1607px;
+                width: calc(83.33% - 4px);
+
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
