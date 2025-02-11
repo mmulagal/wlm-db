@@ -20,6 +20,7 @@ locals {
     sql_version                      = var.sql_version
     fsx_aggr_name                    = var.fsx_aggr_name
     fsx_svm_uuid                     = var.fsx_svm_uuid
+    log_feature_enabled              = local.log_feature_enabled
   })
 }
 

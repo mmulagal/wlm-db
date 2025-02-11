@@ -7,6 +7,7 @@ locals {
     fsx_file_system_id                    = var.fsx_file_system_id
     deployment_name                       = var.deployment_name
     validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
+    log_feature_enabled                   = local.log_feature_enabled
   })
 }
 
