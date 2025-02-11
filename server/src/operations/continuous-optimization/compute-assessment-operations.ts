@@ -62,7 +62,9 @@ async function runComputeAssessment(
         const filteredRecommendationOptions = coRecOptions
             ?.filter(
                 ({ instanceType, platformDifferences }) =>
-                    platformDifferences?.length === 0 && /^[mcr]/.test(instanceType!)
+                    platformDifferences?.length === 0 &&
+                    /^[mcr]/.test(instanceType!) &&
+                    instanceType !== currentInstanceType
             )
             ?.map(
                 ({ instanceType, rank, savingsOpportunity, platformDifferences }) => ({
@@ -73,19 +75,9 @@ async function runComputeAssessment(
                 }) // return only such recommandation options that has no platform difference. Migration to different platform cannot be supported programatically from our application.
             );
 
-        // If the current instance type is already one of the recommended instance type, then the finding should be OPTIMIZED.
-        let updatedFinding = finding;
-        for (const recommendedInstance of filteredRecommendationOptions) {
-            const { instanceType: recommendedInstanceType } = recommendedInstance;
-            if (recommendedInstanceType === currentInstanceType) {
-                updatedFinding = AssessmentStatus.OPTIMIZED;
-                break;
-            }
-        }
-
         return {
             currentInstanceType,
-            finding: updatedFinding,
+            finding,
             findingReasonCodes,
             recommendationOptions: filteredRecommendationOptions
         } as ComputeAssessment;
