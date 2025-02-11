@@ -11,7 +11,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useState } from 'react';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-const ExportPDF = ({ printDocument, disableState, sendEmail }: any) => {
+const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any) => {
     const {
         storageSavingsLoading,
         selectedHostDetails,
@@ -75,7 +75,7 @@ const ExportPDF = ({ printDocument, disableState, sendEmail }: any) => {
 
             <div
                 className={
-                    loading || disableState || !viewCalculationsResponse
+                    loading || disableState || !viewCalculationsResponse || emailStatus
                         ? `${styles.insideContainer} ${styles.disabled}`
                         : styles.insideContainer
                 }

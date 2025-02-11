@@ -50,6 +50,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
     const [isCardOpen, setIsCardOpen] = useState(false);
+    const [emailStatus, setEmailStatus] = useState(false);
     const [getSendEmail] = useGetSendEmailMutation();
 
     const {
@@ -118,6 +119,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     };
 
     const sendEmail = async () => {
+        setEmailStatus(true);
         const elem = document.getElementById('export-pdf') as HTMLElement;
         var options = {
             filename: `SavingsCalculator.pdf`,
@@ -146,6 +148,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         })
                     );
                 }
+                setEmailStatus(false);
             })
             .catch(err => {
                 dispatch(
@@ -154,6 +157,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         message: 'Calculation report was failed to be delivered.'
                     })
                 );
+                setEmailStatus(false);
             });
     };
 
@@ -387,6 +391,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     disableState={disableState}
                     isMutliFsx={isMutliFsx}
                     sendEmail={sendEmail}
+                    emailStatus={emailStatus}
                 />
             </div>
         </div>
