@@ -60,6 +60,11 @@ import {
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { ReactComponent as OptimizeInProgressIcon } from '../../../assets/optimize-in-progress.svg';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import MaxDopTable from './RenderTables/MaxDopTable';
+import MicrosoftSQLPatchTable from './RenderTables/MicrosoftSQLPatchTable';
+import LicenseTable from './RenderTables/LicenseTable';
+import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
+import OSPatchTable from './RenderTables/OSPatchTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -620,8 +625,8 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '136px',
+                    tagHeight: '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.host_os_patch?.recommendation?.description
@@ -634,11 +639,11 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '450px',
+                    tagHeight: '547px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.rss_config?.recommendation?.description
+                        descriptionRssConfig: cardDataDefault?.rss_config?.recommendation?.descriptionRssConfig
                     }
                 });
                 break;
@@ -648,12 +653,9 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.sql_licenses?.recommendation?.description
-                    }
+                    cardHeight: '228px',
+                    tagHeight: '325px',
+                    data: cardDataDefault?.sql_licenses?.recommendation
                 });
                 break;
             case GENERAL.MICROSOFT_SQL_PATCH:
@@ -662,8 +664,8 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '160px',
+                    tagHeight: '257px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
@@ -676,11 +678,11 @@ const DashboardInnerPage = () => {
                     optimizedInstances: selectedConfigSummary.optimizedInstances,
                     notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: '216px',
+                    tagHeight: '313px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.maxdop?.recommendation?.description
+                        description: cardDataDefault?.maxdop?.recommendation?.descriptionRssConfig?.first
                     }
                 });
                 break;
@@ -769,6 +771,16 @@ const DashboardInnerPage = () => {
                 return <OntapConfig />;
             case 'Operating system':
                 return <OperatingSystemTable />;
+            case 'MAXDOP':
+                return <MaxDopTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.MICROSOFT_SQL_PATCH:
+                return <MicrosoftSQLPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.LICENSE_SQL_SERVER:
+                return <LicenseTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.RSS_CONFIGURATION:
+                return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case GENERAL.OPERATING_SYSTEM_PATCH:
+                return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
 

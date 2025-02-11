@@ -651,7 +651,10 @@ export const SAVINGS_CALC_MODE = {
     AUTO_EBS: 'Auto_EBS',
     AUTO_FSXW: 'Auto_FSXW',
     MANUAL_FSXW: 'Manual_FSXW',
-    ONPREM: 'OnPrem'
+    ONPREM: 'OnPrem',
+    EBS: 'ebs',
+    FSXW: 'fsxw',
+    ONPREM_MODE: 'onprem'
 };
 
 export const PARTNER_NODE = 'partner node';
