@@ -9,7 +9,7 @@ validation_node_initialization_s3_url="${validation_node_initialization_s3_url}"
 script_dir="/home/ec2-user/cfn/scripts"
 log_dir="/var/log/netapp_wf"
 log_file="$log_dir/validation-instance-initializer.log"
-log_feature_enabled="true" # Set to false if CloudWatch Logs feature is disabled
+log_feature_enabled="${log_feature_enabled}"
 
 echo "Deployment Name: $deployment_name"
 
