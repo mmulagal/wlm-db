@@ -14,19 +14,6 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
     const dispatch = useDispatch();
     const { selectedExploreSavingsTab } = useAppSelector(state => state?.exploreSavings);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
-    // To check whether account present or not
-    const [noAccount, setNoAccount] = useState(true);
-
-    // To set noAccount flag is present or not
-    useEffect(() => {
-        if (credentialData && credentialData.length > 0) {
-            setNoAccount(false);
-        } else if (!credentialData || credentialData.length === 0) {
-            setNoAccount(true);
-        }
-    }, [credentialData]);
-
     const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
