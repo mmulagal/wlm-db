@@ -37,7 +37,11 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {
-                pathname: `../../credentials/create?from=/databases/storage-saving-calculator?type=ebs&to=/databases/storage-saving-calculator/ebs`,
+                pathname: `../../credentials/create?from=/databases/storage-saving-calculator?type=${
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ? 'ebs' : 'fsxw'
+                }&to=/databases/storage-saving-calculator/${
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ? 'ebs' : 'fsxw'
+                }`,
                 replace: true
             }
         });
