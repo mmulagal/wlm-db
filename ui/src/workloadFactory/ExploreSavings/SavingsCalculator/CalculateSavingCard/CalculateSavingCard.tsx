@@ -37,7 +37,7 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
         postBlueXPMessage({
             type: BlueXPListeners.navigate,
             payload: {
-                pathname: `../../credentials/create`,
+                pathname: `../../credentials/create?from=/databases/storage-saving-calculator?type=ebs&to=/databases/storage-saving-calculator/ebs`,
                 replace: true
             }
         });
