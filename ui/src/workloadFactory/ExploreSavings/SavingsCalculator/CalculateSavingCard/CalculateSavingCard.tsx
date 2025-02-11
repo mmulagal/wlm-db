@@ -7,9 +7,9 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedExploreSavingsTab } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 import { handleExploreSavingsURL } from '../../../../utils/utilityFunctions';
-const CalculateSavingCard = ({ buttonRef, setIsCardOpen }: any) => {
+const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }: any) => {
     const dispatch = useDispatch();
     const { selectedExploreSavingsTab } = useAppSelector(state => state?.exploreSavings);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -35,9 +35,9 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen }: any) => {
                     Calculate your savings on your existing volumes
                 </DsTypography>
                 <DsTypography variant="Regular_14" className={styles.text}>
-                    We can calculate how much you'll save by comparing the cost of your existing EBS resources with FSx
-                    for ONTAP. Click "Try it" to select specific EBS file systems to compare with FSx for ONTAP in the
-                    calculator.
+                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                        ? 'We can calculate how much you\'ll save by comparing the cost of your existing EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS file systems to compare with FSx for ONTAP in the calculator.'
+                        : 'We can calculate how much you\'ll save by comparing the cost of your existing FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows File Server file systems to compare with FSx for ONTAP in the calculator.'}
                 </DsTypography>
             </div>
             <div className={styles.buttonContainer}>

@@ -42,6 +42,7 @@ import StoragePerformance from './StoragePerformance/StoragePerformance';
 import OnPremRegion from './OnPremRegion/OnPremRegion';
 import downloadPdfEmail from '../../../common/emailPDF';
 import CalculateSavingCard from './CalculateSavingCard/CalculateSavingCard';
+import { useGetSendEmailMutation } from '../../../utils/apiService';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
@@ -49,6 +50,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
     const [isCardOpen, setIsCardOpen] = useState(false);
+    const [getSendEmail] = useGetSendEmailMutation();
 
     const {
         savingsCalculatorFrom,
@@ -65,6 +67,17 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     } = useAppSelector(state => state.exploreSavings);
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
+
+    useEffect(() => {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
+            setIsCardOpen(true);
+        } else {
+            setIsCardOpen(false);
+        }
+    }, [savingsCalculatorFrom]);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
@@ -88,6 +101,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         }
     }, [viewCalculationsResponse]);
 
+    const setEmailSubject = () => {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+        ) {
+            return SAVINGS_CALC_MODE.EBS;
+        } else if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
+            return SAVINGS_CALC_MODE.FSXW;
+        } else {
+            return SAVINGS_CALC_MODE.ONPREM_MODE;
+        }
+    };
+
     const sendEmail = async () => {
         const elem = document.getElementById('export-pdf') as HTMLElement;
         var options = {
@@ -96,14 +125,26 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         };
         const report = await downloadPdfEmail(elem, options, true, () => {});
         const formData = new FormData();
-        formData.append('file', report, 'document.pdf');
+        formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
         formData.append('userEmail', userMetadata?.email);
-        formData.append('emailSubject', 'FSXw');
-        // uploadFile(formData).then((resp) => {
-        //     console.log(‘succes’)
-        // }).catch(err => notificationContext({
-
-        // }))
+        formData.append('emailSubject', setEmailSubject());
+        getSendEmail(formData)
+            .then(resp => {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: 'Calculation report was sent to you by email'
+                    })
+                );
+            })
+            .catch(err => {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Calculation report was failed to be delivered.'
+                    })
+                );
+            });
     };
 
     const printDocument = () => {
@@ -194,18 +235,27 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         }
                     >
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
-                        <DsButton
-                            ref={buttonRef}
-                            onClick={() => {
-                                handleOpenCard();
-                            }}
-                            type="text"
-                            icon={<CalculateIcon />}
-                        >
-                            Calculate savings based on existing resources
-                        </DsButton>
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
+                            <DsButton
+                                ref={buttonRef}
+                                onClick={() => {
+                                    handleOpenCard();
+                                }}
+                                type="text"
+                                icon={<CalculateIcon />}
+                            >
+                                Calculate savings based on existing resources
+                            </DsButton>
+                        )}
 
-                        {isCardOpen && <CalculateSavingCard buttonRef={buttonRef} setIsCardOpen={setIsCardOpen} />}
+                        {isCardOpen && (
+                            <CalculateSavingCard
+                                buttonRef={buttonRef}
+                                setIsCardOpen={setIsCardOpen}
+                                savingsCalculatorFrom={savingsCalculatorFrom}
+                            />
+                        )}
                     </div>
 
                     <div
