@@ -313,18 +313,6 @@ const VPCFILTER: GetProductsCommandInput = {
     ServiceCode: 'AmazonVPC',
     FormatVersion: 'aws_v1'
 };
-const SQLINSTANCEFITLER: GetProductsCommandInput = {
-    Filters: [
-        { Type: 'TERM_MATCH', Field: 'regionCode', Value: 'us-east-1' },
-        { Type: 'TERM_MATCH', Field: 'productFamily', Value: 'Compute Instance' },
-        { Type: 'TERM_MATCH', Field: 'instanceType', Value: 'm7i-flex.large' },
-        { Type: 'TERM_MATCH', Field: 'tenancy', Value: 'Shared' },
-        { Type: 'TERM_MATCH', Field: 'capacitystatus', Value: 'Used' },
-        { Type: 'TERM_MATCH', Field: 'operatingSystem', Value: 'windows' }
-    ],
-    ServiceCode: 'AmazonEC2',
-    FormatVersion: 'aws_v1'
-};
 
 pricingMock.on(GetProductsCommand, FSXNSTORAGERATEFILTER).resolves(mockfsxnStoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXNOPERATIONALFILTER).resolves(mockfsxnOperationalPriceGetProductsResponse);
@@ -332,5 +320,97 @@ pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2Instan
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EBSSTORAGERATEFILTER).resolves(mockebsStoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
-pricingMock.on(GetProductsCommand, SQLINSTANCEFITLER).resolves(mockSqlInstancePriceResponse);
+pricingMock.on(GetProductsCommand).callsFake(async command => {
+    if (
+        command?.Filters?.some(
+            (filter: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                filter.Field === 'productFamily' && filter.Value === 'Compute Instance'
+        )
+    ) {
+        const { Value: instanceType } =
+            command?.Filters?.find(
+                (filter: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter.Field === 'instanceType' && filter.Value !== undefined
+            ) || {};
+        if (instanceType) {
+            const { PriceList: priceList } = mockSqlInstancePriceResponse;
+            const updatedPriceList = priceList.map(price => updateInstanceType(instanceType, price));
+            mockSqlInstancePriceResponse.PriceList = updatedPriceList;
+            return mockSqlInstancePriceResponse;
+        }
+        return mockSqlInstancePriceResponse;
+    }
+
+    if (
+        FSXNSTORAGERATEFILTER?.Filters?.every(filter1 =>
+            command?.Filters?.some(
+                (filter2: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter1.Type === filter2.Type && filter1.Field === filter2.Field
+            )
+        )
+    ) {
+        return mockfsxnStoragePriceGetProductsResponse;
+    }
+
+    if (
+        FSXNOPERATIONALFILTER?.Filters?.every(filter1 =>
+            command?.Filters?.some(
+                (filter2: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter1.Type === filter2.Type && filter1.Field === filter2.Field
+            )
+        )
+    ) {
+        return mockfsxnOperationalPriceGetProductsResponse;
+    }
+
+    if (
+        EC2INSTANCERATEFILTER?.Filters?.every(filter1 =>
+            command?.Filters?.some(
+                (filter2: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter1.Type === filter2.Type && filter1.Field === filter2.Field
+            )
+        )
+    ) {
+        return mockec2InstancePriceGetProductsResponse;
+    }
+
+    if (
+        EC2STORAGERATEFILTER?.Filters?.every(filter1 =>
+            command?.Filters?.some(
+                (filter2: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter1.Type === filter2.Type && filter1.Field === filter2.Field
+            )
+        )
+    ) {
+        return mockec2StoragePriceGetProductsResponse;
+    }
+
+    if (
+        EBSSTORAGERATEFILTER?.Filters?.every(filter1 =>
+            command?.Filters?.some(
+                (filter2: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter1.Type === filter2.Type && filter1.Field === filter2.Field
+            )
+        )
+    ) {
+        return mockebsStoragePriceGetProductsResponse;
+    }
+
+    if (
+        VPCFILTER?.Filters?.every(filter1 =>
+            command?.Filters?.some(
+                (filter2: { Type: string | undefined; Field: string | undefined; Value: string | undefined }) =>
+                    filter1.Type === filter2.Type && filter1.Field === filter2.Field
+            )
+        )
+    ) {
+        return mockVPCPriceGetProductsResponse;
+    }
+});
 export default mockGetProductsResponse;
+
+function updateInstanceType(instanceType: string, price: LazyJsonString): LazyJsonString {
+    const sqlInstancePriceObject = JSON.parse(price.toString());
+    sqlInstancePriceObject.product.attributes.instanceType = instanceType;
+    return LazyJsonString.fromObject(JSON.stringify(sqlInstancePriceObject));
+}

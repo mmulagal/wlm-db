@@ -17,6 +17,7 @@ import {
     HttpErrorCodes,
     IO2_AVAILABLE_REGIONS,
     MSSQL,
+    PRICING_LICENSE_KEYS,
     WLMDB
 } from '../utils/consts';
 import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
@@ -69,6 +70,7 @@ import {
     OnPremDatabaseResourcesObjectType,
     SqlInstanceDetailsRequestObjectType
 } from '../routes/types/onprem-tco.types';
+import { getSqlInstancePricingDetails } from './aws/pricing-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -273,9 +275,14 @@ async function getStorageSavingsResponse(
         instances,
         snapshotInfo
     });
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(region, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
-    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
     const { currentLicenseEdition, recommendedLicenseEdition, finding } = getOnpremLicenseRecommendations(instances);
+
+    const currentInstanceType = await deriveHostConfigBasedInstanceType(
+        region,
+        windowsConfig,
+        isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
+    ); // Instance type here is based on the host config; considered as existing instance type
+    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances, recommendedLicenseEdition); // Instance type here is based on the current usage as per the report; considered as recommended instance type
 
     if (!currentInstanceType || !recommendedInstanceType) {
         throw createError(
@@ -563,8 +570,8 @@ function deriveEc2InstanceListForMarketing(
     return ec2Instances;
 }
 
-async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: WindowsConfig) {
-    logger.info('Deriving Instance Type based on host config', { region, windowsConfig });
+async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: WindowsConfig, licenseEdition: string) {
+    logger.info('Deriving Instance Type based on host config', { region, windowsConfig, licenseEdition });
 
     const { nodeDetails } = windowsConfig;
     let maxVCpuCount = 4;
@@ -595,22 +602,31 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         InstanceGenerations: [InstanceGeneration.CURRENT]
     };
 
-    return fetchInstanceTypesByRetry(region, instanceRequirements);
+    return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
 }
 
-async function deriveSqlUsageBasedInstanceType(region: string, sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving SQL usage based Instance Type', { region, sqlInstancesDetails: sqlInstancesDetails?.length });
+async function deriveSqlUsageBasedInstanceType(
+    region: string,
+    sqlInstancesDetails: SqlInstanceDetails[],
+    licenseEdition: string
+) {
+    logger.info('Deriving SQL usage based Instance Type', {
+        region,
+        sqlInstancesDetails: sqlInstancesDetails?.length,
+        licenseEdition
+    });
 
     const instanceRequirements = deriveInstanceRequirements(sqlInstancesDetails);
 
-    return fetchInstanceTypesByRetry(region, instanceRequirements);
+    return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
 }
 
 async function fetchInstanceTypesByRetry(
     region: string,
-    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput
+    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput,
+    licenseEdition: string
 ) {
-    logger.info('Fetching Instance Types by Retry', { region, instanceRequirements });
+    logger.info('Fetching Instance Types by Retry', { region, instanceRequirements, licenseEdition });
 
     let { InstanceTypes: instanceTypes } =
         (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
@@ -652,7 +668,24 @@ async function fetchInstanceTypesByRetry(
         ({ InstanceTypes: instanceTypes } =
             (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
     }
-    return instanceTypes?.[0]?.InstanceType; // TODO: fetch cheapest instance type instead of first item in the list
+
+    let instanceType = instanceTypes?.[0]?.InstanceType; // Fall back to the first instance type if no cheaper instance types are found
+    try {
+        const licenseType =
+            licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
+        const instanceTypePricingDetails = await getSqlInstancePricingDetails(
+            region,
+            undefined,
+            'windows',
+            undefined,
+            licenseType
+        );
+        const [cheaperInstanceType] = Object.keys(instanceTypePricingDetails);
+        instanceType = cheaperInstanceType || instanceType;
+    } catch (error) {
+        logger.warn('Error fetching cheaper instance type', { error });
+    }
+    return instanceType;
 }
 
 async function analyzeOnpremData(
