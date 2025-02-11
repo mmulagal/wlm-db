@@ -73,7 +73,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
         ) {
-            setIsCardOpen(true);
+            setIsCardOpen(false); //False for now
         } else {
             setIsCardOpen(false);
         }
@@ -235,19 +235,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         }
                     >
                         <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
-                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
-                            <DsButton
-                                ref={buttonRef}
-                                onClick={() => {
-                                    handleOpenCard();
-                                }}
-                                type="text"
-                                icon={<CalculateIcon />}
-                            >
-                                Calculate savings based on existing resources
-                            </DsButton>
-                        )}
+                        {
+                            // (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                            //     savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) //false for now
+                            false && (
+                                <DsButton
+                                    ref={buttonRef}
+                                    onClick={() => {
+                                        handleOpenCard();
+                                    }}
+                                    type="text"
+                                    icon={<CalculateIcon />}
+                                >
+                                    Calculate savings based on existing resources
+                                </DsButton>
+                            )
+                        }
 
                         {isCardOpen && (
                             <CalculateSavingCard
