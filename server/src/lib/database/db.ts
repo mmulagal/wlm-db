@@ -354,6 +354,57 @@ async function listResources(
     });
 }
 
+async function listResourcesForMultipleParamas(
+    accountId?: string,
+    credentialIds?: string[],
+    region?: string[],
+    resourceType?: string[],
+    fsxId?: string,
+    metaFilters?: { [x: string]: string | number | boolean },
+    pageSize?: number,
+    nextToken?: string
+) {
+    logger.info('Listing resources by credential IDs', {
+        accountId,
+        resourceType,
+        region,
+        credentialIds,
+        metaFilters,
+        pageSize,
+        nextToken
+    });
+
+    if (accountId) {
+        accountId = checkAccount(accountId);
+    }
+
+    return prisma.client.resource.findMany({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(resourceType && { resource_type: { in: resourceType } }),
+            ...(region && { region: { in: region } }),
+            ...(credentialIds && { credentials_id: { in: credentialIds } }),
+            ...(fsxId && { co_relation_id: fsxId }),
+            ...(metaFilters && {
+                AND: Object.entries(metaFilters).map(([key, val]) => ({
+                    metadata: {
+                        path: `$.${key}`,
+                        equals: val
+                    }
+                }))
+            })
+        },
+        orderBy: {
+            id: 'asc'
+        },
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
+    });
+}
+
 async function countResources(accountId: string, credentialsId?: string, region?: string, resourceType?: string) {
     logger.info('Counting managed resources', { accountId, credentialsId, region, resourceType });
 
@@ -842,5 +893,6 @@ export {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    listAllManagedInstances
+    listAllManagedInstances,
+    listResourcesForMultipleParamas
 };

@@ -10,7 +10,8 @@ import {
     listDeployments,
     listResources,
     countResources,
-    listDatabaseInstances
+    listDatabaseInstances,
+    listResourcesForMultipleParamas
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -277,6 +278,55 @@ async function getResources(
     }
 }
 
+async function getResourcesForMultipleParams(
+    accountId: string,
+    credentialsIds?: string[],
+    regions?: string[],
+    resourceTypes?: string[],
+    pageSize?: number,
+    nextToken?: string
+): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
+    logger.info(' Get the Resources', {
+        accountId,
+        credentialsIds,
+        regions,
+        resourceTypes,
+        pageSize,
+        nextToken
+    });
+    pageSize = pageSize || 200;
+    try {
+        const recordsPromise = listResourcesForMultipleParamas(
+            accountId,
+            credentialsIds,
+            regions,
+            resourceTypes,
+            undefined,
+            undefined,
+            pageSize,
+            nextToken
+        );
+
+        const countPromise = countResources(accountId);
+
+        const {
+            _count: { id: totalResourcesCount }
+        } = await countPromise;
+
+        const records = await recordsPromise;
+        const items = trimAccountIdForDemo(records);
+
+        return {
+            count: items?.length,
+            items,
+            nextToken:
+                totalResourcesCount > pageSize && records.length >= pageSize ? items[items.length - 1].id : undefined
+        };
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
+    }
+}
+
 // To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
 // So while saving & retrieving we have to maintain the same in demo mode
 function trimAccountIdForDemo(records: any) {
@@ -327,5 +377,6 @@ export {
     getDeployments,
     getResources,
     trimAccountIdForDemo,
-    getInstanceInfo
+    getInstanceInfo,
+    getResourcesForMultipleParams
 };

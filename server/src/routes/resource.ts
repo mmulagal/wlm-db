@@ -47,18 +47,21 @@ export default function resourceRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(
-        `${MSSQL_API_PATH_RESOURCES}/managed-hosts`,
-        { schema: GetManagedResourcesSchema },
-        async (request, reply) => {
-            const {
-                params: { accountId, credentialsId, region },
-                query: { pageSize, nextToken }
-            } = castRequest(request);
-            const response = await getManagedResources(accountId, credentialsId, region, pageSize, nextToken);
-            return reply.send(response);
-        }
-    );
+    server.get('v1/managed-hosts', { schema: GetManagedResourcesSchema }, async (request, reply) => {
+        const {
+            params: { accountId },
+            query: { pageSize, nextToken, credentialsIds, regions, databaseTypes }
+        } = castRequest(request);
+        const response = await getManagedResources(
+            accountId,
+            credentialsIds,
+            regions,
+            databaseTypes,
+            pageSize,
+            nextToken
+        );
+        return reply.send(response);
+    });
 
     server.post(
         `${MSSQL_API_PATH_RESOURCES}/create-demo-resources`,
