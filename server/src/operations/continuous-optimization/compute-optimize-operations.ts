@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE, resource } from '@prisma/client';
 import createError from 'http-errors';
-import { cloneDeep, compact, isEmpty, isNull } from 'lodash-es';
-import { DatabaseInstance, Metadata, NodeDetails } from '../../utils/common-types';
+import { cloneDeep, compact, isEmpty } from 'lodash-es';
+import { DatabaseInstance, Metadata } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import {
@@ -60,9 +60,10 @@ async function handleComputeRemediation(
 
     let anySubJobFailed = false;
     let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
-    let primaryNodeInstanceDetails: NodeDetails | null = null;
+    const modifiedInstancesNodeDetails: { ec2InstanceId: string; oldDnsAddresses: string; oldInstanceType: string }[] =
+        [];
+    let instanceDetails: { svmId: string; fsxId: string } = { svmId: '', fsxId: '' };
     try {
-        const modifiedInstancesNodeDetails = [];
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
@@ -83,6 +84,7 @@ async function handleComputeRemediation(
             const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
 
             const instanceIdsList = [activeNodeInstanceId];
+            instanceDetails = { svmId, fsxId };
             if (node2InstanceId) {
                 // more than one node in the cluster
                 const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
@@ -151,10 +153,6 @@ async function handleComputeRemediation(
                             nodeId => nodeId !== activeNodeInstanceId
                         );
 
-                        [primaryNodeInstanceDetails] = clusterNodeDetails.filter(
-                            node => node.ec2InstanceId === activeNodeInstanceId
-                        );
-
                         const changeInstanceTypeJobId = await handleOptimizeJobCreation(
                             accountId,
                             credentialsId,
@@ -171,19 +169,21 @@ async function handleComputeRemediation(
                         try {
                             // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
                             for (const nodeId of nonPrimaryNodeInstanceIds) {
-                                modifiedInstancesNodeDetails.push(
-                                    await updateNodeInstanceType(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        nodeId,
-                                        instanceType,
-                                        fsxId,
-                                        svmId,
-                                        changeInstanceTypeJobId,
-                                        formattedInstanceName
-                                    )
+                                const oldInstanceType = clusterNodeDetails.filter(
+                                    node => node.ec2InstanceId === nodeId
+                                )[0].ec2InstanceType;
+                                const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    nodeId,
+                                    instanceType,
+                                    fsxId,
+                                    svmId,
+                                    changeInstanceTypeJobId,
+                                    formattedInstanceName
                                 );
+                                modifiedInstancesNodeDetails.push({ ec2InstanceId, oldDnsAddresses, oldInstanceType });
                             }
                             logger.info('Instance type updated for all secondary nodes in the cluster');
 
@@ -192,27 +192,6 @@ async function handleComputeRemediation(
                                 endTime: Date.now()
                             });
                         } catch (error) {
-                            // In case of failure, revert the instance type change for the nodes that were successfully updated
-                            if (modifiedInstancesNodeDetails.length > 0) {
-                                for (const { ec2InstanceId, oldDnsAddresses } of modifiedInstancesNodeDetails) {
-                                    const oldInstanceType = clusterNodeDetails.filter(
-                                        node => node.ec2InstanceId === ec2InstanceId
-                                    )[0].ec2InstanceType;
-
-                                    await updateNodeInstanceType(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        ec2InstanceId,
-                                        oldInstanceType,
-                                        fsxId,
-                                        svmId,
-                                        formattedInstanceName,
-                                        undefined,
-                                        oldDnsAddresses
-                                    );
-                                }
-                            }
                             subJobErrorMessage = `Failed to update instance type for secondary nodes in the cluster, ${error}`;
                             await updateJobDetails(accountId, changeInstanceTypeJobId, {
                                 status: JOBSTATUS.FAILED,
@@ -333,42 +312,25 @@ async function handleComputeRemediation(
                 jobId
             );
             try {
-                modifiedInstancesNodeDetails.push(
-                    await updateNodeInstanceType(
-                        accountId,
-                        credentialsId,
-                        region,
-                        activeNodeInstanceId,
-                        instanceType,
-                        fsxId,
-                        svmId,
-                        updateInstanceTypeJobId,
-                        formattedInstanceName
-                    )
+                const oldInstanceType = (resourceDetails[0]?.metadata as any)?.assessment?.compute?.currentInstanceType;
+                const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
+                    accountId,
+                    credentialsId,
+                    region,
+                    activeNodeInstanceId,
+                    instanceType,
+                    fsxId,
+                    svmId,
+                    updateInstanceTypeJobId,
+                    formattedInstanceName
                 ); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
+                modifiedInstancesNodeDetails.push({ ec2InstanceId, oldDnsAddresses, oldInstanceType });
+
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.COMPLETED,
                     endTime: Date.now()
                 });
             } catch (error) {
-                if (modifiedInstancesNodeDetails.length > 0 && !isNull(primaryNodeInstanceDetails)) {
-                    const { ec2InstanceId, oldDnsAddresses } = modifiedInstancesNodeDetails.filter(
-                        node => node.ec2InstanceId === primaryNodeInstanceDetails?.ec2InstanceId
-                    )[0];
-                    await updateNodeInstanceType(
-                        accountId,
-                        credentialsId,
-                        region,
-                        ec2InstanceId,
-                        primaryNodeInstanceDetails?.ec2InstanceType,
-                        fsxId,
-                        svmId,
-                        formattedInstanceName,
-                        undefined,
-                        oldDnsAddresses
-                    );
-                }
-
                 subJobErrorMessage = `Failed to update instance type for primary node in the cluster, ${error}`;
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.FAILED,
@@ -458,6 +420,23 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
+        // In case of failure, revert the instance type change for the nodes that were successfully updated
+        if (modifiedInstancesNodeDetails.length > 0) {
+            for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
+                await updateNodeInstanceType(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    oldInstanceType,
+                    instanceDetails.fsxId,
+                    instanceDetails.svmId,
+                    formattedInstanceName,
+                    undefined,
+                    oldDnsAddresses
+                );
+            }
+        }
         errorMessage = `Error while optimizing compute ${error}`;
         logger.error(errorMessage);
 
