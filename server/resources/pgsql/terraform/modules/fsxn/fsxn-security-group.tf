@@ -44,7 +44,7 @@ resource "aws_security_group" "ontap_security_group" {
     }
   }
 
-   egress {
+  egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

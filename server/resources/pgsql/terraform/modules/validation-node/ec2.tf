@@ -1,11 +1,11 @@
 locals {
-  log_feature_enabled   = var.enable_cloudwatch_log_feature == true ? "true" : "false"
-   user_data = templatefile("${path.module}/user_data.sh", {
+  log_feature_enabled = var.enable_cloudwatch_log_feature == true ? "true" : "false"
+  user_data = templatefile("${path.module}/user_data.sh", {
     aws_region                            = var.aws_location
     subnet_id                             = var.subnet_id
     perform_fsx_check                     = var.perform_fsx_check
     fsx_file_system_id                    = var.fsx_file_system_id
-    deployment_name                     = var.deployment_name
+    deployment_name                       = var.deployment_name
     validation_node_initialization_s3_url = var.validation_node_initialization_s3_url
   })
 }
@@ -25,7 +25,7 @@ resource "aws_instance" "validation_node" {
   key_name      = var.key_pair_name
 
   iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
-  subnet_id = var.subnet_id
+  subnet_id            = var.subnet_id
 
   user_data = local.user_data
 
