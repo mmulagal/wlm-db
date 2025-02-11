@@ -128,7 +128,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
         formData.append('userEmail', userMetadata?.email);
         formData.append('emailSubject', setEmailSubject());
-        getSendEmail(formData)
+        getSendEmail({ payload: formData })
             .then(resp => {
                 dispatch(
                     addNotification({
