@@ -130,12 +130,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         formData.append('emailSubject', setEmailSubject());
         getSendEmail({ payload: formData })
             .then(resp => {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: 'Calculation report was sent to you by email'
-                    })
-                );
+                if (!resp.error) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: 'Calculation report was sent to you by email'
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            //@ts-ignore
+                            message: resp?.error?.data?.message
+                        })
+                    );
+                }
             })
             .catch(err => {
                 dispatch(
