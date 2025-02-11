@@ -47,6 +47,7 @@ enum OptimizeStorageConfigs {
     FRACTIONAL_RESERVE = 'fractional-reserve',
     SNAPSHOT_COPY_RESERVE = 'snapshot-copy-reserve',
     SNAPSHOT_AUTO_DELETE = 'snapshot-autodelete',
+    SNAPSHOT_POLICY = 'snapshot-policy',
     SPACE_MANAGEMENT = 'space-mgmt-try-first',
     TIERING_MINIMUM_COOLING_DAYS = 'tiering-min-cooling-days',
     TIERING_POLICY = 'tiering-policy',
