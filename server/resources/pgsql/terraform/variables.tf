@@ -550,24 +550,10 @@ variable "ec2_role_name" {
   type        = string
 }
 
-# variable "sql_igroup_name" {
-#   description = "igroup name for the SQL Server."
-#   type        = string
-# }
-
-# variable "sql_collation" {
-#   description = "Collation for the SQL Server."
-#   type        = string
-# }
-
 variable "pgsql_node_initialization_s3_url" {
   description = "The URL of the S3 initialization url"
   type        = string
 }
-# variable "instance_type" {
-#   description = "EC2 instance type for the workload instances."
-#   type        = string
-# }
 
 variable "number_of_nodes" {
   description = "The number of SQL Server nodes to create."

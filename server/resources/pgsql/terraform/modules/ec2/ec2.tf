@@ -73,7 +73,6 @@ resource "aws_instance" "sql_node" {
   )
 }
 
-
 #Wait for user data to complete execution on the instance for mac and linux hosts
 resource "null_resource" "wait_for_tag_mac_or_linux" {
   count = var.operating_system == "Linux" ? 1 : 0

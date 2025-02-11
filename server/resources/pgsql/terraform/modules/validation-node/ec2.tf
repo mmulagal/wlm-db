@@ -1,4 +1,5 @@
 locals {
+  log_feature_enabled   = var.enable_cloudwatch_log_feature == true ? "true" : "false"
    user_data = templatefile("${path.module}/user_data.sh", {
     aws_region                            = var.aws_location
     subnet_id                             = var.subnet_id
@@ -26,14 +27,9 @@ resource "aws_instance" "validation_node" {
   iam_instance_profile = aws_iam_instance_profile.validation_instance_profile.name
   subnet_id = var.subnet_id
 
-  # network_interface {
-  #   device_index         = 0
-  #   subnet_id = var.subnet_id
-  # }
-
   user_data = local.user_data
 
-  instance_initiated_shutdown_behavior = "stop" // enable this to terminate once we are done with staging testing so this will get terminated
+  instance_initiated_shutdown_behavior = "terminate" // enable this to terminate once we are done with staging testing so this will get terminated
 
   timeouts {
     create = "30m"
@@ -69,34 +65,4 @@ resource "null_resource" "wait_for_tag_mac_or_linux" {
 #   provisioner "local-exec" {
 #     command = "powershell.exe -ExecutionPolicy Bypass -File ${path.root}/scripts/wait_for_tag.ps1 ${path.root} ${aws_instance.validation_node.id} ${var.aws_location} ${var.validation_node_name} ${var.aws_profile}"
 #   }
-# }
-
-
-# resource "aws_security_group" "domain_member_sg" {
-#   name        = "${var.deployment_name}_${var.validation_node_name}_domain_member_sg"
-#   description = "Domain Members"
-#   vpc_id      = var.vpc_id
-
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-
-#   egress {
-#     from_port        = 0
-#     to_port          = 0
-#     protocol         = "-1"
-#     ipv6_cidr_blocks = ["::/0"]
-#   }
-
-#   tags = {
-#     ResourceGroupID = var.unique_id
-#   }
-# }
-
-# resource "aws_network_interface" "validation_node_ni" {
-#   subnet_id       = var.subnet_id
-#   security_groups = [aws_security_group.domain_member_sg.id]
 # }

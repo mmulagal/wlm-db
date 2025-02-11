@@ -7,6 +7,7 @@ deployment_name=$2
 subnet_id=$3
 perform_fsx_check=$4
 fsx_file_system_id=$5
+log_feature_enabled=$6 # Set to false if CloudWatch Logs feature is disabled
 
 get_instance_id() {
     token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
@@ -51,18 +52,6 @@ install_agents() {
         echo "Error installing CloudWatch Agent"
         return 1
     fi
-}
-
-# Function to create deployment folders
-create_folders() {
-    local folders=("$@")
-    for folder in "${folders[@]}"; do
-        echo "Creating folder ${folder}"
-        if ! mkdir -p "${folder}"; then
-            echo "Error creating folder ${folder}"
-            return 1
-        fi
-    done
 }
 
 # Function to configure CloudWatch Logs
@@ -189,15 +178,20 @@ main() {
     trap 'handle_error "${instance_id}"' ERR
 
     install_agents "${aws_region}" 
-    create_folders "/home/ec2-user/cfn/scripts" "/var/log/netapp_wf" 
-    configure_cloudwatch "${aws_region}" "${deployment_name}" 
+    if [ "${log_feature_enabled}" = "true" ]; then
+        configure_cloudwatch "${aws_region}" "${deployment_name}"
+    fi 
 
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/verify-signature.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=af981074d7801b9bd4822da61ff158c6d086ed5fbcac0a7814b73036694bb62a&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/verify-signature.sh"
+    download_file "{{{ScriptVerifySignature}}}" "/home/ec2-user/cfn/scripts/verify-signature.sh"
 
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/unzip-archive.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=94f23b11171bce555ddd5a5ba2a76a0afc4241d39aa4bf5c47959dd5390b8f9d&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/unzip-archive.sh" 
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/validation.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=22f4b8fc503b480d0779ec765671ee3812c6515989e25cdca98a1c8c0331bef1&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/validation.zip" 
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/fsx_certs.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=508736c57d698a326c37a88f4ea7ca4fd1345836e014c927dcdecab0347f2ece&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/fsx_certs.zip" 
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/signig_files.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=443bbe64cd8768b6912e05c627e52f4a960cf8eaedf012e9f5df05f20331798d&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/signig_files.zip" 
+    download_file "{{{ ScriptUnzipArchive }}}" "/home/ec2-user/cfn/scripts/unzip-archive.sh" 
+    
+    download_file "{{{ ScriptValidation }}}" "/home/ec2-user/cfn/scripts/validation.zip" 
+    
+    download_file "{{{ FsxCertificates }}}" "/home/ec2-user/cfn/fsx_certs.zip" 
+    
+    download_file "{{{ ArtifactsSignatures }}}" "/home/ec2-user/cfn/signig_files.zip" 
+    
     verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
     verify_and_extract "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
     verify_and_extract "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.sig" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.pub" "ValidationNode1" "${deployment_name}" 

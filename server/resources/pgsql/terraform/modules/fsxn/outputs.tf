@@ -72,48 +72,6 @@ output "fsx_log_volume_uuid" {
   value       = aws_fsx_ontap_volume.fsx_log_volume.uuid
 }
 
-# # For Cluster Volume
-# output "fsx_cluster_volume_logical_id" {
-#   description = "Logical ID of the FSx for ONTAP cluster volume"
-#   value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].id : "Not Created"
-# }
-
-# output "fsx_cluster_volume_arn" {
-#   description = "ARN of the FSx for ONTAP cluster volume"
-#   value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].arn : "Not Created"
-# }
-
-# output "fsx_cluster_volume_id" {
-#   description = "System generated ID of cluster volume"
-#   value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].id : "Not Created"
-# }
-
-# output "fsx_cluster_volume_uuid" {
-#   description = "System generated UUID of cluster volume"
-#   value       = local.fsx_is_multi_zone_deployment ? aws_fsx_ontap_volume.fsx_cluster_quorum_volume[0].uuid : "Not Created"
-# }
-
-# # For Temp DP Volume
-# output "fsx_temp_dp_volume_logical_id" {
-#   description = "Logical ID of the FSx for ONTAP temp db volume"
-#   value       = aws_fsx_ontap_volume.fsx_temp_db_volume.id
-# }
-
-# output "fsx_temp_dp_volume_arn" {
-#   description = "ARN of the FSx for ONTAP temp db volume"
-#   value       = aws_fsx_ontap_volume.fsx_temp_db_volume.arn
-# }
-
-# output "fsx_temp_dp_volume_id" {
-#   description = "System generated ID of temp db volume"
-#   value       = aws_fsx_ontap_volume.fsx_temp_db_volume.id
-# }
-
-# output "fsx_temp_dp_volume_uuid" {
-#   description = "System generated UUID of temp dp volume"
-#   value       = aws_fsx_ontap_volume.fsx_temp_db_volume.uuid
-# }
-
 #For FSX Security Group
 output "fsxn_security_group_id" {
   description = "The ID of the fsxn security group."

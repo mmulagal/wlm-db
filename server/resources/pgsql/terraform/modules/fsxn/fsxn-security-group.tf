@@ -30,11 +30,10 @@ resource "aws_security_group" "ontap_security_group" {
       { from_port = 135, to_port = 135, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 749, to_port = 749, protocol = "tcp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 111, to_port = 111, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
-      { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 161, to_port = 162, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 635, to_port = 635, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
       { from_port = 137, to_port = 137, protocol = "udp", cidr_blocks = local.sg_cidr_blocks },
-      { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = ["202.3.121.6/32"] },
+      { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = ["202.3.121.0/32"] },
     ]
 
     content {

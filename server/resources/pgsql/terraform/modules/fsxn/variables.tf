@@ -76,26 +76,6 @@ variable "fsx_log_volume_size" {
   type        = number
 }
 
-# variable "fsx_temp_db_volume_name" {
-#   description = "The name of the volume for the tempdb system database."
-#   type        = string
-# }
-
-# variable "fsx_temp_db_volume_size" {
-#   description = "Size of the tempdb volume in megabytes (MiB)."
-#   type        = number
-# }
-
-# variable "fsx_cluster_quorum_volume_name" {
-#   description = "The name of the volume for cluster quorum."
-#   type        = string
-# }
-
-# variable "fsx_cluster_quorum_volume_size" {
-#   description = "The size of the cluster quorum volume in megabytes (MiB)."
-#   type        = number
-# }
-
 variable "vpc_id" {
   description = "Specify the VPC from which the file system is accessible."
   type        = string
@@ -133,11 +113,7 @@ variable "standby_route_table_id" {
 variable "fsxn_volume_security_style" {
   description = "The security style of the volume."
   type        = string
-  default     = "NTFS"
-  validation {
-    condition     = contains(["UNIX", "NTFS"], var.fsxn_volume_security_style)
-    error_message = "The security style must be one of UNIX or NTFS."
-  }
+  default     = "UNIX"
 }
 
 variable "fsx_file_system_id" {

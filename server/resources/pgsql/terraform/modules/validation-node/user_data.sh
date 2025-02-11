@@ -7,14 +7,24 @@ subnet_id="${subnet_id}"
 perform_fsx_check="${perform_fsx_check}"
 validation_node_initialization_s3_url="${validation_node_initialization_s3_url}"
 script_dir="/home/ec2-user/cfn/scripts"
-log_file="$script_dir/validation-instance-initializer.log"
+log_dir="/var/log/netapp_wf"
+log_file="$log_dir/validation-instance-initializer.log"
+log_feature_enabled="true" # Set to false if CloudWatch Logs feature is disabled
 
 echo "Deployment Name: $deployment_name"
 
+# Function to create deployment folders
 # Check if the log directory exists, and create it if it does not
-if [ ! -d "$script_dir" ]; then
-    mkdir -p "$script_dir"
-fi
+create_deployment_folders() {
+    local folders=("$@")
+    for folder in "${folders[@]}"; do
+        echo "Creating folder ${folder}"
+        if ! mkdir -p "${folder}"; then
+            echo "Error creating folder ${folder}"
+            return 1
+        fi
+    done
+}
 
 get_instance_id() {
     token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
@@ -25,6 +35,8 @@ get_instance_id() {
 # Ensure necessary security protocols are set
 export AWS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 
+create_deployment_folders "$script_dir" "$log_dir"
+
 # Get the instance ID
 instance_id=$(get_instance_id)
 echo "Got the Instance ID: $instance_id"
@@ -34,9 +46,10 @@ curl -o "$script_dir/Validation-Instance-Initializer.sh" "$validation_node_initi
 chmod +x "$script_dir/Validation-Instance-Initializer.sh"
 
 # Construct the command to execute the initialization script
-command="$script_dir/Validation-Instance-Initializer.sh '$aws_region' '$deployment_name' '$subnet_id' '$perform_fsx_check'"
+command="$script_dir/Validation-Instance-Initializer.sh '$aws_region' '$deployment_name' '$subnet_id' '$perform_fsx_check' '$log_feature_enabled'"
 
 if [ -n "$fsx_file_system_id" ]; then
+    echo "FSx file system ID: $fsx_file_system_id"
     command+=" $fsx_file_system_id"
 fi
 

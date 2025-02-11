@@ -15,17 +15,24 @@ fsx_log_volume_name="${fsx_log_volume_name}"
 fsx_svm_uuid="${fsx_svm_uuid}"
 log_feature_enabled="true" # Set to false if CloudWatch Logs feature is disabled
 script_dir="/home/ec2-user/cfn/scripts"
-log_file="$script_dir/pgsql-Instance-initializer.sh"
+log_dir="/var/log/netapp_wf"
+log_file="$log_dir/Pgsql-Instance-initializer.log"
 pgsql_node_initialization_s3_url="${pgsql_node_initialization_s3_url}"
-
-
 
 echo "Deployment Name: $deployment_name"
 
+# Function to create deployment folders
 # Check if the log directory exists, and create it if it does not
-if [ ! -d "$script_dir" ]; then
-    mkdir -p "$script_dir"
-fi
+create_deployment_folders() {
+    local folders=("$@")
+    for folder in "${folders[@]}"; do
+        echo "Creating folder ${folder}"
+        if ! mkdir -p "${folder}"; then
+            echo "Error creating folder ${folder}"
+            return 1
+        fi
+    done
+}
 
 get_instance_id() {
     token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
@@ -36,20 +43,18 @@ get_instance_id() {
 # Ensure necessary security protocols are set
 export AWS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 
+create_deployment_folders "$script_dir" "$log_dir"
+
 # Get the instance ID
 instance_id=$(get_instance_id)
 echo "Got the Instance ID: $instance_id"
 
 # Download the initialization script
-curl -o "$script_dir/pgsql-Instance-initializer.sh" "$pgsql_node_initialization_s3_url"
-chmod +x "$script_dir/pgsql-Instance-initializer.sh"
+curl -o "$script_dir/Pgsql-Instance-initializer.sh" "$pgsql_node_initialization_s3_url"
+chmod +x "$script_dir/Pgsql-Instance-initializer.sh"
 
 # Construct the command to execute the initialization script
-command="$script_dir/pgsql-Instance-initializer.sh '$aws_region' '$deployment_name' '$fsx_file_system_id' '$fsx_svm_id' '$sql_svm_name' '$fsx_aggr_name' '$fsx_data_volume_name' '$fsx_log_volume_name' '$fsx_svm_uuid' '$sql_version' '$sql_service_account_password' '$sql_server_name' '$log_feature_enabled'"
-
-# if [ -n "$fsx_file_system_id" ]; then
-#     command+=" $fsx_file_system_id"
-# fi
+command="$script_dir/Pgsql-Instance-initializer.sh '$aws_region' '$deployment_name' '$fsx_file_system_id' '$fsx_svm_id' '$sql_svm_name' '$fsx_aggr_name' '$fsx_data_volume_name' '$fsx_log_volume_name' '$fsx_svm_uuid' '$sql_version' '$sql_service_account_password' '$sql_server_name' '$log_feature_enabled'"
 
 echo "Executing command: $command"
 bash -c "$command" &> "$log_file"

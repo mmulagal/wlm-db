@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo su
+
 # Define variables
 aws_region=$1
 deployment_name=$2
@@ -55,12 +57,13 @@ verify_and_extract() {
     local deployment_name=$6
 
     echo "Verifying and extracting ${source}"
-    if ! /home/ec2-user/cfn/scripts/verify-signature.sh -f "${source}" -s "${signature}" -p "${pub_key}" -r "${resource_id}" -n "${deployment_name}"; then
+    # enable this while going to staging
+    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "${source}" -s "${signature}" -p "${pub_key}" -r "${resource_id}" -n "${deployment_name}"; then
         echo "Error verifying ${source}"
         return 1
     fi
 
-    if ! /home/ec2-user/cfn/scripts/unzip-archive.sh -s "${source}" -d "${dest}"; then
+    if ! sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s "${source}" -d "${dest}"; then
         echo "Error extracting ${source}"
         return 1
     fi
@@ -93,18 +96,6 @@ install_agents() {
         echo "Error installing CloudWatch Agent"
         return 1
     fi
-}
-
-# Function to create deployment folders
-create_deployment_folders() {
-    local folders=("$@")
-    for folder in "${folders[@]}"; do
-        echo "Creating folder ${folder}"
-        if ! mkdir -p "${folder}"; then
-            echo "Error creating folder ${folder}"
-            return 1
-        fi
-    done
 }
 
 # Function to configure CloudWatch Logs
@@ -153,26 +144,13 @@ EOF
     fi
 }
 
-# Function to fetch resources
-fetch_resources() {
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/verify-signature.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=af981074d7801b9bd4822da61ff158c6d086ed5fbcac0a7814b73036694bb62a&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/verify-signature.sh" || return 1
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/unzip-archive.sh?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=94f23b11171bce555ddd5a5ba2a76a0afc4241d39aa4bf5c47959dd5390b8f9d&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/unzip-archive.sh" || return 1
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/signig_files.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=443bbe64cd8768b6912e05c627e52f4a960cf8eaedf012e9f5df05f20331798d&X-Amz-SignedHeaders=host&x-id=GetObject" " /home/ec2-user/cfn/signig_files.zip" || return 1
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/common.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=4fdce189712ac20823f843fdfd5b9ac80f68c706053bfe3262c36c785f76edd6&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/common.zip" || return 1
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/scripts/setup.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=fae94b8126194f200f28dc51c4369906dea28475e0e0007d9422d32cc9f10131&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/scripts/setup.zip" || return 1
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/fsx_certs.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=508736c57d698a326c37a88f4ea7ca4fd1345836e014c927dcdecab0347f2ece&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/fsx_certs.zip" || return 1
-    download_file "https://staging-artifacts-ap-southeast-1-workloads-netapp-com.s3.ap-southeast-1.amazonaws.com/wlmdb/pgsql/packages/pgvector.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20250203%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20250203T103440Z&X-Amz-Expires=604800&X-Amz-Signature=10571148854250dcbcc342683477188d0091a565df4c9741735717e526c97efe&X-Amz-SignedHeaders=host&x-id=GetObject" "/home/ec2-user/cfn/pgvector.zip" || return 1
-}
-
-
 # Function to verify and unpack scripts
 verify_and_unpack_scripts() {
-    sudo su
     verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" || return 1
     verify_and_extract "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/common.zip.sig" "/home/ec2-user/cfn/signig_files/common.zip.pub" "ValidationNode1" "${deployment_name}" || return 1
     verify_and_extract "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/setup.zip.sig" "/home/ec2-user/cfn/signig_files/setup.zip.pub" "ValidationNode1" "${deployment_name}" || return 1
-    /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn || return 1
-    /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn || return 1
+    sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn || return 1
+    sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn || return 1
 }
 
 # Function to configure ONTAP
@@ -187,7 +165,12 @@ configure_ontap() {
     local fsx_svm_uuid=$8
     local deployment_name=$9
 
-    /home/ec2-user/cfn/scripts/setup/configure-ontap.sh -f ${fsx_file_system_id} -r ${aws_region} -s ${fsx_svm_id} -n ${sql_svm_name} -a ${fsx_aggr_name} -d ${fsx_data_volume_name} -l ${fsx_log_volume_name} -v ${fsx_svm_uuid} -p ${deployment_name} || return 1
+    echo "Configuring ONTAP with fsx_file_system_id=${fsx_file_system_id}, aws_region=${aws_region}, fsx_svm_id=${fsx_svm_id}, sql_svm_name=${sql_svm_name}, fsx_aggr_name=${fsx_aggr_name}, fsx_data_volume_name=${fsx_data_volume_name}, fsx_log_volume_name=${fsx_log_volume_name}, fsx_svm_uuid=${fsx_svm_uuid}, deployment_name=${deployment_name}"
+
+    if ! sudo /home/ec2-user/cfn/scripts/setup/configure-ontap.sh -f ${fsx_file_system_id} -r ${aws_region} -s ${fsx_svm_id} -n ${sql_svm_name} -a ${fsx_aggr_name} -d ${fsx_data_volume_name} -l ${fsx_log_volume_name} -v ${fsx_svm_uuid} -p ${deployment_name}; then
+        echo "Error configuring ONTAP"
+        return 1
+    fi
 }
 
 # Function to configure PostgreSQL
@@ -197,14 +180,24 @@ configure_pgsql() {
     local sql_version=$3
     local sql_service_account_password=$4
 
-    /home/ec2-user/cfn/scripts/setup/configure-pgsql.sh -d ${fsx_data_volume_name} -l ${fsx_log_volume_name} -v ${sql_version} -w ${sql_service_account_password} || return 1
+    echo "Configuring PostgreSQL with fsx_data_volume_name=${fsx_data_volume_name}, fsx_log_volume_name=${fsx_log_volume_name}, sql_version=${sql_version}, sql_service_account_password=${sql_service_account_password}"
+
+    if ! sudo /home/ec2-user/cfn/scripts/setup/configure-pgsql.sh -d ${fsx_data_volume_name} -l ${fsx_log_volume_name} -v ${sql_version} -w ${sql_service_account_password}; then
+        echo "Error configuring PostgreSQL"
+        return 1
+    fi
 }
 
 # Function to rename host
 rename_host() {
     local sql_server_name=$1
 
-    /home/ec2-user/cfn/scripts/common/rename-host.sh ${sql_server_name} || return 1
+    echo "Renaming host with sql_server_name=${sql_server_name}"
+
+    if ! sudo /home/ec2-user/cfn/scripts/common/rename-host.sh ${sql_server_name}; then
+        echo "Error renaming host"
+        return 1
+    fi
 }
 
 # Function to restart host
@@ -212,23 +205,46 @@ restart_host() {
     sudo reboot || return 1
 }
 
+handle_error() {
+    local instance_id=$1
+    echo "Handling error for instance_id: ${instance_id}"
+    tag_instance "${instance_id}" "user_data" "failed"
+    exit 1
+}
+
 # Main function
 main() {
     local instance_id
     instance_id=$(get_instance_id)
-    # Error handling
-    trap 'tag_instance "${instance_id}" "user_data" "failed"' ERR
+    echo "Got the Instance ID: $instance_id"
 
-    install_agents "${aws_region}" || return 1
-    create_deployment_folders "/home/ec2-user/cfn/scripts" "/var/log/netapp_wf" || return 1
-    configure_cloudwatch || return 1
-    fetch_resources || return 1
-    verify_and_unpack_scripts || return 1
-    configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}" || return 1
-    configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}" || return 1
-    rename_host "${sql_server_name}" || return 1
-    restart_host || return 1
+    #Trap any error and call the handle_error function
+    trap 'handle_error "${instance_id}"' ERR
+
+    install_agents "${aws_region}"
+    if [ "${log_feature_enabled}" = "true" ]; then
+        configure_cloudwatch "${aws_region}" "${deployment_name}"
+    fi   
+    download_file "{{{ ScriptVerifySignature }}}" "/home/ec2-user/cfn/scripts/verify-signature.sh"
+   
+    download_file "{{{ ScriptUnzipArchive }}}" "/home/ec2-user/cfn/scripts/unzip-archive.sh"
+    
+    download_file "{{{ ArtifactsSignatures }}}" "/home/ec2-user/cfn/signig_files.zip"
+    
+    download_file "{{{ ScriptCommon }}}" "/home/ec2-user/cfn/scripts/common.zip"
+    
+    download_file "{{{ ScriptSetup }}}" "/home/ec2-user/cfn/scripts/setup.zip"
+    
+    download_file "{{{ FsxCertificates }}}" "/home/ec2-user/cfn/fsx_certs.zip"
+    
+    download_file "{{{ PGSQLPackages }}}" "/home/ec2-user/cfn/pgvector.zip"
+
+    verify_and_unpack_scripts
+    configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
+    configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}"
+    rename_host "${sql_server_name}"
     tag_instance "${instance_id}" "user_data" "completed"
+    restart_host
 }
 
 main "$@"

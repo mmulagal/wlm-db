@@ -22,7 +22,6 @@ variable "vpc_id" {
   type        = string
 }
 
-
 variable "vpc_cidr" {
   description = "CIDR Block for the VPC."
   type        = string
@@ -41,7 +40,6 @@ variable "number_of_nodes" {
   description = "The number of SQL Server nodes to create."
   type        = string
 }
-
 
 variable "route_table_id" {
   description = "Route table id."
@@ -142,11 +140,6 @@ variable "enable_cloudwatch_log_feature" {
   description = "Enable AWS CloudWatch logging."
   type        = bool
 }
-
-# variable "domain_member_sg_id" {
-#   description = "ID of the domain member security group (for example, sg-9cb7d0e5)."
-#   type        = string
-# }
 
 variable "sql_node_aws_location" {
   description = "The location of the AWS"
