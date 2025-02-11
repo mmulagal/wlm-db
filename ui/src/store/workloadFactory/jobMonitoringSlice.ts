@@ -1,4 +1,4 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 export const initialJobMonitoringState: any = {
     jobsList: [], // Jobs list exclusing subtasks
@@ -13,13 +13,17 @@ export const initialJobMonitoringState: any = {
     jobsSummaryTimeline: {}, // Line chart graph data
     jobsSummaryTimelineLoading: false, // Line chart graph loading
     subJobsData: {}, // This is to store sub jobs data which is expanded
-    subJobsDataLoading: false // This is to store sub jobs data loading for expanded row
-}
+    subJobsDataLoading: false, // This is to store sub jobs data loading for expanded row
+    columnState: [] // This is to store column state for job monitoring
+};
 
 const jobMonitoringSlice = createSlice({
     name: 'jobMonitoring',
     initialState: initialJobMonitoringState,
     reducers: {
+        setJobMonitoringColumnState: (state, action: PayloadAction<any>) => {
+            state.columnState = action.payload;
+        },
         setJobsListLoading: (state, action: PayloadAction<any>) => {
             state.jobsListLoading = action.payload;
         },
@@ -79,7 +83,8 @@ export const {
     setJobsSummaryTimeline,
     setSubJobsData,
     setSubJobsDataLoading,
-    addInitialJMData
+    addInitialJMData,
+    setJobMonitoringColumnState
 } = jobMonitoringSlice.actions;
 
 export default jobMonitoringSlice;

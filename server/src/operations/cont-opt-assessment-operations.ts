@@ -16,7 +16,7 @@ import {
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
-import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import { AuditStatus, ASSESSMENT_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
 import {
@@ -134,6 +134,42 @@ async function initiateComputeLicenseAssessmentCollection(
                 resourceName,
                 jobId
             );
+            if (computeAssessment) {
+                // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
+                let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
+                const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+                const { compute: { recommendationOptions: existingRecommendationOptions } = {} } =
+                    existingAssessmentData || {};
+                if (
+                    existingRecommendationOptions &&
+                    !isEmpty(existingRecommendationOptions) &&
+                    recommendationOptions &&
+                    !isEmpty(recommendationOptions)
+                ) {
+                    const existingRecommendationInstanceTypes = existingRecommendationOptions.map(
+                        ({ instanceType }) => instanceType
+                    );
+                    const newRecommendationInstanceTypes = recommendationOptions.map(
+                        ({ instanceType }) => instanceType
+                    );
+                    if (
+                        existingRecommendationInstanceTypes.every(instanceType =>
+                            newRecommendationInstanceTypes.includes(instanceType)
+                        )
+                    ) {
+                        finding = AssessmentStatus.OPTIMIZED;
+                        findingReasonCodes = [];
+                    }
+
+                    computeAssessment = {
+                        ...computeAssessment,
+                        finding,
+                        findingReasonCodes
+                    };
+                }
+            } else {
+                logger.warn('No compute assessment data found');
+            }
         }
         if (fields?.includes(AssessmentCategories.HOST_OS_PATCH)) {
             hostOsPatchAssessment = await managedHostOsPatchAssessment(
@@ -278,7 +314,7 @@ async function initiateStorageAssessmentCollection(
         ssmComment,
         accountId,
         false,
-        CUSTOM_SSM_EXECUTION_TIMEOUT
+        ASSESSMENT_SSM_EXECUTION_TIMEOUT
     );
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
@@ -376,6 +412,7 @@ async function driftAssessmentDataCollection(
         shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
         shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
     } else {
+        fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
         shouldRunStorageAssessment = true;
         shouldRunComputeAssessment = true;
         shouldRunLicenseAssessment = true;

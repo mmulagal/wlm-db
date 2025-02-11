@@ -366,31 +366,30 @@ async function handleComputeRemediation(
                 }
             }
 
-            const checkRunningResponse = await checkRunningStatus(
-                accountId,
-                jobId,
-                instanceName,
-                region,
-                credentialsId,
-                activeNodeInstanceId,
-                formattedInstanceName
-            );
+            // const checkRunningResponse = await checkRunningStatus(
+            //     accountId,
+            //     jobId,
+            //     instanceName,
+            //     region,
+            //     credentialsId,
+            //     activeNodeInstanceId,
+            //     formattedInstanceName
+            // );
 
-            if (!checkRunningResponse.running) {
-                subJobErrorMessage = checkRunningResponse.error;
-                anySubJobFailed = true;
-                throw checkRunningResponse.error;
-            }
+            // if (!checkRunningResponse.running) {
+            //     subJobErrorMessage = checkRunningResponse.error;
+            //     anySubJobFailed = true;
+            //     throw checkRunningResponse.error;
+            // }
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            const { compute: { findingReasonCodes = [], recommendationOptions = [] } = {} } =
-                existingAssessmentData || {};
+            const { compute: { recommendationOptions = [] } = {} } = existingAssessmentData || {};
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
                 compute: {
                     finding: AssessmentStatus.OPTIMIZED,
-                    findingReasonCodes,
+                    findingReasonCodes: [],
                     currentInstanceType: instanceType,
                     recommendationOptions
                 }
@@ -838,4 +837,4 @@ async function updateNodeInstanceType(
     }
 }
 
-export { handleComputeRemediation };
+export { handleComputeRemediation, checkRunningStatus };

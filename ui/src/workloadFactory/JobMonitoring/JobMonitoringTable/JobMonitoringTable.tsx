@@ -1,4 +1,13 @@
-import { Button, Popover, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
+import {
+    Button,
+    DsTypography,
+    Popover,
+    Table,
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable
+} from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -26,17 +35,19 @@ import { useDispatch } from 'react-redux';
 import {
     setDownloadJobsList,
     setDownloadJobsLoading,
+    setJobMonitoringColumnState,
     setSubJobsData,
     setSubJobsDataLoading
 } from '../../../store/workloadFactory/jobMonitoringSlice';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
+import { initialJobMonitorColState } from '../../../utils/manageColumnUtils';
 
-const JobMonitoringTable = () => {
+const JobMonitoringTable = React.memo(() => {
     const { setDialog } = useDialog();
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
@@ -44,12 +55,14 @@ const JobMonitoringTable = () => {
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
     const downloadJobsLoading = useAppSelector(state => state.jobMonitoring.downloadJobsLoading);
+    const columnState = useAppSelector(state => state.jobMonitoring.columnState);
     const downloadJobsList = useAppSelector(state => state.jobMonitoring.downloadJobsList);
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
+    const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
@@ -64,6 +77,32 @@ const JobMonitoringTable = () => {
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+
+    const setRegion = (name: string, code: string) => {
+        if (name && code) {
+            return `${name} | ${code}`;
+        } else if (name && !code) {
+            return name;
+        } else if (!name && code) {
+            return code;
+        } else {
+            return GENERAL.NOT_AVAILABLE;
+        }
+    };
+
+    const tableFullData = useMemo(() => {
+        return jobsList.map((job: any) => {
+            const matchingEntry =
+                credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
+
+            return {
+                ...job,
+                regions: setRegion(job?.region?.name, job?.region?.code),
+                credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
+                providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
+            };
+        });
+    }, [jobsList, credentialData]);
 
     const menuItems = (row: any) => {
         return [
@@ -165,9 +204,17 @@ const JobMonitoringTable = () => {
     }, [downloadJobsLoading]);
 
     // Download Job monitoring download function
-    const downloadJMTable = (dataList: any) => {
-        const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
-        const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
+    const downloadJMTable = (dataList: any, columnsState: any) => {
+        const keys = columnsState
+            .filter((column: any) => column.Header && typeof column.Header === 'string' && column.Header.trim() !== '')
+            .map((column: any) => column.accessor)
+            .filter((accessor: any) => accessor);
+
+        const headers = columnsState
+            .filter((column: any) => typeof column.Header === 'string' && column.Header.trim() !== '')
+            .map((column: any) => column.Header)
+            .join(',');
+
         const result = '';
         let csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
         // remove #
@@ -182,13 +229,24 @@ const JobMonitoringTable = () => {
     useEffect(() => {
         if (!jmJobsListLoading) {
             let oldList = downloadJobsList || [];
-            let newList = jmJobsList?.items || [];
+            // let newList = jmJobsList?.items || [];
+            let newList = jmJobsList?.items.map((job: any) => {
+                const matchingEntry =
+                    credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
+
+                return {
+                    ...job,
+                    regions: setRegion(job?.region?.name, job?.region?.code),
+                    credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
+                    providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
+                };
+            });
             let mergedList = [...oldList, ...newList];
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (jmJobsList && !jmJobsList?.nextToken) {
                 // Download logic
-                downloadJMTable(mergedList);
+                downloadJMTable(mergedList, columnState);
                 dispatch(clearNotifications());
                 // success notification
                 dispatch(
@@ -203,46 +261,6 @@ const JobMonitoringTable = () => {
             }
         }
     }, [jmJobsList, jmJobsListLoading, jmJobsListError]);
-
-    const lastColDetails = () => {
-        return {
-            id: '10',
-            Header: '',
-            accessor: 'name',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'goToCf') {
-                                        handleGoToCfClick(cellData);
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            },
-            showHide: true,
-            width: '57px',
-            isSticky: true
-        };
-    };
 
     const ExpandedRow = useCallback(({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
@@ -375,11 +393,32 @@ const JobMonitoringTable = () => {
             width: '168px'
         },
         {
+            id: '8',
+            Header: 'AWS credentials',
+            accessor: 'credName',
+            filterOptions: 'auto',
+            width: '250px'
+        },
+        {
+            id: '9',
+            Header: 'AWS Account',
+            accessor: 'providerAccountId',
+            filterOptions: 'auto',
+            width: '200px'
+        },
+        {
+            id: '11',
+            Header: 'Region',
+            accessor: 'regions',
+            filterOptions: 'auto',
+            width: '300px'
+        },
+        {
             id: '5',
             Header: 'Job name',
             accessor: 'name',
             isSortable: true,
-            width: '325px',
+            width: '320px',
             renderCell: (cellData: any) => {
                 let jobName = cellData ? cellData.split(';href')[0] : '';
                 return (
@@ -418,19 +457,50 @@ const JobMonitoringTable = () => {
                     </div>
                 );
             }
-        },
-
-        lastColDetails()
+        }
     ];
 
     const tableProps = useTable({
         isSorting: false,
         columns: JobsColDefs,
-        rows: jobsList,
+        rows: tableFullData,
         pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: jobsListLoading,
+        isLazyLoading: jobsListLoading || credentialLoading,
+        isManagedColumns: true,
+        initialColumnState: initialJobMonitorColState,
+        manageColumnsProps: {
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={menuItems(rowData)}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'goToCf') {
+                                        handleGoToCfClick(rowData?.name);
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            }
+        },
         ...(isDemoMode
             ? {
                   initialSortState: {
@@ -456,6 +526,10 @@ const JobMonitoringTable = () => {
             }
         });
     }, [tableProps]);
+
+    useEffect(() => {
+        dispatch(setJobMonitoringColumnState(tableProps?.columns));
+    }, [tableProps.columnsState]);
 
     const tableComponentProps = {
         ExpandedRow,
@@ -530,6 +604,6 @@ const JobMonitoringTable = () => {
             </div>
         </>
     );
-};
+});
 
 export default JobMonitoringTable;

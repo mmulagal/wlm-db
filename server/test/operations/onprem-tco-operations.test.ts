@@ -215,7 +215,7 @@ describe('onPrem TCO operations', () => {
     it('should derive the correct EBS volumes list from SQL instance details', () => {
         const expectedEbsVolumes = [
             {
-                volumeType: 'gp2',
+                volumeType: 'gp3',
                 volumeNumber: 3,
                 storageAmount: 0.009375000000000001
             }
@@ -223,8 +223,8 @@ describe('onPrem TCO operations', () => {
 
         const { primaryEbsVolumes } =
             deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, reportData.sqlServerInfo) || {};
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp3')?.throughput).toBeDefined();
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume.volumeType === 'gp3')?.volumeIops).toBeDefined();
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume?.volumeType === 'gp3')?.throughput).toBeDefined();
+        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume?.volumeType === 'gp3')?.volumeIops).toBeDefined();
         expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 

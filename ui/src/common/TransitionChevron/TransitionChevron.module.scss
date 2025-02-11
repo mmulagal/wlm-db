@@ -1,0 +1,15 @@
+.base {
+    --icon-primary-color: var(--icon-secondary);
+
+    &.is-hovered {
+        --icon-primary-color: var(--icon-secondary-hover);
+    }
+
+    &:disabled {
+        --icon-primary-color: var(--icon-secondary-disabled);
+    }
+
+    .is-expanded {
+        transform: rotate(180deg);
+    }
+}
