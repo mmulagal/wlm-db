@@ -857,6 +857,11 @@ function getSubJobDescriptions(dbEngineType: string) {
     return subJobDescriptions;
 }
 
+const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -906,5 +911,6 @@ export {
     parsePgSqlInstanceInfo,
     getServerNameWithHostname,
     extractKbNumber,
-    extractVersionYear
+    extractVersionYear,
+    isValidEmail
 };

@@ -72,6 +72,7 @@ import {
 import { isActiveInstance, isDemo } from './utils/utils';
 import { resetCache } from './utils/cache';
 import { REDIS_URL } from './utils/continous-optimization-consts';
+import fastifyMultipart from '@fastify/multipart';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -225,6 +226,9 @@ const app = fastify({
         },
         { prefix: `${API_PREFIX_PATH}` }
     )
+    .register(fastifyMultipart, {
+        limits: { fileSize: 500 * 1024 * 1024 }
+    })
     .addHook(
         'preHandler',
         (
