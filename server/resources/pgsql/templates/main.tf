@@ -750,8 +750,7 @@ module "standalone_sql_node" {
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
   sql_service_account_password     = var.sql_service_account_password
-  fsx_svm_id                       = local.existing_ontap_fsx ? var.fsx_svm_id : module.fsxn_standalone[0].fsx_svm_id // may be the output of the fsx if its new
+  fsx_svm_id                       = module.fsxn_standalone[0].fsx_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
-  fsx_svm_uuid                     = local.existing_ontap_fsx ? var.fsx_svm_uuid : module.fsxn_standalone[0].fsx_svm_uuid // may be the output of the fsx if its new
-  number_of_nodes                  = var.number_of_nodes
+  fsx_svm_uuid                     = module.fsxn_standalone[0].fsx_svm_uuid
 }

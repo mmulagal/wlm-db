@@ -555,22 +555,9 @@ variable "pgsql_node_initialization_s3_url" {
   type        = string
 }
 
-variable "number_of_nodes" {
-  description = "The number of SQL Server nodes to create."
-  type        = string
-}
-
 variable "fsx_aggr_name" {
   description = "Aggregate FSx for ONTAP file system."
   type        = string
 }
 
-variable "fsx_svm_uuid" {
-  description = "UUID of the FSx Storage Virtual Machine"
-  type        = string
-}
 
-variable "fsx_svm_id" {
-  description = "ID of the FSx Storage Virtual Machine"
-  type        = string
-}

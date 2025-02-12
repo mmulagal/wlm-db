@@ -299,7 +299,8 @@ async function createTFVarsFile(
                 creator_tag: deploymentName,
                 deployment_name: deploymentName,
                 ...(isMssql && { role_credentials_id: '' }),
-                aws_profile: 'default'
+                aws_profile: 'default',
+                ...(!isMssql && { fsx_aggr_name: 'aggr1' })
             };
             let terraformVariableString = '';
             let tfVarsGeneral = '\n# General Configurations\n# -----------------------------\n';
