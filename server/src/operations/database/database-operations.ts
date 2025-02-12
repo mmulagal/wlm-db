@@ -21,7 +21,7 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
+import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from '../../utils/consts';
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
@@ -282,7 +282,7 @@ async function getResourcesForMultipleParams(
     accountId: string,
     credentialsIds?: string[],
     regions?: string[],
-    resourceTypes?: string[],
+    resourceTypes: string[] = [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL],
     pageSize?: number,
     nextToken?: string
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
@@ -296,24 +296,25 @@ async function getResourcesForMultipleParams(
     });
     pageSize = pageSize || 200;
     try {
-        const recordsPromise = listResourcesForMultipleParamas(
-            accountId,
-            credentialsIds,
-            regions,
-            resourceTypes,
-            undefined,
-            undefined,
-            pageSize,
-            nextToken
-        );
+        const [
+            records,
+            {
+                _count: { id: totalResourcesCount }
+            }
+        ] = await Promise.all([
+            listResourcesForMultipleParamas(
+                accountId,
+                credentialsIds,
+                regions,
+                resourceTypes,
+                undefined,
+                undefined,
+                pageSize,
+                nextToken
+            ),
+            countResources(accountId)
+        ]);
 
-        const countPromise = countResources(accountId);
-
-        const {
-            _count: { id: totalResourcesCount }
-        } = await countPromise;
-
-        const records = await recordsPromise;
         const items = trimAccountIdForDemo(records);
 
         return {

@@ -1,4 +1,11 @@
-import { createDeployment, deleteConfig, deleteDeployment } from '../../../src/lib/database/db';
+import { STORAGE_TYPE } from '@prisma/client';
+import {
+    createDeployment,
+    createResource,
+    deleteConfig,
+    deleteDeployment,
+    deleteResource
+} from '../../../src/lib/database/db';
 import {
     getSavedConfig,
     getAllSavedConfig,
@@ -6,9 +13,10 @@ import {
     deleteSavedConfig,
     getAllDeploymentStatus,
     getDeploymentStatusByName,
-    modifyConfig
+    modifyConfig,
+    getResourcesForMultipleParams
 } from '../../../src/operations/database/database-operations';
-import { ACCOUNT_ID } from '../../utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
 describe('Database operations', () => {
     it('Get saved config', async () => {
@@ -137,4 +145,40 @@ describe('Database operations', () => {
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-2345');
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-45678');
     });
+});
+it('Get resources for multiple params', async () => {
+    await deleteResource(ACCOUNT_ID, 'i-1a2b3c4d5e');
+    const resource1 = await createResource(ACCOUNT_ID, {
+        resourceId: 'i-1a2b3c4d5e',
+        resourceName: 'sqlnode1',
+        resourceType: 'MSSQL',
+        cloudProviderAccountId: '464262061435',
+        cloudProviderName: 'AWS',
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        storageType: STORAGE_TYPE.FSXN,
+        region: DEFAULT_AWS_REGION
+    });
+
+    const resource2 = await createResource(ACCOUNT_ID, {
+        resourceId: 'i-1a2b3c4d5f',
+        resourceName: 'sqlnode2',
+        resourceType: 'PGSQL',
+        cloudProviderAccountId: '464262061435',
+        cloudProviderName: 'AWS',
+        credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+        storageType: STORAGE_TYPE.FSXN,
+        region: 'ap-southeast-1'
+    });
+
+    const response = await getResourcesForMultipleParams(
+        ACCOUNT_ID,
+        [DEFAULT_AWS_CREDENTIALS_ID, 'f6082f35-c1db-4619-bb5c-84bcb5bf3286'],
+        [DEFAULT_AWS_REGION, 'ap-southeast-1'],
+        ['MSSQL', 'PGSQL']
+    );
+
+    await deleteResource(ACCOUNT_ID, resource1.resource_id);
+    await deleteResource(ACCOUNT_ID, resource2.resource_id);
+
+    expect(response.count).toStrictEqual(2);
 });

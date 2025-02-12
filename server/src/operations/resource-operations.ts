@@ -6,7 +6,6 @@ import {
     DBCREATE_RELATIVE_PATH,
     DEMO_AWS_ACCOUNT_ID,
     HttpErrorCodes,
-    RESOURCESTYPE,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
 } from '../utils/consts';
 import { listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
@@ -84,10 +83,7 @@ async function getManagedResources(
 
     const credentialIdsList = credentialsIds?.split(',');
     const regionsList = regions?.split(',');
-    let databaseTypesList = databaseTypes?.split(',');
-    if (!databaseTypesList) {
-        databaseTypesList = [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
-    }
+    const databaseTypesList = databaseTypes?.split(',');
 
     const { items, nextToken, count } = await getResourcesForMultipleParams(
         accountId,
