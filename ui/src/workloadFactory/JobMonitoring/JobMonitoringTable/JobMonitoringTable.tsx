@@ -35,6 +35,7 @@ import { useDispatch } from 'react-redux';
 import {
     setDownloadJobsList,
     setDownloadJobsLoading,
+    setJobMonitoringColumnState,
     setSubJobsData,
     setSubJobsDataLoading
 } from '../../../store/workloadFactory/jobMonitoringSlice';
@@ -54,6 +55,7 @@ const JobMonitoringTable = React.memo(() => {
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
     const downloadJobsLoading = useAppSelector(state => state.jobMonitoring.downloadJobsLoading);
+    const columnState = useAppSelector(state => state.jobMonitoring.columnState);
     const downloadJobsList = useAppSelector(state => state.jobMonitoring.downloadJobsList);
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
@@ -202,9 +204,17 @@ const JobMonitoringTable = React.memo(() => {
     }, [downloadJobsLoading]);
 
     // Download Job monitoring download function
-    const downloadJMTable = (dataList: any) => {
-        const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
-        const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
+    const downloadJMTable = (dataList: any, columnsState: any) => {
+        const keys = columnsState
+            .filter((column: any) => column.Header && typeof column.Header === 'string' && column.Header.trim() !== '')
+            .map((column: any) => column.accessor)
+            .filter((accessor: any) => accessor);
+
+        const headers = columnsState
+            .filter((column: any) => typeof column.Header === 'string' && column.Header.trim() !== '')
+            .map((column: any) => column.Header)
+            .join(',');
+
         const result = '';
         let csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
         // remove #
@@ -219,13 +229,27 @@ const JobMonitoringTable = React.memo(() => {
     useEffect(() => {
         if (!jmJobsListLoading) {
             let oldList = downloadJobsList || [];
-            let newList = jmJobsList?.items || [];
+            // let newList = jmJobsList?.items || [];
+            let newList =
+                (jmJobsList &&
+                    jmJobsList?.items.map((job: any) => {
+                        const matchingEntry =
+                            credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
+
+                        return {
+                            ...job,
+                            regions: setRegion(job?.region?.name, job?.region?.code),
+                            credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
+                            providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
+                        };
+                    })) ||
+                [];
             let mergedList = [...oldList, ...newList];
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (jmJobsList && !jmJobsList?.nextToken) {
                 // Download logic
-                downloadJMTable(mergedList);
+                downloadJMTable(mergedList, columnState);
                 dispatch(clearNotifications());
                 // success notification
                 dispatch(
@@ -505,6 +529,10 @@ const JobMonitoringTable = React.memo(() => {
             }
         });
     }, [tableProps]);
+
+    useEffect(() => {
+        dispatch(setJobMonitoringColumnState(tableProps?.columns));
+    }, [tableProps.columnsState]);
 
     const tableComponentProps = {
         ExpandedRow,
