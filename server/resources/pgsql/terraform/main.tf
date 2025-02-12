@@ -46,8 +46,6 @@ module "vpc_endpoints" {
   standby_subnet1_id              = local.is_standalone ? "" : var.private_subnet2_id
   standby_subnet_cidrblock        = local.is_standalone ? "" : var.private_subnet2_cidrblock
   s3_endpoint_exists              = var.s3_endpoint_exists
-  cloudformation_endpoint_exists  = var.cloudformation_endpoint_exists
-  sqs_endpoint_exists             = var.sqs_endpoint_exists
   ssm_endpoint_exists             = var.ssm_endpoint_exists
   ec2_messages_endpoint_exists    = var.ec2_messages_endpoint_exists
   ssm_messages_endpoint_exists    = var.ssm_messages_endpoint_exists

@@ -545,12 +545,6 @@ variable "account_id" {
   default     = "{{account_id}}"
 }
 
-variable "cloud_provider_account_id" {
-  description = "The cloud provider's account ID"
-  type        = number
-  default     = "{{cloud_provider_account_id}}"
-}
-
 variable "wlmdb_aws_account_id" {
   description = "The AWS account ID for WLMDB"
   type        = number
@@ -577,12 +571,6 @@ variable "fsx_volume_snapshot_policy" {
     condition     = length(var.fsx_volume_snapshot_policy) > 0
     error_message = "The fsx_volume_snapshot_policy value must not be empty."
   }
-}
-
-variable "file_system_encryption_key_id" {
-  description = "The ID of the file system encryption key"
-  type        = string
-  default     = "{{file_system_encryption_key_id}}"
 }
 
 variable "sql_version" {

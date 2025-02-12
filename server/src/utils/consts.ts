@@ -1087,11 +1087,6 @@ const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
     [key: string]: { name: string; type: string; configType: string };
 } = {
     AccountId: { name: 'account_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
-    CloudProviderAccountId: {
-        name: 'cloud_provider_account_id',
-        type: 'string',
-        configType: PGSQL_TF_VARS_CONFIG.General
-    },
     CloudwatchLogsEndpointExists: {
         name: 'cloudwatch_logs_endpoint_exists',
         type: 'boolean',

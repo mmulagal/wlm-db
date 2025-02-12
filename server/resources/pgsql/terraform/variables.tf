@@ -99,11 +99,6 @@ variable "account_id" {
   type        = string
 }
 
-variable "cloud_provider_account_id" {
-  description = "The cloud provider's account ID"
-  type        = number
-}
-
 variable "wlmdb_aws_account_id" {
   description = "The AWS account ID for WLMDB"
   type        = number
@@ -452,21 +447,10 @@ variable "workload_instance_type" {
 variable "key_pair_name" {
   description = "The name of the key pair"
   type        = string
-  default     = "occm_qa"
 
   validation {
     condition     = length(var.key_pair_name) > 0
     error_message = "The key_pair_name value must not be empty."
-  }
-}
-
-variable "file_system_encryption_key_id" {
-  description = "The File System Encryption Key ID"
-  type        = string
-
-  validation {
-    condition     = length(var.file_system_encryption_key_id) > 0
-    error_message = "The file_system_encryption_key_id value must not be empty."
   }
 }
 
