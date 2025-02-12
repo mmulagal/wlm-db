@@ -1,5 +1,5 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import fastifyMultipart, { MultipartFile } from '@fastify/multipart';
+import { MultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import castRequest from './utils';
@@ -25,11 +25,6 @@ import { MSSQL } from '../utils/consts';
 
 export default function onPremTcoRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-    fastify.register(fastifyMultipart, {
-        limits: {
-            fileSize: 500 * 1024 * 1024 // 500 MB
-        }
-    });
     const API_PATH_ON_PREM_TCO = '/v1/mssql/onprem-tco';
 
     if (process.env.NODE_ENV !== 'production') {

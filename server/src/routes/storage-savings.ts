@@ -24,7 +24,6 @@ import { ManualStorageSavingsRequestBodyType, StorageSavingsRequestBodyType } fr
 
 export default function storageSavingsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-
     const API_PATH_STORAGE_SAVINGS =
         '/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/storage-savings';
 

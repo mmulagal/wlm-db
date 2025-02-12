@@ -151,7 +151,8 @@ enum RouteTags {
     STORAGE_SAVINGS = 'Storage Savings',
     SANDBOX = 'Sandbox',
     ASSESSMENT = 'Continuous Optimization',
-    ONPREM_TCO = 'OnPremises TCO'
+    ONPREM_TCO = 'OnPremises TCO',
+    NOTIFICATION = 'Notification'
 }
 
 enum HttpErrorCodes {
@@ -163,6 +164,7 @@ enum HttpErrorCodes {
     CONFLICT = 409,
     VALIDATION_ERROR = 422,
     FAILED_DEPENDENCY = 424,
+    TOO_MANY_REQUESTS = 429,
 
     // Server errors
     INTERNAL_SERVER_ERROR = 500,
@@ -1126,6 +1128,7 @@ const AWS_SSM_PARAMETER = 'AWS_SSM_PARAMETER';
 const AWS_CE_TYPE = 'AWS_CE';
 const AWS_CO_TYPE = 'AWS_CO';
 const MANUAL_TCO = 'MANUAL_TCO';
+const EMAIL_RATE_LIMIT_TYPE = 'EMAIL_RATE_LIMIT';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -1537,6 +1540,11 @@ const PGSQL_CW_CONFIG = `{
 `;
 
 const SQL_CASE_INSENSITIVE = 'collate SQL_Latin1_General_CP1_CI_AS';
+// 2MB
+const MAX_EMAIL_ATTACHMENT_SIZE = 2048;
+const EMAIL_TYPES = {
+    SAVINGS_CALCULATIONS: 'savings-calculations'
+};
 
 const PRICING_LICENSE_KEYS = {
     SQL_ENT: 'SQL Ent',
@@ -1867,6 +1875,9 @@ export {
     DATABASE_INSTANCE_INDEX_MAPPING,
     PGSQL_CW_CONFIG,
     SQL_CASE_INSENSITIVE,
+    MAX_EMAIL_ATTACHMENT_SIZE,
+    EMAIL_RATE_LIMIT_TYPE,
+    EMAIL_TYPES,
     PRICING_LICENSE_KEYS,
     ASSESSMENT_SSM_EXECUTION_TIMEOUT
 };
