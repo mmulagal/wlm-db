@@ -230,17 +230,20 @@ const JobMonitoringTable = React.memo(() => {
         if (!jmJobsListLoading) {
             let oldList = downloadJobsList || [];
             // let newList = jmJobsList?.items || [];
-            let newList = jmJobsList?.items.map((job: any) => {
-                const matchingEntry =
-                    credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
+            let newList =
+                (jmJobsList &&
+                    jmJobsList?.items.map((job: any) => {
+                        const matchingEntry =
+                            credentialData && credentialData?.find(entry => entry.credentialsId === job.credentialsId);
 
-                return {
-                    ...job,
-                    regions: setRegion(job?.region?.name, job?.region?.code),
-                    credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
-                    providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
-                };
-            });
+                        return {
+                            ...job,
+                            regions: setRegion(job?.region?.name, job?.region?.code),
+                            credName: matchingEntry ? matchingEntry.name : GENERAL.NOT_AVAILABLE,
+                            providerAccountId: matchingEntry ? matchingEntry.providerAccountId : GENERAL.NOT_AVAILABLE
+                        };
+                    })) ||
+                [];
             let mergedList = [...oldList, ...newList];
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);

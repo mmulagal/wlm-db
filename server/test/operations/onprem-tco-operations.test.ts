@@ -11,6 +11,7 @@ import {
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../src/utils/consts';
 import { prisma } from '../../src/utils/prisma-utils';
 import '../simulator/scopes/aws/ec2-scope';
+import '../simulator/scopes/aws/pricing-scope';
 
 const reportData = {
     scriptVersion: '1.0.0',
@@ -197,8 +198,12 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should derive the correct instance type based on host config', async () => {
-        const instanceType = await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, reportData.windowsConfig);
-        expect(instanceType).toEqual('m2.xlarge');
+        const instanceType = await deriveHostConfigBasedInstanceType(
+            DEFAULT_AWS_REGION,
+            reportData.windowsConfig,
+            'Enterprise Edition'
+        );
+        expect(instanceType).toEqual('m7i - flex.large');
     });
 
     it('should group SQL Server instances by deployment type', () => {
@@ -224,8 +229,12 @@ describe('onPrem TCO operations', () => {
     });
 
     it('should derive the correct instance type based on SQL usage', async () => {
-        const instanceType = await deriveSqlUsageBasedInstanceType(DEFAULT_AWS_REGION, reportData.sqlServerInfo);
-        expect(instanceType).toEqual('m2.xlarge');
+        const instanceType = await deriveSqlUsageBasedInstanceType(
+            DEFAULT_AWS_REGION,
+            reportData.sqlServerInfo,
+            'Enterprise Edition'
+        );
+        expect(instanceType).toEqual('m7i - flex.large');
     });
 
     it('should return false if any SQL instance is not using enterprise features', () => {

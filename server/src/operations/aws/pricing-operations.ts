@@ -23,7 +23,8 @@ import {
     SQL_SOFTWARE_TYPES,
     SQL_STD,
     HOURS_IN_MONTH,
-    EBS_ROOT_VOLUME
+    EBS_ROOT_VOLUME,
+    PRICING_LICENSE_KEYS
 } from '../../utils/consts';
 import { DEMO_PRODUCT_RATE } from '../../utils/demo-utils/demoMockdata';
 import getProducts from '../../lib/aws/pricing';
@@ -874,11 +875,18 @@ function calculateFsxWindowsCapacityPrice(
 }
 async function getSqlInstancePricingDetails(
     region: string,
-    instanceType: string,
+    instanceType?: string,
     operatingSystem?: string,
-    usageOperation?: string
+    usageOperation?: string,
+    licenseType?: string
 ) {
-    logger.info('Get SQL instance pricing details', { region, instanceType, operatingSystem, usageOperation });
+    logger.info('Get SQL instance pricing details', {
+        region,
+        instanceType,
+        operatingSystem,
+        usageOperation,
+        licenseType
+    });
 
     const params: GetProductsCommandInput = {
         Filters: [
@@ -891,11 +899,6 @@ async function getSqlInstancePricingDetails(
                 Type: 'TERM_MATCH',
                 Field: 'productFamily',
                 Value: 'Compute Instance'
-            },
-            {
-                Type: 'TERM_MATCH',
-                Field: 'instanceType',
-                Value: instanceType
             },
             {
                 Type: 'TERM_MATCH',
@@ -912,6 +915,13 @@ async function getSqlInstancePricingDetails(
         ...AWS_PRICING_FORMAT_VERSION
     };
 
+    if (instanceType) {
+        params?.Filters?.push({
+            Type: 'TERM_MATCH',
+            Field: 'instanceType',
+            Value: instanceType
+        });
+    }
     if (usageOperation) {
         params?.Filters?.push({
             Type: 'TERM_MATCH',
@@ -929,7 +939,9 @@ async function getSqlInstancePricingDetails(
     }
 
     const pricingResult = await getProducts(params);
-    const pricingDetails: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } } = {};
+    const pricingDetails: {
+        [instanceType: string]: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } };
+    } = {};
     if (pricingResult?.PriceList) {
         pricingResult.PriceList.forEach(priceItem => {
             const item = (priceItem as LazyJsonString).deserializeJSON();
@@ -939,10 +951,13 @@ async function getSqlInstancePricingDetails(
                 const { OnDemand: onDemandPrice } = terms;
                 const { priceDimensions } = onDemandPrice[Object.keys(onDemandPrice)[0]];
                 const { unit, pricePerUnit } = priceDimensions[Object.keys(priceDimensions)[0]];
-                const { preInstalledSw, licenseModel } = product.attributes;
+                const { preInstalledSw, instanceType: ec2InstType, licenseModel } = product.attributes;
                 if (licenseModel !== 'Bring your own license') {
                     // Windows Server as BYOL- no windows license included Windows Server as BYOL (Bring Your Own License) - RunInstances:0800
-                    pricingDetails[preInstalledSw] = {
+                    if (!pricingDetails[ec2InstType]) {
+                        pricingDetails[ec2InstType] = {};
+                    }
+                    pricingDetails[ec2InstType][preInstalledSw] = {
                         pricePerUnit: Number(pricePerUnit.USD),
                         unit
                     };
@@ -951,9 +966,33 @@ async function getSqlInstancePricingDetails(
         });
     }
 
-    logger.debug('getSqlInstancePricingDetails response', pricingDetails);
+    if (instanceType) {
+        return pricingDetails; // returns in format { instanceType: { preInstalledSw: { pricePerUnit, unit } } }
+    }
+    /**
+     * If no instanceType is provided, this function gets the pricing details for all instance types.
+     * It sorts and filters the pricing details based on the specified license type.
+     * - Filters out entries that do not have the specified license type (if provided) or are not available in NA.
+     * - Sorts the remaining entries by the price per unit in ascending order.
+     */
+    const sortedPricingDetails =
+        Object.entries(pricingDetails).length > 1
+            ? Object.fromEntries(
+                  Object.entries(pricingDetails)
+                      .filter(([, licenses]) =>
+                          licenseType
+                              ? licenses[licenseType] && licenses[PRICING_LICENSE_KEYS.SQL_STD] && licenses.NA
+                              : licenses[PRICING_LICENSE_KEYS.SQL_STD] && licenses.NA
+                      )
+                      .sort(([, licensesA], [, licensesB]) => {
+                          const priceA = licensesA.NA ? licensesA.NA.pricePerUnit : Infinity;
+                          const priceB = licensesB.NA ? licensesB.NA.pricePerUnit : Infinity;
+                          return priceA - priceB;
+                      })
+              )
+            : Object.fromEntries(Object.entries(pricingDetails)); // returns in format { instanceType: { preInstalledSw: { pricePerUnit, unit } } } or { instanceType1: { preInstalledSw: { pricePerUnit, unit } },instanceType2: { preInstalledSw: { pricePerUnit, unit } }, instanceType3: { preInstalledSw: { pricePerUnit, unit } } }
 
-    return pricingDetails;
+    return sortedPricingDetails;
 }
 
 function getPricingByLicenseType(
@@ -998,7 +1037,11 @@ async function deriveInstanceCountPricingDetails(nodeInstanceTypes: string[], re
     >();
     await Promise.all(
         Object.entries(instanceTypeCount).map(async ([instanceType, count]) => {
-            const pricingDetails = await getSqlInstancePricingDetails(region, instanceType, 'windows');
+            const { [instanceType]: pricingDetails } = await getSqlInstancePricingDetails(
+                region,
+                instanceType,
+                'windows'
+            );
             existingInstanceTypePricingsDetails.set(instanceType, { count, pricingDetails });
         })
     );
