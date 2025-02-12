@@ -78,11 +78,6 @@ variable "private_subnet2_id" {
   type        = string
 }
 
-variable "tf_deploy_role_name" {
-  description = "The name of the terraform deployment role"
-  type        = string
-}
-
 variable "validation_ami" {
   description = "The AMI ID for validation"
   type        = string
@@ -152,16 +147,6 @@ variable "s3_endpoint_exists" {
   }
 }
 
-variable "sqs_endpoint_exists" {
-  description = "Does the SQS endpoint exist?"
-  type        = bool
-
-  validation {
-    condition     = var.sqs_endpoint_exists != null
-    error_message = "The sqs_endpoint_exists value must not be empty."
-  }
-}
-
 variable "ssm_endpoint_exists" {
   description = "Does the SSM endpoint exist?"
   type        = bool
@@ -179,16 +164,6 @@ variable "cloudwatch_logs_endpoint_exists" {
   validation {
     condition     = var.cloudwatch_logs_endpoint_exists != null
     error_message = "The cloudwatch_logs_endpoint_exists value must not be empty."
-  }
-}
-
-variable "cloudformation_endpoint_exists" {
-  description = "Does the CloudFormation endpoint exist?"
-  type        = bool
-
-  validation {
-    condition     = var.cloudformation_endpoint_exists != null
-    error_message = "The cloudformation_endpoint_exists value must not be empty."
   }
 }
 
@@ -495,26 +470,6 @@ variable "file_system_encryption_key_id" {
   }
 }
 
-variable "notification_ARN" {
-  description = "The Notification ARN"
-  type        = string
-
-  validation {
-    condition     = length(var.notification_ARN) > 0
-    error_message = "The notification_ARN value must not be empty."
-  }
-}
-
-variable "jwt_token" {
-  description = "The JWT Token"
-  type        = string
-
-  validation {
-    condition     = length(var.jwt_token) > 0
-    error_message = "The jwt_token value must not be empty."
-  }
-}
-
 variable "aws_profile" {
   description = "The AWS CLI profile to use for this deployment"
   type        = string
@@ -543,11 +498,6 @@ variable "validation_node_initialization_s3_url" {
     condition     = length(var.validation_node_initialization_s3_url) > 0
     error_message = "The validation_node_initialization_s3_url value must not be empty."
   }
-}
-
-variable "ec2_role_name" {
-  description = "EC2 instance role name."
-  type        = string
 }
 
 variable "pgsql_node_initialization_s3_url" {

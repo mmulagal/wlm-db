@@ -140,12 +140,6 @@ variable "route_table2_id" {
   }
 }
 
-variable "tf_deploy_role_name" {
-  description = "The name of the terraform deployment role"
-  type        = string
-  default     = "{{tf_deploy_role_name}}"
-}
-
 variable "validation_ami" {
   description = "The AMI ID for validation"
   type        = string
@@ -200,17 +194,6 @@ variable "s3_endpoint_exists" {
   validation {
     condition     = var.s3_endpoint_exists != null
     error_message = "The s3_endpoint_exists value must not be empty."
-  }
-}
-
-variable "sqs_endpoint_exists" {
-  description = "Does the SQS endpoint exist?"
-  type        = bool
-  default     = "{{sqs_endpoint_exists}}"
-
-  validation {
-    condition     = var.sqs_endpoint_exists != null
-    error_message = "The sqs_endpoint_exists value must not be empty."
   }
 }
 
@@ -611,12 +594,6 @@ variable "sql_version" {
     condition     = length(var.sql_version) > 0
     error_message = "The sql_version value must not be empty."
   }
-}
-
-variable "ec2_role_name" {
-  description = "EC2 instance role name."
-  type        = string
-  default     = "{{ec2_role_name}}"
 }
 
 variable "fsx_aggr_name" {

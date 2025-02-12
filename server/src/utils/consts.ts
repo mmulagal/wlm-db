@@ -1110,7 +1110,7 @@ const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
         configType: PGSQL_TF_VARS_CONFIG.General
     },
     FileSystemEncryptionKeyId: {
-        name: 'file_system_encryption_key_id',
+        name: 'fsx_encryption_key',
         type: 'string',
         configType: PGSQL_TF_VARS_CONFIG.FSX
     },
@@ -1136,6 +1136,7 @@ const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
         type: 'number',
         configType: PGSQL_TF_VARS_CONFIG.FSX
     },
+    SQLSvmName: { name: 'sql_svm_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
     KeyPairName: { name: 'key_pair_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.EC2 },
     NodeNetBIOSNames: { name: 'node_net_bios_names', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
     ONTAPSecurityGroupID: { name: 'ontap_security_group_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
