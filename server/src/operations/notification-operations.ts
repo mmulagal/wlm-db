@@ -58,7 +58,7 @@ async function sendSavingsCalculationEmail(
     logger.info('Sending savings calculation email', { accountId, fileName, userEmail, storageType });
     const successMsg = { message: 'Email sent successfully' };
 
-    if (process.env.NODE_ENV !== 'demo') {
+    if (process.env.NODE_ENV === 'demo') {
         return successMsg;
     }
 
