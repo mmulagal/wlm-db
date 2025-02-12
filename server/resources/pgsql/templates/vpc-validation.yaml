@@ -11,7 +11,8 @@ Metadata:
                   default: Network Configuration
               Parameters:
                   - VPCID
-                  - SubnetID
+                  - Subnet1ID
+                  - Subnet2ID
                   - Ec2RoleName
             - Label:
                   default: Amazon EC2 Configuration
@@ -28,7 +29,7 @@ Metadata:
                   - EnableCloudWatchLogFeature
                   - ParentStackName
             - Label:
-                  default: Microsoft SQL Server Configuration
+                  default: PGSQL Server Configuration
               Parameters:
                   - SQLDeploymentMode
         ParameterLabels:
@@ -40,8 +41,10 @@ Metadata:
                 default: Instance type of the validation node
             KeyPairName:
                 default: Key pair Name
-            SubnetID:
-                default: Subnet ID
+            Subnet1ID:
+                default: Subnet ID 1
+            Subnet2ID:
+                default: Subnet ID 2
             PurposeTag:
                 default: Tag your instances with purpose
             VPCID:
@@ -57,7 +60,7 @@ Metadata:
             FSxFileSystemId:
                 default: FSx for ONTAP Filesystem ID
             SQLDeploymentMode:
-                default: SQL server deployment mode
+                default: PGSQL server deployment mode
 Parameters:
     UniqueID:
         Default: UID123
@@ -73,10 +76,12 @@ Parameters:
         Description: Public/private key pairs allow you to securely connect to your instance
             after it launches.
         Type: AWS::EC2::KeyPair::KeyName
-    SubnetID:
-        Description: ID of private subnet in an Availability Zone 1 for the workload (For example,
-            subnet-a0246dcd).
-        Type: AWS::EC2::Subnet::Id
+    Subnet1ID:
+        Description: ID of private subnet in an Availability Zone 1 for the workload (For example, subnet-a0246dcd).
+        Type: String
+    Subnet2ID:
+        Description: ID of private subnet in an Availability Zone 2 for the workload (For example, subnet-a0246dcd).
+        Type: String
     VPCID:
         Description: ID of the VPC (for example, vpc-0343606e).
         Type: AWS::EC2::VPC::Id
@@ -102,12 +107,12 @@ Parameters:
         Description: ID for the FSx for ONTAP file system.
         Type: String
     SQLDeploymentMode:
-        Description: SQL server deployment mode
+        Description: PGSQL server deployment mode
         Type: String
         AllowedValues:
-            - 'fci'
+            - 'ha'
             - 'standalone'
-        Default: 'fci'
+        Default: 'ha'
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -122,6 +127,9 @@ Conditions:
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
         - 'true'
+    IsHaCluster: !Equals
+        - !Ref 'SQLDeploymentMode'
+        - 'ha'
 Resources:
     ValidationInstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -156,18 +164,14 @@ Resources:
                         a-install-ssm-agent:
                             command: !Sub
                                 'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
-                            waitAfterCompletion: '0'
                         b-install-cloudwatch-agent:
                             command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
-                            waitAfterCompletion: '0'
                 CreateDeploymentFolders:
                     commands:
                         a-create-scripts-folder:
                             command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
-                            waitAfterCompletion: '0'
                         b-create-logs-folder:
                             command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
-                            waitAfterCompletion: '0'
                 ConfigureCWLogs:
                     files:
                         /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
@@ -182,7 +186,6 @@ Resources:
                                 - LogFeatureEnabled
                                 - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
                                 - echo "CloudWatch Logs feature is disabled."
-                            waitAfterCompletion: '0'
                 FetchResources:
                     files:
                         /home/ec2-user/cfn/scripts/verify-signature.sh:
@@ -214,10 +217,8 @@ Resources:
                     commands:
                         a-change-to-sudo-user:
                             command: sudo su
-                            waitAfterCompletion: 0
                         b-unpack-signatures:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
-                            waitAfterCompletion: 0
                         c-verify-validation-signature:
                             command: !Join
                                 - ''
@@ -225,20 +226,16 @@ Resources:
                                     -p /home/ec2-user/cfn/signig_files/validation.zip.pub -r ValidationNode1 -n "
                                   - !Ref 'AWS::StackName'
                                   - '"'
-                            waitAfterCompletion: 0
                         d-unpack-validation-scripts:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
-                            waitAfterCompletion: 0
                         e-unpack-fsx-certificates:
                             command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
-                            waitAfterCompletion: 0
                 Finalize:
                     commands:
                         a-validate-vpc:
                             command: !Sub 
                                 - '/home/ec2-user/cfn/scripts/validation/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode1'
-                                - subnetId: !Ref 'SubnetID'
-                            waitAfterCompletion: '0'
+                                - subnetId: !Ref 'Subnet1ID'
                         b-store-credentials-in-parameter-store:
                             command: !Sub 
                                 - aws ssm put-parameter
@@ -247,7 +244,6 @@ Resources:
                                     --value "$(aws ssm get-parameter --name "/netapp/wlmdb/${ParentStackName}" --with-decryption --query "Parameter.Value" --output text)"
                                     --overwrite
                                 - parentStackName: !Ref 'ParentStackName'
-                            waitAfterCompletion: '0'
                         c-validate-fsx-connectivity:
                             command: !Sub 
                                 - '/home/ec2-user/cfn/scripts/validation/validate-fsx.sh
@@ -260,11 +256,9 @@ Resources:
                                 -   PerformFSxCheck: !Ref 'PerformFSxCheck'
                                     FSxFileSystemId: !Ref 'FSxFileSystemId'
                                     ParentStackName: !Ref 'ParentStackName'
-                            waitAfterCompletion: '0'
                         d-signal-resource:
                             command: !Sub 'cfn-signal -e $? --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
-                            waitAfterCompletion: '0'
         Properties:
             ImageId: !Ref 'AMI'
             InstanceType: !Ref 'InstanceType'
@@ -274,7 +268,7 @@ Resources:
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
             NetworkInterfaces:
                 - DeviceIndex: '0'
-                  SubnetId: !Ref 'SubnetID'
+                  SubnetId: !Ref 'Subnet1ID'
             KeyName: !Ref 'KeyPairName'
             InstanceInitiatedShutdownBehavior: terminate
             UserData:
@@ -295,5 +289,146 @@ Resources:
                     else
                         echo "CF endpoint is reachable."
                         /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource ValidationNode1 --region ${AWS::Region}
+                    fi
+                    shutdown now
+    ValidationNode2:
+        Type: AWS::EC2::Instance
+        Condition: IsHaCluster
+        CreationPolicy:
+            ResourceSignal:
+                Count: '1'
+                Timeout: PT45M
+        Metadata:
+            AWS::CloudFormation::Init:
+                configSets:
+                    config:
+                        - InstallSSMAgent
+                        - CreateDeploymentFolders
+                        - ConfigureCWLogs
+                        - FetchResources
+                        - ScriptSignatureVerificationandExtract
+                        - Finalize
+                InstallSSMAgent:
+                    commands:
+                        a-install-ssm-agent:
+                            command: !Sub
+                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                        b-install-cloudwatch-agent:
+                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                CreateDeploymentFolders:
+                    commands:
+                        a-create-scripts-folder:
+                            command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {{{ PgsqlCloudWatchConfig }}}
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
+                FetchResources:
+                    files:
+                        /home/ec2-user/cfn/scripts/verify-signature.sh:
+                            source: {{{ ScriptVerifySignature }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/unzip-archive.sh:
+                            source: {{{ ScriptUnzipArchive }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/validation.zip:
+                            source: {{{ ScriptValidation }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/fsx_certs.zip:
+                            source: {{{ FsxCertificates }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        a-change-to-sudo-user:
+                            command: sudo su
+                        b-unpack-signatures:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
+                        c-verify-validation-signature:
+                            command: !Join
+                                - ''
+                                - - /home/ec2-user/cfn/scripts/verify-signature.sh -f /home/ec2-user/cfn/scripts/validation.zip -s /home/ec2-user/cfn/signig_files/validation.zip.sig 
+                                    -p /home/ec2-user/cfn/signig_files/validation.zip.pub -r ValidationNode2 -n "
+                                  - !Ref 'AWS::StackName'
+                                  - '"'
+                        d-unpack-validation-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/validation.zip -d /home/ec2-user/cfn/scripts
+                        e-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                Finalize:
+                    commands:
+                        a-validate-vpc:
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/validation/validate-vpc.sh ${subnetId} ${AWS::Region} ${AWS::StackName} ValidationNode2'
+                                - subnetId: !Ref 'Subnet2ID'
+                        b-validate-fsx-connectivity:
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/validation/validate-fsx.sh
+                                    -e ${PerformFSxCheck}
+                                    -f ${FSxFileSystemId}
+                                    -r ${AWS::Region}
+                                    -n ${AWS::StackName}
+                                    -p ${ParentStackName}
+                                    -s ValidationNode2'
+                                -   PerformFSxCheck: !Ref 'PerformFSxCheck'
+                                    FSxFileSystemId: !Ref 'FSxFileSystemId'
+                                    ParentStackName: !Ref 'ParentStackName'
+                        c-signal-resource:
+                            command: !Sub 'cfn-signal -e $? --resource ValidationNode2
+                                --stack ${AWS::StackName} --region ${AWS::Region}'
+        Properties:
+            ImageId: !Ref 'AMI'
+            InstanceType: !Ref 'InstanceType'
+            IamInstanceProfile: !Ref 'ValidationInstanceProfile'
+            LaunchTemplate:
+                LaunchTemplateId: !Ref 'DisableIMDSv1'
+                Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
+            NetworkInterfaces:
+                - DeviceIndex: '0'
+                  SubnetId: !Ref 'Subnet2ID'
+            KeyName: !Ref 'KeyPairName'
+            InstanceInitiatedShutdownBehavior: terminate
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash -xe
+                    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+                    echo "Token: $token"
+                    instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+                    echo "Instance ID: $instanceID"
+                    FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
+                    url=https://cloudformation.${AWS::Region}.amazonaws.com
+                    StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
+                    echo "Status code: $StatusCode"
+                    if [ "$StatusCode" != "200" ]; then
+                        echo $FailureReason
+                        aws cloudformation signal-resource --stack ${AWS::StackName} --logical-resource-id ValidationNode2 --status FAILURE --reason "$FailureReason" --region ${AWS::Region}
+                        exit 1
+                    else
+                        echo "CF endpoint is reachable."
+                        /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource ValidationNode2 --region ${AWS::Region}
                     fi
                     shutdown now

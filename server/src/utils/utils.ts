@@ -124,8 +124,16 @@ function generateDeploymentParams(
         }
     }
 
-    const stacknameSubstring = `${databaseType === DatabaseTypes.MS_SQL_SERVER ? '' : 'Pg'}${
-        sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME
+    const stacknameSubstring = `${
+        databaseType === DatabaseTypes.MS_SQL_SERVER
+            ? sqlDeploymentType === 'fci'
+                ? FCI_STACKNAME
+                : STANDALONE_STACKNAME
+            : databaseType === DatabaseTypes.PG_SQL
+            ? sqlDeploymentType === 'ha'
+                ? 'PgSqlHAStack'
+                : `Pg${STANDALONE_STACKNAME}`
+            : ''
     }`;
     const netbios =
         sqlDeploymentType === 'fci'
@@ -490,7 +498,7 @@ function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: 
     logger.info('Return job decription for job name:', { jobName, stackSqlDeploymentType, dbEngineType });
     // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
     // Diffrentiating between the deployment type to provide appropriate description.
-    const subJobDescriptions = getSubJobDescriptions(dbEngineType);
+    const subJobDescriptions = getSubJobDescriptions(dbEngineType, stackSqlDeploymentType);
     if (jobName.includes('ValidationStack1')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
@@ -789,12 +797,14 @@ function extractVersionYear(sqlVersion: string) {
     return match ? match[1] : 'Unknown';
 }
 
-function getSubJobDescriptions(dbEngineType: string) {
-    logger.info('Get sub job descriptions', { dbEngineType });
+function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: string) {
+    logger.info('Get sub job descriptions', { dbEngineType, stackSqlDeploymentType });
 
     const subJobDescriptions: SubJobDescriptions = {
         SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
-        PGSQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
+        PGSQLServerStack: `Deploying an ${dbEngineType} Server ${
+            stackSqlDeploymentType === 'standalone' ? 'standalone' : 'ha'
+        } instance with recommended best practices`,
         SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
         NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
         ExistingFSxStack: `Deploying a storage virtual machine for the ${dbEngineType} Server workload on the FSx for ONTAP file system`,
