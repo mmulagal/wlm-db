@@ -6,8 +6,8 @@ aws_region=$1
 deployment_name=$2
 subnet_id=$3
 perform_fsx_check=$4
-fsx_file_system_id=$5
-log_feature_enabled=$6 # Set to false if CloudWatch Logs feature is disabled
+log_feature_enabled=$5 # Set to false if CloudWatch Logs feature is disabled
+fsx_file_system_id=$6
 
 get_instance_id() {
     token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)

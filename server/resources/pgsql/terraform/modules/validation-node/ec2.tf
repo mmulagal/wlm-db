@@ -1,5 +1,6 @@
 locals {
   log_feature_enabled = var.enable_cloudwatch_log_feature == true ? "true" : "false"
+
   user_data = templatefile("${path.module}/user_data.sh", {
     aws_region                            = var.aws_location
     subnet_id                             = var.subnet_id
