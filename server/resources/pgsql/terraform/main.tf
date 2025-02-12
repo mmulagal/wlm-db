@@ -34,7 +34,7 @@ provider "aws" {
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
-  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy, aws_ssm_parameter.credentials_ssm_parameter]
+  depends_on = [aws_iam_role.ec2_iam_role, aws_iam_role_policy.ec2_iam_role_policy]
 
   vpc_id                          = var.vpc_id
   vpc_cidr                        = var.vpc_cidr
@@ -62,7 +62,7 @@ module "fsxn_standalone" {
   source = "./modules/fsxn"
   count  = local.is_standalone ? 1 : 0
 
-  depends_on                     = [module.vpc_endpoints, module.validation_node1]
+  depends_on                     = [aws_ssm_parameter.credentials_ssm_parameter, module.vpc_endpoints, module.validation_node1]
   fsx_file_system_id             = var.fsx_file_system_id
   deployment_mode                = var.deployment_mode
   deployment_name                = var.deployment_name

@@ -22,17 +22,19 @@ pgsql_node_initialization_s3_url="${pgsql_node_initialization_s3_url}"
 echo "Deployment Name: $deployment_name"
 
 # Create necessary directories
-echo "Creating folder $script_dir"
-if ! mkdir -p "$script_dir"; then
-    echo "Error creating folder $script_dir"
-    exit 1
-fi
+create_deployment_folders() {
+    echo "Creating folder $script_dir"
+    if ! mkdir -p "$script_dir"; then
+        echo "Error creating folder $script_dir"
+        return 1
+    fi
 
-echo "Creating folder $log_dir"
-if ! mkdir -p "$log_dir"; then
-    echo "Error creating folder $log_dir"
-    exit 1
-fi
+    echo "Creating folder $log_dir"
+    if ! mkdir -p "$log_dir"; then
+        echo "Error creating folder $log_dir"
+        return 1
+    fi
+}
 
 get_instance_id() {
     token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
