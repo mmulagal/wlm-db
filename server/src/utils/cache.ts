@@ -12,7 +12,8 @@ import {
     AWS_FSX_TYPE,
     AWS_CE_TYPE,
     AWS_SSM_PARAMETER,
-    AWS_CO_TYPE
+    AWS_CO_TYPE,
+    MANUAL_TCO
 } from './consts.js';
 import getLogger from './logger.js';
 
@@ -75,6 +76,11 @@ const AWS_CO_CACHE = new LRUCache({
     ttl: ms('1d')
 });
 
+const MANUAL_TCO_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('10m')
+});
+
 function getCacheByType(type: string, checkCache: boolean = false) {
     logger.debug('Getting cache by type:', type);
 
@@ -103,6 +109,8 @@ function getCacheByType(type: string, checkCache: boolean = false) {
             return AWS_SSM_PARAMETER_CACHE;
         case AWS_CO_TYPE:
             return AWS_CO_CACHE;
+        case MANUAL_TCO:
+            return MANUAL_TCO_CACHE;
         default:
             if (!checkCache) {
                 logger.error('Could not found compatible cache: ', type);
