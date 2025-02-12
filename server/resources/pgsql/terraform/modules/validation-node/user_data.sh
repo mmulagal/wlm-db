@@ -13,12 +13,6 @@ log_file="$log_dir/Validation-instance-initializer.log"
 
 echo "Deployment Name: $deployment_name"
 
-get_instance_id() {
-    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
-    instance_id=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
-    echo "$instance_id"
-}
-
 # Create necessary directories
 echo "Creating folder $script_dir"
 if ! mkdir -p "$script_dir"; then
@@ -32,8 +26,18 @@ if ! mkdir -p "$log_dir"; then
     exit 1
 fi
 
+
+get_instance_id() {
+    token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+    instance_id=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+    echo "$instance_id"
+}
+
 # Ensure necessary security protocols are set
 export AWS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+
+# Create necessary deployment folders
+create_deployment_folders
 
 # Get the instance ID
 instance_id=$(get_instance_id)
