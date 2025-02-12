@@ -259,8 +259,6 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 }
             } = castRequest(request);
             const response = await getPGSQLTerraformSetup(
-                credentialsId,
-                region,
                 networkConfiguration,
                 ec2Configuration,
                 fsxConfiguration,
@@ -268,7 +266,9 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 topicArn,
                 enableCloudWatch,
                 triggeredFrom as string,
-                tags
+                tags,
+                credentialsId,
+                region
             );
             return reply.code(202).send(response);
         });
