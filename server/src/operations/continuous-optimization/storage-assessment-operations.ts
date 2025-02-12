@@ -423,7 +423,8 @@ async function calculateStorageDrift(
                 severity: goldenData.severity,
                 recommendation: goldenData.recommendation,
                 tags: goldenData.tags,
-                current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+                current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb']
             });
         }
 
@@ -433,12 +434,14 @@ async function calculateStorageDrift(
         let recommendationString =
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality';
         let severity = 'critical';
+        let databasesInViolation: string[] = [];
         goldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
         if (!isEmpty(goldenData)) {
             dataFilesLayoutStatus =
                 goldenData?.value === defaultDataFilesAssessment
                     ? AssessmentStatus.OPTIMIZED
                     : AssessmentStatus.NOT_OPTIMIZED;
+            databasesInViolation = dataFilesLayoutStatus === AssessmentStatus.NOT_OPTIMIZED ? ['system'] : [];
         }
         goldenData = layoutConfigData.find(data => data.parameter === 'default-log-files-location');
         if (!isEmpty(goldenData)) {
@@ -446,6 +449,7 @@ async function calculateStorageDrift(
                 goldenData?.value === defaultLogFilesAssessment
                     ? AssessmentStatus.OPTIMIZED
                     : AssessmentStatus.NOT_OPTIMIZED;
+            databasesInViolation = dataFilesLayoutStatus === AssessmentStatus.NOT_OPTIMIZED ? ['system'] : [];
         }
 
         const dataVolumes = userDatabaseLayoutAssessment?.data;
@@ -498,6 +502,7 @@ async function calculateStorageDrift(
             severity = 'critical';
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
+            databasesInViolation = databasesOnSameDataLogLun.map(data => data.name);
         } else if (!isEmpty(databasesOnSameDataLogVolume)) {
             recommended = 'separate-data-log-volume-per-database';
             dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
@@ -505,6 +510,7 @@ async function calculateStorageDrift(
             severity = 'warning';
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
+            databasesInViolation = databasesOnSameDataLogVolume.map(data => data.name);
         } else if (databasesAbove500Gb.length > 1) {
             if (
                 !isEmpty(databasesSharingDataVolumes) ||
@@ -518,6 +524,7 @@ async function calculateStorageDrift(
                 severity = 'critical';
                 recommendationString =
                     'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+                databasesInViolation = databasesAbove500Gb.map(data => data.name);
             }
         } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
             if (!isEmpty(databasesSharingDataLuns)) {
@@ -529,6 +536,7 @@ async function calculateStorageDrift(
             severity = 'critical';
             recommendationString =
                 'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+            databasesInViolation = databasesAbove500Gb.map(data => data.name);
         } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
             if (!isEmpty(databasesSharingDataVolumes)) {
                 dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
@@ -539,6 +547,7 @@ async function calculateStorageDrift(
             severity = 'warning';
             recommendationString =
                 'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
+            databasesInViolation = databasesAbove500Gb.map(data => data.name);
         }
 
         driftAssessmentData.layout.push(
@@ -552,7 +561,8 @@ async function calculateStorageDrift(
                     AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ],
-                current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+                current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                objectsInViolation: databasesInViolation
             },
 
             {
@@ -565,7 +575,8 @@ async function calculateStorageDrift(
                     AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ],
-                current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+                current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                objectsInViolation: databasesInViolation
             }
         );
     }
