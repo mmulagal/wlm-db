@@ -1,6 +1,7 @@
 import { DsButton, DsTable } from '@netapp/design-system';
 import { ReactComponent as ContextMenuIcon } from '@netapp/icons/ic_table_action.svg';
 import styles from './HostsTable.module.scss';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const HostsTable = () => {
     const data = [
@@ -178,32 +179,50 @@ const HostsTable = () => {
     ];
     const tableColumns: any = [
         {
-            id: 'volumeName',
+            id: 'nameForSorting',
+            value: 'Host name'
+        },
+        {
+            id: 'hostType',
             isFilterable: true,
-            value: 'Volume Name'
+            value: 'Host type'
         },
         {
-            formatCell: () => {},
-            id: 'svmName',
+            id: 'totalInstance',
+            value: 'Managed instances'
+        },
+        {
+            id: 'serverInstallationMode',
             isFilterable: true,
-            value: 'SVM Name'
+            value: 'Deployment model'
         },
         {
-            id: 'volumeSize',
-            value: 'Volume Size'
+            id: 'instanceListText',
+            value: 'Attached EC2 nodes'
         },
         {
-            id: 'usedSize',
-            isFilterable: true,
-            value: 'Used Size'
+            id: 'vpcName',
+            value: 'VPC'
         },
         {
-            id: 'snapshotUsedSize',
-            value: 'Snapshot used size'
+            id: 'ssmState',
+            value: 'SSM connectivity'
         },
         {
-            id: 'coldDataEstimated',
-            value: 'Cold Data (Estimated)'
+            id: 'totalCost',
+            value: GENERAL.DB_HOST_ESTIMATED_COST
+        },
+        {
+            id: 'credentialName',
+            value: 'AWS credentials'
+        },
+        {
+            id: 'accountId',
+            value: 'AWS account'
+        },
+        {
+            id: 'regionName',
+            value: 'Region'
         },
         {
             formatCells(_, row: any) {
@@ -244,19 +263,10 @@ const HostsTable = () => {
         <div className={styles.hostsTable}>
             <DsTable
                 isManagedColumns={true}
-                actions={[
-                    {
-                        children: 'Secondary',
-                        variant: 'secondary'
-                    },
-                    {
-                        children: 'Primary',
-                        variant: 'primary'
-                    }
-                ]}
+                actions={[]}
                 columns={tableColumns}
                 data={data}
-                title="Volumes"
+                title="Hosts"
             />
         </div>
     );
