@@ -8,6 +8,7 @@ ADD config ./config
 ADD resources/mssql/templates ./resources/mssql/templates
 ADD resources/mssql/terraform ./resources/mssql/terraform
 ADD resources/pgsql/templates ./resources/pgsql/templates/
+ADD resources/pgsql/terraform ./resources/mssql/terraform
 COPY package.json ./
 COPY package-lock.json ./
 
@@ -17,6 +18,7 @@ COPY patches ./patches/
 
 # Change the permissions of the /resources/mssql directory to give read and write access
 RUN chmod -R 766 ./resources/mssql
+RUN chmod -R 766 ./resources/pgsql
 
 RUN npm i
 
