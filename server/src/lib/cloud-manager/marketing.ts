@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash-es';
-import { HEADERS, MANUAL_TCO, USER_TOKEN, WF_USER_CRED_TYPE, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import { HEADERS, MANUAL_TCO, USER_TOKEN, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
@@ -54,7 +54,7 @@ async function getManualModeStorageSavings<T>(accountId: string, params: ManualM
 
     const cacheKey = generateHash(JSON.stringify(params));
     if (!process.env.TEST && hasCache(MANUAL_TCO, cacheKey)) {
-        return readFromCacheByKey(MANUAL_TCO, cacheKey);
+        return readFromCacheByKey(MANUAL_TCO, cacheKey) as T;
     }
 
     const response = await gotInstanceForInternalRequest
@@ -69,8 +69,9 @@ async function getManualModeStorageSavings<T>(accountId: string, params: ManualM
             json: params
         })
         .json<T>();
+
     if (!isEmpty(response)) {
-        writeToCache(WF_USER_CRED_TYPE, cacheKey, response);
+        writeToCache(MANUAL_TCO, cacheKey, response);
     }
     return response;
 }
