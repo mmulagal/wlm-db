@@ -7,6 +7,9 @@ const emailSchema = {
     summary: 'Send email',
     description: 'Sends email containing attachment with report',
     params: EmailRequestParams,
+    querystring: Type.Object({
+        emailType: Type.String()
+    }),
     consumes: ['multipart/form-data'],
     body: Type.Any(),
     response: {

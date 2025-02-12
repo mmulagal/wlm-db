@@ -12,7 +12,8 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
 
     server.post(`${API_PATH_NOTIFICATION}/email`, { schema: emailSchema }, async (request: FastifyRequest, reply) => {
         const {
-            params: { accountId }
+            params: { accountId },
+            query: { emailType }
         } = castRequest(request);
 
         if (!request.isMultipart()) {
@@ -35,7 +36,7 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
             }
         }
 
-        const response = await processEmailRequest(accountId, fileBuffer, fileName, fields);
+        const response = await processEmailRequest(accountId, fileBuffer, fileName, fields, emailType);
 
         return reply.send(response);
     });

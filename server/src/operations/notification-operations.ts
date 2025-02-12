@@ -12,7 +12,8 @@ export default async function processEmailRequest(
     accountId: string,
     fileBuffer: Buffer | null,
     fileName: string,
-    fields: { [key: string]: string }
+    fields: { [key: string]: string },
+    emailType: string
 ) {
     logger.info('Processing email request', { accountId, fileName, fields });
 
@@ -24,7 +25,7 @@ export default async function processEmailRequest(
         throw createError(HttpErrorCodes.TOO_MANY_REQUESTS, 'Too many requests');
     }
 
-    if (fields.emailType && fields.emailType === EMAIL_TYPES.SAVINGS_CALCULATIONS) {
+    if (emailType && emailType === EMAIL_TYPES.SAVINGS_CALCULATIONS) {
         const { storageType } = fields;
 
         if (!fileBuffer) {
