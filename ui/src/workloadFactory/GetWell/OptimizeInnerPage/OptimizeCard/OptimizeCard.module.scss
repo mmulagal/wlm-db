@@ -27,6 +27,11 @@
                 display: flex;
                 gap: 24px;
                 align-items: center;
+
+                .tagContainer {
+                    display: flex;
+                    gap: 8px;
+                }
             }
         }
 

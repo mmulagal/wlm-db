@@ -10,25 +10,91 @@ const OptimizeCard = () => {
     const [setCardData, setSetCardData] = useState<any>({});
     useEffect(() => {
         if (optimizeInnerPageValues) {
-            const data = getCardData(selectedOptimizeConfig, optimizeInnerPageValues);
+            const data = getCardData(selectedOptimizeConfig?.type, optimizeInnerPageValues);
             setSetCardData(data);
         }
     }, [selectedOptimizeConfig, optimizeInnerPageValues]);
     const getCardData = (config: string, data: any) => {
-        if (config === 'Storage tier') {
-            return {
-                block_one: { type: 'Impacted volumes', value: data.impactedVolumes || '2' },
-                block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                block_three: { type: 'Tags', value: ['Performance efficiency'] }
-            };
-        } else if (config === 'File system') {
-            return {
-                block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
-                block_two: { type: 'Severity', value: data.severity || 'Unknown' },
-                block_three: { type: 'Tags', value: data.tags || [] }
-            };
+        switch (config) {
+            case 'Storage tier':
+            case 'ONTAP / Tiering policy':
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.impactedVolumes || '2' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency'] }
+                };
+            case 'File system headroom':
+                return {
+                    block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Operational excellence'] }
+                };
+            case 'Log drive size':
+                return {
+                    block_one: { type: 'Impacted drives', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Operational excellence'] }
+                };
+            case 'Data files':
+                return {
+                    block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency', 'Operational excellence'] }
+                };
+            case 'Log files':
+                return {
+                    block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency', 'Operational excellence'] }
+                };
+            case 'ONTAP / Thin provisioning':
+            case 'ONTAP / Autosize':
+            case 'ONTAP / Autosize-mode':
+            case 'ONTAP / Fractional reserve':
+            case 'ONTAP / Snapshot copy reserve':
+            case 'ONTAP / Snapshot autodelete':
+            case 'ONTAP / Space management':
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Operational excellence', 'Cost optimization'] }
+                };
+            case 'ONTAP / Tiering minimum cooling days':
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Cost optimization'] }
+                };
+            case 'ONTAP / OS type':
+                return {
+                    block_one: { type: 'Impacted LUNs', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency'] }
+                };
+            case 'ONTAP / Space reservation':
+            case 'ONTAP / Space allocation':
+                return {
+                    block_one: { type: 'Impacted LUNs', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Reliability'] }
+                };
+            case 'Operating system  |  Multipath I/O Policy':
+            case 'NTFS allocation unit size':
+                return {
+                    block_one: { type: 'Impacted discs', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency', 'Reliability'] }
+                };
+            case 'Network adapter settings':
+            case 'Network adapters':
+                return {
+                    block_one: { type: 'Impacted network adapters', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: ['Network adapter settings'] }
+                };
+            default:
+                return null;
         }
-        return null;
     };
 
     return (
@@ -49,17 +115,22 @@ const OptimizeCard = () => {
 
                     <div className={styles.tagRow}>
                         <DsTypography variant="Semibold_14">{setCardData?.block_three?.type}</DsTypography>
-                        {setCardData?.block_three?.value.map((tag: string, index: number) => {
-                            return (
-                                <div key={index}>
-                                    <Tag text={tag} />
-                                </div>
-                            );
-                        })}
+                        <div className={styles.tagContainer}>
+                            {setCardData?.block_three?.value.map((tag: string, index: number) => {
+                                return (
+                                    <div key={index}>
+                                        <Tag text={tag} />
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
                 <div className={styles.rightSide}>
-                    <TooltipInfo>text</TooltipInfo>
+                    <TooltipInfo>
+                        For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier. Using
+                        the capacity tier may result in slower performance and higher latency.
+                    </TooltipInfo>
                     <DsTypography variant="Regular_14">View recommendation</DsTypography>
                 </div>
             </div>

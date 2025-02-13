@@ -1,14 +1,233 @@
-import { DsTypography } from '@netapp/design-system';
+import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { useDispatch } from 'react-redux';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
+import { useAppSelector } from '../../../store/storeHooks';
+import StorageTierOptimizeTable from './InnerTables/StorageTierOptimizeTable';
+import store from '../../../store/store';
+import { GENERAL } from '../../../utils/appConstants';
+import {
+    setInProgressHostData,
+    setInProgressOptimizationData,
+    setJobToInstanceMap,
+    setOptimizingData,
+    setOptimizingInstanceData
+} from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import {
+    useLazyGetSubTaskListQuery,
+    useOptimizeComputeConfigMutation,
+    useOptimizeStorageConfigMutation,
+    useOptimizeStorageSizingMutation,
+    useOptimizeStorageTierMutation
+} from '../../../utils/apiService';
+import { handleDialog } from '../StorageCardComponent/optimizeUtils';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
+    const { setDialog, closeDialog } = useDialog();
+    const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
+    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+
+    const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
+    const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
+    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
+    const lastColDetails = (name: string, data?: any) => {
+        return {
+            id: '4',
+            Header: '',
+            accessor: '',
+            isSticky: true,
+            width: '302px',
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.buttonContainer}>
+                        <div />
+                        {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
+                            <Popover
+                                isAppendedToBody={true}
+                                children={
+                                    <DsTypography variant="Regular_14">
+                                        Bulk action is enabled on selected rows
+                                    </DsTypography>
+                                }
+                                trigger="hover"
+                                delayHide={200}
+                                interactive={true}
+                                container={
+                                    <DsButton variant="secondary" isDisabled={true} isThin>
+                                        Optimize
+                                    </DsButton>
+                                }
+                            />
+                        ) : (
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                isDisabled={false}
+                                onClick={() => {
+                                    // optimizeAction(rowData);
+                                    // handleDialog(name, rowData, 'single');
+                                }}
+                            >
+                                Optimize
+                            </DsButton>
+                        )}
+                    </div>
+                );
+            }
+        };
+    };
+
+    // This is the function that will be called when the optimize button is clicked from main cards
+    const callOptimizeApi = (type: any) => {
+        let payload: null | object = {};
+        let apiCall = null;
+        const state = store.getState();
+        if (type === GENERAL.COMPUTE_RIGHTSIZING) {
+            apiCall = optimizeComputeConfig;
+            const { selectedRecommendedInstance } = state.getWellOptimize;
+            payload = {
+                instanceType: selectedRecommendedInstance?.value
+            };
+        } else if (
+            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ) {
+            apiCall = optimizeStorageSizing;
+            payload = {
+                type: [selectedOptimizeConfig?.data?.id]
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
+            apiCall = optimizeStorageTier;
+            payload = null;
+        } else {
+            // ToDo - More type will come like optimize for sizing and layout here
+            apiCall = optimizeStorageConfig;
+            payload = {
+                assessments: [
+                    {
+                        configurationName: type,
+                        objectsToOptimize: []
+                    }
+                ]
+            };
+        }
+
+        // call optimize api
+        dispatch(setOptimizingInstanceData(true));
+        dispatch(
+            setOptimizingData({
+                ...optimizingData,
+                [selectedOptimizeConfig?.data?.id]: 'optimizing'
+            })
+        );
+        dispatch(
+            setInProgressOptimizationData({
+                ...inProgressOptimizationData,
+                [type]: [
+                    ...(inProgressOptimizationData[type] || []),
+                    selectedResourceId + '_' + selectedDatabaseInstance
+                ]
+            })
+        );
+        dispatch(
+            setInProgressHostData({
+                ...inProgressHostData,
+                [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+            })
+        );
+        formatGetWellData(dispatch);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: (
+                    <div>
+                        {`Optimization process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.JOB_MONITORING}.
+                        </Button>
+                    </div>
+                )
+            })
+        );
+
+        apiCall({
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            payload: payload
+        }).then((res: any) => {
+            const failedMsgData = (
+                <div className={styles.notification}>
+                    {type} failed to optimize.
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {GENERAL.VIEW_JOB_MONITORING}.
+                    </Button>
+                </div>
+            );
+            if (!res.error) {
+                dispatch(
+                    setJobToInstanceMap({
+                        ...state.getWellOptimize.jobToInstanceMap,
+                        [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                    })
+                );
+            }
+            handleOptimizeStorageJob(
+                res,
+                {
+                    id: selectedOptimizeConfig?.data?.id,
+                    name: type,
+                    hostId: selectedResourceId,
+                    instanceId: selectedDatabaseInstance
+                },
+                failedMsgData,
+                getJobDetailApi,
+                dispatch,
+                type
+            );
+        });
+    };
+
+    const handleBulkAction = () => {
+        handleDialog(
+            setDialog,
+            selectedOptimizeConfig?.type,
+            callOptimizeApi,
+            closeDialog,
+            selectedOptimizeConfig?.data
+        );
+    };
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
@@ -18,7 +237,7 @@ const OptimizeInnerPage = () => {
                             {
                                 title: 'Inventory',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                 }
                             },
                             {
@@ -26,21 +245,23 @@ const OptimizeInnerPage = () => {
                                 dataTestId: 'wlm-db-optimize-configuration'
                             },
                             {
-                                title: `Storage tier`,
-                                dataTestId: 'wlm-db-storage-tier'
+                                title: `${selectedOptimizeConfig?.type}`,
+                                dataTestId: `wlm-db-manage-instance-inner-page-heading-for-${selectedOptimizeConfig?.type
+                                    .toLowerCase()
+                                    .replace(/ /g, '-')}`
                             }
                         ]}
                     />
                 </div>
 
                 <div className={styles.headingSection}>
-                    <DsTypography data-testid={`wlm-db-$`} variant="Semibold_20">
+                    <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
                         Storage tier
                     </DsTypography>
                     <DsTypography
-                        // data-testid={`wlm-db-manage-instance-optimization-heading-for-${selectedConfig
-                        //     .toLowerCase()
-                        //     .replace(/ /g, '-')}`}
+                        data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
+                            .toLowerCase()
+                            .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
                         Manage instance optimization
@@ -49,6 +270,14 @@ const OptimizeInnerPage = () => {
 
                 <div className={styles.contentSection}>
                     <OptimizeCard />
+                </div>
+
+                <div className={styles.tableSection}>
+                    <StorageTierOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
                 </div>
             </div>
         </div>

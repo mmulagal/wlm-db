@@ -33,6 +33,16 @@
             margin-top: 44px;
             display: flex;
             justify-content: center;
+
+            .buttonContainer {
+                display: flex;
+                justify-content: space-between;
+                width: 92%;
+
+                [class*='dsButtonContainer'] {
+                    border-radius: 20px !important;
+                }
+            }
         }
 
         .contentSection {
