@@ -35,6 +35,7 @@ const FileSystemCredentialsStatusSchema = {
 
 const GetManagedResourcesSchema = {
     tags: [RouteTags.RESOURCE],
+    hide: true,
     params: AccountIdParams,
     querystring: ManageResourcesQueryString,
     summary: 'List managed resources',

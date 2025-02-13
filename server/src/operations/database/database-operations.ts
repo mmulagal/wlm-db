@@ -10,8 +10,7 @@ import {
     listDeployments,
     listResources,
     countResources,
-    listDatabaseInstances,
-    listResourcesForMultipleParamas
+    listDatabaseInstances
 } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
@@ -229,9 +228,9 @@ async function getDeployments(
 async function getResources(
     accountId: string,
     resourceId?: string,
-    credentialsId?: string,
-    region?: string,
-    resourceType?: string,
+    credentialsId?: string | string[],
+    region?: string | string[],
+    resourceType?: string | string[],
     pageSize: number = 200,
     nextToken?: string
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
@@ -244,6 +243,8 @@ async function getResources(
         pageSize,
         nextToken
     });
+
+    resourceType = resourceType || [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
 
     try {
         const recordsPromise = listResources(
@@ -265,56 +266,6 @@ async function getResources(
         } = await countPromise;
 
         const records = await recordsPromise;
-        const items = trimAccountIdForDemo(records);
-
-        return {
-            count: items?.length,
-            items,
-            nextToken:
-                totalResourcesCount > pageSize && records.length >= pageSize ? items[items.length - 1].id : undefined
-        };
-    } catch (error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
-    }
-}
-
-async function getResourcesForMultipleParams(
-    accountId: string,
-    credentialsIds?: string[],
-    regions?: string[],
-    resourceTypes: string[] = [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL],
-    pageSize?: number,
-    nextToken?: string
-): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
-    logger.info('Get the Resources for params', {
-        accountId,
-        credentialsIds,
-        regions,
-        resourceTypes,
-        pageSize,
-        nextToken
-    });
-    pageSize = pageSize || 200;
-    try {
-        const [
-            records,
-            {
-                _count: { id: totalResourcesCount }
-            }
-        ] = await Promise.all([
-            listResourcesForMultipleParamas(
-                accountId,
-                credentialsIds,
-                regions,
-                resourceTypes,
-                undefined,
-                undefined,
-                pageSize,
-                nextToken
-            ),
-            countResources(accountId)
-        ]);
-
         const items = trimAccountIdForDemo(records);
 
         return {
@@ -378,6 +329,5 @@ export {
     getDeployments,
     getResources,
     trimAccountIdForDemo,
-    getInstanceInfo,
-    getResourcesForMultipleParams
+    getInstanceInfo
 };

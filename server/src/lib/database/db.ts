@@ -6,7 +6,7 @@ import {
     DATABASE_DEPLOYMENT_TYPE,
     DATABASE_TYPE
 } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
@@ -303,62 +303,9 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 async function listResources(
     accountId?: string,
     resourceId?: string,
-    credentialsId?: string,
-    region?: string,
-    resourceType?: string,
-    fsxId?: string,
-    metaFilters?: { [x: string]: string | number | boolean },
-    pageSize?: number,
-    nextToken?: string
-) {
-    logger.info('Listing resources', {
-        accountId,
-        resourceId,
-        resourceType,
-        region,
-        credentialsId,
-        metaFilters,
-        pageSize,
-        nextToken
-    });
-
-    if (accountId) {
-        accountId = checkAccount(accountId);
-    }
-
-    return prisma.client.resource.findMany({
-        where: {
-            ...(accountId && { account_id: accountId }),
-            ...(resourceId && { resource_id: resourceId }),
-            ...(resourceType && { resource_type: resourceType }),
-            ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId }),
-            ...(fsxId && { co_relation_id: fsxId }),
-            ...(metaFilters && {
-                AND: Object.entries(metaFilters).map(([key, val]) => ({
-                    metadata: {
-                        path: `$.${key}`,
-                        equals: val
-                    }
-                }))
-            })
-        },
-        orderBy: {
-            id: 'asc'
-        },
-        ...(pageSize && { take: pageSize }),
-        ...(nextToken && {
-            cursor: { id: nextToken },
-            skip: 1
-        })
-    });
-}
-
-async function listResourcesForMultipleParamas(
-    accountId?: string,
-    credentialIds?: string[],
-    region?: string[],
-    resourceType?: string[],
+    credentialIds?: string | string[],
+    region?: string | string[],
+    resourceType?: string | string[],
     fsxId?: string,
     metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
@@ -366,6 +313,7 @@ async function listResourcesForMultipleParamas(
 ) {
     logger.info('Listing resources for params', {
         accountId,
+        resourceId,
         resourceType,
         region,
         credentialIds,
@@ -377,6 +325,9 @@ async function listResourcesForMultipleParamas(
     if (accountId) {
         accountId = checkAccount(accountId);
     }
+    resourceType = resourceType ? (isArray(resourceType) ? resourceType : [resourceType]) : undefined;
+    region = region ? (isArray(region) ? region : [region]) : undefined;
+    credentialIds = credentialIds ? (isArray(credentialIds) ? credentialIds : [credentialIds]) : undefined;
 
     return prisma.client.resource.findMany({
         where: {
@@ -893,6 +844,5 @@ export {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    listAllManagedInstances,
-    listResourcesForMultipleParamas
+    listAllManagedInstances
 };

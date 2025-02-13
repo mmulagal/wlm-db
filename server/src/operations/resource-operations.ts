@@ -11,7 +11,7 @@ import {
 import { listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
 import { ManageResourcesResponseType } from '../routes/types/resource.types';
-import { getResourcesForMultipleParams } from './database/database-operations';
+import { getResources } from './database/database-operations';
 import { Metadata } from '../utils/common-types';
 import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-consts';
 import { getArtifactsRegionBucketName, isDemo, retryWithDelay, sqlResponseParsing } from '../utils/utils';
@@ -85,8 +85,9 @@ async function getManagedResources(
     const regionsList = regions?.split(',');
     const databaseTypesList = databaseTypes?.split(',');
 
-    const { items, nextToken, count } = await getResourcesForMultipleParams(
+    const { items, nextToken, count } = await getResources(
         accountId,
+        undefined,
         credentialIdsList,
         regionsList,
         databaseTypesList,
