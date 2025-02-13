@@ -78,7 +78,10 @@ async function getSnapshotPolicyDriftData(
     };
     volumes.forEach(volume => {
         const volDetails = volume as Record<string, string>;
-        if (isEmpty(volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY])) {
+        if (
+            isEmpty(volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
+            volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none'
+        ) {
             snapshotPolicyAssesmentData.violations.push(volDetails?.name);
         }
     });
