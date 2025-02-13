@@ -857,6 +857,14 @@ function getSubJobDescriptions(dbEngineType: string) {
     return subJobDescriptions;
 }
 
+function isMssql(resourceType: string) {
+    return resourceType === DatabaseTypes.MS_SQL_SERVER;
+}
+
+function isPgsql(resourceType: string) {
+    return resourceType === DatabaseTypes.PG_SQL;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -906,5 +914,7 @@ export {
     parsePgSqlInstanceInfo,
     getServerNameWithHostname,
     extractKbNumber,
-    extractVersionYear
+    extractVersionYear,
+    isMssql,
+    isPgsql
 };

@@ -29,7 +29,7 @@ import {
     PGSQL_TERRAFORM_FOLDER_PATH,
     PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION
 } from '../utils/consts';
-import { getArtifactsRegionBucketName, isDemo } from '../utils/utils';
+import { getArtifactsRegionBucketName, isDemo, isMssql, isPgsql } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { generateSignedUrls } from './template-operations';
 
@@ -70,12 +70,11 @@ async function uploadTerraformModules(
     // here getting all the assets signed urls for the scripts and other resources
     // then upating the initializer scripts for validation and sql/pgsql standalone node with the signed urls and uploading them to s3
     try {
-        if (resourceType === DatabaseTypes.MS_SQL_SERVER || resourceType === DatabaseTypes.PG_SQL) {
+        if (isMssql(resourceType) || isPgsql(resourceType)) {
             const signedUrls = await generateSignedUrls(region, resourceType);
-            const initializationTemplatesDistribution =
-                resourceType === DatabaseTypes.MS_SQL_SERVER
-                    ? TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION
-                    : TERRAFORM_PGSQL_INITIALIZATION_TEMPLATES_DISTRIBUTION;
+            const initializationTemplatesDistribution = isMssql(resourceType)
+                ? TERRAFORM_SQL_INITIALIZATION_TEMPLATES_DISTRIBUTION
+                : TERRAFORM_PGSQL_INITIALIZATION_TEMPLATES_DISTRIBUTION;
             const promises = initializationTemplatesDistribution.map(async template =>
                 uploadInitializerScripts(
                     region,
@@ -124,7 +123,7 @@ async function uploadInitializerScripts(
     let signedURLDetail = {};
 
     try {
-        if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
+        if (isMssql(resourceType)) {
             const source = readFileSync(initializerPath).toString();
             const template = Handlebars.compile(source);
             if (initializerName === TEMPLATE_TYPES.VALIDATION) {
@@ -223,9 +222,7 @@ async function uploadInitializerScripts(
                     PGSQLPackages: decodeURIComponent(signedUrls.get('PGSQLPackages')?.url || '')
                 });
                 const templateName =
-                    deploymentMode === STANDALONE
-                        ? 'PGSQLStandaloneInitializerTemplate'
-                        : 'PGSQLFCIInitializerTemplate';
+                    deploymentMode === STANDALONE ? 'PGSQLStandaloneInitializerTemplate' : 'PGSQLHAInitializerTemplate';
                 signedURLDetail = await processTemplate(
                     deploymentName,
                     templateName,
@@ -256,11 +253,10 @@ async function processTemplate(
 ) {
     logger.info('Processing template', templateName, contents, deploymentName, urlName, region, resourceType);
 
-    const templateAssets =
-        resourceType === DatabaseTypes.MS_SQL_SERVER
-            ? TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS
-            : TERRAFORM_PGSQL_INITIALIZER_TEMPLATES_ASSETS;
-    const resourcePath = resourceType === DatabaseTypes.MS_SQL_SERVER ? MSSQL : PGSQL;
+    const templateAssets = isMssql(resourceType)
+        ? TERRAFORM_SQL_INITIALIZER_TEMPLATES_ASSETS
+        : TERRAFORM_PGSQL_INITIALIZER_TEMPLATES_ASSETS;
+    const resourcePath = isMssql(resourceType) ? MSSQL : PGSQL;
 
     const initializerTemplate = templateAssets.find(asset => asset.name === templateName);
 
@@ -288,19 +284,19 @@ async function createTFVarsFile(
 ) {
     logger.info('Creating terraform vars file', region, resourceType, deploymentName, templatePath, templateParameters);
     try {
-        if (resourceType === DatabaseTypes.MS_SQL_SERVER || resourceType === DatabaseTypes.PG_SQL) {
+        if (isMssql(resourceType) || isPgsql(resourceType)) {
             // This will create the terraform variable with the values of proper types like string, number & boolean
 
-            const isMssql = resourceType === DatabaseTypes.MS_SQL_SERVER;
-            const databaseFolderPath = isMssql ? MSSQL : PGSQL;
+            const isMssqlServer = isMssql(resourceType);
+            const databaseFolderPath = isMssqlServer ? MSSQL : PGSQL;
 
             const tfVariables = {
                 aws_location: region,
                 creator_tag: deploymentName,
                 deployment_name: deploymentName,
-                ...(isMssql && { role_credentials_id: '' }),
+                ...(isMssqlServer && { role_credentials_id: '' }),
                 aws_profile: 'default',
-                ...(!isMssql && { fsx_aggr_name: 'aggr1' })
+                ...(!isMssqlServer && { fsx_aggr_name: 'aggr1' })
             };
             let terraformVariableString = '';
             let tfVarsGeneral = '\n# General Configurations\n# -----------------------------\n';
@@ -312,7 +308,7 @@ async function createTFVarsFile(
             let tfVarsVpc = '# VPC and Subnet Configurations\n# -----------------------------\n';
             const terraformVariables: any = {};
 
-            const cfToTerraformVariableMapping = isMssql
+            const cfToTerraformVariableMapping = isMssqlServer
                 ? CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING
                 : CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING;
 
@@ -376,9 +372,8 @@ async function createTFVarsFile(
                 terraformVariables[key] = value;
             }
 
-            // terraformVariableString += `${tfVarsVpc}${tfVarsEc2}${tfVarsSqlServer}${tfVarsAd}${tfVarsFsx}${tfVarsEndpoint}${tfVarsGeneral}`;
             terraformVariableString += `${tfVarsVpc}${tfVarsEc2}${tfVarsSqlServer}${
-                isMssql ? tfVarsAd : ''
+                isMssqlServer ? tfVarsAd : ''
             }${tfVarsFsx}${tfVarsEndpoint}${tfVarsGeneral}`;
             // Write the Terraform variables to a local file as well.. can be decided whether to use it from local or s3
             const dirPath = `./resources/${databaseFolderPath}/${deploymentName}/terraform`;
@@ -386,7 +381,7 @@ async function createTFVarsFile(
             await mkdir(dirPath, { recursive: true });
             await writeFile(localTfVarsPath, terraformVariableString);
 
-            const terraformFolderPathInLocal = isMssql ? TERRAFORM_FOLDER_PATH : PGSQL_TERRAFORM_FOLDER_PATH;
+            const terraformFolderPathInLocal = isMssqlServer ? TERRAFORM_FOLDER_PATH : PGSQL_TERRAFORM_FOLDER_PATH;
             // Copy all files from the source directory to the destination directory
             const sourceDir = terraformFolderPathInLocal;
             const destDir = dirPath;
@@ -411,11 +406,10 @@ async function createRootModuleFile(
     logger.info('creating root module file', region, resourceType, deploymentName, terraformVariables);
 
     try {
-        if (resourceType === DatabaseTypes.MS_SQL_SERVER || resourceType === DatabaseTypes.PG_SQL) {
-            const tfRootModuleTemplatePath =
-                resourceType === DatabaseTypes.MS_SQL_SERVER
-                    ? TERRAFORM_ROOT_MODULE_DISTRIBUTION
-                    : PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION;
+        if (isMssql(resourceType) || isPgsql(resourceType)) {
+            const tfRootModuleTemplatePath = isMssql(resourceType)
+                ? TERRAFORM_ROOT_MODULE_DISTRIBUTION
+                : PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION;
             const source = readFileSync(tfRootModuleTemplatePath.location).toString();
             const template = Handlebars.compile(source);
 
@@ -435,9 +429,9 @@ async function createAndUploadTheTerraformZipFile(
     templatePath: string
 ) {
     logger.info('Creating and uploading the terraform zip file', region, resourceType, deploymentName, templatePath);
-    const type = resourceType === DatabaseTypes.MS_SQL_SERVER ? MSSQL : PGSQL;
+    const type = isMssql(resourceType) ? MSSQL : PGSQL;
     try {
-        if (resourceType === DatabaseTypes.MS_SQL_SERVER || resourceType === DatabaseTypes.PG_SQL) {
+        if (isMssql(resourceType) || isPgsql(resourceType)) {
             const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/${deploymentName}.zip`;
             if (!isDemoFlow) {
                 const archiveFolder = `./resources/${type}/${deploymentName}/${deploymentName}.zip`;

@@ -8,7 +8,7 @@ ADD config ./config
 ADD resources/mssql/templates ./resources/mssql/templates
 ADD resources/mssql/terraform ./resources/mssql/terraform
 ADD resources/pgsql/templates ./resources/pgsql/templates/
-ADD resources/pgsql/terraform ./resources/mssql/terraform
+ADD resources/pgsql/terraform ./resources/pgsql/terraform
 COPY package.json ./
 COPY package-lock.json ./
 

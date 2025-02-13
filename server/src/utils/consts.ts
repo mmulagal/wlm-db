@@ -951,7 +951,7 @@ const TERRAFORM_PGSQL_INITIALIZER_TEMPLATES_ASSETS = [
         url: 'terraform/standalone/Pgsql-Instance-Initializer.sh'
     },
     {
-        name: 'PGSQLFCIInitializerTemplate',
+        name: 'PGSQLHAInitializerTemplate',
         url: 'terraform/FCI/Pgsql-Instance-Initializer.sh'
     }
 ];
