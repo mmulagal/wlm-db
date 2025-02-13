@@ -332,6 +332,7 @@ async function listResources(
     return prisma.client.resource.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
+            ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: { in: resourceType } }),
             ...(region && { region: { in: region } }),
             ...(credentialIds && { credentials_id: { in: credentialIds } }),
