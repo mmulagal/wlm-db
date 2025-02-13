@@ -43,7 +43,7 @@ router.post(`${BASE_URL}/v1/mssql/onprem/upload`, async (req: {}, res: any) => {
     }, 5000);
 });
 
-router.post(`${BASE_URL}/v1/mssql/storage-savings/email/calculations`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/notification/email?emailType=savings-calculations`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, SendEmail);
     }, 5000);

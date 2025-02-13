@@ -68,20 +68,20 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
             <StorageCredentials />
             <div className={styles.content}>
                 <DsTypography className={styles.heading} variant="Semibold_14">
-                    Calculate your savings on your existing volumes
+                    Calculate savings on your existing SQL Servers
                 </DsTypography>
                 {!noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? 'We can calculate how much you\'ll save by comparing the cost of your existing EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS file systems to compare with FSx for ONTAP in the calculator.'
-                            : 'We can calculate how much you\'ll save by comparing the cost of your existing FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows File Server file systems to compare with FSx for ONTAP in the calculator.'}
+                            ? 'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS database hosts to compare with FSx for ONTAP in the calculator.'
+                            : 'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows database hosts to compare with FSx for ONTAP in the calculator.'}
                     </DsTypography>
                 )}
                 {noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? 'We can calculate how much you can save comparing to your specific EBS. Add your credentials, go to explore savings and select the volumes you want to compare.'
-                            : 'We can calculate how much you can save comparing to your specific FSx for Windows File Server. Add your credentials, go to explore savings and select the volumes you want to compare.'}
+                            ? 'We can calculate how much you can save comparing to your specific SQL Servers using EBS. Add your credentials, go to explore savings and select the volumes you want to compare.'
+                            : 'We can calculate how much you can save comparing to your specific SQL Servers using FSx for Windows File Server. Add your credentials, go to explore savings and select the volumes you want to compare.'}
                     </DsTypography>
                 )}
             </div>

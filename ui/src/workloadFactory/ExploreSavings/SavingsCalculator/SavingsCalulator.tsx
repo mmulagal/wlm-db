@@ -129,7 +129,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         const formData = new FormData();
         formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
         formData.append('userEmail', userMetadata?.email);
-        formData.append('emailSubject', setEmailSubject());
+        formData.append('emailType', 'savings-calculations');
+        formData.append('storageType', setEmailSubject());
         getSendEmail({ payload: formData })
             .then(resp => {
                 if (!resp.error) {
