@@ -460,7 +460,7 @@ function processEbsDisks(disks: EBSClassification[]) {
                 ebsTypeCountMap.set(ebsType, {
                     volumeType: ebsType,
                     volumeNumber: volumeNumber + numDatabases,
-                    storageAmount: storageAmount + requiredVolumeSize,
+                    storageAmount: storageAmount + requiredVolumeSize * numDatabases,
                     volumeIops: Math.max(volumeIops, requiredIops), // IOPS and throughput would be in a similar range for the same ebs disk type, considering the max value among all primary or secondary instances which uses the same ebs disk type
                     throughput: Math.max(throughput, requiredThroughput)
                 });
@@ -469,7 +469,7 @@ function processEbsDisks(disks: EBSClassification[]) {
                 ebsTypeCountMap.set(ebsType, {
                     volumeType: ebsType,
                     volumeNumber: numDatabases,
-                    storageAmount: requiredVolumeSize,
+                    storageAmount: requiredVolumeSize * numDatabases,
                     volumeIops: requiredIops,
                     throughput: requiredThroughput
                 });
@@ -477,7 +477,8 @@ function processEbsDisks(disks: EBSClassification[]) {
         });
 
     return Array.from(ebsTypeCountMap.values()).map(
-        ({ volumeType, volumeNumber, storageAmount: storageAmountPerDiskType, volumeIops, throughput }) => {
+        ({ volumeType, volumeNumber, storageAmount: totalStorageAmountPerDiskType, volumeIops, throughput }) => {
+            const storageAmountPerDiskType = totalStorageAmountPerDiskType / volumeNumber;
             let storageAmount = Math.max(storageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
             switch (volumeType) {
                 case 'io2':
@@ -528,7 +529,8 @@ function deriveEbsVolumesListForMarketing(region: string, sqlInstancesDetails: S
         const secondaryEbsDisks = ebsDisks.filter(({ isPrimary }) => !isPrimary);
 
         const primaryEbsVolumes = processEbsDisks(primaryEbsDisks);
-        const secondaryEbsVolumes = processEbsDisks(secondaryEbsDisks);
+
+        const secondaryEbsVolumes = secondaryEbsDisks.length > 0 ? processEbsDisks(secondaryEbsDisks) : [];
 
         logger.info('>>EBS VOLUMES', { primaryEbsVolumes, secondaryEbsVolumes });
 
