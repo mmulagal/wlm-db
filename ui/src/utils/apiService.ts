@@ -900,7 +900,7 @@ export const exploreSavingsApi = createApi({
             }),
             getSendEmail: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/mssql/storage-savings/email/calculations`,
+                    url: `v1/notification/email?emailType=savings-calculations`,
                     method: 'POST',
                     body: payload
                 })

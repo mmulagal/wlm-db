@@ -46,6 +46,7 @@ import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
 import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
+import { readFromCacheByKey, writeToCache } from './cache';
 
 const logger = getLogger();
 
@@ -857,6 +858,24 @@ function getSubJobDescriptions(dbEngineType: string) {
     return subJobDescriptions;
 }
 
+const isRateLimited = (cacheType: string, cacheKey: string, LIMIT: number, ttl?: string): boolean => {
+    const cacheNum = readFromCacheByKey(cacheType, cacheKey);
+    if (!cacheNum) {
+        writeToCache(cacheType, cacheKey, 1, ttl);
+        return false;
+    }
+    if ((cacheNum as number) >= LIMIT) {
+        return true;
+    }
+    writeToCache(cacheType, cacheKey, (cacheNum as number) + 1);
+    return false;
+};
+
+const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -906,5 +925,7 @@ export {
     parsePgSqlInstanceInfo,
     getServerNameWithHostname,
     extractKbNumber,
-    extractVersionYear
+    extractVersionYear,
+    isValidEmail,
+    isRateLimited
 };
