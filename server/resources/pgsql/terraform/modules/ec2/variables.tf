@@ -36,11 +36,6 @@ variable "workload_instance_type" {
   type        = string
 }
 
-variable "number_of_nodes" {
-  description = "The number of SQL Server nodes to create."
-  type        = string
-}
-
 variable "route_table_id" {
   description = "Route table id."
   type        = string
