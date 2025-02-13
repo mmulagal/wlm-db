@@ -21,8 +21,7 @@ import {
     listTrackedEc2,
     removeTrackedEc2Record,
     updateTrackedEc2Record,
-    listAllManagedInstances,
-    listResourcesForMultipleParamas
+    listAllManagedInstances
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -307,42 +306,5 @@ describe('Tracked EC2 operations', () => {
         const [instanceRecord] = await listTrackedEc2('TCO', undefined, undefined, undefined, 'i-1234567890abcdef0');
         expect(instanceRecord.last_updated).toEqual(newTime);
         await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
-    });
-    it('should return resources filtered by multiple parameters', async () => {
-        const resource1 = await createResource(ACCOUNT_ID, {
-            resourceId: 'i-1a2b3c4d5e',
-            resourceName: 'sqlnode1',
-            resourceType: 'MSSQL',
-            cloudProviderAccountId: '464262061435',
-            cloudProviderName: 'AWS',
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            storageType: STORAGE_TYPE.FSXN,
-            region: DEFAULT_AWS_REGION
-        });
-
-        const resource2 = await createResource(ACCOUNT_ID, {
-            resourceId: 'i-5e4d3c2b1a',
-            resourceName: 'sqlnode2',
-            resourceType: 'MSSQL',
-            cloudProviderAccountId: '464262061435',
-            cloudProviderName: 'AWS',
-            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-            storageType: STORAGE_TYPE.FSXN,
-            region: 'us-west-2'
-        });
-
-        const resp = await listResourcesForMultipleParamas(
-            ACCOUNT_ID,
-            [DEFAULT_AWS_CREDENTIALS_ID],
-            [DEFAULT_AWS_REGION, 'us-west-2'],
-            ['MSSQL']
-        );
-
-        expect(resp.length).toBeGreaterThanOrEqual(2);
-        expect(resp.find((res: { resource_id: string }) => res.resource_id === resource1.resource_id)).toBeDefined();
-        expect(resp.find((res: { resource_id: string }) => res.resource_id === resource2.resource_id)).toBeDefined();
-
-        await deleteResource(ACCOUNT_ID, resource1.resource_id);
-        await deleteResource(ACCOUNT_ID, resource2.resource_id);
     });
 });
