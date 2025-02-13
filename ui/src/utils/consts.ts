@@ -347,6 +347,7 @@ export const UI_IDS = {
 export const WLF_TABS = {
     DASHBOARD: 'Dashboard',
     DASHBOARD_INNER_PAGE: 'DashboardInnerPage',
+    OPTIMIZE_INNER_PAGE: 'OptimizeInnerPage',
     INVENTORY: 'Inventory',
     OVERVIEW: 'Overview',
     SANDBOXES: 'Sandboxes',

@@ -24,12 +24,13 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
@@ -277,6 +278,42 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 />
                             </div>
                         )}
+                </div>
+            );
+        }
+    };
+
+    const sectionFourContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        }
+    };
+
+    const sectionFiveContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
                 </div>
             );
         }
@@ -548,6 +585,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         });
     };
 
+    const handleNavigateToOptimizePage = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setSelectedOptimizeConfig(type));
+    };
+
     const handleDialog = () => {
         setDialog(
             <DialogComponent
@@ -597,13 +640,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div>
 
             {/* Section three */}
-            <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
+            {/* <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
                 {sectionThreeContent(cardData)}
 
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
                     {cardData?.block_three?.type}
                 </DsTypography>
-            </div>
+            </div> */}
 
             {/* Section 4 */}
             <div className={styles.commonSection}>
@@ -621,6 +664,29 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     {cardData?.block_four?.type}
                 </DsTypography>
             </div>
+
+            {/* Section Next */}
+            <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
+                {sectionFourContent(cardData)}
+
+                <DsTypography variant="Regular_14" isDisabled={disableText}>
+                    {cardData?.block_five?.type}
+                </DsTypography>
+            </div>
+
+            {/* Section Next 2 */}
+            {cardData?.block_six && (
+                <div
+                    className={styles.thirdSection}
+                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}
+                >
+                    {sectionFourContent(cardData)}
+
+                    <DsTypography variant="Regular_14" isDisabled={disableText}>
+                        {cardData?.block_six?.type}
+                    </DsTypography>
+                </div>
+            )}
 
             {/* 5 Section */}
             {windowSize.width >= 1770 && (
@@ -699,7 +765,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <DsButton
                             variant="secondary"
-                            onClick={() => handleDialog()}
+                            onClick={() => handleNavigateToOptimizePage(type)}
                             isDisabled={loading || disableOptimizeButton}
                         >
                             {GENERAL.OPTIMIZE}

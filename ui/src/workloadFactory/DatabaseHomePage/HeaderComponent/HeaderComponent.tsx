@@ -94,6 +94,7 @@ import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
+import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
 
 type Tab = {
     tab: string;
@@ -866,6 +867,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {selectedHeaderTab === WLF_TABS.OPTIMIZE && <GetWell />}
 
                     {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
+
+                    {selectedHeaderTab === WLF_TABS.OPTIMIZE_INNER_PAGE && <OptimizeInnerPage />}
 
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>

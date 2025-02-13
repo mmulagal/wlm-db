@@ -49,13 +49,18 @@ const initialInventoryV2State: InventorySliceData = {
     managedAssessmentHostData: null,
     allmssqlHostAssessmentData: [],
     allmssqlHostAssessmentLoading: false,
-    potentialSavingsHostData: {}
+    potentialSavingsHostData: {},
+    selectedOptimizeConfig: '',
+    optimizeInnerPageValues: {}
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setOptimizeInnerPageValues: (state, action: PayloadAction<any>) => {
+            state.optimizeInnerPageValues = action.payload;
+        },
         setBreadCrumbSelectedFrom: (state, action: PayloadAction<any>) => {
             state.breadCrumbSelectedFrom = action.payload;
         },
@@ -175,11 +180,16 @@ const inventoryV2Slice = createSlice({
         },
         setPotentialSavingsHostData: (state, action: PayloadAction<any>) => {
             state.potentialSavingsHostData = action.payload;
+        },
+        setSelectedOptimizeConfig: (state, action: PayloadAction<any>) => {
+            state.selectedOptimizeConfig = action.payload;
         }
     }
 });
 
 export const {
+    setOptimizeInnerPageValues,
+    setSelectedOptimizeConfig,
     setDefaultFilterOptions,
     setOptimizeFilterTags,
     setValuesForForm,
