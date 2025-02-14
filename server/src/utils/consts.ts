@@ -937,7 +937,7 @@ const TERRAFORM_PGSQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
         location: './resources/pgsql/terraform/modules/validation-node/Validation-Instance-initializer.sh'
     },
     {
-        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
+        name: TEMPLATE_TYPES.PGSQLSTACK,
         location: './resources/pgsql/terraform/modules/ec2/Pgsql-Instance-Initializer.sh'
     }
 ];
