@@ -104,9 +104,17 @@ export const AccordionTable = React.memo(({ children, isGrouped = false }: Accor
             for (const card of ref.current.getElementsByClassName(`at-${context.id}`)) {
                 max = Math.max(card.clientWidth, max);
             }
-            accordionTableHeaderStyle.innerHTML = `.${styles.header}.ah-${context.id} {
-                  grid-template-columns: minmax(${max}px, max-content) 1fr max-content max-content max-content;
-              }`;
+            // accordionTableHeaderStyle.innerHTML = `.${styles.header}.ah-${context.id} {
+            //       grid-template-columns: minmax(${max}px, max-content) 1fr max-content max-content max-content;
+            //   }`;
+
+            // Use textContent instead of innerHTML
+            const styleContent = `
+            .${styles.header}.ah-${context.id} {
+                grid-template-columns: minmax(${max}px, max-content) 1fr max-content max-content max-content;
+            }
+        `;
+            accordionTableHeaderStyle.appendChild(document.createTextNode(styleContent));
         }
 
         return () => {
