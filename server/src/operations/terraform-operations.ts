@@ -211,7 +211,8 @@ async function uploadInitializerScripts(
                     region,
                     resourceType
                 );
-            } else if (initializerName === TEMPLATE_TYPES.PGSQLSTANDALONE) {
+            } else if (initializerName === TEMPLATE_TYPES.PGSQLSTACK) {
+                // Both Standalone and HA have the same initializer script
                 const contents = template({
                     ScriptVerifySignature: decodeURIComponent(signedUrls.get('ScriptVerifySignature')?.url || ''),
                     ScriptUnzipArchive: decodeURIComponent(signedUrls.get('ScriptUnzipArchive')?.url || ''),
