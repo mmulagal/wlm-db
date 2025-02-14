@@ -593,7 +593,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     const handleDifferentNavigation = () => {
-        if (type === 'Storage tier') {
+        if (
+            type === 'Storage tier' ||
+            type === 'File system headroom' ||
+            type === 'Log drive size' ||
+            type === 'Data files' ||
+            type === 'Log files'
+        ) {
             handleNavigateToOptimizePage(type);
         } else {
             handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
@@ -689,7 +695,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             height="30px"
                         >
                             <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    variant="secondary"
+                                    isDisabled={false}
+                                    onClick={() => handleDifferentNavigation()}
+                                >
                                     Optimize
                                 </DsButton>
                             </div>
@@ -705,7 +715,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         height="50px"
                     >
                         <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                            <DsButton variant="secondary" isDisabled={true}>
+                            <DsButton
+                                variant="secondary"
+                                isDisabled={false}
+                                onClick={() => handleDifferentNavigation()}
+                            >
                                 {GENERAL.OPTIMIZE}
                             </DsButton>
                         </div>
@@ -729,7 +743,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                     left: windowSize.width >= 1770 ? '0px' : '112px'
                                 }}
                             >
-                                <DsButton variant="secondary" isDisabled={true}>
+                                <DsButton
+                                    variant="secondary"
+                                    isDisabled={false}
+                                    onClick={() => handleDifferentNavigation()}
+                                >
                                     {GENERAL.OPTIMIZE}
                                 </DsButton>
                             </div>

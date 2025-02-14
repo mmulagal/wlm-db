@@ -27,6 +27,10 @@ import {
     useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
 import { handleDialog } from '../StorageCardComponent/optimizeUtils';
+import FileSystemHeadroomOptimizeTable from './InnerTables/FileSystemHeaderoomOptimizeTable';
+import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
+import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
+import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -45,47 +49,66 @@ const OptimizeInnerPage = () => {
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const lastColDetails = (name: string, data?: any) => {
+    const buttonComponent = () => {
+        if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
+            );
+        } else if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
+            );
+        } else {
+            return (
+                <DsButton
+                    isThin
+                    variant="secondary"
+                    isDisabled={false}
+                    onClick={() => {
+                        // optimizeAction(rowData);
+                        // handleDialog(name, rowData, 'single');
+                    }}
+                >
+                    Optimize
+                </DsButton>
+            );
+        }
+    };
+
+    const lastColDetails = (name: string, data?: any, width: any = '302px') => {
         return {
             id: '4',
             Header: '',
             accessor: '',
             isSticky: true,
-            width: '302px',
+            width: width,
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
-                            <Popover
-                                isAppendedToBody={true}
-                                children={
-                                    <DsTypography variant="Regular_14">
-                                        Bulk action is enabled on selected rows
-                                    </DsTypography>
-                                }
-                                trigger="hover"
-                                delayHide={200}
-                                interactive={true}
-                                container={
-                                    <DsButton variant="secondary" isDisabled={true} isThin>
-                                        Optimize
-                                    </DsButton>
-                                }
-                            />
-                        ) : (
-                            <DsButton
-                                isThin
-                                variant="secondary"
-                                isDisabled={false}
-                                onClick={() => {
-                                    // optimizeAction(rowData);
-                                    // handleDialog(name, rowData, 'single');
-                                }}
-                            >
-                                Optimize
-                            </DsButton>
-                        )}
+                        {buttonComponent()}
                     </div>
                 );
             }
@@ -228,6 +251,51 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.data
         );
     };
+
+    const renderTable = () => {
+        switch (selectedOptimizeConfig?.type) {
+            case 'Storage tier':
+                return (
+                    <StorageTierOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'File system headroom':
+                return (
+                    <FileSystemHeadroomOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Log drive size':
+                return (
+                    <LogDriveSizeOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Data files':
+                return (
+                    <DataFilesOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Log files':
+                return (
+                    <LogFilesOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+        }
+    };
     return (
         <div className={styles['optimize-inner-page']}>
             <div className={styles.innerPage}>
@@ -256,7 +324,7 @@ const OptimizeInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        Storage tier
+                        {selectedOptimizeConfig?.type}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
@@ -272,13 +340,7 @@ const OptimizeInnerPage = () => {
                     <OptimizeCard />
                 </div>
 
-                <div className={styles.tableSection}>
-                    <StorageTierOptimizeTable
-                        type={selectedOptimizeConfig?.type}
-                        lastColDetails={lastColDetails}
-                        handleBulkAction={handleBulkAction}
-                    />
-                </div>
+                <div className={styles.tableSection}>{renderTable()}</div>
             </div>
         </div>
     );
