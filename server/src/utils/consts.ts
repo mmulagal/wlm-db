@@ -863,8 +863,7 @@ enum TEMPLATE_TYPES {
     ENDPOINT = 'endpoint',
     NEWFSX = 'newfsx',
     EXISTINGFSX = 'existingfsx',
-    PGSQLSTACK = 'pgsqlstack',
-    PGSQLSTANDALONE = 'pgsqlstandalone'
+    PGSQLSTACK = 'pgsqlstack'
 }
 
 const SQL_TEMPLATES_DISTRIBUTION = [
@@ -938,7 +937,7 @@ const TERRAFORM_PGSQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
         location: './resources/pgsql/terraform/modules/validation-node/Validation-Instance-initializer.sh'
     },
     {
-        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
+        name: TEMPLATE_TYPES.PGSQLSTACK,
         location: './resources/pgsql/terraform/modules/ec2/Pgsql-Instance-Initializer.sh'
     }
 ];
@@ -1518,8 +1517,8 @@ const PGSQL_TEMPLATES_DISTRIBUTION = [
     //     location: './resources/pgsql/templates/sql-windows-fci-config_nosignal.yaml'
     // },
     {
-        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
-        location: './resources/pgsql/templates/standalone-deployment.yaml'
+        name: TEMPLATE_TYPES.PGSQLSTACK,
+        location: './resources/pgsql/templates/pgsql-server.yaml'
     },
     {
         name: TEMPLATE_TYPES.ENDPOINT,
@@ -1588,8 +1587,8 @@ const PGSQL_TEMPLATES_ASSETS = [
         url: 'pgsql/templates/vpc-endpoints.yaml'
     },
     {
-        name: 'SQLStandaloneTemplate',
-        url: 'pgsql/templates/standalone-deployment.yaml'
+        name: 'PGSQLTemplate',
+        url: 'pgsql/templates/pgsql-server.yaml'
     }
 ];
 

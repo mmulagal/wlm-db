@@ -2,13 +2,13 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: 'A CloudFormation template to use with an existing Amazon FSx for NetApp ONTAP file system. This template creates a storage virtual machine (SVM) with the required volumes for SQL Server workloads.'
+Description: 'A CloudFormation template to use with an existing Amazon FSx for NetApp ONTAP file system. This template creates a storage virtual machine (SVM) with the required volumes for PGSQL Server workloads.'
 
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
             - Label:
-                  default: SQL Server volumes' configuration for Amazon FSx for NetApp ONTAP file system
+                  default: PGSQL Server volumes' configuration for Amazon FSx for NetApp ONTAP file system
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemId
@@ -48,7 +48,7 @@ Parameters:
         MaxLength: 47
 
     FSxDataVolumeName:
-        Description: The name of the volume for SQL Server data.
+        Description: The name of the volume for PGSQL Server data.
         Type: String
         Default: wlmdb_fsx_data_volume
 
@@ -58,7 +58,7 @@ Parameters:
         Default: 200
 
     FSxLogVolumeName:
-        Description: The name of the volume for the SQL Server log.
+        Description: The name of the volume for the PGSQL Server log.
         Type: String
         Default: wlmdb_fsx_log_volume
 
@@ -67,14 +67,22 @@ Parameters:
         Type: Number
         Default: 100
 
+    SQLDeploymentMode:
+        Description: PGSQL server deployment mode
+        Type: String
+        Default: 'ha'
+        AllowedValues:
+            - 'ha'
+            - 'standalone'
+
 Conditions:
     FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
+    IsHACluster: !Equals [!Ref 'SQLDeploymentMode', 'ha']
 
 Resources:
     FSxSvmConfiguration:
         Type: AWS::FSx::StorageVirtualMachine
         Properties:
-            #      ActiveDirectoryConfiguration: !Ref FSxADConfiguration
             Name: !Ref FSxSvmName
             FileSystemId: !Ref FSxFileSystemId
             RootVolumeSecurityStyle: UNIX
@@ -105,6 +113,48 @@ Resources:
                 SizeInMegabytes: !Ref FSxLogVolumeSize
                 StorageVirtualMachineId: !Ref FSxSvmConfiguration
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
+                OntapVolumeType: RW
+                StorageEfficiencyEnabled: true
+                TieringPolicy:
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
+
+    FSxReplicaSvmConfiguration:
+        Condition: IsHACluster
+        Type: AWS::FSx::StorageVirtualMachine
+        Properties:
+            Name: !Sub "${FSxSvmName}_replica"
+            FileSystemId: !Ref FSxFileSystemId
+            RootVolumeSecurityStyle: UNIX
+
+    FSxReplicaDataVolumeConfiguration:
+        Condition: IsHACluster
+        Type: AWS::FSx::Volume
+        Properties:
+            Name: !Sub "${FSxDataVolumeName}_replica"
+            VolumeType: ONTAP
+            OntapConfiguration:
+                SecurityStyle: UNIX
+                SizeInMegabytes: !Ref FSxDataVolumeSize
+                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                JunctionPath: !Join ['', [/, !Sub "${FSxDataVolumeName}_replica"]]
+                OntapVolumeType: RW
+                StorageEfficiencyEnabled: true
+                TieringPolicy:
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
+
+    FSxReplicaLogVolumeConfiguration:
+        Condition: IsHACluster
+        Type: AWS::FSx::Volume
+        Properties:
+            Name: !Sub "${FSxLogVolumeName}_replica"
+            VolumeType: ONTAP
+            OntapConfiguration:
+                SecurityStyle: UNIX
+                SizeInMegabytes: !Ref FSxLogVolumeSize
+                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                JunctionPath: !Join ['', [/, !Sub "${FSxLogVolumeName}_replica"]]
                 OntapVolumeType: RW
                 StorageEfficiencyEnabled: true
                 TieringPolicy:
@@ -145,7 +195,6 @@ Outputs:
         Value: !GetAtt FSxDataVolumeConfiguration.UUID
         Export:
             Name: !Sub ${AWS::StackName}-FSxDataVolumeUuid
-
     FSxLogVolumeLogicalId:
         Description: Logical ID of FSx for ONTAP log volume
         Value: !Ref FSxLogVolumeConfiguration
@@ -166,3 +215,91 @@ Outputs:
         Value: !GetAtt FSxLogVolumeConfiguration.UUID
         Export:
             Name: !Sub ${AWS::StackName}-FSxLogVolumeUuid
+    FSxReplicaSvmId:
+        Description: System generated ID of the storage virtual machine
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaSvmConfiguration.StorageVirtualMachineId
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaSvmId
+
+    FSxReplicaSvmUuid:
+        Description: System generated UUID of the storage virtual machine
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaSvmConfiguration.UUID
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaSvmUuid
+    FSxReplicaDataVolumeLogicalId:
+        Description: Logical ID of the FSx for ONTAP data volume
+        Value: !If
+            - IsHACluster
+            - !Ref FSxReplicaDataVolumeConfiguration
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeLogicalId
+
+    FSxReplicaDataVolumeArn:
+        Description: ARN of the FSx for ONTAP data volume
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaDataVolumeConfiguration.ResourceARN
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeArn
+
+    FSxReplicaDataVolumeId:
+        Description: System generated ID of volume
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaDataVolumeConfiguration.VolumeId
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeId
+
+    FSxReplicaDataVolumeUuid:
+        Description: System generated UUID of volume
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaDataVolumeConfiguration.UUID
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeUuid
+
+    FSxReplicaLogVolumeLogicalId:
+        Description: Logical ID of FSx for ONTAP log volume
+        Value: !If
+            - IsHACluster
+            - !Ref FSxReplicaLogVolumeConfiguration
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeLogicalId
+
+    FSxReplicaLogVolumeArn:
+        Description: ARN of FSx for ONTAP data volume
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaLogVolumeConfiguration.ResourceARN
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeArn
+
+    FSxReplicaLogVolumeId:
+        Description: System generated ID of volume
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaLogVolumeConfiguration.VolumeId
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeId
+
+    FSxReplicaLogVolumeUuid:
+        Description: System generated UUID of volume
+        Value: !If
+            - IsHACluster
+            - !GetAtt FSxReplicaLogVolumeConfiguration.UUID
+            - !Ref AWS::NoValue
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeUuid
