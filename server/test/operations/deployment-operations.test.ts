@@ -9,6 +9,7 @@ import {
     getPGSQLTerraformSetup
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
+import '../simulator/scopes/aws/ssm-scope';
 import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
