@@ -47,38 +47,38 @@ const OptimizeCard = () => {
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
                     block_three: { type: 'Tags', value: ['Performance efficiency', 'Operational excellence'] }
                 };
-            case 'ONTAP / Thin provisioning':
-            case 'ONTAP / Autosize':
-            case 'ONTAP / Autosize-mode':
-            case 'ONTAP / Fractional reserve':
-            case 'ONTAP / Snapshot copy reserve':
-            case 'ONTAP / Snapshot autodelete':
-            case 'ONTAP / Space management':
+            case 'Thin provisioning':
+            case 'Autosize':
+            case 'Autosize-mode':
+            case ' Fractional reserve':
+            case 'Snapshot copy reserve':
+            case 'Snapshot autodelete ':
+            case 'Space management':
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedDatabases || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
                     block_three: { type: 'Tags', value: ['Operational excellence', 'Cost optimization'] }
                 };
-            case 'ONTAP / Tiering minimum cooling days':
+            case ' Tiering minimum cooling days':
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedDatabases || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
                     block_three: { type: 'Tags', value: ['Cost optimization'] }
                 };
-            case 'ONTAP / OS type':
+            case 'OS type':
                 return {
                     block_one: { type: 'Impacted LUNs', value: data.impactedDatabases || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
                     block_three: { type: 'Tags', value: ['Performance efficiency'] }
                 };
-            case 'ONTAP / Space reservation':
-            case 'ONTAP / Space allocation':
+            case 'Space reservation':
+            case 'Space allocation':
                 return {
                     block_one: { type: 'Impacted LUNs', value: data.impactedDatabases || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Critical' },
                     block_three: { type: 'Tags', value: ['Reliability'] }
                 };
-            case 'Operating system  |  Multipath I/O Policy':
+            case 'Multipath I/O Policy':
             case 'NTFS allocation unit size':
                 return {
                     block_one: { type: 'Impacted discs', value: data.impactedDatabases || '0' },

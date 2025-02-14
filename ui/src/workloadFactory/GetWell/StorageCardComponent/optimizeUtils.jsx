@@ -35,3 +35,27 @@ export const handleDialog = (setDialog, type, callOptimizeApi, closeDialog, card
         />
     );
 };
+
+const isDialogPrimaryBtnDisabled = rowData => {
+    return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
+};
+
+export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData) => {
+    setDialog(
+        <DialogComponent
+            header={`${rowData?.name} optimization`}
+            content={<DialogContent type={rowData?.name} />}
+            primaryButton={GENERAL.CONTINUE}
+            secondaryButton={GENERAL.CANCEL}
+            callback={() => {
+                callOptimizeApi(rowData);
+            }}
+            closeCallback={() => {
+                closeDialog();
+            }}
+            customClass={'innerPage'}
+            primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
+            primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
+        />
+    );
+};
