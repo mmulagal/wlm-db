@@ -8,6 +8,7 @@ import {
     getCloudformationTemplate,
     getCollationDetailsForDeployment,
     getFSXAvailableRegionsForThrougput,
+    getPGSQLTerraformSetup,
     getPgSqlCfTemplate,
     getTerraformSetup
 } from '../operations/deployment-operations';
@@ -20,7 +21,8 @@ import {
     CollationListSchema,
     PgSqlDeployTemplateSchema,
     TerraformSetupSchema,
-    PgSqlCloudFormationTemplateSchema
+    PgSqlCloudFormationTemplateSchema,
+    PgSqlTerraformSetupSchema
 } from './schemas/deployment-schemas';
 import castRequest from './utils';
 
@@ -29,6 +31,7 @@ const API_MSSQL_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:reg
 const API_MSSQL_STATIC_TEMPLATE_PREFIX_PATH = '/v1/mssql/cloudformation/template';
 const API_MSSQL_TERRAFORM_PREFIX_PATH = '/v1/mssql/terraform/setup';
 const API_PGSQL_PREFIX_PATH = '/v1/pgsql/credentials/:credentialsId/regions/:region';
+const API_PGSQL_TERRAFORM_PREFIX_PATH = '/v1/pgsql/terraform/setup';
 
 export default function deploymentRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -239,5 +242,34 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 region
             );
             return reply.send(response);
+        })
+        .post(`${API_PGSQL_TERRAFORM_PREFIX_PATH}`, { schema: PgSqlTerraformSetupSchema }, async (request, reply) => {
+            const {
+                headers: { 'triggered-from': triggeredFrom },
+                body: {
+                    networkConfiguration,
+                    ec2Configuration,
+                    fsxConfiguration,
+                    sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch,
+                    tags,
+                    credentialsId,
+                    region
+                }
+            } = castRequest(request);
+            const response = await getPGSQLTerraformSetup(
+                networkConfiguration,
+                ec2Configuration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                triggeredFrom as string,
+                tags,
+                credentialsId,
+                region
+            );
+            return reply.code(202).send(response);
         });
 }

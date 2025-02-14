@@ -119,10 +119,22 @@ const CollationListSchema = {
 const TerraformSetupSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
-    summary: 'Create Terraform Setup',
+    summary: 'Create Terraform Setup for MSSQL',
     headers: CloudFormationTemplateHeader,
-    description: 'Create Terraform Setup in URL for user deployment',
+    description: 'Create Terraform Setup in URL for MSSQL user deployment',
     body: TerraformSetupRequestBody,
+    response: {
+        200: TerraformSetupResponse
+    }
+};
+
+const PgSqlTerraformSetupSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    headers: CloudFormationTemplateHeader,
+    summary: 'Create Terraform setup for PGSQL',
+    description: 'Create Terraform setup in URL for pgsql user deploymen',
+    body: PgSqlCloudFormationTemplateRequestBody,
     response: {
         200: TerraformSetupResponse
     }
@@ -137,5 +149,6 @@ export {
     CollationListSchema,
     PgSqlDeployTemplateSchema,
     TerraformSetupSchema,
-    PgSqlCloudFormationTemplateSchema
+    PgSqlCloudFormationTemplateSchema,
+    PgSqlTerraformSetupSchema
 };

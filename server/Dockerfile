@@ -30,6 +30,7 @@ COPY resources/mssql/templates/fsx-existing.yaml ./resources/mssql/templates/fsx
 COPY resources/mssql/templates/main.tf ./resources/mssql/templates/main.tf
 COPY resources/mssql/terraform ./resources/mssql/terraform/
 COPY resources/pgsql/templates ./resources/pgsql/templates/
+COPY resources/pgsql/terraform ./resources/pgsql/terraform/
 
 COPY dist/src ./
 
@@ -42,6 +43,7 @@ COPY patches ./patches/
 # Switch to the root user to change the permissions
 USER root
 RUN chown -R netappuser:netappgroup ./resources/mssql
+RUN chown -R netappuser:netappgroup ./resources/pgsql
 USER netappuser
 
 RUN npm ci --omit=dev
