@@ -541,12 +541,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             # Using PSCustomObject
             $perVolRow = [PSCustomObject]@{
                 name = $perVolumeData.name
+                'uuid' = $perVolumeData.uuid
                 'thin-provision' = $perVolumeData.guarantee.honored
                 'space-guarantee' = $perVolumeData.guarantee.type
                 'autosize-mode' = $perVolumeData.autosize.mode
                 'fractional-reserve' = $perVolumeData.space.fractional_reserve
                 'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
                 'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
+                'snapshot-policy' = $perVolumeData.snapshot_policy.name
                 'tiering-policy' = $perVolumeData.tiering.policy
                 'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
             }

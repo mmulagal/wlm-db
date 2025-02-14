@@ -17,6 +17,7 @@ import {
     HttpErrorCodes,
     IO2_AVAILABLE_REGIONS,
     MSSQL,
+    PRICING_LICENSE_KEYS,
     WLMDB
 } from '../utils/consts';
 import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
@@ -24,7 +25,7 @@ import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
 import {
-    OP_TCO_COLLECTOR_SCRIPT_PATH,
+    SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH,
     REPORTING_BUCKET,
     NETWORK_PERF,
     ONPREM_TCO_CREDENTIALS_ID
@@ -69,6 +70,7 @@ import {
     OnPremDatabaseResourcesObjectType,
     SqlInstanceDetailsRequestObjectType
 } from '../routes/types/onprem-tco.types';
+import { getSqlInstancePricingDetails } from './aws/pricing-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -182,7 +184,7 @@ async function downloadSqlServerDataCollectorScript(accountId: string, databaseT
     logger.info('Downloading SQL Server data collector Script', { accountId, databaseType });
 
     const bucketname = getArtifactsRegionBucketName(DEFAULT_AWS_REGION);
-    const url = await getPreSignedUrl(DEFAULT_AWS_REGION, bucketname, OP_TCO_COLLECTOR_SCRIPT_PATH);
+    const url = await getPreSignedUrl(DEFAULT_AWS_REGION, bucketname, SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH);
     return {
         url
     };
@@ -273,9 +275,14 @@ async function getStorageSavingsResponse(
         instances,
         snapshotInfo
     });
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(region, windowsConfig); // Instance type here is based on the host config; considered as existing instance type
-    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances); // Instance type here is based on the current usage as per the report; considered as recommended instance type
     const { currentLicenseEdition, recommendedLicenseEdition, finding } = getOnpremLicenseRecommendations(instances);
+
+    const currentInstanceType = await deriveHostConfigBasedInstanceType(
+        region,
+        windowsConfig,
+        isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
+    ); // Instance type here is based on the host config; considered as existing instance type
+    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances, recommendedLicenseEdition); // Instance type here is based on the current usage as per the report; considered as recommended instance type
 
     if (!currentInstanceType || !recommendedInstanceType) {
         throw createError(
@@ -442,48 +449,61 @@ function processEbsDisks(disks: EBSClassification[]) {
         }
     >();
 
-    disks.forEach((disk: EBSClassification) => {
-        if (ebsTypeCountMap.has(disk.ebsType)) {
-            const existing = ebsTypeCountMap.get(disk.ebsType)!;
-            ebsTypeCountMap.set(disk.ebsType, {
-                volumeType: disk.ebsType,
-                volumeNumber: existing.volumeNumber + disk.numDatabases,
-                storageAmount: existing.storageAmount + disk.avgVolumeSizePerDb,
-                volumeIops: existing.volumeIops + disk.avgIopsPerDb,
-                throughput: existing.throughput + disk.avgThroughputPerDb
-            });
-        } else {
-            ebsTypeCountMap.set(disk.ebsType, {
-                volumeType: disk.ebsType,
-                volumeNumber: disk.numDatabases,
-                storageAmount: disk.avgVolumeSizePerDb,
-                volumeIops: disk.avgIopsPerDb,
-                throughput: disk.avgThroughputPerDb
-            });
-        }
-    });
+    disks
+        .filter(disk => disk.numDatabases > 0)
+        .forEach((disk: EBSClassification) => {
+            if (ebsTypeCountMap.has(disk.ebsType)) {
+                const existing = ebsTypeCountMap.get(disk.ebsType)!;
+
+                const { ebsType, numDatabases, requiredVolumeSize, requiredIops, requiredThroughput } = disk;
+                const { volumeNumber, storageAmount, volumeIops, throughput } = existing;
+                ebsTypeCountMap.set(ebsType, {
+                    volumeType: ebsType,
+                    volumeNumber: volumeNumber + numDatabases,
+                    storageAmount: storageAmount + requiredVolumeSize * numDatabases,
+                    volumeIops: Math.max(volumeIops, requiredIops), // IOPS and throughput would be in a similar range for the same ebs disk type, considering the max value among all primary or secondary instances which uses the same ebs disk type
+                    throughput: Math.max(throughput, requiredThroughput)
+                });
+            } else {
+                const { ebsType, numDatabases, requiredVolumeSize, requiredIops, requiredThroughput } = disk;
+                ebsTypeCountMap.set(ebsType, {
+                    volumeType: ebsType,
+                    volumeNumber: numDatabases,
+                    storageAmount: requiredVolumeSize * numDatabases,
+                    volumeIops: requiredIops,
+                    throughput: requiredThroughput
+                });
+            }
+        });
 
     return Array.from(ebsTypeCountMap.values()).map(
-        ({ volumeType, volumeNumber, storageAmount, volumeIops, throughput }) => {
-            volumeIops = 0;
-            throughput = 0;
-            storageAmount = Math.max(storageAmount, 1); // Minimum volume size is 1 GiB
+        ({ volumeType, volumeNumber, storageAmount: totalStorageAmountPerDiskType, volumeIops, throughput }) => {
+            const storageAmountPerDiskType = totalStorageAmountPerDiskType / volumeNumber;
+            let storageAmount = Math.max(storageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
             switch (volumeType) {
-                case 'io2':
+                case 'io2': {
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 4), sizeInGigaBytes(64, 'TiB')); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.min(Math.max(volumeIops, 100), 256000); // Minimum IOPS is 100, max 256,000
+                    throughput = 0; // Throughput is not applicable for io1
+                    break;
+                }
                 case 'io1': {
-                    storageAmount = Math.max(storageAmount, 4); // Minimum volume size is 4 GiB for io1
-                    volumeIops = Math.max(volumeIops, 100); // Minimum IOPS is 100
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 4), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.min(Math.max(volumeIops, 100), 64000); // Minimum IOPS is 100 , max 64,000
+                    throughput = 0; // Throughput is not applicable for io1
                     break;
                 }
                 case 'st1': {
-                    storageAmount = Math.max(storageAmount, 125); // Minimum volume size is 125 GiB for st1
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 125), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 125, max 16TiB GiB for st1
+                    volumeIops = 0; // IOPS is not applicable for st1
+                    throughput = 0; // Minimum throughput is 125
                     break;
                 }
                 case 'gp3':
                 default: {
-                    volumeIops = Math.max(volumeIops, 3000); // Minimum IOPS is 3000
-                    throughput = Math.max(throughput, 125); // Minimum throughput is 125
-                    storageAmount = Math.max(storageAmount, 1); // Minimum volume size is 1 GiB
+                    volumeIops = Math.min(Math.max(volumeIops, 3000), 1000); // Minimum IOPS is 3000
+                    throughput = Math.min(Math.max(throughput, 125), 1000); // Minimum throughput is 125 , max is 1000
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 1), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 1 GiB
                     break;
                 }
             }
@@ -514,7 +534,8 @@ function deriveEbsVolumesListForMarketing(region: string, sqlInstancesDetails: S
         const secondaryEbsDisks = ebsDisks.filter(({ isPrimary }) => !isPrimary);
 
         const primaryEbsVolumes = processEbsDisks(primaryEbsDisks);
-        const secondaryEbsVolumes = processEbsDisks(secondaryEbsDisks);
+
+        const secondaryEbsVolumes = secondaryEbsDisks.length > 0 ? processEbsDisks(secondaryEbsDisks) : [];
 
         logger.info('>>EBS VOLUMES', { primaryEbsVolumes, secondaryEbsVolumes });
 
@@ -556,8 +577,8 @@ function deriveEc2InstanceListForMarketing(
     return ec2Instances;
 }
 
-async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: WindowsConfig) {
-    logger.info('Deriving Instance Type based on host config', { region, windowsConfig });
+async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: WindowsConfig, licenseEdition: string) {
+    logger.info('Deriving Instance Type based on host config', { region, windowsConfig, licenseEdition });
 
     const { nodeDetails } = windowsConfig;
     let maxVCpuCount = 4;
@@ -588,22 +609,31 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         InstanceGenerations: [InstanceGeneration.CURRENT]
     };
 
-    return fetchInstanceTypesByRetry(region, instanceRequirements);
+    return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
 }
 
-async function deriveSqlUsageBasedInstanceType(region: string, sqlInstancesDetails: SqlInstanceDetails[]) {
-    logger.info('Deriving SQL usage based Instance Type', { region, sqlInstancesDetails: sqlInstancesDetails?.length });
+async function deriveSqlUsageBasedInstanceType(
+    region: string,
+    sqlInstancesDetails: SqlInstanceDetails[],
+    licenseEdition: string
+) {
+    logger.info('Deriving SQL usage based Instance Type', {
+        region,
+        sqlInstancesDetails: sqlInstancesDetails?.length,
+        licenseEdition
+    });
 
     const instanceRequirements = deriveInstanceRequirements(sqlInstancesDetails);
 
-    return fetchInstanceTypesByRetry(region, instanceRequirements);
+    return fetchInstanceTypesByRetry(region, instanceRequirements, licenseEdition);
 }
 
 async function fetchInstanceTypesByRetry(
     region: string,
-    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput
+    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput,
+    licenseEdition: string
 ) {
-    logger.info('Fetching Instance Types by Retry', { region, instanceRequirements });
+    logger.info('Fetching Instance Types by Retry', { region, instanceRequirements, licenseEdition });
 
     let { InstanceTypes: instanceTypes } =
         (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {};
@@ -645,7 +675,24 @@ async function fetchInstanceTypesByRetry(
         ({ InstanceTypes: instanceTypes } =
             (await getInstanceTypesFromInstanceRequirementsCommand(region, instanceRequirements)) || {});
     }
-    return instanceTypes?.[0]?.InstanceType; // TODO: fetch cheapest instance type instead of first item in the list
+
+    let instanceType = instanceTypes?.[0]?.InstanceType; // Fall back to the first instance type if no cheaper instance types are found
+    try {
+        const licenseType =
+            licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
+        const instanceTypePricingDetails = await getSqlInstancePricingDetails(
+            region,
+            undefined,
+            'windows',
+            undefined,
+            licenseType
+        );
+        const [cheaperInstanceType] = Object.keys(instanceTypePricingDetails);
+        instanceType = cheaperInstanceType || instanceType;
+    } catch (error) {
+        logger.warn('Error fetching cheaper instance type', { error });
+    }
+    return instanceType;
 }
 
 async function analyzeOnpremData(
@@ -815,10 +862,10 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
 interface EBSClassification {
     instanceName: string;
     numDatabases: number;
-    avgIopsPerDb: number;
-    avgThroughputPerDb: number;
+    requiredIops: number;
+    requiredThroughput: number;
     ebsType: string;
-    avgVolumeSizePerDb: number;
+    requiredVolumeSize: number;
     isPrimary: boolean;
 }
 
@@ -871,10 +918,10 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
         return {
             instanceName: instance.sqlInstanceName,
             numDatabases,
-            avgIopsPerDb,
-            avgThroughputPerDb,
+            requiredIops: avgIopsPerDb,
+            requiredThroughput: avgThroughputPerDb,
             ebsType,
-            avgVolumeSizePerDb,
+            requiredVolumeSize: avgVolumeSizePerDb,
             isPrimary: classification !== 'secondary' // if it is not secondary, it is primary by default because marketing API expects atleast primary volumes
         };
     } catch (error) {

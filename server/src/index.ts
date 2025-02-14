@@ -9,6 +9,7 @@ import helmet from '@fastify/helmet';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import sensible from '@fastify/sensible';
+import fastifyMultipart from '@fastify/multipart';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import getLogger, { getTraceData } from './utils/logger';
 import {
@@ -48,7 +49,7 @@ import discoverRoutes from './routes/discover';
 import storageSavingsRoutes from './routes/storage-savings';
 import onpremTcoRoutes from './routes/onprem-tco';
 import continuousOptimizationRoutes from './routes/continuous-optimization';
-
+import notificationRoutes from './routes/notification';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -122,6 +123,9 @@ const app = fastify({
         }
     }
 })
+    .register(fastifyMultipart, {
+        limits: { fileSize: 500 * 1024 * 1024 }
+    })
     .register(cors)
     .register(compress)
     .register(sensible) // disable sensible error handler and use fastify native
@@ -221,6 +225,7 @@ const app = fastify({
             storageSavingsRoutes(instance);
             continuousOptimizationRoutes(instance);
             onpremTcoRoutes(instance);
+            notificationRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

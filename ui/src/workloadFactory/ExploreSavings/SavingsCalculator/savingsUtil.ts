@@ -1051,7 +1051,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}`,
-                      text: `Storage amount of disc type in GiB`
+                      text: `Storage capacity of a single volume per disk type in GiB`
                   },
                   {
                       label: 'Pricing calculations'
@@ -1059,7 +1059,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.gp3.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp3.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp3.ebsCapacityPrice}) x Number of Volumes (${viewCalculation.ebsCalculation.gp3?.numberOfVolumes})`
                   },
                   {
                       label: 'Billable IOPS',
@@ -1096,7 +1096,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.io2.storageAmountPerVol}`,
-                      text: `Storage amount of disc type in GiB`
+                      text: `Storage capacity of a single volume per disk type in GiB`
                   },
                   {
                       label: 'Pricing calculations'
@@ -1104,7 +1104,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.io2.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.io2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io2.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.io2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io2.ebsCapacityPrice}) x Number of Volumes (${viewCalculation.ebsCalculation.io2?.numberOfVolumes})`
                   },
                   {
                       label: 'Billable IOPS',
@@ -1126,7 +1126,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.io1.storageAmountPerVol}`,
-                      text: `Storage amount of disc type in GiB`
+                      text: `Storage capacity of a single volume per disk type in GiB`
                   },
                   {
                       label: 'Pricing calculations'
@@ -1134,7 +1134,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.io1.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.io1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io1.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.io1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io1.ebsCapacityPrice}) x Number of Volumes (${viewCalculation.ebsCalculation.io1?.numberOfVolumes})`
                   },
                   {
                       label: 'Billable IOPS',
@@ -1156,7 +1156,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}`,
-                      text: `Storage amount of disc type in GiB`
+                      text: `Storage capacity of a single volume per disk type in GiB`
                   },
                   {
                       label: 'Pricing calculations'
@@ -1164,7 +1164,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.gp2.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp2.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp2.ebsCapacityPrice}) x Number of Volumes (${viewCalculation.ebsCalculation.gp2?.numberOfVolumes})`
                   }
               ]
             : [],
@@ -1176,7 +1176,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total storage amount',
                       value: `${viewCalculation.ebsCalculation.st1.storageAmountPerVol}`,
-                      text: `Storage amount of disc type in GiB`
+                      text: `Storage capacity of a single volume per disk type in GiB`
                   },
                   {
                       label: 'Pricing calculations'
@@ -1184,7 +1184,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.st1.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.st1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.st1.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.st1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.st1.ebsCapacityPrice}) x Number of Volumes (${viewCalculation.ebsCalculation.st1?.numberOfVolumes})`
                   }
               ]
             : [],

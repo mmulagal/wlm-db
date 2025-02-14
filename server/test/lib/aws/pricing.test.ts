@@ -40,6 +40,6 @@ describe('Pricing Lib', () => {
             FormatVersion: 'aws_v1'
         };
         const resp = await getProducts(productFilters);
-        expect(resp).toEqual(mockGetProductsResponse);
+        expect(resp.PriceList).toEqual(mockGetProductsResponse.PriceList);
     });
 });

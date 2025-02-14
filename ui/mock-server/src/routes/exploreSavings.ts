@@ -4,6 +4,7 @@ import StorageSavingsFsxw from '../data/storageSavingsFsxw.json';
 import ViewCalculations from '../data/viewCalculations.json';
 import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 import UploadScript from '../data/uploadScript.json';
+import SendEmail from '../data/sendEmail.json';
 import ExploreSavingsOnPrem from '../data/exploreSavingsOnPrem.json';
 import OnPremCalculations from '../data/onPremCalculations.json';
 
@@ -39,6 +40,12 @@ router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/ebs`, a
 router.post(`${BASE_URL}/v1/mssql/onprem/upload`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, UploadScript);
+    }, 5000);
+});
+
+router.post(`${BASE_URL}/v1/notification/email?emailType=savings-calculations`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, SendEmail);
     }, 5000);
 });
 

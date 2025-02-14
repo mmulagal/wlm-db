@@ -898,6 +898,13 @@ export const exploreSavingsApi = createApi({
                     body: payload
                 })
             }),
+            getSendEmail: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/notification/email?emailType=savings-calculations`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getOnPremSavings: builder.mutation({
                 query: () => ({
                     url: `v1/mssql/onprem-tco/resources`
@@ -1130,6 +1137,7 @@ export const {
 } = sandboxApi;
 
 export const {
+    useGetSendEmailMutation,
     useGetUploadScriptMutation,
     useGetOnPremSavingsMutation,
     useGetOnPremCalculationsMutation,
