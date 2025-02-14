@@ -858,6 +858,14 @@ function getSubJobDescriptions(dbEngineType: string) {
     return subJobDescriptions;
 }
 
+function isMssql(resourceType: string) {
+    return resourceType === DatabaseTypes.MS_SQL_SERVER;
+}
+
+function isPgsql(resourceType: string) {
+    return resourceType === DatabaseTypes.PG_SQL;
+}
+
 const isRateLimited = (cacheType: string, cacheKey: string, LIMIT: number, ttl?: string): boolean => {
     const cacheNum = readFromCacheByKey(cacheType, cacheKey);
     if (!cacheNum) {
@@ -926,6 +934,8 @@ export {
     getServerNameWithHostname,
     extractKbNumber,
     extractVersionYear,
+    isMssql,
+    isPgsql,
     isValidEmail,
     isRateLimited
 };

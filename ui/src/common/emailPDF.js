@@ -298,9 +298,7 @@ const downloadPdfEmail = (dom, options, encoded, cb) => {
                 pdf.addImage(imgData, 'PNG', 0, 0, a4Width, pageHeight, undefined, compression);
                 ++page;
             }
-            const pdfBlob = encoded
-                ? new Blob([pdf.output('datauristring').split(',')[1]], { type: 'application/pdf' })
-                : pdf.output('blob');
+            const pdfBlob = encoded ? pdf.output('blob') : pdf.output('blob');
 
             if (typeof cb === 'function') {
                 cb(pdf);

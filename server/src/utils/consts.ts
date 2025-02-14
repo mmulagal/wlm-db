@@ -561,6 +561,7 @@ const IO2_AVAILABLE_REGIONS = [
 const WLMDB = 'wlmdb';
 const INITIALIZER = 'initializer';
 const MSSQL = 'mssql';
+const PGSQL = 'pgsql';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
@@ -931,6 +932,48 @@ const TERRAFORM_ROOT_MODULE_DISTRIBUTION = {
 
 const TERRAFORM_FOLDER_PATH = './resources/mssql/terraform';
 
+const TERRAFORM_PGSQL_INITIALIZATION_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/pgsql/terraform/modules/validation-node/Validation-Instance-initializer.sh'
+    },
+    {
+        name: TEMPLATE_TYPES.PGSQLSTANDALONE,
+        location: './resources/pgsql/terraform/modules/ec2/Pgsql-Instance-Initializer.sh'
+    }
+];
+
+const TERRAFORM_PGSQL_INITIALIZER_TEMPLATES_ASSETS = [
+    {
+        name: 'ValidationInitializerTemplate',
+        url: 'terraform/validation/Validation-Instance-initializer.sh'
+    },
+    {
+        name: 'PGSQLStandaloneInitializerTemplate',
+        url: 'terraform/standalone/Pgsql-Instance-Initializer.sh'
+    },
+    {
+        name: 'PGSQLHAInitializerTemplate',
+        url: 'terraform/FCI/Pgsql-Instance-Initializer.sh'
+    }
+];
+
+const PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION = {
+    name: 'main',
+    location: './resources/pgsql/templates/main.tf'
+};
+
+const PGSQL_TERRAFORM_FOLDER_PATH = './resources/pgsql/terraform';
+
+const PGSQL_TF_VARS_CONFIG = {
+    EC2: 'ec2',
+    FSX: 'fsx',
+    PGSQLServer: 'pgsqlServer',
+    General: 'general',
+    Endpoint: 'endpoint',
+    VPC: 'vpc'
+};
+
 const TF_VARS_CONFIG = {
     EC2: 'ec2',
     FSX: 'fsx',
@@ -1040,6 +1083,103 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: {
     WorkloadInstanceType: { name: 'workload_instance_type', type: 'string', configType: TF_VARS_CONFIG.EC2 },
     EBSVolumeSize: { name: 'ebs_volume_size', type: 'number', configType: TF_VARS_CONFIG.EC2 },
     SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string', configType: TF_VARS_CONFIG.General }
+};
+
+const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
+    [key: string]: { name: string; type: string; configType: string };
+} = {
+    AccountId: { name: 'account_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
+    CloudwatchLogsEndpointExists: {
+        name: 'cloudwatch_logs_endpoint_exists',
+        type: 'boolean',
+        configType: PGSQL_TF_VARS_CONFIG.Endpoint
+    },
+    DeploymentMode: { name: 'deployment_mode', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
+    Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean', configType: PGSQL_TF_VARS_CONFIG.Endpoint },
+    Ec2MessagesEndpointExists: {
+        name: 'ec2_messages_endpoint_exists',
+        type: 'boolean',
+        configType: PGSQL_TF_VARS_CONFIG.Endpoint
+    },
+    EnableCloudWatchLogFeature: {
+        name: 'enable_cloud_watch_log_feature',
+        type: 'boolean',
+        configType: PGSQL_TF_VARS_CONFIG.General
+    },
+    FileSystemEncryptionKeyId: {
+        name: 'fsx_encryption_key',
+        type: 'string',
+        configType: PGSQL_TF_VARS_CONFIG.FSX
+    },
+    FSxAdminPassword: { name: 'fsx_admin_password', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxAdminUsername: { name: 'fsx_admin_username', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxDataVolumeName: { name: 'fsx_data_volume_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxDataVolumeSize: { name: 'fsx_data_volume_size', type: 'number', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxDiskIops: { name: 'fsx_disk_iops', type: 'number', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FsxEndpointExists: { name: 'fsx_endpoint_exists', type: 'boolean', configType: PGSQL_TF_VARS_CONFIG.Endpoint },
+    FSxFileSystemId: { name: 'fsx_file_system_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxFileSystemName: { name: 'fsx_file_system_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxLogVolumeName: { name: 'fsx_log_volume_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxLogVolumeSize: { name: 'fsx_log_volume_size', type: 'number', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxStorageCapacity: { name: 'fsx_storage_capacity', type: 'number', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FSxSvmName: { name: 'fsx_svm_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    FsxVolumeSnapshotPolicy: {
+        name: 'fsx_volume_snapshot_policy',
+        type: 'string',
+        configType: PGSQL_TF_VARS_CONFIG.FSX
+    },
+    FSxVolumeThroughputCapacity: {
+        name: 'fsx_volume_throughput_capacity',
+        type: 'number',
+        configType: PGSQL_TF_VARS_CONFIG.FSX
+    },
+    SQLSvmName: { name: 'sql_svm_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
+    KeyPairName: { name: 'key_pair_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.EC2 },
+    NodeNetBIOSNames: { name: 'node_net_bios_names', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
+    ONTAPSecurityGroupID: { name: 'ontap_security_group_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    PrivateSubnet1Cidrblock: {
+        name: 'private_subnet1_cidrblock',
+        type: 'string',
+        configType: PGSQL_TF_VARS_CONFIG.VPC
+    },
+    PrivateSubnet1ID: { name: 'private_subnet1_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    PrivateSubnet2Cidrblock: {
+        name: 'private_subnet2_cidrblock',
+        type: 'string',
+        configType: PGSQL_TF_VARS_CONFIG.VPC
+    },
+    PrivateSubnet2ID: { name: 'private_subnet2_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    RouteTable1Id: { name: 'route_table1_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    RouteTable2Id: { name: 'route_table2_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    S3EndpointExists: { name: 's3_endpoint_exists', type: 'boolean', configType: PGSQL_TF_VARS_CONFIG.Endpoint },
+    S3EndpointRouteTables: { name: 's3_endpoint_route_tables', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    SsmEndpointExists: { name: 'ssm_endpoint_exists', type: 'boolean', configType: PGSQL_TF_VARS_CONFIG.Endpoint },
+    SSMMessagesEndpointExists: {
+        name: 'ssm_messages_endpoint_exists',
+        type: 'boolean',
+        configType: PGSQL_TF_VARS_CONFIG.Endpoint
+    },
+    UniqueID: { name: 'unique_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
+    ValidationAmi: { name: 'validation_ami', type: 'string', configType: PGSQL_TF_VARS_CONFIG.EC2 },
+    ValidationNodeInstanceType: {
+        name: 'validation_node_instance_type',
+        type: 'string',
+        configType: PGSQL_TF_VARS_CONFIG.EC2
+    },
+    VPCCIDR: { name: 'vpc_cidr', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    VPCID: { name: 'vpc_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.VPC },
+    WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.General },
+    WorkloadInstanceType: { name: 'workload_instance_type', type: 'string', configType: PGSQL_TF_VARS_CONFIG.EC2 },
+    EBSVolumeSize: { name: 'ebs_volume_size', type: 'number', configType: PGSQL_TF_VARS_CONFIG.EC2 },
+    SqlVersion: { name: 'sql_version', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
+    SQLAMIID: { name: 'sql_ami_id', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
+    SQLServiceAccountPassword: {
+        name: 'sql_service_account_password',
+        type: 'string',
+        configType: PGSQL_TF_VARS_CONFIG.PGSQLServer
+    },
+    SqlServerName: { name: 'sql_server_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
+    SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer }
 };
 
 const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
@@ -1879,5 +2019,12 @@ export {
     EMAIL_RATE_LIMIT_TYPE,
     EMAIL_TYPES,
     PRICING_LICENSE_KEYS,
-    ASSESSMENT_SSM_EXECUTION_TIMEOUT
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+    TERRAFORM_PGSQL_INITIALIZATION_TEMPLATES_DISTRIBUTION,
+    TERRAFORM_PGSQL_INITIALIZER_TEMPLATES_ASSETS,
+    PGSQL_TERRAFORM_FOLDER_PATH,
+    PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION,
+    PGSQL_TF_VARS_CONFIG,
+    CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
+    PGSQL
 };

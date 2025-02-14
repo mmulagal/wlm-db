@@ -78,11 +78,6 @@ variable "private_subnet2_id" {
   type        = string
 }
 
-variable "tf_deploy_role_name" {
-  description = "The name of the terraform deployment role"
-  type        = string
-}
-
 variable "validation_ami" {
   description = "The AMI ID for validation"
   type        = string
@@ -102,11 +97,6 @@ variable "validation_node_instance_type" {
 variable "account_id" {
   description = "The account ID"
   type        = string
-}
-
-variable "cloud_provider_account_id" {
-  description = "The cloud provider's account ID"
-  type        = number
 }
 
 variable "wlmdb_aws_account_id" {
@@ -152,16 +142,6 @@ variable "s3_endpoint_exists" {
   }
 }
 
-variable "sqs_endpoint_exists" {
-  description = "Does the SQS endpoint exist?"
-  type        = bool
-
-  validation {
-    condition     = var.sqs_endpoint_exists != null
-    error_message = "The sqs_endpoint_exists value must not be empty."
-  }
-}
-
 variable "ssm_endpoint_exists" {
   description = "Does the SSM endpoint exist?"
   type        = bool
@@ -179,16 +159,6 @@ variable "cloudwatch_logs_endpoint_exists" {
   validation {
     condition     = var.cloudwatch_logs_endpoint_exists != null
     error_message = "The cloudwatch_logs_endpoint_exists value must not be empty."
-  }
-}
-
-variable "cloudformation_endpoint_exists" {
-  description = "Does the CloudFormation endpoint exist?"
-  type        = bool
-
-  validation {
-    condition     = var.cloudformation_endpoint_exists != null
-    error_message = "The cloudformation_endpoint_exists value must not be empty."
   }
 }
 
@@ -477,41 +447,10 @@ variable "workload_instance_type" {
 variable "key_pair_name" {
   description = "The name of the key pair"
   type        = string
-  default     = "occm_qa"
 
   validation {
     condition     = length(var.key_pair_name) > 0
     error_message = "The key_pair_name value must not be empty."
-  }
-}
-
-variable "file_system_encryption_key_id" {
-  description = "The File System Encryption Key ID"
-  type        = string
-
-  validation {
-    condition     = length(var.file_system_encryption_key_id) > 0
-    error_message = "The file_system_encryption_key_id value must not be empty."
-  }
-}
-
-variable "notification_ARN" {
-  description = "The Notification ARN"
-  type        = string
-
-  validation {
-    condition     = length(var.notification_ARN) > 0
-    error_message = "The notification_ARN value must not be empty."
-  }
-}
-
-variable "jwt_token" {
-  description = "The JWT Token"
-  type        = string
-
-  validation {
-    condition     = length(var.jwt_token) > 0
-    error_message = "The jwt_token value must not be empty."
   }
 }
 
@@ -545,18 +484,8 @@ variable "validation_node_initialization_s3_url" {
   }
 }
 
-variable "ec2_role_name" {
-  description = "EC2 instance role name."
-  type        = string
-}
-
 variable "pgsql_node_initialization_s3_url" {
   description = "The URL of the S3 initialization url"
-  type        = string
-}
-
-variable "number_of_nodes" {
-  description = "The number of SQL Server nodes to create."
   type        = string
 }
 
@@ -565,12 +494,4 @@ variable "fsx_aggr_name" {
   type        = string
 }
 
-variable "fsx_svm_uuid" {
-  description = "UUID of the FSx Storage Virtual Machine"
-  type        = string
-}
 
-variable "fsx_svm_id" {
-  description = "ID of the FSx Storage Virtual Machine"
-  type        = string
-}

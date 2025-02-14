@@ -46,8 +46,6 @@ module "vpc_endpoints" {
   standby_subnet1_id              = local.is_standalone ? "" : var.private_subnet2_id
   standby_subnet_cidrblock        = local.is_standalone ? "" : var.private_subnet2_cidrblock
   s3_endpoint_exists              = var.s3_endpoint_exists
-  cloudformation_endpoint_exists  = var.cloudformation_endpoint_exists
-  sqs_endpoint_exists             = var.sqs_endpoint_exists
   ssm_endpoint_exists             = var.ssm_endpoint_exists
   ec2_messages_endpoint_exists    = var.ec2_messages_endpoint_exists
   ssm_messages_endpoint_exists    = var.ssm_messages_endpoint_exists
@@ -145,8 +143,7 @@ module "standalone_sql_node" {
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
   sql_service_account_password     = var.sql_service_account_password
-  fsx_svm_id                       = local.existing_ontap_fsx ? var.fsx_svm_id : module.fsxn_standalone[0].fsx_svm_id // may be the output of the fsx if its new
+  fsx_svm_id                       = module.fsxn_standalone[0].fsx_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
-  fsx_svm_uuid                     = local.existing_ontap_fsx ? var.fsx_svm_uuid : module.fsxn_standalone[0].fsx_svm_uuid // may be the output of the fsx if its new
-  number_of_nodes                  = var.number_of_nodes
+  fsx_svm_uuid                     = module.fsxn_standalone[0].fsx_svm_uuid
 }

@@ -102,6 +102,6 @@
         "bucket-name": "staging.reports.data-services.tlveng.netapp.com"
     },
     "notification": {
-        "senderEmail": "ng-wlm-fsx@netapp.com"
+        "senderEmail": "calculator@console.workloads.netapp.com"
     }
 }

@@ -752,6 +752,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         },
         {
@@ -764,6 +765,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         },
         {
@@ -776,6 +778,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         }
     ]
