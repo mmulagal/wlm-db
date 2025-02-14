@@ -760,8 +760,7 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     GENERAL.LICENSE_SQL_SERVER,
     GENERAL.OPERATING_SYSTEM_PATCH,
     GENERAL.RSS_CONFIGURATION,
-    GENERAL.MICROSOFT_SQL_PATCH,
-    GENERAL.MAXDOP_PATCH
+    GENERAL.MICROSOFT_SQL_PATCH
 ];
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
@@ -787,5 +786,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     DATA_FILES_MDF: 'Data files (.mdf)',
     LOG_FILES_LDF: 'Log files (.ldf)',
     TEMPDB_PLACEMENT: 'TempDB placement',
-    COMPUTE_RIGHTSIZING: 'Compute rightsizing'
+    COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    MAXDOP: 'MAXDOP'
 };

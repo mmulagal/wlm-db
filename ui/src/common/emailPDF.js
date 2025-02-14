@@ -33,26 +33,29 @@ let _cloneNode = (node, javascriptEnabled) => {
     return clone;
 };
 
-let _createElement = (tagName, { className, innerHTML, style }) => {
-    let el;
-    let i;
-    let key;
-    let scripts;
-    el = document.createElement(tagName);
+let _createElement = (tagName, { className, html, style }) => {
+    let el = document.createElement(tagName);
+
     if (className) {
         el.className = className;
     }
-    if (innerHTML) {
-        el.innerHTML = innerHTML;
-        scripts = el.getElementsByTagName('script');
-        i = scripts.length;
-        while (i-- > 0) {
-            scripts[i].parentNode.removeChild(scripts[i]);
+
+    if (html) {
+        const tempDiv = document.createElement('div');
+        tempDiv.textContent = html; // Use textContent to avoid XSS
+
+        // Convert plain text into structured elements
+        while (tempDiv.firstChild) {
+            el.appendChild(tempDiv.firstChild);
         }
     }
-    for (key in style) {
-        el.style[key] = style[key];
+
+    if (style) {
+        Object.keys(style).forEach(key => {
+            el.style[key] = style[key];
+        });
     }
+
     return el;
 };
 

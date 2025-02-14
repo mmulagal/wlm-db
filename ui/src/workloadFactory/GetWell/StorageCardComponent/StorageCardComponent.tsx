@@ -34,6 +34,7 @@ import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
+    useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeStorageTierMutation
@@ -59,6 +60,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
+    const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -487,6 +489,21 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
             payload = null;
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+            apiCall = optimizeMaxdopConfigForBulk;
+            payload = {
+                hostsToOptimize: [
+                    {
+                        type: 'maxdop',
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance]
+                            }
+                        ]
+                    }
+                ]
+            };
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -545,13 +562,26 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             })
         );
 
-        apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
-            payload: payload
-        }).then((res: any) => {
+        let apiCallObj = {};
+        if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+            apiCallObj = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                payload: payload
+            };
+        } else {
+            apiCallObj = {
+                credentialId:
+                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                payload: payload
+            };
+        }
+
+        apiCall(apiCallObj).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {type} failed to optimize.

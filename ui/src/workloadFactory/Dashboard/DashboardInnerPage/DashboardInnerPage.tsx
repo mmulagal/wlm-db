@@ -41,7 +41,8 @@ import {
     useOptimizeStorageTierMutation,
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
-    useOptimizeComputeConfigForBulkMutation
+    useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMaxdopConfigForBulkMutation
 } from '../../../utils/apiService';
 import {
     setGwDatabaseInstance,
@@ -97,6 +98,7 @@ const DashboardInnerPage = () => {
     const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
     const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
+    const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const callOptimizeApi = (type: any, rowData?: any, operation?: string) => {
@@ -226,6 +228,53 @@ const DashboardInnerPage = () => {
                 apiCall = optimizeStorageTier;
                 payload = null;
             }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+            apiCall = optimizeMaxdopConfigForBulk;
+            if (operation === 'bulk') {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'maxdop',
+                            databaseHosts: Object.values(
+                                rowData.reduce(
+                                    (
+                                        acc: Record<string, { id: string; sqlServerInstances: string[] }>,
+                                        {
+                                            databaseHostId,
+                                            instanceId,
+                                            hostName
+                                        }: { databaseHostId: string; instanceId: string; hostName: string }
+                                    ) => {
+                                        if (!acc[databaseHostId]) {
+                                            acc[databaseHostId] = {
+                                                id: databaseHostId,
+                                                sqlServerInstances: []
+                                            };
+                                        }
+                                        acc[databaseHostId].sqlServerInstances.push(instanceId);
+                                        return acc;
+                                    },
+                                    {}
+                                )
+                            )
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'maxdop',
+                            databaseHosts: [
+                                {
+                                    id: rowData?.databaseHostId,
+                                    sqlServerInstances: [rowData?.instanceId]
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -321,14 +370,23 @@ const DashboardInnerPage = () => {
                 payload: payload
             };
         } else {
-            apiData = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
-                databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance,
-                payload: payload
-            };
+            if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+                apiData = {
+                    credentialId:
+                        landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                    payload: payload
+                };
+            } else {
+                apiData = {
+                    credentialId:
+                        landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                    databaseHostId: selectedResourceId,
+                    instanceId: selectedDatabaseInstance,
+                    payload: payload
+                };
+            }
         }
 
         apiCall(apiData).then((res: any) => {
@@ -450,7 +508,7 @@ const DashboardInnerPage = () => {
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass={'innerPage'}
+                customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
                 hidePrimaryButton={
                     (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
