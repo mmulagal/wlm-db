@@ -17,12 +17,12 @@ import {
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 
-interface StorageTierTableProps {
+interface MaxdopTableProps {
     lastColDetails: any;
     handleBulkAction: any;
 }
 
-const MaxDopTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps) => {
+const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => {
     const disptach = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
@@ -30,23 +30,21 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let maxdopAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
-                    if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                    const maxdopObj = instanceData?.assessments?.maxDOP;
+                    const isMaxdopOptimized = isOptimized(maxdopObj?.status);
+                    if (!isMaxdopOptimized) {
+                        maxdopAssessmentData.push({
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
+                            maxdopPatch: maxdopObj?.current,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
+                            assessmentStatus: GETWELL_VALUES[maxdopObj?.status],
                             data: instanceData
                         });
                     }
@@ -55,21 +53,21 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            maxdopAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
-                ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                ASSESSMENT_CONFIG_NAMES.MAXDOP,
                 selectedRowsForOptimize
             );
         } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.MAXDOP);
         }
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
@@ -95,7 +93,7 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps
         },
         {
             Header: 'Missing patches',
-            accessor: 'performanceTier',
+            accessor: 'maxdopPatch',
             id: '3',
             width: '320px',
             filterOptions: 'auto',
@@ -103,7 +101,7 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, {}, inProgressOptimizationData, inProgressHostData)
+        lastColDetails(ASSESSMENT_CONFIG_NAMES.MAXDOP, {}, inProgressOptimizationData, inProgressHostData)
     ];
 
     const tableProps = useTable({
@@ -123,13 +121,13 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps
 
         disptach(setSelectedRowsForOptimize(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.MAXDOP, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>
