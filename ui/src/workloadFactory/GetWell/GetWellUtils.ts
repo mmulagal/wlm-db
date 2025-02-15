@@ -56,6 +56,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: ''
+        },
         recommendation: {
             title: 'Storage tier recommendation',
             description:
@@ -80,6 +88,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'File system headroom ',
             value: ''
         },
         recommendation: {
@@ -109,6 +125,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Log drive size recommendation',
             description:
@@ -134,6 +158,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempBD drive size',
             value: ''
         },
         recommendation: {
@@ -164,6 +196,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Data files (.mdf) placement recommendation',
             description:
@@ -189,6 +229,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: 'Volumes'
+        },
+        block_six: {
+            type: 'Impacted databases',
             value: ''
         },
         recommendation: {
@@ -218,6 +266,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempDB placement',
+            value: ''
+        },
         recommendation: {
             title: 'TempDB placement recommendation',
             description:
@@ -243,6 +299,11 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: 'Critical'
         },
+        block_five: {
+            type: 'Not optimized configuration',
+            value: ''
+        },
+
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
@@ -262,6 +323,10 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
+        },
+        block_five: {
+            type: 'Not optimized configuration',
+            value: ''
         },
         tags: ['Performance efficiency', 'Reliability']
     },
@@ -342,6 +407,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
@@ -367,6 +441,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted network adapters',
             value: ''
         },
         recommendation: {
@@ -407,6 +489,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
@@ -432,6 +523,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'License edition',
             value: ''
         },
         recommendation: {
@@ -472,6 +571,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Missing patches',
+            value: ''
+        },
         recommendation: {
             title: 'Microsoft SQL assessment recommendation',
             description:
@@ -497,6 +604,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'MAXDOP',
             value: ''
         },
         recommendation: {

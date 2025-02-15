@@ -24,12 +24,13 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
@@ -43,6 +44,7 @@ import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { handleDialog } from './optimizeUtils';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -279,6 +281,42 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 />
                             </div>
                         )}
+                </div>
+            );
+        }
+    };
+
+    const sectionFourContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        }
+    };
+
+    const sectionFiveContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
                 </div>
             );
         }
@@ -578,37 +616,43 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         });
     };
 
-    const handleDialog = () => {
-        setDialog(
-            <DialogComponent
-                header={`${type} optimization`}
-                content={
-                    <DialogContent
-                        type={type}
-                        recommendationOptions={cardData?.recommendationOptions}
-                        missingPermissions={cardData?.missingPermissions}
-                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
-                    />
-                }
-                primaryButton={GENERAL.CONTINUE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    callOptimizeApi(type);
-                }}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
-                hidePrimaryButton={
-                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
-                    cardData?.missingPermissions &&
-                    cardData?.missingPermissions.length > 0
-                }
-            />
-        );
+    const handleNavigateToOptimizePage = (type: string) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(setSelectedOptimizeConfig({ type: type, data: cardData }));
     };
+
+    //This is for inner page navigation
+    const handleDifferentNavigation = () => {
+        if (
+            type === 'Storage tier' ||
+            type === 'File system headroom' ||
+            type === 'Log drive size' ||
+            type === 'Data files' ||
+            type === 'Log files' ||
+            type === 'Thin provisioning' ||
+            type === 'Autosize' ||
+            type === 'Autosize-mode' ||
+            type === ' Fractional reserve' ||
+            type === 'Snapshot copy reserve' ||
+            type === 'Snapshot autodelete ' ||
+            type === 'Space management' ||
+            type === ' Tiering minimum cooling days' ||
+            type === 'OS type' ||
+            type === 'Space reservation' ||
+            type === 'Space allocation'
+        ) {
+            handleNavigateToOptimizePage(type);
+        } else {
+            handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
+        }
+    };
+
+    //This will be removed
+    const handleTemporaryDialog = () => {
+        handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
+    };
+
     return (
         <div className={styles.storageCardComponent}>
             {/* Section one */}
@@ -627,13 +671,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div>
 
             {/* Section three */}
-            <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
+            {/* <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
                 {sectionThreeContent(cardData)}
 
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
                     {cardData?.block_three?.type}
                 </DsTypography>
-            </div>
+            </div> */}
 
             {/* Section 4 */}
             <div className={styles.commonSection}>
@@ -651,6 +695,29 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     {cardData?.block_four?.type}
                 </DsTypography>
             </div>
+
+            {/* Section Next */}
+            <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
+                {sectionFourContent(cardData)}
+
+                <DsTypography variant="Regular_14" isDisabled={disableText}>
+                    {cardData?.block_five?.type}
+                </DsTypography>
+            </div>
+
+            {/* Section Next 2 */}
+            {cardData?.block_six && (
+                <div
+                    className={styles.thirdSection}
+                    style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}
+                >
+                    {sectionFourContent(cardData)}
+
+                    <DsTypography variant="Regular_14" isDisabled={disableText}>
+                        {cardData?.block_six?.type}
+                    </DsTypography>
+                </div>
+            )}
 
             {/* 5 Section */}
             {windowSize.width >= 1770 && (
@@ -709,7 +776,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                         ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
                                         : styles.buttonSection
                                 }
-                                style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
+                                style={{
+                                    width: windowSize.width >= 1770 ? '170px' : '20%',
+                                    position: 'relative',
+                                    left: windowSize.width >= 1770 ? '0px' : '112px'
+                                }}
                             >
                                 <DsButton variant="secondary" isDisabled={true}>
                                     {GENERAL.OPTIMIZE}
@@ -729,7 +800,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <DsButton
                             variant="secondary"
-                            onClick={() => handleDialog()}
+                            onClick={() => handleTemporaryDialog()}
                             isDisabled={loading || disableOptimizeButton}
                         >
                             {GENERAL.OPTIMIZE}

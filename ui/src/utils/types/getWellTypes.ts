@@ -161,6 +161,8 @@ export interface GwPerConfigCardInterface {
         value: string;
         smallFont?: boolean;
     };
+    block_five?: any;
+    block_six?: any;
     recommendation?: {
         title: string;
         description?: string;

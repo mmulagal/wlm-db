@@ -75,6 +75,7 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         range: ''
     },
     selectedRowsForOptimize: [],
+    selectedRowsForOptimizeInnerPage: [],
     enableFilter: true,
     potentialSavingsValues: {
         loading: false,
@@ -91,6 +92,9 @@ const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        setSelectedRowsForOptimizeInnerPage: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForOptimizeInnerPage = action.payload;
+        },
         setEnableFilter: (state, action: PayloadAction<any>) => {
             state.enableFilter = action.payload;
         },
@@ -146,6 +150,7 @@ const databaseHomeSlice = createSlice({
 });
 
 export const {
+    setSelectedRowsForOptimizeInnerPage,
     setEnableFilter,
     setSelectedRowsForOptimize,
     selectedTabSelection,
