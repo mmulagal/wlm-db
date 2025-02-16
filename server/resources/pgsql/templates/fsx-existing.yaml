@@ -136,7 +136,7 @@ Resources:
             OntapConfiguration:
                 SecurityStyle: UNIX
                 SizeInMegabytes: !Ref FSxDataVolumeSize
-                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                StorageVirtualMachineId: !Ref FSxReplicaSvmConfiguration
                 JunctionPath: !Join ['', [/, !Sub "${FSxDataVolumeName}_replica"]]
                 OntapVolumeType: RW
                 StorageEfficiencyEnabled: true
@@ -153,7 +153,7 @@ Resources:
             OntapConfiguration:
                 SecurityStyle: UNIX
                 SizeInMegabytes: !Ref FSxLogVolumeSize
-                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                StorageVirtualMachineId: !Ref FSxReplicaSvmConfiguration
                 JunctionPath: !Join ['', [/, !Sub "${FSxLogVolumeName}_replica"]]
                 OntapVolumeType: RW
                 StorageEfficiencyEnabled: true

@@ -58,7 +58,7 @@ Parameters:
     FSxSvmUuid:
         Description: UUID of the FSx Storage Virtual Machine
         Type: String
-    FSxReplicaSVMId:
+    FSxReplicaSvmId:
         Description: ID of the FSx Replica Storage Virtual Machine
         Type: String
     FSxReplicaSvmUuid:
