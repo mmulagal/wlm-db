@@ -20,31 +20,31 @@ const OptimizeCard = () => {
             case 'ONTAP / Tiering policy':
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedVolumes || '2' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Performance efficiency'] }
                 };
             case 'File system headroom':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Operational excellence'] }
                 };
             case 'Log drive size':
                 return {
                     block_one: { type: 'Impacted drives', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Operational excellence'] }
                 };
             case 'Data files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Performance efficiency', 'Operational excellence'] }
                 };
             case 'Log files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Performance efficiency', 'Operational excellence'] }
                 };
             case 'Thin provisioning':
@@ -56,40 +56,45 @@ const OptimizeCard = () => {
             case 'Space management':
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Operational excellence', 'Cost optimization'] }
                 };
             case ' Tiering minimum cooling days':
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Cost optimization'] }
                 };
             case 'OS type':
                 return {
                     block_one: { type: 'Impacted LUNs', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Performance efficiency'] }
                 };
             case 'Space reservation':
             case 'Space allocation':
                 return {
                     block_one: { type: 'Impacted LUNs', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Reliability'] }
                 };
             case 'Multipath I/O Policy':
+                return {
+                    block_one: { type: 'Impacted discs', value: data.impactedDatabases || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency', 'Reliability'] }
+                };
             case 'NTFS allocation unit size':
                 return {
                     block_one: { type: 'Impacted discs', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: ['Performance efficiency', 'Reliability'] }
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: ['Performance efficiency'] }
                 };
             case 'Network adapter settings':
             case 'Network adapters':
                 return {
                     block_one: { type: 'Impacted network adapters', value: data.impactedDatabases || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: ['Network adapter settings'] }
                 };
             default:
