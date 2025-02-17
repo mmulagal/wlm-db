@@ -62,7 +62,7 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
                 left: buttonRef.current
                     ? buttonRef.current.offsetLeft + buttonRef.current.offsetWidth - 500 /* Card width */
                     : 0,
-                height: noAccount ? '460px' : '484px'
+                height: '500px'
             }}
         >
             <StorageCredentials />
