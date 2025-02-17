@@ -266,6 +266,17 @@ const BulkOptimizePerHostRequestBody = Type.Object({
     )
 });
 
+const SnapshotPolicy = Type.Object({
+    uuid: Type.String(),
+    name: Type.String()
+});
+
+const AvailableSnapshotPoliciesResponse = Type.Object({
+    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicy)),
+    errorMessage: Type.Optional(Type.String())
+});
+type AvailableSnapshotPoliciesResponseType = Static<typeof AvailableSnapshotPoliciesResponse>;
+
 type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
 
 const BulkOptimizeStorageRequestBody = Type.Object({
@@ -343,6 +354,8 @@ export {
     MSSQLPatchDriftResponseType,
     SnapshotPolicyAssesmentDataType,
     ResilienceDriftAssessmentResponseType,
+    AvailableSnapshotPoliciesResponse,
+    AvailableSnapshotPoliciesResponseType,
     BulkOptimizeStorageRequestBody,
     BulkOptimizeStorageRequestBodyType,
     BulkOptimizePerHostRequestBodyType,

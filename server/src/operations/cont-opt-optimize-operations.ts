@@ -362,7 +362,7 @@ async function activeSqlNodeDetails(
         sqlServerName,
         databaseType,
         svmDetails,
-        awsAccountId: resourceDetail.cloud_provider_account_id,
+        awsAccountId: resourceDetail.cloud_provider_account_id!,
         serverNameWithHostName,
         instanceMetadata
     };
@@ -2447,4 +2447,4 @@ async function triggerAssessmentAfterOptimization(
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 
-export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings, optimizeStorageTier };
+export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings, optimizeStorageTier, activeSqlNodeDetails };
