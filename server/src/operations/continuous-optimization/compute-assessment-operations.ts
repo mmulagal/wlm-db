@@ -129,7 +129,8 @@ async function calculateComputeDrift(
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
-                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions }
+                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions },
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }

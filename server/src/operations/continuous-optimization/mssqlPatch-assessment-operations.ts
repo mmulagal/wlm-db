@@ -71,7 +71,8 @@ async function calculateMSSQLPatchDrift(
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
-                mssqlPatch: patchAssessment
+                mssqlPatch: patchAssessment,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
