@@ -348,7 +348,7 @@ interface TempDbDriveDetails {
     tempdbDriveTotalSizeMB: number;
 }
 interface Sizing {
-    'performance-tier': boolean;
+    'performance-tier': boolean | Array<number> | Array<{ volumeName: string; performanceTierPercent: number }>;
     'data-log-drive-details': LogDriveDetails[];
     'data-tempdb-drive-details': TempDbDriveDetails;
 }

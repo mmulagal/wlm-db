@@ -583,13 +583,16 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
         $Volumes = $Response.records
 
-        $isPerformanceTier100Percent = $true
         # loop through each volume and get data
-        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
+        # $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
+        $PerformanceTierDetails = @()
         foreach ($perVolumeData in $Volumes) {
-        if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
-                $isPerformanceTier100Percent = $false
-                break
+        if(($MappedVolumeNames -contains $perVolumeData.volume)) {
+                $object = @{
+                    "volumeName" = $perVolumeData.volume;
+                    "performanceTierPercent" = $perVolumeData.volume_blocks_footprint_bin0_percent}
+                $PerformanceTierDetails += $object
+               
         }
         }
     } catch {
@@ -721,7 +724,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $DriftAssessmentData['sizing']['data-tempdb-drive-details'] = $($defaultTempDBDriveDetails);
         }
 
-        $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierPercent);
+        $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
         $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($consolidatedDriveDetails));
         
     } catch { 
@@ -769,7 +772,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $filteredLogDrives = $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
         $AllDrives = $($filteredDataDrives; $filteredLogDrives)
         $AllDrives = $AllDrives | select -Unique
-        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object DriveLetter, BlockSize 
         $ntfsUnitSize = 65536
         $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
         $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)

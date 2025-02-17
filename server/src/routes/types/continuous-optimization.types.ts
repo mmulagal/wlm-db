@@ -25,6 +25,13 @@ const SizingViolationResponse = Type.Object({
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
+const StorageTierViolationResponse = Type.Object({
+    name: Type.String(),
+    percent: Type.Number()
+});
+
+type StorageTierViolationResponseType = Static<typeof StorageTierViolationResponse>;
+
 const ErrorResponse = Type.Object({ errorMessage: Type.String() });
 const ParameterDriftResponse = Type.Object({
     name: Type.String(),
@@ -40,10 +47,12 @@ const ParameterDriftResponse = Type.Object({
             ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
         })
     ),
+    storageTierViolations: Type.Optional(Type.Array(StorageTierViolationResponse)),
     tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
     missingPermissions: Type.Optional(Type.Array(Type.String())),
     recommendedSizeInGib: Type.Optional(Type.Number()),
-    current: Type.Optional(Type.String())
+    current: Type.Optional(Type.String()),
+    totalObjectsAssessed: Type.Optional(Type.Number())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
@@ -197,7 +206,8 @@ const StorageParameterDriftResponse = Type.Object({
         os: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
     }),
     sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
-    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
+    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
+    fileSystems: Type.Array(Type.String())
 });
 
 const ResilienceDriftAssessmentResponse = Type.Object({
@@ -338,5 +348,6 @@ export {
     BulkOptimizeGeneralRequestBodyType,
     OptimizePerHostRequestBody,
     OptimizePerHostRequestBodyType,
-    BulkOptimizeGeneralPerHostRequestBodyType
+    BulkOptimizeGeneralPerHostRequestBodyType,
+    StorageTierViolationResponseType
 };
