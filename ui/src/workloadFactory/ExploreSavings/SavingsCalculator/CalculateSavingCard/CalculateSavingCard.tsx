@@ -14,18 +14,18 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
     const dispatch = useDispatch();
     const { selectedExploreSavingsTab } = useAppSelector(state => state?.exploreSavings);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
+    const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
 
     // To set noAccount flag is present or not
     useEffect(() => {
-        if (credentialData && credentialData.length > 0) {
+        if (statusData && statusData?.isActive === true) {
             setNoAccount(false);
-        } else if (!credentialData || credentialData.length === 0) {
+        } else if (!statusData || statusData?.isActive === false) {
             setNoAccount(true);
         }
-    }, [credentialData]);
+    }, [statusData]);
 
     const handleTryIt = () => {
         dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
@@ -34,13 +34,25 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
     };
 
     const navigateAddCredentials = () => {
-        postBlueXPMessage({
-            type: BlueXPListeners.navigate,
-            payload: {
-                pathname: `../../credentials/create`,
-                replace: true
-            }
-        });
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: `../../credentials/create?from=/databases/storage-saving-calculator?type=ebs
+                    &to=/databases/storage-saving-calculator/ebs`,
+                    replace: true
+                }
+            });
+        } else {
+            postBlueXPMessage({
+                type: BlueXPListeners.navigate,
+                payload: {
+                    pathname: `../../credentials/create?from=/databases/explore-savings-fsxw?type=fsxw
+                    &to=/databases/explore-savings-fsxw/fsxw`,
+                    replace: true
+                }
+            });
+        }
     };
     return (
         <div
@@ -49,26 +61,27 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
                 top: buttonRef.current?.offsetHeight + 24, // 8px for spacing
                 left: buttonRef.current
                     ? buttonRef.current.offsetLeft + buttonRef.current.offsetWidth - 500 /* Card width */
-                    : 0
+                    : 0,
+                height: noAccount ? '460px' : '484px'
             }}
         >
             <StorageCredentials />
             <div className={styles.content}>
                 <DsTypography className={styles.heading} variant="Semibold_14">
-                    Calculate your savings on your existing volumes
+                    Calculate savings on your existing SQL Servers
                 </DsTypography>
                 {!noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? 'We can calculate how much you\'ll save by comparing the cost of your existing EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS file systems to compare with FSx for ONTAP in the calculator.'
-                            : 'We can calculate how much you\'ll save by comparing the cost of your existing FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows File Server file systems to compare with FSx for ONTAP in the calculator.'}
+                            ? 'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS database hosts to compare with FSx for ONTAP in the calculator.'
+                            : 'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows database hosts to compare with FSx for ONTAP in the calculator.'}
                     </DsTypography>
                 )}
                 {noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? 'We can calculate how much you can save comparing to your specific EBS. Add your credentials, go to explore savings and select the volumes you want to compare.'
-                            : 'We can calculate how much you can save comparing to your specific FSx for Windows File Server. Add your credentials, go to explore savings and select the volumes you want to compare.'}
+                            ? 'We can calculate how much you can save comparing to your specific SQL Servers using EBS. Add your credentials, go to explore savings and select the volumes you want to compare.'
+                            : 'We can calculate how much you can save comparing to your specific SQL Servers using FSx for Windows File Server. Add your credentials, go to explore savings and select the volumes you want to compare.'}
                     </DsTypography>
                 )}
             </div>

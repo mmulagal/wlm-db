@@ -426,8 +426,13 @@ async function updateLongRunningResourcePrepareJobs() {
     }
 }
 
-async function updateParentJobStatus(accountId: string, parentId: string, errorMsg?: string) {
-    logger.info('Updating parent job', { accountId, parentId });
+async function updateParentJobStatus(
+    accountId: string,
+    parentId: string,
+    isSandboxJob: boolean = false,
+    errorMsg?: string
+) {
+    logger.info('Updating parent job', { accountId, parentId, isSandboxJob });
 
     const parentJob = await getJobDetails(accountId, parentId);
 
@@ -438,24 +443,40 @@ async function updateParentJobStatus(accountId: string, parentId: string, errorM
     while (parentJob.status === JOBSTATUS.IN_PROGRESS) {
         const allSubJobs = await listJobs(accountId, '', '', parentId);
 
-        const jobStatus: JOBSTATUS = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
-            ? JOBSTATUS.IN_PROGRESS
-            : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
-            ? JOBSTATUS.FAILED
-            : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
-            ? JOBSTATUS.COMPLETED
-            : allSubJobs.some(job => job.status === JOBSTATUS.FAILED)
-            ? JOBSTATUS.WARNING
-            : JOBSTATUS.IN_PROGRESS;
+        let jobStatus: JOBSTATUS;
+
+        if (allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)) {
+            jobStatus = JOBSTATUS.IN_PROGRESS;
+        } else if (allSubJobs.every(job => job.status === JOBSTATUS.FAILED)) {
+            jobStatus = JOBSTATUS.FAILED;
+        } else if (allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)) {
+            jobStatus = JOBSTATUS.COMPLETED;
+        } else if (
+            isSandboxJob &&
+            allSubJobs.some(
+                job => job.status === JOBSTATUS.FAILED && job.name?.includes('Clean up resources for sandbox')
+            )
+        ) {
+            jobStatus = JOBSTATUS.WARNING;
+        } else if (isSandboxJob && allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+            jobStatus = JOBSTATUS.FAILED;
+        } else if (allSubJobs.some(job => job.status === JOBSTATUS.FAILED)) {
+            jobStatus = JOBSTATUS.WARNING;
+        } else {
+            jobStatus = JOBSTATUS.IN_PROGRESS;
+        }
+
         const modifiedJobData = {
             status: jobStatus,
             endTime: Date.now(),
             ...(errorMsg ? { error: errorMsg } : {})
         };
+
         if (jobStatus !== JOBSTATUS.IN_PROGRESS) {
             await updateJobDetails(accountId, parentId, modifiedJobData);
             return;
         }
+
         await sleep(30000);
     }
 }

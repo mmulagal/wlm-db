@@ -5,9 +5,11 @@ import {
     getCloudformationTemplate,
     deployStackOrCreateTemplateURL,
     getCollationDetailsForDeployment,
-    getTerraformSetup
+    getTerraformSetup,
+    getPGSQLTerraformSetup
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
+import '../simulator/scopes/aws/ssm-scope';
 import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
@@ -104,6 +106,18 @@ describe('Cloud formation operations', () => {
             NETWORKING_CONFIGURATION,
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
+            FSX_CONFIGURATION,
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'chatbot'
+        );
+        expect(resp.url).toBeDefined();
+    });
+    it('Get pgsql terraform setup', async () => {
+        const resp = await getPGSQLTerraformSetup(
+            NETWORKING_CONFIGURATION,
+            EC2_CONFIGURATION,
             FSX_CONFIGURATION,
             SQL_CONFIGURATION,
             '',

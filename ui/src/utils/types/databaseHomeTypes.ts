@@ -155,6 +155,7 @@ export interface AggregatedCostsRes {
 export interface DatabaseHostsEntities {
     enableFilter: boolean;
     selectedRowsForOptimize: Array<string> | any;
+    selectedRowsForOptimizeInnerPage: Array<string> | any;
     selectedTab: string;
     getJobsSummary: {
         jobsSummaryData: JobsSummaryRes | null;

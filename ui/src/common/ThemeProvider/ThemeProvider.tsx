@@ -23,6 +23,7 @@ const css = (strings: any, ...values: any) => {
 const ThemeProvider = React.memo(
     ({ children, theme, isRoot, className }: { className?: string; children: any; theme: string; isRoot: boolean }) => {
         const wrapperRef = useRef<HTMLDivElement>(null);
+
         useEffect(() => {
             //@ts-ignore
             const style = styles[theme];
@@ -30,15 +31,19 @@ const ThemeProvider = React.memo(
                 return;
             }
             const generatedString = style(css, palette);
+
             if (isRoot) {
                 const styleTag = window.document.createElement('style');
 
-                styleTag.innerHTML = `
-                :root, ::before, ::after {
-                    ${generatedString};
-                    ${theme === 'dark' ? 'color-scheme: dark;' : ''}
-                }
-            `;
+                // Create a text node for the style content and append it to the style tag
+                const styleContent = `
+                    :root, ::before, ::after {
+                        ${generatedString};
+                        ${theme === 'dark' ? 'color-scheme: dark;' : ''}
+                    }
+                `;
+                styleTag.appendChild(document.createTextNode(styleContent));
+
                 // @ts-ignore
                 ThemeProvider.activeStyles = generatedString;
 
@@ -49,8 +54,7 @@ const ThemeProvider = React.memo(
                 };
             } else {
                 if (wrapperRef.current) {
-                    wrapperRef.current.setAttribute('style', generatedString);
-                    // wrapperRef.current.style.height = "100%";
+                    wrapperRef.current.setAttribute('style', generatedString); // Set the generated styles directly
                 }
             }
         }, [theme, isRoot]);

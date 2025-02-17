@@ -1,4 +1,4 @@
-import { Button, DsTypography, Popover, Typography, useDialog } from '@netapp/design-system';
+import { Button, DsTooltipInfo, DsTypography, Popover, Typography, useDialog } from '@netapp/design-system';
 import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './PostgreCodebox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
@@ -13,6 +13,7 @@ import {
     cfDownloadName,
     generateOptionType,
     getCredDetails,
+    handleDownloadTerraform,
     handleDownloadYAML
 } from '../../../utils/utilityFunctions';
 import {
@@ -31,7 +32,7 @@ import {
     setMaskedPassword
 } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import { createPgsqlPayload } from '../PostgreUtils';
-import { getBaseUrl, useGetPgsqlTemplatesMutation } from '../../../utils/apiService';
+import { getBaseUrl, useGetPgsqlTemplatesMutation, useGetPGSQLTerraformSetupMutation } from '../../../utils/apiService';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
@@ -43,12 +44,17 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { isEqual } from 'lodash';
 import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
 import HighlightText from '../../../common/HighlightText/HighlightText';
+import TerraformColor from '../../CreateMsSql/Terraform/TerraformColor';
+import { downloadTerraformZip } from '../../CreateMsSql/MockTerraformZip/MockTerraformZip';
 
 const PostgreCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
+    const [terraformSetupResponse, setTerraformSetupResponse] = useState<any>(null);
+    const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
+    const [formDataTerraform, setFormDataTerraform] = useState<any>(null); // Saving form data on terraform setup API call
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
 
     const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
@@ -60,6 +66,7 @@ const PostgreCodebox = () => {
     const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
 
     const [loadTemplateData] = useGetPgsqlTemplatesMutation();
+    const [loadTerraformData] = useGetPGSQLTerraformSetupMutation();
     const dispatch = useDispatch();
     const { setDialog } = useDialog();
 
@@ -138,6 +145,12 @@ const PostgreCodebox = () => {
                 getTemplateResponse();
             }
         }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM && !isDemoMode) {
+            if (!formDataTerraform || !isEqual(mssqlFormData, formDataTerraform)) {
+                setFormDataTerraform(mssqlFormData);
+                getTerraformSetupResponse();
+            }
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dropDownValue]);
 
@@ -187,6 +200,37 @@ const PostgreCodebox = () => {
             } else {
                 setRightPanelTemplateResponse(null);
                 setIsRightPanelTemplateLoading(false);
+                dispatch(setIsLoading(false));
+            }
+        });
+    };
+
+    // This will call terraform setup API to get Terraform response for current payload.
+    const getTerraformSetupResponse = () => {
+        setIsTerraformDataLoading(true);
+        const actualData = mssqlFormData;
+        const credDetails = getCredDetails(actualData);
+        const changeObjectForm = {
+            mssqlForm: actualData
+        };
+        const resBody: any = createPgsqlPayload(changeObjectForm);
+        if (credDetails?.credId) {
+            resBody.credentialsId = credDetails?.credId;
+        }
+        if (credDetails?.region) {
+            resBody.region = credDetails?.region;
+        }
+        if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
+            resBody.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
+        }
+        loadTerraformData({ payload: resBody }).then((data: any) => {
+            if (data?.data) {
+                setTerraformSetupResponse(data?.data);
+                setIsTerraformDataLoading(false);
+                dispatch(setIsLoading(false));
+            } else {
+                setTerraformSetupResponse(null);
+                setIsTerraformDataLoading(false);
                 dispatch(setIsLoading(false));
             }
         });
@@ -266,6 +310,13 @@ const PostgreCodebox = () => {
                 </>
             );
         }
+        if (dropDownValue === CODE_VIEWER.TERRAFORM) {
+            return isTerraformDataLoading ? (
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_TERRAFORM} />
+            ) : (
+                <TerraformColor data={terraformSetupResponse} />
+            );
+        }
     };
 
     const handleCopy = () => {
@@ -314,8 +365,17 @@ const PostgreCodebox = () => {
                 <div className={styles.payloadContainer}>
                     <div className={styles.payloadHeader}>
                         <div className={styles.inputPart}>
-                            <DsTypography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                            <DsTypography
+                                className={styles.codeboxHeader}
+                                variant="Regular_14"
+                                style={{ color: 'var(--white)' }}
+                            >
                                 {dropDownValue}
+                                {dropDownValue === GENERAL.TERRAFORM && (
+                                    <DsTooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                        {GENERAL.TERRAFORM_CODEBOX_TOOLTIP}
+                                    </DsTooltipInfo>
+                                )}
                             </DsTypography>
                         </div>
                         <div className={styles.actionPopOver}>
@@ -347,6 +407,41 @@ const PostgreCodebox = () => {
                                                 );
                                             }}
                                         />
+                                    ))}
+                                {dropDownValue === CODE_VIEWER.TERRAFORM &&
+                                    (isTerraformDataLoading ? (
+                                        <div className={styles.menuItemDisabled}>
+                                            <Download />
+                                        </div>
+                                    ) : (
+                                        <div id="codebox-terraform-download">
+                                            <Download
+                                                onClick={() => {
+                                                    if (isDemoMode) {
+                                                        downloadTerraformZip(mssqlFormData?.dbDeploymentModel?.value);
+                                                    } else {
+                                                        handleDownloadTerraform(terraformSetupResponse?.url);
+                                                    }
+                                                    dispatch(clearNotifications());
+                                                    const ele = (
+                                                        <div>
+                                                            <div style={{ fontWeight: 400 }}>
+                                                                {GENERAL.TERRAFORM_DOWNLOAD}
+                                                            </div>
+                                                            <div style={{ fontWeight: 400 }}>
+                                                                {GENERAL.TERRAFORM_NOTICE}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                    dispatch(
+                                                        addNotification({
+                                                            notificationType: NOTIFICATION_TYPES.INFO,
+                                                            message: ele
+                                                        })
+                                                    );
+                                                }}
+                                            />
+                                        </div>
                                     ))}
                                 {dropDownValue !== CODE_VIEWER.TERRAFORM &&
                                     (dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (

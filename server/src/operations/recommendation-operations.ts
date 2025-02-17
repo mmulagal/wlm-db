@@ -7,6 +7,7 @@ import {
     FINDING,
     HOURS_IN_MONTH,
     HttpErrorCodes,
+    PRICING_LICENSE_KEYS,
     SQL_SERVICE_STATE,
     STD_ENGINE_EDITION,
     SqlServerDeploymentModel,
@@ -34,10 +35,6 @@ import {
 } from '../routes/types/storage-savings.types';
 
 const logger = getLogger();
-
-const SQL_ENT = 'SQL Ent';
-const SQL_STD = 'SQL Std';
-const SQL_WEB = 'SQL Web';
 
 async function isUsingEnterpriseConfiguration(
     accountId: string,
@@ -125,10 +122,10 @@ async function getLicenseRecommendations(
     );
     const usingEnterpriseConfiguration = enterpriseUsageResults.some(result => result);
 
-    let recommendedLicenseType = SQL_ENT;
+    let recommendedLicenseType = PRICING_LICENSE_KEYS.SQL_ENT;
     if (!usingEnterpriseConfiguration) {
         licenseFinding = FINDING.NOT_OPTIMIZED;
-        recommendedLicenseType = SQL_STD;
+        recommendedLicenseType = PRICING_LICENSE_KEYS.SQL_STD;
     }
     return { licenseFinding, recommendedLicenseType, sqlServerInstances };
 }
@@ -323,7 +320,7 @@ async function handleInstanceRecommendation(
         const [{ instanceType: recommendedInstanceType = '' } = {}] = instanceRecommendations || [];
 
         if (recommendedInstanceType && existingInstanceType !== recommendedInstanceType) {
-            const recommendedInstancePricingDetails = await getSqlInstancePricingDetails(
+            const { [recommendedInstanceType]: recommendedInstancePricingDetails } = await getSqlInstancePricingDetails(
                 region,
                 recommendedInstanceType as _InstanceType,
                 'windows', // TODO: fetch operating system from existing instance when supporting other instance operating systems
@@ -502,10 +499,10 @@ async function manualModeComputeLicenseDetails(
             existingSqlServerEditionLowerCase.includes('standard'))
     ) {
         existingLicenseType = existingSqlServerEditionLowerCase?.includes('enterprise')
-            ? SQL_ENT
+            ? PRICING_LICENSE_KEYS.SQL_ENT
             : existingSqlServerEditionLowerCase?.includes('web')
-            ? SQL_WEB
-            : SQL_STD;
+            ? PRICING_LICENSE_KEYS.SQL_WEB
+            : PRICING_LICENSE_KEYS.SQL_STD;
 
         existingInstanceHourlyPrice = getPricingByLicenseType(existingLicenseType, existingInstanceTypesPricingDetails);
 
@@ -633,13 +630,18 @@ function handleManualModeRecommendations(
         SqlServerDeploymentModel.SQL_AOAG_SHORT === sqlServerDeploymentType &&
         sqlServerEdition?.toLowerCase().includes('enterprise')
     ) {
-        const licenseType = isNonFreeEnterpriseEdition(sqlServerEdition) ? SQL_ENT : SQL_STD;
+        const licenseType = isNonFreeEnterpriseEdition(sqlServerEdition)
+            ? PRICING_LICENSE_KEYS.SQL_ENT
+            : PRICING_LICENSE_KEYS.SQL_STD;
         let instanceHourlyPrice;
         if (isOnpremTcoFlow) {
             instanceHourlyPrice = getPricingByLicenseType(licenseType, existingInstanceTypePricingDetails);
         } else {
             // As per requirement DBS-2753: Downgrade Enterprise to Standard could be suggested in case of AOAG config.
-            instanceHourlyPrice = getPricingByLicenseType(SQL_STD, existingInstanceTypePricingDetails);
+            instanceHourlyPrice = getPricingByLicenseType(
+                PRICING_LICENSE_KEYS.SQL_STD,
+                existingInstanceTypePricingDetails
+            );
         }
         awsInstanceLicenseMonthlyPrice =
             instanceHourlyPrice && existingInstanceHourlyPriceWithoutLicense
@@ -876,10 +878,10 @@ async function getSqlInstanceLicenseRecommendations(
             ) {
                 // pricing infor is only available for SQL Ent, SQL Std, SQL Web
                 const existingLicenseType = existingSqlServerEditionLowerCase.includes('enterprise')
-                    ? SQL_ENT
+                    ? PRICING_LICENSE_KEYS.SQL_ENT
                     : existingSqlServerEditionLowerCase.includes('web')
-                    ? SQL_WEB
-                    : SQL_STD;
+                    ? PRICING_LICENSE_KEYS.SQL_WEB
+                    : PRICING_LICENSE_KEYS.SQL_STD;
 
                 let { licenseFinding: currentLicenseFinding, recommendedLicenseType: recommendedSqlLicenseType } =
                     sqlServerEngineEdition === ENT_ENGINE_EDITION
@@ -952,7 +954,7 @@ async function getSqlInstanceLicenseRecommendations(
 
                 if (byolHourlyPrice) {
                     if (
-                        existingLicenseType === SQL_ENT &&
+                        existingLicenseType === PRICING_LICENSE_KEYS.SQL_ENT &&
                         recommendedSqlLicenseType !== existingLicenseType &&
                         recommendedLicenseHourlyPrice! < byolHourlyPrice
                     ) {
@@ -1025,7 +1027,7 @@ async function getSqlInstanceLicenseRecommendations(
                 }
                 if (
                     sqlServerEngineEdition === ENT_ENGINE_EDITION &&
-                    recommendedSqlLicenseType === SQL_STD &&
+                    recommendedSqlLicenseType === PRICING_LICENSE_KEYS.SQL_STD &&
                     recommendedSqlLicenseType !== existingLicenseType
                 ) {
                     recommendedLicense = {

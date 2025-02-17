@@ -148,14 +148,16 @@ const createPgsqlPayload = (state: any) => {
                     : state.mssqlForm.dbDeploymentModel?.value === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
                     ? 'ha'
                     : 'standalone',
-            sqlServerName: state.postgreForm.postgreServerName || '',
-            serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
-            serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
-            sqlVersion: state.postgreForm.postgreVersion?.value || ''
+            sqlServerName: state?.postgreForm?.postgreServerName || '',
+            serviceAccountName: state.mssqlForm?.dbCredentials?.name || '',
+            serviceAccountPassword: state.mssqlForm?.dbCredentials?.password || '',
+            sqlVersion: state.postgreForm?.postgreVersion?.value || ''
         },
-        topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
-        enableCloudWatch: state.mssqlForm.cloudWatch,
-        tags: state.mssqlForm.tags.filter((tag: TagObj) => tag.key)
+        topicArn: state.mssqlForm?.simpleNotification?.snsState
+            ? state.mssqlForm?.simpleNotification?.snsARN?.value
+            : '',
+        enableCloudWatch: state.mssqlForm?.cloudWatch,
+        tags: state.mssqlForm?.tags.filter((tag: TagObj) => tag.key)
     };
     return payload;
 };

@@ -192,10 +192,9 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     tooltip: {
                         enabled: false, // Disable the default tooltip
                         external: function (context) {
-                            // Tooltip Element
                             let tooltipEl = document.getElementById('chartjs-tooltip');
 
-                            // Create an element if it doesn't exist
+                            // Create the tooltip element if it doesn't exist
                             if (!tooltipEl) {
                                 tooltipEl = document.createElement('div');
                                 tooltipEl.id = 'chartjs-tooltip';
@@ -211,46 +210,71 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                                 document.body.appendChild(tooltipEl);
                             }
 
-                            // Hide tooltip if no data
                             const tooltipModel = context.tooltip;
+
+                            // Hide the tooltip if there is no data
                             if (tooltipModel.opacity === 0) {
                                 //@ts-ignore
                                 tooltipEl.style.opacity = 0;
                                 return;
                             }
 
-                            // Set position
+                            // Set tooltip position
                             const position = context.chart.canvas.getBoundingClientRect();
                             tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
                             tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
                             //@ts-ignore
                             tooltipEl.style.opacity = 1;
 
-                            // Build custom HTML content
-                            const body = tooltipModel.body
-                                .map(item => {
-                                    let label = item.lines[0]; // Tooltip content
-                                    let color = 'black';
-                                    if (label.includes('issues')) {
-                                        color = '#FDC300';
-                                    } else if (label.includes('Completed')) {
-                                        color = '#68C6B3';
-                                    } else if (label.includes('Failed')) {
-                                        color = '#FE5502';
-                                    }
+                            // Clear existing content
+                            while (tooltipEl.firstChild) {
+                                tooltipEl.removeChild(tooltipEl.firstChild);
+                            }
 
-                                    if (selectedTimeFrame === 'Last 30 days') {
-                                        label = context.tooltip.title[0] + ' | ' + label;
-                                    }
+                            // Build the tooltip content safely
+                            tooltipModel.body.forEach(item => {
+                                let label = item.lines[0];
+                                let color = 'black';
 
-                                    return `<div style="color: ${color}; display: flex; align-items: center; ">
-                                            <span style="width: 8px; height: 8px; background: ${color}; border-radius: 50%; margin-right: 10px;"></span>
-                                            <span style="font-size: 13px; color: var(--text-primary)">${label}</span>
-                                        </div>`;
-                                })
-                                .join('');
+                                if (label.includes('issues')) {
+                                    color = '#FDC300';
+                                } else if (label.includes('Completed')) {
+                                    color = '#68C6B3';
+                                } else if (label.includes('Failed')) {
+                                    color = '#FE5502';
+                                }
 
-                            tooltipEl.innerHTML = `<div style=" display: flex; flex-direction: column; gap: 16px; justify-content: center; border: none  ">${body}</div>`;
+                                if (selectedTimeFrame === 'Last 30 days') {
+                                    label = context.tooltip.title[0] + ' | ' + label;
+                                }
+
+                                // Create a tooltip row
+                                const row = document.createElement('div');
+                                row.style.display = 'flex';
+                                row.style.alignItems = 'center';
+                                row.style.gap = '10px';
+                                row.style.marginBottom = '8px';
+
+                                // Create the color dot
+                                const colorDot = document.createElement('span');
+                                colorDot.style.width = '8px';
+                                colorDot.style.height = '8px';
+                                colorDot.style.backgroundColor = color;
+                                colorDot.style.borderRadius = '50%';
+
+                                // Create the label text
+                                const labelText = document.createElement('span');
+                                labelText.style.fontSize = '13px';
+                                labelText.style.color = 'var(--text-primary)';
+                                labelText.textContent = label; // Use textContent for safety
+
+                                // Append elements to the row
+                                row.appendChild(colorDot);
+                                row.appendChild(labelText);
+
+                                // Append the row to the tooltip
+                                tooltipEl.appendChild(row);
+                            });
                         }
                     }
                 },
