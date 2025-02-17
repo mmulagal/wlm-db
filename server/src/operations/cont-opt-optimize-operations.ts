@@ -596,11 +596,13 @@ async function modifySizingAttributes(
                 parentJobId,
                 instanceToAssess
             );
+            errorMessage = ` ${childJobsStatus.map(job => job?.errorMessage)}`;
             jobStatus = childJobsStatus.some(job => job?.jobStatus === JOBSTATUS.WARNING)
                 ? JOBSTATUS.WARNING
                 : JOBSTATUS.COMPLETED;
             updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         } else {
+            errorMessage = ` ${childJobsStatus.map(job => job?.errorMessage)}`;
             jobStatus = JOBSTATUS.FAILED;
             updateLongRunningAuditGroup(AuditStatus.FAILED, 'Failed to optimize sizing');
         }
@@ -2412,6 +2414,7 @@ async function triggerAssessmentAfterOptimization(
     );
 
     let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
     if (!isDemoFlow) {
         let retries = 5;
         while (retries > 0) {
@@ -2427,6 +2430,7 @@ async function triggerAssessmentAfterOptimization(
                 ? JOBSTATUS.WARNING
                 : JOBSTATUS.IN_PROGRESS;
             if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
+                errorMessage = allSubJobs.find(job => job.status === JOBSTATUS.FAILED)?.error || '';
                 break;
             }
             await sleep(30000);
@@ -2436,7 +2440,8 @@ async function triggerAssessmentAfterOptimization(
     await updateJobDetails(accountId, parentJobId, {
         status: masterJobStatus,
         endTime: Date.now(),
-        description: `Optimization completed for ${serverNameWithHostName}`
+        description: `Optimization completed for ${serverNameWithHostName}`,
+        error: errorMessage
     });
 
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
