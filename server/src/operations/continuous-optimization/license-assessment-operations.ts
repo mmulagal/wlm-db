@@ -47,7 +47,8 @@ async function calculateLicenseDrift(
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
-                license: licenseAssessment
+                license: licenseAssessment,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }

@@ -723,7 +723,7 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxSvmUuid"
             - !GetAtt "ExistingFSxStack.Outputs.FSxSvmUuid"
-        FSxReplicaSVMId:
+        FSxReplicaSvmId:
           !If
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmId"

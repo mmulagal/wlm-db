@@ -403,6 +403,13 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getPGSQLTerraformSetup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/pgsql/terraform/setup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1025,6 +1032,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeMaxdopConfigForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/maxdop`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1077,7 +1091,8 @@ export const {
     useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
     useGetTerraformSetupMutation,
-    useGetPgsqlTemplatesMutation
+    useGetPgsqlTemplatesMutation,
+    useGetPGSQLTerraformSetupMutation
 } = databaseHomeApi;
 
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
@@ -1158,5 +1173,6 @@ export const {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
-    useOptimizeComputeConfigForBulkMutation
+    useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMaxdopConfigForBulkMutation
 } = getWellApi;
