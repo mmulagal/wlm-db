@@ -3,11 +3,11 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { AvailableSnapshotPoliciesResponseType } from '../../routes/types/continuous-optimization.types';
 import { WorkloadInstance } from '../../utils/common-types';
-import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import { GET_CLUSTER_SNAPSHOT_POLICIES } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import { sqlResponseParsing } from '../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 
 const logger = getLogger();
@@ -55,18 +55,15 @@ async function getAvailableSnapshotPolicyList(
         const command = [GET_CLUSTER_SNAPSHOT_POLICIES(instanceRecord, svmDetails.StorageVirtualMachines[0].UUID!)];
         const ssmComment = 'Get available snapshot policies';
 
-        const ssmResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                command,
-                instanceRecord.activeNodeInstanceid,
-                ssmComment,
-                accountId,
-                false,
-                ASSESSMENT_SSM_EXECUTION_TIMEOUT
-            )
+        const ssmResponse = await callSsmExecution(
+            credentialsId,
+            region,
+            command,
+            instanceRecord.activeNodeInstanceid,
+            ssmComment,
+            accountId,
+            false,
+            CUSTOM_SSM_EXECUTION_TIMEOUT
         );
         const parsedSsmResponse = sqlResponseParsing(ssmResponse);
         logger.info('SSM response', parsedSsmResponse);
