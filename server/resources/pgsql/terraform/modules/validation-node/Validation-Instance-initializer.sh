@@ -114,18 +114,27 @@ download_file() {
 }
 
 # Function to verify and extract scripts
-verify_and_extract() {
+unzip_archive() {
     local source=$1
-    local dest=$2
-    local signature=$3
-    local pub_key=$4
-    local resource_id=$5
-    local deployment_name=$6
+    local destination=$2
+    
+    echo "Unzipping $source to $destination"
+    if ! sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s "$source" -d "$destination"; then
+        echo "Error unzipping $source"
+        return 1
+    fi
+}
 
-    echo "Verifying and extracting with inputs: source=${source}, dest=${dest}, signature=${signature}, pub_key=${pub_key}, resource_id=${resource_id}, deployment_name=${deployment_name}"
-
-    if ! /home/ec2-user/cfn/scripts/unzip-archive.sh -s "${source}" -d "${dest}"; then
-        echo "Error extracting ${source}"
+verify_signature() {
+    local file=$1
+    local signature=$2
+    local pubkey=$3
+    local resource=$4
+    local deployment_name=$5
+    
+    echo "Verifying signature for $file"
+    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "$file" -s "$signature" -p "$pubkey" -r "$resource" -n "$deployment_name"; then
+        echo "Error verifying signature for $file"
         return 1
     fi
 }
@@ -192,9 +201,10 @@ main() {
     
     download_file "{{{ ArtifactsSignatures }}}" "/home/ec2-user/cfn/signig_files.zip" 
     
-    verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
-    verify_and_extract "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
-    verify_and_extract "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.sig" "/home/ec2-user/cfn/signig_files/fsx_certs.zip.pub" "ValidationNode1" "${deployment_name}" 
+    unzip_archive "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn"
+    verify_signature "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" 
+    unzip_archive "/home/ec2-user/cfn/scripts/validation.zip" "/home/ec2-user/cfn/scripts"
+    unzip_archive "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn"
 
     validate_vpc "${subnet_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" 
     validate_fsx_connectivity "${perform_fsx_check}" "${fsx_file_system_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" 
