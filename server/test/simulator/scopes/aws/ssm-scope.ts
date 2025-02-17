@@ -90,13 +90,14 @@ import {
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_MSSQL_VERSION,
-    GET_INSTALLED_SQL_PATCHES
+    GET_INSTALLED_SQL_PATCHES,
+    GET_CLUSTER_SNAPSHOT_POLICIES
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
-
+import { SNAPSHOT_POLICY_LIST_PARAM, SNAPSHOT_POLICY_LIST_SVM_UUID } from '../../../utils/consts';
 const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
@@ -570,6 +571,9 @@ const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
 const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
+const listSnapshotPolicies = {
+    commands: [GET_CLUSTER_SNAPSHOT_POLICIES(SNAPSHOT_POLICY_LIST_PARAM, SNAPSHOT_POLICY_LIST_SVM_UUID)]
+};
 
 ssmMock
     .on(SendCommandCommand)
@@ -783,7 +787,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getInstalledSQLVersion })
     .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
-    .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand);
+    .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand)
+    .on(SendCommandCommand, { Parameters: listSnapshotPolicies })
+    .resolves(getSampleCommandResponse('listSnapshotPolicies'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1024,7 +1030,17 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-InstalledSQLVersionCommand'
     })
-    .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse);
+    .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-listSnapshotPoliciesCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'listSnapshotPoliciesCommand',
+            getCommandInvocationResponse.listSnapshotPoliciesCommandResponse.StandardOutputContent
+        )
+    );
+
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

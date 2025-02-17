@@ -333,7 +333,9 @@ async function activeSqlNodeDetails(
         credentialsId,
         region,
         node1InstanceId,
-        node2InstanceId
+        node2InstanceId,
+        undefined,
+        accountId
     );
     logger.info('instancesDetails', instancesDetails);
     const sqlAuthEnabled =
