@@ -342,6 +342,7 @@ Resources:
                         fi
     NetworkInterface2:
         Type: AWS::EC2::NetworkInterface
+        Condition: IsHACluster
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet2ID'
@@ -358,6 +359,7 @@ Resources:
                     Value: !Ref 'SqlServerName'
     SqlNode2:
         Type: AWS::EC2::Instance
+        Condition: IsHACluster
         CreationPolicy:
             ResourceSignal:
                 Count: '1'

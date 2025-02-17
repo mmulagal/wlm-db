@@ -127,7 +127,7 @@ Conditions:
     LogFeatureEnabled: !Equals
         - !Ref 'EnableCloudWatchLogFeature'
         - 'true'
-    IsHaCluster: !Equals
+    IsHACluster: !Equals
         - !Ref 'SQLDeploymentMode'
         - 'ha'
 Resources:
@@ -293,7 +293,7 @@ Resources:
                     shutdown now
     ValidationNode2:
         Type: AWS::EC2::Instance
-        Condition: IsHaCluster
+        Condition: IsHACluster
         CreationPolicy:
             ResourceSignal:
                 Count: '1'
