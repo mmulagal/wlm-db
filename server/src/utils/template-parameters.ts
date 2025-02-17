@@ -26,7 +26,7 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             description: `${dbEngineType} Server deployment mode`,
             type: 'String',
             default: 'fci',
-            allowedValues: ['fci', 'standalone']
+            allowedValues: ['fci', 'standalone', 'ha']
         },
         {
             name: 'CfDeployRoleName',

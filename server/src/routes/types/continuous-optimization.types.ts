@@ -179,6 +179,16 @@ const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
     errorMessage: Type.String()
 });
+
+const SnapshotPolicyAssesmentData = Type.Object({
+    timestamp: Type.Number(),
+    tags: Type.Array(Type.String()),
+    violations: Type.Array(Type.String()),
+    severity: Type.String(),
+    status: Type.String()
+});
+type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
+
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
     configuration: Type.Object({
@@ -189,6 +199,12 @@ const StorageParameterDriftResponse = Type.Object({
     sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
     layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
 });
+
+const ResilienceDriftAssessmentResponse = Type.Object({
+    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse]))
+});
+type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
+
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
@@ -197,7 +213,8 @@ const DriftAssessmentResponse = Type.Object({
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse]))
+    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
+    resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -312,6 +329,8 @@ export {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
     MSSQLPatchDriftResponseType,
+    SnapshotPolicyAssesmentDataType,
+    ResilienceDriftAssessmentResponseType,
     BulkOptimizeStorageRequestBody,
     BulkOptimizeStorageRequestBodyType,
     BulkOptimizePerHostRequestBodyType,

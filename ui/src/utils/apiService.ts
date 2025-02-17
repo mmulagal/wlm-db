@@ -900,7 +900,7 @@ export const exploreSavingsApi = createApi({
             }),
             getSendEmail: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `v1/mssql/storage-savings/email/calculations`,
+                    url: `v1/notification/email?emailType=savings-calculations`,
                     method: 'POST',
                     body: payload
                 })
@@ -1022,6 +1022,13 @@ export const getWellApi = createApi({
             optimizeComputeConfigForBulk: builder.mutation({
                 query: ({ credentialId, regionId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/compute`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
+            optimizeMaxdopConfigForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/maxdop`,
                     method: 'POST',
                     body: payload
                 })
@@ -1158,5 +1165,6 @@ export const {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
-    useOptimizeComputeConfigForBulkMutation
+    useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMaxdopConfigForBulkMutation
 } = getWellApi;

@@ -50,7 +50,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
     const [isCardOpen, setIsCardOpen] = useState(false);
-    const [emailStatus, setEmailStatus] = useState(false);
+
     const [getSendEmail] = useGetSendEmailMutation();
 
     const {
@@ -119,46 +119,52 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     };
 
     const sendEmail = async () => {
-        setEmailStatus(true);
-        const elem = document.getElementById('export-pdf') as HTMLElement;
-        var options = {
-            filename: `SavingsCalculator.pdf`,
-            compression: 'MEDIUM'
-        };
-        const report = await downloadPdfEmail(elem, options, true, () => {});
-        const formData = new FormData();
-        formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
-        formData.append('userEmail', userMetadata?.email);
-        formData.append('emailSubject', setEmailSubject());
-        getSendEmail({ payload: formData })
-            .then(resp => {
-                if (!resp.error) {
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: 'Calculation report was sent to you by email'
-                        })
-                    );
-                } else {
+        setPrintState(true);
+        setTimeout(async () => {
+            const elem = document.getElementById('export-pdf') as HTMLElement;
+            var options = {
+                filename: `SavingsCalculator.pdf`,
+                compression: 'MEDIUM'
+            };
+            const report = await downloadPdfEmail(elem, options, true, () => {});
+
+            const formData = new FormData();
+            formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
+            formData.append('userEmail', userMetadata?.email);
+            formData.append('emailType', 'savings-calculations');
+            formData.append('storageType', setEmailSubject());
+            getSendEmail({ payload: formData })
+                .then(resp => {
+                    if (!resp.error) {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: 'Calculation report was sent to you by email'
+                            })
+                        );
+                    } else {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                //@ts-ignore
+                                message: resp?.error?.data?.message
+                            })
+                        );
+                    }
+
+                    setPrintState(false);
+                })
+                .catch(err => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            //@ts-ignore
-                            message: resp?.error?.data?.message
+                            message: 'Calculation report was failed to be delivered.'
                         })
                     );
-                }
-                setEmailStatus(false);
-            })
-            .catch(err => {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: 'Calculation report was failed to be delivered.'
-                    })
-                );
-                setEmailStatus(false);
-            });
+
+                    setPrintState(false);
+                });
+        }, 10);
     };
 
     const printDocument = () => {
@@ -248,7 +254,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 : styles.savingsHeading
                         }
                     >
-                        <DsTypography variant="Regular_24">{GENERAL.SAVINGS_CALCULATOR}</DsTypography>
+                        <DsTypography variant="Regular_24" style={{ width: '188px', maxWidth: '188px' }}>
+                            {GENERAL.SAVINGS_CALCULATOR}
+                        </DsTypography>
                         {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
                             <DsButton
@@ -388,7 +396,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     disableState={disableState}
                     isMutliFsx={isMutliFsx}
                     sendEmail={sendEmail}
-                    emailStatus={emailStatus}
+                    emailStatus={printState}
                 />
             </div>
         </div>

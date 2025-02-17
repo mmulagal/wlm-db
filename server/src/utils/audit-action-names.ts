@@ -18,7 +18,8 @@ const storageConfigDescriptions: { [key: string]: string } = {
     'tiering-min-cooling-days': 'Tiering minimum cooling days',
     'tiering-policy': 'Tiering policy',
     'space-reservation-enabled': 'Space reservation',
-    'space-allocation-allocate': 'Space allocation'
+    'space-allocation-allocate': 'Space allocation',
+    'snapshot-policy': 'Snapshot policy'
 };
 
 const storageOSDescriptions: { [key: string]: string } = {

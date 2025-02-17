@@ -53,7 +53,15 @@
         "region": "us-east-1"
     },
     "ec2": {
-        "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
+        "vcpu-filter": [
+            "2",
+            "4",
+            "8",
+            "16",
+            "32",
+            "64",
+            "72"
+        ]
     },
     "ssm": {
         "poll-interval": "1s",
@@ -70,7 +78,7 @@
         }
     },
     "db": {
-        "managed-instance":{
+        "managed-instance": {
             "update-recommendation-preference": "1d"
         },
         "tco": {
@@ -83,14 +91,17 @@
             }
         },
         "assessment": {
-            "interval":"24h"
+            "interval": "24h"
         }
     },
     "redis": {
         "endpoint": "127.0.0.1:6379",
         "cron-job-interval": "24h"
     },
-    "reporting":{
+    "reporting": {
         "bucket-name": "staging.reports.data-services.tlveng.netapp.com"
+    },
+    "notification": {
+        "senderEmail": "calculator@console.workloads.netapp.com"
     }
 }

@@ -88,7 +88,7 @@ ontap_request () {
 check_and_create_ontap_volumes() {
     local return_result=""
     # Check if data volume exists
-    ontap_request 'GET' "storage/volumes?name=$fsxdatavolumename"
+    ontap_request 'GET' "storage/volumes?name=$fsxdatavolumename&svm.name=$fsxsvmname"
     data_volume=$(echo $return_result | jq -r '.records[0].name')
     if [ "$data_volume" != "$fsxdatavolumename" ]; then
         echo "Creating data volume..."
@@ -100,7 +100,7 @@ check_and_create_ontap_volumes() {
     fi
 
     # Check if log volume exists
-    ontap_request 'GET' "storage/volumes?name=$fsxlogvolumename"
+    ontap_request 'GET' "storage/volumes?name=$fsxlogvolumename&svm.name=$fsxsvmname"
     log_volume=$(echo $return_result | jq -r '.records[0].name')
     if [ "$log_volume" != "$fsxlogvolumename" ]; then
         echo "Creating log volume..."
