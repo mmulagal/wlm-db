@@ -17,14 +17,9 @@ async function initializeDatabase() {
     prisma.client = new PrismaClient();
 }
 
-// Function to sanitize user input
-function sanitizeInput(input: string): string {
-    return input.replace(/(["'$`\\])/g, '\\$1');
-}
-
 // Function to validate user input
 function validateInput(input: string): boolean {
-    return /^[a-zA-Z0-9/\s]+$/.test(input);
+    return /^[a-zA-Z0-9_./\s]+$/.test(input);
 }
 
 async function execute(command: string, timeout?: number, cwd?: string) {
@@ -36,7 +31,7 @@ async function execute(command: string, timeout?: number, cwd?: string) {
 
     return new Promise(resolve => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        exec(sanitizeInput(command), { cwd, timeout }, (error: any, stdout: any, stderr: any) => {
+        exec(command, { cwd, timeout }, (error: any, stdout: any, stderr: any) => {
             if (error) {
                 logger.error('Failed to execute shell commands', error);
             }
