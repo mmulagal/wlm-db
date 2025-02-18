@@ -610,7 +610,7 @@ async function calculateStorageDrift(
             let underProvisionedDrives;
             let ignoredDrives;
             let currentSizePercentForAllVolumes;
-            const storageTierViolations: StorageTierViolationResponseType[] = [];
+            let storageTierViolations: StorageTierViolationResponseType[] = [];
             let totalObjectsAssessed = 1;
             let resourceType = ASSESSMENT_RESOURCE_TYPE.VOLUME;
 
@@ -633,17 +633,19 @@ async function calculateStorageDrift(
                         if (typeof value === 'number') {
                             value = [value];
                         } else {
-                            details.forEach((e: { performanceTierPercent: number; volumeName: any } | number) => {
-                                if (typeof e !== 'number') {
-                                    if (e.performanceTierPercent !== 100) {
-                                        storageTierViolations.push({
-                                            name: e.volumeName,
-                                            percent: e.performanceTierPercent
-                                        });
-                                    }
-                                }
-                            });
-                            value = details.map((e: { performanceTierPercent: number }) => e.performanceTierPercent);
+                            storageTierViolations = details
+                                .filter(
+                                    (volumeDetail: { performanceTierPercent: number; volumeName: string } | number) =>
+                                        typeof volumeDetail !== 'number' && volumeDetail.performanceTierPercent !== 100
+                                )
+                                .map((volumeDetail: { performanceTierPercent: number; volumeName: string }) => ({
+                                    name: volumeDetail.volumeName,
+                                    percent: volumeDetail.performanceTierPercent
+                                }));
+                            value = details.map(
+                                (volumeDetail: { performanceTierPercent: number }) =>
+                                    volumeDetail.performanceTierPercent
+                            );
                         }
                         totalObjectsAssessed = value.length;
                         const minSizePercent = Math.min(...value);
