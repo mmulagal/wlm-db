@@ -2630,7 +2630,7 @@ async function triggerAssessmentAfterOptimization(
     let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     if (!isDemoFlow) {
-        let retries = 5;
+        let retries = 10;
         while (retries > 0) {
             retries -= 1;
             const allSubJobs = await listJobs(accountId, '', '', parentJobId);
