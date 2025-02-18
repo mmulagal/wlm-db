@@ -12,7 +12,12 @@ import getLogger from '../../utils/logger';
 import { LicenseAssessment, Metadata } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { ENT_ENGINE_EDITION, FINDING, SQL_STD } from '../../utils/consts';
-import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 
@@ -67,7 +72,8 @@ async function calculateLicenseDrift(
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
-            sqlServerInstances
+            sqlServerInstances,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
