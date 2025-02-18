@@ -167,6 +167,7 @@ export interface GwPerConfigCardInterface {
         title: string;
         description?: string;
         values?: string[] | undefined;
+        valuesHeading?: string;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
         descriptionRssConfig?: {
             first?: string;

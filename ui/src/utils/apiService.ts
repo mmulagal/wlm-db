@@ -1035,7 +1035,7 @@ export const getWellApi = createApi({
             }),
             optimizeMaxdopConfigForBulk: builder.mutation({
                 query: ({ credentialId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/maxdop`,
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/max-dop`,
                     method: 'POST',
                     body: payload
                 })

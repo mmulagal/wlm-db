@@ -585,7 +585,7 @@ Resources:
         Type: AWS::FSx::StorageVirtualMachine
         Properties:
             Name: !Sub "${FSxSvmName}_replica"
-            FileSystemId: !Ref FSxFileSystemId
+            FileSystemId: !Ref FSxFileSystemConfiguration
             RootVolumeSecurityStyle: UNIX
 
     FSxReplicaDataVolumeConfiguration:

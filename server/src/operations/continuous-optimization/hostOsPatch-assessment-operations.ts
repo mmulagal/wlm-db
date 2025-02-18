@@ -10,7 +10,8 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY,
-    TEST_CONNECTION_COMMAND
+    TEST_CONNECTION_COMMAND,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -85,7 +86,8 @@ async function triggerHostOsPatchCollection(
         const existingAssessmentData = metadata.assessment;
         metadata.assessment = {
             ...existingAssessmentData,
-            hostOsPatch: hostOsPatchAssessment
+            hostOsPatch: hostOsPatchAssessment,
+            lastAssessedDate: new Date().getTime().toString()
         };
         updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     } catch (error) {
@@ -144,7 +146,8 @@ async function calculateHostOsPatchDrift(
             recommendation: recommendationMessage,
             objectsInViolation: ec2InstancesToPatch?.map(({ ec2InstanceId }) => ec2InstanceId),
             tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-            ec2InstancesToPatch
+            ec2InstancesToPatch,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error) {
         errorMessage = `Error while calculating host os patch drift. ${error}`;
@@ -323,7 +326,8 @@ async function updatePatchBaselineStatusForHost(
             const existingAssessmentData = metaObj.assessment;
             metaObj.assessment = {
                 ...existingAssessmentData,
-                hostOsPatch: hostOsPatchAssessment
+                hostOsPatch: hostOsPatchAssessment,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, undefined, databaseHostId, metaObj);
         });

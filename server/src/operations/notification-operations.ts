@@ -21,7 +21,7 @@ export default async function processEmailRequest(
     const { userEmail } = fields;
 
     const cacheKey = accountId + userEmail;
-    if (isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, 5, '1d')) {
+    if (isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, config.get('notification.max-emails-per-day'), '1d')) {
         throw createError(HttpErrorCodes.TOO_MANY_REQUESTS, 'Too many requests');
     }
 
@@ -65,15 +65,16 @@ async function sendSavingsCalculationEmail(
 
     const storageDesc: { [key: string]: string } = {
         ebs: 'Amazon EBS',
-        fsxw: 'FSx for ONTAP',
-        onprem: 'On-premises storage'
+        fsxw: 'Amazon FSx for Windows',
+        onprem: 'On-premises'
     };
     const desc = storageDesc[storageType];
-    const emailSubject = 'Calculation report was sent to you by email';
-    const emailBody = `The attached report details the Total Cost of Ownership (TCO) savings comparing your database workloads to SQL Server using ${desc} file systems. The details in the report include calculations, cost estimations and recommendations to help you compare your storage environment with FSx for ONTAP and decide whether FSx for ONTAP is more cost efficient for your organization.`;
+    const emailSubject = 'Your TCO Calculation Report is Ready';
+    const emailBody = `Attached, you will find the detailed report of your Total Cost of Ownership (TCO) analysis.
+    The report provides a comprehensive comparison of potential cost savings for your existing Microsoft SQL Server environment using ${desc} as storage, in comparison to using Amazon FSx for ONTAP as storage. It includes detailed calculations, cost estimations, and recommendations to help you make an informed decision about the most cost-effective storage solution for your organization.`;
     fileName = fileName.replace('.pdf', `_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.pdf`); // // fileName_dd-mm-yyyy.pdf
 
-    await sendEmail(config.get<string>('notification.senderEmail'), [userEmail], emailSubject, emailBody, [
+    await sendEmail(config.get<string>('notification.sender-email'), [userEmail], emailSubject, emailBody, [
         {
             filename: fileName,
             content: fileBuffer,

@@ -7,7 +7,8 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     NUMASTATIC,
-    SEVERITY
+    SEVERITY,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { sqlResponseParsing } from '../../utils/utils';
@@ -53,7 +54,8 @@ async function calculateRssConfigDrift(
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
-                rssConfig: rssConfigAssessment
+                rssConfig: rssConfigAssessment,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -73,7 +75,8 @@ async function calculateRssConfigDrift(
             tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
             rssAdapters,
             recommendedAdapterSettings,
-            tcpOffloadState
+            tcpOffloadState,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER
         };
     } catch (error: any) {
         errorMessage = `Error while calculating rss config drift. ${error.message}`;

@@ -50,6 +50,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
     const [isCardOpen, setIsCardOpen] = useState(false);
+    const { statusData } = useAppSelector(state => state.headers.getStatus);
 
     const [getSendEmail] = useGetSendEmailMutation();
 
@@ -71,14 +72,15 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
     useEffect(() => {
         if (
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+            (!statusData || statusData?.isActive === false) &&
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW)
         ) {
             setIsCardOpen(true);
         } else {
             setIsCardOpen(false);
         }
-    }, [savingsCalculatorFrom]);
+    }, [savingsCalculatorFrom, statusData]);
 
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
@@ -257,19 +259,20 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <DsTypography variant="Regular_24" style={{ width: '188px', maxWidth: '188px' }}>
                             {GENERAL.SAVINGS_CALCULATOR}
                         </DsTypography>
-                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
-                            <DsButton
-                                ref={buttonRef}
-                                onClick={() => {
-                                    handleOpenCard();
-                                }}
-                                type="text"
-                                icon={<CalculateIcon />}
-                            >
-                                Calculate savings based on existing resources
-                            </DsButton>
-                        )}
+                        {(!statusData || statusData?.isActive === false) &&
+                            (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
+                                <DsButton
+                                    ref={buttonRef}
+                                    onClick={() => {
+                                        handleOpenCard();
+                                    }}
+                                    type="text"
+                                    icon={<CalculateIcon />}
+                                >
+                                    Calculate savings based on existing resources
+                                </DsButton>
+                            )}
 
                         {isCardOpen && (
                             <CalculateSavingCard

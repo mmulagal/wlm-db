@@ -107,7 +107,7 @@ router.post(
 );
 
 router.post(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/maxdop`,
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/optimize/max-dop`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });
