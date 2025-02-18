@@ -39,10 +39,16 @@ async function calculateMSSQLPatchDrift(
         databaseHostId
     });
     let errorMessage = '';
+    let patchAssessment: MSSQLPatchAssessmentObject[] = [];
+    let metadata;
     try {
-        let patchAssessment: MSSQLPatchAssessmentObject[] = [];
-
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating host os patch drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+    try {
         const metadataObject = metadata as unknown as Metadata;
         const { assessment: { mssqlPatch } = {} } = metadataObject;
         logger.info('MSSQL patch assessment from metadata', mssqlPatch);
@@ -116,6 +122,14 @@ async function calculateMSSQLPatchDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, mssqlPatch: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }

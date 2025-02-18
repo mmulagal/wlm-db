@@ -26,7 +26,7 @@ const SizingViolationResponse = Type.Object({
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
 const StorageTierViolationResponse = Type.Object({
-    name: Type.String(),
+    volumeName: Type.String(),
     percent: Type.Number()
 });
 

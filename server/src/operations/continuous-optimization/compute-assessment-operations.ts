@@ -103,14 +103,23 @@ async function calculateComputeDrift(
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
+    let metadata;
+
+    try {
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating host os patch drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+
     try {
         let finding;
         let findingReasonCodes;
         let currentInstanceType;
         let recommendationOptions;
-
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
         const { assessment: { compute } = {} } = metadata as unknown as Metadata;
+
         if (!isEmpty(compute)) {
             ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
                 compute as ComputeAssessment);
@@ -180,6 +189,14 @@ async function calculateComputeDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating compute drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, compute: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }
@@ -219,7 +236,6 @@ async function managedHostsComputeAssessment(
     } catch (error) {
         errorMessage = `Error while performing compute assessment. ${error}`;
         logger.error(errorMessage);
-
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, computeAssessmentJobId, {
