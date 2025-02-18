@@ -371,7 +371,7 @@ logger.info('Initializing database');
 try {
     initializeDatabase();
     if (isActiveInstance()) {
-        await execute('node_modules/prisma/build/index.js migrate deploy');
+        await execute('node_modules/prisma/build/index.js', ['migrate', 'deploy']);
     }
 } catch (error) {
     logger.error('Failed to initialize database', error);
