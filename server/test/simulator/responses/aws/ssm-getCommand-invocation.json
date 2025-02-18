@@ -2118,34 +2118,5 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
-    },
-    "listSnapshotPoliciesCommandResponse": {
-        "$metadata": {
-            "httpStatusCode": 200,
-            "requestId": "7191d850-f5db-419c-9085-705087ee0af1",
-            "attempts": 1,
-            "totalRetryDelay": 0
-        },
-        "CloudWatchOutputConfig": {
-            "CloudWatchLogGroupName": "",
-            "CloudWatchOutputEnabled": false
-        },
-        "CommandId": "7535f58d-4663-4e4d-a2b0-1649f0f18405",
-        "Comment": "Get available snapshot policies",
-        "DocumentName": "AWS-RunPowerShellScript",
-        "DocumentVersion": "$DEFAULT",
-        "ExecutionElapsedTime": "PT2.676S",
-        "ExecutionEndDateTime": "2025-02-17T13:37:44.690Z",
-        "ExecutionStartDateTime": "2025-02-17T13:37:42.690Z",
-        "InstanceId": "i-08d11ea2049537b1e",
-        "PluginName": "aws:runPowerShellScript",
-        "ResponseCode": 0,
-        "StandardErrorContent": "",
-        "StandardErrorUrl": "",
-        "StandardOutputContent": "{\n  \"errors\": {},\n  \"snapshotPolicies\": [\n    {\n      \"name\": \"daily_weekretention\",\n      \"uuid\": \"4155f74d-b1ff-11ef-b315-11b9ce95d982\"\n    },\n    {\n      \"name\": \"default\",\n      \"uuid\": \"61a6f6da-34d3-11ee-9989-a51720c855dc\"\n    },\n    {\n      \"name\": \"default-1weekly\",\n      \"uuid\": \"61a7837b-34d3-11ee-9989-a51720c855dc\"\n    },\n    {\n      \"name\": \"none\",\n      \"uuid\": \"621ba70e-34d3-11ee-9989-a51720c855dc\"\n    }\n  ]\n}",
-        "StandardOutputUrl": "",
-        "Status": "Success",
-        "StatusDetails": "Success"
     }
-    
 }

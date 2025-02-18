@@ -1,4 +1,14 @@
 import { createResource, upsertDatabaseInstance } from "../../../src/lib/database/db";
+import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
+import '../../simulator/scopes/aws/pricing-scope';
+import '../../simulator/scopes/aws/compute-optimizer-scope';
+import '../../simulator/scopes/aws/cloud-watch-scope';
+import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/aws/ec2-scope';
+import '../../simulator/scopes/aws/ssm-scope';
+import '../../simulator/scopes/aws/fsx-scope';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from "../../utils/consts";
 import { getAvailableSnapshotPolicyList } from '../../../src/operations/continuous-optimization/resilience-optimize-operations';
 import { RESOURCE_ID } from '../../../src/utils/consts';
@@ -44,7 +54,7 @@ describe('List snapshot policies om svm and cluster level', () => {
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d'
         );
-        expect(res.snapshotPolicies).toBeDefined();
+        expect(res.snapshotPolicies?.length).toBeGreaterThan(1);
     });
 
 });
