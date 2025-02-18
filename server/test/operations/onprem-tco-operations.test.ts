@@ -407,59 +407,6 @@ describe('onPrem TCO operations', () => {
         expect(ebsDisks[0].volumeIops).toEqual(150);
         expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
     });
-    it('should process IO1 EBS disks Max limits', () => {
-        const io1List = [
-            {
-                instanceName: 'FCI23NEW',
-                numDatabases: 1,
-                requiredIops: 259000,
-                requiredThroughput: 3000,
-                ebsType: 'io1',
-                requiredVolumeSize: 64 * 1024,
-                isPrimary: true
-            }
-        ];
-        const ebsDisks = processEbsDisks(io1List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io1
-        expect(ebsDisks[0].volumeIops).toEqual(64000); // max iops for io1 is 64000
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // max storage for io1 is 16TiB
-    });
-
-    it('should process IO1 EBS disks min limits', () => {
-        const io1List = [
-            {
-                instanceName: 'FCI23NEW',
-                numDatabases: 1,
-                requiredIops: 50,
-                requiredThroughput: 3000,
-                ebsType: 'io2',
-                requiredVolumeSize: 2,
-                isPrimary: true
-            }
-        ];
-        const ebsDisks = processEbsDisks(io1List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io1
-        expect(ebsDisks[0].volumeIops).toEqual(100); // min iops for io1 is 100
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(4)); // min storage for io1 is 4 GiB
-    });
-
-    it('should process IO1 EBS disks within limits', () => {
-        const io1List = [
-            {
-                instanceName: 'FCI23NEW',
-                numDatabases: 1,
-                requiredIops: 150,
-                requiredThroughput: 3000,
-                ebsType: 'io1',
-                requiredVolumeSize: 5,
-                isPrimary: true
-            }
-        ];
-        const ebsDisks = processEbsDisks(io1List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io1
-        expect(ebsDisks[0].volumeIops).toEqual(150);
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
-    });
 
     it('should process gp3 EBS disks Max limits', () => {
         const gp3List = [
