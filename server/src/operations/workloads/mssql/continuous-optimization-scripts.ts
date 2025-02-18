@@ -14,7 +14,7 @@ import {
     SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
-import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+import { compressResponse, readSsmParameter, slqcmdExecutionTemplate, GET_FCI_NAME } from './ssm-script-utils';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -1078,6 +1078,60 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
     Sqlcmd -Q "${SERVER_VERSION}" -y 0
 `;
 
+const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: number, isClustered: boolean) => `
+    # Set MAXDOP
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+    $maxDopValue = ${maxDopValue}
+    $isClustered = [System.Convert]::ToBoolean('${isClustered}')
+
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+    }
+
+    ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+    ${GET_FCI_NAME}
+
+    # Set the MAXDOP value with RECONFIGURE WITH OVERRIDE
+    $setMaxDopQuery = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', $maxDopValue; RECONFIGURE WITH OVERRIDE;"
+    
+    $result = [PSCustomObject]@{
+        status = "failed"
+        message = ""
+    }
+
+    try {
+        $response = Call-SqlCmd -SqlCredential $sqlCredential -Query $setMaxDopQuery -InstanceName "$ServerInstanceName"
+        $result.status = "success"
+        $result.message = "MAXDOP set to $maxDopValue for instance $ServerInstanceName, $response"
+    } catch {
+        $result.message = "Error while configuring MAXDOP for instance $_"
+        if ($isClustered) {
+            try {
+                $ClusterName = Get-FCIName -sqlServerNameToFind $sqlInstanceName
+                if ($ClusterName -ne '') {
+                    $connectionString = "Server=$ClusterName;Integrated Security=True;TrustServerCertificate=True;"
+                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $setMaxDopQuery -ConnectionString $connectionString
+                    $result.status = "success"
+                    $result.message = "MAXDOP configured using cluster name $ClusterName."
+                } else {
+                    $result.message = "Cluster name not found for instance $sqlInstanceName."
+                }
+            } catch {
+                $result.message = "Error while configuring MAXDOP using cluster name: $_"
+            }
+        }
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -1090,5 +1144,6 @@ export {
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,
-    GET_INSTALLED_MSSQL_VERSION
+    GET_INSTALLED_MSSQL_VERSION,
+    SET_MAXDOP
 };

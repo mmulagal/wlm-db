@@ -90,7 +90,8 @@ import {
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_MSSQL_VERSION,
-    GET_INSTALLED_SQL_PATCHES
+    GET_INSTALLED_SQL_PATCHES,
+    SET_MAXDOP
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
@@ -560,6 +561,10 @@ const getInstalledSQLPatches = {
     commands: [GET_INSTALLED_SQL_PATCHES()]
 };
 
+const maxDOPOptimizationSsm = {
+    commands: [SET_MAXDOP('test-instance', 'MSSQLSERVER', false, 4, false)]
+};
+
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -783,7 +788,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getInstalledSQLVersion })
     .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
-    .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand);
+    .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand)
+    .on(SendCommandCommand, { Parameters: maxDOPOptimizationSsm })
+    .resolves(listSendCommandCommandResponse.setMaxDOPCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1024,7 +1031,11 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-InstalledSQLVersionCommand'
     })
-    .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse);
+    .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMaxDOPCommand'
+    })
+    .resolves(getCommandInvocationResponse.setMaxDOPCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

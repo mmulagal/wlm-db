@@ -2118,5 +2118,33 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "setMaxDOPCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
+        "Comment": "Set MaxDOP",
+        "DocumentName": "AWS-RunPowerShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT2.193S",
+        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
+        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
+        "InstanceId": "i-05978dd409ce8e0e6",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"status\":\"success\",\"message\":\"MAXDOP set to 4 for instance STVYCUAMIUIG\\\\SIGMA, Configuration option \\u0027show advanced options\\u0027 changed from 1 to 1. Run the RECONFIGURE statement to install. Configuration option \\u0027max degree of parallelism\\u0027 changed from 4 to 4. Run the RECONFIGURE statement to install.\"}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

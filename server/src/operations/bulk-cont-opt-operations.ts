@@ -5,7 +5,12 @@ import getLogger from '../utils/logger';
 import { HttpErrorCodes } from '../utils/consts';
 import { BulkOptimizeGeneralPerHostRequestBodyType } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
-import { optimizeOperatingSystemSettings, optimizeSizing, optimizeStorageTier } from './cont-opt-optimize-operations';
+import {
+    optimizeMaxDop,
+    optimizeOperatingSystemSettings,
+    optimizeSizing,
+    optimizeStorageTier
+} from './cont-opt-optimize-operations';
 import { updateParentJobStatus } from './database/job-operations';
 import { OPTIMIZATION_CATEGORIES, OPTIMIZE_SIZING_CONFIGS } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
@@ -47,6 +52,8 @@ async function bulkOptimization(
             ? 'Optimize operating system configuration'
             : optimizationCategory === OPTIMIZATION_CATEGORIES.STORAGE_TIER
             ? 'Optimize storage tier'
+            : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
+            ? 'Optimize maxdop configuration'
             : 'Optimize storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -108,6 +115,9 @@ async function handleOptimization(
                     [optimizationSubcategory as unknown as OPTIMIZE_SIZING_CONFIGS],
                     parentJobId
                 );
+                break;
+            case OPTIMIZATION_CATEGORIES.MAXDOP:
+                await optimizeMaxDop(accountId, credentialsId, region, databaseHostId, databaseInstanceId, parentJobId);
                 break;
             default:
                 break;
