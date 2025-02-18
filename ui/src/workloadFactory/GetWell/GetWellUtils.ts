@@ -56,6 +56,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: ''
+        },
         recommendation: {
             title: 'Storage tier recommendation',
             description:
@@ -82,10 +90,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'File system headroom ',
+            value: ''
+        },
         recommendation: {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
+            valuesHeading: 'File system headroom percentages are as follows:',
             values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
@@ -109,10 +126,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Log drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
+            valuesHeading: 'Log drive size percentages are as follows:',
             values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
@@ -136,10 +162,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempBD placement',
+            value: ''
+        },
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+            valuesHeading: 'TempDB drive size percentages are as follows:',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
@@ -162,6 +197,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
             value: ''
         },
         recommendation: {
@@ -191,6 +234,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: 'Volumes'
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
             description:
@@ -218,6 +269,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempDB placement',
+            value: ''
+        },
         recommendation: {
             title: 'TempDB placement recommendation',
             description:
@@ -243,6 +302,11 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: 'Critical'
         },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: ''
+        },
+
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
@@ -262,6 +326,10 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
+        },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: ''
         },
         tags: ['Performance efficiency', 'Reliability']
     },
@@ -342,6 +410,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
@@ -367,6 +444,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted network adapters',
             value: ''
         },
         recommendation: {
@@ -407,6 +492,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
@@ -432,6 +526,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'License edition',
             value: ''
         },
         recommendation: {
@@ -472,6 +574,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Missing patches',
+            value: ''
+        },
         recommendation: {
             title: 'Microsoft SQL assessment recommendation',
             description:
@@ -497,6 +607,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'MAXDOP',
             value: ''
         },
         recommendation: {

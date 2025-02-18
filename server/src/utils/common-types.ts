@@ -91,6 +91,7 @@ interface ResourceAssessmentData {
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
+    lastAssessedDate?: string;
 }
 interface Metadata {
     node1InstanceId: string;

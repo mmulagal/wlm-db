@@ -107,6 +107,7 @@ async function updateTemplateUrls(
             Tags: tags?.length ? yamlStr : '',
             SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || ''),
             VpcEndpointTemplate: decodeURI(signedUrls.get('VpcEndpointTemplate')?.url || ''),
+            PGSQLTemplate: decodeURI(signedUrls.get('PGSQLTemplate')?.url || ''),
             ...templateParameters
         });
         await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, templatePath!, contents);
@@ -238,7 +239,7 @@ async function updateTemplateUrls(
             url: signedUrl,
             location: customTemplatePath
         });
-    } else if (templateType === TEMPLATE_TYPES.PGSQLSTANDALONE) {
+    } else if (templateType === TEMPLATE_TYPES.PGSQLSTACK) {
         const contents = template({
             ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
             ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
@@ -249,23 +250,18 @@ async function updateTemplateUrls(
             PGSQLPackages: decodeURI(signedUrls.get('PGSQLPackages')?.url || ''),
             PgsqlCloudWatchConfig: PGSQL_CW_CONFIG || ''
         });
-        const standAloneTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
-        const customStandAloneTemplatePath: string = `${WLMDB}/${stackName}/${standAloneTemplatePath!.url}`;
-        await putObjectBucket(
+        const pgsqlTemplatePath = PGSQL_TEMPLATES_ASSETS.find(asset => asset.name === 'PGSQLTemplate');
+        const customPgsqlTemplatePath: string = `${WLMDB}/${stackName}/${pgsqlTemplatePath!.url}`;
+        await putObjectBucket(TEMPLATE_BUCKET_REGION, SIGNED_TEMPLATES_BUCKET_NAME, customPgsqlTemplatePath, contents);
+        const pgsqlTemplateSignedUrl = await getPreSignedUrl(
             TEMPLATE_BUCKET_REGION,
             SIGNED_TEMPLATES_BUCKET_NAME,
-            customStandAloneTemplatePath,
-            contents
+            customPgsqlTemplatePath
         );
-        const standAloneSignedUrl = await getPreSignedUrl(
-            TEMPLATE_BUCKET_REGION,
-            SIGNED_TEMPLATES_BUCKET_NAME,
-            customStandAloneTemplatePath
-        );
-        signedUrls.set(standAloneTemplatePath!.name, {
-            name: standAloneTemplatePath!.name,
-            url: standAloneSignedUrl,
-            location: customStandAloneTemplatePath
+        signedUrls.set(pgsqlTemplatePath!.name, {
+            name: pgsqlTemplatePath!.name,
+            url: pgsqlTemplateSignedUrl,
+            location: customPgsqlTemplatePath
         });
     }
 }

@@ -77,13 +77,14 @@ ontap_request () {
         --write-out "%{http_code}"
         $request_body
     )
+    echo "curl arg ${args[@]}"
     return_result=$(curl "${args[@]}")
     echo $return_result
 }
 
-result=$(ontap_request 'GET' 'cluster?fields=version')
-echo "ONTAP version API response code: $result"
-if [[ ($result -ge 200 && $result -lt 299) || ($result -ge 500 && $result -lt 600) ]]; then
+ontap_request 'GET' 'cluster?fields=version'
+echo "ONTAP version API response code: $return_result"
+if [[ ($return_result -ge 200 && $return_result -lt 299) || ($return_result -ge 500 && $return_result -lt 600) ]]; then
     echo "{\"status\": \"Completed\", \"reason\": \"Done.\"}" | jq -c .
     cfn-signal --exit-code 0 --stack $stackname --resource $resource --region $region --id $instanceId
 else

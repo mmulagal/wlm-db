@@ -22,11 +22,12 @@ import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -45,6 +46,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
     );
+    const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
@@ -189,6 +191,28 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             />
         );
     };
+
+    const handleNavigateToOptimizePage = (rowData: any) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(
+            setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId: hostId, instanceId: instanceId })
+        );
+    };
+
+    //This is for inner page
+    const handleDifferentNavigation = (rowData: any) => {
+        if (
+            selectedHeaderTab === WLF_TABS.OPTIMIZE &&
+            rowData?.name !== 'Multipath I/O Sessions' &&
+            rowData?.name !== 'Multipath I/O Status'
+        ) {
+            handleNavigateToOptimizePage(rowData);
+        } else {
+            handleOntapDialog(rowData);
+        }
+    };
+
     const ColDefs: ColumnProps[] = [
         {
             id: '1',

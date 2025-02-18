@@ -39,7 +39,7 @@ const FSXConfiguration = Type.Object({
 });
 
 const SQLConfiguration = Type.Object({
-    sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci'] }),
+    sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci', 'ha'] }),
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
     serviceAccountPassword: Type.String(),

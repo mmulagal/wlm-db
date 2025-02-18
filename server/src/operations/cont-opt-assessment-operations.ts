@@ -248,7 +248,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 compute: computeAssessment || undefined,
                 hostOsPatch: hostOsPatchAssessment || undefined,
                 rssConfig: rssConfigAssessment || undefined,
-                mssqlPatch: mssqlPatchAssessment || undefined
+                mssqlPatch: mssqlPatchAssessment || undefined,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
