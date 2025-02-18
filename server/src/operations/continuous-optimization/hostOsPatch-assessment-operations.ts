@@ -85,7 +85,8 @@ async function triggerHostOsPatchCollection(
         const existingAssessmentData = metadata.assessment;
         metadata.assessment = {
             ...existingAssessmentData,
-            hostOsPatch: hostOsPatchAssessment
+            hostOsPatch: hostOsPatchAssessment,
+            lastAssessedDate: new Date().getTime().toString()
         };
         updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     } catch (error) {
@@ -323,7 +324,8 @@ async function updatePatchBaselineStatusForHost(
             const existingAssessmentData = metaObj.assessment;
             metaObj.assessment = {
                 ...existingAssessmentData,
-                hostOsPatch: hostOsPatchAssessment
+                hostOsPatch: hostOsPatchAssessment,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, undefined, databaseHostId, metaObj);
         });

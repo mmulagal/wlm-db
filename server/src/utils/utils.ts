@@ -428,7 +428,7 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
         case 'MIB':
             return size / 1024;
         case 'TB':
-            return size * 1024;
+            return size * 1000;
         case 'TIB':
             return size * 1024;
         default:

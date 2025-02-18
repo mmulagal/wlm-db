@@ -17,13 +17,13 @@ const NTFSAllocationTable = ({ type, lastColDetails, handleBulkAction }: any) =>
         {
             serverInstanceName: 'Volume 1',
             status: 'Up',
-            storageTierPercent: '50%',
+            storageTierPercent: '4k',
             id: '1'
         },
         {
             serverInstanceName: 'Volume 2',
             status: 'Up',
-            storageTierPercent: '50%',
+            storageTierPercent: '4k',
             id: '2'
         }
     ];
