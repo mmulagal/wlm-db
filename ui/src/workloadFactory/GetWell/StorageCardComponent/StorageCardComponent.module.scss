@@ -193,6 +193,10 @@
     [class*='Popover-module_base'] {
         max-width: 430px;
     }
+
+    [class*='dsTypography-module_Regular_24'] {
+        line-height: 0px !important;
+    }
 }
 
 .colorSet {

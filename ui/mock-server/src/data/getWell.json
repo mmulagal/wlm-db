@@ -166,7 +166,10 @@
                     "overProvisionedDrives": [],
                     "underProvisionedDrives": [],
                     "ignoredDrives": []
-                }
+                },
+                "resourceType": "Volume",
+                "totalObjectsAssessed": 17,
+                "totalObjectsInViolation": 5 
             },
             {
                 "name": "log-drive-size",
@@ -192,7 +195,10 @@
                         }
                     ]
                 },
-                "missingPermissions": ["fsx:UpdateVolume"]
+                "missingPermissions": ["fsx:UpdateVolume"],
+                "resourceType": "Drive",
+                "totalObjectsAssessed": 10,
+                "totalObjectsInViolation": 5 
             },
             {
                 "name": "tempdb-drive-size",
@@ -222,43 +228,55 @@
                     "underProvisionedDrives": [],
                     "ignoredDrives": []
                 },
-                "missingPermissions": ["fsx:UpdateVolume"]
+                "missingPermissions": ["fsx:UpdateVolume"],
+                "resourceType": "Database"
             },
             {
                 "name": "headroom",
-                "current": "110%",
+                "current": "36%",
                 "recommended": "36-100%",
                 "status": "under-provisioned",
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": ["Performance efficiency"],
-                "missingPermissions": ["fsx:UpdateVolume"]
+                "missingPermissions": ["fsx:UpdateVolume"],
+                "resourceType": "File system (FSx for ONTAP)"
             }
         ],
         "layout": [
             {
                 "name": "tempdb-files-location",
+                "current": "separate drive",
                 "recommended": "separate-drive",
                 "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
-                "tags": ["Performance efficiency", "Operational excellence"]
+                "tags": ["Performance efficiency", "Operational excellence"],
+                "resourceType": "Database"
             },
             {
                 "name": "log-files-location",
+                "current": "shared drive",
                 "recommended": "separate-drive",
                 "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                "tags": ["Performance efficiency", "Operational excellence"]
+                "tags": ["Performance efficiency", "Operational excellence"],
+                "resourceType": "Database",
+                "totalObjectsAssessed": 10,
+                "totalObjectsInViolation": 5 
             },
             {
                 "name": "data-files-location",
                 "recommended": "separate-drive",
+                "current": "shared drive",
                 "status": "not-optimized",
                 "severity": "critical",
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-                "tags": ["Performance efficiency", "Operational excellence"]
+                "tags": ["Performance efficiency", "Operational excellence"],
+                "resourceType": "Database",
+                "totalObjectsAssessed": 10,
+                "totalObjectsInViolation": 5 
             }
         ]
     },
@@ -310,7 +328,8 @@
             "EBS throughput over-provisioned",
             "Network bandwidth over-provisioned",
             "Network PPS over-provisioned"
-        ]
+        ],
+        "resourceType": "Instance"
     },
     "rssConfig": {
         "name": "rss-config",
@@ -342,7 +361,8 @@
           "recommendedRssProfile": "NUMAStatic",
           "recommendedBaseProcessorNumber": 2,
           "recommendedReceiveQueues": 2
-        }
+        },
+        "resourceType": "Network Adapter"
       },
     "license": {
         "name": "sql-license",
@@ -370,7 +390,8 @@
                 "sqlServerEngineEdition": 3,
                 "sqlServerName": "SQLServer-Prod-02"
             }
-        ]
+        ],
+        "resourceType": "Instance"
     },
     "hostOsPatch": {
         "name": "host-os-patch",
@@ -390,7 +411,8 @@
                 "securityNonCompliantCount": 1,
                 "otherNonCompliantCount": 1
             }
-        ]
+        ],
+        "resourceType": "Instance"
     },
     "maxDOP" : {
         "name": "maxdop",
@@ -399,7 +421,8 @@
         "severity": "critical",
         "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16.",
         "tags": ["Performance efficiency"],
-        "current": 3
+        "current": 3,
+        "resourceType": "SQL Instance"
     },
     "mssqlPatch" : {
         "name": "mssql-patch",
@@ -446,6 +469,7 @@
         "objectsInViolation": [
           "i-p9o5n2m4l8k6j7h",
           "i-p9o5n2m4l8k6byol"
-        ]
+        ],
+        "resourceType": "Instance"
     }
 }

@@ -714,11 +714,14 @@ export const GETWELL_VALUES: any = {
     'separate-drive': 'Separate drive',
     'same-drive': 'Same drive',
     same_drive: 'Same drive',
+    'shared-drive': 'Shared drive',
+    shared_drive: 'Shared drive',
     critical: 'Critical',
     warning: 'Warning',
     none: 'None',
     'separate drive': 'Separate drive',
-    'same drive': 'Same drive'
+    'same drive': 'Same drive',
+    'shared drive': 'Shared drive'
 };
 
 export const GETWELL_CONFIG: any = {

@@ -90,6 +90,9 @@ export interface PerConfigInterface {
     errorMessage?: string;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    resourceType?: string;
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
     ec2InstancesToPatch?: Array<{
         baselineId?: string;
         criticalNonCompliantCount?: number;
