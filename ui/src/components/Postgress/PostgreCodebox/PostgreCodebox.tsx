@@ -63,6 +63,7 @@ const PostgreCodebox = () => {
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
     const selectedDBName = useAppSelector(state => state.postgreForm.postgreServerName);
+    const postGreVersion = useAppSelector(state => state.postgreForm.postgreVersion);
     const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
 
     const [loadTemplateData] = useGetPgsqlTemplatesMutation();
@@ -87,7 +88,7 @@ const PostgreCodebox = () => {
                 header={GENERAL.DEMO_TITLE}
                 content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
                 primaryButton={GENERAL.CONTINUE}
-                callback={() => { }}
+                callback={() => {}}
             />
         );
     };
@@ -212,6 +213,7 @@ const PostgreCodebox = () => {
         if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
             resBody.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
         }
+        resBody.sqlConfiguration.sqlVersion = postGreVersion?.label;
         loadTerraformData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
                 setTerraformSetupResponse(data?.data);
