@@ -7,6 +7,7 @@ import { MaxDOPAssesment } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { HttpErrorCodes } from '../../utils/consts';
 import {
+    ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
@@ -98,7 +99,8 @@ async function calculateMaxDOPDrift(
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             current: current?.toString(),
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+            resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE
         };
         return maxDOPResponse;
     } catch (error: any) {

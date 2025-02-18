@@ -52,7 +52,8 @@ const ParameterDriftResponse = Type.Object({
     missingPermissions: Type.Optional(Type.Array(Type.String())),
     recommendedSizeInGib: Type.Optional(Type.Number()),
     current: Type.Optional(Type.String()),
-    totalObjectsAssessed: Type.Optional(Type.Number())
+    totalObjectsAssessed: Type.Optional(Type.Number()),
+    resourceType: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
@@ -194,7 +195,8 @@ const SnapshotPolicyAssesmentData = Type.Object({
     tags: Type.Array(Type.String()),
     violations: Type.Array(Type.String()),
     severity: Type.String(),
-    status: Type.String()
+    status: Type.String(),
+    resourceType: Type.String()
 });
 type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
 

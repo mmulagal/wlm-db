@@ -4,7 +4,8 @@ import moment from 'moment';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars
+    AwsWellArchitecturedPillars,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 
@@ -330,7 +331,8 @@ async function calculateStorageDrift(
                 severity: config.severity,
                 recommendation: config.recommendation,
                 tags: config.tags,
-                totalObjectsAssessed: volumes.length
+                totalObjectsAssessed: volumes.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             });
         });
     }
@@ -358,11 +360,12 @@ async function calculateStorageDrift(
                 name: config.parameter,
                 recommended: config.value.toString(),
                 status,
-                objectsInViolation,
+                objectsInViolation: [...new Set(objectsInViolation)],
                 severity: config.severity,
                 recommendation: config.recommendation,
                 tags: config.tags,
-                totalObjectsAssessed: luns.length
+                totalObjectsAssessed: luns.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN
             });
         });
     }
@@ -430,7 +433,8 @@ async function calculateStorageDrift(
                 tags: goldenData.tags,
                 current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
                 objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb'],
-                totalObjectsAssessed: 1
+                totalObjectsAssessed: 1,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
             });
         }
 
@@ -568,8 +572,9 @@ async function calculateStorageDrift(
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ],
                 current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
-                objectsInViolation: databasesInViolation,
-                totalObjectsAssessed: dataLogVolumeDetails.length
+                objectsInViolation: [...new Set(databasesInViolation)],
+                totalObjectsAssessed: dataLogVolumeDetails.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
             },
 
             {
@@ -583,8 +588,9 @@ async function calculateStorageDrift(
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ],
                 current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
-                objectsInViolation: databasesInViolation,
-                totalObjectsAssessed: dataLogVolumeDetails.length
+                objectsInViolation: [...new Set(databasesInViolation)],
+                totalObjectsAssessed: dataLogVolumeDetails.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
             }
         );
     }
@@ -606,6 +612,7 @@ async function calculateStorageDrift(
             let currentSizePercentForAllVolumes;
             const storageTierViolations: StorageTierViolationResponseType[] = [];
             let totalObjectsAssessed = 1;
+            let resourceType = ASSESSMENT_RESOURCE_TYPE.VOLUME;
 
             if (key === 'data-log-drive-details') {
                 goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
@@ -659,6 +666,7 @@ async function calculateStorageDrift(
                         currentSizePercentForAllVolumes,
                         drivesCount: totalObjectsAssessed
                     } = getLogVolumeDrift(value, status, key));
+                    resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
                 if (key === 'data-tempdb-drive-details') {
                     ({
@@ -669,6 +677,7 @@ async function calculateStorageDrift(
                         ignoredDrives,
                         currentSizePercentForAllVolumes
                     } = getTempDbVolumeDrift(value, status, key));
+                    resourceType = ASSESSMENT_RESOURCE_TYPE.DATABASE;
                 }
 
                 let missingPermissions: string[] = [];
@@ -700,7 +709,8 @@ async function calculateStorageDrift(
                     missingPermissions,
                     current: currentSizeRange,
                     totalObjectsAssessed,
-                    storageTierViolations
+                    storageTierViolations,
+                    resourceType
                 });
             }
         });
@@ -725,7 +735,8 @@ async function calculateStorageDrift(
             tags: goldenData!.tags,
             missingPermissions,
             recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0,
-            current: `${headroomPercent}%`
+            current: `${headroomPercent}%`,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         });
     } catch (error: any) {
         logger.error(

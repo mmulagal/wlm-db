@@ -1690,6 +1690,7 @@ const PRICING_LICENSE_KEYS = {
     SQL_STD: 'SQL Std',
     SQL_WEB: 'SQL Web'
 };
+
 export {
     WLMDB,
     AWS_REGIONS,

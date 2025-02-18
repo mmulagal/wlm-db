@@ -12,7 +12,8 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     OptimizeStorageConfigs,
-    SEVERITY
+    SEVERITY,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import { HttpErrorCodes } from '../../utils/consts';
 import { StorageAssessment } from '../../utils/common-types';
@@ -74,7 +75,8 @@ async function getSnapshotPolicyDriftData(
         tags: [AwsWellArchitecturedPillars.RELIABILITY],
         severity: SEVERITY.WARNING,
         status: AssessmentStatus.NOT_OPTIMIZED,
-        violations: []
+        violations: [],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     };
     volumes.forEach(volume => {
         const volDetails = volume as Record<string, string>;
