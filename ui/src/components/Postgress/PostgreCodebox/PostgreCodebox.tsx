@@ -70,23 +70,12 @@ const PostgreCodebox = () => {
     const dispatch = useDispatch();
     const { setDialog } = useDialog();
 
-    const terraformUI = () => {
-        return (
-            <div className={styles.terraformContainer}>
-                <div>{GENERAL.TERRAFORM}</div>
-                <div>
-                    <ComingSoon />
-                </div>
-            </div>
-        );
-    };
-
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3, '');
+            const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
@@ -98,7 +87,7 @@ const PostgreCodebox = () => {
                 header={GENERAL.DEMO_TITLE}
                 content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
                 primaryButton={GENERAL.CONTINUE}
-                callback={() => {}}
+                callback={() => { }}
             />
         );
     };
