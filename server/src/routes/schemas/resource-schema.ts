@@ -35,7 +35,7 @@ const FileSystemCredentialsStatusSchema = {
 
 const GetManagedResourcesSchema = {
     tags: [RouteTags.RESOURCE],
-    hide: true,
+    hide: process.env.NODE_ENV === 'production',
     params: AccountIdParams,
     querystring: ManageResourcesQueryString,
     summary: 'List managed resources',
