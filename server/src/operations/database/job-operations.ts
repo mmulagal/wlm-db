@@ -26,7 +26,7 @@ import {
     UpdateJobRecordType,
     JobSummaryQueryType
 } from '../../routes/types/jobs.types';
-import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
+import { GERERIC_JOB_ERROR_MESSAGE, JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
 import { getRegionDetails, isDemo, sleep } from '../../utils/utils';
 import { RegionDetailsType } from '../../routes/types/generic.types';
 
@@ -469,7 +469,11 @@ async function updateParentJobStatus(
         const modifiedJobData = {
             status: jobStatus,
             endTime: Date.now(),
-            ...(errorMsg ? { error: errorMsg } : {})
+            ...(errorMsg
+                ? { error: errorMsg }
+                : jobStatus === JOBSTATUS.FAILED
+                ? { error: GERERIC_JOB_ERROR_MESSAGE }
+                : {})
         };
 
         if (jobStatus !== JOBSTATUS.IN_PROGRESS) {

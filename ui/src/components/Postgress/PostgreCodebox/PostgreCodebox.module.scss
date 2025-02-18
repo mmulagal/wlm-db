@@ -147,6 +147,12 @@
         align-items: center;
     }
 
+    .codeboxHeader {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
     .cloudFormationButtonContainer {
         height: 64px;
         display: flex;

@@ -8,7 +8,12 @@ import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operati
 import getLogger from '../../utils/logger';
 import { translateFindingReasonCode } from '../aws/compute-optimizer-operations';
 import { getEc2Arn } from '../../utils/utils';
-import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../utils/continous-optimization-consts';
 import { ComputeAssessment, Metadata } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -129,7 +134,8 @@ async function calculateComputeDrift(
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
-                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions }
+                compute: { finding, findingReasonCodes, currentInstanceType, recommendationOptions },
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -168,7 +174,8 @@ async function calculateComputeDrift(
             recommendation: recommendationMessage,
             objectsInViolation,
             tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-            recommendationOptions
+            recommendationOptions,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error: any) {
         errorMessage = `Error while calculating compute drift. ${error.message}`;

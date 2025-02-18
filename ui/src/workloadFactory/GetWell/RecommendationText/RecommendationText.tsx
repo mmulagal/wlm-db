@@ -9,6 +9,7 @@ type RecommendationTextProps = {
         title: string;
         description: string;
         values?: Array<string>;
+        valuesHeading?: string;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
         descriptionRssConfig?: {
             first?: string;
@@ -77,6 +78,12 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     </div>
                 );
             })}
+
+            {data?.valuesHeading && (
+                <div className={styles.valuesHeading}>
+                    <DsTypography variant="Semibold_14">{data?.valuesHeading}</DsTypography>
+                </div>
+            )}
 
             {data?.values && data?.values?.length > 0 && (
                 <div className={styles.values}>

@@ -1690,6 +1690,9 @@ const PRICING_LICENSE_KEYS = {
     SQL_STD: 'SQL Std',
     SQL_WEB: 'SQL Web'
 };
+
+const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -2025,5 +2028,6 @@ export {
     PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     PGSQL_TF_VARS_CONFIG,
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
-    PGSQL
+    PGSQL,
+    GERERIC_JOB_ERROR_MESSAGE
 };

@@ -56,6 +56,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: ''
+        },
         recommendation: {
             title: 'Storage tier recommendation',
             description:
@@ -82,10 +90,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'File system headroom ',
+            value: ''
+        },
         recommendation: {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
+            valuesHeading: 'File system headroom percentages are as follows:',
             values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
@@ -109,10 +126,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Log drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
+            valuesHeading: 'Log drive size percentages are as follows:',
             values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
@@ -136,10 +162,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempBD placement',
+            value: ''
+        },
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+            valuesHeading: 'TempDB drive size percentages are as follows:',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
@@ -162,6 +197,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
             value: ''
         },
         recommendation: {
@@ -191,6 +234,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: 'Volumes'
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
             description:
@@ -218,6 +269,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempDB placement',
+            value: ''
+        },
         recommendation: {
             title: 'TempDB placement recommendation',
             description:
@@ -243,6 +302,11 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: 'Critical'
         },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: ''
+        },
+
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
@@ -262,6 +326,10 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
+        },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: ''
         },
         tags: ['Performance efficiency', 'Reliability']
     },
@@ -342,6 +410,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
@@ -367,6 +444,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted network adapters',
             value: ''
         },
         recommendation: {
@@ -407,6 +492,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
@@ -432,6 +526,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'License edition',
             value: ''
         },
         recommendation: {
@@ -472,6 +574,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Missing patches',
+            value: ''
+        },
         recommendation: {
             title: 'Microsoft SQL assessment recommendation',
             description:
@@ -497,6 +607,14 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_four: {
             type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'MAXDOP',
             value: ''
         },
         recommendation: {
@@ -1711,31 +1829,69 @@ export const handleOptimizeStorageJob = (
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
             let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
-            let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
-            let selectedResourceId = state.getWellOptimize.selectedResourceId || '';
-            dispatch(
-                setOptimizingData({
-                    ...optimizingData,
-                    [rowData?.id]: ''
-                })
-            );
-            dispatch(
-                setInProgressOptimizationData({
-                    ...inProgressOptimizationData,
-                    [type]: inProgressOptimizationData?.[type]?.filter(
-                        (instanceId: any) => instanceId !== selectedResourceId + '_' + selectedDatabaseInstance
-                    )
-                })
-            );
-            dispatch(
-                setInProgressHostData({
-                    ...inProgressHostData,
-                    [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedResourceId)
-                })
-            );
-            formatGetWellData(dispatch);
-            dispatch(setOptimizingInstanceData(false));
-            // Error message for failed optimization API will be returned here
+            if (operation === 'bulk') {
+                if (bulkRowData?.[0]?.id) {
+                    dispatch(
+                        setOptimizingData({
+                            ...optimizingData,
+                            [bulkRowData?.[0]?.id]: ''
+                        })
+                    );
+                }
+
+                dispatch(
+                    setInProgressOptimizationData({
+                        ...inProgressOptimizationData,
+                        [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                            const jobInstances =
+                                bulkRowData?.map((instance: any) => `${instance?.hostId}_${instance?.instanceId}`) ||
+                                [];
+                            return !jobInstances.includes(instanceId);
+                        })
+                    })
+                );
+                dispatch(
+                    setInProgressHostData({
+                        ...inProgressHostData,
+                        [type]: inProgressHostData?.[type]?.filter(
+                            //Data host id to check
+                            (hostId: any) => {
+                                const jobHostIds = bulkRowData?.map((host: any) => host?.hostId) || [];
+                                return !jobHostIds.includes(hostId);
+                            }
+                        )
+                    })
+                );
+
+                // formatGetWellData(dispatch);
+                dispatch(setOptimizingInstanceData(false));
+            } else {
+                let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
+                let selectedResourceId = state.getWellOptimize.selectedResourceId || '';
+                dispatch(
+                    setOptimizingData({
+                        ...optimizingData,
+                        [rowData?.id]: ''
+                    })
+                );
+                dispatch(
+                    setInProgressOptimizationData({
+                        ...inProgressOptimizationData,
+                        [type]: inProgressOptimizationData?.[type]?.filter(
+                            (instanceId: any) => instanceId !== selectedResourceId + '_' + selectedDatabaseInstance
+                        )
+                    })
+                );
+                dispatch(
+                    setInProgressHostData({
+                        ...inProgressHostData,
+                        [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedResourceId)
+                    })
+                );
+                // formatGetWellData(dispatch);
+                dispatch(setOptimizingInstanceData(false));
+                // Error message for failed optimization API will be returned here
+            }
         }
     }, 10);
 };
@@ -1796,6 +1952,14 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             assessments: {
                                 ...instance?.assessments,
                                 compute: { ...instance.assessments.compute, status: 'optimized' }
+                            }
+                        };
+                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                maxDOP: { ...instance.assessments.maxDOP, status: 'optimized' }
                             }
                         };
                     } else if (storageConfigurationMap[rowData?.id]) {
@@ -1965,7 +2129,11 @@ export const nameToIdConfigMapping = (name: string) => {
         ? 'tempdb-drive-size'
         : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
         ? 'performance-tier'
-        : 'compute-rightsizing';
+        : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
+        ? 'compute-rightsizing'
+        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
+        ? 'maxdop'
+        : '';
 };
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {

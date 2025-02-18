@@ -86,6 +86,7 @@ function generateDeploymentParams(
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
+    const randomDigitsUpto4 = generateRandomNumberInRange(1000, 9999);
 
     if (fsxDataLunSize > MAX_DATA_LUN_SIZE_IN_GIB) {
         // With 35% headroom and 15% for log and temp volumes, we can't go beyond 86TiB, given the max fsxn storage capacity is 192TiB
@@ -140,19 +141,22 @@ function generateDeploymentParams(
         sqlDeploymentType === 'fci'
             ? [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`]
             : [`sqlnode-${randomDigits}`];
-    const netbiosPgsql = [`pgsqlnode-${randomDigits}`];
+    const netbiosPgsql =
+        sqlDeploymentType === 'ha'
+            ? [`pgsqlnode1-${randomDigitsUpto4}`, `pgsqlnode2-${randomDigitsUpto4}`]
+            : [`pgsqlnode-${randomDigitsUpto4}`];
 
     let params = {
         UniqueID: suffix,
         StackName: `${prefix.toUpperCase()}-${stacknameSubstring}-${suffix}`,
         // VpcName: `${prefix}-vpc-${suffix}`,
         FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
-        FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
+        FSxDataVolumeName: `${prefix}_${databaseType === DatabaseTypes.PG_SQL ? 'pg' : ''}sqldata_${suffix}`,
         FSxDataVolumeSize,
-        FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
+        FSxLogVolumeName: `${prefix}_${databaseType === DatabaseTypes.PG_SQL ? 'pg' : ''}sqllog_${suffix}`,
         FSxLogVolumeSize, // 25% of FSxDataVolumeSize
         FSxSvmName: `${prefix}_svm_${suffix}`,
-        SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
+        SQLSvmName: `${prefix}_${databaseType === DatabaseTypes.PG_SQL ? 'pg' : ''}sqlsvm_${suffix}`,
         FSxStorageCapacity: fsxStorageCapacity,
         NodeNetBIOSNames: databaseType === DatabaseTypes.PG_SQL ? netbiosPgsql : netbios,
         ...(databaseType === DatabaseTypes.MS_SQL_SERVER && {
@@ -424,7 +428,7 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
         case 'MIB':
             return size / 1024;
         case 'TB':
-            return size * 1024;
+            return size * 1000;
         case 'TIB':
             return size * 1024;
         default:

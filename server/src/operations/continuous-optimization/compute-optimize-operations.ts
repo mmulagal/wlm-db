@@ -392,7 +392,8 @@ async function handleComputeRemediation(
                     findingReasonCodes: [],
                     currentInstanceType: instanceType,
                     recommendationOptions
-                }
+                },
+                lastAssessedDate: new Date().getTime().toString()
             };
             await updateResourceMetaData(accountId, credentialsId, resourceId, metadata);
             jobStatus = JOBSTATUS.COMPLETED;

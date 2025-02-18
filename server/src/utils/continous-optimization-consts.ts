@@ -200,6 +200,17 @@ const NETWORK_PERF = {
 
 const ONPREM_TCO_CREDENTIALS_ID = 'ONPREM_TCO_CREDENTIALS_ID';
 
+const ASSESSMENT_RESOURCE_TYPE = {
+    VOLUME: 'Volume',
+    FILE_SYSTEM: 'File system (FSx for ONTAP)',
+    DRIVE: 'Drive',
+    DATABASE: 'Database',
+    INSTANCE: 'Instance',
+    NETWORK_ADAPTER: 'Network Adapter',
+    LUN: 'Lun',
+    SQL_INSTANCE: 'SQL Instance'
+};
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -228,5 +239,6 @@ export {
     NETWORK_PERF,
     ONPREM_TCO_CREDENTIALS_ID,
     OPTIMIZATION_CATEGORIES,
-    OptimizeMaxDopParams
+    OptimizeMaxDopParams,
+    ASSESSMENT_RESOURCE_TYPE
 };

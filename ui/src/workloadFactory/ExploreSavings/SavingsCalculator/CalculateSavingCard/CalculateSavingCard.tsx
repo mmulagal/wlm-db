@@ -62,7 +62,7 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
                 left: buttonRef.current
                     ? buttonRef.current.offsetLeft + buttonRef.current.offsetWidth - 500 /* Card width */
                     : 0,
-                height: noAccount ? '460px' : '484px'
+                height: '500px'
             }}
         >
             <StorageCredentials />
@@ -80,8 +80,8 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
                 {noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? 'We can calculate how much you can save comparing to your specific SQL Servers using EBS. Add your credentials, go to explore savings and select the volumes you want to compare.'
-                            : 'We can calculate how much you can save comparing to your specific SQL Servers using FSx for Windows File Server. Add your credentials, go to explore savings and select the volumes you want to compare.'}
+                            ? "We can calculate how much you'll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Microsoft SQL Server host you'd like to compare."
+                            : "We can calculate how much you'll save by comparing the cost of your existing SQL Servers using FSx for Windows resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Microsoft SQL Server host you'd like to compare."}
                     </DsTypography>
                 )}
             </div>
