@@ -12,7 +12,8 @@ import {
     LogDriveDetails,
     TempDbDriveDetails,
     OptimizeMpioIscsiSessionsParams,
-    StorageTierParams
+    StorageTierParams,
+    MaxDOPAssesment
 } from '../utils/common-types';
 import { HttpErrorCodes, AuditStatus, SqlServerDeploymentModel, RESOURCESTYPE } from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
@@ -20,7 +21,8 @@ import { getInstanceInfo, getResources } from './database/database-operations';
 import {
     GET_ONTAP_LUN_DETAILS,
     OPTIMIZE_STORAGE_PARAMS_SCRIPT,
-    RESCAN_EXTEND_LUN
+    RESCAN_EXTEND_LUN,
+    SET_MAXDOP
 } from './workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { registerJob, updateJobDetails } from './database/job-operations';
@@ -186,7 +188,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             databaseHostId,
             serverNameWithHostName,
             parentJobId,
-            instanceToAssess
+            instanceToAssess,
+            AssessmentCategories.STORAGE
         );
     } catch (error) {
         logger.error('Failed to optimize storage', { params, error });
@@ -323,7 +326,8 @@ async function activeSqlNodeDetails(
         database_type: databaseType,
         fsx_svm_id: svmDetails,
         resource: resourceDetail,
-        metadata: instanceMetadata
+        metadata: instanceMetadata,
+        database_deployment_type: databaseDeploymentType
     } = instanceDetail as unknown as DatabaseInstance;
 
     const { metadata, resource_name: sqlServerName } = resourceDetail;
@@ -364,7 +368,8 @@ async function activeSqlNodeDetails(
         svmDetails,
         awsAccountId: resourceDetail.cloud_provider_account_id,
         serverNameWithHostName,
-        instanceMetadata
+        instanceMetadata,
+        databaseDeploymentType
     };
 }
 
@@ -594,7 +599,8 @@ async function modifySizingAttributes(
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
             errorMessage = ` ${childJobsStatus.map(job => job?.errorMessage)}`;
             jobStatus = childJobsStatus.some(job => job?.jobStatus === JOBSTATUS.WARNING)
@@ -1348,7 +1354,8 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             databaseHostId,
             serverNameWithHostName,
             parentJobId,
-            instanceToAssess
+            instanceToAssess,
+            AssessmentCategories.STORAGE
         );
     } catch (error) {
         jobError = `Error while optimizing mpio configuration ${error}`;
@@ -1599,7 +1606,8 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
         }
     } catch (error) {
@@ -1845,7 +1853,8 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             databaseHostId,
             serverNameWithHostName,
             parentJobId,
-            instanceToAssess
+            instanceToAssess,
+            AssessmentCategories.STORAGE
         );
     } else {
         // Run remediation on primary node
@@ -1903,7 +1912,8 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
         }
     }
@@ -2282,7 +2292,8 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
             await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         }
@@ -2378,6 +2389,211 @@ async function optimizeStorageTier(
     return { jobId: parentJobId };
 }
 
+async function handleMaxDopRemediation(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    parentJobId: string,
+    configData: MaxDOPAssesment,
+    serverNameWithHostName: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Setting Max Dop ', {
+        accountId,
+        credentialsId,
+        region,
+        parentJobId,
+        configData,
+        serverNameWithHostName,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError = '';
+    const jobDescription = `Set the max dop to the recommended value for ${serverNameWithHostName}`;
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        serverNameWithHostName!,
+        JOBTYPE.OPTIMIZATION,
+        jobDescription,
+        jobDescription,
+        parentJobId
+    );
+
+    const {
+        sqlAuthEnabled,
+        activeNodeInstanceId,
+        fsxId,
+        instanceId,
+        instanceName,
+        databaseType,
+        awsAccountId,
+        instanceMetadata,
+        databaseDeploymentType
+    } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
+
+    try {
+        if (!activeNodeInstanceId) {
+            const errorMessage = `Cannot retrieve active node ID from the Microsoft SQL configuration. Max DOP optimization for database instance  ${databaseInstanceId} isn't possible.`;
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
+        const isClustered = databaseDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT;
+
+        const ssmCommand = SET_MAXDOP(
+            instanceName,
+            sqlAuthEnabled as boolean,
+            Number(configData?.recommendedMaxDOP),
+            isClustered
+        );
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
+            3,
+            5000
+        );
+        const parsedResp = sqlResponseParsing(resp);
+        jobStatus = parsedResp.status === 'success' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
+    } catch (error) {
+        jobStatus = JOBSTATUS.FAILED;
+        jobError = `Error while optimizing max-dop ${error}`;
+        logger.error(jobError);
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+        if (jobStatus === JOBSTATUS.FAILED) {
+            updateLongRunningAuditGroup(AuditStatus.FAILED, jobError);
+            await updateJobDetails(accountId, parentJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now(),
+                error: jobError
+            });
+        } else {
+            const instanceToAssess: WorkloadInstance = {
+                id: instanceId,
+                name: instanceName,
+                type: databaseType,
+                region,
+                sqlAuthEnabled: sqlAuthEnabled || false,
+                fsxFileSystem: fsxId,
+                activeNodeInstanceid: activeNodeInstanceId!,
+                cloudProviderAccountId: awsAccountId as string,
+                resourceName: serverNameWithHostName
+            };
+
+            if (isDemoFlow) {
+                // update metadata in instances table to mark optimized configuration
+                const metadata: databaseInstanceMetadata = isDatabaseInstanceMetadata(instanceMetadata)
+                    ? instanceMetadata
+                    : { configsOptimized: {} };
+
+                await updateOptimizedConfigNameInInstanceTable(accountId, instanceId, ['maxdop'], 'maxdop', metadata);
+            }
+            await triggerAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess,
+                AssessmentCategories.MAXDOP
+            );
+            await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+        }
+    }
+}
+
+async function optimizeMaxDop(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    masterOptimizeParentId?: string
+) {
+    logger.info(
+        `Optimizing max dop for ${accountId}, ${credentialsId}, ${region}, ${databaseHostId}, ${databaseInstanceId}, ${masterOptimizeParentId}`
+    );
+
+    let parentJobId = '';
+    try {
+        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            AssessmentCategories.MAXDOP
+        );
+
+        const {
+            config_data: configData,
+            database_instances: { database_instance_name: instanceName = '' } = {},
+            resource: { resource_name: sqlServerName = '' } = {}
+        } = persistedConfigurationData || {};
+        const maxDopConfigData = configData as unknown as MaxDOPAssesment;
+
+        if (!instanceName || !sqlServerName) {
+            logger.error('Instance name or sql server name is missing');
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
+        }
+
+        const serverNameWithHostName = getServerNameWithHostname(sqlServerName, instanceName);
+        const jobMetadata: JobMetadata = {
+            hostsToOptimize: [
+                {
+                    optimizationType: 'max-dop',
+                    resourceId: databaseHostId,
+                    sqlServerInstances: [databaseInstanceId]
+                }
+            ]
+        };
+        // check whether any jobs on the same resource running
+        parentJobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            serverNameWithHostName,
+            JOBTYPE.OPTIMIZATION,
+            `Optimize max-dop for ${serverNameWithHostName}`,
+            `Optimize max-dop for ${serverNameWithHostName}`,
+            masterOptimizeParentId,
+            jobMetadata
+        );
+
+        await handleMaxDopRemediation(
+            accountId,
+            credentialsId,
+            region,
+            parentJobId,
+            maxDopConfigData,
+            serverNameWithHostName,
+            databaseHostId,
+            databaseInstanceId
+        );
+    } catch (error) {
+        const errorMessage = `Error while optimizing max-dop ${error}`;
+        logger.error(errorMessage);
+        await updateJobDetails(accountId, parentJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
+
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+    return { jobId: parentJobId };
+}
+
 async function triggerAssessmentAfterOptimization(
     credentialsId: string,
     region: string,
@@ -2385,7 +2601,8 @@ async function triggerAssessmentAfterOptimization(
     databaseHostId: string,
     serverNameWithHostName: string,
     parentJobId: string,
-    instanceToAssess: WorkloadInstance
+    instanceToAssess: WorkloadInstance,
+    fields?: string
 ) {
     logger.info('Triggering assessment after optimization', {
         credentialsId,
@@ -2394,7 +2611,8 @@ async function triggerAssessmentAfterOptimization(
         databaseHostId,
         serverNameWithHostName,
         parentJobId,
-        instanceToAssess
+        instanceToAssess,
+        fields
     });
 
     // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
@@ -2409,14 +2627,14 @@ async function triggerAssessmentAfterOptimization(
         databaseHostId,
         instanceToAssess.id,
         AssessmentTriggeredBy.SYSTEM,
-        '',
+        fields || '',
         parentJobId
     );
 
     let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
     if (!isDemoFlow) {
-        let retries = 5;
+        let retries = 10;
         while (retries > 0) {
             retries -= 1;
             const allSubJobs = await listJobs(accountId, '', '', parentJobId);
@@ -2447,4 +2665,8 @@ async function triggerAssessmentAfterOptimization(
     updateLongRunningAuditGroup(AuditStatus.SUCCESS);
 }
 
-export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings, optimizeStorageTier };
+function isDatabaseInstanceMetadata(value: any): value is databaseInstanceMetadata {
+    return value && typeof value === 'object' && 'configsOptimized' in value;
+}
+
+export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings, optimizeStorageTier, optimizeMaxDop };

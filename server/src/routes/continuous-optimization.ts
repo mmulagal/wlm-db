@@ -24,7 +24,8 @@ import {
     BulkOptimizeStorageSizingSchema,
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
-    BulkOptimizeComputeSchema
+    BulkOptimizeComputeSchema,
+    BulkOptimizeMaxDopSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -282,6 +283,25 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 } = castRequest(request);
 
                 const response = await bulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize);
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/max-dop`,
+            { schema: BulkOptimizeMaxDopSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OPTIMIZATION_CATEGORIES.MAXDOP,
+                    hostsToOptimize
+                );
                 return reply.send(response);
             }
         );

@@ -186,6 +186,13 @@ const BulkOptimizeComputeSchema = {
     summary: 'Optimize compute',
     description: 'Optimize compute parameters as per the best practice for selected database instances.'
 };
+
+const BulkOptimizeMaxDopSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Optimize max-dop',
+    description: 'Optimize max-dop parameters as per the best practice for selected database instances.'
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -199,5 +206,6 @@ export {
     BulkOptimizeStorageSizingSchema,
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
-    BulkOptimizeComputeSchema
+    BulkOptimizeComputeSchema,
+    BulkOptimizeMaxDopSchema
 };
