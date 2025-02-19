@@ -1,6 +1,10 @@
 .inner-table {
     width: 1334px;
 
+    [class*='Table-module_cell'] {
+        color: var(--text-primary) !important;
+    }
+
     .statusContainer {
         display: flex;
         gap: 8px;
