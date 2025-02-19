@@ -303,7 +303,7 @@ Resources:
                                         -c ${FSxDataVolumeName}'
                                     -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
                                         FSxDataVolumeName: !Ref 'FSxDataVolumeName'
-                                - !Sub 'echo "Skipping c-configure-replication because IsHACluster is false."'
+                                - 'echo "Skipping c-configure-replication because IsHACluster is false."'
                         d-rename-host:
                             command: !Sub
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
