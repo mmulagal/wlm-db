@@ -1,10 +1,11 @@
 #!/bin/bash
-
+exec > /var/log/netapp_wf/configure-replica-primary.log 2>&1
 # Parse command-line arguments
-while getopts "i:s:" opt; do
+while getopts "a:b:c:" opt; do
     case $opt in
-        i) secondary_server_IP="$OPTARG" ;;
-        s) service_account_password="$OPTARG" ;;
+        a) parent_stack_name="$OPTARG" ;;
+        b) service_account_password="$OPTARG" ;;
+        c) fsxdatavolumename="$OPTARG" ;;
     esac
 done
 
@@ -16,9 +17,41 @@ check_status() {
     fi
 }
 
+is_valid_json() {
+    echo "$1" | jq empty > /dev/null 2>&1
+    return $?
+}
+
+convert_to_json_string() {
+    local json_string="$1"
+    # Replace single quotes with double quotes and add double quotes around keys
+    echo "$json_string" | sed "s/'/\"/g" | sed 's/\([a-zA-Z0-9_]*\):/"\1":/g'
+}
+
+extract_ip() {
+    local json_string="$1"
+    local privateIp=$(echo "$json_string" | jq -r '.private_ip')
+    echo "$privateIp"
+}
+
+echo "Parent Stack Name: $parent_stack_name"
+instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text)
+echo "instance_details fetched"
+if is_valid_json "$instance_details"; then
+    valid_instance_details="$instanceDetails"
+else
+    valid_instance_details=$(convert_to_json_string "$instance_details")
+fi
+
+ip_details=$(extract_ip "$valid_instance_details")
+secondary_server_IP=$(echo "$ip_details" | awk '{print $1}')
+echo "ip details fetched"
+
+# Delete the parameter from SSM
+aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary"
 
 # (1) Define variables for file paths.
-PG_DATA_DIR="/mnt/data"
+PG_DATA_DIR="/$fsxdatavolumename"
 PG_CONF="$PG_DATA_DIR/postgresql.conf"
 PG_HBA="$PG_DATA_DIR/pg_hba.conf"
 
@@ -45,12 +78,12 @@ check_status "Failed to restart PostgreSQL service"
 # (5) Create the replicator user and set passwords
 echo "Creating/altering replication user and postgres user..."
 sudo -u postgres psql -c "CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD '$service_account_password';"
-check_status "Failed to create user re"
+check_status "Failed to create user"
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$service_account_password';"
-check_status "Failed to create/alter users"
+check_status "Failed to alter users"
 
 # (6) Update pg_hba.conf to allow replication from secondary's IP
-echo "host    replication     replicator      $secondary_server_IP         md5" | sudo tee -a "$PG_HBA"
+echo "host    replication     replicator      $secondary_server_IP/16         md5" | sudo tee -a "$PG_HBA"
 check_status "Failed to add entry to pg_hba.conf"
 
 # (7) Restart PostgreSQL again after pg_hba.conf change

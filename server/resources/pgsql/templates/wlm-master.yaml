@@ -426,6 +426,7 @@ Resources:
                   - ssm:GetParameters
                   - ssm:PutParameter
                   - ssm:GetParametersByPath
+                  - ssm:DeleteParameter
                 Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
             
           PolicyName: !Join
