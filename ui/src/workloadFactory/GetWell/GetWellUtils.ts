@@ -1121,7 +1121,7 @@ export const formatIndividualCardMainConfig = (
                     missingPermissions: item?.missingPermissions,
                     recommendedSizeInGib: item?.recommendedSizeInGib,
                     sizingViolations: item?.sizingViolations,
-                    storageTierViolations: item?.storageTierViolations
+                    violationDetails: item?.violationDetails
                 }
             };
         });
