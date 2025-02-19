@@ -4,6 +4,7 @@ import {
     AwsWellArchitecturedPillars,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeParams,
+    OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
     OptimizeStorageTierParams
@@ -21,7 +22,8 @@ const SizingViolationResponse = Type.Object({
     lunUuid: Type.Optional(Type.String()),
     tempdbAccessPath: Type.Optional(Type.String()),
     tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
-    diskSerialNumber: Type.Optional(Type.String())
+    diskSerialNumber: Type.Optional(Type.String()),
+    sizePercentToDataDrive: Type.Optional(Type.Number())
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
@@ -59,6 +61,7 @@ const ParameterDriftResponse = Type.Object({
     recommendedSizeInGib: Type.Optional(Type.Number()),
     current: Type.Optional(Type.String()),
     totalObjectsAssessed: Type.Optional(Type.Number()),
+    totalObjectsInViolation: Type.Optional(Type.Number()),
     resourceType: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
@@ -331,7 +334,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OPTIMIZE_SIZING_CONFIGS,
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
-        ...OptimizeComputeParams
+        ...OptimizeComputeParams,
+        ...OptimizeMaxDopParams
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });

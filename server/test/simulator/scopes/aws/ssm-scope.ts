@@ -91,7 +91,8 @@ import {
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_MSSQL_VERSION,
     GET_INSTALLED_SQL_PATCHES,
-    GET_CLUSTER_SNAPSHOT_POLICIES
+    GET_CLUSTER_SNAPSHOT_POLICIES,
+    SET_MAXDOP
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
@@ -794,7 +795,11 @@ ssmMock
         const commentString = /# Set snapshot policy for volumes/;
         return commentString.test(params.Parameters.commands?.[0])
     })
-    .resolves(getSampleCommandResponse('setSnapshotPolicy'));
+    .resolves(getSampleCommandResponse('setSnapshotPolicy'))
+    .on(SendCommandCommand, params => {
+        return /#Set MAXDOP/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('setMaxDOP'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1047,8 +1052,16 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'setSnapshotPolicy',
             '{ "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8"}, {"uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"}, {"uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"}]}')
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMaxDOP'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'setMaxDOP',
+            '{"status":"success","message":"MAXDOP set to 4 for instance STVYCUAMIUIG\\\\SIGMA, Configuration option \\u0027show advanced options\\u0027 changed from 1 to 1. Run the RECONFIGURE statement to install. Configuration option \\u0027max degree of parallelism\\u0027 changed from 4 to 4. Run the RECONFIGURE statement to install."}\r\n'
+        )
     );
-
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

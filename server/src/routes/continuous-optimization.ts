@@ -26,7 +26,8 @@ import {
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
     AvailableSnapshotPolicies,
-    SetSnapshotPolicySchema
+    SetSnapshotPolicySchema,
+    BulkOptimizeMaxDopSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -323,6 +324,25 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     databaseHostId,
                     databaseInstanceId,
                     snapshotPolicy
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/max-dop`,
+            { schema: BulkOptimizeMaxDopSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OPTIMIZATION_CATEGORIES.MAXDOP,
+                    hostsToOptimize
                 );
                 return reply.send(response);
             }

@@ -14,6 +14,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -31,6 +32,7 @@ import FileSystemHeadroomOptimizeTable from './InnerTables/FileSystemHeaderoomOp
 import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
+import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -225,6 +227,11 @@ const OptimizeInnerPage = () => {
                         [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
                     })
                 );
+
+                setTimeout(() => {
+                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                }, 3000);
             }
             handleOptimizeStorageJob(
                 res,
@@ -258,6 +265,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <StorageTierOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -289,6 +297,15 @@ const OptimizeInnerPage = () => {
             case 'Log files':
                 return (
                     <LogFilesOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Network adapter settings':
+            case 'Network adapters':
+                return (
+                    <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}

@@ -311,13 +311,152 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
+        } else if (cardData?.block_five?.count) {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
+                        {cardData?.block_five?.count?.totalObjectsInViolation || 0}
+                    </DsTypography>
+                    <DsTypography className={styles.centerText} variant="Semibold_14" isDisabled={disableText}>
+                        {' out of '}
+                    </DsTypography>
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
+                        {cardData?.block_five?.count?.totalObjectsAssessed || 0}
+                    </DsTypography>
+                </div>
+            );
         } else {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        }
+    };
+
+    const sectionSixContent = (cardData: any) => {
+        if (loading) {
+            return (
+                <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
+                    <DsFlashingDotsLoader />
+                </div>
+            );
+        } else if (cardData?.block_six?.count) {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
+                        {cardData?.block_six?.count?.totalObjectsInViolation || 0}
+                    </DsTypography>
+                    <DsTypography className={styles.centerText} variant="Semibold_14" isDisabled={disableText}>
+                        {' out of '}
+                    </DsTypography>
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
+                        {cardData?.block_six?.count?.totalObjectsAssessed || 0}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.block_six?.list) {
+            let listObj: any = [];
+            cardData?.block_six?.list?.map((item: any) => {
+                const parts = item.split(' ');
+                const value = parts.pop() || ''; // Take the last element as value
+                const key = parts.join(' '); // Join the rest as key
+                listObj.push({ key, value });
+            });
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_six?.list?.length > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '120px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    {cardData?.block_six?.list?.length === 0 && (
+                        <div>
+                            <DisabledTooltipIcon />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_six?.list?.length + ' values'}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
             return (
                 <div className={styles.warningMsg}>
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 </div>
+            );
+        } else if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
+            let listObj = [
+                { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
+                { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
+                { key: 'Other ', value: cardData?.osPatchMissingPatches?.other }
+            ];
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_six?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '30px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
+            let listObj = [
+                { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
+                { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
+            ];
+            return (
+                <div className={styles.tooltipContainer}>
+                    {cardData?.block_six?.value > 0 && (
+                        <div className={styles.tooltip}>
+                            <Popover
+                                popoverClass={''}
+                                children={tooltipListSection(listObj, '30px')}
+                                trigger="hover"
+                                isAppendedToBody={false}
+                                container={<TooltipIcon />}
+                                placement="bottom"
+                            />
+                        </div>
+                    )}
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                </div>
+            );
+        } else if (cardData?.block_six?.smallFont || !cardData?.block_six?.value) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
+            );
+        } else {
+            return (
+                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} isDisabled={disableText}>
+                    {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                </DsTypography>
             );
         }
     };
@@ -494,7 +633,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: 'maxdop',
+                        type: 'max-dop',
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
@@ -624,24 +763,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     //This is for inner page navigation
     const handleDifferentNavigation = () => {
-        if (
-            type === 'Storage tier' ||
-            type === 'File system headroom' ||
-            type === 'Log drive size' ||
-            type === 'Data files' ||
-            type === 'Log files' ||
-            type === 'Thin provisioning' ||
-            type === 'Autosize' ||
-            type === 'Autosize-mode' ||
-            type === ' Fractional reserve' ||
-            type === 'Snapshot copy reserve' ||
-            type === 'Snapshot autodelete ' ||
-            type === 'Space management' ||
-            type === ' Tiering minimum cooling days' ||
-            type === 'OS type' ||
-            type === 'Space reservation' ||
-            type === 'Space allocation'
-        ) {
+        if (type === 'Storage tier') {
+            // type === 'File system headroom' ||
+            // type === 'Log drive size' ||
+            // type === 'Data files' ||
+            // type === 'Log files' ||
+            // type === 'Thin provisioning' ||
+            // type === 'Autosize' ||
+            // type === 'Autosize-mode' ||
+            // type === ' Fractional reserve' ||
+            // type === 'Snapshot copy reserve' ||
+            // type === 'Snapshot autodelete ' ||
+            // type === 'Space management' ||
+            // type === ' Tiering minimum cooling days' ||
+            // type === 'OS type' ||
+            // type === 'Space reservation' ||
+            // type === 'Space allocation'
             handleNavigateToOptimizePage(type);
         } else {
             handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
@@ -651,6 +788,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     //This will be removed
     const handleTemporaryDialog = () => {
         handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
+    };
+
+    const setButtonText = () => {
+        if (type === 'Storage tier') {
+            // type === 'Log drive size' ||
+            return 'View & optimize';
+        } else {
+            return GENERAL.OPTIMIZE;
+        }
     };
 
     return (
@@ -697,8 +843,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div>
 
             {/* Section Next */}
-            <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
-                {sectionFourContent(cardData)}
+            <div
+                className={styles.thirdSection}
+                style={{
+                    height: cardData?.block_three?.smallFont ? '56px' : '64px',
+                    minWidth: '200px',
+                    position: 'relative',
+                    top: '3px'
+                }}
+            >
+                {sectionFiveContent(cardData)}
 
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
                     {cardData?.block_five?.type}
@@ -711,7 +865,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     className={styles.thirdSection}
                     style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}
                 >
-                    {sectionFourContent(cardData)}
+                    {sectionSixContent(cardData)}
 
                     <DsTypography variant="Regular_14" isDisabled={disableText}>
                         {cardData?.block_six?.type}
@@ -743,7 +897,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         >
                             <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                                 <DsButton variant="secondary" isDisabled={true}>
-                                    Optimize
+                                    {setButtonText()}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -759,7 +913,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
-                                {GENERAL.OPTIMIZE}
+                                {setButtonText()}
                             </DsButton>
                         </div>
                     </TooltipComponent>
@@ -783,7 +937,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 }}
                             >
                                 <DsButton variant="secondary" isDisabled={true}>
-                                    {GENERAL.OPTIMIZE}
+                                    {setButtonText()}
                                 </DsButton>
                             </div>
                         }
@@ -800,10 +954,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <DsButton
                             variant="secondary"
-                            onClick={() => handleTemporaryDialog()}
+                            onClick={() => handleDifferentNavigation()}
                             isDisabled={loading || disableOptimizeButton}
                         >
-                            {GENERAL.OPTIMIZE}
+                            {setButtonText()}
                         </DsButton>
                     </div>
                 ))}

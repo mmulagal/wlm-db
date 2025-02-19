@@ -10,15 +10,37 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
 
-const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const RSSOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const data = [
+        {
+            serverInstanceName: 'Network adapter name 1',
+            status: 'Up',
+            tcpOffloading: 'Not optimized ',
+            receivingQueue: 'Not optimized ',
+            rssProfile: 'Not optimized ',
+            rssStatus: 'Not optimized',
+            baseProcessor: 'Not optimized ',
+
+            id: '1'
+        },
+        {
+            serverInstanceName: 'Network adapter name 2',
+            status: 'Up',
+            tcpOffloading: 'Optimized ',
+            receivingQueue: 'Optimized ',
+            rssProfile: 'Optimized ',
+            rssStatus: 'Not optimized',
+            baseProcessor: 'Optimized ',
+
+            id: '2'
+        }
+    ];
 
     const tableData = useMemo(() => {
-        let id = 0;
-        return data?.violationDetails?.map((row: any) => ({
+        return data.map((row: any) => ({
             ...row,
-            id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
@@ -26,25 +48,65 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Volume name',
-            accessor: 'objectName',
+            accessor: 'serverInstanceName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '481px',
-            renderCell: (cellData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            width: '219px',
+            renderCell: (cellData: any, rowData: any) => {
+                return <FirstColumnComponent rowData={rowData} />;
             }
         },
 
         {
-            Header: 'Performance tier',
-            accessor: 'value',
+            Header: 'TCP offloading',
+            accessor: 'tcpOffloading',
             id: '3',
-            width: '481px',
+            width: '174px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Receive queues',
+            accessor: 'receivingQueue',
+            id: '4',
+            width: '174px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'RSS profile',
+            accessor: 'rssProfile',
+            id: '5',
+            width: '174px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'RSS status',
+            accessor: 'rssStatus',
+            id: '6',
+            width: '174px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Base processor',
+            accessor: 'baseProcessor',
+            id: '7',
+            width: '174px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         lastColDetails(type, {})
@@ -59,7 +121,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
         rows: tableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        defaultSelectedRows: tableData.map(item => item.id)
     });
 
     useEffect(() => {
@@ -91,4 +153,4 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
     );
 };
 
-export default StorageTierOptimizeTable;
+export default RSSOptimizeTable;

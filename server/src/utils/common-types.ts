@@ -93,6 +93,13 @@ interface ResourceAssessmentData {
     maxDOP?: MaxDOPAssesment;
     mssqlPatch?: MSSQLPatchAssessmentObject[];
     lastAssessedDate?: string;
+    errors?: {
+        compute?: string;
+        hostOsPatch?: string;
+        rssConfig?: string;
+        mssqlPatch?: string;
+        license?: string;
+    };
 }
 interface Metadata {
     node1InstanceId: string;
@@ -336,6 +343,7 @@ interface LogDriveDetails {
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
     diskNumber: number;
+    sizePercentToDataDrive: number;
 }
 
 interface TempDbDriveDetails {
@@ -348,6 +356,7 @@ interface TempDbDriveDetails {
     dataDriveTotalSizeMB: number;
     defaultDataDriveLetter: string;
     tempdbDriveTotalSizeMB: number;
+    sizePercentToDataDrive: number;
 }
 interface Sizing {
     'performance-tier': boolean | Array<number> | Array<{ volumeName: string; performanceTierPercent: number }>;

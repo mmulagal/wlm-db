@@ -10,7 +10,7 @@ resource "aws_ssm_parameter" "credentials_ssm_parameter" {
   },
   "pgsql": [{
     "username": "postgres",
-    "password": "${var.sql_service_account_password}",
+    "password": "${var.sql_service_account_password}"
   }]
 }
 EOF

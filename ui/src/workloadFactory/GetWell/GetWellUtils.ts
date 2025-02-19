@@ -205,7 +205,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_six: {
             type: 'Impacted databases',
-            value: ''
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'Data files (.mdf) placement recommendation',
@@ -240,7 +241,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_six: {
             type: 'Impacted databases',
-            value: ''
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
@@ -275,7 +277,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_six: {
             type: 'TempDB placement',
-            value: ''
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'TempDB placement recommendation',
@@ -452,7 +455,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_six: {
             type: 'Impacted network adapters',
-            value: ''
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'Network adapter settings recommendation',
@@ -499,7 +503,8 @@ export const cardDataDefault: GwCardDataInterface = {
         block_six: {
             type: 'Finding reasons',
             value: '',
-            list: null
+            list: null,
+            smallFont: true
         },
         recommendation: {
             title: 'Operating system patch recommendation',
@@ -534,7 +539,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_six: {
             type: 'License edition',
-            value: ''
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'License recommendation',
@@ -615,7 +621,8 @@ export const cardDataDefault: GwCardDataInterface = {
         },
         block_six: {
             type: 'MAXDOP',
-            value: ''
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'MAXDOP assessment recommendation',
@@ -675,6 +682,14 @@ export const formatApplicationCardMainConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: licenseVal
+            },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
@@ -725,6 +740,14 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: String(totalPatches)
+            },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
@@ -768,6 +791,14 @@ export const formatMaxdopPatchCardConfig = (
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
@@ -822,6 +853,14 @@ export const formatOsPatchCardConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: String(totalViolations)
+            },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
             id: item?.name,
             category: categoryVal,
@@ -867,9 +906,13 @@ export const formatRssConfigCardConfig = (
         baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
     };
 
+    let totalAdapters = item?.rssAdapters?.length || 0;
+    let nonOptimizedAdapters = 0;
+
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
+            nonOptimizedAdapters++;
             optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
             optimizedValue['rssProfile'] = adapter?.rssProfile;
             optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
@@ -906,6 +949,14 @@ export const formatRssConfigCardConfig = (
                     optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
                 }
             }
+
+            if (
+                adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile ||
+                adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber ||
+                adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues
+            ) {
+                nonOptimizedAdapters++;
+            }
         }
     });
 
@@ -930,6 +981,18 @@ export const formatRssConfigCardConfig = (
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: findingReasons,
+                count: {
+                    totalObjectsAssessed: totalAdapters,
+                    totalObjectsInViolation: nonOptimizedAdapters
+                }
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
             id: item?.name,
@@ -988,7 +1051,6 @@ export const formatIndividualCardMainConfig = (
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
             }
-
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
             let blockThreeValue = '';
@@ -996,6 +1058,31 @@ export const formatIndividualCardMainConfig = (
                 blockThreeValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
             } else {
                 blockThreeValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
+            }
+
+            let blockSixValue: string | undefined = '';
+            let blockSixCountObject = null;
+            if (
+                itemName === 'storage_tier' ||
+                itemName === 'transaction_log_drive_size' ||
+                itemName === 'user_data_files' ||
+                itemName === 'transaction_log_files'
+            ) {
+                blockSixValue = (item?.totalObjectsInViolation || 0) + ' out of ' + (item?.totalObjectsAssessed || 0);
+                blockSixCountObject = {
+                    totalObjectsInViolation: item?.totalObjectsInViolation || 0,
+                    totalObjectsAssessed: item?.totalObjectsAssessed || 0
+                };
+            } else if (
+                itemName === 'file_system_headroom' ||
+                itemName === 'tempdb_drive_size' ||
+                itemName === 'tempdb_files'
+            ) {
+                blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else if (categoryVal === 'storage') {
+                blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else {
+                blockSixValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
             }
 
             cardsData = {
@@ -1015,6 +1102,16 @@ export const formatIndividualCardMainConfig = (
                         ...(cardDataDefault?.[itemName]?.block_four || {}),
                         value: GETWELL_VALUES?.[severity] || severity
                     },
+                    block_five: {
+                        ...(cardDataDefault?.[itemName]?.block_five || {}),
+                        value: item?.resourceType
+                    },
+                    block_six: {
+                        ...(cardDataDefault?.[itemName]?.block_six || {}),
+                        value: blockSixValue,
+                        count: blockSixCountObject,
+                        list: item?.objectsInViolation ? item?.objectsInViolation : null
+                    },
                     errorMessage: item?.errorMessage,
                     tags: item?.tags,
                     id: item?.name,
@@ -1023,7 +1120,8 @@ export const formatIndividualCardMainConfig = (
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
                     recommendedSizeInGib: item?.recommendedSizeInGib,
-                    sizingViolations: item?.sizingViolations
+                    sizingViolations: item?.sizingViolations,
+                    violationDetails: item?.violationDetails
                 }
             };
         });
@@ -1312,6 +1410,17 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 ...cardDataDefault?.ontap_configuration?.block_four,
                 value: highestOntapSeverity
             },
+            block_five: {
+                ...cardDataDefault?.ontap_configuration?.block_five,
+                value:
+                    (ontapNotOptimizedConfig || 0) +
+                    ' out of ' +
+                    ((ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)),
+                count: {
+                    totalObjectsAssessed: (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0),
+                    totalObjectsInViolation: ontapNotOptimizedConfig || 0
+                }
+            },
             tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
         }
@@ -1345,6 +1454,15 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             block_four: {
                 ...cardDataDefault?.os_configuration?.block_four,
                 value: highestOsSeverity
+            },
+            block_five: {
+                ...cardDataDefault?.os_configuration?.block_five,
+                value:
+                    (osNotOptimizedConfig || 0) + ' out of ' + ((osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)),
+                count: {
+                    totalObjectsAssessed: (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0),
+                    totalObjectsInViolation: osNotOptimizedConfig || 0
+                }
             },
             tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
@@ -2132,7 +2250,7 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         ? 'compute-rightsizing'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-        ? 'maxdop'
+        ? 'max-dop'
         : '';
 };
 

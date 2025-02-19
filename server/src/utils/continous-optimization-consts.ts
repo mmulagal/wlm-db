@@ -90,11 +90,16 @@ enum OPTIMIZE_SIZING_CONFIGS {
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
 }
 
+enum OptimizeMaxDopParams {
+    MAX_DOP = 'max-dop'
+}
+
 enum OPTIMIZATION_CATEGORIES {
     STORAGE_TIER = 'storage-tier',
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
-    COMPUTE = 'compute'
+    COMPUTE = 'compute',
+    MAXDOP = 'max-dop'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -234,5 +239,6 @@ export {
     NETWORK_PERF,
     ONPREM_TCO_CREDENTIALS_ID,
     OPTIMIZATION_CATEGORIES,
+    OptimizeMaxDopParams,
     ASSESSMENT_RESOURCE_TYPE
 };
