@@ -496,6 +496,8 @@ Resources:
                             source: {{{ DSC }}}
                         C:\cfn\Installer\powershell.zip:
                             source: {{{ PowerShell }}}
+                        C:\cfn\Installer\dotnet.zip:
+                            source: {{{ Dotnet }}}                            
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
@@ -571,10 +573,13 @@ Resources:
                         k-unpack-sqlspcu-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
-                        l-unpack-powershell-scripts:
+                        l-unpack-dotnet-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\dotnet.zip -Destination C:\cfn\Installer                                
+                        m-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        m-verify-dbcreate-signature:
+                        n-verify-dbcreate-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig 
@@ -582,22 +587,22 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        n-unpack-dbcreate-scripts:
+                        o-unpack-dbcreate-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts
-                        o-move-execurequeryfromssmscript:
+                        p-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
                             waitAfterCompletion: 0
-                        p-move-ontapscript:
+                        q-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        q-move-dbcreatescripts:
+                        r-move-dbcreatescripts:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        r-hide-ssm:
+                        s-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0 
-                        s-verify-dependentpackages-signature:
+                        t-verify-dependentpackages-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig 
@@ -605,7 +610,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        t-unpack-dependentpackages:
+                        u-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
@@ -650,14 +655,16 @@ Resources:
                         a-install-ontap-prereqs:
                             command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1
                             waitAfterCompletion: 0
-                        b-install-powershell-7:
+                        b-install-dotnet:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-dotnet.ps1                            
+                        c-install-powershell-7:
                             command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-powershell7.ps1
-                        c-update-awstoolsmodules:
+                        d-update-awstoolsmodules:
                             command: pwsh -Command C:\cfn\scripts\sqlontap\Update-AWSToolsModules.ps1
-                        d-restart-computer:
+                        e-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
-                        e-configure-ontap:
+                        f-configure-ontap:
                             command: !Join
                                 - ''
                                 - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -Parentstackname
@@ -684,7 +691,7 @@ Resources:
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
-                        f-connect-ontap-instance:
+                        g-connect-ontap-instance:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
@@ -696,7 +703,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        g-init-iscsi-disk:
+                        h-init-iscsi-disk:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlontap\Initialize-Iscsidisk.ps1"
                 InstancePrep:
                     commands:
@@ -1165,6 +1172,8 @@ Resources:
                             source: {{{ DSC }}}
                         C:\cfn\Installer\powershell.zip:
                             source: {{{ PowerShell }}}
+                        C:\cfn\Installer\dotnet.zip:
+                            source: {{{ Dotnet }}}                            
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{{ AmazonLaunchWizardForCFN }}}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
@@ -1240,10 +1249,13 @@ Resources:
                         k-unpack-sqlspcu-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
-                        l-unpack-powershell-scripts:
+                        l-unpack-dotnet-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\dotnet.zip -Destination C:\cfn\Installer                                
+                        m-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        m-verify-dbcreate-signature:
+                        n-verify-dbcreate-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig 
@@ -1251,22 +1263,22 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        n-unpack-dbcreate-scripts:
+                        o-unpack-dbcreate-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts
-                        o-move-execurequeryfromssmscript:
+                        p-move-execurequeryfromssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
                             waitAfterCompletion: 0
-                        p-move-ontapscript:
+                        q-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                             waitAfterCompletion: 0
-                        q-move-dbcreatescripts:
+                        r-move-dbcreatescripts:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\dbcreate\* -Destination C:\SSM\ -Recurse
                             waitAfterCompletion: 0
-                        r-hide-ssm:
+                        s-hide-ssm:
                             command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
                             waitAfterCompletion: 0
-                        s-verify-dependentpackages-signature:
+                        t-verify-dependentpackages-signature:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\Installer\dependent-packages.zip -SignatureFilePath C:\cfn\signig_files\dependent-packages.sig 
@@ -1274,7 +1286,7 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0 
-                        t-unpack-dependentpackages:
+                        u-unpack-dependentpackages:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\dependent-packages.zip -Destination C:\cfn\Installer
                 InitialSetup:
@@ -1319,14 +1331,16 @@ Resources:
                         a-install-ontap-prereqs:
                             command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1
                             waitAfterCompletion: 300
-                        b-install-powershell-7:
+                        b-install-dotnet:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-dotnet.ps1                            
+                        c-install-powershell-7:
                             command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-powershell7.ps1
-                        c-update-awstoolsmodules:
+                        d-update-awstoolsmodules:
                             command: pwsh -Command C:\cfn\scripts\sqlontap\Update-AWSToolsModules.ps1
-                        d-restart-computer:
+                        e-restart-computer:
                             command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
                             waitAfterCompletion: forever
-                        e-add-node2-initiator:
+                        f-add-node2-initiator:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1 -SQLVMName '
@@ -1340,7 +1354,7 @@ Resources:
                                   - "' -Parentstackname '"
                                   - !Ref 'ParentStackName'
                                   - '''"'
-                        f-connect-ontap-instance:
+                        g-connect-ontap-instance:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
