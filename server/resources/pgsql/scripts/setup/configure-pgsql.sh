@@ -12,9 +12,9 @@ while getopts "d:l:v:w:" opt; do
     esac
 done
 
-fsxdatamountpoint=/$fsxdatavolumename
-fsxlogmountpoint=/$fsxlogvolumename
-archive_dir=/$fsxlogvolumename/logs/archived_logs
+datadirname="${fsxdatavolumename/_replica/}" # Remove _replica from the data volume name
+logdirname="${fsxlogvolumename/_replica/}" # Remove _replica from the log volume name
+archive_dir=/$logdirname/logs/archived_logs
 
 # Function to check the status of the previous command and exit on failure
 check_status() {
@@ -43,15 +43,15 @@ check_status "Failed to install PostgreSQL or NFS utilities"
 export PATH=$PATH:/usr/bin
 
 # Set permissions for directories
-sudo chmod 0700 /$fsxdatavolumename /$fsxlogvolumename
-sudo chown -R postgres:postgres /$fsxdatavolumename /$fsxlogvolumename
+sudo chmod 0700 /$datadirname /$logdirname
+sudo chown -R postgres:postgres /$datadirname /$logdirname
 check_status "Failed to set permissions"
 
 # Remove existing contents of /$fsxdatavolumename directory
-sudo rm -rf /$fsxdatavolumename/*
+sudo rm -rf /$datadirname/*
 
 # Initialize the database cluster on the FSxN mounted volume
-sudo -u postgres /usr/bin/initdb -D /$fsxdatavolumename
+sudo -u postgres /usr/bin/initdb -D /$datadirname
 check_status "Failed to initialize PostgreSQL database cluster on FSxN volume"
 
 # Increase shared memory limits
@@ -68,21 +68,21 @@ check_status "Failed to initialize PostgreSQL database cluster on FSxN volume"
 # sudo sed -i "s|^#work_mem =.*|work_mem = 32MB|" /$fsxdatavolumename/postgresql.conf
 
 # Update PostgreSQL configuration to use the new data and log directories
-sudo sed -i "s|^#data_directory =.*|data_directory = '/$fsxdatavolumename'|" /$fsxdatavolumename/postgresql.conf
-sudo sed -i "s|^#log_directory =.*|log_directory = '/$fsxlogvolumename'|" /$fsxdatavolumename/postgresql.conf
+sudo sed -i "s|^#data_directory =.*|data_directory = '/$datadirname'|" /$datadirname/postgresql.conf
+sudo sed -i "s|^#log_directory =.*|log_directory = '/$logdirname'|" /$datadirname/postgresql.conf
 check_status "Failed to update PostgreSQL configuration"
 
 # Changing dynamic_shared_memory_type to mmap
-sudo sed -i "s|^dynamic_shared_memory_type =.*|dynamic_shared_memory_type = mmap|" /$fsxdatavolumename/postgresql.conf
+sudo sed -i "s|^dynamic_shared_memory_type =.*|dynamic_shared_memory_type = mmap|" /$datadirname/postgresql.conf
 
 # Change the PGDATA environment variable
-sudo sed -i "s|^Environment=PGDATA=.*|Environment=PGDATA=/$fsxdatavolumename|" /usr/lib/systemd/system/postgresql.service
+sudo sed -i "s|^Environment=PGDATA=.*|Environment=PGDATA=/$datadirname|" /usr/lib/systemd/system/postgresql.service
 
 # Add RequiresMountsFor to the PostgreSQL service unit file, so that the service starts after the FSxN volumes are mounted
 sudo mkdir -p /etc/systemd/system/postgresql.service.d
 sudo echo "[Unit]" > /etc/systemd/system/postgresql.service.d/override.conf
-sudo echo "RequiresMountsFor=$fsxdatamountpoint" >> /etc/systemd/system/postgresql.service.d/override.conf
-sudo echo "RequiresMountsFor=$fsxlogmountpoint" >> /etc/systemd/system/postgresql.service.d/override.conf
+sudo echo "RequiresMountsFor=/$datadirname" >> /etc/systemd/system/postgresql.service.d/override.conf
+sudo echo "RequiresMountsFor=/$logdirname" >> /etc/systemd/system/postgresql.service.d/override.conf
 
 # Reload the systemd configuration
 sudo systemctl daemon-reload
@@ -97,14 +97,14 @@ sudo systemctl start postgresql
 check_status "Failed to start PostgreSQL service"
 
 # Switch to postgres user and move wal logs to log volume
-sudo chown -R postgres:postgres /$fsxdatavolumename/pg_wal
+sudo chown -R postgres:postgres /$datadirname/pg_wal
 # Ensure the target directory is empty
-sudo rm -rf /$fsxlogvolumename/pg_wal
-sudo -u postgres mv /$fsxdatavolumename/pg_wal /$fsxlogvolumename/pg_wal
+sudo rm -rf /$logdirname/pg_wal
+sudo -u postgres mv /$datadirname/pg_wal /$logdirname/pg_wal
 check_status "Failed to move WAL logs"
 
 # Create soft link to moved wal dir
-sudo -u postgres ln -s /$fsxlogvolumename/pg_wal /$fsxdatavolumename/pg_wal
+sudo -u postgres ln -s /$logdirname/pg_wal /$datadirname/pg_wal
 check_status "Failed to create soft link for WAL logs"
 
 # Create postgresql archive log dir
@@ -121,7 +121,7 @@ check_status "Failed to set password for postgres user"
 
 # Verify the data directory
 data_directory=$(sudo -u postgres /usr/bin/psql -t -c "SHOW data_directory;" | xargs)
-if [ "$data_directory" = "/$fsxdatavolumename" ]; then
+if [ "$data_directory" = "/$datadirname" ]; then
     echo "PostgreSQL data directory is correctly set to the FSxN mounted volume: $data_directory"
 else
     echo "Error: PostgreSQL data directory is not set to the FSxN mounted volume. Current data directory: $data_directory"
