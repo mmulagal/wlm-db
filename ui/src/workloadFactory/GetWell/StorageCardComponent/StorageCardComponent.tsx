@@ -633,7 +633,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: 'maxdop',
+                        type: 'max-dop',
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
