@@ -16,7 +16,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
 
     const tableData = useMemo(() => {
         let id = 0;
-        return data?.storageTierViolations?.map((row: any) => ({
+        return data?.violationDetails?.map((row: any) => ({
             ...row,
             id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
@@ -26,7 +26,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Volume name',
-            accessor: 'volumeName',
+            accessor: 'objectName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
@@ -39,7 +39,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
 
         {
             Header: 'Performance tier',
-            accessor: 'percent',
+            accessor: 'value',
             id: '3',
             width: '481px',
             filterOptions: 'auto',
