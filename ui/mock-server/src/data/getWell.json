@@ -233,6 +233,28 @@
                     "underProvisionedDrives": [],
                     "ignoredDrives": []
                 },
+                "storageTierViolations" : [
+                    {
+                        "volumeName": "volume1",
+                        "percent": 25
+                    },
+                    {
+                        "volumeName": "volume2",
+                        "percent": 35
+                    },
+                    {
+                        "volumeName": "volume3",
+                        "percent": 30
+                    },
+                    {
+                        "volumeName": "volume4",
+                        "percent": 35
+                    },
+                    {
+                        "volumeName": "volume5",
+                        "percent": 30
+                    }
+                ],
                 "resourceType": "Volume",
                 "totalObjectsAssessed": 17,
                 "totalObjectsInViolation": 5 

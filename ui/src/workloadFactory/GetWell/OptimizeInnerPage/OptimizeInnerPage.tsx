@@ -258,6 +258,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <StorageTierOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />

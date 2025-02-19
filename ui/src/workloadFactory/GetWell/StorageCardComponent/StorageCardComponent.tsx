@@ -763,24 +763,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     //This is for inner page navigation
     const handleDifferentNavigation = () => {
-        if (
-            type === 'Storage tier' ||
-            type === 'File system headroom' ||
-            type === 'Log drive size' ||
-            type === 'Data files' ||
-            type === 'Log files' ||
-            type === 'Thin provisioning' ||
-            type === 'Autosize' ||
-            type === 'Autosize-mode' ||
-            type === ' Fractional reserve' ||
-            type === 'Snapshot copy reserve' ||
-            type === 'Snapshot autodelete ' ||
-            type === 'Space management' ||
-            type === ' Tiering minimum cooling days' ||
-            type === 'OS type' ||
-            type === 'Space reservation' ||
-            type === 'Space allocation'
-        ) {
+        if (type === 'Storage tier') {
+            // type === 'File system headroom' ||
+            // type === 'Log drive size' ||
+            // type === 'Data files' ||
+            // type === 'Log files' ||
+            // type === 'Thin provisioning' ||
+            // type === 'Autosize' ||
+            // type === 'Autosize-mode' ||
+            // type === ' Fractional reserve' ||
+            // type === 'Snapshot copy reserve' ||
+            // type === 'Snapshot autodelete ' ||
+            // type === 'Space management' ||
+            // type === ' Tiering minimum cooling days' ||
+            // type === 'OS type' ||
+            // type === 'Space reservation' ||
+            // type === 'Space allocation'
             handleNavigateToOptimizePage(type);
         } else {
             handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
@@ -942,7 +940,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <DsButton
                             variant="secondary"
-                            onClick={() => handleTemporaryDialog()}
+                            onClick={() => handleDifferentNavigation()}
                             isDisabled={loading || disableOptimizeButton}
                         >
                             {GENERAL.OPTIMIZE}
