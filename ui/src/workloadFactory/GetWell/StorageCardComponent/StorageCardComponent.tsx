@@ -311,6 +311,20 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     <DsFlashingDotsLoader />
                 </div>
             );
+        } else if (cardData?.block_five?.count) {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Regular_24">
+                        {cardData?.block_five?.count?.totalObjectsInViolation || 0}
+                    </DsTypography>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {' out of '}
+                    </DsTypography>
+                    <DsTypography variant="Regular_24">
+                        {cardData?.block_five?.count?.totalObjectsAssessed || 0}
+                    </DsTypography>
+                </div>
+            );
         } else {
             return (
                 <div className={styles.warningMsg}>

@@ -1414,7 +1414,11 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     (ontapNotOptimizedConfig || 0) +
                     ' out of ' +
-                    ((ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0))
+                    ((ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)),
+                count: {
+                    totalObjectsAssessed: (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0),
+                    totalObjectsInViolation: ontapNotOptimizedConfig || 0
+                }
             },
             tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
@@ -1453,7 +1457,11 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             block_five: {
                 ...cardDataDefault?.os_configuration?.block_five,
                 value:
-                    (osNotOptimizedConfig || 0) + ' out of ' + ((osOptimizedConfig || 0) + (osNotOptimizedConfig || 0))
+                    (osNotOptimizedConfig || 0) + ' out of ' + ((osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)),
+                count: {
+                    totalObjectsAssessed: (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0),
+                    totalObjectsInViolation: osNotOptimizedConfig || 0
+                }
             },
             tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
