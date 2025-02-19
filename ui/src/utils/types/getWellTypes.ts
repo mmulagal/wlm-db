@@ -93,6 +93,7 @@ export interface PerConfigInterface {
     resourceType?: string;
     totalObjectsAssessed?: number;
     totalObjectsInViolation?: number;
+    storageTierViolations?: any;
     ec2InstancesToPatch?: Array<{
         baselineId?: string;
         criticalNonCompliantCount?: number;

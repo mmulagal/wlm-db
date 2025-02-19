@@ -10,27 +10,15 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
 
-const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
+const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const data = [
-        {
-            serverInstanceName: 'Volume 1',
-            status: 'Up',
-            storageTierPercent: '50%',
-            id: '1'
-        },
-        {
-            serverInstanceName: 'Volume 2',
-            status: 'Up',
-            storageTierPercent: '50%',
-            id: '2'
-        }
-    ];
 
     const tableData = useMemo(() => {
-        return data.map((row: any) => ({
+        let id = 0;
+        return data?.storageTierViolations?.map((row: any) => ({
             ...row,
+            id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
@@ -38,25 +26,25 @@ const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: an
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Volume name',
-            accessor: 'serverInstanceName',
+            accessor: 'volumeName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: '481px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
         {
             Header: 'Performance tier',
-            accessor: 'performanceTier',
+            accessor: 'percent',
             id: '3',
             width: '481px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
             }
         },
         lastColDetails(type, {})
@@ -71,7 +59,7 @@ const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: an
         rows: tableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: tableData.map(item => item.id)
+        defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
     useEffect(() => {

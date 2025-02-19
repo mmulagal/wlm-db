@@ -1120,7 +1120,8 @@ export const formatIndividualCardMainConfig = (
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
                     recommendedSizeInGib: item?.recommendedSizeInGib,
-                    sizingViolations: item?.sizingViolations
+                    sizingViolations: item?.sizingViolations,
+                    storageTierViolations: item?.storageTierViolations
                 }
             };
         });
