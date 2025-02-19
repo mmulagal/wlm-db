@@ -39,7 +39,7 @@ import castRequest from './utils';
 import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
 import {
     getAvailableSnapshotPolicyList,
-    setSnapshotPolicyForVolumes
+    handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -316,7 +316,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
                 } = castRequest(request);
                 const { snapshotPolicy } = request.body;
-                const response = await setSnapshotPolicyForVolumes(
+                const response = await handleResiliecyOptimize(
                     accountId,
                     credentialsId,
                     region,

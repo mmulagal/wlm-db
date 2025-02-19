@@ -290,13 +290,6 @@ const BulkOptimizeSnapshotPolicyRequestBody = Type.Object({
     volumes: Type.Optional(Type.Array(OntapVolume))
 });
 
-const BulkOptimizeSnapshotPolicyParams = Type.Object({
-    fsxId: Type.String(),
-    region: Type.String(),
-    volUuids: Type.String(),
-    apiBody: Type.String()
-});
-type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
 type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
 
 const BulkOptimizeStorageRequestBody = Type.Object({
@@ -388,7 +381,5 @@ export {
     OptimizePerHostRequestBody,
     OptimizePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
-    StorageTierViolationResponseType,
-    BulkOptimizeSnapshotPolicyParamsType,
-    BulkOptimizeSnapshotPolicyParams
+    StorageTierViolationResponseType
 };

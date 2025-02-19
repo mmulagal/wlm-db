@@ -10,7 +10,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/aws/fsx-scope';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
-import { getAvailableSnapshotPolicyList, setSnapshotPolicyForVolumes } from '../../../src/operations/continuous-optimization/resilience-optimize-operations';
+import { getAvailableSnapshotPolicyList, handleResiliecyOptimize } from '../../../src/operations/continuous-optimization/resilience-optimize-operations';
 import { RESOURCE_ID } from '../../../src/utils/consts';
 
 beforeAll(async () => {
@@ -60,7 +60,7 @@ describe('List snapshot policies om svm and cluster level', () => {
 
 describe('Should set snapshot policy on volume level', () => {
     it('should set snapshot policy on volume level', async () => {
-        const { jobId } = await setSnapshotPolicyForVolumes(
+        const { jobId } = await handleResiliecyOptimize(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,

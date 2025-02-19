@@ -1,6 +1,7 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
+import { Static, Type } from '@sinclair/typebox';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -472,6 +473,14 @@ interface StorageTierParams extends OptimizeParams {
     svmName: string;
 }
 
+const BulkOptimizeSnapshotPolicyParams = Type.Object({
+    fsxId: Type.String(),
+    region: Type.String(),
+    volUuids: Type.String(),
+    apiBody: Type.String()
+});
+type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
 export {
     Metadata,
     NodeDetails,
@@ -511,5 +520,7 @@ export {
     PgSqlInstanceDetails,
     RssConfigAssesment,
     MaxDOPAssesment,
-    PatchDetail
+    PatchDetail,
+    BulkOptimizeSnapshotPolicyParams,
+    BulkOptimizeSnapshotPolicyParamsType
 };

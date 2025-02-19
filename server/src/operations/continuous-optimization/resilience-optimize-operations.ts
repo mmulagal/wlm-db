@@ -4,10 +4,9 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
-    BulkOptimizeSnapshotPolicyParamsType,
     SnapshotPolicyType
 } from '../../routes/types/continuous-optimization.types';
-import { Metadata, WorkloadInstance } from '../../utils/common-types';
+import { BulkOptimizeSnapshotPolicyParamsType, Metadata, WorkloadInstance } from '../../utils/common-types';
 import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
@@ -161,64 +160,38 @@ async function getAvailableSnapshotPolicyList(
 }
 
 async function setSnapshotPolicyForVolumes(
+    instanceRecord: WorkloadInstance,
+    fsxId: string,
     accountId: string,
     credentialsId: string,
     region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    snapshotPolicy: SnapshotPolicyType
+    snapshotPolicy: SnapshotPolicyType,
+    parentJobId?: string
 ) {
-    logger.info('Optimize snapshot policy for volumes', {
-        region,
-        accountId,
-        credentialsId,
-        databaseInstanceId,
-        databaseHostId,
-        snapshotPolicy
-    });
-    const { instanceRecord, fsxId } = await getActiveNodeInfo(
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        databaseInstanceId
-    );
-
-    // create job
+    logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let jobError = '';
     let subJobId = null;
-    const jobMetadata: JobMetadata = {
-        hostsToOptimize: [
-            {
-                optimizationType: 'resiliency',
-                resourceId: databaseHostId,
-                sqlServerInstances: [databaseInstanceId]
-            }
-        ]
-    };
-    // check whether any jobs on the same resource running
-    const jobId = await handleOptimizeJobCreation(
-        accountId,
-        credentialsId,
-        region,
-        instanceRecord.resourceName,
-        JOBTYPE.OPTIMIZATION,
-        `Optimize resiliency for ${instanceRecord.resourceName}`,
-        `Optimize resiliency for ${instanceRecord.resourceName}`,
-        undefined,
-        jobMetadata
-    );
     try {
+        const jobMetadata: JobMetadata = {
+            hostsToOptimize: [
+                {
+                    optimizationType: 'resiliency',
+                    resourceId: instanceRecord.resourceName,
+                    sqlServerInstances: [instanceRecord.activeNodeInstanceid]
+                }
+            ]
+        };
+        const subJobDetails = `Optimize snapshot policy for ${instanceRecord.resourceName}`;
         subJobId = await handleOptimizeJobCreation(
             accountId,
             credentialsId,
             region,
             instanceRecord.resourceName,
             JOBTYPE.OPTIMIZATION,
-            `Optimize snapshot policy for ${instanceRecord.resourceName}`,
-            `Optimize snapshot policy for ${instanceRecord.resourceName}`,
-            jobId,
+            subJobDetails,
+            subJobDetails,
+            parentJobId,
             jobMetadata
         );
         const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
@@ -272,8 +245,8 @@ async function setSnapshotPolicyForVolumes(
         jobError = errMsg;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
-        if (!isNil(jobId)) {
-            await updateJobDetails(accountId, jobId, {
+        if (!isNil(parentJobId)) {
+            await updateJobDetails(accountId, parentJobId, {
                 status: jobStatus,
                 endTime: Date.now(),
                 error: jobError
@@ -289,8 +262,55 @@ async function setSnapshotPolicyForVolumes(
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
         updateLongRunningAuditGroup(auditStatus, jobError);
     }
+}
 
+async function handleResiliecyOptimize(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    snapshotPolicy: SnapshotPolicyType
+) {
+    logger.info('Optimize resiliency for: ', {
+        region,
+        accountId,
+        credentialsId,
+        databaseInstanceId,
+        databaseHostId,
+        snapshotPolicy
+    });
+    const { instanceRecord, fsxId } = await getActiveNodeInfo(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+    const jobMetadata: JobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: 'resiliency',
+                resourceId: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ]
+    };
+    // check whether any jobs on the same resource running
+    const jobDetails = `Optimize resiliency for ${instanceRecord.resourceName}`;
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        instanceRecord.resourceName,
+        JOBTYPE.OPTIMIZATION,
+        jobDetails,
+        jobDetails,
+        undefined,
+        jobMetadata
+    );
+    setSnapshotPolicyForVolumes(instanceRecord, fsxId, accountId, credentialsId, region, snapshotPolicy, jobId);
     return { jobId };
 }
 
-export { getAvailableSnapshotPolicyList, setSnapshotPolicyForVolumes };
+export { getAvailableSnapshotPolicyList, handleResiliecyOptimize };
