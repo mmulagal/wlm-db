@@ -657,15 +657,13 @@ async function calculateStorageDrift(
                                     name: volumeDetail.volumeName,
                                     percent: volumeDetail.performanceTierPercent
                                 }));
-                            value = details
-                                .filter(
-                                    (volumeDetail: { performanceTierPercent: number; volumeName: string } | number) =>
-                                        typeof volumeDetail !== 'number'
-                                )
-                                .map(
-                                    (volumeDetail: { performanceTierPercent: number }) =>
-                                        volumeDetail.performanceTierPercent
-                                );
+
+                            value = details.map((volumeDetail: { performanceTierPercent: number } | number) => {
+                                if (typeof volumeDetail !== 'number') {
+                                    return volumeDetail.performanceTierPercent;
+                                }
+                                return volumeDetail;
+                            });
                         }
                         totalObjectsAssessed = value.length;
                         const minSizePercent = Math.min(...value);
