@@ -371,7 +371,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
-                                                Optimize
+                                                {rowData?.name !== 'Multipath I/O Sessions' &&
+                                                rowData?.name !== 'Multipath I/O Status'
+                                                    ? 'View & optimize'
+                                                    : 'Optimize'}
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
@@ -386,7 +389,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
-                                                Optimize
+                                                {rowData?.name !== 'Multipath I/O Sessions' &&
+                                                rowData?.name !== 'Multipath I/O Status'
+                                                    ? 'View & optimize'
+                                                    : 'Optimize'}
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
@@ -397,7 +403,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                             onClick={() => handleOntapDialog(rowData)}
                                             isDisabled={rowData?.status === 'Not optimized' ? false : true}
                                         >
-                                            Optimize
+                                            {rowData?.name !== 'Multipath I/O Sessions' &&
+                                            rowData?.name !== 'Multipath I/O Status'
+                                                ? 'View & optimize'
+                                                : 'Optimize'}
                                         </DsButton>
                                     </div>
                                 ))}

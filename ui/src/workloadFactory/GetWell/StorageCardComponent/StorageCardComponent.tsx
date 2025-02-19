@@ -790,6 +790,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
     };
 
+    const setButtonText = () => {
+        if (type === 'Storage tier') {
+            // type === 'Log drive size' ||
+            return 'View & optimize';
+        } else {
+            return GENERAL.OPTIMIZE;
+        }
+    };
+
     return (
         <div className={styles.storageCardComponent}>
             {/* Section one */}
@@ -836,7 +845,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {/* Section Next */}
             <div
                 className={styles.thirdSection}
-                style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px', minWidth: '200px' }}
+                style={{
+                    height: cardData?.block_three?.smallFont ? '56px' : '64px',
+                    minWidth: '200px',
+                    position: 'relative',
+                    top: '3px'
+                }}
             >
                 {sectionFiveContent(cardData)}
 
@@ -883,7 +897,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         >
                             <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                                 <DsButton variant="secondary" isDisabled={true}>
-                                    Optimize
+                                    {setButtonText()}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -899,7 +913,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
-                                {GENERAL.OPTIMIZE}
+                                {setButtonText()}
                             </DsButton>
                         </div>
                     </TooltipComponent>
@@ -923,7 +937,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 }}
                             >
                                 <DsButton variant="secondary" isDisabled={true}>
-                                    {GENERAL.OPTIMIZE}
+                                    {setButtonText()}
                                 </DsButton>
                             </div>
                         }
@@ -943,7 +957,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                             onClick={() => handleDifferentNavigation()}
                             isDisabled={loading || disableOptimizeButton}
                         >
-                            {GENERAL.OPTIMIZE}
+                            {setButtonText()}
                         </DsButton>
                     </div>
                 ))}
