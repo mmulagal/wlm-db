@@ -69,11 +69,10 @@
         gap: 8px;
         align-items: center;
         color: var(--warning);
-
-        [class*='dsTypography-module_Regular_24'] {
-            line-height: 0px !important;
+        .centerText {
+            position: relative;
+            top: 4.5px;
         }
-        
     }
 
     .tooltipTable {

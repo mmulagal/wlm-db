@@ -33,10 +33,16 @@ async function calculateLicenseDrift(
     logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
+    let licenseAssessment;
+    let metadata;
     try {
-        let licenseAssessment;
-
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating license drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+    try {
         const { assessment: { license } = {} } = metadata as unknown as Metadata;
         if (!isEmpty(license)) {
             licenseAssessment = license as LicenseAssessment;
@@ -78,6 +84,14 @@ async function calculateLicenseDrift(
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, license: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }

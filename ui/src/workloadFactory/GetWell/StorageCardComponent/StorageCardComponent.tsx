@@ -314,13 +314,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.block_five?.count) {
             return (
                 <div className={styles.warningMsg}>
-                    <DsTypography variant="Regular_24">
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
                         {cardData?.block_five?.count?.totalObjectsInViolation || 0}
                     </DsTypography>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    <DsTypography className={styles.centerText} variant="Semibold_14" isDisabled={disableText}>
                         {' out of '}
                     </DsTypography>
-                    <DsTypography variant="Regular_24">
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
                         {cardData?.block_five?.count?.totalObjectsAssessed || 0}
                     </DsTypography>
                 </div>
@@ -346,13 +346,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else if (cardData?.block_six?.count) {
             return (
                 <div className={styles.warningMsg}>
-                    <DsTypography variant="Regular_24">
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
                         {cardData?.block_six?.count?.totalObjectsInViolation || 0}
                     </DsTypography>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    <DsTypography className={styles.centerText} variant="Semibold_14" isDisabled={disableText}>
                         {' out of '}
                     </DsTypography>
-                    <DsTypography variant="Regular_24">
+                    <DsTypography style={{ lineHeight: 'unset' }} variant="Regular_24">
                         {cardData?.block_six?.count?.totalObjectsAssessed || 0}
                     </DsTypography>
                 </div>
@@ -836,7 +836,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             </div>
 
             {/* Section Next */}
-            <div className={styles.thirdSection} style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px' }}>
+            <div
+                className={styles.thirdSection}
+                style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px', minWidth: '200px' }}
+            >
                 {sectionFiveContent(cardData)}
 
                 <DsTypography variant="Regular_14" isDisabled={disableText}>
