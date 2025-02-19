@@ -54,7 +54,7 @@ describe('List snapshot policies om svm and cluster level', () => {
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d'
         );
-        expect(res.snapshotPolicies?.length).toBeGreaterThan(1);
+        expect(res.snapshotPolicies?.length).toBeGreaterThanOrEqual(1);
     });
 });
 

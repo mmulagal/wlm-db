@@ -16,7 +16,7 @@ import {
     SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
-import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+import { compressResponse, readSsmParameter, restGetUtilForOntap, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -1083,67 +1083,9 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
     Sqlcmd -Q "${SERVER_VERSION}" -y 0
 `;
 
-/**
- * @returns snapshot policies; Expected response structure:
- * { "errors": { }, "snapshotPolicies": [ { "name": "daily_weekretention", "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8" }]}
- */
-const GET_CLUSTER_SNAPSHOT_POLICIES = (instanceRecord: WorkloadInstance, svmId: string) => `
+const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     # Get list of snapshot policies on cluster level
-    ${JSON_CHECK};
-    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
-    
-    $response = @{}
-    $response['errors'] = @{}
-    $FSxID = "${instanceRecord.fsxFileSystem}"
-    $FSxRegion = "${instanceRecord.region}"
-    $SvmID = "${svmId}"
-
-    Write-Information "Getting snapshot policies for FSx ID: $FSxID, FSx Region: $FSxRegion"
-
-    ${ontapRestRequest}
-
-    $APIEndpoint = '/storage/snapshot-policies'
-    $ApiQueryFields = "fields=name,uuid"
-    $APIQueryFilterSvmLevel = "svm.uuid=$SvmID"
-    $APIQueryFilterClusterLevel = "scope=cluster"
-    
-    try{
-        # Only fetch snapshot policies for current SVM and cluster level
-        Write-Information "Fetch snapshot policies for SVM level"
-        $rawResponseSvmLevel = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilterSvmLevel -ApiQueryFields $ApiQueryFields
-        Write-Information "Fetch snapshot policies for cluster level"
-        $rawResponseClusterLevel = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilterClusterLevel -ApiQueryFields $ApiQueryFields
-        $SnapshotsPoliciesList = @()
-        
-        # loop through each response object, return uuid and name
-        foreach($snapshot in $rawResponseSvmLevel.records) {
-            $SnapshotsPoliciesList += [PSCustomObject]@{
-                name = $snapshot.name
-                uuid = $snapshot.uuid
-            }
-        }
-        
-        foreach($snapshot in $rawResponseClusterLevel.records) {
-            $SnapshotsPoliciesList += [PSCustomObject]@{
-                name = $snapshot.name
-                uuid = $snapshot.uuid
-            }
-        }
-        $response['snapshotPolicies'] = @($SnapshotsPoliciesList)
-    } catch {
-     Write-Information "Error occurred while fetching ONTAP snapshot details. Error: $_.Exception.Message"
-     $response['errors'] = $_.Exception.Message
-    }
-
-    $response = $response | ConvertTo-Json
-
-    if([string]::IsNullOrEmpty($response)) {
-        throw "Failed to compress the response because the response is either null or empty. $response"
-    }
-    
-    ${compressResponse}
-    Stop-Transcript | Out-Null
-    return (Deflate-String $response)    
+    ${restGetUtilForOntap(fsxId, region, '/storage/snapshot-policies', '', 'fields=svm,scope')}
 `;
 
 /**

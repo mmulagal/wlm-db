@@ -1039,11 +1039,7 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-listSnapshotPolicies'
     })
-    .resolves(
-        getSampleCommandResponseWithOutput(
-            'listSnapshotPolicies',
-            '{"errors":{},"snapshotPolicies":[{"name":"daily_weekretention","uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"},{"name":"default","uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"},{"name":"default-1weekly","uuid":"61a7837b-34d3-11ee-9989-a51720c855dc"},{"name":"none","uuid":"621ba70e-34d3-11ee-9989-a51720c855dc"}]}')
-    )
+    .resolves(getSampleCommandResponseWithOutput('listSnapshotPolicies', JSON.stringify(getCommandInvocationResponse.snapshotListResponse)))
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setSnapshotPolicy'
     })
