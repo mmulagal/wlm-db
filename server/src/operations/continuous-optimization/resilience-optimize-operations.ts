@@ -245,6 +245,7 @@ async function setSnapshotPolicyForVolumes(
         jobError = errMsg;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
     } finally {
+        // TODO: Handle job errors for parent and each sub job separately to prevent job status from being overwritten
         if (!isNil(parentJobId)) {
             await updateJobDetails(accountId, parentJobId, {
                 status: jobStatus,
