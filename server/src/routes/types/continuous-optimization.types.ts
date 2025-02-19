@@ -21,7 +21,8 @@ const SizingViolationResponse = Type.Object({
     lunUuid: Type.Optional(Type.String()),
     tempdbAccessPath: Type.Optional(Type.String()),
     tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
-    diskSerialNumber: Type.Optional(Type.String())
+    diskSerialNumber: Type.Optional(Type.String()),
+    sizePercentToDataDrive: Type.Optional(Type.Number())
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
 
@@ -53,6 +54,7 @@ const ParameterDriftResponse = Type.Object({
     recommendedSizeInGib: Type.Optional(Type.Number()),
     current: Type.Optional(Type.String()),
     totalObjectsAssessed: Type.Optional(Type.Number()),
+    totalObjectsInViolation: Type.Optional(Type.Number()),
     resourceType: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
