@@ -46,6 +46,6 @@ export default async function initiateSecrets() {
         })
     );
     if (isDemo()) {
-        logger.info('Secrets initiated in demo:', SECRETS);
+        logger.info('Secrets initiated in demo');
     }
 }

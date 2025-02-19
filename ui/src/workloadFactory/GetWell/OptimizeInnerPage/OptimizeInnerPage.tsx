@@ -31,6 +31,7 @@ import FileSystemHeadroomOptimizeTable from './InnerTables/FileSystemHeaderoomOp
 import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
+import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -290,6 +291,15 @@ const OptimizeInnerPage = () => {
             case 'Log files':
                 return (
                     <LogFilesOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Network adapter settings':
+            case 'Network adapters':
+                return (
+                    <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}

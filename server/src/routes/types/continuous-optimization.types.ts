@@ -4,6 +4,7 @@ import {
     AwsWellArchitecturedPillars,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeParams,
+    OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
     OptimizeStorageTierParams
@@ -309,7 +310,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OPTIMIZE_SIZING_CONFIGS,
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
-        ...OptimizeComputeParams
+        ...OptimizeComputeParams,
+        ...OptimizeMaxDopParams
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
