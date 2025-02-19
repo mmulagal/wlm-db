@@ -2250,7 +2250,7 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         ? 'compute-rightsizing'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-        ? 'maxdop'
+        ? 'max-dop'
         : '';
 };
 
