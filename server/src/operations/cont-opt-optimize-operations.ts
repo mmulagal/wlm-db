@@ -364,7 +364,7 @@ async function activeSqlNodeDetails(
         sqlServerName,
         databaseType,
         svmDetails,
-        awsAccountId: resourceDetail.cloud_provider_account_id!,
+        awsAccountId: resourceDetail.cloud_provider_account_id,
         serverNameWithHostName,
         instanceMetadata
     };

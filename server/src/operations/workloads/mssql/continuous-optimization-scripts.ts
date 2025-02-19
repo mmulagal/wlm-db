@@ -1,3 +1,4 @@
+import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/continuous-optimization.types';
 import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
@@ -799,7 +800,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
-    $apiBody = '${params.apiBody}'
+    $apiBody = '${JSON.stringify(params.apiBody)}'
     Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
@@ -1083,7 +1084,7 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
 `;
 
 /**
- * Expected response structure:
+ * @returns snapshot policies; Expected response structure:
  * { "errors": { }, "snapshotPolicies": [ { "name": "daily_weekretention", "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8" }]}
  */
 const GET_CLUSTER_SNAPSHOT_POLICIES = (instanceRecord: WorkloadInstance, svmId: string) => `
@@ -1140,29 +1141,59 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (instanceRecord: WorkloadInstance, svmId: 
         throw "Failed to compress the response because the response is either null or empty. $response"
     }
     
-    Function Deflate-String([string]$stringToCompress) {
-
-        if ([string]::IsNullOrEmpty($stringToCompress)) {
-            Write-Information "The string to compress is either null or empty."
-            return $null
-        }
-
-        $encoder = New-Object System.Text.UTF8Encoding
-        $memoryStream = New-Object System.IO.MemoryStream
-        $deflateStream = New-Object System.IO.Compression.DeflateStream($memoryStream, [System.IO.Compression.CompressionMode]::Compress)
-
-        $buffer = $encoder.GetBytes($stringToCompress)
-        $deflateStream.Write($buffer, 0, $buffer.Length)
-        $memoryStream.Position = 0
-        $deflateStream.Dispose()
-
-        $bytes = $memoryStream.ToArray()
-        $encodedString = [Convert]::ToBase64String($bytes)
-
-        return $encodedString
-    }
+    ${compressResponse}
     Stop-Transcript | Out-Null
     return (Deflate-String $response)    
+`;
+
+/**
+ * @returns the UUID of the ONTAP job created for setting the snapshot policy;
+ * Expected response structure:
+ * { "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8" }]}
+ */
+const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType) => `
+    # Set snapshot policy for volumes
+    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $volUuids = '${params.volUuids}' | ConvertFrom-Json
+    $apiEndpoint = '/storage/volumes/'
+    $apiBody = '${params.apiBody}'
+    $res = @{}
+    $res['response'] = @{}
+    $res['errors'] = @{}
+    $volRes = @()
+    $errors = @()
+    ${ontapRestRequest}
+
+    foreach($volUuid in $volUuids) {
+        try {
+            Write-Information "Optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
+            $body = $apiBody | ConvertFrom-Json | ConvertTo-Json
+            $apiEndpointWithPathParams = $apiEndpoint + $volUuid
+            $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $apiEndpointWithPathParams -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+            $volRes += [PSCustomObject]@{
+                uuid = $ontapResponse.job.uuid
+            }
+        } catch {
+            $errors += $_.Exception.Message
+            Write-Information "Error occurred while optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
+        }
+    }
+    $res['response'] = @($volRes)
+    $res['errors'] = @($errors)
+
+    $res = $res | ConvertTo-Json
+
+    if([string]::IsNullOrEmpty($res)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    ${compressResponse}
+    Stop-Transcript | Out-Null
+    return (Deflate-String $res)
+
 `;
 
 export {
@@ -1178,5 +1209,6 @@ export {
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,
     GET_INSTALLED_MSSQL_VERSION,
-    GET_CLUSTER_SNAPSHOT_POLICIES
+    GET_CLUSTER_SNAPSHOT_POLICIES,
+    SET_VOLUME_SNAPSHOT_POLICY
 };

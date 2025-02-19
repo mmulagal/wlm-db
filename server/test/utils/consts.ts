@@ -1,6 +1,5 @@
 /* eslint-disable quotes */
 import { faker } from '@faker-js/faker';
-import { WorkloadInstance } from '../../src/utils/common-types';
 
 const DEFAULT_AWS_VPC_ID = 'vpc-84b3afe6';
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -111,20 +110,6 @@ const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
-const SNAPSHOT_POLICY_LIST_PARAM: WorkloadInstance = {
-
-    activeNodeInstanceid: 'i-08d11ea2049537b1e',
-    cloudProviderAccountId: 'test-aws-account',
-    fsxFileSystem: 'fs-0f53fbecdd3d85fb2',
-    id: 'f4b7c5d3-e1f6-4g2a-9b5d',
-    name: 'MSSQLSERVER',
-    region: DEFAULT_AWS_REGION,
-    resourceName: 'test-resource',
-    sqlAuthEnabled: false,
-    type: 'MSSQL'
-};
-const SNAPSHOT_POLICY_LIST_SVM_UUID = '939a4ec9-7c14-11ee-b185-8329e8fcbf44';
-
 export {
     TEST_STOPPED_EC2_INSTANCE_ID,
     SQL_CONFIGURATION,
@@ -142,7 +127,5 @@ export {
     ACTIVE_INSTANCE_ID,
     STANDBY_INSTANCE_ID,
     DEPLOYMENT_JOBS_COUNT_RESPONSE,
-    THIRTY_DAYS,
-    SNAPSHOT_POLICY_LIST_SVM_UUID,
-    SNAPSHOT_POLICY_LIST_PARAM
+    THIRTY_DAYS
 };

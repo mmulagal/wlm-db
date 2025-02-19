@@ -16,7 +16,8 @@ import {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
     BulkOptimizeGeneralRequestBody,
-    AvailableSnapshotPoliciesResponse
+    AvailableSnapshotPoliciesResponse,
+    BulkOptimizeSnapshotPolicyRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -164,6 +165,18 @@ const AvailableSnapshotPolicies = {
     }
 };
 
+const SetSnapshotPolicySchema = {
+    ...resourceRequest,
+    summary: 'Set snapshot policy for instance volumes',
+    description: 'Set snapshot policy for instance volumes',
+    params: DatabaseHostInstanceSummaryParams,
+    body: BulkOptimizeSnapshotPolicyRequestBody,
+    tags: [RouteTags.ASSESSMENT],
+    resourceRequest: {
+        200: AvailableSnapshotPoliciesResponse
+    }
+};
+
 const BulkOptimizeGeneralSchema = {
     ...resourceRequest,
     params: CredentialsIdParams,
@@ -210,6 +223,7 @@ export {
     OptimizeStorageTierSchema,
     DriftAssessmentPerAccount,
     AvailableSnapshotPolicies,
+    SetSnapshotPolicySchema,
     BulkOptimizeStorageSizingSchema,
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,

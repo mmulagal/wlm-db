@@ -97,7 +97,7 @@ import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
-import { SNAPSHOT_POLICY_LIST_PARAM, SNAPSHOT_POLICY_LIST_SVM_UUID } from '../../../utils/consts';
+
 const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
@@ -571,9 +571,6 @@ const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
 const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
-const listSnapshotPolicies = {
-    commands: [GET_CLUSTER_SNAPSHOT_POLICIES(SNAPSHOT_POLICY_LIST_PARAM, SNAPSHOT_POLICY_LIST_SVM_UUID)]
-};
 
 ssmMock
     .on(SendCommandCommand)
@@ -792,7 +789,12 @@ ssmMock
         const commentString = /# Get list of snapshot policies on cluster level/;
         return commentString.test(params.Parameters.commands?.[0])
     })
-    .resolves(getSampleCommandResponse('listSnapshotPolicies'));
+    .resolves(getSampleCommandResponse('listSnapshotPolicies'))
+    .on(SendCommandCommand, params => {
+        const commentString = /# Set snapshot policy for volumes/;
+        return commentString.test(params.Parameters.commands?.[0])
+    })
+    .resolves(getSampleCommandResponse('setSnapshotPolicy'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1041,6 +1043,14 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'listSnapshotPolicies',
             '{"errors":{},"snapshotPolicies":[{"name":"daily_weekretention","uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"},{"name":"default","uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"},{"name":"default-1weekly","uuid":"61a7837b-34d3-11ee-9989-a51720c855dc"},{"name":"none","uuid":"621ba70e-34d3-11ee-9989-a51720c855dc"}]}')
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setSnapshotPolicy'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'setSnapshotPolicy',
+            '{ "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8"}, {"uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"}, {"uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"}]}')
     );
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

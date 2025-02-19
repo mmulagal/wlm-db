@@ -25,7 +25,8 @@ import {
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
-    AvailableSnapshotPolicies
+    AvailableSnapshotPolicies,
+    SetSnapshotPolicySchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -36,7 +37,10 @@ import {
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
 import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
-import { getAvailableSnapshotPolicyList } from '../operations/continuous-optimization/resilience-optimize-operations';
+import {
+    getAvailableSnapshotPolicyList,
+    setSnapshotPolicyForVolumes
+} from '../operations/continuous-optimization/resilience-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -300,6 +304,27 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+            { schema: SetSnapshotPolicySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                } = castRequest(request);
+                const { snapshotPolicy } = request.body;
+                const volumesList = request.body.volumes ?? [];
+                const response = await setSnapshotPolicyForVolumes(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    snapshotPolicy,
+                    volumesList
                 );
                 return reply.send(response);
             }
