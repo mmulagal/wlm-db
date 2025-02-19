@@ -44,7 +44,7 @@ async function calculateMSSQLPatchDrift(
     try {
         [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
     } catch (error) {
-        errorMessage = `Error while calculating host os patch drift. ${error}`;
+        errorMessage = `Error while calculating mssql patch drift. ${error}`;
         logger.error({ errorMessage });
         return { errorMessage };
     }
