@@ -561,10 +561,6 @@ const getInstalledSQLPatches = {
     commands: [GET_INSTALLED_SQL_PATCHES()]
 };
 
-const maxDOPOptimizationSsm = {
-    commands: [SET_MAXDOP('test-instance', 'MSSQLSERVER', false, 4, false)]
-};
-
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
 const optimizeRegex = /#Storage Optimization Script/;
@@ -789,8 +785,10 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
     .resolves(listSendCommandCommandResponse.getInstalledSQLPatchesCommand)
-    .on(SendCommandCommand, { Parameters: maxDOPOptimizationSsm })
-    .resolves(listSendCommandCommandResponse.setMaxDOPCommand);
+    .on(SendCommandCommand, params => {
+        return /#Set MAXDOP/.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('setMaxDOP'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1033,9 +1031,14 @@ ssmMock
     })
     .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
     .on(GetCommandInvocationCommand, {
-        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMaxDOPCommand'
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setMaxDOP'
     })
-    .resolves(getCommandInvocationResponse.setMaxDOPCommandResponse);
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'setMaxDOP',
+            '{"status":"success","message":"MAXDOP set to 4 for instance STVYCUAMIUIG\\\\SIGMA, Configuration option \\u0027show advanced options\\u0027 changed from 1 to 1. Run the RECONFIGURE statement to install. Configuration option \\u0027max degree of parallelism\\u0027 changed from 4 to 4. Run the RECONFIGURE statement to install."}\r\n'
+        )
+    );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

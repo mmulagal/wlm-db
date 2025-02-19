@@ -1082,7 +1082,7 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
 `;
 
 const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: number, isClustered: boolean) => `
-    # Set MAXDOP
+    #Set MAXDOP
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlInstanceName = "${instanceName}"
     $maxDopValue = ${maxDopValue}
