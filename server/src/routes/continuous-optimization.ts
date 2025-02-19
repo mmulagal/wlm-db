@@ -316,15 +316,13 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
                 } = castRequest(request);
                 const { snapshotPolicy } = request.body;
-                const volumesList = request.body.volumes ?? [];
                 const response = await setSnapshotPolicyForVolumes(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    snapshotPolicy,
-                    volumesList
+                    snapshotPolicy
                 );
                 return reply.send(response);
             }
