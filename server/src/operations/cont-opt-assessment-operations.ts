@@ -1179,10 +1179,9 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         sqlInstanceId: databaseInstanceId
     })) as DatabaseInstancesIncludingResource[];
     if (isEmpty(managedInstance)) {
-        logger.error(
-            `No  managed database instance by ${accountId} ${credentialsId} ${databaseHostId} ${databaseInstanceId} found.`
-        );
-        return;
+        const errorMessage = `No managed database instance by account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId} found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
     const {
         resource: { resource_name: resourceName },

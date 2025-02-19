@@ -335,6 +335,7 @@ interface LogDriveDetails {
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
     diskNumber: number;
+    sizePercentToDataDrive: number;
 }
 
 interface TempDbDriveDetails {
@@ -347,6 +348,7 @@ interface TempDbDriveDetails {
     dataDriveTotalSizeMB: number;
     defaultDataDriveLetter: string;
     tempdbDriveTotalSizeMB: number;
+    sizePercentToDataDrive: number;
 }
 interface Sizing {
     'performance-tier': boolean | Array<number> | Array<{ volumeName: string; performanceTierPercent: number }>;
