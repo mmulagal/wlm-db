@@ -65,7 +65,41 @@ beforeAll(async () => {
                     'mpio-iscsi-count': '5',
                     'ntfs-allocation-details': {},
                     'mpio-load-balance-policy': 'RR',
-                    'ntfs-allocation-unit-size': 65536
+                    'ntfs-allocation-unit-size': 65536,
+                    'mpio-load-balance-policy-details': [
+                        {
+                            disk: 'Disk 4',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 1',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 8',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 2',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 3',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 5',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 6',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 7',
+                            policy: 'RR'
+                        }
+                    ]
                 },
                 luns: [
                     {

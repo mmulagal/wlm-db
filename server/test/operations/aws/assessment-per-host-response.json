@@ -19,7 +19,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "autosize",
@@ -32,7 +35,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "autosize-mode",
@@ -45,7 +51,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "fractional-reserve",
@@ -58,7 +67,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "snapshot-copy-reserve",
@@ -71,7 +83,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "snapshot-autodelete",
@@ -84,7 +99,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "space-mgmt-try-first",
@@ -93,7 +111,10 @@
                                 "severity": "warning",
                                 "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                                 "tags": ["Cost optimization", "Operational excellence"],
-                                "objectsInViolation": []
+                                "objectsInViolation": [],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 0,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "tiering-policy",
@@ -106,7 +127,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "tiering-min-cooling-days",
@@ -119,7 +143,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             }
                         ],
                         "luns": [
@@ -134,7 +161,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             },
                             {
                                 "name": "space-reservation-enabled",
@@ -147,7 +177,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             },
                             {
                                 "name": "space-allocation-allocated",
@@ -160,7 +193,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             }
                         ],
                         "os": [
@@ -170,7 +206,8 @@
                                 "recommended": "true",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": []
                             },
                             {
                                 "name": "mpio-iscsi-count",
@@ -178,7 +215,8 @@
                                 "recommended": "5",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": []
                             },
                             {
                                 "name": "ntfs-allocation-unit-size",
@@ -186,7 +224,12 @@
                                 "recommended": "65536",
                                 "severity": "critical",
                                 "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                                "tags": ["Performance efficiency"]
+                                "tags": ["Performance efficiency"],
+                                "violationDetails": [{
+                                    "objectName": "wlmdb_sqldata_1728552629461",
+                                    "currentValue": "4096",
+                                    "objectType": "Volume"
+                                }]
                             },
                             {
                                 "name": "mpio-load-balance-policy",
@@ -194,7 +237,12 @@
                                 "recommended": "RR",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": [{
+                                    "objectName": "Disk 11",
+                                    "currentValue": "Other",
+                                    "objectType": "Disk"
+                                }]
                             }
                         ]
                     },
@@ -206,8 +254,17 @@
                             "severity": "critical",
                             "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
-                            "sizingViolations": {},
-                            "current": "94% - 100%"
+                            "violationDetails": [
+                                {
+                                    "objectName": "wlmdb_sqldata_1728552629461",
+                                    "currentValue": "94%",
+                                    "objectType": "Volume"
+                                }
+                            ],
+                            "current": "94% - 100%",
+                            "totalObjectsAssessed": 5,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Volume"
                         },
                         {
                             "name": "log-drive-size",
@@ -228,7 +285,8 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731988070",
                                         "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ce0cca99-e9fd-42af-9daa-50039625d44d",
-                                        "diskSerialNumber": "lWB4c$XRevTA"
+                                        "diskSerialNumber": "lWB4c$XRevTA",
+                                        "sizePercentToDataDrive": 10
                                     },
                                     {
                                         "dataAccessPath": "D:\\MSSQL",
@@ -239,7 +297,8 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                         "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
-                                        "diskSerialNumber": "lWB4c$XRevT9"
+                                        "diskSerialNumber": "lWB4c$XRevT9",
+                                        "sizePercentToDataDrive": 10
                                     }
                                 ],
                                 "ignoredDrives": [
@@ -247,11 +306,15 @@
                                         "dataAccessPath": "S:\\mssql",
                                         "dataDriveTotalSizeMB": 3071820,
                                         "logAccessPath": "S:\\mssql",
-                                        "logDriveTotalSizeMB": 307
+                                        "logDriveTotalSizeMB": 307,
+                                        "sizePercentToDataDrive": 10
                                     }
                                 ]
                             },
-                            "current": "10%"
+                            "current": "10%",
+                            "totalObjectsAssessed": 5,
+                            "totalObjectsInViolation": 3,
+                            "resourceType": "Drive"
                         },
                         {
                             "name": "tempdb-drive-size",
@@ -270,12 +333,16 @@
                                         "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ab3fd3b5-b2e2-4c97-b026-52ba19accc41",
                                         "tempdbDriveTotalSizeMB": 291930,
-                                        "diskSerialNumber": "lWB4c$XRevT9"
+                                        "diskSerialNumber": "lWB4c$XRevT9",
+                                        "sizePercentToDataDrive": 3
                                     }
                                 ],
                                 "ignoredDrives": []
                             },
-                            "current": "3%"
+                            "current": "3%",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "headroom",
@@ -286,7 +353,8 @@
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
                             "recommendedSizeInGib": 0,
-                            "current": "45%"
+                            "current": "45%",
+                            "resourceType": "File system (FSx for ONTAP)"
                         }
                     ],
                     "layout": [
@@ -297,7 +365,10 @@
                             "severity": "critical",
                             "recommendation": "Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "default-log-files-location",
@@ -306,7 +377,10 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "default-data-files-location",
@@ -315,7 +389,10 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         }
                     ]
                 }
@@ -339,7 +416,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "autosize",
@@ -352,7 +432,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "autosize-mode",
@@ -365,7 +448,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "fractional-reserve",
@@ -378,7 +464,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "snapshot-copy-reserve",
@@ -391,7 +480,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "snapshot-autodelete",
@@ -404,7 +496,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "space-mgmt-try-first",
@@ -413,7 +508,10 @@
                                 "severity": "warning",
                                 "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                                 "tags": ["Cost optimization", "Operational excellence"],
-                                "objectsInViolation": []
+                                "objectsInViolation": [],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 0,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "tiering-policy",
@@ -426,7 +524,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "tiering-min-cooling-days",
@@ -439,7 +540,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             }
                         ],
                         "luns": [
@@ -454,7 +558,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             },
                             {
                                 "name": "space-reservation-enabled",
@@ -467,7 +574,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             },
                             {
                                 "name": "space-allocation-allocated",
@@ -480,7 +590,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             }
                         ],
                         "os": [
@@ -490,7 +603,8 @@
                                 "recommended": "true",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": []
                             },
                             {
                                 "name": "mpio-iscsi-count",
@@ -498,7 +612,8 @@
                                 "recommended": "5",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": []
                             },
                             {
                                 "name": "ntfs-allocation-unit-size",
@@ -506,7 +621,12 @@
                                 "recommended": "65536",
                                 "severity": "critical",
                                 "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                                "tags": ["Performance efficiency"]
+                                "tags": ["Performance efficiency"],
+                                "violationDetails": [{
+                                    "objectName": "wlmdb_sqldata_1728552629461",
+                                    "currentValue": "4096",
+                                    "objectType": "Volume"
+                                }]
                             },
                             {
                                 "name": "mpio-load-balance-policy",
@@ -514,7 +634,12 @@
                                 "recommended": "RR",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": [{
+                                    "objectName": "Disk 7",
+                                    "currentValue": "Other",
+                                    "objectType": "Disk"
+                                }]
                             }
                         ]
                     },
@@ -526,8 +651,17 @@
                             "severity": "critical",
                             "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
-                            "sizingViolations": {},
-                            "current": "94% - 100%"
+                            "violationDetails": [
+                                {
+                                    "objectName": "wlmdb_sqldata_1728552629461",
+                                    "currentValue": "94%",
+                                    "objectType": "Volume"
+                                }
+                            ],
+                            "current": "94% - 100%",
+                            "totalObjectsAssessed": 5,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Volume"
                         },
                         {
                             "name": "log-drive-size",
@@ -571,7 +705,10 @@
                                     }
                                 ]
                             },
-                            "current": "10%"
+                            "current": "10%",
+                            "totalObjectsAssessed": 5,
+                            "totalObjectsInViolation": 3,
+                            "resourceType": "Drive"
                         },
                         {
                             "name": "tempdb-drive-size",
@@ -595,7 +732,10 @@
                                 ],
                                 "ignoredDrives": []
                             },
-                            "current": "3%"
+                            "current": "3%",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "headroom",
@@ -606,7 +746,8 @@
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
                             "recommendedSizeInGib": 0,
-                            "current": "45%"
+                            "current": "45%",
+                            "resourceType": "File system (FSx for ONTAP)"
                         }
                     ],
                     "layout": [
@@ -617,7 +758,10 @@
                             "severity": "critical",
                             "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "default-log-files-location",
@@ -626,7 +770,10 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "default-data-files-location",
@@ -635,7 +782,10 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         }
                     ]
                 }
@@ -659,7 +809,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "autosize",
@@ -672,7 +825,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "autosize-mode",
@@ -685,7 +841,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "fractional-reserve",
@@ -698,7 +857,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "snapshot-copy-reserve",
@@ -711,7 +873,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "snapshot-autodelete",
@@ -724,7 +889,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "space-mgmt-try-first",
@@ -733,7 +901,10 @@
                                 "severity": "warning",
                                 "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
                                 "tags": ["Cost optimization", "Operational excellence"],
-                                "objectsInViolation": []
+                                "objectsInViolation": [],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 0,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "tiering-policy",
@@ -746,7 +917,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             },
                             {
                                 "name": "tiering-min-cooling-days",
@@ -759,7 +933,10 @@
                                     "wlmdb_sqldata_1728552629461",
                                     "wlmdb_sqltemp_1728552629461",
                                     "wlmdb_sqldata_1728574994"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Volume"
                             }
                         ],
                         "luns": [
@@ -774,7 +951,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             },
                             {
                                 "name": "space-reservation-enabled",
@@ -787,7 +967,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             },
                             {
                                 "name": "space-allocation-allocated",
@@ -800,7 +983,10 @@
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
                                     "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                                     "/vol/wlmdb_sqldata_1728574994/sqldata"
-                                ]
+                                ],
+                                "totalObjectsAssessed": 5,
+                                "totalObjectsInViolation": 3,
+                                "resourceType": "Lun"
                             }
                         ],
                         "os": [
@@ -810,7 +996,8 @@
                                 "recommended": "true",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": []
                             },
                             {
                                 "name": "mpio-iscsi-count",
@@ -818,7 +1005,8 @@
                                 "recommended": "5",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": []
                             },
                             {
                                 "name": "ntfs-allocation-unit-size",
@@ -826,7 +1014,12 @@
                                 "recommended": "65536",
                                 "severity": "critical",
                                 "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                                "tags": ["Performance efficiency"]
+                                "tags": ["Performance efficiency"],
+                                "violationDetails": [{
+                                    "objectName": "wlmdb_sqldata_1728552629461",
+                                    "currentValue": "4096",
+                                    "objectType": "Volume"
+                                }]
                             },
                             {
                                 "name": "mpio-load-balance-policy",
@@ -834,7 +1027,12 @@
                                 "recommended": "RR",
                                 "severity": "critical",
                                 "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                                "tags": ["Performance efficiency", "Reliability"]
+                                "tags": ["Performance efficiency", "Reliability"],
+                                "violationDetails": [{
+                                    "objectName": "Disk 5",
+                                    "currentValue": "Other",
+                                    "objectType": "Disk"
+                                }]
                             }
                         ]
                     },
@@ -846,8 +1044,17 @@
                             "severity": "critical",
                             "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
                             "tags": ["Performance efficiency"],
-                            "sizingViolations": {},
-                            "current": "94% - 100%"
+                            "violationDetails": [
+                                {
+                                    "objectName": "wlmdb_sqldata_1728552629461",
+                                    "currentValue": "94%",
+                                    "objectType": "Volume"
+                                }
+                            ],
+                            "current": "94% - 100%",
+                            "totalObjectsAssessed": 5,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Volume"
                         },
                         {
                             "name": "log-drive-size",
@@ -891,7 +1098,10 @@
                                     }
                                 ]
                             },
-                            "current": "10%"
+                            "current": "10%",
+                            "totalObjectsAssessed": 5,
+                            "totalObjectsInViolation": 3,
+                            "resourceType": "Drive"
                         },
                         {
                             "name": "tempdb-drive-size",
@@ -915,7 +1125,10 @@
                                 ],
                                 "ignoredDrives": []
                             },
-                            "current": "5%"
+                            "current": "5%",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 1,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "headroom",
@@ -926,7 +1139,8 @@
                             "tags": ["Performance efficiency"],
                             "missingPermissions": [],
                             "recommendedSizeInGib": 0,
-                            "current": "35%"
+                            "current": "35%",
+                            "resourceType": "File system (FSx for ONTAP)"
                         }
                     ],
                     "layout": [
@@ -937,7 +1151,10 @@
                             "severity": "critical",
                             "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "default-log-files-location",
@@ -946,7 +1163,10 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "resourceType": "Database"
                         },
                         {
                             "name": "default-data-files-location",
@@ -955,7 +1175,8 @@
                             "severity": "critical",
                             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                             "tags": ["Performance efficiency", "Operational excellence"],
-                            "current": "separate-drive"
+                            "current": "separate-drive",
+                             "resourceType": "Database"
                         }
                     ]
                 }

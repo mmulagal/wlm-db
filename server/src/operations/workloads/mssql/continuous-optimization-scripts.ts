@@ -747,17 +747,29 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
         
         # Fetch load balancing policy for all NetApp disks
-        $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number 
+        $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
+        $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
             $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
             if(-Not ($MpioLBDetails -Match $matchString) ) {
                 $LoadBalancingPolicy = 'Other'
-                break
+                $object = [PSCustomObject]@{
+                    "disk" = "Disk " + $disk.Number
+                    "policy" = $LoadBalancingPolicy
+                }
             }
+            else {
+             $object = [PSCustomObject]@{
+                    "disk" = "Disk " + $disk.Number
+                    "policy" = 'RR'
+                        }
+                }
+            $LoadBalancingPolicyDetails += $($object)
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
+        $DriftAssessmentData['os']['mpio-load-balance-policy-details'] = $LoadBalancingPolicyDetails
         } catch {$DriftAssessmentData['errors']['mpio-policy'] = $_.Exception.Message}
 
     ${TEST_ISCSI_SESSIONS}

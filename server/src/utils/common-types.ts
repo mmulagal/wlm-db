@@ -380,11 +380,19 @@ interface StorageLayout {
     'default-log-files-location': string;
     'default-data-files-location': string;
 }
+
+interface OSAssessment {
+    'mpio-enabled': boolean;
+    'mpio-iscsi-count': number;
+    'ntfs-allocation-details': Array<{ Key?: string; Value?: string }>;
+    'mpio-load-balance-policy': string;
+    'ntfs-allocation-unit-size': number;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
-    os: Array<{ Key?: string; Value?: string }>;
+    os: OSAssessment;
     layout: JSON;
     sizing: Sizing;
     errors: {
