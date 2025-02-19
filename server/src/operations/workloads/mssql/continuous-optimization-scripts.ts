@@ -1,8 +1,14 @@
-import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
+import {
+    BulkOptimizeSnapshotPolicyParamsType,
+    OntapRequestParams,
+    OptimizeStorageParams,
+    WorkloadInstance
+} from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     COMPUTE_OPTIMIZE_LOG_PATH,
     DISCOVER_OPERATION_LOG_PATH,
+    RESILIENCY_OPTIMIZE_LOG_PATH,
     SIZING_OPERATIONS_LOG_PATH,
     STORAGE_ASSESSMENT_LOG_PATH
 } from './const';
@@ -14,7 +20,13 @@ import {
     SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
-import { compressResponse, readSsmParameter, slqcmdExecutionTemplate, GET_FCI_NAME } from './ssm-script-utils';
+import {
+    compressResponse,
+    readSsmParameter,
+    restGetUtilForOntap,
+    slqcmdExecutionTemplate,
+    GET_FCI_NAME
+} from './ssm-script-utils';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -798,7 +810,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
-    $apiBody = '${params.apiBody}'
+    $apiBody = '${JSON.stringify(params.apiBody)}'
     Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
@@ -1081,6 +1093,61 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
     Sqlcmd -Q "${SERVER_VERSION}" -y 0
 `;
 
+const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
+    # Get list of snapshot policies on cluster level
+    ${restGetUtilForOntap(fsxId, region, '/storage/snapshot-policies', '', 'fields=svm,scope')}
+`;
+
+/**
+ * @returns the UUID of the ONTAP job created for setting the snapshot policy;
+ * Expected response structure:
+ * { "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8" }]}
+ */
+const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType) => `
+    # Set snapshot policy for volumes
+    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $volUuids = '${params.volUuids}' | ConvertFrom-Json
+    $apiEndpoint = '/storage/volumes/'
+    $apiBody = '${params.apiBody}'
+    $res = @{}
+    $res['response'] = @{}
+    $res['errors'] = @{}
+    $volRes = @()
+    $errors = @()
+    ${ontapRestRequest}
+
+    foreach($volUuid in $volUuids) {
+        try {
+            Write-Information "Optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
+            $body = $apiBody | ConvertFrom-Json | ConvertTo-Json
+            $apiEndpointWithPathParams = $apiEndpoint + $volUuid
+            $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $apiEndpointWithPathParams -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+            $volRes += [PSCustomObject]@{
+                uuid = $ontapResponse.job.uuid
+            }
+        } catch {
+            $errors += $_.Exception.Message
+            Write-Information "Error occurred while optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
+        }
+    }
+    $res['response'] = @($volRes)
+    $res['errors'] = @($errors)
+
+    $res = $res | ConvertTo-Json
+
+    if([string]::IsNullOrEmpty($res)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    ${compressResponse}
+    Stop-Transcript | Out-Null
+    return (Deflate-String $res)
+
+`;
+
 const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: number, isClustered: boolean) => `
     #Set MAXDOP
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
@@ -1148,5 +1215,7 @@ export {
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,
     GET_INSTALLED_MSSQL_VERSION,
+    GET_CLUSTER_SNAPSHOT_POLICIES,
+    SET_VOLUME_SNAPSHOT_POLICY,
     SET_MAXDOP
 };
