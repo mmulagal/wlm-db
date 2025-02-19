@@ -1,4 +1,6 @@
 export interface InventorySliceData {
+    optimizeInnerPageValues: {} | any;
+    selectedOptimizeConfig: any;
     breadCrumbSelectedFrom: string;
     defaultFilterOptions: {} | any;
     optimizeFilterTags: [] | any;

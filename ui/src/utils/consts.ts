@@ -347,6 +347,8 @@ export const UI_IDS = {
 export const WLF_TABS = {
     DASHBOARD: 'Dashboard',
     DASHBOARD_INNER_PAGE: 'DashboardInnerPage',
+    OPTIMIZE_INNER_PAGE: 'OptimizeInnerPage',
+    OPTIMIZE_ONTAP_INNER_PAGE: 'OptimizeOntapInnerPage',
     INVENTORY: 'Inventory',
     OVERVIEW: 'Overview',
     SANDBOXES: 'Sandboxes',
@@ -651,7 +653,10 @@ export const SAVINGS_CALC_MODE = {
     AUTO_EBS: 'Auto_EBS',
     AUTO_FSXW: 'Auto_FSXW',
     MANUAL_FSXW: 'Manual_FSXW',
-    ONPREM: 'OnPrem'
+    ONPREM: 'OnPrem',
+    EBS: 'ebs',
+    FSXW: 'fsxw',
+    ONPREM_MODE: 'onprem'
 };
 
 export const PARTNER_NODE = 'partner node';
@@ -709,11 +714,14 @@ export const GETWELL_VALUES: any = {
     'separate-drive': 'Separate drive',
     'same-drive': 'Same drive',
     same_drive: 'Same drive',
+    'shared-drive': 'Shared drive',
+    shared_drive: 'Shared drive',
     critical: 'Critical',
     warning: 'Warning',
     none: 'None',
     'separate drive': 'Separate drive',
-    'same drive': 'Same drive'
+    'same drive': 'Same drive',
+    'shared drive': 'Shared drive'
 };
 
 export const GETWELL_CONFIG: any = {
@@ -756,8 +764,7 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     GENERAL.LICENSE_SQL_SERVER,
     GENERAL.OPERATING_SYSTEM_PATCH,
     GENERAL.RSS_CONFIGURATION,
-    GENERAL.MICROSOFT_SQL_PATCH,
-    GENERAL.MAXDOP_PATCH
+    GENERAL.MICROSOFT_SQL_PATCH
 ];
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
@@ -783,5 +790,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     DATA_FILES_MDF: 'Data files (.mdf)',
     LOG_FILES_LDF: 'Log files (.ldf)',
     TEMPDB_PLACEMENT: 'TempDB placement',
-    COMPUTE_RIGHTSIZING: 'Compute rightsizing'
+    COMPUTE_RIGHTSIZING: 'Compute rightsizing',
+    MAXDOP: 'MAXDOP'
 };

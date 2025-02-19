@@ -21,9 +21,17 @@ const SizingViolationResponse = Type.Object({
     lunUuid: Type.Optional(Type.String()),
     tempdbAccessPath: Type.Optional(Type.String()),
     tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
-    diskSerialNumber: Type.Optional(Type.String())
+    diskSerialNumber: Type.Optional(Type.String()),
+    sizePercentToDataDrive: Type.Optional(Type.Number())
 });
 type SizingViolationResponseType = Static<typeof SizingViolationResponse>;
+
+const StorageTierViolationResponse = Type.Object({
+    name: Type.String(),
+    percent: Type.Number()
+});
+
+type StorageTierViolationResponseType = Static<typeof StorageTierViolationResponse>;
 
 const ErrorResponse = Type.Object({ errorMessage: Type.String() });
 const ParameterDriftResponse = Type.Object({
@@ -40,10 +48,14 @@ const ParameterDriftResponse = Type.Object({
             ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
         })
     ),
+    storageTierViolations: Type.Optional(Type.Array(StorageTierViolationResponse)),
     tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
     missingPermissions: Type.Optional(Type.Array(Type.String())),
     recommendedSizeInGib: Type.Optional(Type.Number()),
-    current: Type.Optional(Type.String())
+    current: Type.Optional(Type.String()),
+    totalObjectsAssessed: Type.Optional(Type.Number()),
+    totalObjectsInViolation: Type.Optional(Type.Number()),
+    resourceType: Type.Optional(Type.String())
 });
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
@@ -179,6 +191,17 @@ const StorageParameterErrorResponse = Type.Object({
     name: Type.String(),
     errorMessage: Type.String()
 });
+
+const SnapshotPolicyAssesmentData = Type.Object({
+    timestamp: Type.Number(),
+    tags: Type.Array(Type.String()),
+    violations: Type.Array(Type.String()),
+    severity: Type.String(),
+    status: Type.String(),
+    resourceType: Type.String()
+});
+type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
+
 const StorageParameterDriftResponse = Type.Object({
     timestamp: Type.Number(),
     configuration: Type.Object({
@@ -187,8 +210,15 @@ const StorageParameterDriftResponse = Type.Object({
         os: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
     }),
     sizing: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
-    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse]))
+    layout: Type.Array(Type.Union([ParameterDriftResponse, StorageParameterErrorResponse])),
+    fileSystems: Type.Array(Type.String())
 });
+
+const ResilienceDriftAssessmentResponse = Type.Object({
+    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse]))
+});
+type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
+
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({
     storage: Type.Optional(StorageParameterDriftResponse),
@@ -197,7 +227,8 @@ const DriftAssessmentResponse = Type.Object({
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
     maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse]))
+    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
+    resiliency: Type.Optional(Type.Union([ResilienceDriftAssessmentResponse, ErrorResponse]))
 });
 type DriftAssessmentResponseType = Static<typeof DriftAssessmentResponse>;
 
@@ -312,6 +343,8 @@ export {
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
     MSSQLPatchDriftResponseType,
+    SnapshotPolicyAssesmentDataType,
+    ResilienceDriftAssessmentResponseType,
     BulkOptimizeStorageRequestBody,
     BulkOptimizeStorageRequestBodyType,
     BulkOptimizePerHostRequestBodyType,
@@ -319,5 +352,6 @@ export {
     BulkOptimizeGeneralRequestBodyType,
     OptimizePerHostRequestBody,
     OptimizePerHostRequestBodyType,
-    BulkOptimizeGeneralPerHostRequestBodyType
+    BulkOptimizeGeneralPerHostRequestBodyType,
+    StorageTierViolationResponseType
 };

@@ -22,11 +22,12 @@ import { useDispatch } from 'react-redux';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import { GETWELL_STATUS, GW_CONFIG_OPTIMIZE_NA, WLF_TABS } from '../../../utils/consts';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -45,6 +46,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
         state => state.getWellOptimize
     );
+    const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
@@ -189,19 +191,41 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             />
         );
     };
+
+    const handleNavigateToOptimizePage = (rowData: any) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
+        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+        dispatch(
+            setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId: hostId, instanceId: instanceId })
+        );
+    };
+
+    //This is for inner page
+    const handleDifferentNavigation = (rowData: any) => {
+        if (
+            selectedHeaderTab === WLF_TABS.OPTIMIZE &&
+            rowData?.name !== 'Multipath I/O Sessions' &&
+            rowData?.name !== 'Multipath I/O Status'
+        ) {
+            handleNavigateToOptimizePage(rowData);
+        } else {
+            handleOntapDialog(rowData);
+        }
+    };
+
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
             Header: 'Configuration',
             accessor: 'name',
-            width: from === WLF_TABS.INVENTORY ? '260px' : '280px',
+            width: from === WLF_TABS.INVENTORY ? '268px' : '250px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
         {
-            id: '3',
+            id: '2',
             Header: 'Status',
             accessor: 'status',
             width: '220px',
@@ -222,13 +246,42 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             }
         },
         {
-            id: '4',
+            id: '3',
             Header: 'Severity',
             accessor: 'severity',
-            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            width: from === WLF_TABS.INVENTORY ? '173px' : '200px',
             isSortable: true,
             renderCell: (cellData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            id: '4',
+            Header: 'Impacted resources',
+            accessor: 'totalObjectsInViolation',
+            width: from === WLF_TABS.INVENTORY ? '220px' : '200px',
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                let type = '';
+                if (rowData?.type === 'volume') {
+                    type = 'volumes';
+                } else if (rowData?.type === 'lun') {
+                    type = 'LUN path';
+                } else if (rowData?.type === 'os') {
+                    type = 'discs';
+                }
+
+                return (
+                    <div>
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {(rowData?.totalObjectsInViolation || 0) +
+                                ' out of ' +
+                                (rowData?.totalObjectsAssessed || 0) +
+                                ' ' +
+                                type}
+                        </DsTypography>
+                    </div>
+                );
             }
         },
         {
@@ -278,7 +331,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
             id: '6',
             Header: '',
             accessor: 'recommendation',
-            width: from === WLF_TABS.INVENTORY ? '588px' : '575px',
+            width: from === WLF_TABS.INVENTORY ? '406px' : '575px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <>
@@ -355,7 +408,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         }
     ];
 
-    const colDefsForDashboard = ColDefs.filter((item: any) => item.id !== '3');
+    const colDefsForDashboard = ColDefs.filter((item: any) => item.id !== '2');
 
     const tableProps = useTable({
         isSorting: false,

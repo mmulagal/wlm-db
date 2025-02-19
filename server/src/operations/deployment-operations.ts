@@ -807,6 +807,116 @@ async function getTerraformSetup(
     }
 }
 
+async function getPGSQLTerraformSetup(
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: PgSqlConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    triggeredFrom: string,
+    tags?: Array<{ key: string; value: string }>,
+    credentialsId?: string,
+    region?: string
+): Promise<TerraformSetupResponseType> {
+    logger.info('Get PGSQL terraform setup', {
+        networkConfiguration,
+        ec2Configuration,
+        fsxConfiguration,
+        sqlConfiguration,
+        triggeredFrom,
+        tags,
+        enableCloudWatch,
+        topicArn,
+        credentialsId,
+        region
+    });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
+    const { sqlServerName } = sqlConfiguration;
+
+    try {
+        const amazonLinuxAmis = await getParametersByPath(
+            credentialsId,
+            region,
+            '/aws/service/ami-amazon-linux-latest'
+        );
+        const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
+        if (al2023AmiId) {
+            sqlConfiguration.sqlAmiId = al2023AmiId;
+        } else {
+            throw createError(412, 'Amazon Linux 2023 AMI is not available');
+        }
+
+        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
+
+        const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:15,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+
+        const { stackName: deploymentName, templateParameters } = await formatPgSqlTemplateParameters(
+            networkConfiguration,
+            ec2Configuration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            enableCloudWatch,
+            metrics,
+            credentialsId,
+            region
+        );
+
+        const tfDeploymentName = `TF-${deploymentName.replace('Stack', '')}`;
+        logger.debug(`Deployment ${tfDeploymentName} parameters ${JSON.stringify(templateParameters)}.`);
+
+        region = !isEmpty(region) ? region : TEMPLATE_BUCKET_REGION;
+
+        const customTerraformModulesPath: string = `${WLMDB}/${tfDeploymentName}/terraform`;
+
+        const initializationScriptURLs = await uploadTerraformModules(
+            region as string,
+            DatabaseTypes.PG_SQL,
+            tfDeploymentName,
+            sqlConfiguration.sqlDeploymentMode,
+            tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+            customTerraformModulesPath
+        );
+        logger.debug('PGSQL Terraform modules uploaded successfully', initializationScriptURLs);
+
+        const { terraformVariables } = await createTFVarsFile(
+            region as string,
+            DatabaseTypes.PG_SQL,
+            tfDeploymentName,
+            customTerraformModulesPath,
+            templateParameters,
+            initializationScriptURLs as InitializationScript[]
+        );
+
+        const contents = await createRootModuleFile(
+            region as string,
+            DatabaseTypes.PG_SQL,
+            tfDeploymentName,
+            terraformVariables
+        );
+
+        const terraformZipS3SignedURL = await createAndUploadTheTerraformZipFile(
+            region as string,
+            DatabaseTypes.PG_SQL,
+            tfDeploymentName,
+            customTerraformModulesPath
+        );
+
+        logger.debug('PGSQL Terraform zip file signed url', terraformZipS3SignedURL);
+
+        return {
+            url: terraformZipS3SignedURL,
+            template: contents || ''
+        };
+    } catch (err: any) {
+        logger.error('Error while getting terraform setup for pgsql', err);
+        throw createError(500, `Error while getting terraform setup for pgsql: ${err.message}`);
+    }
+}
+
 async function deployStackOrCreateTemplateURL(
     credentialsId: string,
     region: string,
@@ -1471,7 +1581,7 @@ async function deployPgSql(
 
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
-    const { sqlServerName } = sqlConfiguration;
+    const { sqlServerName, sqlVersion } = sqlConfiguration;
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
     const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
@@ -1482,7 +1592,7 @@ async function deployPgSql(
 
     validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
 
-    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:15,${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
@@ -1758,7 +1868,7 @@ async function formatPgSqlTemplateParameters(
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
-        { ParameterKey: TEMPLATE_METRICS, ParameterValue: '' },
+        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
@@ -2071,5 +2181,6 @@ export {
     getCollationDetailsForDeployment,
     deployPgSql,
     getTerraformSetup,
-    getPgSqlCfTemplate
+    getPgSqlCfTemplate,
+    getPGSQLTerraformSetup
 };

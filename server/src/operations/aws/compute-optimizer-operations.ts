@@ -84,7 +84,7 @@ async function identifyComputeOptimizerRecommendationOptions(
     const recommendationOptionsWithPrices = [];
     for (const recommendationOption of instanceRecommendationOptions) {
         const { instanceType = '' } = recommendationOption;
-        const pricingDetails = await getSqlInstancePricingDetails(region, instanceType, 'windows'); // Assuming this function returns pricing details for a specific instance type
+        const { [instanceType]: pricingDetails } = await getSqlInstancePricingDetails(region, instanceType, 'windows'); // Assuming this function returns pricing details for a specific instance type
         if (pricingDetails?.NA?.pricePerUnit) {
             recommendationOptionsWithPrices.push({
                 recommendationOption,

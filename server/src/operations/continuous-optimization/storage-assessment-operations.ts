@@ -4,7 +4,8 @@ import moment from 'moment';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars
+    AwsWellArchitecturedPillars,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 
@@ -12,7 +13,8 @@ import storageGoldenConfigData from './golden-configs/storage';
 import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
 import {
     SizingViolationResponseType,
-    StorageParameterDriftResponseType
+    StorageParameterDriftResponseType,
+    StorageTierViolationResponseType
 } from '../../routes/types/continuous-optimization.types';
 import { LogDriveDetails, StorageAssessment, TempDbDriveDetails } from '../../utils/common-types';
 import { HttpErrorCodes } from '../../utils/consts';
@@ -110,6 +112,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     }, []);
 
     const currentSizePercentForAllVolumes: number[] = [];
+    const drivesCount = filteredDriveDetails.length;
     filteredDriveDetails.forEach((drive: LogDriveDetails) => {
         let { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
         if (isNull(logDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
@@ -121,7 +124,8 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             dataDriveTotalSizeMB,
             logDriveTotalSizeMB,
             dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
-            databases: [...new Set(drive.databaseName.split(','))]
+            databases: [...new Set(drive.databaseName.split(','))],
+            sizePercentToDataDrive: Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100)
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
@@ -139,6 +143,8 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
         }
     });
+    const totalObjectsInViolation = [...new Set(overProvisionedDrives.concat(underProvisionedDrives, ignoredDrives))]
+        .length;
     key = 'log-drive-size';
     status =
         !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
@@ -158,7 +164,9 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
         underProvisionedDrives,
         ignoredDrives,
         optimisedDrives,
-        currentSizePercentForAllVolumes
+        currentSizePercentForAllVolumes,
+        drivesCount,
+        totalObjectsInViolation
     };
 }
 
@@ -181,7 +189,8 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     value = {
         ...value,
         dataDriveTotalSizeMB,
-        tempdbDriveTotalSizeMB
+        tempdbDriveTotalSizeMB,
+        sizePercentToDataDrive: Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100)
     };
 
     if (defaultDataDriveLetter === tempdbDriveLetter) {
@@ -203,6 +212,8 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
             underProvisionedDrives.push(value);
         }
     }
+    const totalObjectsInViolation = [...new Set(overProvisionedDrives.concat(underProvisionedDrives, ignoredDrives))]
+        .length;
     key = 'tempdb-drive-size';
     return {
         status,
@@ -213,7 +224,8 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
         underProvisionedDrives,
         overProvisionedDrives,
         ignoredDrives,
-        currentSizePercentForAllVolumes
+        currentSizePercentForAllVolumes,
+        totalObjectsInViolation
     };
 }
 
@@ -292,7 +304,8 @@ async function calculateStorageDrift(
         timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
         configuration: { volumes: [], luns: [], os: [] },
         sizing: [],
-        layout: []
+        layout: [],
+        fileSystems: []
     };
 
     const { config_data: configData } = persistedConfigurationData;
@@ -325,7 +338,10 @@ async function calculateStorageDrift(
                 objectsInViolation,
                 severity: config.severity,
                 recommendation: config.recommendation,
-                tags: config.tags
+                tags: config.tags,
+                totalObjectsAssessed: volumes.length,
+                totalObjectsInViolation: objectsInViolation.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             });
         });
     }
@@ -353,10 +369,13 @@ async function calculateStorageDrift(
                 name: config.parameter,
                 recommended: config.value.toString(),
                 status,
-                objectsInViolation,
+                objectsInViolation: [...new Set(objectsInViolation)],
                 severity: config.severity,
                 recommendation: config.recommendation,
-                tags: config.tags
+                tags: config.tags,
+                totalObjectsAssessed: luns.length,
+                totalObjectsInViolation: objectsInViolation.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN
             });
         });
     }
@@ -369,7 +388,6 @@ async function calculateStorageDrift(
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-
             driftAssessmentData.configuration.os.push({
                 name: key,
                 recommended: goldenData.value.toString(),
@@ -423,7 +441,11 @@ async function calculateStorageDrift(
                 severity: goldenData.severity,
                 recommendation: goldenData.recommendation,
                 tags: goldenData.tags,
-                current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+                current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb'],
+                totalObjectsAssessed: 1,
+                totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
             });
         }
 
@@ -433,12 +455,14 @@ async function calculateStorageDrift(
         let recommendationString =
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality';
         let severity = 'critical';
+        let databasesInViolation: string[] = [];
         goldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
         if (!isEmpty(goldenData)) {
             dataFilesLayoutStatus =
                 goldenData?.value === defaultDataFilesAssessment
                     ? AssessmentStatus.OPTIMIZED
                     : AssessmentStatus.NOT_OPTIMIZED;
+            databasesInViolation = dataFilesLayoutStatus === AssessmentStatus.NOT_OPTIMIZED ? ['system'] : [];
         }
         goldenData = layoutConfigData.find(data => data.parameter === 'default-log-files-location');
         if (!isEmpty(goldenData)) {
@@ -446,6 +470,7 @@ async function calculateStorageDrift(
                 goldenData?.value === defaultLogFilesAssessment
                     ? AssessmentStatus.OPTIMIZED
                     : AssessmentStatus.NOT_OPTIMIZED;
+            databasesInViolation = dataFilesLayoutStatus === AssessmentStatus.NOT_OPTIMIZED ? ['system'] : [];
         }
 
         const dataVolumes = userDatabaseLayoutAssessment?.data;
@@ -498,6 +523,7 @@ async function calculateStorageDrift(
             severity = 'critical';
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
+            databasesInViolation = databasesOnSameDataLogLun.map(data => data.name);
         } else if (!isEmpty(databasesOnSameDataLogVolume)) {
             recommended = 'separate-data-log-volume-per-database';
             dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
@@ -505,6 +531,7 @@ async function calculateStorageDrift(
             severity = 'warning';
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
+            databasesInViolation = databasesOnSameDataLogVolume.map(data => data.name);
         } else if (databasesAbove500Gb.length > 1) {
             if (
                 !isEmpty(databasesSharingDataVolumes) ||
@@ -518,6 +545,7 @@ async function calculateStorageDrift(
                 severity = 'critical';
                 recommendationString =
                     'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+                databasesInViolation = databasesAbove500Gb.map(data => data.name);
             }
         } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
             if (!isEmpty(databasesSharingDataLuns)) {
@@ -529,6 +557,7 @@ async function calculateStorageDrift(
             severity = 'critical';
             recommendationString =
                 'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
+            databasesInViolation = databasesAbove500Gb.map(data => data.name);
         } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
             if (!isEmpty(databasesSharingDataVolumes)) {
                 dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
@@ -539,8 +568,10 @@ async function calculateStorageDrift(
             severity = 'warning';
             recommendationString =
                 'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
+            databasesInViolation = databasesAbove500Gb.map(data => data.name);
         }
 
+        databasesInViolation = [...new Set(databasesInViolation)];
         driftAssessmentData.layout.push(
             {
                 name: 'data-files-location',
@@ -552,7 +583,11 @@ async function calculateStorageDrift(
                     AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ],
-                current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+                current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                objectsInViolation: databasesInViolation,
+                totalObjectsAssessed: dataLogVolumeDetails.length,
+                totalObjectsInViolation: databasesInViolation.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
             },
 
             {
@@ -565,7 +600,11 @@ async function calculateStorageDrift(
                     AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
                 ],
-                current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive'
+                current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                objectsInViolation: databasesInViolation,
+                totalObjectsAssessed: dataLogVolumeDetails.length,
+                totalObjectsInViolation: databasesInViolation.length,
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
             }
         );
     }
@@ -585,6 +624,10 @@ async function calculateStorageDrift(
             let underProvisionedDrives;
             let ignoredDrives;
             let currentSizePercentForAllVolumes;
+            let storageTierViolations: StorageTierViolationResponseType[] = [];
+            let totalObjectsAssessed = 1;
+            let totalObjectsInViolation = 0;
+            let resourceType = ASSESSMENT_RESOURCE_TYPE.VOLUME;
 
             if (key === 'data-log-drive-details') {
                 goldenData = sizingConfigData.find(data => data.parameter === 'log-drive-size');
@@ -597,14 +640,32 @@ async function calculateStorageDrift(
                 let status = AssessmentStatus.NOT_OPTIMIZED;
                 if (key === 'performance-tier') {
                     // Old assessment data has performance-tier as boolean, new assessment data has performance-tier as list of numbers
-
+                    const details = value;
                     if (typeof value !== 'boolean') {
                         // DBS-4648 FIX
                         // By default, when a list as a single element PS returns the element instead of a list.
                         // Script has been updated to return a list even if it has a single element. However, older data still has single element so the fix.
                         if (typeof value === 'number') {
                             value = [value];
+                        } else {
+                            storageTierViolations = details
+                                .filter(
+                                    (volumeDetail: { performanceTierPercent: number; volumeName: string } | number) =>
+                                        typeof volumeDetail !== 'number' && volumeDetail.performanceTierPercent !== 100
+                                )
+                                .map((volumeDetail: { performanceTierPercent: number; volumeName: string }) => ({
+                                    name: volumeDetail.volumeName,
+                                    percent: volumeDetail.performanceTierPercent
+                                }));
+
+                            value = details.map((volumeDetail: { performanceTierPercent: number } | number) => {
+                                if (typeof volumeDetail !== 'number') {
+                                    return volumeDetail.performanceTierPercent;
+                                }
+                                return volumeDetail;
+                            });
                         }
+                        totalObjectsAssessed = value.length;
                         const minSizePercent = Math.min(...value);
                         const maxSizePercent = Math.max(...value);
                         currentSizeRange =
@@ -622,8 +683,11 @@ async function calculateStorageDrift(
                         overProvisionedDrives,
                         underProvisionedDrives,
                         ignoredDrives,
-                        currentSizePercentForAllVolumes
+                        currentSizePercentForAllVolumes,
+                        drivesCount: totalObjectsAssessed,
+                        totalObjectsInViolation
                     } = getLogVolumeDrift(value, status, key));
+                    resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
                 if (key === 'data-tempdb-drive-details') {
                     ({
@@ -632,8 +696,10 @@ async function calculateStorageDrift(
                         overProvisionedDrives,
                         underProvisionedDrives,
                         ignoredDrives,
-                        currentSizePercentForAllVolumes
+                        currentSizePercentForAllVolumes,
+                        totalObjectsInViolation
                     } = getTempDbVolumeDrift(value, status, key));
+                    resourceType = ASSESSMENT_RESOURCE_TYPE.DATABASE;
                 }
 
                 let missingPermissions: string[] = [];
@@ -654,6 +720,11 @@ async function calculateStorageDrift(
                             ? `${maxSizePercent}%`
                             : `${minSizePercent}% - ${maxSizePercent}%`;
                 }
+                const sizingViolations =
+                    key === 'performance-tier'
+                        ? undefined
+                        : { overProvisionedDrives, underProvisionedDrives, ignoredDrives };
+                const tierViolations = key === 'performance-tier' ? storageTierViolations : undefined;
                 driftAssessmentData.sizing.push({
                     name: key,
                     recommended: goldenData.value.toString(),
@@ -661,9 +732,13 @@ async function calculateStorageDrift(
                     severity: goldenData.severity,
                     recommendation: goldenData.recommendation,
                     tags: goldenData.tags,
-                    sizingViolations: { overProvisionedDrives, underProvisionedDrives, ignoredDrives },
+                    sizingViolations,
                     missingPermissions,
-                    current: currentSizeRange
+                    current: currentSizeRange,
+                    totalObjectsAssessed,
+                    totalObjectsInViolation,
+                    storageTierViolations: tierViolations,
+                    resourceType
                 });
             }
         });
@@ -688,7 +763,8 @@ async function calculateStorageDrift(
             tags: goldenData!.tags,
             missingPermissions,
             recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0,
-            current: `${headroomPercent}%`
+            current: `${headroomPercent}%`,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         });
     } catch (error: any) {
         logger.error(
@@ -696,6 +772,9 @@ async function calculateStorageDrift(
             error
         );
     }
+
+    // Add file system id to the response
+    driftAssessmentData.fileSystems.push(filesystemId);
 
     return driftAssessmentData;
 }

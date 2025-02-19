@@ -90,6 +90,9 @@ export interface PerConfigInterface {
     errorMessage?: string;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    resourceType?: string;
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
     ec2InstancesToPatch?: Array<{
         baselineId?: string;
         criticalNonCompliantCount?: number;
@@ -161,10 +164,13 @@ export interface GwPerConfigCardInterface {
         value: string;
         smallFont?: boolean;
     };
+    block_five?: any;
+    block_six?: any;
     recommendation?: {
         title: string;
         description?: string;
         values?: string[] | undefined;
+        valuesHeading?: string;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
         descriptionRssConfig?: {
             first?: string;

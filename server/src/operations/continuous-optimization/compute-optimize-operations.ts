@@ -384,16 +384,16 @@ async function handleComputeRemediation(
 
             // update metadata after successful optimization
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
-            const { compute: { findingReasonCodes = [], recommendationOptions = [] } = {} } =
-                existingAssessmentData || {};
+            const { compute: { recommendationOptions = [] } = {} } = existingAssessmentData || {};
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
                 compute: {
                     finding: AssessmentStatus.OPTIMIZED,
-                    findingReasonCodes,
+                    findingReasonCodes: [],
                     currentInstanceType: instanceType,
                     recommendationOptions
-                }
+                },
+                lastAssessedDate: new Date().getTime().toString()
             };
             await updateResourceMetaData(accountId, credentialsId, resourceId, metadata);
             jobStatus = JOBSTATUS.COMPLETED;

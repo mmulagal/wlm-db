@@ -403,6 +403,13 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getPGSQLTerraformSetup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/pgsql/terraform/setup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -898,6 +905,13 @@ export const exploreSavingsApi = createApi({
                     body: payload
                 })
             }),
+            getSendEmail: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/notification/email?emailType=savings-calculations`,
+                    method: 'POST',
+                    body: payload
+                })
+            }),
             getOnPremSavings: builder.mutation({
                 query: () => ({
                     url: `v1/mssql/onprem-tco/resources`
@@ -1018,6 +1032,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeMaxdopConfigForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/max-dop`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1070,7 +1091,8 @@ export const {
     useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
     useGetTerraformSetupMutation,
-    useGetPgsqlTemplatesMutation
+    useGetPgsqlTemplatesMutation,
+    useGetPGSQLTerraformSetupMutation
 } = databaseHomeApi;
 
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
@@ -1130,6 +1152,7 @@ export const {
 } = sandboxApi;
 
 export const {
+    useGetSendEmailMutation,
     useGetUploadScriptMutation,
     useGetOnPremSavingsMutation,
     useGetOnPremCalculationsMutation,
@@ -1150,5 +1173,6 @@ export const {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
-    useOptimizeComputeConfigForBulkMutation
+    useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMaxdopConfigForBulkMutation
 } = getWellApi;

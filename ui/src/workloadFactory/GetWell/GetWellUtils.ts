@@ -56,6 +56,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: ''
+        },
         recommendation: {
             title: 'Storage tier recommendation',
             description:
@@ -82,10 +90,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'File system headroom ',
+            value: ''
+        },
         recommendation: {
             title: 'File system headroom recommendation',
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
+            valuesHeading: 'File system headroom percentages are as follows:',
             values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
         },
         tags: ['Performance efficiency']
@@ -109,10 +126,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: ''
+        },
         recommendation: {
             title: 'Log drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
+            valuesHeading: 'Log drive size percentages are as follows:',
             values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
@@ -136,10 +162,19 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempBD placement',
+            value: ''
+        },
         recommendation: {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+            valuesHeading: 'TempDB drive size percentages are as follows:',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
@@ -163,6 +198,15 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'Data files (.mdf) placement recommendation',
@@ -191,6 +235,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: 'Volumes'
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: '',
+            smallFont: true
+        },
         recommendation: {
             title: 'Log files (.ldf) placement recommendation',
             description:
@@ -218,6 +271,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'TempDB placement',
+            value: '',
+            smallFont: true
+        },
         recommendation: {
             title: 'TempDB placement recommendation',
             description:
@@ -243,6 +305,11 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: 'Critical'
         },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: ''
+        },
+
         tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency', 'Reliability']
     },
     os_configuration: {
@@ -262,6 +329,10 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: 'Critical'
+        },
+        block_five: {
+            type: 'Not optimized configurations',
+            value: ''
         },
         tags: ['Performance efficiency', 'Reliability']
     },
@@ -342,6 +413,15 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null
+        },
         recommendation: {
             title: 'Compute rightsizing recommendation',
             description:
@@ -368,6 +448,15 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted network adapters',
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'Network adapter settings recommendation',
@@ -407,6 +496,16 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null,
+            smallFont: true
+        },
         recommendation: {
             title: 'Operating system patch recommendation',
             description:
@@ -433,6 +532,15 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'License edition',
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'License recommendation',
@@ -472,6 +580,14 @@ export const cardDataDefault: GwCardDataInterface = {
             type: 'Severity',
             value: ''
         },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Missing patches',
+            value: ''
+        },
         recommendation: {
             title: 'Microsoft SQL assessment recommendation',
             description:
@@ -498,6 +614,15 @@ export const cardDataDefault: GwCardDataInterface = {
         block_four: {
             type: 'Severity',
             value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'MAXDOP',
+            value: '',
+            smallFont: true
         },
         recommendation: {
             title: 'MAXDOP assessment recommendation',
@@ -557,6 +682,14 @@ export const formatApplicationCardMainConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: licenseVal
+            },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
@@ -607,6 +740,14 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: String(totalPatches)
+            },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
@@ -650,6 +791,14 @@ export const formatMaxdopPatchCardConfig = (
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0
             },
             errorMessage: item?.errorMessage,
             tags: item?.tags,
@@ -704,6 +853,14 @@ export const formatOsPatchCardConfig = (
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
             },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: String(totalViolations)
+            },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
             id: item?.name,
             category: categoryVal,
@@ -749,9 +906,13 @@ export const formatRssConfigCardConfig = (
         baseProcessorNumber: item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
     };
 
+    let totalAdapters = item?.rssAdapters?.length || 0;
+    let nonOptimizedAdapters = 0;
+
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
+            nonOptimizedAdapters++;
             optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
             optimizedValue['rssProfile'] = adapter?.rssProfile;
             optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
@@ -788,6 +949,14 @@ export const formatRssConfigCardConfig = (
                     optimizedValue['receiveQueues'] = adapter?.numberOfReceiveQueues;
                 }
             }
+
+            if (
+                adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile ||
+                adapter?.baseProcessorNumber !== item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber ||
+                adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues
+            ) {
+                nonOptimizedAdapters++;
+            }
         }
     });
 
@@ -812,6 +981,18 @@ export const formatRssConfigCardConfig = (
             block_four: {
                 ...(cardDataDefault?.[itemName]?.block_four || {}),
                 value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: findingReasons,
+                count: {
+                    totalObjectsAssessed: totalAdapters,
+                    totalObjectsInViolation: nonOptimizedAdapters
+                }
             },
             tags: item?.tags || cardDataDefault?.[itemName]?.tags,
             id: item?.name,
@@ -870,7 +1051,6 @@ export const formatIndividualCardMainConfig = (
             if (optimizingData?.[itemName] && optimizingData?.[itemName] !== '') {
                 status = optimizingData?.[itemName];
             }
-
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
             let blockThreeValue = '';
@@ -878,6 +1058,31 @@ export const formatIndividualCardMainConfig = (
                 blockThreeValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
             } else {
                 blockThreeValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
+            }
+
+            let blockSixValue: string | undefined = '';
+            let blockSixCountObject = null;
+            if (
+                itemName === 'storage_tier' ||
+                itemName === 'transaction_log_drive_size' ||
+                itemName === 'user_data_files' ||
+                itemName === 'transaction_log_files'
+            ) {
+                blockSixValue = (item?.totalObjectsInViolation || 0) + ' out of ' + (item?.totalObjectsAssessed || 0);
+                blockSixCountObject = {
+                    totalObjectsInViolation: item?.totalObjectsInViolation || 0,
+                    totalObjectsAssessed: item?.totalObjectsAssessed || 0
+                };
+            } else if (
+                itemName === 'file_system_headroom' ||
+                itemName === 'tempdb_drive_size' ||
+                itemName === 'tempdb_files'
+            ) {
+                blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else if (categoryVal === 'storage') {
+                blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
+            } else {
+                blockSixValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
             }
 
             cardsData = {
@@ -896,6 +1101,16 @@ export const formatIndividualCardMainConfig = (
                     block_four: {
                         ...(cardDataDefault?.[itemName]?.block_four || {}),
                         value: GETWELL_VALUES?.[severity] || severity
+                    },
+                    block_five: {
+                        ...(cardDataDefault?.[itemName]?.block_five || {}),
+                        value: item?.resourceType
+                    },
+                    block_six: {
+                        ...(cardDataDefault?.[itemName]?.block_six || {}),
+                        value: blockSixValue,
+                        count: blockSixCountObject,
+                        list: item?.objectsInViolation ? item?.objectsInViolation : null
                     },
                     errorMessage: item?.errorMessage,
                     tags: item?.tags,
@@ -1194,6 +1409,17 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 ...cardDataDefault?.ontap_configuration?.block_four,
                 value: highestOntapSeverity
             },
+            block_five: {
+                ...cardDataDefault?.ontap_configuration?.block_five,
+                value:
+                    (ontapNotOptimizedConfig || 0) +
+                    ' out of ' +
+                    ((ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0)),
+                count: {
+                    totalObjectsAssessed: (ontapOptimizedConfig || 0) + (ontapNotOptimizedConfig || 0),
+                    totalObjectsInViolation: ontapNotOptimizedConfig || 0
+                }
+            },
             tags: ontapTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
         }
@@ -1227,6 +1453,15 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
             block_four: {
                 ...cardDataDefault?.os_configuration?.block_four,
                 value: highestOsSeverity
+            },
+            block_five: {
+                ...cardDataDefault?.os_configuration?.block_five,
+                value:
+                    (osNotOptimizedConfig || 0) + ' out of ' + ((osOptimizedConfig || 0) + (osNotOptimizedConfig || 0)),
+                count: {
+                    totalObjectsAssessed: (osOptimizedConfig || 0) + (osNotOptimizedConfig || 0),
+                    totalObjectsInViolation: osNotOptimizedConfig || 0
+                }
             },
             tags: osTagsList.filter((value: any, index: any, self: string | any[]) => self.indexOf(value) === index),
             category: 'storage'
@@ -1711,31 +1946,69 @@ export const handleOptimizeStorageJob = (
             }, OPTIMIZE_POLLING_INTERVAL);
         } else {
             let { inProgressOptimizationData, inProgressHostData } = state.getWellOptimize;
-            let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstanceName || '';
-            let selectedResourceId = state.getWellOptimize.selectedResourceId || '';
-            dispatch(
-                setOptimizingData({
-                    ...optimizingData,
-                    [rowData?.id]: ''
-                })
-            );
-            dispatch(
-                setInProgressOptimizationData({
-                    ...inProgressOptimizationData,
-                    [type]: inProgressOptimizationData?.[type]?.filter(
-                        (instanceId: any) => instanceId !== selectedResourceId + '_' + selectedDatabaseInstance
-                    )
-                })
-            );
-            dispatch(
-                setInProgressHostData({
-                    ...inProgressHostData,
-                    [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedResourceId)
-                })
-            );
-            formatGetWellData(dispatch);
-            dispatch(setOptimizingInstanceData(false));
-            // Error message for failed optimization API will be returned here
+            if (operation === 'bulk') {
+                if (bulkRowData?.[0]?.id) {
+                    dispatch(
+                        setOptimizingData({
+                            ...optimizingData,
+                            [bulkRowData?.[0]?.id]: ''
+                        })
+                    );
+                }
+
+                dispatch(
+                    setInProgressOptimizationData({
+                        ...inProgressOptimizationData,
+                        [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
+                            const jobInstances =
+                                bulkRowData?.map((instance: any) => `${instance?.hostId}_${instance?.instanceId}`) ||
+                                [];
+                            return !jobInstances.includes(instanceId);
+                        })
+                    })
+                );
+                dispatch(
+                    setInProgressHostData({
+                        ...inProgressHostData,
+                        [type]: inProgressHostData?.[type]?.filter(
+                            //Data host id to check
+                            (hostId: any) => {
+                                const jobHostIds = bulkRowData?.map((host: any) => host?.hostId) || [];
+                                return !jobHostIds.includes(hostId);
+                            }
+                        )
+                    })
+                );
+
+                // formatGetWellData(dispatch);
+                dispatch(setOptimizingInstanceData(false));
+            } else {
+                let selectedDatabaseInstance = state.getWellOptimize.selectedDatabaseInstance || '';
+                let selectedResourceId = state.getWellOptimize.selectedResourceId || '';
+                dispatch(
+                    setOptimizingData({
+                        ...optimizingData,
+                        [rowData?.id]: ''
+                    })
+                );
+                dispatch(
+                    setInProgressOptimizationData({
+                        ...inProgressOptimizationData,
+                        [type]: inProgressOptimizationData?.[type]?.filter(
+                            (instanceId: any) => instanceId !== selectedResourceId + '_' + selectedDatabaseInstance
+                        )
+                    })
+                );
+                dispatch(
+                    setInProgressHostData({
+                        ...inProgressHostData,
+                        [type]: inProgressHostData?.[type]?.filter((hostId: any) => hostId !== selectedResourceId)
+                    })
+                );
+                // formatGetWellData(dispatch);
+                dispatch(setOptimizingInstanceData(false));
+                // Error message for failed optimization API will be returned here
+            }
         }
     }, 10);
 };
@@ -1796,6 +2069,14 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
                             assessments: {
                                 ...instance?.assessments,
                                 compute: { ...instance.assessments.compute, status: 'optimized' }
+                            }
+                        };
+                    } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                maxDOP: { ...instance.assessments.maxDOP, status: 'optimized' }
                             }
                         };
                     } else if (storageConfigurationMap[rowData?.id]) {
@@ -1965,7 +2246,11 @@ export const nameToIdConfigMapping = (name: string) => {
         ? 'tempdb-drive-size'
         : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
         ? 'performance-tier'
-        : 'compute-rightsizing';
+        : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
+        ? 'compute-rightsizing'
+        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
+        ? 'maxdop'
+        : '';
 };
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
