@@ -188,7 +188,8 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
             databaseHostId,
             serverNameWithHostName,
             parentJobId,
-            instanceToAssess
+            instanceToAssess,
+            AssessmentCategories.STORAGE
         );
     } catch (error) {
         logger.error('Failed to optimize storage', { params, error });
@@ -598,7 +599,8 @@ async function modifySizingAttributes(
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
             errorMessage = ` ${childJobsStatus.map(job => job?.errorMessage)}`;
             jobStatus = childJobsStatus.some(job => job?.jobStatus === JOBSTATUS.WARNING)
@@ -1352,7 +1354,8 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             databaseHostId,
             serverNameWithHostName,
             parentJobId,
-            instanceToAssess
+            instanceToAssess,
+            AssessmentCategories.STORAGE
         );
     } catch (error) {
         jobError = `Error while optimizing mpio configuration ${error}`;
@@ -1603,7 +1606,8 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
         }
     } catch (error) {
@@ -1849,7 +1853,8 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             databaseHostId,
             serverNameWithHostName,
             parentJobId,
-            instanceToAssess
+            instanceToAssess,
+            AssessmentCategories.STORAGE
         );
     } else {
         // Run remediation on primary node
@@ -1907,7 +1912,8 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
         }
     }
@@ -2286,7 +2292,8 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.STORAGE
             );
             await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         }
@@ -2496,7 +2503,8 @@ async function handleMaxDopRemediation(
                 databaseHostId,
                 serverNameWithHostName,
                 parentJobId,
-                instanceToAssess
+                instanceToAssess,
+                AssessmentCategories.MAXDOP
             );
             await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
         }
@@ -2561,7 +2569,7 @@ async function optimizeMaxDop(
             jobMetadata
         );
 
-        handleMaxDopRemediation(
+        await handleMaxDopRemediation(
             accountId,
             credentialsId,
             region,
@@ -2593,7 +2601,8 @@ async function triggerAssessmentAfterOptimization(
     databaseHostId: string,
     serverNameWithHostName: string,
     parentJobId: string,
-    instanceToAssess: WorkloadInstance
+    instanceToAssess: WorkloadInstance,
+    fields?: string
 ) {
     logger.info('Triggering assessment after optimization', {
         credentialsId,
@@ -2602,7 +2611,8 @@ async function triggerAssessmentAfterOptimization(
         databaseHostId,
         serverNameWithHostName,
         parentJobId,
-        instanceToAssess
+        instanceToAssess,
+        fields
     });
 
     // its required to sleep for 5 seconds so that the optimization is completed before drift assessment
@@ -2617,7 +2627,7 @@ async function triggerAssessmentAfterOptimization(
         databaseHostId,
         instanceToAssess.id,
         AssessmentTriggeredBy.SYSTEM,
-        '',
+        fields || '',
         parentJobId
     );
 
