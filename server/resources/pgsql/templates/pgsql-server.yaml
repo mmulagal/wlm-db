@@ -61,9 +61,11 @@ Parameters:
     FSxReplicaSvmId:
         Description: ID of the FSx Replica Storage Virtual Machine
         Type: String
+        Default: ''
     FSxReplicaSvmUuid:
         Description: UUID of the FSx Replica Storage Virtual Machine
         Type: String
+        Default: ''
     FSxAggrName:
         Description: Aggregate FSx for ONTAP file system.
         Type: String
@@ -572,14 +574,10 @@ Outputs:
         Description: Id of PgSql Instance
         Value: !Ref SqlNode1
     SqlNodeIp2:
+        Condition: IsHACluster
         Description: Private IP of PgSql Instance
-        Value: !If
-            - IsHACluster
-            - !GetAtt SqlNode2.PrivateIp
-            - !Ref AWS::NoValue
+        Value: !GetAtt SqlNode2.PrivateIp
     SqlNodeId2:
+        Condition: IsHACluster
         Description: Id of PgSql Instance
-        Value: !If
-            - IsHACluster
-            - !Ref SqlNode2
-            - !Ref AWS::NoValue
+        Value: !Ref SqlNode2
