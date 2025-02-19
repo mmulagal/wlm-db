@@ -2405,14 +2405,14 @@ async function handleMaxDopRemediation(
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError = '';
-    const jobDescription = `Set the max dop to the recommended value ${serverNameWithHostName}`;
+    const jobDescription = `Set the max dop to the recommended value for ${serverNameWithHostName}`;
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
         serverNameWithHostName!,
         JOBTYPE.OPTIMIZATION,
-        `Set max dop to the recommended value for ${serverNameWithHostName}`,
+        jobDescription,
         jobDescription,
         parentJobId
     );
@@ -2487,13 +2487,7 @@ async function handleMaxDopRemediation(
                     ? instanceMetadata
                     : { configsOptimized: {} };
 
-                await updateOptimizedConfigNameInInstanceTable(
-                    accountId,
-                    instanceId,
-                    ['performance-tier'],
-                    'SIZING',
-                    metadata
-                );
+                await updateOptimizedConfigNameInInstanceTable(accountId, instanceId, ['maxdop'], 'maxdop', metadata);
             }
             await triggerAssessmentAfterOptimization(
                 credentialsId,
