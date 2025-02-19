@@ -401,10 +401,10 @@ async function calculateStorageDrift(
         if (!isEmpty(goldenData)) {
             if (key === 'ntfs-allocation-unit-size') {
                 objectsInViolation = ntfsAllocationDetails
-                    .filter(ntfsDetail => ntfsDetail.BlockSize !== 65536)
+                    .filter(ntfsDetail => ntfsDetail.BlockSize && ntfsDetail.BlockSize !== 65536)
                     .map(ntfsDetail => ({
                         objectName: ntfsDetail.DriveLetter,
-                        value: '',
+                        value: ntfsDetail.BlockSize.toString(),
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
             } else if (key === 'mpio-load-balance-policy') {
@@ -685,7 +685,7 @@ async function calculateStorageDrift(
                                 )
                                 .map((volumeDetail: { performanceTierPercent: number; volumeName: string }) => ({
                                     objectName: volumeDetail.volumeName,
-                                    value: volumeDetail.performanceTierPercent,
+                                    value: volumeDetail.performanceTierPercent.toString(),
                                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
                                 }));
 
