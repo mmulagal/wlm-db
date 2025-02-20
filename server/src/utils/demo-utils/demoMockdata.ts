@@ -1833,6 +1833,371 @@ function savePGSQLConfigurationData(
         postgreServerName: 'pgsqlserver'
     };
 }
+
+function savePGSQLHaConfigurationData(
+    region: string,
+    awsAccountId: string,
+    credentialsId: string,
+    dbName: string,
+    configName: string
+) {
+    return {
+        awsAccount: {
+            selectedCredential: {
+                value: `DemoDefaultCredential | ${awsAccountId}`,
+                label: `DemoDefaultCredential | ${awsAccountId}`,
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    credentialsId,
+                    name: 'DemoDefaultCredential',
+                    arn: `arn:aws:iam::${awsAccountId}:role/demo_role_auth0637c80cf46e3b8daf81a914e`,
+                    providerAccountId: awsAccountId
+                }
+            }
+        },
+        regionAndVpc: {
+            selectedRegion: {
+                value: region,
+                label: AWS_REGIONS.get(region)!,
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    regionCode: region,
+                    regionName: AWS_REGIONS.get(region)!
+                }
+            },
+            selectedVPC: {
+                value: 'VPC-1 | 172.30.0.0/20',
+                label: 'VPC-1 | 172.30.0.0/20',
+                label2: 'vpc-7d4a2818',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'vpc-7d4a2818',
+                    name: 'VPC-1',
+                    cidrBlock: '172.30.0.0/20',
+                    availabilityZones: {
+                        'availability-zone-1': [
+                            {
+                                id: 'subnet-5a37222d',
+                                state: 'available',
+                                vpcId: 'vpc-ba1ed1de',
+                                cidrBlock: '192.168.16.0/24',
+                                availabilityZone: 'availability-zone-1',
+                                availableIps: 251,
+                                tags: [
+                                    {
+                                        Key: 'KubernetesCluster',
+                                        Value: 'netehenfhk'
+                                    },
+                                    {
+                                        Key: 'eco-groupname',
+                                        Value: 'HCL'
+                                    },
+                                    {
+                                        Key: 'Name',
+                                        Value: 'HCL-CC-1'
+                                    },
+                                    {
+                                        Key: 'eco-shared-resource',
+                                        Value: 'Y'
+                                    }
+                                ],
+                                name: 'HCL-CC-1',
+                                routeTableId: 'rtb-0dde1132a1c54f5e6'
+                            }
+                        ],
+                        'availability-zone-2': [
+                            {
+                                id: 'subnet-74a1b303',
+                                state: 'available',
+                                vpcId: 'vpc-ba1ed1de',
+                                cidrBlock: '192.168.17.0/24',
+                                availabilityZone: 'availability-zone-2',
+                                availableIps: 251,
+                                tags: [
+                                    {
+                                        Key: 'Name',
+                                        Value: 'HCL-CC-2'
+                                    },
+                                    {
+                                        Key: 'eco-shared-resource',
+                                        Value: 'Y'
+                                    },
+                                    {
+                                        Key: 'eco-groupname',
+                                        Value: 'HCL'
+                                    }
+                                ],
+                                name: 'HCL-CC-2',
+                                routeTableId: 'rtb-00d7acd615fac5414'
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        availabilityZones: {
+            selectedAzNode1: {
+                value: 'availability-zone-1',
+                label: 'availability-zone-1',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    availabilityZone: 'availability-zone-1',
+                    subnets: ['subnet-5a37222d']
+                }
+            },
+            selectedSubnetNode1: {
+                value: '192.168.16.0/24',
+                label: 'HCL-CC-1 | 192.168.16.0/24',
+                label2: 'subnet-5a37222d',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'subnet-5a37222d',
+                    state: 'available',
+                    vpcId: 'vpc-ba1ed1de',
+                    cidrBlock: '192.168.16.0/24',
+                    availabilityZone: 'availability-zone-1',
+                    availableIps: 251,
+                    tags: [
+                        {
+                            Key: 'KubernetesCluster',
+                            Value: 'netehenfhk'
+                        },
+                        {
+                            Key: 'eco-groupname',
+                            Value: 'HCL'
+                        },
+                        {
+                            Key: 'Name',
+                            Value: 'HCL-CC-1'
+                        },
+                        {
+                            Key: 'eco-shared-resource',
+                            Value: 'Y'
+                        }
+                    ],
+                    name: 'HCL-CC-1',
+                    routeTableId: 'rtb-0dde1132a1c54f5e6'
+                }
+            },
+            selectedAzNode2: {
+                value: 'availability-zone-2',
+                label: 'availability-zone-2',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    availabilityZone: 'availability-zone-2',
+                    subnets: ['subnet-74a1b303']
+                }
+            },
+            selectedSubnetNode2: {
+                value: '192.168.17.0/24',
+                label: 'HCL-CC-2 | 192.168.17.0/24',
+                label2: 'subnet-74a1b303',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'subnet-74a1b303',
+                    state: 'available',
+                    vpcId: 'vpc-ba1ed1de',
+                    cidrBlock: '192.168.17.0/24',
+                    availabilityZone: 'availability-zone-2',
+                    availableIps: 251,
+                    tags: [
+                        {
+                            Key: 'Name',
+                            Value: 'HCL-CC-2'
+                        },
+                        {
+                            Key: 'eco-shared-resource',
+                            Value: 'Y'
+                        },
+                        {
+                            Key: 'eco-groupname',
+                            Value: 'HCL'
+                        }
+                    ],
+                    name: 'HCL-CC-2',
+                    routeTableId: 'rtb-00d7acd615fac5414'
+                }
+            }
+        },
+        securityGroup: {
+            selectedSecurityType: 'Use an existing security group',
+            selectedExistingSecurityGroup: {
+                value: 'sg-ad2b38d1',
+                label: 'sg-ad2b38d1',
+                label2: 'default',
+                isDisabled: false,
+                disabledTitle: ''
+            }
+        },
+        operatingSystem: {
+            label: 'Amazon Linux 2023',
+            value: '2023'
+        },
+        dbVersion: {
+            value: '2016',
+            label: 'PostgreSql Server 2016'
+        },
+        dbDeploymentModel: {
+            label: 'High Availability instances',
+            value: 'ha'
+        },
+        license: {
+            selectedLicenseType: 'License included AMI',
+            selectedLicenseId: null,
+            selectedCustomAMI: null
+        },
+        sqlServerCollation: {},
+        dbName,
+        dbCredentials: {
+            name: 'postgres',
+            password: ''
+        },
+        keyPair: {
+            selectedKeyPair: {
+                value: 'Key-Pair-1',
+                label: 'Key-Pair-1',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'EcP2PDOX6NUQFDKSOMXE',
+                    name: 'Key-Pair-1'
+                }
+            }
+        },
+        instanceType: {
+            value: 'm5.xlarge',
+            label: 'm5.xlarge',
+            label2: '4vCPU, 16 GiB RAM, 4750Mbps',
+            isDisabled: false,
+            disabledTitle: '',
+            data: {
+                instanceType: 'm5.xlarge',
+                vCpus: 4,
+                ramInMib: 16384,
+                iopsInMbps: 4750,
+                architecture: ['x86_64']
+            }
+        },
+        fsxN: {
+            fsxNType: 'fsxn_new',
+            fsxNName: '',
+            fsxNNewUserName: 'fsxadmin',
+            fsxNExistingName: {
+                value: 'fsx-wlmdb-DEFAULT | fs-a1d234bb6e87a',
+                label: 'fsx-wlmdb-DEFAULT | fs-a1d234bb6e87a',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    fileSystemId: 'fs-a1d234bb6e87a',
+                    fileSystemName: 'fsx-wlmdb-DEFAULT',
+                    kmsKeyId: 'arn:aws:kms:eu-south-2:951911461994:key/XESZQNNYHHSRE6VFL'
+                }
+            },
+            fsxNExistingUserName: 'fsxadmin',
+            fsxNPassword: ''
+        },
+        storageCapacity: {
+            capacity: '1024',
+            unit: {
+                value: 'GiB',
+                label: 'GiB',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: ''
+            }
+        },
+        provisionedIOPS: {
+            provisionedType: 'Automatic',
+            IOPSValue: ''
+        },
+        throughput: {
+            value: '128 MBps',
+            label: '128 MBps',
+            label2: '',
+            isDisabled: false,
+            disabledTitle: ''
+        },
+        simpleNotification: {
+            snsState: false,
+            snsARN: null
+        },
+        cloudWatch: true,
+        snapshotPolicyToggle: true,
+        encryption: {
+            encryptionType: 'Select a key from your account',
+            selectedRow: [
+                {
+                    id: 'PzYId8vguOMMrUE6Nqhb',
+                    arn: 'NWDnBoaBUkmdOahJLYss',
+                    name: 'aws/fsx',
+                    origin: 'AWS_KMS',
+                    state: 'Enabled',
+                    isDefault: true,
+                    default: true
+                },
+                {
+                    id: 'Vn0yCBjUEcLlnkFhQCVi',
+                    arn: 'Bvahsy3LuDVcSBJIdow3',
+                    name: 'aws/fsx',
+                    origin: 'AWS_KMS',
+                    state: 'Enabled',
+                    isDefault: true,
+                    default: true
+                },
+                {
+                    id: 'QKHC2REqZJI9vWY9OMfL',
+                    arn: '9iULssaon4glR7XEQWrA',
+                    name: 'aws/fsx',
+                    origin: 'AWS_KMS',
+                    state: 'Enabled',
+                    isDefault: true,
+                    default: true
+                }
+            ],
+            encryptionArn: ''
+        },
+        tags: [
+            {
+                key: '',
+                value: ''
+            }
+        ],
+        saveConfigName: configName,
+        selectConfig: 'Standard create',
+        loadConfig: '',
+        selectedDatabaseType: 'PostgreSQL',
+        postgreDeploymentType: 'High Availability instance',
+        postgreOS: {
+            value: 'Amazon Linux 2023 AMI',
+            label: 'Amazon Linux 2023 AMI',
+            label2: 'Amazon Linux 2023 AMI',
+            isDisabled: false,
+            disabledTitle: ''
+        },
+        postgreVersion: {
+            value: 'postgresql16',
+            label: 'postgresql16',
+            label2: 'postgresql16',
+            isDisabled: false,
+            disabledTitle: ''
+        },
+        postgreServerName: 'postgres'
+    };
+}
+
 function sandboxJobData(
     accountId: string,
     region: string,
@@ -2842,6 +3207,7 @@ export {
     optimizeOperatingSystemJobData,
     mockPGSqlStandaloneDeploymentStack,
     savePGSQLConfigurationData,
+    savePGSQLHaConfigurationData,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
     enableMPIOJobData,
