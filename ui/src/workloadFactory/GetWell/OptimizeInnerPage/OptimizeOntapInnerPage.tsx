@@ -14,6 +14,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -210,6 +211,11 @@ const OptimizeOntapInnerPage = () => {
                         [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
                     })
                 );
+
+                setTimeout(() => {
+                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                }, 1000);
             }
             handleOptimizeStorageJob(
                 res,
@@ -234,6 +240,7 @@ const OptimizeOntapInnerPage = () => {
         return (
             <OntapTable
                 type={selectedOptimizeConfig?.type}
+                data={selectedOptimizeConfig?.data}
                 lastColDetails={lastColDetails}
                 handleBulkAction={handleBulkAction}
             />
