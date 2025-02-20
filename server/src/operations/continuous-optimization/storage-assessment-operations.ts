@@ -115,9 +115,11 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const drivesCount = filteredDriveDetails.length;
     filteredDriveDetails.forEach((drive: LogDriveDetails) => {
         let { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        let sizePercentToDataDrive = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         if (isNull(logDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
             logDriveTotalSizeMB = 0;
             dataDriveTotalSizeMB = 0;
+            sizePercentToDataDrive = 0;
         }
         const formattedDriveInfo = {
             ...drive,
@@ -125,7 +127,7 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             logDriveTotalSizeMB,
             dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
             databases: [...new Set(drive.databaseName.split(','))],
-            sizePercentToDataDrive: Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100)
+            sizePercentToDataDrive
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
