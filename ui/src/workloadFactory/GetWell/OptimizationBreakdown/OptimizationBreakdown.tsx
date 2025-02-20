@@ -50,10 +50,11 @@ const OptimizationBreakdown = () => {
 
                 <div className={styles.rightSide}>
                     <OptimizeComponent
-                        value={<ComingSoon />}
+                        value={optimizationBreakDown?.resiliency?.percent || 0}
+                        data={optimizationBreakDown?.resiliency}
                         text={'Resiliency'}
                         image={<Resiliency />}
-                        isComingSoon={true}
+                        isComingSoon={false}
                     />
                     <OptimizeComponent
                         value={<ComingSoon />}

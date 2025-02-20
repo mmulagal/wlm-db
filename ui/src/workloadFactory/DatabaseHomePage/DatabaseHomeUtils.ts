@@ -435,6 +435,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
         storage: 0,
         compute: 0,
         application: 0,
+        resiliency: 0,
         total: 0
     };
     assessmentData.map((databaseHost: any) => {
