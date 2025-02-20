@@ -384,15 +384,7 @@ async function calculateStorageDrift(
         driftAssessmentData.configuration.os.push({ name: 'mpio-policy', errorMessage: errors['mpio-policy'] });
     }
 
-    const ntfsAllocationDetails = Object.entries(os)
-        .filter(([key]) => key === 'ntfs-allocation-details')
-        .map(([, value]) => value)
-        .flat();
-
-    const mpioPolicyDetails = Object.entries(os)
-        .filter(([key]) => key === 'mpio-load-balance-policy-details')
-        .map(([, value]) => value)
-        .flat();
+    let assessmentDetails = [];
 
     let objectsInViolation: GenericViolationResponseType[] = [];
 
@@ -400,7 +392,11 @@ async function calculateStorageDrift(
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
             if (key === 'ntfs-allocation-unit-size') {
-                objectsInViolation = ntfsAllocationDetails
+                assessmentDetails = Object.entries(os)
+                    .filter(([type]) => type === 'ntfs-allocation-details')
+                    .map(([, data]) => data)
+                    .flat();
+                objectsInViolation = assessmentDetails
                     .filter(ntfsDetail => ntfsDetail.BlockSize && ntfsDetail.BlockSize !== 65536)
                     .map(ntfsDetail => ({
                         objectName: ntfsDetail.DriveLetter,
@@ -408,7 +404,11 @@ async function calculateStorageDrift(
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
             } else if (key === 'mpio-load-balance-policy') {
-                objectsInViolation = mpioPolicyDetails
+                assessmentDetails = Object.entries(os)
+                    .filter(([type]) => type === 'mpio-load-balance-policy-details')
+                    .map(([, data]) => data)
+                    .flat();
+                objectsInViolation = assessmentDetails
                     .filter(policyDetail => policyDetail.policy === 'Other')
                     .map(policyDetail => ({
                         objectName: policyDetail.disk,
@@ -424,7 +424,9 @@ async function calculateStorageDrift(
                 severity: goldenData.severity,
                 recommendation: goldenData.recommendation,
                 tags: goldenData.tags,
-                violationDetails: objectsInViolation
+                violationDetails: objectsInViolation,
+                totalObjectsAssessed: assessmentDetails.length,
+                totalObjectsInViolation: objectsInViolation.length
             });
         }
     });
