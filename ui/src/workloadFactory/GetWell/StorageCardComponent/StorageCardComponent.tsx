@@ -763,7 +763,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     //This is for inner page navigation
     const handleDifferentNavigation = () => {
-        if (type === 'Storage tier') {
+        if (type === 'Storage tier' || type === 'Log drive size') {
             // type === 'File system headroom' ||
             // type === 'Log drive size' ||
             // type === 'Data files' ||
@@ -791,8 +791,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     const setButtonText = () => {
-        if (type === 'Storage tier') {
-            // type === 'Log drive size' ||
+        if (type === 'Storage tier' || type === 'Log drive size') {
             return 'View & optimize';
         } else {
             return GENERAL.OPTIMIZE;

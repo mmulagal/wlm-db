@@ -282,6 +282,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <LogDriveSizeOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
