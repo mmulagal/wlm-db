@@ -231,7 +231,7 @@ const OptimizeInnerPage = () => {
                 setTimeout(() => {
                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                     dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-                }, 3000);
+                }, 1000);
             }
             handleOptimizeStorageJob(
                 res,

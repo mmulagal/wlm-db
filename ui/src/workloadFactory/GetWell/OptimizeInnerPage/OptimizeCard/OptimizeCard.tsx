@@ -9,7 +9,9 @@ const OptimizeCard = () => {
     const [setCardData, setSetCardData] = useState<any>({});
     useEffect(() => {
         if (selectedOptimizeConfig) {
-            let dataObj = {
+            let dataObj = {};
+            dataObj = {
+                ...selectedOptimizeConfig?.data,
                 impactedCount: selectedOptimizeConfig?.data?.block_six?.count?.totalObjectsInViolation,
                 severity: selectedOptimizeConfig?.data?.block_four?.value,
                 tags: selectedOptimizeConfig?.data?.tags
@@ -54,43 +56,43 @@ const OptimizeCard = () => {
             case 'Thin provisioning':
             case 'Autosize':
             case 'Autosize-mode':
-            case ' Fractional reserve':
+            case 'Fractional reserve':
             case 'Snapshot copy reserve':
             case 'Snapshot autodelete ':
             case 'Space management':
                 return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags }
                 };
-            case ' Tiering minimum cooling days':
+            case 'Tiering minimum cooling days':
                 return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags }
                 };
             case 'OS type':
                 return {
-                    block_one: { type: 'Impacted LUNs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags }
                 };
             case 'Space reservation':
             case 'Space allocation':
                 return {
-                    block_one: { type: 'Impacted LUNs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags }
                 };
             case 'Multipath I/O Policy':
                 return {
-                    block_one: { type: 'Impacted discs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted discs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags }
                 };
             case 'NTFS allocation unit size':
                 return {
-                    block_one: { type: 'Impacted discs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted discs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags }
                 };
