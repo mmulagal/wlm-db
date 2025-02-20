@@ -34,17 +34,17 @@ output "policy_id" {
 
 
 # output of sql node
-output "standalone_sql_node_instance_id" {
+output "standalone_pgsql_node_instance_id" {
   description = "The ID of the standalone SQL Node instance"
   value       = length(module.standalone_sql_node) > 0 ? module.standalone_sql_node[0].sql_node_instance_id : null
 }
 
-output "standalone_sql_node_private_ip" {
+output "standalone_pgsql_node_private_ip" {
   description = "The private IP of the standalone SQL Node instance"
   value       = length(module.standalone_sql_node) > 0 ? module.standalone_sql_node[0].sql_node_private_ip : null
 }
 
-output "standalone_sql_node_instance_name" {
+output "standalone_pgsql_node_instance_name" {
   description = "The name of the standalone SQL Node instance"
   value       = length(module.standalone_sql_node) > 0 ? module.standalone_sql_node[0].sql_node_instance_name : null
 }
@@ -120,46 +120,6 @@ output "fsx_log_volume_standalone_uuid" {
   description = "System generated UUID of log volume"
   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_log_volume_uuid : null
 }
-
-# output "fsx_cluster_volume_standalone_logical_id" {
-#   description = "Logical ID of the FSx for ONTAP cluster volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_logical_id : "Not Created"
-# }
-
-# output "fsx_cluster_volume_standalone_arn" {
-#   description = "ARN of the FSx for ONTAP cluster volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_arn : "Not Created"
-# }
-
-# output "fsx_cluster_volume_standalone_id" {
-#   description = "System generated ID of cluster volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_id : "Not Created"
-# }
-
-# output "fsx_cluster_volume_standalone_uuid" {
-#   description = "System generated UUID of cluster volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_cluster_volume_uuid : "Not Created"
-# }
-
-# output "fsx_temp_dp_volume_standalone_logical_id" {
-#   description = "Logical ID of the FSx for ONTAP temp db volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_logical_id : null
-# }
-
-# output "fsx_temp_dp_volume_standalone_arn" {
-#   description = "ARN of the FSx for ONTAP temp db volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_arn : null
-# }
-
-# output "fsx_temp_dp_volume_standalone_id" {
-#   description = "System generated ID of temp db volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_id : null
-# }
-
-# output "fsx_temp_dp_volume_standalone_uuid" {
-#   description = "System generated UUID of temp dp volume"
-#   value       = length(module.fsxn_standalone) > 0 ? module.fsxn_standalone[0].fsx_temp_dp_volume_uuid : null
-# }
 
 output "absolute_path" {
   value = abspath(path.root)

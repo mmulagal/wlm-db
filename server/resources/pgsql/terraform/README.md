@@ -1,6 +1,6 @@
 # Workload Factory for Databases Terraform Deployment
 
-# Deploy a SQL Server on EC2 with FSx for ONTAP
+# Deploy a PGSQL Server on EC2 with FSx for ONTAP
 
 This Terraform automates the deployment of a PostgreSQL Server on Amazon EC2, utilizing FSx for ONTAP for storage. The deployment is configured as a standalone instance with Single-AZ FSx for ONTAP filesystem.
 
