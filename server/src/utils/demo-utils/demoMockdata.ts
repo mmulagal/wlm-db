@@ -2049,8 +2049,8 @@ function savePGSQLHaConfigurationData(
             label: 'PostgreSql Server 2016'
         },
         dbDeploymentModel: {
-            label: 'High Availability instances',
-            value: 'ha'
+            label: 'Failover cluster instance (FCI)',
+            value: 'fci'
         },
         license: {
             selectedLicenseType: 'License included AMI',
