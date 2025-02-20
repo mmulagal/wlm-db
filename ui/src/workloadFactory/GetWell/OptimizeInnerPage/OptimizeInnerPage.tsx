@@ -291,6 +291,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <DataFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -299,6 +300,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <LogFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -313,6 +315,16 @@ const OptimizeInnerPage = () => {
                     />
                 );
         }
+    };
+
+    const setHeading = () => {
+        if (selectedOptimizeConfig?.type === 'Data files') {
+            return 'Data files (.mdf) placement';
+        }
+        if (selectedOptimizeConfig?.type === 'Log files') {
+            return 'Log files (.ldf) placement';
+        }
+        return selectedOptimizeConfig?.type;
     };
     return (
         <div className={styles['optimize-inner-page']}>
@@ -342,7 +354,7 @@ const OptimizeInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        {selectedOptimizeConfig?.type}
+                        {setHeading()}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
