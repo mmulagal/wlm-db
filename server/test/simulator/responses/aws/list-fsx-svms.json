@@ -23,6 +23,30 @@
             "StorageVirtualMachineId": "svm-0491dd89a76b7ca3d",
             "Subtype": "DEFAULT",
             "UUID": "3bb505f5-5781-11ee-bbaa-73441e925a97"
+        },
+        {
+            "CreationTime": "2023-09-20T06:43:53.667Z",
+            "Endpoints": {
+                "Iscsi": {
+                    "DNSName": "iscsi.svm-0123456789abcdef0.fs-0b6426cf6960a5082.fsx.ap-southeast-1.amazonaws.com",
+                    "IpAddresses": ["10.0.133.40", "10.0.22.12"]
+                },
+                "Management": {
+                    "DNSName": "svm-0123456789abcdef0.fs-0b6426cf6960a5082.fsx.ap-southeast-1.amazonaws.com",
+                    "IpAddresses": ["198.19.252.13"]
+                },
+                "Nfs": {
+                    "DNSName": "svm-0123456789abcdef0.fs-0b6426cf6960a5082.fsx.ap-southeast-1.amazonaws.com",
+                    "IpAddresses": ["198.19.252.13"]
+                }
+            },
+            "FileSystemId": "fs-0b6426cf6960a5082",
+            "Lifecycle": "CREATED",
+            "Name": "wlmdb_sqlsvm_1695189650293",
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:storage-virtual-machine/fs-0b6426cf6960a5082/svm-0123456789abcdef0",
+            "StorageVirtualMachineId": "svm-0123456789abcdef0",
+            "Subtype": "DEFAULT",
+            "UUID": "3bb505f5-5781-11ee-bbaa-73441e925a97"
         }
     ]
 }

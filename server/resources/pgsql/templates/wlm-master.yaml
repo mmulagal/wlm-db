@@ -426,6 +426,7 @@ Resources:
                   - ssm:GetParameters
                   - ssm:PutParameter
                   - ssm:GetParametersByPath
+                  - ssm:DeleteParameter
                 Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
             
           PolicyName: !Join
@@ -726,13 +727,25 @@ Resources:
         FSxReplicaSvmId:
           !If
             - NewOntapFsx
-            - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmId"
-            - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmId"
+            - !If
+              - IsHACluster
+              - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmId"
+              - !Ref AWS::NoValue
+            - !If
+              - IsHACluster
+              - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmId"
+              - !Ref AWS::NoValue
         FSxReplicaSvmUuid:
           !If
             - NewOntapFsx
-            - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmUuid"
-            - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmUuid"
+            - !If
+              - IsHACluster
+              - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmUuid"
+              - !Ref AWS::NoValue
+            - !If
+              - IsHACluster
+              - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmUuid"
+              - !Ref AWS::NoValue
         ONTAPSecurityGroupID:
           Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:

@@ -337,7 +337,9 @@ async function activeSqlNodeDetails(
         credentialsId,
         region,
         node1InstanceId,
-        node2InstanceId
+        node2InstanceId,
+        undefined,
+        accountId
     );
     logger.info('instancesDetails', instancesDetails);
     const sqlAuthEnabled =
@@ -2669,4 +2671,11 @@ function isDatabaseInstanceMetadata(value: any): value is databaseInstanceMetada
     return value && typeof value === 'object' && 'configsOptimized' in value;
 }
 
-export { optimizeStorage, optimizeSizing, optimizeOperatingSystemSettings, optimizeStorageTier, optimizeMaxDop };
+export {
+    optimizeStorage,
+    optimizeSizing,
+    optimizeOperatingSystemSettings,
+    optimizeStorageTier,
+    activeSqlNodeDetails,
+    optimizeMaxDop
+};

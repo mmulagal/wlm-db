@@ -703,91 +703,71 @@ Outputs:
             Name: !Sub ${AWS::StackName}-FSxLogVolumeUuid
 
     FSxReplicaSvmId:
+        Condition: IsHACluster
         Description: System generated ID of the storage virtual machine
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaSvmConfiguration.StorageVirtualMachineId
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaSvmConfiguration.StorageVirtualMachineId
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaSvmId
 
     FSxReplicaSvmUuid:
+        Condition: IsHACluster
         Description: System generated UUID of the storage virtual machine
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaSvmConfiguration.UUID
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaSvmConfiguration.UUID
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaSvmUuid
+
     FSxReplicaDataVolumeLogicalId:
+        Condition: IsHACluster
         Description: Logical ID of the FSx for ONTAP data volume
-        Value: !If
-            - IsHACluster
-            - !Ref FSxReplicaDataVolumeConfiguration
-            - !Ref AWS::NoValue
+        Value: !Ref FSxReplicaDataVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeLogicalId
 
     FSxReplicaDataVolumeArn:
+        Condition: IsHACluster
         Description: ARN of the FSx for ONTAP data volume
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaDataVolumeConfiguration.ResourceARN
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaDataVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeArn
 
     FSxReplicaDataVolumeId:
+        Condition: IsHACluster
         Description: System generated ID of volume
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaDataVolumeConfiguration.VolumeId
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaDataVolumeConfiguration.VolumeId
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeId
 
     FSxReplicaDataVolumeUuid:
+        Condition: IsHACluster
         Description: System generated UUID of volume
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaDataVolumeConfiguration.UUID
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaDataVolumeConfiguration.UUID
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaDataVolumeUuid
 
     FSxReplicaLogVolumeLogicalId:
+        Condition: IsHACluster
         Description: Logical ID of FSx for ONTAP log volume
-        Value: !If
-            - IsHACluster
-            - !Ref FSxReplicaLogVolumeConfiguration
-            - !Ref AWS::NoValue
+        Value: !Ref FSxReplicaLogVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeLogicalId
 
     FSxReplicaLogVolumeArn:
+        Condition: IsHACluster
         Description: ARN of FSx for ONTAP data volume
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaLogVolumeConfiguration.ResourceARN
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaLogVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeArn
 
     FSxReplicaLogVolumeId:
+        Condition: IsHACluster
         Description: System generated ID of volume
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaLogVolumeConfiguration.VolumeId
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaLogVolumeConfiguration.VolumeId
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeId
 
     FSxReplicaLogVolumeUuid:
+        Condition: IsHACluster
         Description: System generated UUID of volume
-        Value: !If
-            - IsHACluster
-            - !GetAtt FSxReplicaLogVolumeConfiguration.UUID
-            - !Ref AWS::NoValue
+        Value: !GetAtt FSxReplicaLogVolumeConfiguration.UUID
         Export:
             Name: !Sub ${AWS::StackName}-FSxReplicaLogVolumeUuid
-

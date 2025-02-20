@@ -34,6 +34,12 @@ const StorageTierViolationResponse = Type.Object({
 
 type StorageTierViolationResponseType = Static<typeof StorageTierViolationResponse>;
 
+const OntapVolume = Type.Object({
+    ontapVolumeName: Type.Optional(Type.String()),
+    ontapVolumeUuid: Type.Optional(Type.String())
+});
+type OntapVolumeType = Static<typeof OntapVolume>;
+
 const ErrorResponse = Type.Object({ errorMessage: Type.String() });
 const ParameterDriftResponse = Type.Object({
     name: Type.String(),
@@ -269,6 +275,24 @@ const BulkOptimizePerHostRequestBody = Type.Object({
     )
 });
 
+const SnapshotPolicy = Type.Object({
+    uuid: Type.String(),
+    name: Type.String()
+});
+type SnapshotPolicyType = Static<typeof SnapshotPolicy>;
+
+const AvailableSnapshotPoliciesResponse = Type.Object({
+    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicy)),
+    errorMessage: Type.Optional(Type.String())
+});
+
+type AvailableSnapshotPoliciesResponseType = Static<typeof AvailableSnapshotPoliciesResponse>;
+
+const BulkOptimizeSnapshotPolicyRequestBody = Type.Object({
+    snapshotPolicy: SnapshotPolicy,
+    volumes: Type.Optional(Type.Array(OntapVolume))
+});
+
 type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
 
 const BulkOptimizeStorageRequestBody = Type.Object({
@@ -347,6 +371,12 @@ export {
     MSSQLPatchDriftResponseType,
     SnapshotPolicyAssesmentDataType,
     ResilienceDriftAssessmentResponseType,
+    SnapshotPolicy,
+    SnapshotPolicyType,
+    OntapVolumeType,
+    AvailableSnapshotPoliciesResponse,
+    AvailableSnapshotPoliciesResponseType,
+    BulkOptimizeSnapshotPolicyRequestBody,
     BulkOptimizeStorageRequestBody,
     BulkOptimizeStorageRequestBodyType,
     BulkOptimizePerHostRequestBodyType,

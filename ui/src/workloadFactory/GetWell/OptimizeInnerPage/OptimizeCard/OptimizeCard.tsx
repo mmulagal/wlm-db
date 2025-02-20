@@ -10,7 +10,6 @@ const OptimizeCard = () => {
     useEffect(() => {
         if (selectedOptimizeConfig) {
             let dataObj = {};
-            console.log(selectedOptimizeConfig?.data);
             dataObj = {
                 ...selectedOptimizeConfig?.data,
                 impactedCount: selectedOptimizeConfig?.data?.block_six?.count?.totalObjectsInViolation,

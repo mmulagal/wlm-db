@@ -25,6 +25,8 @@ import {
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
+    AvailableSnapshotPolicies,
+    SetSnapshotPolicySchema,
     BulkOptimizeMaxDopSchema
 } from './schemas/continuous-optimization-schema';
 import {
@@ -36,6 +38,10 @@ import {
 import optimizeCompute from '../operations/continuous-optimization/compute-optimize-operations';
 import castRequest from './utils';
 import { bulkComputeOptimization, bulkOptimization } from '../operations/bulk-cont-opt-operations';
+import {
+    getAvailableSnapshotPolicyList,
+    handleResiliecyOptimize
+} from '../operations/continuous-optimization/resilience-optimize-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -283,6 +289,42 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                 } = castRequest(request);
 
                 const response = await bulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+            { schema: AvailableSnapshotPolicies },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                } = castRequest(request);
+                const response = await getAvailableSnapshotPolicyList(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+            { schema: SetSnapshotPolicySchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                } = castRequest(request);
+                const { snapshotPolicy } = request.body;
+                const response = await handleResiliecyOptimize(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    snapshotPolicy
+                );
                 return reply.send(response);
             }
         )
