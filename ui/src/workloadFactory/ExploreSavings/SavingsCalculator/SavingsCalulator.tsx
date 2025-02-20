@@ -209,6 +209,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const handleOpenCard = () => {
         setIsCardOpen(!isCardOpen);
     };
+
+    const setFirstContainerClass = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            if (printState) {
+                return `${styles.firstContainer} ${styles.classForManualFsx} ${styles.classForPrint}`;
+            } else {
+                return `${styles.firstContainer} ${styles.classForManualFsx}`;
+            }
+        } else {
+            if (printState) {
+                return `${styles.firstContainer} ${styles.classForPrint}`;
+            } else {
+                return `${styles.firstContainer} `;
+            }
+        }
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -295,13 +311,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     >
                         {/* Left side code here */}
                         {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
-                            <div
-                                className={
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                        ? `${styles.firstContainer} ${styles.classForManualFsx}`
-                                        : styles.firstContainer
-                                }
-                            >
+                            <div className={setFirstContainerClass()}>
                                 {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                     <>
