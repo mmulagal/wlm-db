@@ -201,7 +201,8 @@ const PostgreCodebox = () => {
         const actualData = mssqlFormData;
         const credDetails = getCredDetails(actualData);
         const changeObjectForm = {
-            mssqlForm: actualData
+            mssqlForm: actualData,
+            postgreForm: pgsqlFormData
         };
         const resBody: any = createPgsqlPayload(changeObjectForm);
         if (credDetails?.credId) {
@@ -213,7 +214,6 @@ const PostgreCodebox = () => {
         if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
             resBody.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
         }
-        resBody.sqlConfiguration.sqlVersion = postGreVersion?.label;
         resBody.sqlConfiguration.sqlServerName = postgreServerName;
 
         loadTerraformData({ payload: resBody }).then((data: any) => {

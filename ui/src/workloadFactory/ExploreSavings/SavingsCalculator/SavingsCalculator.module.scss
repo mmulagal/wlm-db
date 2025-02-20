@@ -67,6 +67,11 @@
             overflow-y: unset;
             overflow-x: unset;
         }
+
+        .classForPrint {
+            max-height: max-content;
+            height: max-content;
+        }
     }
     .contentAreaOnPremise {
         width: 1607px;
@@ -122,6 +127,11 @@
                 [class*='savingsHeader'] {
                     width: 648px;
                 }
+            }
+
+            .classForPrint {
+                max-height: max-content;
+                height: max-content;
             }
 
             .onPremiseContainer {
