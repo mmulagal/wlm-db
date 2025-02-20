@@ -745,9 +745,10 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
         const resp = await fn();
         return resp;
     } catch (err) {
-        logger.error('Retry failed with error', err);
+        const errorMessage = `Retry failed with error: ${err}`;
+        logger.error(errorMessage);
         if (retries <= 0) {
-            return Promise.reject(finalErr);
+            return Promise.reject(errorMessage);
         }
 
         await sleep(interval);
