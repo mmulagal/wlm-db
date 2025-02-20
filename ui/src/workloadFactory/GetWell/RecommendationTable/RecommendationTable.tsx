@@ -173,12 +173,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (
-            name === 'Multipath I/O Sessions' ||
-            name === 'Multipath I/O Status' ||
-            name === 'Multipath I/O Policy' ||
-            name === 'NTFS allocation unit size'
-        ) {
+        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status') {
             return false;
         } else {
             return true;

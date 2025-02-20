@@ -28,6 +28,8 @@ import {
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
 import OntapTable from './InnerTables/OntapTable';
+import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
+import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
@@ -237,14 +239,48 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const renderTable = () => {
-        return (
-            <OntapTable
-                type={selectedOptimizeConfig?.type}
-                data={selectedOptimizeConfig?.data}
-                lastColDetails={lastColDetails}
-                handleBulkAction={handleBulkAction}
-            />
-        );
+        switch (selectedOptimizeConfig?.type) {
+            case 'Multipath I/O Policy':
+                return (
+                    <OSMultiPathIOPolicy
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            case 'NTFS allocation unit size':
+                return (
+                    <NTFSAllocationTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            default:
+                return (
+                    <OntapTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+        }
+    };
+
+    const setHeading = () => {
+        if (
+            selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
+            selectedOptimizeConfig?.type !== 'NTFS allocation unit size'
+        ) {
+            return `ONTAP / ${selectedOptimizeConfig?.type}`;
+        } else {
+            return `Operating system |  ${selectedOptimizeConfig?.type}`;
+        }
     };
     return (
         <div className={styles['optimize-inner-page']}>
@@ -274,10 +310,7 @@ const OptimizeOntapInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        {(selectedOptimizeConfig?.type !== 'Multipath I/O Policy' ||
-                            selectedOptimizeConfig?.type === 'NTFS allocation unit size') &&
-                            'ONTAP /'}{' '}
-                        {selectedOptimizeConfig?.type}
+                        {setHeading()}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
