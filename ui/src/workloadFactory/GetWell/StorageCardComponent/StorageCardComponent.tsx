@@ -633,7 +633,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             payload = {
                 hostsToOptimize: [
                     {
-                        type: 'maxdop',
+                        type: 'max-dop',
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
@@ -763,24 +763,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     //This is for inner page navigation
     const handleDifferentNavigation = () => {
-        if (
-            type === 'Storage tier' ||
-            type === 'File system headroom' ||
-            type === 'Log drive size' ||
-            type === 'Data files' ||
-            type === 'Log files' ||
-            type === 'Thin provisioning' ||
-            type === 'Autosize' ||
-            type === 'Autosize-mode' ||
-            type === ' Fractional reserve' ||
-            type === 'Snapshot copy reserve' ||
-            type === 'Snapshot autodelete ' ||
-            type === 'Space management' ||
-            type === ' Tiering minimum cooling days' ||
-            type === 'OS type' ||
-            type === 'Space reservation' ||
-            type === 'Space allocation'
-        ) {
+        if (type === 'Storage tier') {
+            // type === 'File system headroom' ||
+            // type === 'Log drive size' ||
+            // type === 'Data files' ||
+            // type === 'Log files' ||
+            // type === 'Thin provisioning' ||
+            // type === 'Autosize' ||
+            // type === 'Autosize-mode' ||
+            // type === ' Fractional reserve' ||
+            // type === 'Snapshot copy reserve' ||
+            // type === 'Snapshot autodelete ' ||
+            // type === 'Space management' ||
+            // type === ' Tiering minimum cooling days' ||
+            // type === 'OS type' ||
+            // type === 'Space reservation' ||
+            // type === 'Space allocation'
             handleNavigateToOptimizePage(type);
         } else {
             handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
@@ -790,6 +788,15 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     //This will be removed
     const handleTemporaryDialog = () => {
         handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
+    };
+
+    const setButtonText = () => {
+        if (type === 'Storage tier') {
+            // type === 'Log drive size' ||
+            return 'View & optimize';
+        } else {
+            return GENERAL.OPTIMIZE;
+        }
     };
 
     return (
@@ -838,7 +845,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             {/* Section Next */}
             <div
                 className={styles.thirdSection}
-                style={{ height: cardData?.block_three?.smallFont ? '56px' : '64px', minWidth: '200px' }}
+                style={{
+                    height: cardData?.block_three?.smallFont ? '56px' : '64px',
+                    minWidth: '200px',
+                    position: 'relative',
+                    top: '3px'
+                }}
             >
                 {sectionFiveContent(cardData)}
 
@@ -885,7 +897,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         >
                             <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                                 <DsButton variant="secondary" isDisabled={true}>
-                                    Optimize
+                                    {setButtonText()}
                                 </DsButton>
                             </div>
                         </TooltipComponent>
@@ -901,7 +913,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
                             <DsButton variant="secondary" isDisabled={true}>
-                                {GENERAL.OPTIMIZE}
+                                {setButtonText()}
                             </DsButton>
                         </div>
                     </TooltipComponent>
@@ -925,7 +937,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 }}
                             >
                                 <DsButton variant="secondary" isDisabled={true}>
-                                    {GENERAL.OPTIMIZE}
+                                    {setButtonText()}
                                 </DsButton>
                             </div>
                         }
@@ -942,10 +954,10 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     >
                         <DsButton
                             variant="secondary"
-                            onClick={() => handleTemporaryDialog()}
+                            onClick={() => handleDifferentNavigation()}
                             isDisabled={loading || disableOptimizeButton}
                         >
-                            {GENERAL.OPTIMIZE}
+                            {setButtonText()}
                         </DsButton>
                     </div>
                 ))}

@@ -61,9 +61,11 @@ Parameters:
     FSxReplicaSvmId:
         Description: ID of the FSx Replica Storage Virtual Machine
         Type: String
+        Default: ''
     FSxReplicaSvmUuid:
         Description: UUID of the FSx Replica Storage Virtual Machine
         Type: String
+        Default: ''
     FSxAggrName:
         Description: Aggregate FSx for ONTAP file system.
         Type: String
@@ -293,11 +295,22 @@ Resources:
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
                                     SQLVersion: !Ref 'SQLVersion'
                                     SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
-                        c-rename-host:
+                        c-configure-replication:
+                            command: !If
+                                - IsHACluster
+                                - !Sub
+                                    - '/home/ec2-user/cfn/scripts/setup/configure-replica-primary.sh 
+                                        -a ${AWS::StackName} 
+                                        -b ${SqlServiceAccountPassword} 
+                                        -c ${FSxDataVolumeName}'
+                                    -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                                        FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                - 'echo "Skipping c-configure-replication because IsHACluster is false."'
+                        d-rename-host:
                             command: !Sub
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
                                 - SqlServerName: !Ref 'SqlServerName'
-                        c-restart-host:
+                        e-restart-host:
                             command: sudo reboot
                 Finalize:
                     commands:
@@ -328,6 +341,7 @@ Resources:
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
                         echo "Instance ID: $instanceID"
+                        privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
                         FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
                         url=https://cloudformation.${AWS::Region}.amazonaws.com
                         StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
@@ -338,6 +352,8 @@ Resources:
                             exit 1
                         else
                             echo "CF endpoint is reachable."
+                            aws ssm put-parameter --name "/netapp/wlmdb/${AWS::StackName}_primary" --value "{private_ip: '$privateIP'}" --type String
+                            echo "Ssm parameter created"
                             /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource SqlNode1 --region ${AWS::Region}
                         fi
     NetworkInterface2:
@@ -500,11 +516,21 @@ Resources:
                                     FSxLogVolumeName: !Sub "${FSxLogVolumeName}_replica"
                                     SQLVersion: !Ref 'SQLVersion'
                                     SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
-                        c-rename-host:
+                        c-configure-replication:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/setup/configure-replica-secondary.sh
+                                    -a ${AWS::StackName}
+                                    -b ${SqlServiceAccountPassword}
+                                    -c ${FSxDataVolumeName}
+                                    -d ${FSxLogVolumeName}'
+                                -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                                    FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                    FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                        d-rename-host:
                             command: !Sub
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
                                 - SqlServerName: !Ref 'SqlServerName'
-                        c-restart-host:
+                        e-restart-host:
                             command: sudo reboot
                 Finalize:
                     commands:
@@ -534,6 +560,7 @@ Resources:
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
                         echo "Instance ID: $instanceID"
+                        privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
                         FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
                         url=https://cloudformation.${AWS::Region}.amazonaws.com
                         StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
@@ -544,6 +571,8 @@ Resources:
                             exit 1
                         else
                             echo "CF endpoint is reachable."
+                            aws ssm put-parameter --name "/netapp/wlmdb/${AWS::StackName}_secondary" --value "{private_ip: '$privateIP'}" --type String
+                            echo "Ssm parameter created"
                             /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource SqlNode2 --region ${AWS::Region}
                         fi
     WorkloadSecurityGroup:
@@ -572,14 +601,10 @@ Outputs:
         Description: Id of PgSql Instance
         Value: !Ref SqlNode1
     SqlNodeIp2:
+        Condition: IsHACluster
         Description: Private IP of PgSql Instance
-        Value: !If
-            - IsHACluster
-            - !GetAtt SqlNode2.PrivateIp
-            - !Ref AWS::NoValue
+        Value: !GetAtt SqlNode2.PrivateIp
     SqlNodeId2:
+        Condition: IsHACluster
         Description: Id of PgSql Instance
-        Value: !If
-            - IsHACluster
-            - !Ref SqlNode2
-            - !Ref AWS::NoValue
+        Value: !Ref SqlNode2

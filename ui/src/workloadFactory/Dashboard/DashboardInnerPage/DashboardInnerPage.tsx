@@ -234,7 +234,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'maxdop',
+                            type: 'max-dop',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -264,7 +264,7 @@ const DashboardInnerPage = () => {
                 payload = {
                     hostsToOptimize: [
                         {
-                            type: 'maxdop',
+                            type: 'max-dop',
                             databaseHosts: [
                                 {
                                     id: rowData?.databaseHostId,

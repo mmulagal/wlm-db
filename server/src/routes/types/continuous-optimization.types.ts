@@ -4,6 +4,7 @@ import {
     AwsWellArchitecturedPillars,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeParams,
+    OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
     OptimizeStorageTierParams
@@ -33,6 +34,12 @@ const GenericViolationResponse = Type.Object({
 });
 
 type GenericViolationResponseType = Static<typeof GenericViolationResponse>;
+
+const OntapVolume = Type.Object({
+    ontapVolumeName: Type.Optional(Type.String()),
+    ontapVolumeUuid: Type.Optional(Type.String())
+});
+type OntapVolumeType = Static<typeof OntapVolume>;
 
 const ErrorResponse = Type.Object({ errorMessage: Type.String() });
 const ParameterDriftResponse = Type.Object({
@@ -269,6 +276,24 @@ const BulkOptimizePerHostRequestBody = Type.Object({
     )
 });
 
+const SnapshotPolicy = Type.Object({
+    uuid: Type.String(),
+    name: Type.String()
+});
+type SnapshotPolicyType = Static<typeof SnapshotPolicy>;
+
+const AvailableSnapshotPoliciesResponse = Type.Object({
+    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicy)),
+    errorMessage: Type.Optional(Type.String())
+});
+
+type AvailableSnapshotPoliciesResponseType = Static<typeof AvailableSnapshotPoliciesResponse>;
+
+const BulkOptimizeSnapshotPolicyRequestBody = Type.Object({
+    snapshotPolicy: SnapshotPolicy,
+    volumes: Type.Optional(Type.Array(OntapVolume))
+});
+
 type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
 
 const BulkOptimizeStorageRequestBody = Type.Object({
@@ -310,7 +335,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OPTIMIZE_SIZING_CONFIGS,
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
-        ...OptimizeComputeParams
+        ...OptimizeComputeParams,
+        ...OptimizeMaxDopParams
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
@@ -346,6 +372,12 @@ export {
     MSSQLPatchDriftResponseType,
     SnapshotPolicyAssesmentDataType,
     ResilienceDriftAssessmentResponseType,
+    SnapshotPolicy,
+    SnapshotPolicyType,
+    OntapVolumeType,
+    AvailableSnapshotPoliciesResponse,
+    AvailableSnapshotPoliciesResponseType,
+    BulkOptimizeSnapshotPolicyRequestBody,
     BulkOptimizeStorageRequestBody,
     BulkOptimizeStorageRequestBodyType,
     BulkOptimizePerHostRequestBodyType,

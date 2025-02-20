@@ -1283,6 +1283,25 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
     }
 `;
 
+const GET_FCI_NAME = `
+Function Get-FCIName {
+    param (
+        [string]$sqlServerNameToFind
+    )
+
+    $ipResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object {$_.ResourceType -eq "IP Address"}
+
+    $filteredResources = $ipResources | Where-Object {
+        $_.OwnerGroup -match "^SQL Server \(([^)]+)\)"
+    } | Select-Object @{Name='FCIName'; Expression={[regex]::Match($_.Name, '\\(([^)]+)\\)').Groups[1].Value}},
+                  @{Name='SQLServerName'; Expression={[regex]::Match($_.OwnerGroup, 'SQL Server \\(([^)]+)\\)').Groups[1].Value}}
+
+    $fciName = $filteredResources | Where-Object { $_.SQLServerName -eq $sqlServerNameToFind } | Select-Object -ExpandProperty FCIName
+
+    return $fciName
+}
+`;
+
 export {
     GET_ACTIVE_NODE_DRIVE_INFO,
     GET_STANDBY_NODE_DRIVE_LIST,
@@ -1301,5 +1320,6 @@ export {
     slqcmdExecutionTemplate,
     READ_SCRIPT_VERSION,
     sqlQueryExecutionWithAuth,
-    compressResponse
+    compressResponse,
+    GET_FCI_NAME
 };

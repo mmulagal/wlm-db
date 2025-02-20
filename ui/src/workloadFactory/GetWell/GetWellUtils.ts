@@ -1120,7 +1120,8 @@ export const formatIndividualCardMainConfig = (
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
                     recommendedSizeInGib: item?.recommendedSizeInGib,
-                    sizingViolations: item?.sizingViolations
+                    sizingViolations: item?.sizingViolations,
+                    violationDetails: item?.violationDetails
                 }
             };
         });
@@ -2249,7 +2250,7 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         ? 'compute-rightsizing'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-        ? 'maxdop'
+        ? 'max-dop'
         : '';
 };
 

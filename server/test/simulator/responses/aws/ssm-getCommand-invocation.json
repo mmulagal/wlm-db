@@ -2118,5 +2118,44 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "snapshotListResponse": {
+        "records": [
+            {
+                "uuid": "9ac36021-b918-11ef-b315-11b9ce95d982",
+                "svm": {
+                    "uuid": "3bb505f5-5781-11ee-bbaa-73441e925a97",
+                    "name": "wlmdb_sqlsvm_1734066557644",
+                    "_links": {
+                        "self": {
+                            "href": "/api/svm/svms/d094063c-b912-11ef-a881-1fbfd81226d0"
+                        }
+                    }
+                },
+                "name": "daily_weekretention",
+                "scope": "svm",
+                "_links": {
+                    "self": {
+                        "href": "/api/storage/snapshot-policies/9ac36021-b918-11ef-b315-11b9ce95d982"
+                    }
+                }
+            },
+            {
+                "uuid": "621ba70e-34d3-11ee-9989-a51720c855dc",
+                "name": "none",
+                "scope": "cluster",
+                "_links": {
+                    "self": {
+                        "href": "/api/storage/snapshot-policies/621ba70e-34d3-11ee-9989-a51720c855dc"
+                    }
+                }
+            }
+        ],
+        "num_records": 8,
+        "_links": {
+            "self": {
+                "href": "/api/storage/snapshot-policies?fields=svm,scope"
+            }
+        }
     }
 }
