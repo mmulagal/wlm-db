@@ -815,7 +815,8 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         }
-    ]
+    ],
+    filesystemId: 'fs-07a22f282fd4f5a20'
 };
 
 export { inventoryDemoData, ASSESMENT_CONFIG_DATA };
