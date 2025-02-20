@@ -399,7 +399,7 @@ async function calculateStorageDrift(
                 objectsInViolation = assessmentDetails
                     .filter(ntfsDetail => ntfsDetail.BlockSize && ntfsDetail.BlockSize !== 65536)
                     .map(ntfsDetail => ({
-                        objectName: ntfsDetail.DriveLetter,
+                        objectName: ntfsDetail.DriveLetter || ntfsDetail.Name || '',
                         value: ntfsDetail.BlockSize.toString(),
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
