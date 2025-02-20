@@ -14,7 +14,7 @@ import { listDatabaseInstanceConfigData } from '../../lib/database/database-inst
 import {
     SizingViolationResponseType,
     StorageParameterDriftResponseType,
-    StorageTierViolationResponseType
+    GenericViolationResponseType
 } from '../../routes/types/continuous-optimization.types';
 import { LogDriveDetails, StorageAssessment, TempDbDriveDetails } from '../../utils/common-types';
 import { HttpErrorCodes } from '../../utils/consts';
@@ -384,9 +384,38 @@ async function calculateStorageDrift(
         driftAssessmentData.configuration.os.push({ name: 'mpio-policy', errorMessage: errors['mpio-policy'] });
     }
 
+    let assessmentDetails = [];
+
+    let objectsInViolation: GenericViolationResponseType[] = [];
+
     Object.entries(os).forEach(([key, value]) => {
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
+            if (key === 'ntfs-allocation-unit-size') {
+                assessmentDetails = Object.entries(os)
+                    .filter(([type]) => type === 'ntfs-allocation-details')
+                    .map(([, data]) => data)
+                    .flat();
+                objectsInViolation = assessmentDetails
+                    .filter(ntfsDetail => ntfsDetail.BlockSize && ntfsDetail.BlockSize !== 65536)
+                    .map(ntfsDetail => ({
+                        objectName: ntfsDetail.DriveLetter,
+                        value: ntfsDetail.BlockSize.toString(),
+                        objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+                    }));
+            } else if (key === 'mpio-load-balance-policy') {
+                assessmentDetails = Object.entries(os)
+                    .filter(([type]) => type === 'mpio-load-balance-policy-details')
+                    .map(([, data]) => data)
+                    .flat();
+                objectsInViolation = assessmentDetails
+                    .filter(policyDetail => policyDetail.policy === 'Other')
+                    .map(policyDetail => ({
+                        objectName: policyDetail.disk,
+                        value: 'Other',
+                        objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+                    }));
+            }
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             driftAssessmentData.configuration.os.push({
                 name: key,
@@ -394,7 +423,10 @@ async function calculateStorageDrift(
                 status,
                 severity: goldenData.severity,
                 recommendation: goldenData.recommendation,
-                tags: goldenData.tags
+                tags: goldenData.tags,
+                violationDetails: objectsInViolation,
+                totalObjectsAssessed: assessmentDetails.length,
+                totalObjectsInViolation: objectsInViolation.length
             });
         }
     });
@@ -624,7 +656,7 @@ async function calculateStorageDrift(
             let underProvisionedDrives;
             let ignoredDrives;
             let currentSizePercentForAllVolumes;
-            let storageTierViolations: StorageTierViolationResponseType[] = [];
+            let storageTierViolations: GenericViolationResponseType[] = [];
             let totalObjectsAssessed = 1;
             let totalObjectsInViolation = 0;
             let resourceType = ASSESSMENT_RESOURCE_TYPE.VOLUME;
@@ -654,8 +686,9 @@ async function calculateStorageDrift(
                                         typeof volumeDetail !== 'number' && volumeDetail.performanceTierPercent !== 100
                                 )
                                 .map((volumeDetail: { performanceTierPercent: number; volumeName: string }) => ({
-                                    name: volumeDetail.volumeName,
-                                    percent: volumeDetail.performanceTierPercent
+                                    objectName: volumeDetail.volumeName,
+                                    value: volumeDetail.performanceTierPercent.toString(),
+                                    objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
                                 }));
 
                             value = details.map((volumeDetail: { performanceTierPercent: number } | number) => {
@@ -737,7 +770,7 @@ async function calculateStorageDrift(
                     current: currentSizeRange,
                     totalObjectsAssessed,
                     totalObjectsInViolation,
-                    storageTierViolations: tierViolations,
+                    violationDetails: tierViolations,
                     resourceType
                 });
             }
