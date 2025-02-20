@@ -862,7 +862,8 @@ async function getPGSQLTerraformSetup(
             enableCloudWatch,
             metrics,
             credentialsId,
-            region
+            region,
+            true // to skip the passwords param to be empty string
         );
 
         const tfDeploymentName = `TF-${deploymentName.replace('Stack', '')}`;
