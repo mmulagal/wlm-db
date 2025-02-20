@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isNil } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
@@ -267,7 +267,8 @@ async function initiateStorageAssessmentCollection(
     region: string,
     databaseHostId: string,
     jobId: string,
-    instanceRecord: WorkloadInstance
+    instanceRecord: WorkloadInstance,
+    registerJobForResilience: boolean = false
 ) {
     logger.info('Initiating storage assessment data collection', {
         accountId,
@@ -374,6 +375,33 @@ async function initiateStorageAssessmentCollection(
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
+
+    if (registerJobForResilience) {
+        let volsWithMissingPolicy = 0;
+        volumes.forEach((vol: Record<string, string>) => {
+            if (!isNil(vol['snapshot-policy']) && vol['snapshot-policy'] !== '') {
+                volsWithMissingPolicy += 1;
+            }
+        });
+        let jobStatus;
+        if (volsWithMissingPolicy === volumes.length) {
+            jobStatus = JOBSTATUS.FAILED;
+        } else if (volsWithMissingPolicy > 0) {
+            jobStatus = JOBSTATUS.WARNING;
+        } else {
+            jobStatus = JOBSTATUS.COMPLETED;
+        }
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Resiliency assessment',
+            description: 'Snapshot policy assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+    }
 }
 
 async function driftAssessmentDataCollection(
@@ -436,7 +464,8 @@ async function driftAssessmentDataCollection(
             region,
             databaseHostId,
             jobId,
-            databaseInstanceRecord
+            databaseInstanceRecord,
+            shouldRunResilienceAssessment
         );
     }
 

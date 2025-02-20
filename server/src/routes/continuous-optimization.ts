@@ -293,7 +293,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency/snapshot-policies`,
             { schema: AvailableSnapshotPolicies },
             async (request, reply) => {
                 const {
@@ -310,7 +310,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency/snapshot-policies`,
             { schema: SetSnapshotPolicySchema },
             async (request, reply) => {
                 const {
