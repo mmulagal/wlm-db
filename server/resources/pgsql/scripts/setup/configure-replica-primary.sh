@@ -83,7 +83,7 @@ sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$service_account_pa
 check_status "Failed to alter users"
 
 # (6) Update pg_hba.conf to allow replication from secondary's IP
-echo "host    replication     replicator      $secondary_server_IP/16         md5" | sudo tee -a "$PG_HBA"
+echo "host    replication     replicator      $secondary_server_IP         md5" | sudo tee -a "$PG_HBA"
 check_status "Failed to add entry to pg_hba.conf"
 
 # (7) Restart PostgreSQL again after pg_hba.conf change

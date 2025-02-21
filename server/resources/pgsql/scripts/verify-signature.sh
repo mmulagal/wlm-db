@@ -15,6 +15,7 @@ while getopts "f:s:p:r:n:t:" opt; do
         p) PubFilePath="$OPTARG" ;;
         r) ResourceID="$OPTARG" ;;
         n) Stackname="$OPTARG" ;;
+        t) IsTerraform="$OPTARG" ;;  # Handle the IsTerraform parameter
         *) usage ;;
     esac
 done
@@ -41,6 +42,8 @@ if grep -q "Verified OK" "$logfilename"; then
     echo "Signature verified successfully."
 else
     echo "Signature verification failed."
-    cfn-signal --exit-code 1 --stack "$Stackname" --resource "$ResourceID" --reason "Verifying the signature of compressed files failed" --id "$instanceID"
+     if [ "$IsTerraform" != "true" ]; then
+        cfn-signal --exit-code 1 --stack "$Stackname" --resource "$ResourceID" --reason "Verifying the signature of compressed files failed" --id "$instanceID"
+    fi
     exit 1
 fi

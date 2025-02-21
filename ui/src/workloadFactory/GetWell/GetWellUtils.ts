@@ -693,7 +693,8 @@ export const formatApplicationCardMainConfig = (
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
-            category: categoryVal
+            category: categoryVal,
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -755,7 +756,8 @@ export const formatMicrosoftSqlPatchCardConfig = (
             sqlPatchMissingPatches: {
                 critical: criticalPatches,
                 important: importantPatches
-            }
+            },
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -803,7 +805,8 @@ export const formatMaxdopPatchCardConfig = (
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
-            category: categoryVal
+            category: categoryVal,
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -869,7 +872,8 @@ export const formatOsPatchCardConfig = (
                 critical: criticalViolations,
                 security: securityViolations,
                 other: otherViolations
-            }
+            },
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -908,11 +912,28 @@ export const formatRssConfigCardConfig = (
 
     let totalAdapters = item?.rssAdapters?.length || 0;
     let nonOptimizedAdapters = 0;
+    let notOptimizedAdapters: any = [];
+
+    if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
+        findingReasons++;
+        optimizedRows['tcpOffloading'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+        optimizedValue['tcpOffloading'] = 'Enabled';
+    }
 
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
             nonOptimizedAdapters++;
+            notOptimizedAdapters.push({
+                ...adapter,
+                rssEnabled: adapter?.rssEnabled ? 'Enabled' : 'Disabled',
+                rssProfileStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                rssEnabledStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                baseProcessorNumberStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                receiveQueuesStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                tcpOffloadState: optimizedValue?.tcpOffloading,
+                tcpOffloadStateStatus: optimizedRows?.tcpOffloading
+            });
             optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
             optimizedValue['rssProfile'] = adapter?.rssProfile;
             optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
@@ -956,15 +977,30 @@ export const formatRssConfigCardConfig = (
                 adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues
             ) {
                 nonOptimizedAdapters++;
+                // notOptimizedAdapters.push(adapter);
+                notOptimizedAdapters.push({
+                    ...adapter,
+                    rssEnabled: adapter?.rssEnabled ? 'Enabled' : 'Disabled',
+                    rssProfileStatus:
+                        adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile
+                            ? GENERAL.FINDINGS.NOT_OPTIMIZED
+                            : GENERAL.FINDINGS.OPTIMIZED,
+                    rssEnabledStatus: GENERAL.FINDINGS.OPTIMIZED,
+                    baseProcessorNumberStatus:
+                        adapter?.baseProcessorNumber !==
+                        item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+                            ? GENERAL.FINDINGS.NOT_OPTIMIZED
+                            : GENERAL.FINDINGS.OPTIMIZED,
+                    receiveQueuesStatus:
+                        adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues
+                            ? GENERAL.FINDINGS.NOT_OPTIMIZED
+                            : GENERAL.FINDINGS.OPTIMIZED,
+                    tcpOffloadState: optimizedValue?.tcpOffloading,
+                    tcpOffloadStateStatus: optimizedRows?.tcpOffloading
+                });
             }
         }
     });
-
-    if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
-        findingReasons++;
-        optimizedRows['tcpOffloading'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-        optimizedValue['tcpOffloading'] = 'Enabled';
-    }
 
     cardsData = {
         ...cardsData,
@@ -999,9 +1035,12 @@ export const formatRssConfigCardConfig = (
             category: categoryVal,
             errorMessage: item?.errorMessage,
             rssAdapters: item?.rssAdapters,
+            recommendedAdapterSettings: item?.recommendedAdapterSettings,
+            notOptimizedAdapters: notOptimizedAdapters,
             tcpOffloadState: item?.tcpOffloadState,
             rssOptimizedRows: optimizedRows,
-            rssOptimizedValues: optimizedValue
+            rssOptimizedValues: optimizedValue,
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -1121,7 +1160,9 @@ export const formatIndividualCardMainConfig = (
                     missingPermissions: item?.missingPermissions,
                     recommendedSizeInGib: item?.recommendedSizeInGib,
                     sizingViolations: item?.sizingViolations,
-                    violationDetails: item?.violationDetails
+                    violationDetails: item?.violationDetails,
+                    objectsInViolation: item?.objectsInViolation,
+                    recommendationText: item?.recommendation
                 }
             };
         });

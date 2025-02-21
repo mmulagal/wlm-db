@@ -56,6 +56,11 @@
             box-shadow: 2px 2px 6px 0px var(--border);
         }
 
+        .classForPrintOnPrem {
+            max-height: max-content;
+            height: max-content;
+        }
+
         .secondContainer {
             display: flex;
             flex-direction: column;
@@ -66,6 +71,11 @@
             max-height: none;
             overflow-y: unset;
             overflow-x: unset;
+        }
+
+        .classForPrint {
+            max-height: max-content;
+            height: max-content;
         }
     }
     .contentAreaOnPremise {
@@ -124,9 +134,18 @@
                 }
             }
 
+            .classForPrint {
+                max-height: max-content;
+                height: max-content;
+            }
+
             .onPremiseContainer {
                 height: 1356px;
                 max-height: 1356px;
+            }
+            .classForPrintOnPrem {
+                max-height: max-content;
+                height: max-content;
             }
 
             .secondContainer {

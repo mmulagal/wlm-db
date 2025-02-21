@@ -1,40 +1,54 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, Typography, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
 
-const LogDriveSizeOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
+const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const data = [
-        {
-            serverInstanceName: 'Volume 1',
-            status: 'Up',
-            LogDrivePercent: '50%',
-            LogDriveStatus: 'Under-provisioned',
-            driveName: 'Drive 1',
-            id: '1'
-        },
-        {
-            serverInstanceName: 'Volume 2',
-            status: 'Up',
-            LogDrivePercent: '50%',
-            LogDriveStatus: 'Over-provisioned',
-            driveName: 'Drive 2',
-            id: '2'
-        }
-    ];
 
     const tableData = useMemo(() => {
-        return data.map((row: any) => ({
+        let id = 0;
+        let uniqueViolatedRows: any = [];
+        let uniqueViolatedList: any = [];
+
+        data?.sizingViolations?.overProvisionedDrives?.map((row: any) => {
+            if (!uniqueViolatedList.includes(row.logAccessPath)) {
+                uniqueViolatedList.push(row.logAccessPath);
+                uniqueViolatedRows.push({
+                    ...row,
+                    status: 'Over-provisioned'
+                });
+            }
+        });
+        data?.sizingViolations?.underProvisionedDrives?.map((row: any) => {
+            if (!uniqueViolatedList.includes(row.logAccessPath)) {
+                uniqueViolatedList.push(row.logAccessPath);
+                uniqueViolatedRows.push({
+                    ...row,
+                    status: 'Under-provisioned'
+                });
+            }
+        });
+        data?.sizingViolations?.ignoredDrives?.map((row: any) => {
+            if (!uniqueViolatedList.includes(row.logAccessPath)) {
+                uniqueViolatedList.push(row.logAccessPath);
+                uniqueViolatedRows.push({
+                    ...row,
+                    status: 'Ignored drives'
+                });
+            }
+        });
+        return uniqueViolatedRows?.map((row: any) => ({
             ...row,
+            id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
@@ -42,35 +56,72 @@ const LogDriveSizeOptimizeTable = ({ type, lastColDetails, handleBulkAction }: a
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Drive name',
-            accessor: 'driveName',
+            accessor: 'logAccessPath',
             id: '2',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '244px',
+            width: '224px',
             renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
         {
             Header: 'Databases',
-            accessor: 'serverInstanceName',
+            accessor: 'databases',
             id: '2',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '244px',
+            width: '284px',
             renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+                const truncatedItems = getTruncatedItems(cellData);
+
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <div className={styles.container}>
+                                <Typography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
+                                </Typography>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <>
+                                        <Popover
+                                            popoverClass={styles['popover']}
+                                            children={truncatedItems?.remaining.map((item: any) => (
+                                                <Typography variant="Regular_14">{item}</Typography>
+                                            ))}
+                                            trigger="click"
+                                            interactive={true}
+                                            delayHide={200}
+                                            container={
+                                                <Typography variant="Regular_14" className={styles.colorText}>
+                                                    {`+ ${truncatedItems?.remaining.length}`}
+                                                </Typography>
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
             }
         },
 
         {
             Header: 'Status',
-            accessor: 'LogDriveStatus',
+            accessor: 'status',
             id: '3',
-            width: '244px',
+            width: '224px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -78,12 +129,12 @@ const LogDriveSizeOptimizeTable = ({ type, lastColDetails, handleBulkAction }: a
         },
         {
             Header: 'File system headroom percentage',
-            accessor: 'LogDrivePercent',
+            accessor: 'sizePercentToDataDrive',
             id: '4',
             width: '302px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
             }
         },
         lastColDetails(type, {}, '230px')
@@ -98,7 +149,7 @@ const LogDriveSizeOptimizeTable = ({ type, lastColDetails, handleBulkAction }: a
         rows: tableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: tableData.map(item => item.id)
+        defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
     useEffect(() => {

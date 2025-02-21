@@ -47,28 +47,6 @@ download_file() {
     chmod 755 "${dest}"
 }
 
-# Function to verify and extract a zip file
-verify_and_extract() {
-    local source=$1
-    local dest=$2
-    local signature=$3
-    local pub_key=$4
-    local resource_id=$5
-    local deployment_name=$6
-
-    echo "Verifying and extracting ${source}"
-    # enable this while going to staging
-    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "${source}" -s "${signature}" -p "${pub_key}" -r "${resource_id}" -n "${deployment_name}"; then
-        echo "Error verifying ${source}"
-        return 1
-    fi
-
-    if ! sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s "${source}" -d "${dest}"; then
-        echo "Error extracting ${source}"
-        return 1
-    fi
-}
-
 # Function to install SSM Agent and CloudWatch Agent
 install_agents() {
     local region=$1
@@ -164,7 +142,7 @@ verify_signature() {
     local deployment_name=$5
     
     echo "Verifying signature for $file"
-    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "$file" -s "$signature" -p "$pubkey" -r "$resource" -n "$deployment_name"; then
+    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "$file" -s "$signature" -p "$pubkey" -r "$resource" -n "$deployment_name" -t "true"; then
         echo "Error verifying signature for $file"
         return 1
     fi

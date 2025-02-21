@@ -92,7 +92,7 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
             filterOptions: 'auto'
         },
         {
-            Header: 'Missing patches',
+            Header: 'MAXDOP',
             accessor: 'maxdopPatch',
             id: '3',
             width: '320px',

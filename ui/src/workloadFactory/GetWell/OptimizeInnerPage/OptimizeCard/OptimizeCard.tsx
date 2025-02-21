@@ -9,7 +9,9 @@ const OptimizeCard = () => {
     const [setCardData, setSetCardData] = useState<any>({});
     useEffect(() => {
         if (selectedOptimizeConfig) {
-            let dataObj = {
+            let dataObj = {};
+            dataObj = {
+                ...selectedOptimizeConfig?.data,
                 impactedCount: selectedOptimizeConfig?.data?.block_six?.count?.totalObjectsInViolation,
                 severity: selectedOptimizeConfig?.data?.block_four?.value,
                 tags: selectedOptimizeConfig?.data?.tags
@@ -18,6 +20,7 @@ const OptimizeCard = () => {
             setSetCardData(data);
         }
     }, [selectedOptimizeConfig]);
+
     const getCardData = (config: string, data: any) => {
         switch (config) {
             case 'Storage tier':
@@ -25,81 +28,93 @@ const OptimizeCard = () => {
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'File system headroom':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Log drive size':
                 return {
                     block_one: { type: 'Impacted drives', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Data files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Log files':
                 return {
                     block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Thin provisioning':
             case 'Autosize':
             case 'Autosize-mode':
-            case ' Fractional reserve':
+            case 'Fractional reserve':
             case 'Snapshot copy reserve':
             case 'Snapshot autodelete ':
             case 'Space management':
                 return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
-            case ' Tiering minimum cooling days':
+            case 'Tiering minimum cooling days':
                 return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'OS type':
                 return {
-                    block_one: { type: 'Impacted LUNs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Space reservation':
             case 'Space allocation':
                 return {
-                    block_one: { type: 'Impacted LUNs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Multipath I/O Policy':
                 return {
-                    block_one: { type: 'Impacted discs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted discs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'NTFS allocation unit size':
                 return {
-                    block_one: { type: 'Impacted discs', value: data.impactedCount || '0' },
+                    block_one: { type: 'Impacted discs', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'Network adapter settings':
             case 'Network adapters':
                 return {
                     block_one: { type: 'Impacted network adapters', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags }
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             default:
                 return null;
@@ -136,11 +151,8 @@ const OptimizeCard = () => {
                     </div>
                 </div>
                 <div className={styles.rightSide}>
-                    <TooltipInfo>
-                        For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier. Using
-                        the capacity tier may result in slower performance and higher latency.
-                    </TooltipInfo>
-                    <DsTypography variant="Regular_14">View recommendation</DsTypography>
+                    <TooltipInfo>{setCardData?.recommendationText?.value}</TooltipInfo>
+                    <DsTypography variant="Regular_14">{setCardData?.recommendationText?.type}</DsTypography>
                 </div>
             </div>
         </div>
