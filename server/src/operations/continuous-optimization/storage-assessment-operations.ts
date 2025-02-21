@@ -115,17 +115,19 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const drivesCount = filteredDriveDetails.length;
     filteredDriveDetails.forEach((drive: LogDriveDetails) => {
         let { dataAccessPath, logAccessPath, dataDriveTotalSizeMB, logDriveTotalSizeMB } = drive;
+        let sizePercentToDataDrive = 0;
         if (isNull(logDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
             logDriveTotalSizeMB = 0;
             dataDriveTotalSizeMB = 0;
         }
+        sizePercentToDataDrive = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         const formattedDriveInfo = {
             ...drive,
             dataDriveTotalSizeMB,
             logDriveTotalSizeMB,
             dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
             databases: [...new Set(drive.databaseName.split(','))],
-            sizePercentToDataDrive: Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100)
+            sizePercentToDataDrive: Number.isNaN(sizePercentToDataDrive) ? 0 : sizePercentToDataDrive
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
@@ -186,11 +188,12 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
         tempdbDriveTotalSizeMB = 0;
         dataDriveTotalSizeMB = 0;
     }
+    tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
     value = {
         ...value,
         dataDriveTotalSizeMB,
         tempdbDriveTotalSizeMB,
-        sizePercentToDataDrive: Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100)
+        sizePercentToDataDrive: Number.isNaN(tempdbPercent) ? 0 : tempdbPercent
     };
 
     if (defaultDataDriveLetter === tempdbDriveLetter) {
