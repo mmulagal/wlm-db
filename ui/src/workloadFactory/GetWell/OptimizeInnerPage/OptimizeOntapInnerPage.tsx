@@ -41,7 +41,8 @@ const OptimizeOntapInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -295,7 +296,7 @@ const OptimizeOntapInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Host name / Instance name`,
+                                title: `${selectedHostname} / ${selectedDatabaseInstanceName}`,
                                 dataTestId: 'wlm-db-optimize-configuration'
                             },
                             {
@@ -318,7 +319,7 @@ const OptimizeOntapInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Instance name
+                        {selectedDatabaseInstanceName || ''}
                     </DsTypography>
                 </div>
 
