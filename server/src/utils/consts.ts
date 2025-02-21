@@ -735,6 +735,10 @@ const SQL_RESOURCE_ASSETS = [
     //     url: 'Installer/powershell.zip.sig'
     // },
     {
+        name: 'Dotnet',
+        url: `${WLMDB}/Installer/dotnet.zip`
+    },
+    {
         name: 'Sqlspcu',
         url: `${WLMDB}/Installer/sqlspcu.zip`
     },

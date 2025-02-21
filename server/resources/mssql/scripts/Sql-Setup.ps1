@@ -552,6 +552,7 @@ try {
     Write-Output "Starting ontap configuration"
     $OntapPreReqCommands = @(
         @{Command = "C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1"; UseExecutionPolicy = $false },
+        @{Command = "C:\cfn\scripts\sqlontap\install-dotnet.ps1"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\sqlontap\install-powershell7.ps1"; UseExecutionPolicy = $false }
     )
     Invoke-CommandExecution -commands $OntapPreReqCommands -logFile "C:\cfn\tflogs\OntapPreReqCommands.log"
