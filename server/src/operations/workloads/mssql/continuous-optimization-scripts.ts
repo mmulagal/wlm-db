@@ -1088,7 +1088,7 @@ const GET_INSTALLED_SQL_PATCHES = () => `
     # Get the list of installed patches
     $installedPatches = Get-ChildItem -Path HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall |
         Get-ItemProperty |
-        Where-Object {($_.DisplayName -like "Hotfix*SQL*") -or ($_.DisplayName -like "Service Pack*SQL*")} |
+        Where-Object {($_.DisplayName -like "Hotfix*SQL*") -or ($_.DisplayName -like "Service Pack*SQL*") -or ($_.DisplayName -like "GDR*SQL*")} |
         Select-Object -Property DisplayName, DisplayVersion, InstallDate
 
     # Prepare the result
