@@ -44,7 +44,8 @@ const OptimizeInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -339,7 +340,9 @@ const OptimizeInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Host name / Instance name`,
+                                title:
+                                    `${selectedHostname} / ${selectedDatabaseInstanceName}` ||
+                                    'Host name/instance name',
                                 dataTestId: 'wlm-db-optimize-configuration'
                             },
                             {
@@ -362,7 +365,7 @@ const OptimizeInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Manage instance optimization
+                        {selectedDatabaseInstanceName || ''}
                     </DsTypography>
                 </div>
 
