@@ -244,6 +244,7 @@ enum DEPLOYMENT_STATUS {
 enum DEPLOYMENT_MODEL {
   FCI
   Standalone
+  HA
 }
 
 enum STORAGE_TYPE {
@@ -261,6 +262,7 @@ enum DATABASE_DEPLOYMENT_TYPE {
   Standalone
   FCI
   AOAG
+  HA
 }
 
 enum DATABASE_TYPE {
