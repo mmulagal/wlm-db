@@ -713,7 +713,20 @@ const ASSESMENT_CONFIG_DATA = {
         'default-data-files-location': 'separate-drive'
     },
     sizing: {
-        'performance-tier': [94, 95, 100],
+        'performance-tier': [
+            {
+                volumeName: 'wlmdb_sqldata_1740015122754',
+                performanceTierPercent: 95
+            },
+            {
+                volumeName: 'wlmdb_sqllog_1740027207',
+                performanceTierPercent: 94
+            },
+            {
+                volumeName: 'wlmdb_sqltemp_1740015122754',
+                performanceTierPercent: 100
+            }
+        ],
         'data-log-drive-details': [
             {
                 databaseName: 'msdb',

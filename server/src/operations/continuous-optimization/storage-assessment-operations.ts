@@ -702,6 +702,7 @@ async function calculateStorageDrift(
                             });
                         }
                         totalObjectsAssessed = value.length;
+                        totalObjectsInViolation = storageTierViolations.length;
                         const minSizePercent = Math.min(...value);
                         const maxSizePercent = Math.max(...value);
                         currentSizeRange =
