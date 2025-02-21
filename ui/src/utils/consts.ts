@@ -758,12 +758,9 @@ export const GETWELL_CONFIG: any = {
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
-    // 'Data files (.mdf) placement',
-    // 'Log files (.ldf) placement',
     'TempDB placement',
     GENERAL.LICENSE_SQL_SERVER,
     GENERAL.OPERATING_SYSTEM_PATCH,
-    // GENERAL.RSS_CONFIGURATION,
     GENERAL.MICROSOFT_SQL_PATCH
 ];
 
