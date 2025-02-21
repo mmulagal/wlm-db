@@ -275,6 +275,21 @@
             "ReleaseDate": "2024-11-12T18:00:00.000Z",
             "Title": "Security Update for SQL Server 2019 RTM CU (KB5046860)",
             "Vendor": "Microsoft"
+        },
+        {
+            "Classification": "CriticalUpdates",
+            "ContentUrl": "https://support.microsoft.com/en-us/kb/4562900",
+            "Description": "A critical security vulnerability has been identified in SQL Server 2019 that could allow an attacker to compromise your system and gain control over it. Installing this update from Microsoft will help protect your computer. After you install this item, you may have to restart your computer.",
+            "Id": "d4f8a6b9-3b4a-4b8b-9f3e-2a90a6ee81cf",
+            "KbNumber": "KB4562900",
+            "Language": "All",
+            "MsrcNumber": "",
+            "MsrcSeverity": "Critical",
+            "Product": "Microsoft SQL Server 2019",
+            "ProductFamily": "SQL Server",
+            "ReleaseDate": "2021-02-15T18:00:00.000Z",
+            "Title": "Critical Update for SQL Server 2019 (KB4562900)",
+            "Vendor": "Microsoft"
         }
     ]
 }
