@@ -352,7 +352,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         )}
 
                         {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
-                            <div className={`${styles.onPremiseContainer} `}>
+                            <div
+                                className={
+                                    printState
+                                        ? `${styles.onPremiseContainer} ${styles.classForPrintOnPrem}`
+                                        : `${styles.onPremiseContainer} `
+                                }
+                            >
                                 <>
                                     <SavingsHeader />
                                     <OnPremRegion />
