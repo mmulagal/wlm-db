@@ -162,10 +162,15 @@ Resources:
                 InstallSSMAgent:
                     commands:
                         a-install-ssm-agent:
-                            command: !Sub
-                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
+                                done
                         b-install-cloudwatch-agent:
-                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
                 CreateDeploymentFolders:
                     commands:
                         a-create-scripts-folder:
@@ -311,10 +316,15 @@ Resources:
                 InstallSSMAgent:
                     commands:
                         a-install-ssm-agent:
-                            command: !Sub
-                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
+                                done
                         b-install-cloudwatch-agent:
-                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
                 CreateDeploymentFolders:
                     commands:
                         a-create-scripts-folder:
