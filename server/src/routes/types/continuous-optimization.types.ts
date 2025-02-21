@@ -2,6 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
+    OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeComputeParams,
     OptimizeMaxDopParams,
@@ -294,6 +295,12 @@ const BulkOptimizeSnapshotPolicyRequestBody = Type.Object({
     volumes: Type.Optional(Type.Array(OntapVolume))
 });
 
+const OptimizeResiliencyBody = Type.Object({
+    type: Type.Array(Type.Enum(OPTIMIZE_RESILIENCY_CONFIGS)),
+    params: Type.Optional(Type.Array(Type.Union([BulkOptimizeSnapshotPolicyRequestBody])))
+});
+type OptimizeResiliencyBodyType = Static<typeof OptimizeResiliencyBody>;
+
 type BulkOptimizePerHostRequestBodyType = Static<typeof BulkOptimizePerHostRequestBody>;
 
 const BulkOptimizeStorageRequestBody = Type.Object({
@@ -386,5 +393,7 @@ export {
     OptimizePerHostRequestBody,
     OptimizePerHostRequestBodyType,
     BulkOptimizeGeneralPerHostRequestBodyType,
-    GenericViolationResponseType
+    GenericViolationResponseType,
+    OptimizeResiliencyBodyType,
+    OptimizeResiliencyBody
 };

@@ -15,6 +15,7 @@ import {
     handleResiliecyOptimize
 } from '../../../src/operations/continuous-optimization/resilience-optimize-operations';
 import { RESOURCE_ID } from '../../../src/utils/consts';
+import { OPTIMIZE_RESILIENCY_CONFIGS } from '../../../src/utils/continous-optimization-consts';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -70,8 +71,10 @@ describe('Should set snapshot policy on volume level', () => {
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
             {
-                uuid: 'vol-1234567890abcdef0',
-                name: 'snap-1234567890abcdef0'
+                type: [OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY],
+                params: [{
+                    snapshotPolicy: {uuid: 'vol-1234567890abcdef0', name: 'snap-1234567890abcdef0'}
+                }]
             }
         );
         expect(jobId).toBeDefined();
