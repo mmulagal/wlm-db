@@ -26,8 +26,8 @@ import {
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
     AvailableSnapshotPolicies,
-    SetSnapshotPolicySchema,
-    BulkOptimizeMaxDopSchema
+    BulkOptimizeMaxDopSchema,
+    OptimizeResilienceSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -42,6 +42,7 @@ import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
+import { OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -293,7 +294,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency/snapshot-policies`,
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
             { schema: AvailableSnapshotPolicies },
             async (request, reply) => {
                 const {
@@ -310,20 +311,20 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency/snapshot-policies`,
-            { schema: SetSnapshotPolicySchema },
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency`,
+            { schema: OptimizeResilienceSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
                 } = castRequest(request);
-                const { snapshotPolicy } = request.body;
+                const requestBody: OptimizeResiliencyBodyType = request.body;
                 const response = await handleResiliecyOptimize(
                     accountId,
                     credentialsId,
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    snapshotPolicy
+                    requestBody
                 );
                 return reply.send(response);
             }

@@ -311,6 +311,11 @@ enum FileSystemTypes {
     FSXW = 'FSXW'
 }
 
+enum STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES {
+    RESILIENCY = 'resiliency',
+    STORAGE = 'storage',
+    BOTH = 'both'
+}
 const SECRETS_MANAGER = 'secretsmanager';
 const SECRECTS_MANAGER_ACTION_NAMES = ['CreateSecret', 'GetSecretValue', 'ListSecrets'].map(
     action => `${SECRETS_MANAGER}:${action}`
@@ -2029,5 +2034,6 @@ export {
     PGSQL_TF_VARS_CONFIG,
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
     PGSQL,
-    GERERIC_JOB_ERROR_MESSAGE
+    GERERIC_JOB_ERROR_MESSAGE,
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
 };

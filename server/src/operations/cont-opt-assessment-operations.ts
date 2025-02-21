@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
@@ -16,7 +16,13 @@ import {
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
-import { AuditStatus, ASSESSMENT_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    AuditStatus,
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
+} from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
 import {
@@ -268,7 +274,7 @@ async function initiateStorageAssessmentCollection(
     databaseHostId: string,
     jobId: string,
     instanceRecord: WorkloadInstance,
-    registerJobForResilience: boolean = false
+    jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
 ) {
     logger.info('Initiating storage assessment data collection', {
         accountId,
@@ -344,60 +350,53 @@ async function initiateStorageAssessmentCollection(
         : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
         ? JOBSTATUS.COMPLETED
         : JOBSTATUS.WARNING;
-
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage configuration assessment',
-        description: 'Storage configuration assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: configJobStatus,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage layout assessment',
-        description: 'Storage layout assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage sizing assessment',
-        description: 'Storage sizing assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-
-    if (registerJobForResilience) {
-        let volsWithMissingPolicy = 0;
-        volumes.forEach((vol: Record<string, string>) => {
-            if (!isNil(vol['snapshot-policy']) && vol['snapshot-policy'] !== '') {
-                volsWithMissingPolicy += 1;
-            }
+    if (
+        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
+    ) {
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage configuration assessment',
+            description: 'Storage configuration assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: configJobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
         });
-        let jobStatus;
-        if (volsWithMissingPolicy === volumes.length) {
-            jobStatus = JOBSTATUS.FAILED;
-        } else if (volsWithMissingPolicy > 0) {
-            jobStatus = JOBSTATUS.WARNING;
-        } else {
-            jobStatus = JOBSTATUS.COMPLETED;
-        }
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage sizing assessment',
+            description: 'Storage sizing assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+    }
+
+    if (
+        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
+    ) {
         await registerJob(accountId, credentialsId, region, {
             name: 'Resiliency assessment',
             description: 'Snapshot policy assessment',
             resourceName: resourceWithInstanceName,
             startTime: Date.now(),
             endTime: Date.now(),
-            status: jobStatus,
+            status: configJobStatus,
             type: JOBTYPE.ASSESSMENT,
             parentJobId: jobId
         });
@@ -465,7 +464,11 @@ async function driftAssessmentDataCollection(
             databaseHostId,
             jobId,
             databaseInstanceRecord,
-            shouldRunResilienceAssessment
+            !shouldRunResilienceAssessment
+                ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
+                : shouldRunStorageAssessment
+                ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
+                : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
         );
     }
 
@@ -1325,5 +1328,6 @@ export {
     onDemandTriggerDriftAssessmentDataCollection,
     fetchDriftAssessmentPerHost,
     calculateComputeDrift,
-    fetchDriftAssessmentPerAccount
+    fetchDriftAssessmentPerAccount,
+    initiateStorageAssessmentCollection
 };

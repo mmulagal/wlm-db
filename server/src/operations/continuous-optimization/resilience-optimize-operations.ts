@@ -4,6 +4,8 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
+    BulkOptimizeSnapshotPolicyRequestBody,
+    OptimizeResiliencyBodyType,
     SnapshotPolicyType
 } from '../../routes/types/continuous-optimization.types';
 import { BulkOptimizeSnapshotPolicyParamsType, Metadata, WorkloadInstance } from '../../utils/common-types';
@@ -23,6 +25,12 @@ import { updateJobDetails } from '../database/job-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { listDatabaseInstances } from '../../lib/database/db';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
+import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assessment-operations';
+import {
+    AssessmentCategories,
+    AssessmentTriggeredBy,
+    OPTIMIZE_RESILIENCY_CONFIGS
+} from '../../utils/continous-optimization-consts';
 
 const logger = getLogger();
 
@@ -161,7 +169,6 @@ async function getAvailableSnapshotPolicyList(
 
 async function setSnapshotPolicyForVolumes(
     instanceRecord: WorkloadInstance,
-    fsxId: string,
     accountId: string,
     credentialsId: string,
     region: string,
@@ -202,7 +209,7 @@ async function setSnapshotPolicyForVolumes(
         const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
 
         const params: BulkOptimizeSnapshotPolicyParamsType = {
-            fsxId,
+            fsxId: instanceRecord.fsxFileSystem,
             region,
             volUuids: JSON.stringify(volumeUuids),
             apiBody: JSON.stringify({ snapshot_policy: snapshotPolicy })
@@ -271,7 +278,7 @@ async function handleResiliecyOptimize(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    snapshotPolicy: SnapshotPolicyType
+    request: OptimizeResiliencyBodyType
 ) {
     logger.info('Optimize resiliency for: ', {
         region,
@@ -279,9 +286,13 @@ async function handleResiliecyOptimize(
         credentialsId,
         databaseInstanceId,
         databaseHostId,
-        snapshotPolicy
+        request
     });
-    const { instanceRecord, fsxId } = await getActiveNodeInfo(
+    const shouldOptimizeSnapshotPolicy = !!request.type.filter(
+        type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
+    ).length;
+    const params = request.params!;
+    const { instanceRecord } = await getActiveNodeInfo(
         accountId,
         credentialsId,
         region,
@@ -310,7 +321,23 @@ async function handleResiliecyOptimize(
         undefined,
         jobMetadata
     );
-    setSnapshotPolicyForVolumes(instanceRecord, fsxId, accountId, credentialsId, region, snapshotPolicy, jobId);
+    if (shouldOptimizeSnapshotPolicy) {
+        const [{ snapshotPolicy }] = params.filter(
+            param => typeof param === typeof BulkOptimizeSnapshotPolicyRequestBody
+        );
+        setSnapshotPolicyForVolumes(instanceRecord, accountId, credentialsId, region, snapshotPolicy, jobId);
+
+        // trigger assesment to update the assessment config data
+        onDemandTriggerDriftAssessmentDataCollection(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            AssessmentTriggeredBy.SYSTEM,
+            AssessmentCategories.RESILIENCY
+        );
+    }
     return { jobId };
 }
 
