@@ -1,45 +1,18 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
-import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
-import { useAppSelector } from '../../../../store/storeHooks';
-import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
+import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 
-const RSSOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
+const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
-    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const data = [
-        {
-            serverInstanceName: 'Network adapter name 1',
-            status: 'Up',
-            tcpOffloading: 'Not optimized ',
-            receivingQueue: 'Not optimized ',
-            rssProfile: 'Not optimized ',
-            rssStatus: 'Not optimized',
-            baseProcessor: 'Not optimized ',
-
-            id: '1'
-        },
-        {
-            serverInstanceName: 'Network adapter name 2',
-            status: 'Up',
-            tcpOffloading: 'Optimized ',
-            receivingQueue: 'Optimized ',
-            rssProfile: 'Optimized ',
-            rssStatus: 'Not optimized',
-            baseProcessor: 'Optimized ',
-
-            id: '2'
-        }
-    ];
 
     const tableData = useMemo(() => {
-        return data.map((row: any) => ({
+        return data?.notOptimizedAdapters?.map((row: any) => ({
             ...row,
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
@@ -47,69 +20,129 @@ const RSSOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Volume name',
-            accessor: 'serverInstanceName',
+            Header: 'Network adapter name',
+            accessor: 'adapterName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: '219px',
             renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
         {
             Header: 'TCP offloading',
-            accessor: 'tcpOffloading',
+            accessor: 'tcpOffloadStateStatus',
             id: '3',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <div className={styles.rssCell}>
+                        <Popover
+                            popoverClass={''}
+                            children={rowData?.tcpOffloadState}
+                            trigger="hover"
+                            container={<TooltipIcon />}
+                        />
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {cellData || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    </div>
+                );
             }
         },
         {
             Header: 'Receive queues',
-            accessor: 'receivingQueue',
+            accessor: 'receiveQueuesStatus',
             id: '4',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <div className={styles.rssCell}>
+                        <Popover
+                            popoverClass={''}
+                            children={rowData?.numberOfReceiveQueues}
+                            trigger="hover"
+                            container={<TooltipIcon />}
+                        />
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {cellData || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    </div>
+                );
             }
         },
         {
             Header: 'RSS profile',
-            accessor: 'rssProfile',
+            accessor: 'rssProfileStatus',
             id: '5',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <div className={styles.rssCell}>
+                        <Popover
+                            popoverClass={''}
+                            children={rowData?.rssProfile}
+                            trigger="hover"
+                            container={<TooltipIcon />}
+                        />
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {cellData || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    </div>
+                );
             }
         },
         {
             Header: 'RSS status',
-            accessor: 'rssStatus',
+            accessor: 'rssEnabledStatus',
             id: '6',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <div className={styles.rssCell}>
+                        <Popover
+                            popoverClass={''}
+                            children={rowData?.rssEnabled}
+                            trigger="hover"
+                            container={<TooltipIcon />}
+                        />
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {cellData || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    </div>
+                );
             }
         },
         {
             Header: 'Base processor',
-            accessor: 'baseProcessor',
+            accessor: 'baseProcessorNumberStatus',
             id: '7',
             width: '174px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (
+                    <div className={styles.rssCell}>
+                        <Popover
+                            popoverClass={''}
+                            children={rowData?.baseProcessorNumber}
+                            trigger="hover"
+                            container={<TooltipIcon />}
+                        />
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {cellData || GENERAL.NOT_AVAILABLE}
+                        </DsTypography>
+                    </div>
+                );
             }
         },
-        lastColDetails(type, {})
+        lastColDetails(type, {}, '245px')
     ];
 
     const tableProps = useTable({
@@ -120,8 +153,8 @@ const RSSOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple',
-        defaultSelectedRows: tableData.map(item => item.id)
+        selectionType: 'none',
+        defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
     useEffect(() => {
@@ -139,10 +172,10 @@ const RSSOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle={`Impacted network adapters`}
+                singularTitle={'Impacted network adapter'}
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

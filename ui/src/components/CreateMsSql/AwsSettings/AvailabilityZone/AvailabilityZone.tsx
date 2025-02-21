@@ -342,7 +342,9 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
 
                         {deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (
                             <div className={styles.firstContainer}>
-                                <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_2}</Typography>
+                                <Typography variant="Regular_14" className={styles.pgsqlMargin}>
+                                    {GENERAL.CLUSTER_CONFIG_NODE_2}
+                                </Typography>
                                 <SelectField
                                     label={GENERAL.AZ_Zone}
                                     placeholder="Select an availability zone"

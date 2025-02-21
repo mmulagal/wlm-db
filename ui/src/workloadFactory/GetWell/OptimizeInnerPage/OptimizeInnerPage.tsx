@@ -44,7 +44,8 @@ const OptimizeInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -52,11 +53,15 @@ const OptimizeInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const buttonComponent = () => {
-        if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
+        if (
+            selectedOptimizeConfig?.type === 'Data files' ||
+            selectedOptimizeConfig?.type === 'Log files' ||
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION
+        ) {
             return (
                 <Popover
                     isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -67,11 +72,11 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
+        } else if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
                     isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -231,7 +236,7 @@ const OptimizeInnerPage = () => {
                 setTimeout(() => {
                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                     dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-                }, 3000);
+                }, 1000);
             }
             handleOptimizeStorageJob(
                 res,
@@ -282,6 +287,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <LogDriveSizeOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -290,6 +296,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <DataFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -298,6 +305,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <LogFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -307,11 +315,22 @@ const OptimizeInnerPage = () => {
                 return (
                     <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
                 );
         }
+    };
+
+    const setHeading = () => {
+        if (selectedOptimizeConfig?.type === 'Data files') {
+            return 'Data files (.mdf) placement';
+        }
+        if (selectedOptimizeConfig?.type === 'Log files') {
+            return 'Log files (.ldf) placement';
+        }
+        return selectedOptimizeConfig?.type;
     };
     return (
         <div className={styles['optimize-inner-page']}>
@@ -326,7 +345,9 @@ const OptimizeInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Host name / Instance name`,
+                                title:
+                                    `${selectedHostname} / ${selectedDatabaseInstanceName}` ||
+                                    'Host name/instance name',
                                 dataTestId: 'wlm-db-optimize-configuration'
                             },
                             {
@@ -341,7 +362,7 @@ const OptimizeInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        {selectedOptimizeConfig?.type}
+                        {setHeading()}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
@@ -349,7 +370,7 @@ const OptimizeInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Manage instance optimization
+                        {selectedDatabaseInstanceName || ''}
                     </DsTypography>
                 </div>
 

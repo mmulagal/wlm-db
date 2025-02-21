@@ -133,7 +133,7 @@ verify_signature() {
     local deployment_name=$5
     
     echo "Verifying signature for $file"
-    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "$file" -s "$signature" -p "$pubkey" -r "$resource" -n "$deployment_name"; then
+    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "$file" -s "$signature" -p "$pubkey" -r "$resource" -n "$deployment_name" -t "true"; then
         echo "Error verifying signature for $file"
         return 1
     fi
@@ -148,7 +148,7 @@ validate_vpc() {
 
     echo "Validating VPC with inputs: subnet_id=${subnet_id}, region=${region}, deployment_name=${deployment_name}, resource_id=${resource_id}"
 
-    if ! /home/ec2-user/cfn/scripts/validation/validate-vpc.sh "${subnet_id}" "${region}" "${deployment_name}" "${resource_id}"; then
+    if ! /home/ec2-user/cfn/scripts/validation/validate-vpc.sh "${subnet_id}" "${region}" "${deployment_name}" "${resource_id}" "true"; then
         echo "Error occurred during VPC validation."
         return 1
     fi
@@ -164,7 +164,7 @@ validate_fsx_connectivity() {
 
     echo "Validating FSx connectivity with inputs: perform_fsx_check=${perform_fsx_check}, fsx_file_system_id=${fsx_file_system_id}, region=${region}, deployment_name=${deployment_name}, resource_id=${resource_id}"
 
-    if ! /home/ec2-user/cfn/scripts/validation/validate-fsx.sh -e "${perform_fsx_check}" -f "${fsx_file_system_id}" -r "${region}" -n "${deployment_name}" -p "${deployment_name}" -s "${resource_id}"; then
+    if ! /home/ec2-user/cfn/scripts/validation/validate-fsx.sh -e "${perform_fsx_check}" -f "${fsx_file_system_id}" -r "${region}" -n "${deployment_name}" -p "${deployment_name}" -s "${resource_id}" -t "true"; then
         echo "Error occurred during FSx connectivity validation."
         return 1
     fi

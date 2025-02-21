@@ -14,6 +14,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -27,6 +28,8 @@ import {
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
 import OntapTable from './InnerTables/OntapTable';
+import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
+import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
@@ -38,7 +41,8 @@ const OptimizeOntapInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -210,6 +214,11 @@ const OptimizeOntapInnerPage = () => {
                         [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
                     })
                 );
+
+                setTimeout(() => {
+                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                }, 1000);
             }
             handleOptimizeStorageJob(
                 res,
@@ -231,13 +240,48 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const renderTable = () => {
-        return (
-            <OntapTable
-                type={selectedOptimizeConfig?.type}
-                lastColDetails={lastColDetails}
-                handleBulkAction={handleBulkAction}
-            />
-        );
+        switch (selectedOptimizeConfig?.type) {
+            case 'Multipath I/O Policy':
+                return (
+                    <OSMultiPathIOPolicy
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            case 'NTFS allocation unit size':
+                return (
+                    <NTFSAllocationTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            default:
+                return (
+                    <OntapTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+        }
+    };
+
+    const setHeading = () => {
+        if (
+            selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
+            selectedOptimizeConfig?.type !== 'NTFS allocation unit size'
+        ) {
+            return `ONTAP / ${selectedOptimizeConfig?.type}`;
+        } else {
+            return `Operating system |  ${selectedOptimizeConfig?.type}`;
+        }
     };
     return (
         <div className={styles['optimize-inner-page']}>
@@ -252,7 +296,7 @@ const OptimizeOntapInnerPage = () => {
                                 }
                             },
                             {
-                                title: `Host name / Instance name`,
+                                title: `${selectedHostname} / ${selectedDatabaseInstanceName}`,
                                 dataTestId: 'wlm-db-optimize-configuration'
                             },
                             {
@@ -267,10 +311,7 @@ const OptimizeOntapInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        {(selectedOptimizeConfig?.type !== 'Multipath I/O Policy' ||
-                            selectedOptimizeConfig?.type === 'NTFS allocation unit size') &&
-                            'ONTAP /'}{' '}
-                        {selectedOptimizeConfig?.type}
+                        {setHeading()}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
@@ -278,7 +319,7 @@ const OptimizeOntapInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Instance name
+                        {selectedDatabaseInstanceName || ''}
                     </DsTypography>
                 </div>
 

@@ -8,28 +8,17 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
+import { GENERAL } from '../../../../utils/appConstants';
 
-const OSMultiPathIOPolicy = ({ type, lastColDetails, handleBulkAction }: any) => {
+const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const data = [
-        {
-            serverInstanceName: 'Volume 1',
-            status: 'Up',
-            storageTierPercent: '50%',
-            id: '1'
-        },
-        {
-            serverInstanceName: 'Volume 2',
-            status: 'Up',
-            storageTierPercent: '50%',
-            id: '2'
-        }
-    ];
 
     const tableData = useMemo(() => {
-        return data.map((row: any) => ({
+        let id = 0;
+        return data?.violationDetails?.map((row: any) => ({
             ...row,
+            id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
@@ -37,14 +26,14 @@ const OSMultiPathIOPolicy = ({ type, lastColDetails, handleBulkAction }: any) =>
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Disc name',
-            accessor: 'serverInstanceName',
+            accessor: 'objectName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: '962px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
@@ -60,7 +49,7 @@ const OSMultiPathIOPolicy = ({ type, lastColDetails, handleBulkAction }: any) =>
         rows: tableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: tableData.map(item => item.id)
+        defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
     useEffect(() => {

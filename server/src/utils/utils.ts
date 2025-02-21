@@ -745,9 +745,10 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
         const resp = await fn();
         return resp;
     } catch (err) {
-        logger.error('Retry failed with error', err);
+        const errorMessage = `Retry failed with error: ${err}`;
+        logger.error(errorMessage);
         if (retries <= 0) {
-            return Promise.reject(finalErr);
+            return Promise.reject(errorMessage);
         }
 
         await sleep(interval);
@@ -812,7 +813,7 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
     const subJobDescriptions: SubJobDescriptions = {
         SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
         PGSQLServerStack: `Deploying an ${dbEngineType} Server ${
-            stackSqlDeploymentType === 'standalone' ? 'standalone' : 'ha'
+            stackSqlDeploymentType === 'Standalone' ? 'standalone' : 'ha'
         } instance with recommended best practices`,
         SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
         NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,

@@ -90,6 +90,10 @@ enum OPTIMIZE_SIZING_CONFIGS {
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
 }
 
+enum OPTIMIZE_RESILIENCY_CONFIGS {
+    SNAPSHOT_POLICY = 'snapshot-policy'
+}
+
 enum OptimizeMaxDopParams {
     MAX_DOP = 'max-dop'
 }
@@ -240,5 +244,6 @@ export {
     ONPREM_TCO_CREDENTIALS_ID,
     OPTIMIZATION_CATEGORIES,
     OptimizeMaxDopParams,
-    ASSESSMENT_RESOURCE_TYPE
+    ASSESSMENT_RESOURCE_TYPE,
+    OPTIMIZE_RESILIENCY_CONFIGS
 };
