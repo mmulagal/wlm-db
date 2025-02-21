@@ -33,10 +33,12 @@ import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
+import { useRef, useState } from 'react';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -51,6 +53,7 @@ const OptimizeInnerPage = () => {
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const userNavigated = useRef(false);
 
     const buttonComponent = () => {
         if (
@@ -126,6 +129,7 @@ const OptimizeInnerPage = () => {
     const callOptimizeApi = (type: any) => {
         let payload: null | object = {};
         let apiCall = null;
+
         const state = store.getState();
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
@@ -192,6 +196,8 @@ const OptimizeInnerPage = () => {
                             Component="button"
                             variant="text"
                             onClick={() => {
+                                if (notificationTimeout) clearTimeout(notificationTimeout);
+                                userNavigated.current = true;
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                 dispatch(clearNotifications());
                             }}
@@ -217,6 +223,8 @@ const OptimizeInnerPage = () => {
                         Component="button"
                         variant="text"
                         onClick={() => {
+                            if (notificationTimeout) clearTimeout(notificationTimeout);
+                            userNavigated.current = true;
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                             dispatch(clearNotifications());
                         }}
@@ -233,10 +241,14 @@ const OptimizeInnerPage = () => {
                     })
                 );
 
-                setTimeout(() => {
-                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                const timeoutId = setTimeout(() => {
+                    if (!userNavigated.current) {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                    }
                 }, 1000);
+
+                setNotificationTimeout(timeoutId);
             }
             handleOptimizeStorageJob(
                 res,
