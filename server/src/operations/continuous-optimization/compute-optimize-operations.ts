@@ -33,6 +33,15 @@ import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-s
 import { getInstanceInfo } from '../database/database-operations';
 import { AssessmentStatus } from '../../utils/continous-optimization-consts';
 
+interface ModifiedInstancesNodeDetails {
+    ec2InstanceId: string;
+    oldDnsAddresses: string;
+    oldInstanceType: string;
+}
+interface InstanceDetails {
+    svmId: string;
+    fsxId: string;
+}
 const logger = getLogger();
 
 async function handleComputeRemediation(
@@ -60,9 +69,8 @@ async function handleComputeRemediation(
 
     let anySubJobFailed = false;
     let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
-    const modifiedInstancesNodeDetails: { ec2InstanceId: string; oldDnsAddresses: string; oldInstanceType: string }[] =
-        [];
-    let instanceDetails: { svmId: string; fsxId: string } = { svmId: '', fsxId: '' };
+    const modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[] = [];
+    let instanceDetails: InstanceDetails = { svmId: '', fsxId: '' };
     try {
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
@@ -169,9 +177,9 @@ async function handleComputeRemediation(
                         try {
                             // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
                             for (const nodeId of nonPrimaryNodeInstanceIds) {
-                                const oldInstanceType = clusterNodeDetails.filter(
-                                    node => node.ec2InstanceId === nodeId
-                                )[0].ec2InstanceType;
+                                const oldInstanceType =
+                                    clusterNodeDetails.find(node => node.ec2InstanceId === nodeId)?.ec2InstanceType ??
+                                    '';
                                 const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
                                     accountId,
                                     credentialsId,
@@ -420,22 +428,27 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
-        // In case of failure, revert the instance type change for the nodes that were successfully updated
-        if (modifiedInstancesNodeDetails.length > 0) {
-            for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
-                await updateNodeInstanceType(
-                    accountId,
-                    credentialsId,
-                    region,
-                    ec2InstanceId,
-                    oldInstanceType,
-                    instanceDetails.fsxId,
-                    instanceDetails.svmId,
-                    formattedInstanceName,
-                    undefined,
-                    oldDnsAddresses
-                );
+        try {
+            // In case of failure, rollback the instance type change for the nodes that were successfully updated
+            if (modifiedInstancesNodeDetails.length > 0) {
+                for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
+                    await updateNodeInstanceType(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        oldInstanceType,
+                        instanceDetails.fsxId,
+                        instanceDetails.svmId,
+                        formattedInstanceName,
+                        undefined,
+                        oldDnsAddresses
+                    );
+                }
             }
+        } catch (rollbackError) {
+            errorMessage = `Error while reverting instance type change ${rollbackError}`;
+            logger.error(errorMessage);
         }
         errorMessage = `Error while optimizing compute ${error}`;
         logger.error(errorMessage);

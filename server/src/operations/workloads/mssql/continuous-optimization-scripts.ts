@@ -912,7 +912,6 @@ Function Move-AllClusterGroups {
                     $groupResult.status = 'failed'
                     $groupResult.error = $_.Exception.Message
                     $errorMsg = "Error occurred while moving cluster group: $clusterGroupName : $_.Exception.Message"
-                    Write-Error "$errorMsg"
                     Write-Information "$errorMsg"
                 }
                 Write-Information "Status of moving cluster group: $clusterGroupName : $groupResult.status"
