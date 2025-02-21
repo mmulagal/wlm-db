@@ -53,11 +53,15 @@ const OptimizeInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const buttonComponent = () => {
-        if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
+        if (
+            selectedOptimizeConfig?.type === 'Data files' ||
+            selectedOptimizeConfig?.type === 'Log files' ||
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION
+        ) {
             return (
                 <Popover
                     isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -68,11 +72,11 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
+        } else if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
                     isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -311,6 +315,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />

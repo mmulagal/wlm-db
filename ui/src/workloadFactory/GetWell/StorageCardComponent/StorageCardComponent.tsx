@@ -763,22 +763,13 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     //This is for inner page navigation
     const handleDifferentNavigation = () => {
-        if (type === 'Storage tier' || type === 'Log drive size' || type === 'Data files' || type === 'Log files') {
-            // type === 'File system headroom' ||
-            // type === 'Log drive size' ||
-            // type === 'Data files' ||
-            // type === 'Log files' ||
-            // type === 'Thin provisioning' ||
-            // type === 'Autosize' ||
-            // type === 'Autosize-mode' ||
-            // type === ' Fractional reserve' ||
-            // type === 'Snapshot copy reserve' ||
-            // type === 'Snapshot autodelete ' ||
-            // type === 'Space management' ||
-            // type === ' Tiering minimum cooling days' ||
-            // type === 'OS type' ||
-            // type === 'Space reservation' ||
-            // type === 'Space allocation'
+        if (
+            type === 'Storage tier' ||
+            type === 'Log drive size' ||
+            type === 'Data files' ||
+            type === 'Log files' ||
+            type === GENERAL.RSS_CONFIGURATION
+        ) {
             handleNavigateToOptimizePage(type);
         } else {
             handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
@@ -793,6 +784,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const setButtonText = () => {
         if (type === 'Storage tier' || type === 'Log drive size') {
             return 'View & optimize';
+        } else if (type === 'Data files' || type === 'Log files' || type === GENERAL.RSS_CONFIGURATION) {
+            return 'View';
         } else {
             return GENERAL.OPTIMIZE;
         }

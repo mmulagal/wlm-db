@@ -73,6 +73,17 @@
         }
     }
 
+    .rssCell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
     [class*='Table-module_high-row'] {
         background-color: var(--content-background) !important;
     }
