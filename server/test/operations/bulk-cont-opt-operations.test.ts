@@ -145,7 +145,24 @@ beforeAll(async () => {
                     'default-data-files-location': 'separate-drive'
                 },
                 sizing: {
-                    'performance-tier': [100, 100, 100],
+                    'performance-tier': [
+                        {
+                            volumeName: 'wlmdb_sqldata_1740015122754',
+                            performanceTierPercent: 100
+                        },
+                        {
+                            volumeName: 'wlmdb_sqldata_1740027207',
+                            performanceTierPercent: 100
+                        },
+                        {
+                            volumeName: 'wlmdb_sqllog_1740027207',
+                            performanceTierPercent: 100
+                        },
+                        {
+                            volumeName: 'wlmdb_sqltemp_1740015122754',
+                            performanceTierPercent: 100
+                        }
+                    ],
                     'data-log-drive-details': [
                         {
                             databaseName: 'casaba',

@@ -900,6 +900,8 @@ async function fetchDriftAssessment(
                     const sizing = sizingConfig as ParameterDriftResponseType;
                     if (sizingConfigsOptimized.includes(sizing.name)) {
                         sizing.status = AssessmentStatus.OPTIMIZED;
+                        sizing.objectsInViolation = [];
+                        sizing.totalObjectsInViolation = 0;
                     }
                     return sizing;
                 });
