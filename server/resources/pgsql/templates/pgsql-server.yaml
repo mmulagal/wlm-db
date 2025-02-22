@@ -562,9 +562,9 @@ Resources:
                         echo "Instance ID: $instanceID"
                         privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
                         MAC=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n 1)
-                        subnetCidr=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/${MAC}/subnet-ipv4-cidr-block)
+                        subnetCidr=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/subnet-ipv4-cidr-block)
                         prefix=$(echo $subnetCidr | cut -d'/' -f2)
-                        privateIPWithCidr="${privateIP}/${prefix}"
+                        privateIPWithCidr="$privateIP/$prefix"
                         FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
                         url=https://cloudformation.${AWS::Region}.amazonaws.com
                         StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
