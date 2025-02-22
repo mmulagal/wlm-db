@@ -55,7 +55,7 @@ CREATE TABLE `resource` (
     `cloud_provider_name` VARCHAR(30) NULL,
     `region` VARCHAR(30) NULL,
     `metadata` JSON NULL,
- 
+
     INDEX `k_wlmdb_resource_account_id`(`account_id`),
     INDEX `k_wlmdb_resource_resource_id`(`resource_id`),
     UNIQUE INDEX `uk_wlmdb_resource_account_id_credentials_id_region_resource_id`(`account_id`, `credentials_id`, `region`, `resource_id`),
