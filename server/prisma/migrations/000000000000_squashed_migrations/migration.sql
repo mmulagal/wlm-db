@@ -15,7 +15,7 @@ CREATE TABLE `deployment` (
     `start_time` DATETIME(3) NOT NULL,
     `end_time` DATETIME(3) NULL,
     `data` JSON NULL,
-
+    
     INDEX `k_wlmdb_deployment_account_id`(`account_id`),
     INDEX `k_wlmdb_deployment_deployment_id`(`deployment_id`),
     UNIQUE INDEX `uk_wlmdb_deployment_account_id_deployment_id`(`account_id`, `deployment_id`),
