@@ -31,8 +31,7 @@ set -e
 token=$(curl -s -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" "http://169.254.169.254/latest/api/token")
 instanceID=$(curl -s -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.254/latest/meta-data/instance-id")
 
-mkdir -p /home/ec2-user/cfn/log/
-logfilename=/home/ec2-user/cfn/log/$(basename "$FilePath").log
+logfilename=/var/log/netapp_wf/$(basename "$FilePath").log
 
 # Verify signature
 openssl dgst -sha256 -verify "$PubFilePath" -signature "$SignatureFilePath" "$FilePath" > "$logfilename" 2>&1
