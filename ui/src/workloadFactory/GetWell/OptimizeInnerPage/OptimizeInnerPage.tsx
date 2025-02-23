@@ -353,14 +353,17 @@ const OptimizeInnerPage = () => {
                             {
                                 title: 'Inventory',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                                 }
                             },
                             {
                                 title:
                                     `${selectedHostname} / ${selectedDatabaseInstanceName}` ||
                                     'Host name/instance name',
-                                dataTestId: 'wlm-db-optimize-configuration'
+                                dataTestId: 'wlm-db-optimize-configuration',
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                }
                             },
                             {
                                 title: `${selectedOptimizeConfig?.type}`,

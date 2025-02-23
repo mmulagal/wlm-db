@@ -1,7 +1,6 @@
 import { Table, useTable, TableTopBar, Typography, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
-import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
@@ -128,7 +127,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             }
         },
         {
-            Header: 'File system headroom percentage',
+            Header: 'Log drive size percentage',
             accessor: 'sizePercentToDataDrive',
             id: '4',
             width: '302px',
