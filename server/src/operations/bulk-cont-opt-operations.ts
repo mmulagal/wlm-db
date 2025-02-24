@@ -281,8 +281,6 @@ async function validateRequestDetails(accountId: string, credentialsId: string, 
     const [resourceDetail] = await listResources(accountId, undefined, credentialsId, region);
 
     if (isEmpty(resourceDetail)) {
-        const errorMessage = `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`;
-        logger.error(errorMessage);
         return false;
     }
 
