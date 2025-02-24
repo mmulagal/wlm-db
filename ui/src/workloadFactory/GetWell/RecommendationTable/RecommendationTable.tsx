@@ -276,15 +276,21 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 }
 
                 return (
-                    <div>
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {(rowData?.totalObjectsInViolation || 0) +
-                                ' out of ' +
-                                (rowData?.totalObjectsAssessed || 0) +
-                                ' ' +
-                                type}
-                        </DsTypography>
-                    </div>
+                    <>
+                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status' ? (
+                            <div>
+                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                    {(rowData?.totalObjectsInViolation || 0) +
+                                        ' out of ' +
+                                        (rowData?.totalObjectsAssessed || 0) +
+                                        ' ' +
+                                        type}
+                                </DsTypography>
+                            </div>
+                        ) : (
+                            <></>
+                        )}
+                    </>
                 );
             }
         },
