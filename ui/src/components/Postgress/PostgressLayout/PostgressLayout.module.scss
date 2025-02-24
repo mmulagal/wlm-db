@@ -7,7 +7,7 @@
 
     .pgsql-availability-zone {
         [class*='_firstContainer'] {
-            div:first-child {
+            [class*='_pgsqlMargin'] {
                 margin-right: 26px;
             }
         }

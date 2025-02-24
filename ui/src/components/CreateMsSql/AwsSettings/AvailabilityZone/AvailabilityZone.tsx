@@ -260,14 +260,6 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         }
     };
 
-    const pqsqlNode1 = () => {
-        if (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-            return 'HA configuration - Node 1:';
-        } else {
-            return GENERAL.CLUSTER_CONFIG_PGSQL;
-        }
-    };
-
     return (
         <div className={styles['availability-zone']}>
             <AccordionCard
@@ -285,7 +277,9 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
 
                         <div className={styles.firstContainer}>
                             <Typography variant="Regular_14">
-                                {wizardType === WIZARD_TYPE.MSSQL ? GENERAL.CLUSTER_CONFIG_NODE_1 : pqsqlNode1()}
+                                {wizardType === WIZARD_TYPE.MSSQL
+                                    ? GENERAL.CLUSTER_CONFIG_NODE_1
+                                    : GENERAL.CLUSTER_CONFIG_PGSQL}
                             </Typography>
                             <SelectField
                                 label={GENERAL.AZ_Zone}
@@ -349,9 +343,7 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                         {deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (
                             <div className={styles.firstContainer}>
                                 <Typography variant="Regular_14" className={styles.pgsqlMargin}>
-                                    {wizardType === WIZARD_TYPE.MSSQL
-                                        ? GENERAL.CLUSTER_CONFIG_NODE_2
-                                        : 'HA configuration - Node 2:'}
+                                    {GENERAL.CLUSTER_CONFIG_NODE_2}
                                 </Typography>
                                 <SelectField
                                     label={GENERAL.AZ_Zone}
