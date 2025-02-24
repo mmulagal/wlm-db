@@ -25,7 +25,7 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Disc name',
+            Header: 'Disk name',
             accessor: 'objectName',
             id: '1',
             isSortable: false,

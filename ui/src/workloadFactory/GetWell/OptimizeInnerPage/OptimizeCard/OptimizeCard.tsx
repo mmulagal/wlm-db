@@ -97,14 +97,14 @@ const OptimizeCard = () => {
                 };
             case 'Multipath I/O Policy':
                 return {
-                    block_one: { type: 'Impacted discs', value: data.totalObjectsInViolation || '0' },
+                    block_one: { type: 'Impacted disks', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
             case 'NTFS allocation unit size':
                 return {
-                    block_one: { type: 'Impacted discs', value: data.totalObjectsInViolation || '0' },
+                    block_one: { type: 'Impacted disks', value: data.totalObjectsInViolation || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText }

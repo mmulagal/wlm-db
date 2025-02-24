@@ -272,7 +272,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 } else if (rowData?.type === 'lun') {
                     type = 'LUN path';
                 } else if (rowData?.type === 'os') {
-                    type = 'discs';
+                    type = 'disks';
                 }
 
                 return (

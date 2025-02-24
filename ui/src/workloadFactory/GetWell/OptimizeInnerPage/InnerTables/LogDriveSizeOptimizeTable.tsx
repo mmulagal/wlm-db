@@ -41,7 +41,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                 uniqueViolatedList.push(row.logAccessPath);
                 uniqueViolatedRows.push({
                     ...row,
-                    status: 'Ignored drives'
+                    status: 'Shared drive'
                 });
             }
         });
@@ -166,8 +166,8 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle={`Impacted drives`}
+                singularTitle={'Impacted drive'}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
             <Table

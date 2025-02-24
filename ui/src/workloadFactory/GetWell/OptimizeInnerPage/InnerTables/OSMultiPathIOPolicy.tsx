@@ -25,7 +25,7 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Disc name',
+            Header: 'Disk name',
             accessor: 'objectName',
             id: '1',
             isSortable: false,
@@ -67,8 +67,8 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted discs`}
-                singularTitle={'Impacted disc'}
+                pluralTitle={`Impacted disks`}
+                singularTitle={'Impacted disk'}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
             <Table
