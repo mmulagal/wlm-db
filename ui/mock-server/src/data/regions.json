@@ -103,6 +103,10 @@
       {
         "regionCode": "us-east-2",
         "regionName": "US East (Ohio)"
+      },
+      {
+        "regionCode": "ap-southeast-5",
+        "regionName": "Asia Pacific (Malaysia)"
       }
     ]
 }
