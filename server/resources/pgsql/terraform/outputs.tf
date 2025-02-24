@@ -11,10 +11,6 @@ output "credentials_ssm_parameter_value" {
   sensitive = true
 }
 
-output "credentials_ssm_parameter_tags" {
-  value = aws_ssm_parameter.credentials_ssm_parameter.tags
-}
-
 output "role_name" {
   value = aws_iam_role.ec2_iam_role.name
 }
