@@ -465,6 +465,9 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
                 const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
+                const isScheduledLoclaSnapshotOptimized = isOptimized(
+                    instanceAssessmentData?.resiliency?.snapshotPolicy?.status
+                );
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
                     assessmentGroupedByCategory.compute++;
@@ -479,6 +482,9 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 }
                 if (isApplicationOptimized && isMicrosoftSqlPatchOptimized && isMaxdopPatchOptimized) {
                     assessmentGroupedByCategory.application++;
+                }
+                if (isScheduledLoclaSnapshotOptimized) {
+                    assessmentGroupedByCategory.resiliency++;
                 }
             }
         });
@@ -503,6 +509,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         applicationSqlServer: 0,
         mssqlPatch: 0,
         maxdopPatch: 0,
+        scheduledLocalSnapshot: 0,
         total: 0,
         severityObj: {}
     };
@@ -563,6 +570,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isApplicationSqlServerOptimized = isOptimized(instanceAssessmentData?.license?.status);
                 const isMicrosoftSqlPatchOptimized = isOptimized(instanceAssessmentData?.mssqlPatch?.status);
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
+                const isScheduledLocalSnapshotOptimized = isOptimized(
+                    instanceAssessmentData?.resiliency?.snapshotPolicy?.status
+                );
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.storageTier = GETWELL_VALUES[perfTierObj?.severity];
@@ -605,6 +615,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.maxdopPatch += isMaxdopPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
                     GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity];
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot += isScheduledLocalSnapshotOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
+                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity];
             }
         });
     });

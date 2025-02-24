@@ -33,6 +33,7 @@ import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
+import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
@@ -56,7 +57,8 @@ const OptimizeInnerPage = () => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
         ) {
             return (
                 <Popover
@@ -314,6 +316,15 @@ const OptimizeInnerPage = () => {
             case 'Network adapters':
                 return (
                     <RSSOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
+                return (
+                    <ScheduledLocalSnapshotOptimizeTable
                         type={selectedOptimizeConfig?.type}
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}

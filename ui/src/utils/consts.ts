@@ -754,7 +754,8 @@ export const GETWELL_CONFIG: any = {
     'sql-license': 'sql_licenses',
     'host-os-patch': 'host_os_patch',
     'mssql-patch': 'microsoft_sql_patch',
-    maxdop: 'maxdop'
+    maxdop: 'maxdop',
+    'snapshot-policy': 'scheduled_local_snapshot'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
@@ -788,5 +789,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     LOG_FILES_LDF: 'Log files (.ldf)',
     TEMPDB_PLACEMENT: 'TempDB placement',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
-    MAXDOP: 'MAXDOP'
+    MAXDOP: 'MAXDOP',
+    SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot'
 };

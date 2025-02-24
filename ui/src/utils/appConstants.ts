@@ -1237,6 +1237,8 @@ export const GENERAL = {
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
     LICENSE_SQL_SERVER: 'License',
     APPLICATION: 'Application (SQL Server)',
+    RESILIENCY: 'Resiliency',
+    SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };

@@ -3,6 +3,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
 import Tag from '../../../../common/Tag/Tag';
 import { useEffect, useState } from 'react';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const OptimizeCard = () => {
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
@@ -112,6 +113,13 @@ const OptimizeCard = () => {
             case 'Network adapters':
                 return {
                     block_one: { type: 'Impacted network adapters', value: data.impactedCount || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                };
+            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText }

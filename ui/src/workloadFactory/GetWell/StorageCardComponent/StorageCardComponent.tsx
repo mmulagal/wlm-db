@@ -768,7 +768,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log drive size' ||
             type === 'Data files' ||
             type === 'Log files' ||
-            type === GENERAL.RSS_CONFIGURATION
+            type === GENERAL.RSS_CONFIGURATION ||
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
         ) {
             handleNavigateToOptimizePage(type);
         } else {
@@ -784,7 +785,12 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const setButtonText = () => {
         if (type === 'Storage tier' || type === 'Log drive size') {
             return 'View & optimize';
-        } else if (type === 'Data files' || type === 'Log files' || type === GENERAL.RSS_CONFIGURATION) {
+        } else if (
+            type === 'Data files' ||
+            type === 'Log files' ||
+            type === GENERAL.RSS_CONFIGURATION ||
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+        ) {
             return 'View';
         } else {
             return GENERAL.OPTIMIZE;

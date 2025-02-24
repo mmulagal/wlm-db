@@ -60,6 +60,9 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
+    resiliency?: {
+        snapshotPolicy?: PerConfigInterface;
+    };
 }
 
 export interface HostAssessmentResponseInterface {
