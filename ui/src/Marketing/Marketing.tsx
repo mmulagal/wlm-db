@@ -13,7 +13,7 @@ import styles from './Marketing.module.scss';
 import { useState } from 'react';
 import CardComponent from './CardComponent/CardComponent';
 import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../utils/consts';
+import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
 
 const Marketing = () => {
@@ -75,9 +75,68 @@ const Marketing = () => {
                         </div>
 
                         <div className={styles.buttonSection}>
-                            <DsButton variant="primary" onClick={handleNavigation}>
-                                Get Started
-                            </DsButton>
+                            <DsButton
+                                children=" Get Started"
+                                variant="Default"
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    items: [
+                                        {
+                                            id: 'wlm-db-deploy-mssql-host',
+                                            label: 'Microsoft SQL Server',
+                                            onClick: () => {
+                                                if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_FORM_NAVIGATE);
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: './mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    navigate('../../fsxdb/mssql-deploy-wizard');
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            className: 'mssql-deployment-button'
+                                        },
+                                        {
+                                            id: 'wlm-db-deploy-pgsql-host',
+                                            label: 'PostgreSQL Server',
+                                            onClick: () => {
+                                                if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: './postgreSQL-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/postgreSQL-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            className: 'pgsql-deployment-button'
+                                        }
+                                    ]
+                                }}
+                            />
                         </div>
                     </div>
 
