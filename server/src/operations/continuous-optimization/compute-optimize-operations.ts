@@ -38,7 +38,7 @@ interface ModifiedInstancesNodeDetails {
     oldDnsAddresses: string;
     oldInstanceType: string;
 }
-interface InstanceDetails {
+interface StorageDetails {
     svmId: string;
     fsxId: string;
 }
@@ -68,19 +68,23 @@ async function handleComputeRemediation(
     let subJobErrorMessage;
 
     let anySubJobFailed = false;
+
+    let activeNodeInstanceId: any = '';
+    let instanceName = '';
+    let shouldRollbackClusterOwnership = false;
     let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
     const modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[] = [];
-    let instanceDetails: InstanceDetails = { svmId: '', fsxId: '' };
+    let storageDetails = { svmId: '', fsxId: '' };
+
     try {
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        const { activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+        ({ activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId,
             region,
             node1InstanceId,
             node2InstanceId
-        );
-
+        ));
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             formattedInstanceName = getServerNameWithHostname(
@@ -92,7 +96,7 @@ async function handleComputeRemediation(
             const svmId = svmDetailsObject ? svmDetailsObject[fsxId] : '';
 
             const instanceIdsList = [activeNodeInstanceId];
-            instanceDetails = { svmId, fsxId };
+            storageDetails = { svmId, fsxId };
             if (node2InstanceId) {
                 // more than one node in the cluster
                 const connectionStatus = await getSSMConnectionStatus(credentialsId, region!, node2InstanceId);
@@ -267,6 +271,7 @@ async function handleComputeRemediation(
                                 status: JOBSTATUS.COMPLETED,
                                 endTime: Date.now()
                             });
+                            shouldRollbackClusterOwnership = true;
                         } catch (error) {
                             subJobErrorMessage = `Failed to transfer sql node ownership in the cluster, ${error}`;
                             await updateJobDetails(accountId, changeInstanceTypeJobId, {
@@ -373,6 +378,7 @@ async function handleComputeRemediation(
                         status: JOBSTATUS.COMPLETED,
                         endTime: Date.now()
                     });
+                    shouldRollbackClusterOwnership = false;
                 } catch (error) {
                     subJobErrorMessage = `Failed to transfer node ownership back to primary node in the cluster, ${error}`;
                     await updateJobDetails(accountId, nodeTransferJobId, {
@@ -430,22 +436,18 @@ async function handleComputeRemediation(
     } catch (error) {
         try {
             // In case of failure, rollback the instance type change for the nodes that were successfully updated
-            if (modifiedInstancesNodeDetails.length > 0) {
-                for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
-                    await updateNodeInstanceType(
-                        accountId,
-                        credentialsId,
-                        region,
-                        ec2InstanceId,
-                        oldInstanceType,
-                        instanceDetails.fsxId,
-                        instanceDetails.svmId,
-                        formattedInstanceName,
-                        undefined,
-                        oldDnsAddresses
-                    );
-                }
-            }
+            rollbackComputeOptimize(
+                accountId,
+                credentialsId,
+                region,
+                storageDetails,
+                modifiedInstancesNodeDetails,
+                shouldRollbackClusterOwnership,
+                activeNodeInstanceId,
+                instanceName,
+                formattedInstanceName,
+                jobId
+            );
         } catch (rollbackError) {
             errorMessage = `Error while reverting instance type change ${rollbackError}`;
             logger.error(errorMessage);
@@ -888,6 +890,92 @@ async function updateNodeInstanceType(
 
         logger.error(errorMessage);
         throw createError(500, errorMessage);
+    }
+}
+
+async function rollbackComputeOptimize(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    storageDetails: StorageDetails,
+    modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[],
+    shouldRollbackClusterOwnership: boolean,
+    activeNodeInstanceId: string,
+    instanceName: string,
+    formattedInstanceName: string,
+    jobId: string
+) {
+    let rollbackNodeInstanceTypeJobId = null;
+    let rollbackClusterOwnershipJobId = null;
+    if (modifiedInstancesNodeDetails.length > 0) {
+        rollbackNodeInstanceTypeJobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            formattedInstanceName,
+            JOBTYPE.OPTIMIZATION,
+            'Rollback instance type for nodes in the cluster',
+            'Rollback instance type for nodes in the cluster',
+            jobId
+        );
+    }
+
+    if (shouldRollbackClusterOwnership) {
+        rollbackClusterOwnershipJobId = await handleOptimizeJobCreation(
+            accountId,
+            credentialsId,
+            region,
+            formattedInstanceName,
+            JOBTYPE.OPTIMIZATION,
+            'Rollback cluster ownership transfer to primary node',
+            'Rollback cluster ownership transfer to primary node',
+            jobId
+        );
+    }
+
+    try {
+        if (modifiedInstancesNodeDetails.length > 0 && rollbackNodeInstanceTypeJobId) {
+            for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
+                await updateNodeInstanceType(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    oldInstanceType,
+                    storageDetails.fsxId,
+                    storageDetails.svmId,
+                    formattedInstanceName,
+                    undefined,
+                    oldDnsAddresses
+                );
+            }
+            await updateJobDetails(accountId, rollbackNodeInstanceTypeJobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            });
+        }
+        if (shouldRollbackClusterOwnership && rollbackClusterOwnershipJobId) {
+            await moveClusterGroupOwnership(credentialsId, region, instanceName, activeNodeInstanceId);
+            await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
+                status: JOBSTATUS.COMPLETED,
+                endTime: Date.now()
+            });
+        }
+    } catch (error) {
+        if (rollbackNodeInstanceTypeJobId) {
+            await updateJobDetails(accountId, rollbackNodeInstanceTypeJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now()
+            });
+        }
+        if (rollbackClusterOwnershipJobId) {
+            await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
+                status: JOBSTATUS.FAILED,
+                endTime: Date.now()
+            });
+        }
+        logger.error(`Error while rolling back compute optimization ${error}`);
+        throw createError(500, `Error while rolling back compute optimization ${error}`);
     }
 }
 
