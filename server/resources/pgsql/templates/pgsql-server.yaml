@@ -316,7 +316,7 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
                                 - SqlServerName: !Ref 'SqlServerName'
                         e-restart-host:
-                            command: sudo reboot
+                            command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -541,7 +541,7 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
                                 - SqlServerName: !Ref 'SqlServerName'
                         e-restart-host:
-                            command: sudo reboot
+                            command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
                 Finalize:
                     commands:
                         a-signal-resource:
