@@ -719,7 +719,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                         {!isWorkloadFactory && (
                             <div className={styles.thirdRow}>
-                                <DsBlueXpMenu className="hamburgerMenu" domain={process.env.REACT_APP_WF_DOMAIN!} />
+                                <DsBlueXpMenu className="hamburgerMenu" domain={import.meta.env.VITE_APP_WF_DOMAIN!} />
                             </div>
                         )}
                     </div>
