@@ -400,6 +400,13 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getPGSQLTerraformSetup: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `v1/pgsql/terraform/setup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -964,12 +971,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency`
                 })
             }),
             triggerInstanceAssessment: builder.mutation({
@@ -1032,6 +1039,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeMaxdopConfigForBulk: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/max-dop`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1079,7 +1093,14 @@ export const {
     useUpdateConfigMutation
 } = configApi;
 
-export const { useGetTemplatesMutation, useGetTerraformSetupMutation, useGetPgsqlTemplatesMutation } = databaseHomeApi;
+export const {
+    useGetJobsSummaryQuery,
+    useLazyGetJobsSummaryQuery,
+    useGetTemplatesMutation,
+    useGetTerraformSetupMutation,
+    useGetPgsqlTemplatesMutation,
+    useGetPGSQLTerraformSetupMutation
+} = databaseHomeApi;
 
 export const { useLazyGetResourceDetailsV2Query, useGetDatabaseListV2Query, useLazyGetDatabaseListV2Query } =
     workloadFactoryResourceApiV2;
@@ -1159,5 +1180,6 @@ export const {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
-    useOptimizeComputeConfigForBulkMutation
+    useOptimizeComputeConfigForBulkMutation,
+    useOptimizeMaxdopConfigForBulkMutation
 } = getWellApi;

@@ -1,0 +1,624 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+    This template deploys a Postgresql Server standalone instance using FSx for NetApp ONTAP in an existing VPC.
+    This template creates EC2 instances and the required resources. You will be billed for AWS resources if you create a stack from this template.
+
+Parameters:
+    Ec2RoleName:
+        Default: AmazonEC2RoleForLaunchWizard
+        Description: EC2 instance role name.
+        Type: String
+    KeyPairName:
+        Description: Name of an existing EC2 key pair. All instances will launch with this key pair.
+        Type: AWS::EC2::KeyPair::KeyName
+    PrivateSubnet1ID:
+        Description: ID of private subnet in an Availability Zone 1 for the workload (For example, subnet-a0246dcd).
+        Type: String
+    PrivateSubnet2ID:
+        Description: ID of private subnet in an Availability Zone 2 for the workload (For example, subnet-a0246dcd).
+        Type: String
+    VPCID:
+        Description: ID of your existing VPC for deployment.
+        Type: String
+    VPCCIDR:
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+        ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+        Description: CIDR block for the VPC.
+        Type: String
+    WorkloadInstanceType:
+        Description: EC2 instance type for the workload instances.
+        Type: String
+    NumberOfNodes:
+        Description: The number of PGSQL Server nodes to create.
+        Type: String
+    SQLSvmName:
+        Description: Name of the storage virtual machine (SVM) that will host the PGSQL Server workload.
+        Type: String
+    FSxDataVolumeName:
+        Description: The name of the volume for PGSQL Server data.
+        Type: String
+    FSxLogVolumeName:
+        Description: The name of the volume for the PGSQL Server log.
+        Type: String
+    FSxFileSystemId:
+        Description: ID for the FSx for ONTAP file system.
+        Type: String
+    FSXUsername:
+        Description: Username for the FSx for ONTAP file system.
+        Type: String
+        Default: fsxadmin
+    FSXPassword:
+        Description: Password for the FSx for ONTAP file system.
+        Type: String
+        NoEcho: true
+        Default: netapp1!
+    FSxSVMId:
+        Description: ID of the FSx Storage Virtual Machine
+        Type: String
+    FSxSvmUuid:
+        Description: UUID of the FSx Storage Virtual Machine
+        Type: String
+    FSxReplicaSvmId:
+        Description: ID of the FSx Replica Storage Virtual Machine
+        Type: String
+        Default: ''
+    FSxReplicaSvmUuid:
+        Description: UUID of the FSx Replica Storage Virtual Machine
+        Type: String
+        Default: ''
+    FSxAggrName:
+        Description: Aggregate FSx for ONTAP file system.
+        Type: String
+        Default: aggr1
+    EBSVolumeSize:
+        Description: Size of the EBS Volume in GiB.
+        Type: String
+    AMIID:
+        Description: The AMI ID for the EC2 instances.
+        Type: String
+    SQLVersion:
+        Description: The version of PostgreSQL to install.
+        Type: String
+    SqlFSxServerNetBIOSName:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: SqlFSx1
+        Description: NetBIOS name of the PGSQL Server (up to 15 characters).
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlServerName:
+        Description: Name of the PGSQL Server.
+        Type: String
+    SQLServiceAccountPassword:
+        Description: Password for the PGSQL service account.
+        Type: String
+        NoEcho: true
+    ONTAPSecurityGroupID:
+        Description: ID of the FSx for ONTAP security group.
+        Type: String
+    ParentStackName:
+        Description: Stack name for the parent CloudFormation stack.
+        Type: String
+    EnableCloudWatchLogFeature:
+        Description: Enable CloudWatch Logs feature.
+        Type: String
+        Default: 'true'
+        AllowedValues:
+            - 'true'
+            - 'false'
+    SQLDeploymentMode:
+        Description: PGSQL server deployment mode
+        Type: String
+        Default: 'ha'
+        AllowedValues:
+            - 'ha'
+            - 'standalone'
+Conditions:
+    isGovRegion: !Or
+        - !Equals
+          - us-gov-west-1
+          - !Ref 'AWS::Region'
+        - !Equals
+          - us-gov-east-1
+          - !Ref 'AWS::Region'
+    CreateNewRole: !Equals
+        - !Ref 'Ec2RoleName'
+        - ''
+    LogFeatureEnabled: !Equals
+        - !Ref 'EnableCloudWatchLogFeature'
+        - 'true'
+    IsHACluster: !Equals
+        - !Ref 'SQLDeploymentMode'
+        - 'ha'
+Resources:
+    LaunchWizardSqlFSxProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Roles:
+                - !Ref Ec2RoleName
+            Path: /
+    NetworkInterface1:
+        Type: AWS::EC2::NetworkInterface
+        Properties:
+            SecondaryPrivateIpAddressCount: 2
+            SubnetId: !Ref 'PrivateSubnet1ID'
+            GroupSet: !Split
+                - ','
+                - !Join
+                    - ','
+                    -   - !Ref 'WorkloadSecurityGroup'
+                        - !Ref 'ONTAPSecurityGroupID'
+            Tags:
+                -   Key: Name
+                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                -   Key: SQLServerName
+                    Value: !Ref 'SqlServerName'
+    SqlNode1:
+        Type: AWS::EC2::Instance
+        CreationPolicy:
+            ResourceSignal:
+                Count: '1'
+                Timeout: PT30M
+        Metadata:
+            AWS::CloudFormation::Init:
+                configSets:
+                    config:
+                        - InstallSSMAgent
+                        - CreateDeploymentFolders
+                        - ConfigureCWLogs
+                        - FetchResources
+                        - ScriptSignatureVerificationandExtract
+                        - Configure
+                        - Finalize
+                InstallSSMAgent:
+                    commands:
+                        a-install-ssm-agent:
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
+                                done
+                        b-install-cloudwatch-agent:
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
+                CreateDeploymentFolders:
+                    commands:
+                        a-create-scripts-folder:
+                            command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {{{ PgsqlCloudWatchConfig }}}
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
+                FetchResources:
+                    files:
+                        /home/ec2-user/cfn/scripts/verify-signature.sh:
+                            source: {{{ ScriptVerifySignature }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/unzip-archive.sh:
+                            source: {{{ ScriptUnzipArchive }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/common.zip:
+                            source: {{{ ScriptCommon }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/setup.zip:
+                            source: {{{ ScriptSetup }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/fsx_certs.zip:
+                            source: {{{ FsxCertificates }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/pgvector.zip:
+                            source: {{{ PGSQLPackages }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        a-change-to-sudo-user:
+                            command: sudo su
+                        b-unpack-signatures:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
+                        c-verify-common-signature:
+                            command: !Sub '/home/ec2-user/cfn/scripts/verify-signature.sh
+                                    -f /home/ec2-user/cfn/scripts/common.zip
+                                    -s /home/ec2-user/cfn/signig_files/common.zip.sig
+                                    -p /home/ec2-user/cfn/signig_files/common.zip.pub
+                                    -r SqlNode1
+                                    -n ${AWS::StackName}'
+                        d-unpack-common-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/common.zip -d /home/ec2-user/cfn/scripts
+                        e-verify-setup-signature:
+                            command: !Sub '/home/ec2-user/cfn/scripts/verify-signature.sh
+                                    -f /home/ec2-user/cfn/scripts/setup.zip
+                                    -s /home/ec2-user/cfn/signig_files/setup.zip.sig 
+                                    -p /home/ec2-user/cfn/signig_files/setup.zip.pub
+                                    -r SqlNode1
+                                    -n ${AWS::StackName}'
+                        f-unpack-setup-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/setup.zip -d /home/ec2-user/cfn/scripts
+                        g-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                        h-unpack-pgvector:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn
+                Configure:
+                    commands:
+                        a-configure-ontap:
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/setup/configure-ontap.sh
+                                    -f ${FSxFileSystemId}
+                                    -r ${AWS::Region}
+                                    -s ${FSxSVMId}
+                                    -n ${SQLSvmName}
+                                    -a ${FSxAggrName}
+                                    -d ${FSxDataVolumeName}
+                                    -l ${FSxLogVolumeName}
+                                    -v ${svmUuid}
+                                    -p ${parentStackName}'
+                                -   FSxFileSystemId: !Ref 'FSxFileSystemId'
+                                    FSxSVMId: !Ref 'FSxSVMId'
+                                    SQLSvmName: !Ref 'SQLSvmName'
+                                    FSxAggrName: !Ref 'FSxAggrName'
+                                    FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                    FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                                    svmUuid: !Ref 'FSxSvmUuid'
+                                    parentStackName: !Ref 'ParentStackName'
+                        b-configure-pgsql:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/setup/configure-pgsql.sh
+                                    -d ${FSxDataVolumeName}
+                                    -l ${FSxLogVolumeName}
+                                    -v ${SQLVersion}
+                                    -w ${SqlServiceAccountPassword}'
+                                -   FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                    FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                                    SQLVersion: !Ref 'SQLVersion'
+                                    SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                        c-configure-replication:
+                            command: !If
+                                - IsHACluster
+                                - !Sub
+                                    - '/home/ec2-user/cfn/scripts/setup/configure-replica-primary.sh 
+                                        -a ${AWS::StackName} 
+                                        -b ${SqlServiceAccountPassword} 
+                                        -c ${FSxDataVolumeName}'
+                                    -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                                        FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                - 'echo "Skipping c-configure-replication because IsHACluster is false."'
+                        d-rename-host:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
+                                - SqlServerName: !Ref 'SqlServerName'
+                        e-restart-host:
+                            command: sudo reboot
+                Finalize:
+                    commands:
+                        a-signal-resource:
+                            command: !Sub 'cfn-signal -e $? --resource SqlNode1 --stack ${AWS::StackName} --region ${AWS::Region}'
+                            
+        Properties:
+            IamInstanceProfile: !Ref LaunchWizardSqlFSxProfile
+            InstanceType: !Ref WorkloadInstanceType
+            ImageId: !Ref AMIID
+            Tags:
+                -   Key: Name
+                    Value: !Ref 'SqlFSxServerNetBIOSName'
+            BlockDeviceMappings:
+                -   DeviceName: /dev/sda1
+                    Ebs:
+                        VolumeSize: !Ref EBSVolumeSize
+                        VolumeType: gp3
+            KeyName: !Ref KeyPairName
+            NetworkInterfaces:
+                -   NetworkInterfaceId: !Ref 'NetworkInterface1'
+                    DeviceIndex: 0
+            UserData:
+                'Fn::Base64':
+                    !Sub |
+                        #!/bin/bash -xe
+                        token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+                        echo "Token: $token"
+                        instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+                        echo "Instance ID: $instanceID"
+                        privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
+                        FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
+                        url=https://cloudformation.${AWS::Region}.amazonaws.com
+                        StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
+                        echo "Status code: $StatusCode"
+                        if [ "$StatusCode" != "200" ]; then
+                            echo $FailureReason
+                            aws cloudformation signal-resource --stack ${AWS::StackName} --logical-resource-id SqlNode1 --status FAILURE --reason "$FailureReason" --region ${AWS::Region}
+                            exit 1
+                        else
+                            echo "CF endpoint is reachable."
+                            aws ssm put-parameter --name "/netapp/wlmdb/${AWS::StackName}_primary" --value "{private_ip: '$privateIP'}" --type String
+                            echo "Ssm parameter created"
+                            /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource SqlNode1 --region ${AWS::Region}
+                        fi
+    NetworkInterface2:
+        Type: AWS::EC2::NetworkInterface
+        Condition: IsHACluster
+        Properties:
+            SecondaryPrivateIpAddressCount: 2
+            SubnetId: !Ref 'PrivateSubnet2ID'
+            GroupSet: !Split
+                - ','
+                - !Join
+                    - ','
+                    -   - !Ref 'WorkloadSecurityGroup'
+                        - !Ref 'ONTAPSecurityGroupID'
+            Tags:
+                -   Key: Name
+                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                -   Key: SQLServerName
+                    Value: !Ref 'SqlServerName'
+    SqlNode2:
+        Type: AWS::EC2::Instance
+        Condition: IsHACluster
+        CreationPolicy:
+            ResourceSignal:
+                Count: '1'
+                Timeout: PT30M
+        Metadata:
+            AWS::CloudFormation::Init:
+                configSets:
+                    config:
+                        - InstallSSMAgent
+                        - CreateDeploymentFolders
+                        - ConfigureCWLogs
+                        - FetchResources
+                        - ScriptSignatureVerificationandExtract
+                        - Configure
+                        - Finalize
+                InstallSSMAgent:
+                    commands:
+                        a-install-ssm-agent:
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
+                                done
+                        b-install-cloudwatch-agent:
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
+                CreateDeploymentFolders:
+                    commands:
+                        a-create-scripts-folder:
+                            command: !Sub 'mkdir -p /home/ec2-user/cfn/scripts'
+                        b-create-logs-folder:
+                            command: !Sub 'sudo mkdir -p /var/log/netapp_wf'
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {{{ PgsqlCloudWatchConfig }}}
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
+                FetchResources:
+                    files:
+                        /home/ec2-user/cfn/scripts/verify-signature.sh:
+                            source: {{{ ScriptVerifySignature }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/unzip-archive.sh:
+                            source: {{{ ScriptUnzipArchive }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/signig_files.zip:
+                            source: {{{ ArtifactsSignatures }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/common.zip:
+                            source: {{{ ScriptCommon }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/scripts/setup.zip:
+                            source: {{{ ScriptSetup }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/fsx_certs.zip:
+                            source: {{{ FsxCertificates }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                        /home/ec2-user/cfn/pgvector.zip:
+                            source: {{{ PGSQLPackages }}}
+                            mode: '000755'
+                            owner: ec2-user
+                            group: ec2-user
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        a-change-to-sudo-user:
+                            command: sudo su
+                        b-unpack-signatures:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/signig_files.zip -d /home/ec2-user/cfn
+                        c-verify-common-signature:
+                            command: !Sub '/home/ec2-user/cfn/scripts/verify-signature.sh
+                                    -f /home/ec2-user/cfn/scripts/common.zip
+                                    -s /home/ec2-user/cfn/signig_files/common.zip.sig
+                                    -p /home/ec2-user/cfn/signig_files/common.zip.pub
+                                    -r SqlNode2
+                                    -n ${AWS::StackName}'
+                        d-unpack-common-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/common.zip -d /home/ec2-user/cfn/scripts
+                        e-verify-setup-signature:
+                            command: !Sub '/home/ec2-user/cfn/scripts/verify-signature.sh
+                                    -f /home/ec2-user/cfn/scripts/setup.zip
+                                    -s /home/ec2-user/cfn/signig_files/setup.zip.sig 
+                                    -p /home/ec2-user/cfn/signig_files/setup.zip.pub
+                                    -r SqlNode2
+                                    -n ${AWS::StackName}'
+                        f-unpack-setup-scripts:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/scripts/setup.zip -d /home/ec2-user/cfn/scripts
+                        g-unpack-fsx-certificates:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn
+                        h-unpack-pgvector:
+                            command: /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn
+                Configure:
+                    commands:
+                        a-configure-ontap:
+                            command: !Sub 
+                                - '/home/ec2-user/cfn/scripts/setup/configure-ontap.sh
+                                    -f ${FSxFileSystemId}
+                                    -r ${AWS::Region}
+                                    -s ${FSxSVMId}
+                                    -n ${SQLSvmName}
+                                    -a ${FSxAggrName}
+                                    -d ${FSxDataVolumeName}
+                                    -l ${FSxLogVolumeName}
+                                    -v ${svmUuid}
+                                    -p ${parentStackName}'
+                                -   FSxFileSystemId: !Ref 'FSxFileSystemId'
+                                    FSxSVMId: !Ref 'FSxReplicaSvmId'
+                                    SQLSvmName: !Sub "${SQLSvmName}_replica"
+                                    FSxAggrName: !Ref 'FSxAggrName'
+                                    FSxDataVolumeName: !Sub "${FSxDataVolumeName}_replica"
+                                    FSxLogVolumeName: !Sub "${FSxLogVolumeName}_replica"
+                                    svmUuid: !Ref 'FSxReplicaSvmUuid'
+                                    parentStackName: !Ref 'ParentStackName'
+                        b-configure-pgsql:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/setup/configure-pgsql.sh
+                                    -d ${FSxDataVolumeName}
+                                    -l ${FSxLogVolumeName}
+                                    -v ${SQLVersion}
+                                    -w ${SqlServiceAccountPassword}'
+                                -   FSxDataVolumeName: !Sub "${FSxDataVolumeName}_replica"
+                                    FSxLogVolumeName: !Sub "${FSxLogVolumeName}_replica"
+                                    SQLVersion: !Ref 'SQLVersion'
+                                    SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                        c-configure-replication:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/setup/configure-replica-secondary.sh
+                                    -a ${AWS::StackName}
+                                    -b ${SqlServiceAccountPassword}
+                                    -c ${FSxDataVolumeName}
+                                    -d ${FSxLogVolumeName}'
+                                -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                                    FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                    FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                        d-rename-host:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
+                                - SqlServerName: !Ref 'SqlServerName'
+                        e-restart-host:
+                            command: sudo reboot
+                Finalize:
+                    commands:
+                        a-signal-resource:
+                            command: !Sub 'cfn-signal -e $? --resource SqlNode2 --stack ${AWS::StackName} --region ${AWS::Region}'
+        Properties:
+            IamInstanceProfile: !Ref LaunchWizardSqlFSxProfile
+            InstanceType: !Ref WorkloadInstanceType
+            ImageId: !Ref AMIID
+            Tags:
+                -   Key: Name
+                    Value: !Ref 'SqlFSxServerNetBIOSName'
+            BlockDeviceMappings:
+                -   DeviceName: /dev/sda1
+                    Ebs:
+                        VolumeSize: !Ref EBSVolumeSize
+                        VolumeType: gp3
+            KeyName: !Ref KeyPairName
+            NetworkInterfaces:
+                -   NetworkInterfaceId: !Ref 'NetworkInterface2'
+                    DeviceIndex: 0
+            UserData:
+                'Fn::Base64':
+                    !Sub |
+                        #!/bin/bash -xe
+                        token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
+                        echo "Token: $token"
+                        instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
+                        echo "Instance ID: $instanceID"
+                        privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
+                        MAC=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n 1)
+                        subnetCidr=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/subnet-ipv4-cidr-block)
+                        prefix=$(echo $subnetCidr | cut -d'/' -f2)
+                        privateIPWithCidr="$privateIP/$prefix"
+                        FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
+                        url=https://cloudformation.${AWS::Region}.amazonaws.com
+                        StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
+                        echo "Status code: $StatusCode"
+                        if [ "$StatusCode" != "200" ]; then
+                            echo $FailureReason
+                            aws cloudformation signal-resource --stack ${AWS::StackName} --logical-resource-id SqlNode2 --status FAILURE --reason "$FailureReason" --region ${AWS::Region}
+                            exit 1
+                        else
+                            echo "CF endpoint is reachable."
+                            aws ssm put-parameter --name "/netapp/wlmdb/${AWS::StackName}_secondary" --value "{private_ip: '$privateIPWithCidr'}" --type String
+                            echo "Ssm parameter created"
+                            /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource SqlNode2 --region ${AWS::Region}
+                        fi
+    WorkloadSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow access to the Workload instances
+            VpcId: !Ref VPCID
+            SecurityGroupIngress:
+                -   IpProtocol: tcp
+                    FromPort: 22
+                    ToPort: 22
+                    CidrIp: 10.0.0.0/16  # Replace with Subnet CIDR
+                -   IpProtocol: tcp
+                    FromPort: 2049
+                    ToPort: 2049
+                    CidrIp: 10.0.0.0/16  # Replace with Subnet CIDR
+                -   IpProtocol: tcp
+                    FromPort: 5432
+                    ToPort: 5432
+                    CidrIp:  10.0.0.0/16 # Replace with Subnet CIDR
+Outputs:
+    SqlNodeIp1:
+        Description: Private IP of PgSql Instance
+        Value: !GetAtt SqlNode1.PrivateIp
+    SqlNodeId1:
+        Description: Id of PgSql Instance
+        Value: !Ref SqlNode1
+    SqlNodeIp2:
+        Condition: IsHACluster
+        Description: Private IP of PgSql Instance
+        Value: !GetAtt SqlNode2.PrivateIp
+    SqlNodeId2:
+        Condition: IsHACluster
+        Description: Id of PgSql Instance
+        Value: !Ref SqlNode2

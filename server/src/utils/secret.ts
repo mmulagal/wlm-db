@@ -39,11 +39,13 @@ export default async function initiateSecrets() {
                 if (secretName === SECRETS_MANAGER_KEYS.DATABASE_URL) {
                     process.env[SECRETS_MANAGER_KEYS.DATABASE_URL] = secret || process.env.DATABASE_URL;
                     logger.info('<initiateSecrets> DATABASE_URL:', process.env.DATABASE_URL);
+                    process.env.DATABASE_URL = `${process.env.DATABASE_URL}&connection_limit=25`;
+                    logger.info('<add connection limit> DATABASE_URL:', process.env.DATABASE_URL);
                 }
             }
         })
     );
     if (isDemo()) {
-        logger.info('Secrets initiated in demo:', SECRETS);
+        logger.info('Secrets initiated in demo');
     }
 }

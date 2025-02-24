@@ -481,24 +481,29 @@ function processEbsDisks(disks: EBSClassification[]) {
             const storageAmountPerDiskType = totalStorageAmountPerDiskType / volumeNumber;
             let storageAmount = Math.max(storageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
             switch (volumeType) {
-                case 'io2':
+                case 'io2': {
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 4), sizeInGigaBytes(64, 'TiB')); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.min(Math.max(volumeIops, 100), 256000); // Minimum IOPS is 100, max 256,000
+                    throughput = 0; // Throughput is not applicable for io1
+                    break;
+                }
                 case 'io1': {
-                    storageAmount = Math.max(storageAmountPerDiskType, 4); // Minimum volume size is 4 GiB for io1
-                    volumeIops = Math.max(volumeIops, 100); // Minimum IOPS is 100
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 4), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 4 GiB for io1
+                    volumeIops = Math.min(Math.max(volumeIops, 100), 64000); // Minimum IOPS is 100 , max 64,000
                     throughput = 0; // Throughput is not applicable for io1
                     break;
                 }
                 case 'st1': {
-                    storageAmount = Math.max(storageAmountPerDiskType, 125); // Minimum volume size is 125 GiB for st1
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 125), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 125, max 16TiB GiB for st1
                     volumeIops = 0; // IOPS is not applicable for st1
                     throughput = 0; // Minimum throughput is 125
                     break;
                 }
                 case 'gp3':
                 default: {
-                    volumeIops = Math.max(volumeIops || 0, 3000); // Minimum IOPS is 3000
-                    throughput = Math.max(throughput, 125); // Minimum throughput is 125
-                    storageAmount = Math.max(storageAmountPerDiskType, 1); // Minimum volume size is 1 GiB
+                    volumeIops = Math.min(Math.max(volumeIops, 3000), 16000); // Minimum IOPS is 3000
+                    throughput = Math.min(Math.max(throughput, 125), 1000); // Minimum throughput is 125 , max is 1000
+                    storageAmount = Math.min(Math.max(storageAmountPerDiskType, 1), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 1 GiB
                     break;
                 }
             }
@@ -1373,5 +1378,6 @@ export {
     getOnpremLicenseRecommendations,
     deriveInstanceRequirements,
     getOnPremResourceExploreSavings,
-    saveReportInReportingRegistry
+    saveReportInReportingRegistry,
+    processEbsDisks
 };

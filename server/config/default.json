@@ -102,6 +102,7 @@
         "bucket-name": "staging.reports.data-services.tlveng.netapp.com"
     },
     "notification": {
-        "senderEmail": "ng-wlm-fsx@netapp.com"
+        "sender-email": "calculator@console.workloads.netapp.com",
+        "max-emails-per-day": 20
     }
 }

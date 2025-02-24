@@ -17,6 +17,7 @@ import {
     setCloudWatch,
     setDBVersion,
     setSelectConfig,
+    setSelectedDBDeploymentModel,
     setSelectedDBEdition,
     setSnapshotPolicyToggle,
     setSNSARN,
@@ -25,7 +26,7 @@ import {
 } from '../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../store/storeHooks';
-import { DEFAULT_MASTER_KEY } from '../../../utils/consts';
+import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 import {
     selectDefaultEncryption,
     selectDefaultInstanceType,
@@ -41,6 +42,7 @@ import {
     setPostgreServerName,
     setPostgreVersion
 } from '../../../store/postgre/postgreFormSlice';
+import { setSelectedDeploymentModel } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const PreviewDefaultPostgres = () => {
     const dispatch = useDispatch();
@@ -62,12 +64,15 @@ const PreviewDefaultPostgres = () => {
     const encryptionType = useAppSelector(state => state.mssqlForm.encryption?.encryptionType);
     const encryptionArn = useAppSelector(state => state.mssqlForm.encryption?.encryptionArn);
 
-    //Postgre
-    const deploymentModel = useAppSelector(state => state.postgreForm.postgreDeploymentType);
-
     useEffect(() => {
         if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
             selectDefaultSecurityGroup(dispatch);
+            dispatch(
+                setSelectedDBDeploymentModel({
+                    label: GENERAL.FAILOVER_CLUSTER,
+                    value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                })
+            );
             dispatch(
                 //@ts-ignore
                 setPostgreOperatingSystem(generatePGSQLOperatingSystem())
@@ -128,7 +133,7 @@ const PreviewDefaultPostgres = () => {
         },
         {
             accordionName: GENERAL.DATABASE_DEPLOYMENT_MODEL,
-            defaultValue: deploymentModel,
+            defaultValue: GENERAL.HIGH_AVAILABILITY,
             editable: GENERAL.NO,
             id: '3'
         },

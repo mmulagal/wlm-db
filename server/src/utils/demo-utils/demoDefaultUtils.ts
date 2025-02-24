@@ -11,7 +11,12 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
-import { saveFciConfigurationData, savePGSQLConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
+import {
+    saveFciConfigurationData,
+    savePGSQLConfigurationData,
+    savePGSQLHaConfigurationData,
+    saveStandaloneConfigurationData
+} from './demoMockdata';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -116,6 +121,16 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
         configName
     );
     saveConfig(accountId, 'SYSTEM', configName, standalonePostgresData, 'pgsql');
+
+    configName = 'PostgreSQL HA deployment in us-east';
+    const haDeploymentPostgresData = savePGSQLHaConfigurationData(
+        'us-east-1',
+        awsAccountId,
+        credentialsId,
+        'haDB',
+        configName
+    );
+    saveConfig(accountId, 'SYSTEM', configName, haDeploymentPostgresData, 'pgsql');
 }
 
 async function createDemoResourcesPerRegion(

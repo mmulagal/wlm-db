@@ -430,6 +430,20 @@
                               "i-p9o5n2m4l8k6j7h",
                               "i-p9o5n2m4l8k6byol"
                             ]
+                        },
+                        "resiliency": {
+                            "snapshotPolicy": {
+                                "timestamp": 1740049582000,
+                                "tags": [
+                                    "Reliability"
+                                ],
+                                "violations": ["testing"],
+                                "severity": "warning",
+                                "status": "optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": 4,
+                                "totalObjectsInViolation": 1
+                            }
                         }
                     }
                 },
@@ -865,6 +879,20 @@
                               "i-p9o5n2m4l8k6j7h",
                               "i-p9o5n2m4l8k6byol"
                             ]
+                        },
+                        "resiliency": {
+                            "snapshotPolicy": {
+                                "timestamp": 1740049582000,
+                                "tags": [
+                                    "Reliability"
+                                ],
+                                "violations": ["testing"],
+                                "severity": "warning",
+                                "status": "optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": 4,
+                                "totalObjectsInViolation": 1
+                            }
                         }
                     }
                 },
@@ -1293,6 +1321,20 @@
                               "i-p9o5n2m4l8k6j7h",
                               "i-p9o5n2m4l8k6byol"
                             ]
+                        },
+                        "resiliency": {
+                            "snapshotPolicy": {
+                                "timestamp": 1740049582000,
+                                "tags": [
+                                    "Reliability"
+                                ],
+                                "violations": ["testing"],
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": 4,
+                                "totalObjectsInViolation": 1
+                            }
                         }
                     }
                 },
@@ -1731,6 +1773,20 @@
                               "i-p9o5n2m4l8k6j7h",
                               "i-p9o5n2m4l8k6byol"
                             ]
+                        },
+                        "resiliency": {
+                            "snapshotPolicy": {
+                                "timestamp": 1740049582000,
+                                "tags": [
+                                    "Reliability"
+                                ],
+                                "violations": ["testing"],
+                                "severity": "warning",
+                                "status": "optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": 4,
+                                "totalObjectsInViolation": 1
+                            }
                         }
                     }
                 },
@@ -2159,6 +2215,20 @@
                               "i-p9o5n2m4l8k6j7h",
                               "i-p9o5n2m4l8k6byol"
                             ]
+                        },
+                        "resiliency": {
+                            "snapshotPolicy": {
+                                "timestamp": 1740049582000,
+                                "tags": [
+                                    "Reliability"
+                                ],
+                                "violations": ["testing"],
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": 4,
+                                "totalObjectsInViolation": 1
+                            }
                         }
                     }
                 },
@@ -2587,6 +2657,20 @@
                               "i-p9o5n2m4l8k6j7h",
                               "i-p9o5n2m4l8k6byol"
                             ]
+                        },
+                        "resiliency": {
+                            "snapshotPolicy": {
+                                "timestamp": 1740049582000,
+                                "tags": [
+                                    "Reliability"
+                                ],
+                                "violations": ["testing"],
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": 4,
+                                "totalObjectsInViolation": 1
+                            }
                         }
                     }
                 },

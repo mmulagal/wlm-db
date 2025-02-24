@@ -52,14 +52,11 @@ router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
     }, 3000);
 });
 
-router.get(
-    `${BASE_URL}/v1/jobs/summary/timeline`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, JobsSummaryTimeline['30']);
-        }, 3000);
-    }
-);
+router.get(`${BASE_URL}/v1/jobs/summary/timeline`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, JobsSummaryTimeline['30']);
+    }, 3000);
+});
 
 router.post(`${BASE_URL}/v1/mssql/cloudformation/template`, async (req: {}, res: any) => {
     setTimeout(() => {
@@ -68,6 +65,12 @@ router.post(`${BASE_URL}/v1/mssql/cloudformation/template`, async (req: {}, res:
 });
 
 router.post(`${BASE_URL}/v1/mssql/terraform/setup`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, Templates);
+    }, 3000);
+});
+
+router.post(`${BASE_URL}/v1/pgsql/terraform/setup`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, Templates);
     }, 3000);

@@ -14,6 +14,7 @@ export interface GetWellSliceInterface {
         storage?: CountBreakDown;
         compute?: CountBreakDown;
         application?: CountBreakDown;
+        resiliency?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -59,6 +60,9 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
+    resiliency?: {
+        snapshotPolicy?: PerConfigInterface;
+    };
 }
 
 export interface HostAssessmentResponseInterface {
@@ -90,6 +94,10 @@ export interface PerConfigInterface {
     errorMessage?: string;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    resourceType?: string;
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
+    violationDetails?: any;
     ec2InstancesToPatch?: Array<{
         baselineId?: string;
         criticalNonCompliantCount?: number;
@@ -161,10 +169,13 @@ export interface GwPerConfigCardInterface {
         value: string;
         smallFont?: boolean;
     };
+    block_five?: any;
+    block_six?: any;
     recommendation?: {
         title: string;
         description?: string;
         values?: string[] | undefined;
+        valuesHeading?: string;
         descriptionList?: Array<{ title: string; description: string }> | undefined;
         descriptionRssConfig?: {
             first?: string;

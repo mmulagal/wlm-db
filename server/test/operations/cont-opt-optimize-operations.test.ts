@@ -8,7 +8,7 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
 import '../simulator/scopes/aws/compute-optimizer-scope';
 
-import { optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
+import { optimizeMaxDop, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
@@ -60,12 +60,50 @@ beforeAll(async () => {
             creation_time: new Date(),
             last_updated: new Date(),
             config_data: {
+                maxdop: {
+                    current: '4',
+                    recommendedMaxDOP: '4'
+                },
                 os: {
                     'mpio-enabled': true,
                     'mpio-iscsi-count': '5',
                     'ntfs-allocation-details': {},
                     'mpio-load-balance-policy': 'RR',
-                    'ntfs-allocation-unit-size': 65536
+                    'ntfs-allocation-unit-size': 65536,
+                    'mpio-load-balance-policy-details': [
+                        {
+                            disk: 'Disk 4',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 1',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 8',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 2',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 3',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 5',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 6',
+                            policy: 'RR'
+                        },
+                        {
+                            disk: 'Disk 7',
+                            policy: 'RR'
+                        }
+                    ]
                 },
                 luns: [
                     {
@@ -105,7 +143,24 @@ beforeAll(async () => {
                     'default-data-files-location': 'separate-drive'
                 },
                 sizing: {
-                    'performance-tier': [100, 100, 100],
+                    'performance-tier': [
+                        {
+                            volumeName: 'wlmdb_sqldata_1740015122754',
+                            performanceTierPercent: 100
+                        },
+                        {
+                            volumeName: 'wlmdb_sqldata_1740027207',
+                            performanceTierPercent: 100
+                        },
+                        {
+                            volumeName: 'wlmdb_sqllog_1740027207',
+                            performanceTierPercent: 100
+                        },
+                        {
+                            volumeName: 'wlmdb_sqltemp_1740015122754',
+                            performanceTierPercent: 100
+                        }
+                    ],
                     'data-log-drive-details': [
                         {
                             databaseName: 'casaba',
@@ -210,7 +265,25 @@ beforeAll(async () => {
             config_data_type: AssessmentCategories.STORAGE
         }
     ];
+
+    const DatabaseInstanceMaxDOPConfigDataRecords = [
+        {
+            resource_id: RESOURCE_ID,
+            account_id: ACCOUNT_ID,
+            credentials_id: CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            database_instance_id: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            creation_time: new Date(),
+            last_updated: new Date(),
+            config_data: {
+                current: '4',
+                recommendedMaxDOP: '4'
+            },
+            config_data_type: AssessmentCategories.MAXDOP
+        }
+    ];
     await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
+    await createDatabaseInstanceConfigData(DatabaseInstanceMaxDOPConfigDataRecords);
 });
 
 afterAll(async () => {
@@ -257,6 +330,19 @@ describe('Continuous optimization optimize operations', () => {
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
             'm5.large'
+        );
+
+        expect(response.jobId).toBeDefined();
+    });
+
+    it('Optimize max dop', async () => {
+        const response = await optimizeMaxDop(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            'test-jobid'
         );
 
         expect(response.jobId).toBeDefined();

@@ -4,7 +4,12 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { getAllClusterNodeDetails } from '../database-hosts-operations';
-import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../aws/mssqlPatch-ssm-operations';
 import { listResources, updateResourceMetaData } from '../../lib/database/db';
@@ -34,10 +39,16 @@ async function calculateMSSQLPatchDrift(
         databaseHostId
     });
     let errorMessage = '';
+    let patchAssessment: MSSQLPatchAssessmentObject[] = [];
+    let metadata;
     try {
-        let patchAssessment: MSSQLPatchAssessmentObject[] = [];
-
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating mssql patch drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+    try {
         const metadataObject = metadata as unknown as Metadata;
         const { assessment: { mssqlPatch } = {} } = metadataObject;
         logger.info('MSSQL patch assessment from metadata', mssqlPatch);
@@ -71,7 +82,8 @@ async function calculateMSSQLPatchDrift(
             const existingAssessmentData = (metadata as unknown as Metadata).assessment;
             (metadata as unknown as Metadata).assessment = {
                 ...existingAssessmentData,
-                mssqlPatch: patchAssessment
+                mssqlPatch: patchAssessment,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -104,11 +116,20 @@ async function calculateMSSQLPatchDrift(
             severity,
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-            objectsInViolation
+            objectsInViolation,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error: any) {
         errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, mssqlPatch: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }

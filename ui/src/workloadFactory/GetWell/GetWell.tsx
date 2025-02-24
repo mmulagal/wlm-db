@@ -267,6 +267,12 @@ const GetWell = () => {
                 label: GENERAL.APPLICATION,
                 value: 'Application_sub',
                 category: GENERAL.APPLICATION
+            },
+            {
+                id: 5,
+                label: 'Protection',
+                value: 'Protection',
+                category: GENERAL.RESILIENCY
             }
         ];
         const filteredOptions = selectedCategories.length
@@ -533,6 +539,11 @@ const GetWell = () => {
                                                             id: 2,
                                                             label: GENERAL.APPLICATION,
                                                             value: 'Application'
+                                                        },
+                                                        {
+                                                            id: 3,
+                                                            label: GENERAL.RESILIENCY,
+                                                            value: 'Resiliency'
                                                         }
                                                     ]}
                                                     selectionType="multi"
@@ -1996,6 +2007,91 @@ const GetWell = () => {
                                             ]}
                                             children={
                                                 <RecommendationText data={filteredCardData?.maxdop?.recommendation} />
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section six */}
+                    {filteredCardData?.scheduled_local_snapshot && (
+                        <div className={styles.sectionClass}>
+                            <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
+                                <DsTypography
+                                    style={{
+                                        padding: '0 0 8px'
+                                    }}
+                                    variant="Semibold_16"
+                                >
+                                    {GENERAL.RESILIENCY}
+                                </DsTypography>
+                            </div>
+
+                            <div className={styles.accordionGroups}>
+                                {filteredCardData?.scheduled_local_snapshot && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.scheduled_local_snapshot}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
+                                        />
+                                        <DsAccordion
+                                            id="17"
+                                            variant="Default"
+                                            isDisabled={
+                                                loading || !cardData?.scheduled_local_snapshot?.block_two?.value
+                                            }
+                                            isExpanded={isAccordionExpanded('17', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('17', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('17')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.scheduled_local_snapshot?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ||
+                                                        !cardData?.scheduled_local_snapshot?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.scheduled_local_snapshot?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={filteredCardData?.scheduled_local_snapshot?.recommendation}
+                                                />
                                             }
                                         />
                                     </div>

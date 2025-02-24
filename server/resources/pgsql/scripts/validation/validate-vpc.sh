@@ -6,6 +6,7 @@ subnet=$1
 region=$2
 Stackname=$3
 ResourceId=$4
+IsTerraform=$5
 
 echo "subnet: $subnet, region: $region, Stackname: $Stackname, ResourceId: $ResourceId"
 
@@ -37,7 +38,9 @@ done
 if [ $failed = true ]; then
     FailureReason="Failed to connect to AWS Cloud Formation endpoint. Check if the security group allows HTTPS(443) tcp port and subnet is associated with the endpoint."
     echo "{\"status\": \"Failed\", \"reason\": \"$FailureReason\"}" | jq -c .
-    cfn-signal -e 1 -r "$FailureReason" --stack $Stackname --resource $ResourceId --region $region --id $instanceId
+    if [ "$IsTerraform" != "true" ]; then
+       cfn-signal -e 1 -r "$FailureReason" --stack $Stackname --resource $ResourceId --region $region --id $instanceId
+    fi
     sleep 60
     exit 1
 else

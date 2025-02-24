@@ -16,7 +16,13 @@ import {
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
-import { AuditStatus, ASSESSMENT_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    AuditStatus,
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
+} from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
 import {
@@ -33,6 +39,7 @@ import {
     LicenseDriftResponseType,
     MSSQLPatchDriftResponseType,
     ParameterDriftResponseType,
+    ResilienceDriftAssessmentResponseType,
     RssConfigDriftResponseType
 } from '../routes/types/continuous-optimization.types';
 import { getInstanceInfo } from './database/database-operations';
@@ -65,6 +72,7 @@ import {
     calculateMSSQLPatchDrift,
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
+import { getResilienceDriftAssessment } from './continuous-optimization/resilience-assessment-operation';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -246,7 +254,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 compute: computeAssessment || undefined,
                 hostOsPatch: hostOsPatchAssessment || undefined,
                 rssConfig: rssConfigAssessment || undefined,
-                mssqlPatch: mssqlPatchAssessment || undefined
+                mssqlPatch: mssqlPatchAssessment || undefined,
+                lastAssessedDate: new Date().getTime().toString()
             };
             updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
         }
@@ -264,7 +273,8 @@ async function initiateStorageAssessmentCollection(
     region: string,
     databaseHostId: string,
     jobId: string,
-    instanceRecord: WorkloadInstance
+    instanceRecord: WorkloadInstance,
+    jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
 ) {
     logger.info('Initiating storage assessment data collection', {
         accountId,
@@ -318,7 +328,6 @@ async function initiateStorageAssessmentCollection(
     );
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
-
     await createDatabaseInstanceConfigData([
         {
             account_id: accountId,
@@ -341,37 +350,57 @@ async function initiateStorageAssessmentCollection(
         : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
         ? JOBSTATUS.COMPLETED
         : JOBSTATUS.WARNING;
+    if (
+        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
+    ) {
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage configuration assessment',
+            description: 'Storage configuration assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: configJobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage sizing assessment',
+            description: 'Storage sizing assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+    }
 
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage configuration assessment',
-        description: 'Storage configuration assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: configJobStatus,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage layout assessment',
-        description: 'Storage layout assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage sizing assessment',
-        description: 'Storage sizing assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
+    if (
+        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
+    ) {
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Resiliency assessment',
+            description: 'Snapshot policy assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: configJobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+    }
 }
 
 async function driftAssessmentDataCollection(
@@ -400,17 +429,21 @@ async function driftAssessmentDataCollection(
     let shouldRunRssConfigAssessment = false;
     let shouldRunMAXDOPAssessment = false;
     let shouldRunMSSQLPatchAssessment = false;
+    let shouldRunResilienceAssessment = false;
     let fieldsValues: string | string[] = [];
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+        shouldRunStorageAssessment =
+            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
+            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment;
         shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
         shouldRunRssConfigAssessment = fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLocaleLowerCase());
         shouldRunMAXDOPAssessment = fieldsValues?.includes(AssessmentCategories.MAXDOP.toLocaleLowerCase());
         shouldRunMSSQLPatchAssessment = fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase());
+        shouldRunResilienceAssessment = fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase());
     } else {
         fieldsValues = Object.values(AssessmentCategories).map(category => category.toLowerCase());
         shouldRunStorageAssessment = true;
@@ -420,16 +453,22 @@ async function driftAssessmentDataCollection(
         shouldRunRssConfigAssessment = true;
         shouldRunMAXDOPAssessment = true;
         shouldRunMSSQLPatchAssessment = true;
+        shouldRunResilienceAssessment = true;
     }
 
-    if (shouldRunStorageAssessment) {
+    if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
         await initiateStorageAssessmentCollection(
             accountId,
             credentialsId,
             region,
             databaseHostId,
             jobId,
-            databaseInstanceRecord
+            databaseInstanceRecord,
+            !shouldRunResilienceAssessment
+                ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
+                : shouldRunStorageAssessment
+                ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
+                : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
         );
     }
 
@@ -781,11 +820,15 @@ async function fetchDriftAssessment(
     let shouldCalculateRssConfigAssessment = false;
     let shouldCalculateMaxDOPAssessment = false;
     let shouldCalculateMSSQLPatchAssessment = false;
+    let shouldCalculateResilienceAssessment = false;
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
+
+        shouldCalculateStorageAssessment =
+            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
+            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment
         shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
@@ -798,6 +841,9 @@ async function fetchDriftAssessment(
         shouldCalculateMSSQLPatchAssessment = fieldsValues?.includes(
             AssessmentCategories.MSSQL_PATCH.toLocaleLowerCase()
         );
+        shouldCalculateResilienceAssessment = fieldsValues?.includes(
+            AssessmentCategories.RESILIENCY.toLocaleLowerCase()
+        );
     } else {
         shouldCalculateStorageAssessment = true;
         shouldCalculateComputeAssessment = true;
@@ -806,6 +852,7 @@ async function fetchDriftAssessment(
         shouldCalculateRssConfigAssessment = true;
         shouldCalculateMaxDOPAssessment = true;
         shouldCalculateMSSQLPatchAssessment = true;
+        shouldCalculateResilienceAssessment = true;
     }
     const driftAssessmentData: DriftAssessmentResponseType = {};
 
@@ -818,7 +865,8 @@ async function fetchDriftAssessment(
             hostOsPatchAssessmentResponse,
             rssConfigResponse,
             mssqlPatchAssessmentResponse
-        }
+        },
+        resilienceAssessmentResponse
     ] = await Promise.all([
         shouldCalculateStorageAssessment
             ? calculateStorageDrift(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
@@ -832,6 +880,9 @@ async function fetchDriftAssessment(
         shouldCalculateRssConfigAssessment ||
         shouldCalculateMSSQLPatchAssessment
             ? hostLevelDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, fields)
+            : Promise.resolve({}),
+        shouldCalculateResilienceAssessment
+            ? getResilienceDriftAssessment(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
             : Promise.resolve({})
     ]);
 
@@ -881,6 +932,8 @@ async function fetchDriftAssessment(
                     const sizing = sizingConfig as ParameterDriftResponseType;
                     if (sizingConfigsOptimized.includes(sizing.name)) {
                         sizing.status = AssessmentStatus.OPTIMIZED;
+                        sizing.objectsInViolation = [];
+                        sizing.totalObjectsInViolation = 0;
                     }
                     return sizing;
                 });
@@ -940,6 +993,10 @@ async function fetchDriftAssessment(
 
     if (!isEmpty(mssqlPatchAssessmentResponse)) {
         driftAssessmentData.mssqlPatch = mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType;
+    }
+
+    if (!isEmpty(resilienceAssessmentResponse)) {
+        driftAssessmentData.resiliency = resilienceAssessmentResponse as ResilienceDriftAssessmentResponseType;
     }
 
     return driftAssessmentData;
@@ -1156,10 +1213,9 @@ async function onDemandTriggerDriftAssessmentDataCollection(
         sqlInstanceId: databaseInstanceId
     })) as DatabaseInstancesIncludingResource[];
     if (isEmpty(managedInstance)) {
-        logger.error(
-            `No  managed database instance by ${accountId} ${credentialsId} ${databaseHostId} ${databaseInstanceId} found.`
-        );
-        return;
+        const errorMessage = `No managed database instance by account ${accountId}, credentials ${credentialsId}, database host ${databaseHostId}, database instance ${databaseInstanceId} found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
     const {
         resource: { resource_name: resourceName },
@@ -1274,5 +1330,6 @@ export {
     onDemandTriggerDriftAssessmentDataCollection,
     fetchDriftAssessmentPerHost,
     calculateComputeDrift,
-    fetchDriftAssessmentPerAccount
+    fetchDriftAssessmentPerAccount,
+    initiateStorageAssessmentCollection
 };

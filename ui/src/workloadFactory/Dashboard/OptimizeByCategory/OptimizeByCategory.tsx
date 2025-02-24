@@ -160,10 +160,13 @@ const OptimizeByCategory = () => {
                             <Resiliency />
                         </div>
                         <div className={styles.section2}>
-                            <div>
-                                <ComingSoon2 />
+                            <div className={styles.valueArea}>
+                                <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }}>
+                                    {Math.round(((categoryData.resiliency || 0) / (categoryData.total || 1)) * 100)}%
+                                </DsTypography>
+                                {allmssqlHostAssessmentLoading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Semibold_14">Resiliency</DsTypography>
+                            <DsTypography variant="Semibold_14">{GENERAL.RESILIENCY}</DsTypography>
                         </div>
                         <div className={styles.section3}></div>
                     </div>

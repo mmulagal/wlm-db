@@ -1,0 +1,96 @@
+.inner-table {
+    width: 1334px;
+
+    [class*='Table-module_cell'] {
+        color: var(--text-primary) !important;
+    }
+
+    .statusContainer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        .statusIcon {
+            width: 10px;
+            height: 10px;
+            align-self: center;
+            &.circle {
+                border-radius: 50%;
+                // margin-top: 2px;
+            }
+            &.online {
+                background-color: var(--green-60);
+            }
+            &.offline {
+                background-color: var(--red-30);
+            }
+            &.unknown {
+                background-color: var(--grey-25);
+            }
+        }
+    }
+
+    .arrow {
+        width: 100%;
+        display: flex;
+        justify-content: end;
+        margin-right: 40px;
+        svg {
+            transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            &.arrow-down {
+                transform: rotate(270deg);
+                -webkit-transform: rotate(270deg);
+            }
+            &.arrow-disable {
+                path {
+                    fill: var(--text-disabled);
+                }
+            }
+        }
+    }
+
+    .container {
+        display: flex;
+        gap: 8px;
+        .sqlServerInstance {
+            max-width: 261px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .colorText {
+            cursor: pointer;
+            color: var(--text-button-primary);
+        }
+        [class*='Popover-module_base'] {
+            max-height: 180px;
+            overflow: auto;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+    }
+
+    .rssCell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+
+    [class*='Table-module_high-row'] {
+        background-color: var(--content-background) !important;
+    }
+}
+
+.colorSet {
+    div {
+        color: var(--text-primary);
+    }
+}

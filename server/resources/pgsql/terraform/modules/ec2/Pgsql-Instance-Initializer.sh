@@ -47,28 +47,6 @@ download_file() {
     chmod 755 "${dest}"
 }
 
-# Function to verify and extract a zip file
-verify_and_extract() {
-    local source=$1
-    local dest=$2
-    local signature=$3
-    local pub_key=$4
-    local resource_id=$5
-    local deployment_name=$6
-
-    echo "Verifying and extracting ${source}"
-    # enable this while going to staging
-    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "${source}" -s "${signature}" -p "${pub_key}" -r "${resource_id}" -n "${deployment_name}"; then
-        echo "Error verifying ${source}"
-        return 1
-    fi
-
-    if ! sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s "${source}" -d "${dest}"; then
-        echo "Error extracting ${source}"
-        return 1
-    fi
-}
-
 # Function to install SSM Agent and CloudWatch Agent
 install_agents() {
     local region=$1
@@ -144,13 +122,30 @@ EOF
     fi
 }
 
-# Function to verify and unpack scripts
-verify_and_unpack_scripts() {
-    verify_and_extract "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn" "/home/ec2-user/cfn/signig_files/validation.zip.sig" "/home/ec2-user/cfn/signig_files/validation.zip.pub" "ValidationNode1" "${deployment_name}" || return 1
-    verify_and_extract "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/common.zip.sig" "/home/ec2-user/cfn/signig_files/common.zip.pub" "ValidationNode1" "${deployment_name}" || return 1
-    verify_and_extract "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts" "/home/ec2-user/cfn/signig_files/setup.zip.sig" "/home/ec2-user/cfn/signig_files/setup.zip.pub" "ValidationNode1" "${deployment_name}" || return 1
-    sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/fsx_certs.zip -d /home/ec2-user/cfn || return 1
-    sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s /home/ec2-user/cfn/pgvector.zip -d /home/ec2-user/cfn || return 1
+# Function to verify and extract scripts
+unzip_archive() {
+    local source=$1
+    local destination=$2
+    
+    echo "Unzipping $source to $destination"
+    if ! sudo /home/ec2-user/cfn/scripts/unzip-archive.sh -s "$source" -d "$destination"; then
+        echo "Error unzipping $source"
+        return 1
+    fi
+}
+
+verify_signature() {
+    local file=$1
+    local signature=$2
+    local pubkey=$3
+    local resource=$4
+    local deployment_name=$5
+    
+    echo "Verifying signature for $file"
+    if ! sudo /home/ec2-user/cfn/scripts/verify-signature.sh -f "$file" -s "$signature" -p "$pubkey" -r "$resource" -n "$deployment_name" -t "true"; then
+        echo "Error verifying signature for $file"
+        return 1
+    fi
 }
 
 # Function to configure ONTAP
@@ -239,7 +234,16 @@ main() {
     
     download_file "{{{ PGSQLPackages }}}" "/home/ec2-user/cfn/pgvector.zip"
 
-    verify_and_unpack_scripts
+    unzip_archive "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn"
+    
+    verify_signature "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/signig_files/common.zip.sig" "/home/ec2-user/cfn/signig_files/common.zip.pub" "SqlNode1" "${deployment_name}"
+    verify_signature "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/signig_files/setup.zip.sig" "/home/ec2-user/cfn/signig_files/setup.zip.pub" "SqlNode1" "${deployment_name}"
+    
+    unzip_archive "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/scripts"
+    unzip_archive "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts"
+    unzip_archive "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn"
+    unzip_archive "/home/ec2-user/cfn/pgvector.zip" "/home/ec2-user/cfn"
+
     configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
     configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}"
     rename_host "${sql_server_name}"

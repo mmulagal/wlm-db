@@ -6,8 +6,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0 11px;
+    padding: 0 11px !important;
     cursor: pointer;
     background-color: var(--tag-3-bg);
-    color: var(--tag-3-text);
+    color: var(--tag-3-text) !important;
 }

@@ -103,6 +103,7 @@ $ScriptSqlOntap = "{{{ScriptSqlOntap}}}"
 $ScriptDbCreate = "{{{ScriptDbCreate}}}"
 $Dsc = "{{{Dsc}}}"
 $PowerShell = "{{{PowerShell}}}"
+$Dotnet = "{{{Dotnet}}}"
 $AmazonLaunchWizardForCfn = "{{{AmazonLaunchWizardForCfn}}}"
 $AmazonLaunchWizardForSsm = "{{{AmazonLaunchWizardForSsm}}}"
 $SqlSpcu = "{{{SqlSpcu}}}"
@@ -259,6 +260,7 @@ try {
         "$ScriptDbCreate"           = "C:\\cfn\\scripts\\dbcreate.zip"
         "$Dsc"                      = "C:\\cfn\\DSC.zip"
         "$PowerShell"               = "C:\\cfn\\Installer\\powershell.zip"
+        "$Dotnet"                   = "C:\\cfn\\Installer\\dotnet.zip"
         "$AmazonLaunchWizardForCfn" = "C:\\cfn\\modules\\AWSLaunchWizardForCFN.zip"
         "$AmazonLaunchWizardForSsm" = "C:\\cfn\\modules\\AWSLaunchWizardForSSM.zip"
         "$SqlSpcu"                  = "C:\\cfn\\Installer\\sqlspcu.zip"
@@ -291,6 +293,7 @@ try {
         @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\sqlontap.zip -SignatureFilePath C:\cfn\signig_files\sqlontap.sig -PubFilePath C:\cfn\signig_files\sqlontap.pub -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn"; UseExecutionPolicy = $false },
+        @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\dotnet.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Verify-Signature.ps1 -FilePath C:\cfn\scripts\dbcreate.zip -SignatureFilePath C:\cfn\signig_files\dbcreate.sig -PubFilePath C:\cfn\signig_files\dbcreate.pub -ResourceID '$NodeType' -Stackname '$DeploymentName'"; UseExecutionPolicy = $false },
         @{Command = "C:\cfn\scripts\Unzip-Archive.ps1 -Source C:\cfn\scripts\dbcreate.zip -Destination C:\cfn\scripts"; UseExecutionPolicy = $false },

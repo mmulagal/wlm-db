@@ -1,7 +1,7 @@
 #prettier-ignore
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: This template deploys Postgres SQL Server in the chosen deployment model (standalone instance). 
+Description: This template deploys PostgreSQL Server in the chosen deployment model. 
             This template creates an Amazon EC2 instance with Amazon Linux 2023 and related resources.
             You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
@@ -15,6 +15,9 @@ Metadata:
           - PrivateSubnet1ID
           - RouteTable1Id
           - PrivateSubnet1Cidrblock
+          - PrivateSubnet2ID
+          - RouteTable2Id
+          - PrivateSubnet2Cidrblock
           - S3EndpointExists
           - CloudformationEndpointExists
           - SqsEndpointExists
@@ -105,8 +108,12 @@ Metadata:
         default: FSx for ONTAP storage capacity
       PrivateSubnet1ID:
         default: Private subnet ID for the first PGSQL node, for example, subnet-000dc866d93550eb0 
+      PrivateSubne21ID:
+        default: Private subnet ID for the first PGSQL node, for example, subnet-000dc866d93550eb0 
       RouteTable1Id:
         default: ID of the route table for private subnet 1.
+      RouteTable2Id:
+        default: ID of the route table for private subnet 2.
       WorkloadInstanceType:
         default: Instance type for cluster nodes
       ONTAPSecurityGroupID:
@@ -272,7 +279,7 @@ Conditions:
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
-  IsFailoverCluster: !Not [Condition: IsStandalone]
+  IsHACluster: !Not [Condition: IsStandalone]
   ShouldSendSaasNotification: !Not [!Equals [!Ref "RoleCredentialsId", ""]]
   
 Resources:
@@ -419,6 +426,7 @@ Resources:
                   - ssm:GetParameters
                   - ssm:PutParameter
                   - ssm:GetParametersByPath
+                  - ssm:DeleteParameter
                 Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
             
           PolicyName: !Join
@@ -439,8 +447,8 @@ Resources:
       ResourceName: !Ref 'SqlServerName'
       SQLDeploymentType: 
           !If
-            - IsFailoverCluster
-            - 'FCI'
+            - IsHACluster
+            - 'HA'
             - 'Standalone'
       FileSystemType: 'FSXN'
       DatabaseType: 'PostgreSQL server'
@@ -473,7 +481,7 @@ Resources:
           Ref: VPCCIDR
         PreferredSubnetId:
           Ref: PrivateSubnet1ID
-        StandbySubnetId: !If [IsFailoverCluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]      
+        StandbySubnetId: !If [IsHACluster, !Ref PrivateSubnet2ID, !Ref AWS::NoValue]      
         S3EndpointExists:
           Ref: S3EndpointExists
         CloudformationEndpointExists:
@@ -496,7 +504,7 @@ Resources:
           Ref: S3EndpointRouteTables
         PreferredSubnetCidrblock:
           Ref: PrivateSubnet1Cidrblock
-        StandbySubnetCidrblock: !If [IsFailoverCluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
+        StandbySubnetCidrblock: !If [IsHACluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -509,7 +517,7 @@ Resources:
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
-  ValidationStack1:
+  ValidationStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - VpcEndpointStack
@@ -519,8 +527,10 @@ Resources:
       Parameters:
         KeyPairName:
           Ref: KeyPairName
-        SubnetID:
+        Subnet1ID:
           Ref: PrivateSubnet1ID
+        Subnet2ID:
+          Ref: PrivateSubnet2ID
         VPCID:
           Ref: VPCID
         Ec2RoleName:
@@ -561,10 +571,9 @@ Resources:
       {{{Tags}}}
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
-    Condition: IsStandalone
     DependsOn: 
       - TrackStackDeploymentWaitCondition
-      - ValidationStack1
+      - ValidationStack
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
     Properties: 
@@ -618,7 +627,9 @@ Resources:
           Ref: AWS::StackName
         PreferredSubnetCidrblock:
           Ref: PrivateSubnet1Cidrblock
-        StandbySubnetCidrblock: !If [IsFailoverCluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
+        StandbySubnetCidrblock: !If [IsHACluster, !Ref PrivateSubnet2Cidrblock, !Ref AWS::NoValue]
+        SQLDeploymentMode:
+          Ref: SQLDeploymentMode
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -652,6 +663,8 @@ Resources:
           Ref: FSxLogVolumeName
         FSxLogVolumeSize:
           Ref: FSxLogVolumeSize
+        SQLDeploymentMode:
+          Ref: SQLDeploymentMode
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -664,21 +677,20 @@ Resources:
           - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
-  PGSQLStandaloneStack:
+  PGSQLServerStack:
     Type: AWS::CloudFormation::Stack
-    Condition: IsStandalone
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: {{{SQLStandaloneTemplate}}}
+      TemplateURL: {{{PGSQLTemplate}}}
       Parameters:
         Ec2RoleName:
           Ref: AWS::StackName
         KeyPairName:
           Ref: KeyPairName
-        PrivateSubnetID:
+        PrivateSubnet1ID:
           Ref: PrivateSubnet1ID
-        RouteTableId:
-          Ref: RouteTable1Id
+        PrivateSubnet2ID:
+          Ref: PrivateSubnet2ID
         AMIID:
           Ref: SQLAMIID
         SQLVersion:
@@ -712,6 +724,28 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxSvmUuid"
             - !GetAtt "ExistingFSxStack.Outputs.FSxSvmUuid"
+        FSxReplicaSvmId:
+          !If
+            - NewOntapFsx
+            - !If
+              - IsHACluster
+              - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmId"
+              - !Ref AWS::NoValue
+            - !If
+              - IsHACluster
+              - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmId"
+              - !Ref AWS::NoValue
+        FSxReplicaSvmUuid:
+          !If
+            - NewOntapFsx
+            - !If
+              - IsHACluster
+              - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmUuid"
+              - !Ref AWS::NoValue
+            - !If
+              - IsHACluster
+              - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmUuid"
+              - !Ref AWS::NoValue
         ONTAPSecurityGroupID:
           Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:
@@ -729,6 +763,8 @@ Resources:
           Ref: AWS::StackName
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
+        SQLDeploymentMode:
+          Ref: SQLDeploymentMode
       NotificationARNs:
         Fn::If:
         - IncludeNotification
@@ -765,12 +801,17 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-      Node1InstanceId: !GetAtt "PGSQLStandaloneStack.Outputs.SqlNodeId"
+      Node1InstanceId: !GetAtt "PGSQLServerStack.Outputs.SqlNodeId1"
+      Node2InstanceId: 
+        !If
+          - IsHACluster
+          - !GetAtt "PGSQLServerStack.Outputs.SqlNodeId2"
+          - !Ref AWS::NoValue
       ResourceName: !Ref 'SqlServerName'
       SQLDeploymentType: 
           !If
-            - IsFailoverCluster
-            - 'FCI'
+            - IsHACluster
+            - 'HA'
             - 'Standalone'
       FileSystemType: 'FSXN'
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'

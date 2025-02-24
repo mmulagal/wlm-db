@@ -1,8 +1,14 @@
-import { OntapRequestParams, OptimizeStorageParams, WorkloadInstance } from '../../../utils/common-types';
+import {
+    BulkOptimizeSnapshotPolicyParamsType,
+    OntapRequestParams,
+    OptimizeStorageParams,
+    WorkloadInstance
+} from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
 import {
     COMPUTE_OPTIMIZE_LOG_PATH,
     DISCOVER_OPERATION_LOG_PATH,
+    RESILIENCY_OPTIMIZE_LOG_PATH,
     SIZING_OPERATIONS_LOG_PATH,
     STORAGE_ASSESSMENT_LOG_PATH
 } from './const';
@@ -14,7 +20,13 @@ import {
     SERVER_VERSION,
     TEMPDB_DRIVE_SIZE
 } from './queries';
-import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+import {
+    compressResponse,
+    readSsmParameter,
+    restGetUtilForOntap,
+    slqcmdExecutionTemplate,
+    GET_FCI_NAME
+} from './ssm-script-utils';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -541,12 +553,14 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             # Using PSCustomObject
             $perVolRow = [PSCustomObject]@{
                 name = $perVolumeData.name
+                'uuid' = $perVolumeData.uuid
                 'thin-provision' = $perVolumeData.guarantee.honored
                 'space-guarantee' = $perVolumeData.guarantee.type
                 'autosize-mode' = $perVolumeData.autosize.mode
                 'fractional-reserve' = $perVolumeData.space.fractional_reserve
                 'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
                 'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
+                'snapshot-policy' = $perVolumeData.snapshot_policy.name
                 'tiering-policy' = $perVolumeData.tiering.policy
                 'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
             }
@@ -581,13 +595,16 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
         $Volumes = $Response.records
 
-        $isPerformanceTier100Percent = $true
         # loop through each volume and get data
-        $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
+        # $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
+        $PerformanceTierDetails = @()
         foreach ($perVolumeData in $Volumes) {
-        if(($MappedVolumeNames -contains $perVolumeData.volume) -and $perVolumeData.volume_blocks_footprint_bin0_percent -ne 100) {
-                $isPerformanceTier100Percent = $false
-                break
+        if(($MappedVolumeNames -contains $perVolumeData.volume)) {
+                $object = @{
+                    "volumeName" = $perVolumeData.volume;
+                    "performanceTierPercent" = $perVolumeData.volume_blocks_footprint_bin0_percent}
+                $PerformanceTierDetails += $object
+               
         }
         }
     } catch {
@@ -719,7 +736,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $DriftAssessmentData['sizing']['data-tempdb-drive-details'] = $($defaultTempDBDriveDetails);
         }
 
-        $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierPercent);
+        $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
         $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($consolidatedDriveDetails));
         
     } catch { 
@@ -742,17 +759,29 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $DriftAssessmentData['os']['mpio-enabled'] = $MpioStatus
         
         # Fetch load balancing policy for all NetApp disks
-        $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number 
+        $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
+        $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
             $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
             if(-Not ($MpioLBDetails -Match $matchString) ) {
                 $LoadBalancingPolicy = 'Other'
-                break
+                $object = [PSCustomObject]@{
+                    "disk" = "Disk " + $disk.Number
+                    "policy" = $LoadBalancingPolicy
+                }
             }
+            else {
+             $object = [PSCustomObject]@{
+                    "disk" = "Disk " + $disk.Number
+                    "policy" = 'RR'
+                        }
+                }
+            $LoadBalancingPolicyDetails += $($object)
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
+        $DriftAssessmentData['os']['mpio-load-balance-policy-details'] = $LoadBalancingPolicyDetails
         } catch {$DriftAssessmentData['errors']['mpio-policy'] = $_.Exception.Message}
 
     ${TEST_ISCSI_SESSIONS}
@@ -767,7 +796,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $filteredLogDrives = $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
         $AllDrives = $($filteredDataDrives; $filteredLogDrives)
         $AllDrives = $AllDrives | select -Unique
-        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object Name, BlockSize 
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object DriveLetter, BlockSize 
         $ntfsUnitSize = 65536
         $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
         $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)
@@ -793,7 +822,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
-    $apiBody = '${params.apiBody}'
+    $apiBody = '${JSON.stringify(params.apiBody)}'
     Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
@@ -1059,7 +1088,7 @@ const GET_INSTALLED_SQL_PATCHES = () => `
     # Get the list of installed patches
     $installedPatches = Get-ChildItem -Path HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall |
         Get-ItemProperty |
-        Where-Object {($_.DisplayName -like "Hotfix*SQL*") -or ($_.DisplayName -like "Service Pack*SQL*")} |
+        Where-Object {($_.DisplayName -like "Hotfix*SQL*") -or ($_.DisplayName -like "Service Pack*SQL*") -or ($_.DisplayName -like "GDR*SQL*")} |
         Select-Object -Property DisplayName, DisplayVersion, InstallDate
 
     # Prepare the result
@@ -1076,6 +1105,115 @@ const GET_INSTALLED_MSSQL_VERSION = () => `
     Sqlcmd -Q "${SERVER_VERSION}" -y 0
 `;
 
+const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
+    # Get list of snapshot policies on cluster level
+    ${restGetUtilForOntap(fsxId, region, '/storage/snapshot-policies', '', 'fields=svm,scope')}
+`;
+
+/**
+ * @returns the UUID of the ONTAP job created for setting the snapshot policy;
+ * Expected response structure:
+ * { "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8" }]}
+ */
+const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType) => `
+    # Set snapshot policy for volumes
+    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $WarningPreference = 'SilentlyContinue';
+    $FSxID = '${params.fsxId}'
+    $FSxRegion = '${params.region}'
+    $volUuids = '${params.volUuids}' | ConvertFrom-Json
+    $apiEndpoint = '/storage/volumes/'
+    $apiBody = '${params.apiBody}'
+    $res = @{}
+    $res['response'] = @{}
+    $res['errors'] = @{}
+    $volRes = @()
+    $errors = @()
+    ${ontapRestRequest}
+
+    foreach($volUuid in $volUuids) {
+        try {
+            Write-Information "Optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid"
+            $body = $apiBody | ConvertFrom-Json | ConvertTo-Json
+            $apiEndpointWithPathParams = $apiEndpoint + $volUuid
+            $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $apiEndpointWithPathParams -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
+            $volRes += [PSCustomObject]@{
+                uuid = $ontapResponse.job.uuid
+            }
+        } catch {
+            $errors += $_.Exception.Message
+            Write-Information "Error occurred while optimizing Snaphot policy for FSx ID: $FSxID FSX region: $FSxRegion Volume UUID: $volUuid. Error: $_.Exception.Message"
+        }
+    }
+    $res['response'] = @($volRes)
+    $res['errors'] = @($errors)
+
+    $res = $res | ConvertTo-Json
+
+    if([string]::IsNullOrEmpty($res)) {
+        throw "Failed to compress the response because the response is either null or empty. $response"
+    }
+    ${compressResponse}
+    Stop-Transcript | Out-Null
+    return (Deflate-String $res)
+
+`;
+
+const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: number, isClustered: boolean) => `
+    #Set MAXDOP
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $sqlInstanceName = "${instanceName}"
+    $maxDopValue = ${maxDopValue}
+    $isClustered = [System.Convert]::ToBoolean('${isClustered}')
+
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+    }
+
+    ${slqcmdExecutionTemplate}
+    $sqlCredential = @{'useSqlAuth' = $False}
+    if($sqlAuthEnabled) {
+        ${readSsmParameter(instanceName)}
+    }
+    ${GET_FCI_NAME}
+
+    # Set the MAXDOP value with RECONFIGURE WITH OVERRIDE
+    $setMaxDopQuery = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE WITH OVERRIDE; EXEC sp_configure 'max degree of parallelism', $maxDopValue; RECONFIGURE WITH OVERRIDE;"
+    
+    $result = [PSCustomObject]@{
+        status = "failed"
+        message = ""
+    }
+
+    try {
+        $response = Call-SqlCmd -SqlCredential $sqlCredential -Query $setMaxDopQuery -InstanceName "$ServerInstanceName"
+        $result.status = "success"
+        $result.message = "MAXDOP set to $maxDopValue for instance $ServerInstanceName, $response"
+    } catch {
+        $result.message = "Error while configuring MAXDOP for instance $_"
+        if ($isClustered) {
+            try {
+                $ClusterName = Get-FCIName -sqlServerNameToFind $sqlInstanceName
+                if ($ClusterName -ne '') {
+                    $connectionString = "Server=$ClusterName;Integrated Security=True;TrustServerCertificate=True;"
+                    Invoke-Sqlcmd -AbortOnError -ErrorAction Stop -Query $setMaxDopQuery -ConnectionString $connectionString
+                    $result.status = "success"
+                    $result.message = "MAXDOP configured using cluster name $ClusterName."
+                } else {
+                    $result.message = "Cluster name not found for instance $sqlInstanceName."
+                }
+            } catch {
+                $result.message = "Error while configuring MAXDOP using cluster name: $_"
+            }
+        }
+    }
+
+    $jsonResult = $result | ConvertTo-Json -Compress
+    Write-Output $jsonResult
+`;
+
 export {
     STORAGE_CONFIGURATION_ASSESSMENT,
     GET_ONTAP_LUN_DETAILS,
@@ -1088,5 +1226,8 @@ export {
     CHECK_RUNNING_STATUS_WITH_RESTART,
     GET_VCPU_AND_MAXDOP_DETAILS,
     GET_INSTALLED_SQL_PATCHES,
-    GET_INSTALLED_MSSQL_VERSION
+    GET_INSTALLED_MSSQL_VERSION,
+    GET_CLUSTER_SNAPSHOT_POLICIES,
+    SET_VOLUME_SNAPSHOT_POLICY,
+    SET_MAXDOP
 };

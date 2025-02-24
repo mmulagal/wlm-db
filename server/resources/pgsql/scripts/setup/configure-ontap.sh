@@ -19,6 +19,8 @@ done
 
 fsxdatamountpoint=/$fsxdatavolumename
 fsxlogmountpoint=/$fsxlogvolumename
+datadirname="${fsxdatavolumename/_replica/}" # Remove _replica from the data volume name
+logdirname="${fsxlogvolumename/_replica/}" # Remove _replica from the log volume name
 
 nfs_ip=$fsxsvmid.$filesystemid.fsx.$region.amazonaws.com
 
@@ -88,7 +90,7 @@ ontap_request () {
 check_and_create_ontap_volumes() {
     local return_result=""
     # Check if data volume exists
-    ontap_request 'GET' "storage/volumes?name=$fsxdatavolumename"
+    ontap_request 'GET' "storage/volumes?name=$fsxdatavolumename&svm.name=$fsxsvmname"
     data_volume=$(echo $return_result | jq -r '.records[0].name')
     if [ "$data_volume" != "$fsxdatavolumename" ]; then
         echo "Creating data volume..."
@@ -100,7 +102,7 @@ check_and_create_ontap_volumes() {
     fi
 
     # Check if log volume exists
-    ontap_request 'GET' "storage/volumes?name=$fsxlogvolumename"
+    ontap_request 'GET' "storage/volumes?name=$fsxlogvolumename&svm.name=$fsxsvmname"
     log_volume=$(echo $return_result | jq -r '.records[0].name')
     if [ "$log_volume" != "$fsxlogvolumename" ]; then
         echo "Creating log volume..."
@@ -119,19 +121,19 @@ ontap_request 'PATCH' "protocols/nfs/services/$svmuuid" '{"transport":{"tcp_max_
 check_status "Failed to update NFS transfer size"
 
 # Create directories
-sudo mkdir -p /$fsxdatavolumename /$fsxlogvolumename
+sudo mkdir -p /$datadirname /$logdirname
 check_status "Failed to create directories"
 
 # Mount NFS volumes
-sudo mount -t nfs $nfs_ip:$fsxdatamountpoint /$fsxdatavolumename
+sudo mount -t nfs $nfs_ip:$fsxdatamountpoint /$datadirname
 check_status "Failed to mount data volume"
 
-sudo mount -t nfs $nfs_ip:$fsxlogmountpoint /$fsxlogvolumename
+sudo mount -t nfs $nfs_ip:$fsxlogmountpoint /$logdirname
 check_status "Failed to mount log volume"
 
 # Add NFS entries to /etc/fstab
-echo "$nfs_ip:$fsxdatamountpoint /$fsxdatavolumename nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
-echo "$nfs_ip:$fsxlogmountpoint /$fsxlogvolumename nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
+echo "$nfs_ip:$fsxdatamountpoint /$datadirname nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
+echo "$nfs_ip:$fsxlogmountpoint /$logdirname nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
 
 # store credentials in SSM
 aws ssm put-parameter --name "/netapp/wlmdb/$filesystemid" --value "{fsx:{username: '$fsxusername', password: '$fsxpassword'}}" --type SecureString --overwrite

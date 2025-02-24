@@ -646,12 +646,46 @@ const ASSESMENT_CONFIG_DATA = {
         'mpio-enabled': false,
         'mpio-iscsi-count': '50',
         'ntfs-allocation-details': [
-            { DriveLetter: 'S', AllocationUnitSize: 6553 },
-            { DriveLetter: 'T', AllocationUnitSize: 6553 },
-            { DriveLetter: 'L', AllocationUnitSize: 6553 }
+            { DriveLetter: 'S', BlockSize: 6553 },
+            { DriveLetter: 'T', BlockSize: 6553 },
+            { DriveLetter: 'L', BlockSize: 6553 }
         ],
         'ntfs-allocation-unit-size': 6553,
-        'mpio-load-balance-policy': 'LB'
+        'mpio-load-balance-policy': 'Other',
+        'mpio-load-balance-policy-details': [
+            {
+                disk: 'Disk 4',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 1',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 8',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 2',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 3',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 5',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 6',
+                policy: 'Other'
+            },
+            {
+                disk: 'Disk 7',
+                policy: 'Other'
+            }
+        ]
     },
     luns: [
         {
@@ -679,7 +713,20 @@ const ASSESMENT_CONFIG_DATA = {
         'default-data-files-location': 'separate-drive'
     },
     sizing: {
-        'performance-tier': [94, 95, 100],
+        'performance-tier': [
+            {
+                volumeName: 'wlmdb_sqldata_1740015122754',
+                performanceTierPercent: 95
+            },
+            {
+                volumeName: 'wlmdb_sqllog_1740027207',
+                performanceTierPercent: 94
+            },
+            {
+                volumeName: 'wlmdb_sqltemp_1740015122754',
+                performanceTierPercent: 100
+            }
+        ],
         'data-log-drive-details': [
             {
                 databaseName: 'msdb',
@@ -752,6 +799,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         },
         {
@@ -764,6 +812,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         },
         {
@@ -776,9 +825,11 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17
         }
-    ]
+    ],
+    filesystemId: 'fs-07a22f282fd4f5a20'
 };
 
 export { inventoryDemoData, ASSESMENT_CONFIG_DATA };

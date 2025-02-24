@@ -611,6 +611,51 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.MAXDOP);
+                            }}
+                            data-testid="wlm-db-optimize-maxdop"
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.maxdopPatch === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
+                            }
+                        >
+                            Optimize
+                        </DsButton>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
+                        percentage={Math.round(
+                            ((configData.scheduledLocalSnapshot || 0) / (configData.total || 1)) * 100
+                        )}
+                        beforeOutOf={configData.scheduledLocalSnapshot}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length ||
+                                0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={
+                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
+                        }
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
                         <TooltipComponent
                             title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
                             placement="bottom"
@@ -619,7 +664,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         >
                             <div>
                                 <DsButton
-                                    data-testid="wlm-db-optimize-maxdop-patch"
+                                    data-testid="wlm-db-optimize-scheduled-local-snapshot"
                                     variant="secondary"
                                     isDisabled={true}
                                 >
