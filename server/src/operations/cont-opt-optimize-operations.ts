@@ -15,7 +15,13 @@ import {
     StorageTierParams,
     MaxDOPAssesment
 } from '../utils/common-types';
-import { HttpErrorCodes, AuditStatus, SqlServerDeploymentModel, RESOURCESTYPE } from '../utils/consts';
+import {
+    HttpErrorCodes,
+    AuditStatus,
+    SqlServerDeploymentModel,
+    RESOURCESTYPE,
+    SSM_COMMAND_CACHE_TYPE
+} from '../utils/consts';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
 import {
@@ -82,6 +88,7 @@ import {
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import { onDemandTriggerDriftAssessmentDataCollection } from './cont-opt-assessment-operations';
 import { listJobs } from '../lib/database/job';
+import { resetCache } from '../utils/cache';
 
 const isDemoFlow = isDemo();
 
@@ -2498,6 +2505,8 @@ async function handleMaxDopRemediation(
 
                 await updateOptimizedConfigNameInInstanceTable(accountId, instanceId, ['maxdop'], 'maxdop', metadata);
             }
+            // clearning all the ssm command cache so that we will get the fresh data in assessment
+            resetCache(SSM_COMMAND_CACHE_TYPE);
             await triggerAssessmentAfterOptimization(
                 credentialsId,
                 region,
