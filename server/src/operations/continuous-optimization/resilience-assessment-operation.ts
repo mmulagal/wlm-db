@@ -10,11 +10,9 @@ import { listDatabaseInstanceConfigData } from '../../lib/database/database-inst
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    OptimizeStorageConfigs,
-    SEVERITY,
-    ASSESSMENT_RESOURCE_TYPE
+    OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
+import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
 import { StorageAssessment } from '../../utils/common-types';
 
@@ -71,12 +69,12 @@ async function getSnapshotPolicyDriftData(
     }
 
     const snapshotPolicyAssesmentData: SnapshotPolicyAssesmentDataType = {
+        ...storageGoldenConfigData.resiliency.snapshotPolicy,
         timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
-        tags: [AwsWellArchitecturedPillars.RELIABILITY],
-        severity: SEVERITY.WARNING,
         status: AssessmentStatus.NOT_OPTIMIZED,
         violations: [],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        totalObjectsAssessed: volumes.length,
+        totalObjectsInViolation: 0
     };
     volumes.forEach(volume => {
         const volDetails = volume as Record<string, string>;
@@ -91,7 +89,7 @@ async function getSnapshotPolicyDriftData(
     if (isEmpty(snapshotPolicyAssesmentData.violations)) {
         snapshotPolicyAssesmentData.status = AssessmentStatus.OPTIMIZED;
     }
-
+    snapshotPolicyAssesmentData.totalObjectsInViolation = snapshotPolicyAssesmentData.violations.length;
     return snapshotPolicyAssesmentData;
 }
 

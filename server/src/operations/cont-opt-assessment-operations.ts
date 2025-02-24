@@ -826,9 +826,7 @@ async function fetchDriftAssessment(
         // remove the empty spaces in the string & split the fields by comma separated array values
         const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
 
-        shouldCalculateStorageAssessment =
-            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment
+        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
         shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
