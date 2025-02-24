@@ -93,13 +93,10 @@ import Dashboard from '../../Dashboard/Dashboard';
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import { setSandboxAgeRange } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
-<<<<<<< HEAD
 import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
 import InventoryApis from '../../InventoryV2/InventoryApis';
-=======
 import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
 import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage';
->>>>>>> origin/master
 
 type Tab = {
     tab: string;
