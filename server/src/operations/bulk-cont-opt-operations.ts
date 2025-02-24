@@ -14,6 +14,7 @@ import {
 import { updateParentJobStatus } from './database/job-operations';
 import { OPTIMIZATION_CATEGORIES, OPTIMIZE_SIZING_CONFIGS } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
+import { listResources } from '../lib/database/db';
 
 const logger = getLogger();
 
@@ -41,6 +42,15 @@ async function bulkOptimization(
         const errorMessage = 'databaseHosts cannot be empty.';
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    // validate the account id, credentials id, region is valid details in the DB
+    const isValid = await validateRequestDetails(accountId, credentialsId, region);
+
+    if (!isValid) {
+        const errorMessage = `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
     const jobMetadata: JobMetadata = {
@@ -263,6 +273,20 @@ async function handleBulkComputeOptimization(
             await updateParentJobStatus(accountId, masterOptimizeParentId);
         }
     }
+}
+
+async function validateRequestDetails(accountId: string, credentialsId: string, region: string) {
+    logger.info(`Validating request details: ${accountId}, ${credentialsId}, ${region}`);
+
+    const [resourceDetail] = await listResources(accountId, undefined, credentialsId, region);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`;
+        logger.error(errorMessage);
+        return false;
+    }
+
+    return true;
 }
 
 export { bulkOptimization, bulkComputeOptimization };
