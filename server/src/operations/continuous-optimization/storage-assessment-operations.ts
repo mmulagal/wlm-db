@@ -141,7 +141,8 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
             } else {
                 optimisedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             }
-        } else {
+        } else if (formattedDriveInfo.databaseName !== 'msdb') {
+            // Ignore system databases when log and data drive is shared: DBS-4639
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
         }
     });
@@ -442,16 +443,10 @@ async function calculateStorageDrift(
             { name: 'tempdb-files-location', errorMessage: errors.layout }
         );
     } else {
-        let defaultLogFilesAssessment;
-        let defaultDataFilesAssessment;
         let userDatabaseLayoutAssessment = { data: [], log: [] };
         let tempdbFilesLocationAssessment;
         Object.entries(layout).forEach(([key, value]) => {
-            if (key === 'default-log-files-location') {
-                defaultLogFilesAssessment = value;
-            } else if (key === 'default-data-files-location') {
-                defaultDataFilesAssessment = value;
-            } else if (key === 'user-database-layout') {
+            if (key === 'user-database-layout') {
                 userDatabaseLayoutAssessment = value;
             } else if (key === 'tempdb-files-location') {
                 tempdbFilesLocationAssessment = value;
@@ -492,28 +487,14 @@ async function calculateStorageDrift(
         let severity = 'critical';
         let databasesInViolation: string[] = [];
         goldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
-        if (!isEmpty(goldenData)) {
-            dataFilesLayoutStatus =
-                goldenData?.value === defaultDataFilesAssessment
-                    ? AssessmentStatus.OPTIMIZED
-                    : AssessmentStatus.NOT_OPTIMIZED;
-            databasesInViolation = dataFilesLayoutStatus === AssessmentStatus.NOT_OPTIMIZED ? ['system'] : [];
-        }
-        goldenData = layoutConfigData.find(data => data.parameter === 'default-log-files-location');
-        if (!isEmpty(goldenData)) {
-            logFilesLayoutStatus =
-                goldenData?.value === defaultLogFilesAssessment
-                    ? AssessmentStatus.OPTIMIZED
-                    : AssessmentStatus.NOT_OPTIMIZED;
-            databasesInViolation = dataFilesLayoutStatus === AssessmentStatus.NOT_OPTIMIZED ? ['system'] : [];
-        }
 
         const dataVolumes = userDatabaseLayoutAssessment?.data;
         const logVolumes = userDatabaseLayoutAssessment?.log;
         const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
         dataVolumes.map((data: DatabaseVolumeRecord) =>
             logVolumes.forEach((log: DatabaseVolumeRecord) => {
-                if (data.name === log.name) {
+                // Ignore system databases for layout assessment: DBS-4639
+                if (data.name !== 'msdb' && data.name === log.name) {
                     const volDetails = data as DatabaseVolumeRecord;
                     volDetails.logVolume = log.volumeName;
                     volDetails.logLunPath = log.lunPath;
@@ -726,6 +707,7 @@ async function calculateStorageDrift(
                     } = getLogVolumeDrift(value, status, key));
                     resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
+
                 if (key === 'data-tempdb-drive-details') {
                     ({
                         status,
@@ -736,7 +718,7 @@ async function calculateStorageDrift(
                         currentSizePercentForAllVolumes,
                         totalObjectsInViolation
                     } = getTempDbVolumeDrift(value, status, key));
-                    resourceType = ASSESSMENT_RESOURCE_TYPE.DATABASE;
+                    resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
 
                 let missingPermissions: string[] = [];
