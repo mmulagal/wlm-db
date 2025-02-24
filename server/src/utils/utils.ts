@@ -869,9 +869,10 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
         subJobDescriptions['ValidationNode1(AWS::EC2::Instance)'] =
-            'Validating outbound connection to deployment resources in Amazon S3';
+            'Validating outbound connection to deployment resources in Amazon S3 for primary validation node';
         subJobDescriptions['ValidationNode2(AWS::EC2::Instance)'] =
-            'Validating outbound connection to deployment resources in Amazon S3';
+            'Validating outbound connection to deployment resources in Amazon S3 for secondary validation node';
+        subJobDescriptions.ValidationStack = `Subnet Validation for ${dbEngineType} deployment`;
     }
 
     return subJobDescriptions;
