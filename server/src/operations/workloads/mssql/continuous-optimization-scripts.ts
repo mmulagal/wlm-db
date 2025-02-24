@@ -377,7 +377,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
 
     foreach ($drive in $defaultTempDBDriveDetails) {
-        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveDetails.dataDriveLetter 
+        $drive | Add-Member -MemberType NoteProperty -Name "dataDriveLetter" -Value $defaultDataDriveDetails.dataDriveLetter 
         $drive | Add-Member -MemberType NoteProperty -Name "dataDriveTotalSizeMB" -Value $defaultDataDriveDetails.dataDriveTotalSizeMB
     }
 
@@ -760,24 +760,24 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         
         # Fetch load balancing policy for all NetApp disks
         $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
+        $InstanceDiskNumbers =   $($responseObject.data; $responseObject.log; $responseObject.tempbDb) | ForEach-Object -MemberName diskNumber
+        $InstanceDiskNumbers = $InstanceDiskNumbers | select -Unique
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
         $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
-            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
-            if(-Not ($MpioLBDetails -Match $matchString) ) {
-                $LoadBalancingPolicy = 'Other'
-                $object = [PSCustomObject]@{
+            if($InstanceDiskNumbers -notcontains $disk.Number) {
+                continue
+            }
+            $object = [PSCustomObject]@{
                     "disk" = "Disk " + $disk.Number
                     "policy" = $LoadBalancingPolicy
                 }
+            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
+            if(-Not ($MpioLBDetails -Match $matchString) ) {
+               $LoadBalancingPolicy = 'Other'
+               $object['policy'] = $LoadBalancingPolicy
             }
-            else {
-             $object = [PSCustomObject]@{
-                    "disk" = "Disk " + $disk.Number
-                    "policy" = 'RR'
-                        }
-                }
             $LoadBalancingPolicyDetails += $($object)
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
@@ -793,10 +793,11 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     try{
         $filteredDataDrives = $instanceAllDataDrivesSizes | ForEach-Object -MemberName dataDriveLetter
-        $filteredLogDrives = $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
-        $AllDrives = $($filteredDataDrives; $filteredLogDrives)
+        $filteredLogDrives =  $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
+        $filteredTempDbDrives =  $defaultTempDBDriveDetails | ForEach-Object -MemberName tempdbDriveLetter
+        $AllDrives = $($filteredDataDrives; $filteredLogDrives;  $filteredTempDbDrives)
         $AllDrives = $AllDrives | select -Unique
-        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object DriveLetter, BlockSize 
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$AllDrives -contains $_.DriveLetter}  | Select-Object DriveLetter, BlockSize 
         $ntfsUnitSize = 65536
         $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
         $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)
