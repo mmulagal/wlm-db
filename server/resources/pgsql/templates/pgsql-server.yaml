@@ -79,9 +79,16 @@ Parameters:
     SQLVersion:
         Description: The version of PostgreSQL to install.
         Type: String
-    SqlFSxServerNetBIOSName:
+    SqlFSxServerNetBIOSName1:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: SqlFSx1
+        Description: NetBIOS name of the PGSQL Server (up to 15 characters).
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlFSxServerNetBIOSName2:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: SqlFSx2
         Description: NetBIOS name of the PGSQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
@@ -150,7 +157,7 @@ Resources:
                         - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName1'
                 -   Key: SQLServerName
                     Value: !Ref 'SqlServerName'
     SqlNode1:
@@ -328,7 +335,7 @@ Resources:
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName1'
             BlockDeviceMappings:
                 -   DeviceName: /dev/sda1
                     Ebs:
@@ -375,7 +382,7 @@ Resources:
                         - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName2'
                 -   Key: SQLServerName
                     Value: !Ref 'SqlServerName'
     SqlNode2:
@@ -552,7 +559,7 @@ Resources:
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName2'
             BlockDeviceMappings:
                 -   DeviceName: /dev/sda1
                     Ebs:

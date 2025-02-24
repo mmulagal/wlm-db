@@ -136,4 +136,17 @@ echo "$nfs_ip:$fsxdatamountpoint /$datadirname nfs rw,hard,nointr,bg,vers=4,prot
 echo "$nfs_ip:$fsxlogmountpoint /$logdirname nfs rw,hard,nointr,bg,vers=4,proto=tcp,rsize=262144,wsize=262144 0 0" | sudo tee -a /etc/fstab
 
 # store credentials in SSM
-aws ssm put-parameter --name "/netapp/wlmdb/$filesystemid" --value "{fsx:{username: '$fsxusername', password: '$fsxpassword'}}" --type SecureString --overwrite
+
+max_attempts=4
+attempt=1
+while [ $attempt -le $max_attempts ]; do
+  aws ssm put-parameter --name "/netapp/wlmdb/$filesystemid" --value "{fsx:{username: '$fsxusername', password: '$fsxpassword'}}" --type SecureString --overwrite && break
+  sleep_time=$((attempt * 2))
+  echo "Attempt $attempt failed, retrying in $sleep_time seconds..."
+  sleep $sleep_time
+  attempt=$((attempt+1))
+done
+
+if [ $attempt -gt $max_attempts ]; then
+  echo "Failed to update parameter after $max_attempts attempts."
+fi

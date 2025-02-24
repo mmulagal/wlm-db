@@ -695,12 +695,21 @@ Resources:
           Ref: SQLAMIID
         SQLVersion:
           Ref: SqlVersion
-        SqlFSxServerNetBIOSName:
+        SqlFSxServerNetBIOSName1:
           Fn::Select:
             - "0"
             - Fn::Split:
                 - ","
                 - Ref: NodeNetBIOSNames
+        SqlFSxServerNetBIOSName2:
+          !If
+          - IsHACluster
+          - Fn::Select:
+            - "1"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+          - !Ref AWS::NoValue
         VPCID:
           Ref: VPCID
         VPCCIDR:
