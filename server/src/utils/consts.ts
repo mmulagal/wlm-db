@@ -541,7 +541,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-gov-west-1', 'AWS GovCloud (US-West)'],
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)'],
-    ['ca-west-1', 'Canada (Calgary)']
+    ['ca-west-1', 'Canada (Calgary)'],
+    ['ap-southeast-5', 'Asia Pacific (Malaysia)']
 ]);
 
 const IO2_AVAILABLE_REGIONS = [
@@ -733,6 +734,10 @@ const SQL_RESOURCE_ASSETS = [
     //     name: 'PowerShellSignature',
     //     url: 'Installer/powershell.zip.sig'
     // },
+    {
+        name: 'Dotnet',
+        url: `${WLMDB}/Installer/dotnet.zip`
+    },
     {
         name: 'Sqlspcu',
         url: `${WLMDB}/Installer/sqlspcu.zip`

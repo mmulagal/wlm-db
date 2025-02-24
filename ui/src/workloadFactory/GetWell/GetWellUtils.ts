@@ -131,7 +131,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'Impacted databases',
+            type: 'Impacted drives',
             value: ''
         },
         recommendation: {
@@ -167,7 +167,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'TempBD placement',
+            type: 'TempBD drive size',
             value: ''
         },
         recommendation: {

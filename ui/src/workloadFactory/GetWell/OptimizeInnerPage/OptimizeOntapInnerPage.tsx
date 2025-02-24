@@ -30,10 +30,13 @@ import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
+import { useRef, useState } from 'react';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
+    const userNavigated = useRef(false);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -174,6 +177,8 @@ const OptimizeOntapInnerPage = () => {
                             Component="button"
                             variant="text"
                             onClick={() => {
+                                if (notificationTimeout) clearTimeout(notificationTimeout);
+                                userNavigated.current = true;
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                 dispatch(clearNotifications());
                             }}
@@ -199,6 +204,8 @@ const OptimizeOntapInnerPage = () => {
                         Component="button"
                         variant="text"
                         onClick={() => {
+                            if (notificationTimeout) clearTimeout(notificationTimeout);
+                            userNavigated.current = true;
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                             dispatch(clearNotifications());
                         }}
@@ -215,10 +222,14 @@ const OptimizeOntapInnerPage = () => {
                     })
                 );
 
-                setTimeout(() => {
-                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                const timeoutId = setTimeout(() => {
+                    if (!userNavigated.current) {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+                    }
                 }, 1000);
+
+                setNotificationTimeout(timeoutId);
             }
             handleOptimizeStorageJob(
                 res,
@@ -292,12 +303,15 @@ const OptimizeOntapInnerPage = () => {
                             {
                                 title: 'Inventory',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                                 }
                             },
                             {
                                 title: `${selectedHostname} / ${selectedDatabaseInstanceName}`,
-                                dataTestId: 'wlm-db-optimize-configuration'
+                                dataTestId: 'wlm-db-optimize-configuration',
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                }
                             },
                             {
                                 title: `${selectedOptimizeConfig?.type}`,

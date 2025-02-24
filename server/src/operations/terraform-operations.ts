@@ -148,7 +148,7 @@ async function uploadInitializerScripts(
                 const contents = template({
                     Dsc: decodeURIComponent(signedUrls.get('DSC')?.url || ''),
                     PowerShell: decodeURIComponent(signedUrls.get('PowerShell')?.url || ''),
-
+                    Dotnet: decodeURIComponent(signedUrls.get('Dotnet')?.url || ''),
                     SqlSpcu: decodeURIComponent(signedUrls.get('Sqlspcu')?.url || ''),
                     AmazonLaunchWizardForCfn: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
                     AmazonLaunchWizardForSsm: decodeURIComponent(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
