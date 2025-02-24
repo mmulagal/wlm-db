@@ -283,7 +283,10 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                             {GENERAL.AZ_TEXT}
                         </Typography>
 
-                        <div className={styles.firstContainer}>
+                        <div
+                            className={styles.firstContainer}
+                            style={{ gap: wizardType === WIZARD_TYPE.MSSQL ? '24px' : '40px' }}
+                        >
                             <Typography variant="Regular_14">
                                 {wizardType === WIZARD_TYPE.MSSQL ? GENERAL.CLUSTER_CONFIG_NODE_1 : pqsqlNode1()}
                             </Typography>
@@ -347,7 +350,10 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                         </div>
 
                         {deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (
-                            <div className={styles.firstContainer}>
+                            <div
+                                className={styles.firstContainer}
+                                style={{ gap: wizardType === WIZARD_TYPE.MSSQL ? '24px' : '40px' }}
+                            >
                                 <Typography variant="Regular_14" className={styles.pgsqlMargin}>
                                     {wizardType === WIZARD_TYPE.MSSQL
                                         ? GENERAL.CLUSTER_CONFIG_NODE_2
