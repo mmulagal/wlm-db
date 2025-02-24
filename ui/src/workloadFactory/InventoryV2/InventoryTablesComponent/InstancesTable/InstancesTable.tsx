@@ -894,18 +894,9 @@ const InstancesTable = () => {
         setResetPage(false);
     }, [resetPage]);
 
-    const divRef = useRef<HTMLDivElement>(null);
-    const [divWidth, setDivWidth] = useState(0);
-
-    const updateDivWidth = () => {
-        if (divRef.current) {
-            setDivWidth(divRef.current.offsetWidth);
-        }
-    };
-
     return (
         <>
-            <div className={styles.instanceTable}>
+            <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
                     className={
@@ -913,7 +904,6 @@ const InstancesTable = () => {
                             ? `${styles.table} ${styles.tableScroll}`
                             : `${styles.table} ${styles.tableScrollRevert}`
                     }
-                    ref={divRef}
                 >
                     <TableTopBar
                         //@ts-ignore

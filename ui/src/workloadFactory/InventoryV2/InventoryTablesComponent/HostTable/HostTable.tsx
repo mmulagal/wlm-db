@@ -1,7 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
-import { TableTopBar, Typography, useDialog, useTable, Button, Popover } from '@netapp/design-system';
+import { TableTopBar, Typography, useDialog, useTable, Button, Popover, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
@@ -49,7 +49,6 @@ const HostTable = () => {
 
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
-    const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -254,28 +253,6 @@ const HostTable = () => {
             }
         });
     };
-
-    const divRef = useRef<HTMLDivElement>(null);
-    const [divWidth, setDivWidth] = useState(0);
-
-    const updateDivWidth = () => {
-        if (divRef.current) {
-            setDivWidth(divRef.current.offsetWidth);
-        }
-    };
-
-    useEffect(() => {
-        // Set initial width
-        updateDivWidth();
-
-        // Update width on window resize
-        window.addEventListener('resize', updateDivWidth);
-
-        // Cleanup event listener on component unmount
-        return () => {
-            window.removeEventListener('resize', updateDivWidth);
-        };
-    }, []);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -567,7 +544,31 @@ const HostTable = () => {
                 const name = rowData?.name;
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</Typography>
+                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <div className={styles.firstColText}>
+                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            )}
+                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                            )}
+                            <DsTypography variant="Regular_13">
+                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                    ? INVENTORY_STATUS.ONLINE
+                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                    ? INVENTORY_STATUS.OFFLINE
+                                    : rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                            </DsTypography>
+                        </div>
                     </div>
                 );
             }
@@ -765,15 +766,10 @@ const HostTable = () => {
 
     return (
         <>
-            <div className={styles.hostTable}>
+            <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={
-                        tableHorizontalScroll
-                            ? `${styles.table} ${styles.tableScroll}`
-                            : `${styles.table} ${styles.tableScrollRevert}`
-                    }
-                    ref={divRef}
+                    className={styles.table}
                 >
                     <TableTopBar
                         //@ts-ignore

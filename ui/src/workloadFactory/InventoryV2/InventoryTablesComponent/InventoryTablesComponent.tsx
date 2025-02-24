@@ -8,7 +8,7 @@ const InventoryTablesComponent = () => {
     const { selectedInventoryTab } = useAppSelector(state => state.inventoryV2);
     return (
         <div className={styles['inventory-tables-component']}>
-            {selectedInventoryTab === 'Hosts' && <HostsTable />}
+            {selectedInventoryTab === 'Hosts' && <HostTable />}
             {selectedInventoryTab === 'Instances' && <InstancesTable />}
             {selectedInventoryTab === 'Databases' && <div>Render Databases table here </div>}
         </div>
