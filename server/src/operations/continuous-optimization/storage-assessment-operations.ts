@@ -435,7 +435,7 @@ async function calculateStorageDrift(
                 objectsInViolation = assessmentDetails
                     .filter(policyDetail => policyDetail.policy === 'Other')
                     .map(policyDetail => ({
-                        objectName: policyDetail.accessPath || policyDetail.name || '',
+                        objectName: policyDetail.accessPath || policyDetail.disk || '',
                         value: 'Other',
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
