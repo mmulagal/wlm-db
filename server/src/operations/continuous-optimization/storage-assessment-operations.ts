@@ -322,6 +322,7 @@ async function calculateStorageDrift(
         volumeConfigData.forEach(config => {
             let status = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
+            const violationDetails: GenericViolationResponseType[] = [];
             volumes.forEach(volume => {
                 let objectName = '';
                 Object.entries(volume).forEach(([key, value]) => {
@@ -330,6 +331,11 @@ async function calculateStorageDrift(
                         status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
                         if (status === AssessmentStatus.NOT_OPTIMIZED) {
                             objectsInViolation.push(objectName!);
+                            violationDetails.push({
+                                objectName: objectName!,
+                                value: value.toString(),
+                                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+                            });
                         }
                     }
                 });
@@ -345,7 +351,8 @@ async function calculateStorageDrift(
                 tags: config.tags,
                 totalObjectsAssessed: volumes.length,
                 totalObjectsInViolation: objectsInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+                resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                violationDetails
             });
         });
     }
@@ -355,6 +362,7 @@ async function calculateStorageDrift(
         lunConfigData.forEach(config => {
             let status = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
+            const violationDetails: GenericViolationResponseType[] = [];
             luns.forEach(lun => {
                 let objectName = '';
                 Object.entries(lun).forEach(([key, value]) => {
@@ -364,6 +372,11 @@ async function calculateStorageDrift(
 
                         if (status === AssessmentStatus.NOT_OPTIMIZED) {
                             objectsInViolation.push(objectName!);
+                            violationDetails.push({
+                                objectName: objectName!,
+                                value: value.toString(),
+                                objectType: ASSESSMENT_RESOURCE_TYPE.LUN
+                            });
                         }
                     }
                 });
@@ -379,7 +392,8 @@ async function calculateStorageDrift(
                 tags: config.tags,
                 totalObjectsAssessed: luns.length,
                 totalObjectsInViolation: objectsInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN
+                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+                violationDetails
             });
         });
     }
