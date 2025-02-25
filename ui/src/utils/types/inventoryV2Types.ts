@@ -57,6 +57,7 @@ export interface InventoryTableData {
     ec2InstanceName?: string;
     id?: string;
     name?: string;
+    hostType?: string;
     status?: string;
     ssmState?: string;
     totalInstance?: number;
@@ -79,6 +80,9 @@ export interface InventoryTableData {
     hasInstanceData?: boolean;
     credentialId?: string;
     regionId?: string;
+    credentialName?: string;
+    regionName?: string;
+    accountId?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {

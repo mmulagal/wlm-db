@@ -28,7 +28,6 @@ import {
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
-    useGetMssqlAssessmentDataForHostMutation,
     useGetMssqlInstanceDataV2Mutation,
     useGetStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
@@ -86,7 +85,7 @@ const InventoryApisV3 = () => {
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
-    const managedAssessmentHostIdsList = useAppSelector(state => state.inventoryV2.managedAssessmentHostIdsList);
+    const allmssqlHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allmssqlHostAssessmentData);
     const perfMssqlInstancesData = useAppSelector(state => state.inventoryV2.perfMssqlInstancesData);
     const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
     const potentialSavingsHostData = useAppSelector(state => state.inventoryV2.potentialSavingsHostData);
@@ -127,9 +126,6 @@ const InventoryApisV3 = () => {
 
     // Get Instance data mutation. This will be called to get unmanaged rows full data - ToDo
     const [getMssqlInstanceDataApi] = useGetMssqlInstanceDataV2Mutation();
-
-    // Get managed assessment data
-    const [getMssqlAssessmentData] = useGetMssqlAssessmentDataForHostMutation();
 
     // Get all managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
@@ -749,58 +745,6 @@ const InventoryApisV3 = () => {
         }
     };
 
-    const getManagedAssessmentData = async (resourceId: string) => {
-        try {
-            const result: any = await getMssqlAssessmentData({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
-                databaseHostId: resourceId
-            });
-            if (result && !result?.error) {
-                let mssqlAssessmentDataRes: any = {};
-                if (result?.data) {
-                    if (managedAssessmentHostDataRef.current[uniqueHostRow(resourceId, credId, regionId)]) {
-                        mssqlAssessmentDataRes[uniqueHostRow(resourceId, credId, regionId)] = {
-                            loading: false,
-                            data: result?.data?.instancesAssessment,
-                            error: result?.data?.error
-                        };
-                    }
-                }
-                if (!mssqlAssessmentDataRes?.[uniqueHostRow(resourceId, credId, regionId)]) {
-                    mssqlAssessmentDataRes[uniqueHostRow(resourceId, credId, regionId)] = {
-                        loading: false,
-                        data: null,
-                        error: null
-                    };
-                }
-                dispatch(
-                    setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataRes })
-                );
-            } else {
-                let mssqlAssessmentDataErr: any = {};
-                mssqlAssessmentDataErr[uniqueHostRow(resourceId, credId, regionId)] = {
-                    loading: false,
-                    data: null,
-                    error: result?.error?.data?.message
-                };
-                dispatch(
-                    setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataErr })
-                );
-            }
-        } catch (error) {
-            let mssqlAssessmentDataErr: any = {};
-            mssqlAssessmentDataErr[uniqueHostRow(resourceId, credId, regionId)] = {
-                loading: false,
-                data: null,
-                error: error
-            };
-            dispatch(
-                setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataErr })
-            );
-        }
-    };
-
     const getAllMssqlHostAssessmentData = async (
         assessmentData: any,
         nextToken: string | null,
@@ -822,7 +766,16 @@ const InventoryApisV3 = () => {
                     headerSelectedMultiRegionIdsList.includes(runningRegionId)
                 ) {
                     if (result && !result?.error) {
-                        assessmentData = [...assessmentData, ...result?.data?.assessmentsPerAccount];
+                        assessmentData = [
+                            ...assessmentData,
+                            ...(Array.isArray(result?.data?.assessmentsPerAccount)
+                                ? result.data.assessmentsPerAccount.map((assessment: any) => ({
+                                      ...assessment,
+                                      credentialId: credId,
+                                      regionId: regionId
+                                  }))
+                                : [])
+                        ];
                         if (result?.data?.nextToken) {
                             setAllmssqlHostAssessmentData(assessmentData);
                             getAllMssqlHostAssessmentData(
@@ -874,36 +827,6 @@ const InventoryApisV3 = () => {
             noRunningList?.map((ec2InstanceId: any) => {
                 setTimeout(() => {
                     getUnmanagedPerfMssqlData(ec2InstanceId, isManagedHost, fields);
-                }, 1);
-            });
-        }
-    };
-
-    const callManagedAssessment = (resourceIds: Array<string>) => {
-        if (resourceIds.length > 0) {
-            let mssqlAssessmentDataLoad: any = {};
-            let noRunningList: Array<string> = [];
-            resourceIds?.map((resourceId: any) => {
-                if (
-                    runningManagedAssessmentRef.current?.length &&
-                    runningManagedAssessmentRef.current.includes(resourceId)
-                ) {
-                    return;
-                }
-                mssqlAssessmentDataLoad[uniqueHostRow(resourceId, credId, regionId)] = {
-                    loading: true,
-                    data: null,
-                    error: null
-                };
-                noRunningList.push(resourceId);
-            });
-            dispatch(
-                setManagedAssessmentHostData({ ...managedAssessmentHostDataRef.current, ...mssqlAssessmentDataLoad })
-            );
-            setRunningManagedAssessmentList([...runningManagedAssessmentRef.current, ...noRunningList]);
-            noRunningList?.map((resourceId: any) => {
-                setTimeout(() => {
-                    getManagedAssessmentData(resourceId);
                 }, 1);
             });
         }
@@ -1078,13 +1001,6 @@ const InventoryApisV3 = () => {
         }
     }, [unManagedPerfInstanceIdsList]);
 
-    useEffect(() => {
-        // Assessment call for managed rows
-        if (managedAssessmentHostIdsList) {
-            callManagedAssessment(managedAssessmentHostIdsList);
-        }
-    }, [managedAssessmentHostIdsList]);
-
     const resetPerComboValues = () => {
         dispatch(resetPerComboData(null));
         // reset for getManagedHostList
@@ -1106,6 +1022,7 @@ const InventoryApisV3 = () => {
         // reset partner list in FCI and AOAG
         setRunningPerfInstanceList([]);
         setRunningManagedAssessmentList([]);
+        setAllmssqlHostAssessmentData([]);
     };
 
     const resetFullData = () => {
@@ -1117,6 +1034,7 @@ const InventoryApisV3 = () => {
         // Explore savings data
         dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setPotentialSavingsValues(null));
+        dispatch(addAllMssqlHostAssessmentData([]));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.
@@ -1332,7 +1250,7 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         if (!refreshBlocked) {
-            dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
 };

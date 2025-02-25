@@ -46,6 +46,7 @@ import TooltipComponent from '../../../../common/TooltipComponent/TooltipCompone
 import { onClickESHost } from '../../../ExploreSavings/ExploreSavingsUtils';
 import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 
 const HostTable = () => {
     const dispatch = useDispatch();
@@ -70,6 +71,9 @@ const HostTable = () => {
 
     const [manageInstanceApi] = useManageMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
+
+    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const menuOpenedRowDetail: any = useRef(null);
 
     useEffect(() => {
         setLoading(
@@ -286,256 +290,314 @@ const HostTable = () => {
         );
     };
 
-    const lastColJSX = (
-        rowData: any,
-        checkForAllManaged: boolean,
-        checkForAllUnDetectInstance: boolean,
-        checkForAllUnDetectOrManageInstance: boolean,
-        checkForAllUnManagedInstance: boolean,
-        checkForAllFsxnManagedInstance: boolean,
-        checkForAllStorageType: boolean
-    ) => {
-        //Condition if installation mode is AOAG than disable manage
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
-            return (
-                <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
-                    <div className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
-        //Condition for if all managed then showing disable managed button with tooltip
-        if (rowData?.action && checkForAllManaged) {
-            return (
-                <TooltipComponent title={GENERAL.ALL_MANAGED_TEXT} placement="bottom" width="320px" height="90px">
-                    <div className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
-        //Check for all un-detect instances and storage type is N/A
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
-            return (
-                <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
-                    <div className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
+    // const lastColJSX = (
+    //     rowData: any,
+    //     checkForAllManaged: boolean,
+    //     checkForAllUnDetectInstance: boolean,
+    //     checkForAllUnDetectOrManageInstance: boolean,
+    //     checkForAllUnManagedInstance: boolean,
+    //     checkForAllFsxnManagedInstance: boolean,
+    //     checkForAllStorageType: boolean
+    // ) => {
+    //     //Condition if installation mode is AOAG than disable manage
+    //     if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
+    //                 <div className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
+    //     //Condition for if all managed then showing disable managed button with tooltip
+    //     if (rowData?.action && checkForAllManaged) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.ALL_MANAGED_TEXT} placement="bottom" width="320px" height="90px">
+    //                 <div className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
+    //     //Check for all un-detect instances and storage type is N/A
+    //     if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
+    //                 <div className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
 
-        //Check for all un-detect or managedinstances and storage type is N/A
-        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
-            return (
-                <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
-                    <div className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
+    //     //Check for all un-detect or managedinstances and storage type is N/A
+    //     if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
+    //                 <div className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
 
-        //Check for all Explore Savings undetected rows
-        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
-            return (
-                <TooltipComponent
-                    title={GENERAL.ALL_ES_UNDETECTED_ROWS}
-                    placement="bottom"
-                    width="320px"
-                    height="100px"
-                >
-                    <div id="inventory-table-option" className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
+    //     //Check for all Explore Savings undetected rows
+    //     if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+    //         return (
+    //             <TooltipComponent
+    //                 title={GENERAL.ALL_ES_UNDETECTED_ROWS}
+    //                 placement="bottom"
+    //                 width="320px"
+    //                 height="100px"
+    //             >
+    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
 
-        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
-        if (
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            !checkForAllUnDetectInstance &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-            checkForAnyAOAG(rowData)
-        ) {
-            return (
-                <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
-                    <div id="inventory-table-option" className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        } else if (
-            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-            !checkForAnySSD(rowData)
-        ) {
-            return (
-                <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
-                    <div id="inventory-table-option" className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
+    //     //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
+    //     if (
+    //         rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+    //         !checkForAllUnDetectInstance &&
+    //         rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+    //         checkForAnyAOAG(rowData)
+    //     ) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
+    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     } else if (
+    //         rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+    //         rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+    //         !checkForAnySSD(rowData)
+    //     ) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
+    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
 
-        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
-            return (
-                <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
-                    <div id="inventory-table-option" className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
+    //     if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
+    //         return (
+    //             <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
+    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
 
-        //Condition if storage type is not known and it is still loading for manage case
-        if (
-            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
-            !checkForAllManaged &&
-            checkForAllFsxnManagedInstance &&
-            rowData?.loading &&
-            !checkForAllStorageType
-        ) {
-            return (
-                <TooltipComponent
-                    title={GENERAL.INVENTORY_LOADING_DISABLED}
-                    placement="bottom"
-                    width="170px"
-                    height="33px"
-                >
-                    <div className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        } else if (
-            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
-            !checkForAllManaged &&
-            checkForAllFsxnManagedInstance
-        ) {
-            //Condition if all fsxn are managed and remaining storage type is unmanaged
-            return (
-                <TooltipComponent title={GENERAL.ALL_FSXN_MANAGED_TEXT} placement="bottom" width="320px" height="93px">
-                    <div className={styles.detectManageDisable}>
-                        <Typography variant="Regular_14" className={styles.textStyle}>
-                            {rowData?.action}
-                        </Typography>
-                    </div>
-                </TooltipComponent>
-            );
-        }
+    //     //Condition if storage type is not known and it is still loading for manage case
+    //     if (
+    //         rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+    //         !checkForAllManaged &&
+    //         checkForAllFsxnManagedInstance &&
+    //         rowData?.loading &&
+    //         !checkForAllStorageType
+    //     ) {
+    //         return (
+    //             <TooltipComponent
+    //                 title={GENERAL.INVENTORY_LOADING_DISABLED}
+    //                 placement="bottom"
+    //                 width="170px"
+    //                 height="33px"
+    //             >
+    //                 <div className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     } else if (
+    //         rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+    //         !checkForAllManaged &&
+    //         checkForAllFsxnManagedInstance
+    //     ) {
+    //         //Condition if all fsxn are managed and remaining storage type is unmanaged
+    //         return (
+    //             <TooltipComponent title={GENERAL.ALL_FSXN_MANAGED_TEXT} placement="bottom" width="320px" height="93px">
+    //                 <div className={styles.detectManageDisable}>
+    //                     <Typography variant="Regular_14" className={styles.textStyle}>
+    //                         {rowData?.action}
+    //                     </Typography>
+    //                 </div>
+    //             </TooltipComponent>
+    //         );
+    //     }
 
-        //Normal use case to show dialog or move to explore savings
-        if (
-            rowData?.action &&
-            !checkForAllManaged &&
-            !rowData?.actionDisable &&
-            rowData.ssmState !== INVENTORY_STATUS.OFFLINE
-        ) {
-            return (
-                <div
-                    className={styles.detectManage}
-                    id={
-                        rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
-                            ? 'explore-savings-inventory-table'
-                            : 'inventory-table-option'
-                    }
-                    onClick={() => {
-                        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                            onClickESHost(dispatch, rowData, isWorkloadFactory);
-                        } else {
-                            handleDialog(rowData);
-                        }
-                    }}
-                >
-                    <Typography variant="Regular_14" className={styles.textStyle}>
-                        {rowData?.action}
-                    </Typography>
-                </div>
-            );
-        }
-        if (
-            rowData?.action &&
-            !checkForAllManaged &&
-            rowData?.actionDisable &&
-            rowData.ssmState !== INVENTORY_STATUS.OFFLINE
-        ) {
-            return (
-                <div
-                    className={styles.detectManageDisable}
-                    id="inventory-table-option"
-                    title={rowData?.detectOptionDisableMsg}
-                >
-                    <Typography variant="Regular_14" className={styles.textStyle}>
-                        {rowData?.action}
-                    </Typography>
-                </div>
-            );
-        }
-    };
+    //     //Normal use case to show dialog or move to explore savings
+    //     if (
+    //         rowData?.action &&
+    //         !checkForAllManaged &&
+    //         !rowData?.actionDisable &&
+    //         rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+    //     ) {
+    //         return (
+    //             <div
+    //                 className={styles.detectManage}
+    //                 id={
+    //                     rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
+    //                         ? 'explore-savings-inventory-table'
+    //                         : 'inventory-table-option'
+    //                 }
+    //                 onClick={() => {
+    //                     if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+    //                         onClickESHost(dispatch, rowData, isWorkloadFactory);
+    //                     } else {
+    //                         handleDialog(rowData);
+    //                     }
+    //                 }}
+    //             >
+    //                 <Typography variant="Regular_14" className={styles.textStyle}>
+    //                     {rowData?.action}
+    //                 </Typography>
+    //             </div>
+    //         );
+    //     }
+    //     if (
+    //         rowData?.action &&
+    //         !checkForAllManaged &&
+    //         rowData?.actionDisable &&
+    //         rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+    //     ) {
+    //         return (
+    //             <div
+    //                 className={styles.detectManageDisable}
+    //                 id="inventory-table-option"
+    //                 title={rowData?.detectOptionDisableMsg}
+    //             >
+    //                 <Typography variant="Regular_14" className={styles.textStyle}>
+    //                     {rowData?.action}
+    //                 </Typography>
+    //             </div>
+    //         );
+    //     }
+    // };
+
+    // const lastColDetails = () => {
+    //     return {
+    //         id: '11',
+    //         Header: '',
+    //         accessor: '',
+    //         width: '184px',
+    //         isSticky: true,
+    //         renderCell: (cellData: any, rowData: any) => {
+    //             const checkForAllManaged = rowData?.sqlServerInstances?.every(
+    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
+    //             );
+    //             const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
+    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
+    //             );
+    //             const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+    //                 (item: any) =>
+    //                     item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
+    //                     item?.statusColText === INVENTORY_STATUS.MANAGED
+    //             );
+    //             const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+    //             );
+    //             const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
+    //                 return (
+    //                     (item?.statusColText === INVENTORY_STATUS.MANAGED &&
+    //                         item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+    //                     (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
+    //                         item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+    //                 );
+    //             });
+    //             const checkForAllStorageType = rowData?.sqlServerInstances?.every(
+    //                 (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
+    //             );
+    //             return lastColJSX(
+    //                 rowData,
+    //                 checkForAllManaged,
+    //                 checkForAllUnDetectInstance,
+    //                 checkForAllUnDetectOrManageInstance,
+    //                 checkForAllUnManagedInstance,
+    //                 checkForAllFsxnManagedInstance,
+    //                 checkForAllStorageType
+    //             );
+    //         }
+    //     };
+    // };
 
     const lastColDetails = () => {
         return {
-            id: '11',
+            id: '12',
             Header: '',
-            accessor: '',
-            width: '184px',
+            accessor: 'name',
+            showHide: true,
+            width: '57px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const checkForAllManaged = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
-                );
-                const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
-                );
-                const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
-                    (item: any) =>
-                        item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
-                        item?.statusColText === INVENTORY_STATUS.MANAGED
-                );
-                const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
-                );
-                const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
-                    return (
-                        (item?.statusColText === INVENTORY_STATUS.MANAGED &&
-                            item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-                        (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
-                            item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-                    );
-                });
-                const checkForAllStorageType = rowData?.sqlServerInstances?.every(
-                    (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
-                );
-                return lastColJSX(
-                    rowData,
-                    checkForAllManaged,
-                    checkForAllUnDetectInstance,
-                    checkForAllUnDetectOrManageInstance,
-                    checkForAllUnManagedInstance,
-                    checkForAllFsxnManagedInstance,
-                    checkForAllStorageType
+                const menu = [
+                    {
+                        id: 'manage',
+                        displayName: 'Manage'
+                    },
+                    {
+                        id: 'viewInstances',
+                        displayName: 'View instances'
+                    },
+                    {
+                        id: 'viewDatabases',
+                        displayName: 'View databases'
+                    }
+                ];
+
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={[...menu]}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'manage') {
+                                    }
+                                    if (menuId === 'viewInstances') {
+                                    }
+                                    if (menuId === 'viewDatabases') {
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
                 );
             }
         };
@@ -556,11 +618,13 @@ const HostTable = () => {
                         <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
                         <div className={styles.firstColText}>
                             {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP ||
+                                rowData?.status === INVENTORY_STATUS.ONLINE) && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
                             )}
                             {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+                                rowData?.status === INVENTORY_STATUS.OFFLINE) && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
                             )}
                             {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
@@ -739,7 +803,7 @@ const HostTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            width: '168px',
+            width: '188px',
             renderCell: (cellData: any, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }

@@ -15,11 +15,13 @@ import { useDispatch } from 'react-redux';
 import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
 import {
     detectFieldsValidation,
+    getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
     renderAllocatedCapacity,
     renderCellData,
     saveFsxInCredRegisteredObj,
+    uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
@@ -86,7 +88,7 @@ const InstancesTable = () => {
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
-    const managedAssessmentHostData = useAppSelector(state => state.inventoryV2.managedAssessmentHostData);
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -109,12 +111,16 @@ const InstancesTable = () => {
         if (inventoryTableData) {
             Object.keys(inventoryTableData).map((rowId: string) => {
                 if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
+                    let perHost = inventoryTableData?.[rowId];
                     let optimizationStatusLoading = false;
                     let optimizationStatusList: any = [];
-                    if (managedAssessmentHostData?.[rowId]) {
-                        let assessmentData = managedAssessmentHostData?.[rowId];
-                        optimizationStatusLoading = assessmentData?.loading;
-                        optimizationStatusList = assessmentData?.data;
+                    let assessRow = allmssqlHostAssessmentData?.filter(
+                        (perRow: any) =>
+                            uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === rowId
+                    );
+                    if (assessRow.length > 0) {
+                        optimizationStatusLoading = allmssqlHostAssessmentLoading;
+                        optimizationStatusList = assessRow?.[0]?.instancesAssessment;
                     }
                     let perInstanceData = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
                         let protectionText = getProtectionText(perRow);
@@ -124,6 +130,9 @@ const InstancesTable = () => {
                         );
                         return {
                             ...perRow,
+                            name: perHost?.name,
+                            hostType: perHost?.hostType,
+                            serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
                             loading: inventoryTableData?.[rowId]?.loading,
                             subLoading: perRow?.loading,
                             optimizationStatusLoading: optimizationStatusLoading,
@@ -136,7 +145,12 @@ const InstancesTable = () => {
                                 `${hostData?.ec2InstanceId}_${perRow.databaseInstanceName}`
                             )
                                 ? INVENTORY_STATUS.IN_PROGRESS
-                                : perRow.statusColText
+                                : perRow.statusColText,
+                            credentialId: perHost?.credentialId,
+                            regionId: perHost?.regionId,
+                            credentialName: perHost?.credentialName,
+                            accountId: perHost?.accountId,
+                            regionName: perHost?.regionName
                         };
                     });
                     newTable = [...newTable, ...(perInstanceData || [])];
@@ -144,7 +158,7 @@ const InstancesTable = () => {
             });
         }
         setData(newTable);
-    }, [inventoryTableData, inProgressInstances, managedAssessmentHostData]);
+    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading]);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -637,7 +651,7 @@ const InstancesTable = () => {
         },
         {
             Header: 'Host name',
-            accessor: 'hostname',
+            accessor: 'name',
             id: '2',
             width: '150px',
             filterOptions: 'auto',
@@ -832,7 +846,7 @@ const InstancesTable = () => {
         {
             id: '9',
             Header: 'AWS credentials',
-            accessor: 'awsCredentials',
+            accessor: 'credentialName',
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
@@ -842,7 +856,7 @@ const InstancesTable = () => {
         {
             id: '10',
             Header: 'AWS account',
-            accessor: 'awsAccount',
+            accessor: 'accountId',
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
@@ -852,7 +866,7 @@ const InstancesTable = () => {
         {
             id: '11',
             Header: 'Region',
-            accessor: 'region',
+            accessor: 'regionName',
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
