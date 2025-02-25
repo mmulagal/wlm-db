@@ -288,7 +288,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                 </DsTypography>
                             </div>
                         ) : (
-                            <></>
+                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                {'Storage multipath'}
+                            </DsTypography>
                         )}
                     </>
                 );
