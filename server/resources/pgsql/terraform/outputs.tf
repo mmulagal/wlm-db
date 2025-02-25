@@ -125,4 +125,32 @@ output "operating_system" {
   value = local.is_windows ? "Windows" : "Linux"
 }
 
+output "sql_node_ni_1_primary_private_ip_list" {
+  value = length(aws_network_interface.pgsql_node_ni_1) > 0 ? tolist(aws_network_interface.pgsql_node_ni_1[0].private_ips) : null
+}
+
+output "sql_node_ni_1_primary_private_ip" {
+  value = length(aws_network_interface.pgsql_node_ni_1) > 0 ? tolist(aws_network_interface.pgsql_node_ni_1[0].private_ips)[0] : null
+}
+
+output "sql_node_ni_1_secondary_private_ip_1" {
+  value = length(aws_network_interface.pgsql_node_ni_1) > 0 ? tolist(aws_network_interface.pgsql_node_ni_1[0].private_ips)[1] : null
+}
+
+output "sql_node_ni_1_secondary_private_ip_2" {
+  value = length(aws_network_interface.pgsql_node_ni_1) > 0 ? tolist(aws_network_interface.pgsql_node_ni_1[0].private_ips)[2] : null
+}
+
+
+output "sql_node_ni_2_primary_private_ip" {
+  value = length(aws_network_interface.pgsql_node_ni_2) > 0 ? tolist(aws_network_interface.pgsql_node_ni_2[0].private_ips)[0] : null
+}
+
+output "sql_node_ni_2_secondary_private_ip_1" {
+  value = length(aws_network_interface.pgsql_node_ni_2) > 0 ? tolist(aws_network_interface.pgsql_node_ni_2[0].private_ips)[1] : null
+}
+
+output "sql_node_ni_2_secondary_private_ip_2" {
+  value = length(aws_network_interface.pgsql_node_ni_2) > 0 ? tolist(aws_network_interface.pgsql_node_ni_2[0].private_ips)[2] : null
+}
 
