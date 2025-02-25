@@ -18,6 +18,8 @@ script_dir="/home/ec2-user/cfn/scripts"
 log_dir="/var/log/netapp_wf"
 log_file="$log_dir/Pgsql-Instance-initializer.log"
 pgsql_node_initialization_s3_url="${pgsql_node_initialization_s3_url}"
+node_name="${node_name}"
+is_ha="${is_ha}"
 
 echo "Deployment Name: $deployment_name"
 
@@ -57,7 +59,7 @@ curl -o "$script_dir/Pgsql-Instance-initializer.sh" "$pgsql_node_initialization_
 chmod +x "$script_dir/Pgsql-Instance-initializer.sh"
 
 # Construct the command to execute the initialization script
-command="$script_dir/Pgsql-Instance-initializer.sh '$aws_region' '$deployment_name' '$fsx_file_system_id' '$fsx_svm_id' '$sql_svm_name' '$fsx_aggr_name' '$fsx_data_volume_name' '$fsx_log_volume_name' '$fsx_svm_uuid' '$sql_version' '$sql_service_account_password' '$sql_server_name' '$log_feature_enabled'"
+command="$script_dir/Pgsql-Instance-initializer.sh '$aws_region' '$deployment_name' '$fsx_file_system_id' '$fsx_svm_id' '$sql_svm_name' '$fsx_aggr_name' '$fsx_data_volume_name' '$fsx_log_volume_name' '$fsx_svm_uuid' '$sql_version' '$sql_service_account_password' '$sql_server_name' '$log_feature_enabled' '$node_name' '$is_ha'"
 
 echo "Executing command: $command"
 bash -c "$command" &> "$log_file"

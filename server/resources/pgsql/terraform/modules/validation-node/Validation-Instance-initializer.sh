@@ -210,6 +210,9 @@ main() {
     validate_fsx_connectivity "${perform_fsx_check}" "${fsx_file_system_id}" "${aws_region}" "${deployment_name}" "ValidationNode1" 
 
     tag_instance "${instance_id}" "user_data" "completed"
+
+    # Add a 30-second delay before shutting down
+    sleep 30 && sudo shutdown now
 }
 
 main "$@"
