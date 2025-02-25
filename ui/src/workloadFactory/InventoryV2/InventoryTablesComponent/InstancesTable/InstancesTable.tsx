@@ -378,7 +378,7 @@ const InstancesTable = () => {
 
     const lastColDetails = () => {
         return {
-            id: '10',
+            id: '12',
             Header: '',
             accessor: 'name',
 
@@ -646,7 +646,7 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Host type',
+            Header: 'Engine type',
             accessor: 'hostType',
             id: '3',
             width: '150px',
@@ -656,9 +656,19 @@ const InstancesTable = () => {
             }
         },
         {
+            Header: 'Deployment model',
+            accessor: 'serverInstallationMode',
+            id: '4',
+            width: '150px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
             Header: 'Management status',
             accessor: 'statusColText',
-            id: '4',
+            id: '5',
             isSortable: false,
             width: '190px',
             filterOptions: 'auto',
@@ -685,7 +695,7 @@ const InstancesTable = () => {
         {
             Header: 'Optimization status',
             accessor: 'optimizationStatus',
-            id: '5',
+            id: '6',
             width: '210px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
@@ -786,9 +796,9 @@ const InstancesTable = () => {
             }
         },
         {
-            Header: 'Protection',
+            Header: 'Protection status',
             accessor: 'protectionText',
-            id: '6',
+            id: '7',
             width: '130px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
@@ -805,7 +815,7 @@ const InstancesTable = () => {
         {
             Header: 'Performance',
             accessor: 'performance.assessment',
-            id: '7',
+            id: '8',
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
@@ -820,7 +830,7 @@ const InstancesTable = () => {
             }
         },
         {
-            id: '8',
+            id: '9',
             Header: 'AWS credentials',
             accessor: 'awsCredentials',
             isSortable: true,
@@ -830,7 +840,7 @@ const InstancesTable = () => {
             }
         },
         {
-            id: '9',
+            id: '10',
             Header: 'AWS account',
             accessor: 'awsAccount',
             isSortable: true,
@@ -840,7 +850,7 @@ const InstancesTable = () => {
             }
         },
         {
-            id: '10',
+            id: '11',
             Header: 'Region',
             accessor: 'region',
             isSortable: true,

@@ -77,6 +77,8 @@ export interface InventoryTableData {
     storageType?: string;
     sqlServerInstances?: Array<InventoryTableInstanceDatInterface>;
     hasInstanceData?: boolean;
+    credentialId?: string;
+    regionId?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {

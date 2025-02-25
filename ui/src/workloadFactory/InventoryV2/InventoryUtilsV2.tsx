@@ -316,9 +316,6 @@ export const getStorageSavingsText = (val: DatabaseInstancesSummaryInterface) =>
     }
 
     if (fsxType) {
-        if (fsxType === 'fsxw') {
-            let a = 1;
-        }
         let fsxTypeValue = val?.storage?.[fsxType] || {};
         storagePercent = fsxTypeValue ? (Number(fsxTypeValue?.spaceSavings) / Number(fsxTypeValue?.used)) * 100 : 0;
         if (val?.storage?.[fsxType]?.spaceSavings && val?.storage?.[fsxType]?.used) {
@@ -699,11 +696,14 @@ export const formatDiscoveredRows = (
         storageType: actionObj?.storageType,
         isDetected: actionObj?.isDetected,
         ec2Details: ec2Details,
+        hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE,
         // **** Below values will get from Instances API *****
         // estimatedUsageCost: {}, // Initially it will be blank
         // totalCost: '',
         // allocatedCapacity: '',
         sqlServerInstances: formatDiscoverInstanceData(discoveredRow, perInstanceStatus),
+        credentialId: discoveredRow?.credentialId,
+        regionId: discoveredRow?.regionId,
         credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
         accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
         regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
@@ -1091,7 +1091,13 @@ export const updateInstancesApiResponse = (
             let inventoryRow;
             let resourceId = '';
             Object.keys(inventoryTableData).map((inst: string) => {
-                if (inventoryTableData[inst]?.ec2InstanceId === key) {
+                let currInst = inventoryTableData[inst];
+                if (
+                    currInst?.ec2InstanceId &&
+                    currInst?.credentialId &&
+                    currInst?.regionId &&
+                    uniqueHostRow(currInst?.ec2InstanceId, currInst?.credentialId, currInst?.regionId) === key
+                ) {
                     inventoryRow = inventoryTableData[inst];
                     resourceId = inst;
                 }

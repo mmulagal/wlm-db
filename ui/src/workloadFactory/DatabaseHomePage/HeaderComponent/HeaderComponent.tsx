@@ -97,6 +97,7 @@ import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNo
 import InventoryApis from '../../InventoryV2/InventoryApis';
 import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
 import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage';
+import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 
 type Tab = {
     tab: string;
@@ -141,8 +142,9 @@ const HeaderComponent = ({ tab }: Tab) => {
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
     HeaderComponentApi();
+    InventoryApisV3();
     // InventoryApisV2();
-    InventoryApis();
+    // InventoryApis();
     DatabaseHomeApis();
     JobMonitoringApi();
     SavingsCalculatorApi();

@@ -1,7 +1,16 @@
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
-import { TableTopBar, Typography, useDialog, useTable, Button, Popover, DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
+import {
+    TableTopBar,
+    Typography,
+    useDialog,
+    useTable,
+    Button,
+    Popover,
+    DsTypography,
+    DsFlashingDotsLoader
+} from '@netapp/design-system';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
@@ -575,7 +584,7 @@ const HostTable = () => {
         },
         {
             id: '1',
-            Header: 'Host type',
+            Header: 'Engine type',
             accessor: 'hostType',
             isSortable: true,
             width: '228px',

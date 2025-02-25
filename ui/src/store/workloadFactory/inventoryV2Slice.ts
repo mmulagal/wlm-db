@@ -190,6 +190,28 @@ const inventoryV2Slice = createSlice({
         },
         setSelectedOptimizeConfig: (state, action: PayloadAction<any>) => {
             state.selectedOptimizeConfig = action.payload;
+        },
+        resetPerComboData: (state, action: PayloadAction<any>) => {
+            state.resetManagedData = true;
+            state.isManagedHostListLoading = true;
+            state.getDatabaseHosts.databaseHostsLoading = true;
+            state.getPgSqlDatabaseHosts.databaseHostsLoading = true;
+            state.getDatabaseHosts.fullHostDataLoading = true;
+            state.getPgSqlDatabaseHosts.fullHostDataLoading = true;
+            state.allmssqlHostAssessmentLoading = true;
+            state.getDatabaseHosts.databaseHostsData = null;
+            state.getPgSqlDatabaseHosts.databaseHostsData = null;
+            state.discoveredHosts.discoveredHostData = null;
+            state.discoveredHosts.discoverHostLoading = true;
+            state.mssqlInstancesData = null;
+            state.inventoryChartData = null;
+            state.removeSecNodeDiscoveredList = [];
+            state.unManagedPerfInstanceIdsList = [];
+            state.managedAssessmentHostIdsList = [];
+            state.perfMssqlInstancesData = {};
+            state.managedAssessmentHostData = {};
+            state.allmssqlHostAssessmentData = [];
+            state.potentialSavingsHostData = {};
         }
     }
 });
@@ -237,7 +259,8 @@ export const {
     setManagedAssessmentHostData,
     addAllMssqlHostAssessmentData,
     setAllMssqlHostAssessmentLoading,
-    setPotentialSavingsHostData
+    setPotentialSavingsHostData,
+    resetPerComboData
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
