@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
@@ -48,7 +48,8 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple',
+        // selectionType: 'multiple',
+        selectionType: 'none',
         defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
@@ -69,8 +70,15 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
                 tableProps={tableProps}
                 pluralTitle={`Impacted drives`}
                 singularTitle={'Impacted drive'}
+                actionsRight={
+                    <div className={styles.optimizeButton}>
+                        <DsButton onClick={handleBulkAction} isThin variant="primary">
+                            Optimize
+                        </DsButton>
+                    </div>
+                }
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

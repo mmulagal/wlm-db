@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -59,7 +59,8 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple',
+        // selectionType: 'multiple',
+        selectionType: 'none',
         defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
@@ -80,8 +81,15 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
                 tableProps={tableProps}
                 pluralTitle={`Impacted ${tableHeader}s`}
                 singularTitle={`Impacted ${tableHeader}`}
+                actionsRight={
+                    <div className={styles.optimizeButton}>
+                        <DsButton onClick={handleBulkAction} isThin variant="primary">
+                            Optimize
+                        </DsButton>
+                    </div>
+                }
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

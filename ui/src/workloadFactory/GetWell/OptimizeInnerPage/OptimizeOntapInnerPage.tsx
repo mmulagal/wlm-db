@@ -99,7 +99,8 @@ const OptimizeOntapInnerPage = () => {
         }
     };
 
-    const lastColDetails = (name: string, data?: any, width: any = '302px') => {
+    const lastColDetails = (name: string, data?: any, width: any = '372px') => {
+        //302
         return {
             id: '4',
             Header: '',
@@ -110,7 +111,7 @@ const OptimizeOntapInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {buttonComponent()}
+                        {/* {buttonComponent()} */}
                     </div>
                 );
             }
