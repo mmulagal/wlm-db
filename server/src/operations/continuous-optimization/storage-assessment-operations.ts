@@ -320,19 +320,22 @@ async function calculateStorageDrift(
         driftAssessmentData.configuration.volumes.push({ errorMessage: errors.volumes });
     } else {
         volumeConfigData.forEach(config => {
-            let status = AssessmentStatus.OPTIMIZED;
+            let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
             volumes.forEach(volume => {
                 let objectName = '';
+                let volumeStatus = AssessmentStatus.OPTIMIZED;
                 Object.entries(volume).forEach(([key, value]) => {
                     objectName = key === 'name' ? value : objectName;
                     if (key === config.parameter) {
-                        status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
-                        if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                        volumeStatus =
+                            config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+                        overallStatus = volumeStatus === AssessmentStatus.NOT_OPTIMIZED ? volumeStatus : overallStatus;
+                        if (volumeStatus === AssessmentStatus.NOT_OPTIMIZED) {
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
-                                objectName: objectName!,
+                                objectName,
                                 value: value.toString(),
                                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
                             });
@@ -344,7 +347,7 @@ async function calculateStorageDrift(
             driftAssessmentData.configuration.volumes.push({
                 name: config.parameter,
                 recommended: config.value.toString(),
-                status,
+                status: overallStatus,
                 objectsInViolation,
                 severity: config.severity,
                 recommendation: config.recommendation,
@@ -360,20 +363,23 @@ async function calculateStorageDrift(
         driftAssessmentData.configuration.luns.push({ errorMessage: errors.luns });
     } else {
         lunConfigData.forEach(config => {
-            let status = AssessmentStatus.OPTIMIZED;
+            let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
             luns.forEach(lun => {
                 let objectName = '';
+                let volumeStatus = AssessmentStatus.OPTIMIZED;
                 Object.entries(lun).forEach(([key, value]) => {
                     objectName = key === 'name' ? value : objectName;
                     if (key === config.parameter) {
-                        status = config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : status;
+                        volumeStatus =
+                            config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+                        overallStatus = volumeStatus === AssessmentStatus.NOT_OPTIMIZED ? volumeStatus : overallStatus;
 
-                        if (status === AssessmentStatus.NOT_OPTIMIZED) {
+                        if (volumeStatus === AssessmentStatus.NOT_OPTIMIZED) {
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
-                                objectName: objectName!,
+                                objectName,
                                 value: value.toString(),
                                 objectType: ASSESSMENT_RESOURCE_TYPE.LUN
                             });
@@ -385,7 +391,7 @@ async function calculateStorageDrift(
             driftAssessmentData.configuration.luns.push({
                 name: config.parameter,
                 recommended: config.value.toString(),
-                status,
+                status: overallStatus,
                 objectsInViolation: [...new Set(objectsInViolation)],
                 severity: config.severity,
                 recommendation: config.recommendation,
