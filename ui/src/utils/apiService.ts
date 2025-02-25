@@ -43,7 +43,12 @@ const prepareHeaders = (
     if (!isWorkloadFactory) {
         headers.set('x-netapp-referer', 'BlueXP');
     }
-    if (endpoint === 'deploySqlTemplate' || endpoint === 'getTemplates') {
+    if (
+        endpoint === 'deploySqlTemplate' ||
+        endpoint === 'getTemplates' ||
+        endpoint === 'deployPgsqlTemplate' ||
+        endpoint === 'getPgsqlTemplates'
+    ) {
         headers.set(
             'triggered-from',
             isChatbot ? 'chatbot' : selectConfig === SELECT_CONFIG.EASY_CREATE ? 'wizard-quick' : 'wizard-advanced'

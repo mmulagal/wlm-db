@@ -120,7 +120,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {buttonComponent()}
+                        {/* {buttonComponent()} */}
                     </div>
                 );
             }

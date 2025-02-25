@@ -26,13 +26,21 @@ import PostgreOperatingSystem from '../PostgreOperatingSystem/PostgreOperatingSy
 import PostgreVersion from '../PostgreVersion/PostgreVersion';
 import PostgreServerName from '../PostgreServerName/PostgreServerName';
 
-import { WIZARD_TYPE } from '../../../utils/consts';
+import { DBType, WIZARD_TYPE } from '../../../utils/consts';
 import SecurityGroup from '../../CreateMsSql/AwsSettings/SecurityGroup/SecurityGroup';
 import StorageCapacity from '../../CreateMsSql/InfrastructureSettings/StorageCapacity/StorageCapacity';
 import PreviewDefaultPostgres from '../PreviewDefaultPostgre/PreviewDefaultPostgre';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 
 function PostgressLayout() {
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
+    }, []);
 
     return (
         <>

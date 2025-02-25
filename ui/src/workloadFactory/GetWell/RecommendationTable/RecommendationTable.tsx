@@ -173,7 +173,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status') {
+        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
             return false;
         } else {
             return true;
@@ -272,19 +272,27 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 } else if (rowData?.type === 'lun') {
                     type = 'LUN path';
                 } else if (rowData?.type === 'os') {
-                    type = 'discs';
+                    type = 'drives';
                 }
 
                 return (
-                    <div>
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {(rowData?.totalObjectsInViolation || 0) +
-                                ' out of ' +
-                                (rowData?.totalObjectsAssessed || 0) +
-                                ' ' +
-                                type}
-                        </DsTypography>
-                    </div>
+                    <>
+                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status' ? (
+                            <div>
+                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                    {(rowData?.totalObjectsInViolation || 0) +
+                                        ' out of ' +
+                                        (rowData?.totalObjectsAssessed || 0) +
+                                        ' ' +
+                                        type}
+                                </DsTypography>
+                            </div>
+                        ) : (
+                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                {'Storage multipath'}
+                            </DsTypography>
+                        )}
+                    </>
                 );
             }
         },

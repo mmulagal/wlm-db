@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -37,7 +37,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
         },
 
         {
-            Header: 'Performance tier',
+            Header: 'Storage tier percentage',
             accessor: 'value',
             id: '3',
             width: '481px',
@@ -46,7 +46,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
                 return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails(type, {})
+        lastColDetails(type, {}, '372px')
     ];
 
     const tableProps = useTable({
@@ -57,7 +57,8 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple',
+        // selectionType: 'multiple',
+        selectionType: 'none',
         defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
@@ -78,8 +79,15 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
                 tableProps={tableProps}
                 pluralTitle={`Impacted volumes`}
                 singularTitle={'Impacted volume'}
+                actionsRight={
+                    <div className={styles.optimizeButton}>
+                        <DsButton onClick={handleBulkAction} isThin variant="primary">
+                            Optimize
+                        </DsButton>
+                    </div>
+                }
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

@@ -48,8 +48,8 @@ const LogFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }:
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle={`Impacted databases`}
+                singularTitle={'Impacted database'}
             />
 
             <Table

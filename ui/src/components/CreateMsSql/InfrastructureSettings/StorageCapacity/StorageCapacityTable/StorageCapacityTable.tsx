@@ -17,6 +17,18 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
     const fsxNType = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNType);
     const [sizeData, setSizeData] = useState<any>([]);
 
+    const sizeDataCalc = (sizeData: any) => {
+        if (isFsxnNew(fsxNType)) {
+            return sizeData?.total;
+        } else {
+            if (wizardType === WIZARD_TYPE.MSSQL) {
+                return (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0) + (sizeData?.quorum || 0);
+            } else {
+                return (sizeData?.data || 0) + (sizeData?.log || 0);
+            }
+        }
+    };
+
     useEffect(() => {
         const sizeData = getEstimatedCostData?.data?.fsxnStorage?.fsxnCostBreakdownById?.[0]?.size;
         let newList = [];
@@ -39,16 +51,17 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
                 size: sizeData?.tempdb,
                 calculation: `10% of ${GENERAL.DATA_SIZE}`
             });
+
+            if (sizeData?.quorum) {
+                newList.push({
+                    id: 4,
+                    type: GENERAL.QUORUM_VOLUME,
+                    size: sizeData?.quorum,
+                    calculation: `Disk Witness for Windows cluster in FCI deployments`
+                });
+            }
         }
 
-        if (sizeData?.quorum) {
-            newList.push({
-                id: 4,
-                type: GENERAL.QUORUM_VOLUME,
-                size: sizeData?.quorum,
-                calculation: `Disk Witness for Windows cluster in FCI deployments`
-            });
-        }
         if (isFsxnNew(fsxNType)) {
             // For existing FSX buffer size should not be considered
             newList.push({
@@ -62,9 +75,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
             id: 6,
             type: GENERAL.TOTAL_VOLUME,
             // For existing FSX removing buffer size
-            size: isFsxnNew(fsxNType)
-                ? sizeData?.total
-                : (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0) + (sizeData?.quorum || 0),
+            size: sizeDataCalc(sizeData),
             calculation: `Total FSx for ONTAP file system SSD capacity`
         });
         setSizeData(newList);
