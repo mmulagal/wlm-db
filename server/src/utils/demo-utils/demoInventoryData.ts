@@ -655,34 +655,17 @@ const ASSESMENT_CONFIG_DATA = {
         'mpio-load-balance-policy-details': [
             {
                 disk: 'Disk 4',
+                accessPath: 'L:\\',
                 policy: 'Other'
             },
             {
                 disk: 'Disk 1',
+                accessPath: 'S:\\',
                 policy: 'Other'
             },
             {
                 disk: 'Disk 8',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 2',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 3',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 5',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 6',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 7',
+                accessPath: 'T:\\',
                 policy: 'Other'
             }
         ]
