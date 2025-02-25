@@ -37,6 +37,7 @@ interface ModifiedInstancesNodeDetails {
     ec2InstanceId: string;
     oldDnsAddresses: string;
     oldInstanceType: string;
+    isPrimaryNode?: boolean;
 }
 interface StorageDetails {
     svmId: string;
@@ -69,8 +70,8 @@ async function handleComputeRemediation(
 
     let anySubJobFailed = false;
 
-    let activeNodeInstanceId: any = '';
-    let instanceName = '';
+    let oldClusterOwnerNode;
+    let activeNodeInstanceId: string = '';
     let shouldRollbackClusterOwnership = false;
     let formattedInstanceName = getServerNameWithHostname(resourceDetails[0]?.resource_name || undefined);
     const modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[] = [];
@@ -79,12 +80,13 @@ async function handleComputeRemediation(
     try {
         const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-        ({ activeNodeInstanceId, instanceName } = await getActiveSqlNode(
+        ({ activeNodeInstanceId = '' } = await getActiveSqlNode(
             credentialsId,
             region,
             node1InstanceId,
             node2InstanceId
         ));
+
         if (activeNodeInstanceId) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             formattedInstanceName = getServerNameWithHostname(
@@ -181,9 +183,8 @@ async function handleComputeRemediation(
                         try {
                             // modify instance type for all nodes in the cluster, (one node at a time to be on safer side) except the primary node
                             for (const nodeId of nonPrimaryNodeInstanceIds) {
-                                const oldInstanceType =
-                                    clusterNodeDetails.find(node => node.ec2InstanceId === nodeId)?.ec2InstanceType ??
-                                    '';
+                                const { ec2InstanceType: oldInstanceType = '' } =
+                                    clusterNodeDetails.find(node => node.ec2InstanceId === nodeId) || {};
                                 const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
                                     accountId,
                                     credentialsId,
@@ -195,7 +196,12 @@ async function handleComputeRemediation(
                                     changeInstanceTypeJobId,
                                     formattedInstanceName
                                 );
-                                modifiedInstancesNodeDetails.push({ ec2InstanceId, oldDnsAddresses, oldInstanceType });
+                                modifiedInstancesNodeDetails.push({
+                                    ec2InstanceId,
+                                    oldDnsAddresses,
+                                    oldInstanceType,
+                                    isPrimaryNode: false
+                                });
                             }
                             logger.info('Instance type updated for all secondary nodes in the cluster');
 
@@ -272,6 +278,7 @@ async function handleComputeRemediation(
                                 endTime: Date.now()
                             });
                             shouldRollbackClusterOwnership = true;
+                            oldClusterOwnerNode = ownerNode;
                         } catch (error) {
                             subJobErrorMessage = `Failed to transfer sql node ownership in the cluster, ${error}`;
                             await updateJobDetails(accountId, changeInstanceTypeJobId, {
@@ -325,7 +332,8 @@ async function handleComputeRemediation(
                 jobId
             );
             try {
-                const oldInstanceType = (resourceDetails[0]?.metadata as any)?.assessment?.compute?.currentInstanceType;
+                const { assessment: { compute: { currentInstanceType: oldInstanceType = '' } = {} } = {} } =
+                    metadata as unknown as Metadata;
                 const { ec2InstanceId, oldDnsAddresses } = await updateNodeInstanceType(
                     accountId,
                     credentialsId,
@@ -337,7 +345,12 @@ async function handleComputeRemediation(
                     updateInstanceTypeJobId,
                     formattedInstanceName
                 ); // modify instance type for the primary node ; secondary nodes if any are already modified at this point
-                modifiedInstancesNodeDetails.push({ ec2InstanceId, oldDnsAddresses, oldInstanceType });
+                modifiedInstancesNodeDetails.push({
+                    ec2InstanceId,
+                    oldDnsAddresses,
+                    oldInstanceType,
+                    isPrimaryNode: true
+                });
 
                 await updateJobDetails(accountId, updateInstanceTypeJobId, {
                     status: JOBSTATUS.COMPLETED,
@@ -370,10 +383,13 @@ async function handleComputeRemediation(
                     const ownershipTransferStatus = await moveClusterGroupOwnership(
                         credentialsId,
                         region,
-                        instanceName,
+                        oldClusterOwnerNode,
                         activeNodeInstanceId
                     );
-                    logger.info('Primary node ownership transferred to', { instanceName, ownershipTransferStatus });
+                    logger.info('Primary node ownership transferred to', {
+                        oldClusterOwnerNode,
+                        ownershipTransferStatus
+                    });
                     await updateJobDetails(accountId, nodeTransferJobId, {
                         status: JOBSTATUS.COMPLETED,
                         endTime: Date.now()
@@ -435,19 +451,20 @@ async function handleComputeRemediation(
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
         try {
-            // In case of failure, rollback the instance type change for the nodes that were successfully updated
-            rollbackComputeOptimize(
-                accountId,
-                credentialsId,
-                region,
-                storageDetails,
-                modifiedInstancesNodeDetails,
-                shouldRollbackClusterOwnership,
-                activeNodeInstanceId,
-                instanceName,
-                formattedInstanceName,
-                jobId
-            );
+            if (modifiedInstancesNodeDetails.length > 0) {
+                // In case of failure, rollback the instance type change for the nodes that were successfully updated
+                rollbackComputeOptimize(
+                    accountId,
+                    credentialsId,
+                    region,
+                    storageDetails,
+                    modifiedInstancesNodeDetails,
+                    shouldRollbackClusterOwnership,
+                    activeNodeInstanceId,
+                    oldClusterOwnerNode,
+                    formattedInstanceName
+                );
+            }
         } catch (rollbackError) {
             errorMessage = `Error while reverting instance type change ${rollbackError}`;
             logger.error(errorMessage);
@@ -697,24 +714,21 @@ async function updateDnsSettings(
     region: string,
     instanceId: string,
     dnsAddresses: string,
-    instanceName: string,
-    jobId?: string
+    jobId: string,
+    instanceName: string
 ) {
     logger.info('Updating DNS settings', { credentialsId, region, instanceId, dnsAddresses, jobId });
     let errorMessage = '';
-    let updateDnsJobId = '';
-    if (jobId) {
-        updateDnsJobId = await handleOptimizeJobCreation(
-            accountId,
-            credentialsId,
-            region,
-            instanceName,
-            JOBTYPE.OPTIMIZATION,
-            'Update DNS settings',
-            'Update DNS settings',
-            jobId
-        );
-    }
+    const updateDnsJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        JOBTYPE.OPTIMIZATION,
+        'Update DNS settings',
+        'Update DNS settings',
+        jobId
+    );
     try {
         return await retryWithDelay(
             callSsmExecution.bind(
@@ -735,13 +749,11 @@ async function updateDnsSettings(
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
         logger.error(errorMessage);
     } finally {
-        if (jobId && updateDnsJobId) {
-            await updateJobDetails(accountId, updateDnsJobId, {
-                status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-                endTime: Date.now(),
-                error: errorMessage
-            });
-        }
+        await updateJobDetails(accountId, updateDnsJobId, {
+            status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
     }
 }
 
@@ -771,8 +783,8 @@ async function handleIscsiSessions(
     ec2InstanceId: string,
     fsxId: string,
     svmId: string,
-    instanceName: string,
-    jobId?: string
+    jobId: string,
+    instanceName: string
 ) {
     logger.info('Handling ISCSI sessions', {
         accountId,
@@ -785,19 +797,16 @@ async function handleIscsiSessions(
         instanceName
     });
 
-    let handleIscsiJobId = '';
-    if (jobId) {
-        handleIscsiJobId = await handleOptimizeJobCreation(
-            accountId,
-            credentialsId,
-            region,
-            instanceName,
-            JOBTYPE.OPTIMIZATION,
-            'Check and update ISCSI sessions',
-            'Check and update ISCSI sessions to ensure ISCSI sessions are available after instance type change',
-            jobId
-        );
-    }
+    const handleIscsiJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        instanceName,
+        JOBTYPE.OPTIMIZATION,
+        'Check and update ISCSI sessions',
+        'Check and update ISCSI sessions to ensure ISCSI sessions are available after instance type change',
+        jobId
+    );
     let errorMessage = '';
     try {
         const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
@@ -820,13 +829,11 @@ async function handleIscsiSessions(
         errorMessage = `Failed to update ISCSI sessions for ${ec2InstanceId}. ${error}`;
         logger.error(errorMessage);
     } finally {
-        if (jobId && handleIscsiJobId) {
-            await updateJobDetails(accountId, handleIscsiJobId, {
-                status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-                endTime: Date.now(),
-                error: errorMessage
-            });
-        }
+        await updateJobDetails(accountId, handleIscsiJobId, {
+            status: errorMessage ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            endTime: Date.now(),
+            error: errorMessage
+        });
     }
 }
 
@@ -838,8 +845,8 @@ async function updateNodeInstanceType(
     instanceType: string,
     fsxId: string,
     svmId: string,
+    jobId: string,
     instanceName: string,
-    jobId?: string,
     dnsAddresses?: string
 ) {
     logger.info('Handling node instance type change', {
@@ -849,7 +856,10 @@ async function updateNodeInstanceType(
         ec2InstanceId,
         instanceType,
         fsxId,
-        svmId
+        svmId,
+        jobId,
+        instanceName,
+        dnsAddresses
     });
 
     try {
@@ -869,8 +879,8 @@ async function updateNodeInstanceType(
                     region,
                     ec2InstanceId,
                     oldDnsAddresses,
-                    instanceName,
-                    jobId
+                    jobId,
+                    instanceName
                 );
             }
             await handleIscsiSessions(
@@ -880,8 +890,8 @@ async function updateNodeInstanceType(
                 ec2InstanceId,
                 fsxId,
                 svmId,
-                instanceName,
-                jobId
+                jobId,
+                instanceName
             );
         }
         return { ec2InstanceId, oldDnsAddresses };
@@ -893,34 +903,25 @@ async function updateNodeInstanceType(
     }
 }
 
-async function rollbackComputeOptimize(
+async function handleRollbackClusterOwnership(
     accountId: string,
     credentialsId: string,
     region: string,
-    storageDetails: StorageDetails,
-    modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[],
-    shouldRollbackClusterOwnership: boolean,
-    activeNodeInstanceId: string,
-    instanceName: string,
     formattedInstanceName: string,
-    jobId: string
+    targetNodeName: string,
+    activeNodeInstanceId: string,
+    rollBackJobId: string
 ) {
-    let rollbackNodeInstanceTypeJobId = null;
-    let rollbackClusterOwnershipJobId = null;
-    if (modifiedInstancesNodeDetails.length > 0) {
-        rollbackNodeInstanceTypeJobId = await handleOptimizeJobCreation(
-            accountId,
-            credentialsId,
-            region,
-            formattedInstanceName,
-            JOBTYPE.OPTIMIZATION,
-            'Rollback instance type for nodes in the cluster',
-            'Rollback instance type for nodes in the cluster',
-            jobId
-        );
-    }
+    logger.info('Rolling back cluster ownership', {
+        accountId,
+        credentialsId,
+        region,
+        formattedInstanceName,
+        targetNodeName
+    });
 
-    if (shouldRollbackClusterOwnership) {
+    let rollbackClusterOwnershipJobId;
+    try {
         rollbackClusterOwnershipJobId = await handleOptimizeJobCreation(
             accountId,
             credentialsId,
@@ -929,53 +930,180 @@ async function rollbackComputeOptimize(
             JOBTYPE.OPTIMIZATION,
             'Rollback cluster ownership transfer to primary node',
             'Rollback cluster ownership transfer to primary node',
-            jobId
+            rollBackJobId
         );
-    }
-
-    try {
-        if (modifiedInstancesNodeDetails.length > 0 && rollbackNodeInstanceTypeJobId) {
-            for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
-                await updateNodeInstanceType(
-                    accountId,
-                    credentialsId,
-                    region,
-                    ec2InstanceId,
-                    oldInstanceType,
-                    storageDetails.fsxId,
-                    storageDetails.svmId,
-                    formattedInstanceName,
-                    undefined,
-                    oldDnsAddresses
-                );
-            }
-            await updateJobDetails(accountId, rollbackNodeInstanceTypeJobId, {
-                status: JOBSTATUS.COMPLETED,
-                endTime: Date.now()
-            });
-        }
-        if (shouldRollbackClusterOwnership && rollbackClusterOwnershipJobId) {
-            await moveClusterGroupOwnership(credentialsId, region, instanceName, activeNodeInstanceId);
-            await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
-                status: JOBSTATUS.COMPLETED,
-                endTime: Date.now()
-            });
-        }
+        await moveClusterGroupOwnership(credentialsId, region, targetNodeName, activeNodeInstanceId);
+        await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
+            status: JOBSTATUS.COMPLETED,
+            endTime: Date.now()
+        });
     } catch (error) {
-        if (rollbackNodeInstanceTypeJobId) {
-            await updateJobDetails(accountId, rollbackNodeInstanceTypeJobId, {
-                status: JOBSTATUS.FAILED,
-                endTime: Date.now()
-            });
-        }
         if (rollbackClusterOwnershipJobId) {
             await updateJobDetails(accountId, rollbackClusterOwnershipJobId, {
                 status: JOBSTATUS.FAILED,
                 endTime: Date.now()
             });
         }
-        logger.error(`Error while rolling back compute optimization ${error}`);
-        throw createError(500, `Error while rolling back compute optimization ${error}`);
+        logger.error(`Error while rolling back compute cluster group ownership ${error}`);
+        throw createError(500, `Error while rolling back compute cluster group ownership ${error}`);
+    }
+}
+
+async function handleRollbackInstanceTypeChange(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    storageDetails: StorageDetails,
+    modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[],
+    formattedInstanceName: string,
+    rollbackComputeOptimizeJobId: string,
+    isPrimaryNode: boolean = false
+) {
+    logger.info('Rolling back instance type change', {
+        accountId,
+        credentialsId,
+        region,
+        storageDetails,
+        modifiedInstancesNodeDetails,
+        formattedInstanceName,
+        rollbackComputeOptimizeJobId
+    });
+
+    const nodeType = isPrimaryNode ? 'primary node' : 'secondary nodes';
+
+    const rollBackInstanceTypeJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        formattedInstanceName,
+        JOBTYPE.OPTIMIZATION,
+        `Rolling back instance type change for ${nodeType} in the cluster`,
+        `Rolling back instance type of SQL node/s ${modifiedInstancesNodeDetails
+            .map(({ ec2InstanceId }) => ec2InstanceId)
+            .join(',')} to ${
+            modifiedInstancesNodeDetails[0]?.oldInstanceType
+        }. To modify, instance/s will be stopped, modified and restarted.`,
+        rollbackComputeOptimizeJobId
+    );
+
+    try {
+        for (const { ec2InstanceId, oldDnsAddresses, oldInstanceType } of modifiedInstancesNodeDetails) {
+            await updateNodeInstanceType(
+                accountId,
+                credentialsId,
+                region,
+                ec2InstanceId,
+                oldInstanceType,
+                storageDetails.fsxId,
+                storageDetails.svmId,
+                rollbackComputeOptimizeJobId,
+                formattedInstanceName,
+                oldDnsAddresses
+            );
+        }
+    } catch (error) {
+        await updateJobDetails(accountId, rollBackInstanceTypeJobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: `Failed to update instance type for ${nodeType} in the cluster, ${error}`
+        });
+        throw error;
+    }
+}
+
+async function rollbackComputeOptimize(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    storageDetails: StorageDetails,
+    modifiedInstancesNodeDetails: ModifiedInstancesNodeDetails[],
+    shouldRollbackClusterOwnership: boolean,
+    activeNodeInstanceId: string,
+    oldClusterOwnerNode: string,
+    formattedInstanceName: string
+) {
+    logger.info('Rolling back compute optimization', {
+        accountId,
+        credentialsId,
+        region,
+        storageDetails,
+        modifiedInstancesNodeDetails,
+        shouldRollbackClusterOwnership,
+        activeNodeInstanceId,
+        oldClusterOwnerNode,
+        formattedInstanceName
+    });
+
+    const rollbackComputeOptimizeJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        formattedInstanceName,
+        JOBTYPE.OPTIMIZATION,
+        'Rollback EC2 compute remidiation for nodes in the cluster',
+        'Rollback EC2 compute remidiation for nodes in the cluster'
+    );
+    let rollBackJobStatus;
+    try {
+        if (modifiedInstancesNodeDetails.length > 0 && rollbackComputeOptimizeJobId) {
+            const modifiedPrimaryNodeDetails = modifiedInstancesNodeDetails.find(
+                instanceDetails => instanceDetails.isPrimaryNode
+            );
+            if (modifiedPrimaryNodeDetails) {
+                // rollback primary node instance type change
+                await handleRollbackInstanceTypeChange(
+                    accountId,
+                    credentialsId,
+                    region,
+                    storageDetails,
+                    [modifiedPrimaryNodeDetails],
+                    formattedInstanceName,
+                    rollbackComputeOptimizeJobId,
+                    true
+                );
+            }
+
+            if (shouldRollbackClusterOwnership) {
+                // rollback cluster ownership transfer back to original node
+                await handleRollbackClusterOwnership(
+                    accountId,
+                    credentialsId,
+                    region,
+                    formattedInstanceName,
+                    oldClusterOwnerNode,
+                    activeNodeInstanceId,
+                    rollbackComputeOptimizeJobId
+                );
+            }
+
+            const modifiedSecondaryNodeDetails = modifiedInstancesNodeDetails.filter(
+                instanceDetails => !instanceDetails.isPrimaryNode
+            ); // rollback secondary nodes instance type change
+            await handleRollbackInstanceTypeChange(
+                accountId,
+                credentialsId,
+                region,
+                storageDetails,
+                modifiedSecondaryNodeDetails,
+                formattedInstanceName,
+                rollbackComputeOptimizeJobId
+            );
+        }
+    } catch (error) {
+        const errorMessage = `Failed to rollback compute optimization ${error}`;
+        logger.error(errorMessage);
+        rollBackJobStatus = JOBSTATUS.FAILED;
+        await updateJobDetails(accountId, rollbackComputeOptimizeJobId, {
+            status: rollBackJobStatus,
+            endTime: Date.now(),
+            error: errorMessage
+        });
+    } finally {
+        rollBackJobStatus = rollBackJobStatus || JOBSTATUS.COMPLETED;
+        await updateJobDetails(accountId, rollbackComputeOptimizeJobId, {
+            status: rollBackJobStatus,
+            endTime: Date.now()
+        });
     }
 }
 
