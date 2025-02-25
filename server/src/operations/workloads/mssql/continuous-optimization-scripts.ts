@@ -776,7 +776,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
             if(-Not ($MpioLBDetails -Match $matchString) ) {
                $LoadBalancingPolicy = 'Other'
-               $object['policy'] = $LoadBalancingPolicy
+               $object.policy = $LoadBalancingPolicy
             }
             $LoadBalancingPolicyDetails += $($object)
         }

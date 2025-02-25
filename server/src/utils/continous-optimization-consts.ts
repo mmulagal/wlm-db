@@ -209,10 +209,10 @@ const ASSESSMENT_RESOURCE_TYPE = {
     FILE_SYSTEM: 'File system (FSx for ONTAP)',
     DRIVE: 'Drive',
     DATABASE: 'Database',
-    INSTANCE: 'Instance',
+    INSTANCE: 'EC2 instance',
     NETWORK_ADAPTER: 'Network Adapter',
     LUN: 'Lun',
-    SQL_INSTANCE: 'SQL Instance'
+    SQL_INSTANCE: 'SQL instance'
 };
 
 export {
