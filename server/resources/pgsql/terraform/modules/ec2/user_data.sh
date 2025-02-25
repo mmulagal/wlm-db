@@ -55,7 +55,7 @@ get_instance_private_ip() {
 
     if [ "$node_type" = "primary" ]; then
         # Save the primary private IP address to an SSM parameter
-        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_primary" --value "{private_ip: '$privateIP'}" --type String --region "$aws_region"
+        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_primary" --value "{private_ip: '$privateIP'}" --type String --region "$aws_region" --overwrite
         echo "SSM parameter created with primary private IP: $privateIP"
     elif [ "$node_type" = "secondary" ]; then
         # Get MAC address and subnet CIDR
@@ -67,7 +67,7 @@ get_instance_private_ip() {
         echo "Private IP with CIDR: $privateIPWithCidr"
 
         # Save the secondary private IP address with CIDR to an SSM parameter
-        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_secondary" --value "{private_ip: '$privateIPWithCidr'}" --type String --region "$aws_region"
+        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_secondary" --value "{private_ip: '$privateIPWithCidr'}" --type String --region "$aws_region" --overwrite
         echo "SSM parameter created with secondary private IP: $privateIPWithCidr"
     fi
 }
