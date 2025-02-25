@@ -23,6 +23,9 @@
         display: flex;
     }
 
+    [class*='dsButtonContainer'] {
+        min-width: 156px;
+    }
     .tooltipContainer {
         display: flex;
         gap: 16px;
