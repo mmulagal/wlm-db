@@ -24,7 +24,7 @@ const StorageCapacityTable = ({ wizardType = 'mssql' }: StorageCapacityTableProp
             if (wizardType === WIZARD_TYPE.MSSQL) {
                 return (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0) + (sizeData?.quorum || 0);
             } else {
-                return (sizeData?.data || 0) + (sizeData?.log || 0) + (sizeData?.tempdb || 0);
+                return (sizeData?.data || 0) + (sizeData?.log || 0);
             }
         }
     };
