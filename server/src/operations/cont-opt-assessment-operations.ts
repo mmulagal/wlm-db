@@ -21,7 +21,8 @@ import {
     ASSESSMENT_SSM_EXECUTION_TIMEOUT,
     HttpErrorCodes,
     RESOURCESTYPE,
-    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    CUSTOM_SSM_EXECUTION_TIMEOUT
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
@@ -293,7 +294,9 @@ async function initiateStorageAssessmentCollection(
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
         instanceRecord.sqlAuthEnabled,
-        true
+        true,
+        accountId,
+        CUSTOM_SSM_EXECUTION_TIMEOUT
     )) as MappedOnTapVolumeResponse[];
 
     if (isEmpty(instanceVolumeMapping)) {
