@@ -40,7 +40,7 @@ elapsed_time=0
 timeout=60
 
 while [ $elapsed_time -lt $timeout ]; do
-    instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text 2>/dev/null)
+    instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
     
     if [ $? -eq 0 ]; then
         echo "SSM parameter found"
