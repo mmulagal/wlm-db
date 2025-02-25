@@ -39,6 +39,8 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             userDataFiles: logDataFilesObj?.current,
+                            totalObjectsAssessed: logDataFilesObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: logDataFilesObj?.totalObjectsInViolation,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[logDataFilesObj?.status],
@@ -89,13 +91,13 @@ const LogFileTable = ({ lastColDetails, handleBulkAction }: any) => {
             filterOptions: 'auto'
         },
         {
-            Header: 'Log files',
-            accessor: 'userDataFiles',
+            Header: 'Impacted databases',
+            accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, {}, inProgressOptimizationData, inProgressHostData)

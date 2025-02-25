@@ -173,7 +173,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status') {
+        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
             return false;
         } else {
             return true;
