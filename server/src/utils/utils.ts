@@ -864,14 +864,24 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
         'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
         'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
-        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
+        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint',
+        'FSxReplicaDataVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host data files for replica instance',
+        'FSxReplicaSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+            'Creating a dedicated storage virtual machine for replica instance',
+        'FSxReplicaLogVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host log files for replica instance',
+        'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
+            stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
+        } EC2 instance`,
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
         subJobDescriptions['ValidationNode1(AWS::EC2::Instance)'] =
             'Validating outbound connection to deployment resources in Amazon S3 for primary validation node';
         subJobDescriptions['ValidationNode2(AWS::EC2::Instance)'] =
-            'Validating outbound connection to deployment resources in Amazon S3 for secondary validation node';
+            'Validating outbound connection to deployment resources in Amazon S3 for replica validation node';
         subJobDescriptions.ValidationStack = `Subnet Validation for ${dbEngineType} deployment`;
     }
 
