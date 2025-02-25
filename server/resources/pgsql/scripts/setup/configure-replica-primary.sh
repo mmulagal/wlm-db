@@ -35,7 +35,22 @@ extract_ip() {
 }
 
 echo "Parent Stack Name: $parent_stack_name"
-instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text)
+interval=10  # Polling interval in seconds
+elapsed_time=0
+timeout=60
+
+while [ $elapsed_time -lt $timeout ]; do
+    instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
+    
+    if [ $? -eq 0 ]; then
+        echo "SSM parameter found"
+        break
+    else
+        echo "SSM parameter not found. Retrying in $interval seconds..."
+        sleep $interval
+        elapsed_time=$((elapsed_time + interval))
+    fi
+done
 echo "instance_details fetched"
 if is_valid_json "$instance_details"; then
     valid_instance_details="$instanceDetails"
@@ -60,7 +75,7 @@ echo "Updating $PG_CONF ..."
 sudo sed -i "s/^#\?listen_addresses.*/listen_addresses = '*'/" "$PG_CONF"
 sudo sed -i "s/^#\?wal_level.*/wal_level = replica/" "$PG_CONF"
 sudo sed -i "s/^#\?max_wal_senders.*/max_wal_senders = 10/" "$PG_CONF"
-sudo sed -i "s/^#\?wal_keep_size.*/wal_keep_size = 64MB/" "$PG_CONF"
+sudo sed -i "s/^#\?wal_keep_size.*/wal_keep_size = 1024MB/" "$PG_CONF"
 sudo sed -i "s/^#\?hot_standby.*/hot_standby = on/" "$PG_CONF"
 sudo sed -i "s/^#\?password_encryption.*/password_encryption = 'md5'/" "$PG_CONF"
 check_status "Failed to configure postgresql.conf"

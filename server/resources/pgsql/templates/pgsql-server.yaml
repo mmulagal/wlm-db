@@ -349,6 +349,7 @@ Resources:
                 'Fn::Base64':
                     !Sub |
                         #!/bin/bash -xe
+                        sleep 10
                         token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
@@ -384,7 +385,7 @@ Resources:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName2'
                 -   Key: SQLServerName
-                    Value: !Ref 'SqlServerName'
+                    Value: !Sub "${SqlServerName}-replica"
     SqlNode2:
         Type: AWS::EC2::Instance
         Condition: IsHACluster
@@ -545,7 +546,7 @@ Resources:
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
                         d-rename-host:
                             command: !Sub
-                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
+                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}-replica'
                                 - SqlServerName: !Ref 'SqlServerName'
                         e-restart-host:
                             command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
@@ -573,6 +574,7 @@ Resources:
                 'Fn::Base64':
                     !Sub |
                         #!/bin/bash -xe
+                        sleep 10
                         token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)

@@ -40,7 +40,22 @@ extract_ip() {
 }
 
 echo "Parent Stack Name: $parent_stack_name"
-instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_primary" --query "Parameter.Value" --output text)
+interval=10  # Polling interval in seconds
+elapsed_time=0
+timeout=60
+
+while [ $elapsed_time -lt $timeout ]; do
+    instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_primary" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-secondary.log")
+    
+    if [ $? -eq 0 ]; then
+        echo "SSM parameter found"
+        break
+    else
+        echo "SSM parameter not found. Retrying in $interval seconds..."
+        sleep $interval
+        elapsed_time=$((elapsed_time + interval))
+    fi
+done
 echo "instance_details fetched"
 if is_valid_json "$instance_details"; then
     valid_instance_details="$instanceDetails"
