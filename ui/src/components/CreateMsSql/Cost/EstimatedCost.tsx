@@ -101,7 +101,11 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
     };
 
     const computeObj = (updatedStr: string, wizardType?: any) => {
-        if (selectedLicenseType === 'Use custom AMI' || wizardType === WIZARD_TYPE.PGSQL) {
+        if (
+            selectedLicenseType === 'Use custom AMI' ||
+            wizardType === WIZARD_TYPE.PGSQL ||
+            selectedDatabaseType === DBType.POSTGRESQL
+        ) {
             return {
                 regionCode: updatedStr || '',
                 instanceType: instanceTypeName || '',
@@ -205,7 +209,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                 };
             }
 
-            if (wizardType === WIZARD_TYPE.PGSQL) {
+            if (wizardType === WIZARD_TYPE.PGSQL || selectedDatabaseType === DBType.POSTGRESQL) {
                 payload = {
                     ...payload,
                     osType: 'linux',
