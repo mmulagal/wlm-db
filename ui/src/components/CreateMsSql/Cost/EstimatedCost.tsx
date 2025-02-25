@@ -14,7 +14,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
-import { DBType, FORM_OPTIONS, FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { DBType, FORM_OPTIONS, FSX_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../../utils/consts';
 import SizePopover from './SizePopover/SizePopover';
 import { formatNumberWithCustomComma, isFsxnNew, updateSizeInGib } from '../../../utils/utilityFunctions';
 import { setEstimatedCostData, setEstimatedCostLoading } from '../../../store/mssql/mssqlSlice';
@@ -100,8 +100,12 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
         }
     };
 
-    const computeObj = (updatedStr: string) => {
-        if (selectedLicenseType === 'Use custom AMI' || selectedDatabaseType === DBType.POSTGRESQL) {
+    const computeObj = (updatedStr: string, wizardType?: any) => {
+        if (
+            selectedLicenseType === 'Use custom AMI' ||
+            wizardType === WIZARD_TYPE.PGSQL ||
+            selectedDatabaseType === DBType.POSTGRESQL
+        ) {
             return {
                 regionCode: updatedStr || '',
                 instanceType: instanceTypeName || '',
@@ -162,7 +166,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                 };
             } else {
                 payload = {
-                    compute: computeObj(updatedStr),
+                    compute: computeObj(updatedStr, wizardType),
                     fsxnStorage: {
                         regionCode: updatedStr || '',
                         fsxnResourceInfo: [
@@ -205,7 +209,7 @@ const EstimatedCost = ({ wizardType = 'mssql' }: { wizardType?: string }) => {
                 };
             }
 
-            if (selectedDatabaseType === DBType.POSTGRESQL) {
+            if (wizardType === WIZARD_TYPE.PGSQL || selectedDatabaseType === DBType.POSTGRESQL) {
                 payload = {
                     ...payload,
                     osType: 'linux',

@@ -14,7 +14,9 @@ import {
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
-import { StorageAssessment } from '../../utils/common-types';
+import { DatabaseInstance, databaseInstanceMetadata, StorageAssessment } from '../../utils/common-types';
+import { isDemo } from '../../utils/utils';
+import { getInstanceInfo } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -85,6 +87,14 @@ async function getSnapshotPolicyDriftData(
             snapshotPolicyAssesmentData.violations.push(volDetails?.name);
         }
     });
+    if (isDemo()) {
+        const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+        const { configsOptimized } =
+            ((instanceDetail as unknown as DatabaseInstance)?.metadata as databaseInstanceMetadata) ?? {};
+        if (configsOptimized?.STORAGE.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
+            snapshotPolicyAssesmentData.violations = [];
+        }
+    }
 
     if (isEmpty(snapshotPolicyAssesmentData.violations)) {
         snapshotPolicyAssesmentData.status = AssessmentStatus.OPTIMIZED;

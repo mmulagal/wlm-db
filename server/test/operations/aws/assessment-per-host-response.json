@@ -396,6 +396,21 @@
                         }
                     ],
                     "filesystemId": "fs-01166dc75715b8826"
+                },
+                "resiliency": {
+                    "snapshotPolicy": {
+                        "timestamp": 1740385867000,
+                        "tags": [
+                            "Reliability"
+                        ],
+                        "violations": ["wlmdb_sqldata_1728574994"],
+                        "severity": "warning",
+                        "status": "optimized",
+                        "resourceType": "Volume",
+                        "totalObjectsAssessed": 3,
+                        "totalObjectsInViolation": 2,
+                        "recommendation": "Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing."
+                    }
                 }
             }
         },
@@ -790,6 +805,21 @@
                         }
                     ],
                     "filesystemId": "fs-01166dc75715b8826"
+                },
+                "resiliency": {
+                    "snapshotPolicy": {
+                        "timestamp": 1740385867000,
+                        "tags": [
+                            "Reliability"
+                        ],
+                        "violations": ["wlmdb_sqldata_1728574994"],
+                        "severity": "warning",
+                        "status": "optimized",
+                        "resourceType": "Volume",
+                        "totalObjectsAssessed": 3,
+                        "totalObjectsInViolation": 2,
+                        "recommendation": "Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing."
+                    }
                 }
             }
         },
@@ -1182,6 +1212,21 @@
                         }
                     ],
                     "filesystemId": "fs-01166dc75715b8826"
+                },
+                "resiliency": {
+                    "snapshotPolicy": {
+                        "timestamp": 1740385867000,
+                        "tags": [
+                            "Reliability"
+                        ],
+                        "violations": ["wlmdb_sqldata_1728574994"],
+                        "severity": "warning",
+                        "status": "optimized",
+                        "resourceType": "Volume",
+                        "totalObjectsAssessed": 3,
+                        "totalObjectsInViolation": 2,
+                        "recommendation": "Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing."
+                    }
                 }
             }
         }

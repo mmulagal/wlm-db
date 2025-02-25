@@ -153,10 +153,14 @@ const Marketing = () => {
                 <div className={styles.section3}>
                     <div className={styles.topSection}>
                         <KB />
+                        <div />
                     </div>
-                    <DsTypography variant="Semibold_24" className={styles.title}>
-                        Workload Factory: Self-managed database automation and operations with FSx for ONTAP
-                    </DsTypography>
+                    <div className={styles.textSection}>
+                        <DsTypography variant="Semibold_24" className={styles.title}>
+                            Workload Factory: Self-managed database automation and operations with FSx for ONTAP
+                        </DsTypography>
+                        <div />
+                    </div>
 
                     <div className={styles.bottomSection}>
                         <div className={styles.commonSection}>
@@ -220,9 +224,12 @@ const Marketing = () => {
                 </div>
 
                 <div className={styles.section4}>
-                    <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                        FSx for ONTAP: intelligent storage for your database workloads
-                    </DsTypography>
+                    <div className={styles.textSection}>
+                        <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
+                            FSx for ONTAP: intelligent storage for your database workloads
+                        </DsTypography>
+                        <div />
+                    </div>
                     <div className={styles.cards}>
                         <div className={styles.commonRow}>
                             <CardComponent

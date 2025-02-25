@@ -173,7 +173,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
     };
 
     const innerPageCheck = (name: string) => {
-        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status') {
+        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
             return false;
         } else {
             return true;
@@ -272,7 +272,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 } else if (rowData?.type === 'lun') {
                     type = 'LUN path';
                 } else if (rowData?.type === 'os') {
-                    type = 'disks';
+                    type = 'drives';
                 }
 
                 return (
@@ -288,7 +288,9 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                 </DsTypography>
                             </div>
                         ) : (
-                            <></>
+                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                {'Storage multipath'}
+                            </DsTypography>
                         )}
                     </>
                 );

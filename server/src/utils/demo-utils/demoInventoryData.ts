@@ -825,7 +825,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
-            'snapshot-policy': 'daily_weekretention',
+            'snapshot-policy': 'none',
             'tiering-min-cooling-days': 17
         }
     ],

@@ -776,7 +776,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
             if(-Not ($MpioLBDetails -Match $matchString) ) {
                $LoadBalancingPolicy = 'Other'
-               $object['policy'] = $LoadBalancingPolicy
+               $object.policy = $LoadBalancingPolicy
             }
             $LoadBalancingPolicyDetails += $($object)
         }
@@ -823,7 +823,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
-    $apiBody = '${JSON.stringify(params.apiBody)}'
+    $apiBody = '${params.apiBody}'
     Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
@@ -941,16 +941,20 @@ Function Move-AllClusterGroups {
                     # Update status and error in case of failure
                     $groupResult.status = 'failed'
                     $groupResult.error = $_.Exception.Message
-                    Write-Error "Error occurred while moving cluster group $clusterGroupName: $_.Exception.Message"
+                    $errorMsg = "Error occurred while moving cluster group: $clusterGroupName : $_.Exception.Message"
+                    Write-Information "$errorMsg"
+                    Write-Error "$errorMsg"
                 }
-                Write-Information "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
+                Write-Information "Status of moving cluster group: $clusterGroupName : $groupResult.status"
                 # Add group result to result array
                 $result += $groupResult
             }
         }
     } catch {
         # Handle any errors that occur
-        Write-Error "Error occurred while moving cluster groups: $_.Exception.Message"
+        $errorMsg = "Error occurred while moving cluster groups: $_.Exception.Message"
+        Write-Error "$errorMsg"
+        Write-Information "$errorMsg"
         $result = @(@{ status = 'failed'; error = $_.Exception.Message })
     } finally {
         Stop-Transcript | Out-Null
