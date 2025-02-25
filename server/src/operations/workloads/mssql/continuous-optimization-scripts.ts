@@ -760,7 +760,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         
         # Fetch load balancing policy for all NetApp disks
         $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
-        $InstanceDiskNumbers =   $($responseObject.data; $responseObject.log; $responseObject.tempbDb) | ForEach-Object -MemberName diskNumber
+        $InstanceDiskNumbers =   $($responseObject.data; $responseObject.log; $responseObject.tempDb) | ForEach-Object -MemberName diskNumber
         $InstanceDiskNumbers = $InstanceDiskNumbers | select -Unique
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
@@ -769,8 +769,13 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             if($InstanceDiskNumbers -notcontains $disk.Number) {
                 continue
             }
+            $AccessPaths = @($($responseObject.data; $responseObject.log; $responseObject.tempDb) | Where-Object { $_.diskNumber -eq $disk.Number } | ForEach-Object { $_.accessPaths })
+            if (-Not ($AccessPaths -is [array])) {
+                $AccessPaths = @($AccessPaths)
+            }
             $object = [PSCustomObject]@{
                     "disk" = "Disk " + $disk.Number
+                    "accessPath" = $AccessPaths[0]
                     "policy" = $LoadBalancingPolicy
                 }
             $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
