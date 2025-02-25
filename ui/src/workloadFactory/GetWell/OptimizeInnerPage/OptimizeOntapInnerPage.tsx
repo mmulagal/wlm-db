@@ -31,6 +31,7 @@ import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
 import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
 import { useRef, useState } from 'react';
+import OntapTableWithData from './InnerTables/OntapTableWithData';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
@@ -271,7 +272,19 @@ const OptimizeOntapInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-
+            case 'Autosize-mode':
+            case 'Snapshot copy reserve':
+            case 'Tiering policy':
+            case 'Tiering minimum cooling days':
+            case 'OS type':
+                return (
+                    <OntapTableWithData
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
             default:
                 return (
                     <OntapTable

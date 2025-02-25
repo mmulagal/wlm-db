@@ -1,7 +1,6 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
-import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
@@ -9,24 +8,37 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
+import { useState } from 'react';
 
-const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
 
+    const [colName, setColName] = useState('Volume name');
+    const [tableHeader, setTableHeader] = useState('Volume');
+
     const tableData = useMemo(() => {
         let id = 0;
+        if (data?.type === 'volume') {
+            setColName('Volume name');
+            setTableHeader('Volume');
+        } else if (data?.type === 'lun') {
+            setColName('LUN name');
+            setTableHeader('LUN');
+        }
         return data?.violationDetails?.map((row: any) => ({
             ...row,
             id: String(id++),
+            name: row?.objectName,
+            value: row?.value,
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Drive name',
-            accessor: 'objectName',
+            Header: colName,
+            accessor: 'name',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
@@ -36,17 +48,21 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-
         {
-            Header: 'NTFS allocation unit size',
+            Header: type,
             accessor: 'value',
-            id: '3',
+            id: '2',
             width: '481px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                let value = cellData;
+                if (type === 'Snapshot copy reserve') {
+                    value = `${cellData}%`;
+                }
+                return value || GENERAL.NOT_AVAILABLE;
             }
         },
+
         lastColDetails(type, {})
     ];
 
@@ -77,8 +93,8 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted drives`}
-                singularTitle={'Impacted drive'}
+                pluralTitle={`Impacted ${tableHeader}s`}
+                singularTitle={`Impacted ${tableHeader}`}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
             <Table
@@ -91,4 +107,4 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
     );
 };
 
-export default NTFSAllocationTable;
+export default OntapTableWithData;

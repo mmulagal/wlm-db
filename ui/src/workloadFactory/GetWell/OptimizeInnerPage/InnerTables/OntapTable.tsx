@@ -26,10 +26,10 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
             setColName('LUN name');
             setTableHeader('LUN');
         }
-        return data?.objectsInViolation?.map((row: any) => ({
+        return data?.violationDetails?.map((row: any) => ({
             ...row,
             id: String(id++),
-            name: row,
+            name: row?.objectName,
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
