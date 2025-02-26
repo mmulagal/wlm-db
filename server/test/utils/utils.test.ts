@@ -134,4 +134,11 @@ describe(' Secrets Manager string', () => {
         expect(getServerNameWithHostname(hostname)).toBe('test-hostname');
         expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
     });
+
+    it('calculateFsxnStorageCapacity storage capacity breakdown for pgsql', () => {
+        const response = calculateFsxnStorageCapacity(2048, 'fci', 'PGSQL');
+        expect(response.FSxDataVolumeSize).toEqual(2048 * 1024);
+        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(.25 * 2048 * 1024));
+        expect(response.FSxTempDbVolumeSize).toEqual(0);
+    });
 });
