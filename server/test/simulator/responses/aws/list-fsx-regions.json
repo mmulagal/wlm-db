@@ -152,6 +152,11 @@
             "Endpoint": "ec2.ca-west-1.amazonaws.com",
             "RegionName": "ca-west-1",
             "OptInStatus": "opt-in-not-required"
+        },
+        {
+            "Endpoint": "ec2.ap-southeast-5.amazonaws.com",
+            "RegionName": "ap-southeast-5",
+            "OptInStatus": "opt-in-not-required"
         }
     ]
 }

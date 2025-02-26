@@ -377,7 +377,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
 
     foreach ($drive in $defaultTempDBDriveDetails) {
-        $drive | Add-Member -MemberType NoteProperty -Name "defaultDataDriveLetter" -Value $defaultDataDriveDetails.dataDriveLetter 
+        $drive | Add-Member -MemberType NoteProperty -Name "dataDriveLetter" -Value $defaultDataDriveDetails.dataDriveLetter 
         $drive | Add-Member -MemberType NoteProperty -Name "dataDriveTotalSizeMB" -Value $defaultDataDriveDetails.dataDriveTotalSizeMB
     }
 
@@ -659,7 +659,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
             # Case when database has multiple drives
             if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
-            $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0) {$_.accessPaths[0]} }
             if ($logVolumeLunDetails) {
                 if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
                 foreach($logVolumeLunDetail in $logVolumeLunDetails) {
@@ -669,6 +668,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                     foreach ($property in $drive.PSObject.Properties) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                         }
+                    $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0 -and $_.accessPaths[0].startswith($drive.dataDriveLetter)) {$_.accessPaths[0]} }
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
@@ -760,25 +760,33 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         
         # Fetch load balancing policy for all NetApp disks
         $AllNetappDisks = Get-Disk | Where-Object { $_.FriendlyName -eq 'NETAPP LUN C-MODE'} | Select-Object -Property Number
+        $InstanceDiskNumbers =   $($responseObject.data; $responseObject.log; $responseObject.tempDb) | ForEach-Object -MemberName diskNumber
+        $InstanceDiskNumbers = $InstanceDiskNumbers | select -Unique
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
+        $ValidPolicies = @('RR', 'RRWS')
         $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
-            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
-            if(-Not ($MpioLBDetails -Match $matchString) ) {
-                $LoadBalancingPolicy = 'Other'
+            if($InstanceDiskNumbers -notcontains $disk.Number) {
+                continue
+            }
+            $AccessPaths = @($($responseObject.data; $responseObject.log; $responseObject.tempDb) | Where-Object { $_.diskNumber -eq $disk.Number } | ForEach-Object { $_.accessPaths })
+            if (-Not ($AccessPaths -is [array])) {
+                $AccessPaths = @($AccessPaths)
+            }
+            $MatchString = ".*Disk\\s+" + $disk.Number + "\\s+(\\S+)"
+            $MatchGroup = [regex]::match($MpioLBDetails,$MatchString).Groups[1]
+            if($MatchGroup.Success -eq 'True') {
                 $object = [PSCustomObject]@{
                     "disk" = "Disk " + $disk.Number
-                    "policy" = $LoadBalancingPolicy
+                    "accessPath" = $AccessPaths[0]
+                    "policy" = $MatchGroup.Value
                 }
+               if ($ValidPolicies -notcontains $MatchGroup.Value) {
+               $LoadBalancingPolicy = 'Other'
             }
-            else {
-             $object = [PSCustomObject]@{
-                    "disk" = "Disk " + $disk.Number
-                    "policy" = 'RR'
-                        }
-                }
             $LoadBalancingPolicyDetails += $($object)
+            }
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
         $DriftAssessmentData['os']['mpio-load-balance-policy-details'] = $LoadBalancingPolicyDetails
@@ -793,10 +801,11 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     
     try{
         $filteredDataDrives = $instanceAllDataDrivesSizes | ForEach-Object -MemberName dataDriveLetter
-        $filteredLogDrives = $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
-        $AllDrives = $($filteredDataDrives; $filteredLogDrives)
+        $filteredLogDrives =  $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
+        $filteredTempDbDrives =  $defaultTempDBDriveDetails | ForEach-Object -MemberName tempdbDriveLetter
+        $AllDrives = $($filteredDataDrives; $filteredLogDrives;  $filteredTempDbDrives)
         $AllDrives = $AllDrives | select -Unique
-        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$allDrives -contains $_.Name.Substring(0,2)}  | Select-Object DriveLetter, BlockSize 
+        $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$AllDrives -contains $_.DriveLetter}  | Select-Object DriveLetter, BlockSize 
         $ntfsUnitSize = 65536
         $ntfsAllocationUnit | ForEach-Object -Process {if($_.BlockSize -ne 65536) {$ntfsUnitSize = $_.BlockSize}}
         $DriftAssessmentData['os']['ntfs-allocation-details'] = $($ntfsAllocationUnit)
@@ -822,7 +831,7 @@ const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
     $FSxRegion = '${params.region}'
     $apiEndpoint = '${params.apiEndpoint}'
     $apiQueryFilter = '${params.apiQueryFilter}'
-    $apiBody = '${JSON.stringify(params.apiBody)}'
+    $apiBody = '${params.apiBody}'
     Write-Information "Optimizing storage for FSx ID: $FSxID FSX region: $FSxRegion"
     ${ontapRestRequest}
 
@@ -940,16 +949,20 @@ Function Move-AllClusterGroups {
                     # Update status and error in case of failure
                     $groupResult.status = 'failed'
                     $groupResult.error = $_.Exception.Message
-                    Write-Error "Error occurred while moving cluster group $clusterGroupName: $_.Exception.Message"
+                    $errorMsg = "Error occurred while moving cluster group: $clusterGroupName : $_.Exception.Message"
+                    Write-Information "$errorMsg"
+                    Write-Error "$errorMsg"
                 }
-                Write-Information "Status of moving cluster group $clusterGroupName: $($groupResult.status)"
+                Write-Information "Status of moving cluster group: $clusterGroupName : $groupResult.status"
                 # Add group result to result array
                 $result += $groupResult
             }
         }
     } catch {
         # Handle any errors that occur
-        Write-Error "Error occurred while moving cluster groups: $_.Exception.Message"
+        $errorMsg = "Error occurred while moving cluster groups: $_.Exception.Message"
+        Write-Error "$errorMsg"
+        Write-Information "$errorMsg"
         $result = @(@{ status = 'failed'; error = $_.Exception.Message })
     } finally {
         Stop-Transcript | Out-Null

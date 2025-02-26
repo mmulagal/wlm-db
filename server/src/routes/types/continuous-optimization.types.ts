@@ -207,7 +207,10 @@ const SnapshotPolicyAssesmentData = Type.Object({
     violations: Type.Array(Type.String()),
     severity: Type.String(),
     status: Type.String(),
-    resourceType: Type.String()
+    resourceType: Type.String(),
+    totalObjectsAssessed: Type.Number(),
+    totalObjectsInViolation: Type.Number(),
+    recommendation: Type.String()
 });
 type SnapshotPolicyAssesmentDataType = Static<typeof SnapshotPolicyAssesmentData>;
 

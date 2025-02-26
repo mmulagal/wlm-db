@@ -655,35 +655,18 @@ const ASSESMENT_CONFIG_DATA = {
         'mpio-load-balance-policy-details': [
             {
                 disk: 'Disk 4',
-                policy: 'Other'
+                accessPath: 'L:\\',
+                policy: 'LB'
             },
             {
                 disk: 'Disk 1',
-                policy: 'Other'
+                accessPath: 'S:\\',
+                policy: 'LB'
             },
             {
                 disk: 'Disk 8',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 2',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 3',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 5',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 6',
-                policy: 'Other'
-            },
-            {
-                disk: 'Disk 7',
-                policy: 'Other'
+                accessPath: 'T:\\',
+                policy: 'LB'
             }
         ]
     },
@@ -825,7 +808,7 @@ const ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 10,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
-            'snapshot-policy': 'daily_weekretention',
+            'snapshot-policy': 'none',
             'tiering-min-cooling-days': 17
         }
     ],

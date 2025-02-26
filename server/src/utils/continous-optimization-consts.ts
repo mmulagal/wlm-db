@@ -209,11 +209,13 @@ const ASSESSMENT_RESOURCE_TYPE = {
     FILE_SYSTEM: 'File system (FSx for ONTAP)',
     DRIVE: 'Drive',
     DATABASE: 'Database',
-    INSTANCE: 'Instance',
+    INSTANCE: 'EC2 instance',
     NETWORK_ADAPTER: 'Network Adapter',
     LUN: 'Lun',
-    SQL_INSTANCE: 'SQL Instance'
+    SQL_INSTANCE: 'SQL instance'
 };
+
+const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
 
 export {
     AssessmentCategories,
@@ -245,5 +247,6 @@ export {
     OPTIMIZATION_CATEGORIES,
     OptimizeMaxDopParams,
     ASSESSMENT_RESOURCE_TYPE,
-    OPTIMIZE_RESILIENCY_CONFIGS
+    OPTIMIZE_RESILIENCY_CONFIGS,
+    VALID_MPIO_LB_POLICIES
 };

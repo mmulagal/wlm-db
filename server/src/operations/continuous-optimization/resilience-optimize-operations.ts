@@ -8,7 +8,12 @@ import {
     OptimizeResiliencyBodyType,
     SnapshotPolicyType
 } from '../../routes/types/continuous-optimization.types';
-import { BulkOptimizeSnapshotPolicyParamsType, Metadata, WorkloadInstance } from '../../utils/common-types';
+import {
+    BulkOptimizeSnapshotPolicyParamsType,
+    databaseInstanceMetadata,
+    Metadata,
+    WorkloadInstance
+} from '../../utils/common-types';
 import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
@@ -16,7 +21,7 @@ import {
     SET_VOLUME_SNAPSHOT_POLICY
 } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import { isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
 import { getMappedOntapVolumes } from '../aws/fsx-operations';
@@ -29,8 +34,10 @@ import { onDemandTriggerDriftAssessmentDataCollection } from '../cont-opt-assess
 import {
     AssessmentCategories,
     AssessmentTriggeredBy,
-    OPTIMIZE_RESILIENCY_CONFIGS
+    OPTIMIZE_RESILIENCY_CONFIGS,
+    OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
+import { updateOptimizedConfigNameInInstanceTable } from '../demo-operations';
 
 const logger = getLogger();
 
@@ -65,7 +72,8 @@ async function getActiveNodeInfo(
         databaseType,
         awsAccountId,
         serverNameWithHostName,
-        svmDetails
+        svmDetails,
+        instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
     const instanceRecord: WorkloadInstance = {
@@ -80,7 +88,7 @@ async function getActiveNodeInfo(
         resourceName: serverNameWithHostName
     };
 
-    return { instanceRecord, fsxId, svmDetails };
+    return { instanceRecord, fsxId, svmDetails, instanceMetadata };
 }
 
 async function getAvailableSnapshotPolicyList(
@@ -125,9 +133,12 @@ async function getAvailableSnapshotPolicyList(
             region,
             fsxId
         );
-        const svmIdAssignedToInstance = svms.find(
-            svm => svm?.StorageVirtualMachineId === (svmRecord as Record<string, string>)[fsxId]
-        );
+        const svmIdAssignedToInstance = svms.find(svm => {
+            if (isDemo()) {
+                return svm;
+            }
+            return svm?.StorageVirtualMachineId === (svmRecord as Record<string, string>)[fsxId];
+        });
         if (!svmIdAssignedToInstance) {
             throw createError(
                 HttpErrorCodes.NOT_FOUND,
@@ -173,7 +184,8 @@ async function setSnapshotPolicyForVolumes(
     credentialsId: string,
     region: string,
     snapshotPolicy: SnapshotPolicyType,
-    parentJobId?: string
+    parentJobId?: string,
+    instanceMetadata?: databaseInstanceMetadata
 ) {
     logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -244,6 +256,15 @@ async function setSnapshotPolicyForVolumes(
             jobStatus = JOBSTATUS.WARNING;
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error setting snapshot policy for volumes');
         }
+        if (isDemo()) {
+            await updateOptimizedConfigNameInInstanceTable(
+                accountId,
+                instanceRecord.id,
+                [OptimizeStorageConfigs.SNAPSHOT_POLICY],
+                'STORAGE',
+                instanceMetadata || ({} as databaseInstanceMetadata)
+            );
+        }
         jobStatus = JOBSTATUS.COMPLETED;
     } catch (error) {
         const errMsg = JSON.stringify(error);
@@ -292,7 +313,7 @@ async function handleResiliecyOptimize(
         type => type === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
     ).length;
     const params = request.params!;
-    const { instanceRecord } = await getActiveNodeInfo(
+    const { instanceRecord, instanceMetadata } = await getActiveNodeInfo(
         accountId,
         credentialsId,
         region,
@@ -325,7 +346,15 @@ async function handleResiliecyOptimize(
         const [{ snapshotPolicy }] = params.filter(
             param => typeof param === typeof BulkOptimizeSnapshotPolicyRequestBody
         );
-        setSnapshotPolicyForVolumes(instanceRecord, accountId, credentialsId, region, snapshotPolicy, jobId);
+        setSnapshotPolicyForVolumes(
+            instanceRecord,
+            accountId,
+            credentialsId,
+            region,
+            snapshotPolicy,
+            jobId,
+            (instanceMetadata ?? {}) as databaseInstanceMetadata
+        );
 
         // trigger assesment to update the assessment config data
         onDemandTriggerDriftAssessmentDataCollection(

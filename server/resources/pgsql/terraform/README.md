@@ -2,7 +2,10 @@
 
 # Deploy a PGSQL Server on EC2 with FSx for ONTAP
 
-This Terraform automates the deployment of a PostgreSQL Server on Amazon EC2, utilizing FSx for ONTAP for storage. The deployment is configured as a standalone instance with Single-AZ FSx for ONTAP filesystem.
+This Terraform automates the deployment of a PostgreSQL Server on Amazon EC2, utilizing FSx for ONTAP for storage. The deployment can be configured in two different models:
+
+1. **High Availability Instances (HA)** with Multi-AZ FSx for ONTAP filesystem.
+2. **Standalone Instance (Standalone)** with Single-AZ FSx for ONTAP filesystem.
 
 ## Table of Contents
 
@@ -24,13 +27,19 @@ This Terraform automates the deployment of a PostgreSQL Server on Amazon EC2, ut
 ## Modules
 
 -   **VPC endpoints**: Creates VPC Endpoints for private network deployments.
--   **Validation node**: Creates a validation EC2 instance to perform a set of validations for the deployment.
+-   **Validation node**: Creates Single/Multiple validation Ec2 instances to do the set of validations for the Deployment..
 -   **FSx for ONTAP volumes**: Configures two LUNs on FSxN volumes for SQL Data, SQL Log.
 -   **EC2 instances**: Deploys EC2 instances with PostgreSQL.
 
 ## Deployment Models
 
-1. **Standalone Instance**:
+1. **High Availability Instances (HA)**:
+
+    - Multi-AZ deployment for high availability.
+    - Creates multiple validation EC2 instances.
+    - Configures One more Replica SVM and replica of data and log volumes for cluster management.
+
+2. **Standalone Instance**:
     - Single-AZ deployment.
     - Creates a single validation EC2 instance.
 

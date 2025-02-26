@@ -79,9 +79,16 @@ Parameters:
     SQLVersion:
         Description: The version of PostgreSQL to install.
         Type: String
-    SqlFSxServerNetBIOSName:
+    SqlFSxServerNetBIOSName1:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: SqlFSx1
+        Description: NetBIOS name of the PGSQL Server (up to 15 characters).
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlFSxServerNetBIOSName2:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: SqlFSx2
         Description: NetBIOS name of the PGSQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
@@ -150,7 +157,7 @@ Resources:
                         - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName1'
                 -   Key: SQLServerName
                     Value: !Ref 'SqlServerName'
     SqlNode1:
@@ -316,7 +323,7 @@ Resources:
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
                                 - SqlServerName: !Ref 'SqlServerName'
                         e-restart-host:
-                            command: sudo reboot
+                            command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -328,9 +335,9 @@ Resources:
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName1'
             BlockDeviceMappings:
-                -   DeviceName: /dev/sda1
+                -   DeviceName: /dev/xvda
                     Ebs:
                         VolumeSize: !Ref EBSVolumeSize
                         VolumeType: gp3
@@ -342,6 +349,7 @@ Resources:
                 'Fn::Base64':
                     !Sub |
                         #!/bin/bash -xe
+                        sleep 10
                         token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
@@ -375,9 +383,9 @@ Resources:
                         - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName2'
                 -   Key: SQLServerName
-                    Value: !Ref 'SqlServerName'
+                    Value: !Sub "${SqlServerName}-replica"
     SqlNode2:
         Type: AWS::EC2::Instance
         Condition: IsHACluster
@@ -538,10 +546,10 @@ Resources:
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
                         d-rename-host:
                             command: !Sub
-                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
+                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}-replica'
                                 - SqlServerName: !Ref 'SqlServerName'
                         e-restart-host:
-                            command: sudo reboot
+                            command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -552,9 +560,9 @@ Resources:
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName2'
             BlockDeviceMappings:
-                -   DeviceName: /dev/sda1
+                -   DeviceName: /dev/xvda
                     Ebs:
                         VolumeSize: !Ref EBSVolumeSize
                         VolumeType: gp3
@@ -566,6 +574,7 @@ Resources:
                 'Fn::Base64':
                     !Sub |
                         #!/bin/bash -xe
+                        sleep 10
                         token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)

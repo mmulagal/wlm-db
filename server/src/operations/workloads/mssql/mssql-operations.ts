@@ -801,7 +801,7 @@ async function getActiveSqlInstanceName(credentialsId: string, region: string, n
 }
 
 async function getAllInstanceDetails(credentialsId: string, region: string, nodeIds: string[], accountId?: string) {
-    logger.info('Fetch all MSSQL instance details', { credentialsId, region });
+    logger.info('Fetch all MSSQL instance details', { credentialsId, region, nodeIds });
     const commands = [INSTANCE_DETAILS];
     let instances = [];
 
@@ -821,7 +821,6 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
                 instances.push(...parsedResponse);
             }
         }
-
         // ****TO-DO: for debugging DBS-4089****
         const instanceStateCounts = instances.reduce((acc: { [key: string]: number }, instance: InstanceDetails) => {
             if (instance.instanceState) {
@@ -833,10 +832,7 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
         // ****TO-DO: for debugging DBS-4089****
         instances = instances.filter(res => res?.instanceState !== SQL_SERVICE_STATE.STOPPED);
 
-        if (!isEmpty(instances)) {
-            return instances;
-        }
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'No running instance found');
+        return instances;
     } catch (error) {
         logger.error(`Error while fetching SQL node status for node ${nodeIds}`, error);
         throw error;

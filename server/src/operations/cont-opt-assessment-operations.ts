@@ -21,7 +21,8 @@ import {
     ASSESSMENT_SSM_EXECUTION_TIMEOUT,
     HttpErrorCodes,
     RESOURCESTYPE,
-    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    CUSTOM_SSM_EXECUTION_TIMEOUT
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
@@ -293,7 +294,9 @@ async function initiateStorageAssessmentCollection(
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
         instanceRecord.sqlAuthEnabled,
-        true
+        true,
+        accountId,
+        CUSTOM_SSM_EXECUTION_TIMEOUT
     )) as MappedOnTapVolumeResponse[];
 
     if (isEmpty(instanceVolumeMapping)) {
@@ -434,9 +437,7 @@ async function driftAssessmentDataCollection(
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldRunStorageAssessment =
-            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment;
+        shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
         shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
@@ -826,9 +827,7 @@ async function fetchDriftAssessment(
         // remove the empty spaces in the string & split the fields by comma separated array values
         const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
 
-        shouldCalculateStorageAssessment =
-            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment
+        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
         shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
