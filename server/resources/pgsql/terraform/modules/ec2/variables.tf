@@ -183,3 +183,33 @@ variable "aws_profile" {
   description = "The name of the AWS profile configured on the host"
   type        = string
 }
+
+variable "private_subnet2_id" {
+  description = "ID of private subnet in an Availability Zone 2 for the workload (For example, subnet-a0246dcd)."
+  type        = string
+  default     = ""
+}
+
+variable "route_table2_id" {
+  description = "Route table id for the second subnet."
+  type        = string
+  default     = ""
+}
+
+variable "workload_security_group_id" {
+  description = "ID of the workload security group."
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_1_id" {
+  description = "Network interface 1 id"
+  type        = string
+  default     = ""
+}
+
+variable "network_interface_2_id" {
+  description = "Network interface 2 id"
+  type        = string
+  default     = ""
+}
