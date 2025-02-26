@@ -1258,6 +1258,7 @@ const MIN_DISKSIZE = 1024;
 const MIN_THROUGHPUT = 128;
 const STANDALONE = 'standalone';
 const FCI = 'fci';
+const HA = 'ha';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
@@ -1847,6 +1848,7 @@ export {
     MIN_DISKSIZE,
     STANDALONE,
     FCI,
+    HA,
     SINGLE_AZ,
     MULTI_AZ,
     MIN_THROUGHPUT,
