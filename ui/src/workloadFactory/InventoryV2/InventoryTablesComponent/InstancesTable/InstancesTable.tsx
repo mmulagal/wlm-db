@@ -18,8 +18,6 @@ import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
-    renderAllocatedCapacity,
-    renderCellData,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
@@ -235,9 +233,6 @@ const InstancesTable = () => {
                 regionId: targettedHost?.regionId
             })
         );
-        // dispatch(setSelectedResourceId(targettedHost?.resourceId));
-        // dispatch(setSelectedDatabaseInstance(targettedDbInstance?.databaseInstanceId));
-        // dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
     const optimizeAction = (rowData: any) => {

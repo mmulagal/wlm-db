@@ -13,10 +13,7 @@ import { WLF_TABS } from '../../../utils/consts';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
-    setCdbPageData,
-    setDBHostName,
-    setInstanceId,
-    setInstanceName
+    setCdbPageData
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { GENERAL } from '../../../utils/appConstants';
@@ -94,10 +91,7 @@ const DatabaseHostOverviewV2 = ({ refreshTime, refreshPage }: any) => {
                                                     cdbRegionId: selectedResourceRegionId
                                                 })
                                             );
-                                            // dispatch(setDBHostName(selectedHostname));
                                             dispatch(updateResourceId(selectedResourceId));
-                                            // dispatch(setInstanceId(selectedDatabaseInstance));
-                                            // dispatch(setInstanceName(selectedDatabaseInstanceName));
                                             navigate('../create-new-user');
                                         }
                                     }}

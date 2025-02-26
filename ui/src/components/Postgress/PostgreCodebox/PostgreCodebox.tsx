@@ -3,7 +3,6 @@ import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './PostgreCodebox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 
 import { useEffect, useMemo, useState } from 'react';
