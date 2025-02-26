@@ -97,7 +97,7 @@ import {
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
-import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils.test';
+import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
 
 const ssmMock = mockClient(SSMClient);
 
