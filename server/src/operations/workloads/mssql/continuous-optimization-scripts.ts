@@ -659,7 +659,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
             # Case when database has multiple drives
             if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
-            $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0) {$_.accessPaths[0]} }
             if ($logVolumeLunDetails) {
                 if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
                 foreach($logVolumeLunDetail in $logVolumeLunDetails) {
@@ -669,13 +668,17 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                     foreach ($property in $drive.PSObject.Properties) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                         }
+                    # When database has data files in multiple different drives, pick dataaccess path for the data drive currently being considered
+                    $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0 -and $_.accessPaths[0].startswith($drive.dataDriveLetter)) {$_.accessPaths[0]} }
+                    # When database has multiple data files in the same drive, filter out the duplicate data access paths
+                    $dataAccessPaths = $dataAccessPaths | Select -unique
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
                     $driveObject | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetail.svmName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetail.diskNumber
                     $driveObject | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetail.lunSerialNumber
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths        
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths   
                     if($logVolumeLunDetail.accessPaths -and $logVolumeLunDetail.accessPaths.Count -gt 0) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetail.accessPaths[0]
                         }
@@ -764,6 +767,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $InstanceDiskNumbers = $InstanceDiskNumbers | select -Unique
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
+        $ValidPolicies = @('RR', 'RRWS')
         $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
             if($InstanceDiskNumbers -notcontains $disk.Number) {
@@ -773,17 +777,19 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             if (-Not ($AccessPaths -is [array])) {
                 $AccessPaths = @($AccessPaths)
             }
-            $object = [PSCustomObject]@{
+            $MatchString = ".*Disk\\s+" + $disk.Number + "\\s+(\\S+)"
+            $MatchGroup = [regex]::match($MpioLBDetails,$MatchString).Groups[1]
+            if($MatchGroup.Success -eq 'True') {
+                $object = [PSCustomObject]@{
                     "disk" = "Disk " + $disk.Number
                     "accessPath" = $AccessPaths[0]
-                    "policy" = $LoadBalancingPolicy
+                    "policy" = $MatchGroup.Value
                 }
-            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
-            if(-Not ($MpioLBDetails -Match $matchString) ) {
+               if ($ValidPolicies -notcontains $MatchGroup.Value) {
                $LoadBalancingPolicy = 'Other'
-               $object.policy = $LoadBalancingPolicy
             }
             $LoadBalancingPolicyDetails += $($object)
+            }
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
         $DriftAssessmentData['os']['mpio-load-balance-policy-details'] = $LoadBalancingPolicyDetails
