@@ -25,7 +25,8 @@ import {
     HOURS_IN_MONTH,
     EBS_ROOT_VOLUME,
     PRICING_LICENSE_KEYS,
-    DatabaseTypes
+    DatabaseTypes,
+    HA
 } from '../../utils/consts';
 import { DEMO_PRODUCT_RATE } from '../../utils/demo-utils/demoMockdata';
 import getProducts from '../../lib/aws/pricing';
@@ -547,7 +548,9 @@ async function calculatePrice(
                     databaseType
                 ));
                 totalFsxnCost = totalFsxnCost + fsxnStorageCost + fsxnOperationalCost;
-                const isPgsqlHADeployment = compute?.sqlDeploymentMode === FCI && databaseType === DatabaseTypes.PG_SQL;
+                const isPgsqlHADeployment =
+                    (compute?.sqlDeploymentMode === FCI || compute?.sqlDeploymentMode === HA) &&
+                    databaseType === DatabaseTypes.PG_SQL;
                 const sizeData = fsxnDiskSizes
                     ? {
                           data: numeral(`${fsxnDiskSizes?.FSxDataVolumeSize}MiB`).value() || 0,
@@ -561,12 +564,12 @@ async function calculatePrice(
                           ...(fsxnDiskSizes?.FSxTempDbVolumeSize && {
                               tempdb: numeral(`${fsxnDiskSizes?.FSxTempDbVolumeSize}MiB`).value() || 0
                           }),
-                          buffer: isPgsqlHADeployment
-                              ? 2 * (numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0)
-                              : numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0,
-                          total: isPgsqlHADeployment
-                              ? 2 * (numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0)
-                              : numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0,
+                          buffer:
+                              (isPgsqlHADeployment ? 2 : 1) *
+                              (numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0),
+                          total:
+                              (isPgsqlHADeployment ? 2 : 1) *
+                              (numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0),
                           ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
                               quorum: numeral(`${fsxnDiskSizes?.FSxQuorumVolumeSize}MB`).value() || 0
                           })

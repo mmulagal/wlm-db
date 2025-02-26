@@ -9,7 +9,8 @@ import {
     SQL_WEB,
     CUSTOM,
     EBS_ROOT_VOLUME,
-    DatabaseTypes
+    DatabaseTypes,
+    HA
 } from '../../utils/consts';
 
 const PricingServiceRequest = Type.Object({
@@ -17,7 +18,7 @@ const PricingServiceRequest = Type.Object({
         regionCode: Type.String({ minLength: 1 }),
         instanceType: Type.String({ minLength: 1 }),
         sqlSoftwareType: Type.String({ enum: [SQL_STD, SQL_ENT, SQL_WEB, CUSTOM] }),
-        sqlDeploymentMode: Type.String({ enum: [FCI, STANDALONE] })
+        sqlDeploymentMode: Type.String({ enum: [FCI, STANDALONE, HA] })
     }),
     fsxnStorage: Type.Optional(
         Type.Object({
