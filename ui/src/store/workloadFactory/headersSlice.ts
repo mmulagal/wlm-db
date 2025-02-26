@@ -64,6 +64,7 @@ const headersSlice = createSlice({
         setHeaderSelectedCred(state, action: PayloadAction<any>) {
             state.headerSelectedCred = action.payload;
             // Will remove below lines once multi cred will be available
+            state.headerSelectedCredSandbox = action.payload;
             state.headerSelectedMultiCred = [action.payload];
             [action.payload]?.forEach((item: any) => {
                 state.headerSelectedMultiCredIdsList.push(item?.data?.credentialsId);
@@ -87,6 +88,7 @@ const headersSlice = createSlice({
         setHeaderSelectedRegion(state, action: PayloadAction<any>) {
             state.headerSelectedRegion = action.payload;
             // Will remove below lines once multi region will be available
+            state.headerSelectedRegionSandbox = action.payload;
             state.headerSelectedMultiRegion = [action.payload];
             [action.payload]?.forEach((item: any) => {
                 state.headerSelectedMultiRegionIdsList.push(item?.data?.regionCode);

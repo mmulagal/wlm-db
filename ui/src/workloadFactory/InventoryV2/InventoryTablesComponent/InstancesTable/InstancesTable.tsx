@@ -46,21 +46,10 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificat
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     resetWorkloadFactoryResourceData,
-    setSelectedDatabaseInstance,
-    setSelectedDatabaseInstanceName,
     setSelectedHostname,
-    setSelectedResourceId,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwPageLoadInstanceData,
-    setGwResourceId,
-    setLandingFrom
-} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { setGwPageLoadInstanceData, setLandingFrom } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setIsDetectHostError, setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import UndetectedSecondDialogV2 from '../../InventoryTable/UndetectedSecondDialog/UndetectedSecondDialogV2';
 import UndetectedHostDialogContentV2 from '../../InventoryTable/UndetectedHostDialogContent/UndetectedHostDialogContentV2';
@@ -70,10 +59,7 @@ import { selectedTabSelection } from '../../../../store/workloadFactory/database
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
-    setCdbPageData,
-    setDBHostName,
-    setInstanceId,
-    setInstanceName
+    setCdbPageData
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../../store/authSlice';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -83,13 +69,8 @@ import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 
 const InstancesTable = () => {
-    const {
-        inventoryTableData,
-        inProgressInstances
-        // inventoryExpandedRowHostData: hostData
-    } = useAppSelector(state => state.inventoryV2);
+    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
 
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
@@ -194,8 +175,8 @@ const InstancesTable = () => {
                     const inProgressId = `${rowData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
                     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
                     unmanageApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: targettedHost?.credentialId,
+                        regionId: targettedHost?.regionId,
                         resourceId: targettedHost?.resourceId,
                         dbInstanceId: targettedDbInstance?.databaseInstanceId
                     }).then((res: any) => {
@@ -277,14 +258,10 @@ const InstancesTable = () => {
                 instanceId: targettedDbInstance?.databaseInstanceId,
                 instanceName: targettedDbInstance?.databaseInstanceName,
                 credId: targettedHost?.credentialId,
-                regionId: targettedHost?.regionId
+                regionId: targettedHost?.regionId,
+                storageType: targettedDbInstance?.sqlServerDeploymentType
             })
         );
-        // dispatch(setGwHostname(rowData?.name));
-        // dispatch(setGwResourceId(targettedHost?.resourceId));
-        // dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
-        // dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
-        // dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
     };
 
     const resetDialogValues = () => {
@@ -341,8 +318,8 @@ const InstancesTable = () => {
             const sqlServerInstance = rowData?.sqlServerInstance || rowData?.databaseInstanceName || '';
             try {
                 const result: any = await registerResourceCred({
-                    credentialId: headerSelectedCred?.data?.credentialsId,
-                    regionId: headerSelectedRegion?.label2,
+                    credentialId: rowData?.credentialId,
+                    regionId: rowData?.regionId,
                     instanceId: rowData?.ec2InstanceId,
                     payload: createDetectHostPayload(sqlServerInstance, fsxId, rowData)
                 });

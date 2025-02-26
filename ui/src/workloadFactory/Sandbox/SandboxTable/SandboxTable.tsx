@@ -55,7 +55,7 @@ const SandboxTable = () => {
         state => state.sandbox
     );
     const { sandboxAgeRange } = useAppSelector(state => state.databaseHome);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -213,8 +213,8 @@ const SandboxTable = () => {
                                   });
                         dispatch(setAggregatedSandboxList(output));
                         getSandboxSavingsApi({
-                            credentialId: headerSelectedCred?.data?.credentialsId,
-                            region: headerSelectedRegion?.label2
+                            credentialId: headerSelectedCredSandbox?.data?.credentialsId,
+                            region: headerSelectedRegionSandbox?.label2
                         }).then((savingsRes: any) => {
                             if (savingsRes?.data) {
                                 dispatch(
@@ -293,8 +293,8 @@ const SandboxTable = () => {
                     });
                     dispatch(setAggregatedSandboxList(output));
                     updateSandboxApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
@@ -338,8 +338,8 @@ const SandboxTable = () => {
                     const { isRollbackSelected, selectedRollbackSnapshot } = updatedState?.sandbox;
 
                     updateSandboxApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name,
@@ -380,8 +380,8 @@ const SandboxTable = () => {
                     });
                     dispatch(setAggregatedSandboxList(output));
                     deleteSandboxApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name
@@ -401,8 +401,8 @@ const SandboxTable = () => {
         dispatch(updateSplitEstimateLoading(true));
         const { databaseHostId, name, instanceId } = rowData;
         getSplitEstimateApi({
-            credentialsId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+            regionId: headerSelectedRegionSandbox?.label2,
             databaseHostId: databaseHostId,
             instanceId,
             sandboxName: name
@@ -436,8 +436,8 @@ const SandboxTable = () => {
                             });
                             dispatch(setAggregatedSandboxList(output));
                             splitSandboxApi({
-                                credentialsId: headerSelectedCred?.data?.credentialsId,
-                                regionId: headerSelectedRegion?.label2,
+                                credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                                regionId: headerSelectedRegionSandbox?.label2,
                                 databaseHostId: rowData?.databaseHostId,
                                 instanceId: rowData?.instanceId,
                                 sandboxName: rowData?.name
@@ -457,8 +457,8 @@ const SandboxTable = () => {
 
     const handleConnectToTools = (rowData: any) => {
         const baseUrl = getBaseUrl();
-        const credID = headerSelectedCred?.data?.credentialsId;
-        const region = headerSelectedRegion?.label2;
+        const credID = headerSelectedCredSandbox?.data?.credentialsId;
+        const region = headerSelectedRegionSandbox?.label2;
         const copyResponseData = () => {
             const payload = { action: 'REFRESH' };
             const baseUrl = getBaseUrl();
@@ -557,8 +557,8 @@ const SandboxTable = () => {
                     });
                     dispatch(setAggregatedSandboxList(output));
                     checkIntegrityApi({
-                        credentialsId: headerSelectedCred?.data?.credentialsId,
-                        regionId: headerSelectedRegion?.label2,
+                        credentialsId: headerSelectedCredSandbox?.data?.credentialsId,
+                        regionId: headerSelectedRegionSandbox?.label2,
                         databaseHostId: rowData?.databaseHostId,
                         instanceId: rowData?.instanceId,
                         sandboxName: rowData?.name

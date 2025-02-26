@@ -16,8 +16,8 @@ import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClip
 const CreateNewSandboxCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCredSandbox);
+    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegionSandbox);
     const createSandboxState = useAppSelector(state => state.createSandbox);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 

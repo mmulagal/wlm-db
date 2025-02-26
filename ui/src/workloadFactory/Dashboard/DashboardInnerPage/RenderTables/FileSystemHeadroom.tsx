@@ -39,6 +39,8 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                     const isStorageTierOptimized = isOptimized(headroomObj?.status);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,

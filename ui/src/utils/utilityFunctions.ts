@@ -1458,12 +1458,12 @@ export const removePasswordInConfig = (payload: any) => {
 
 export const removeOldApisError = (data: any) => {
     const state = store.getState();
-    const credId = state.headers.headerSelectedCred?.data?.credentialsId;
-    const regionId = state.headers.headerSelectedRegion?.label2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     if (data?.endpointName === 'getDatabaseHosts') {
         if (
             data?.originalArgs &&
-            (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)
+            (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.region))
         ) {
             return true;
         } else {
@@ -1472,7 +1472,8 @@ export const removeOldApisError = (data: any) => {
     } else if (data?.endpointName === 'discoverHosts') {
         if (
             data?.originalArgs &&
-            (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)
+            (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
+                !headerSelectedMultiRegionIdsList(data?.originalArgs?.regionId))
         ) {
             return true;
         } else {

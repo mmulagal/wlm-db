@@ -156,8 +156,8 @@ const HostTable = () => {
             payload.databaseHostId = rowData.resourceId;
         }
         manageInstanceApi({
-            credentialsId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
-            regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+            credentialsId: rowData?.credentialId,
+            regionId: rowData?.regionId,
             payload
         }).then((res: any) => {
             const updatedState = store.getState();
@@ -207,8 +207,8 @@ const HostTable = () => {
                     if (prepareApiRequired) {
                         if (sourceNodePrepareRequired) {
                             prepareHostApi({
-                                credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
-                                regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+                                credentialId: rowData?.credentialId,
+                                regionId: rowData?.regionId,
                                 instanceId: rowData?.ec2InstanceId
                             }).then((prepareRes: any) => {
                                 if (prepareRes && !prepareRes?.error) {
@@ -233,8 +233,8 @@ const HostTable = () => {
                         }
                         if (partnerNodeEc2Id) {
                             prepareHostApi({
-                                credentialId: updatedState?.headers?.headerSelectedCred?.data?.credentialsId,
-                                regionId: updatedState?.headers?.headerSelectedRegion?.label2,
+                                credentialId: rowData?.credentialId,
+                                regionId: rowData?.regionId,
                                 instanceId: partnerNodeEc2Id
                             }).then((prepareRes: any) => {
                                 if (prepareRes && !prepareRes?.error) {

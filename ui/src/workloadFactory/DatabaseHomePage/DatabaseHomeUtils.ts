@@ -21,6 +21,7 @@ import {
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
 
 export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZARD_TYPE.MSSQL) => {
     let totalDatabases = 0;
@@ -647,7 +648,9 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
                         score: score,
                         databaseInstanceName: instance?.databaseInstanceName,
                         databaseHostId: databaseHost?.databaseHostId,
-                        instanceId: instance?.databaseInstanceId
+                        instanceId: instance?.databaseInstanceId,
+                        credentialId: databaseHost?.credentialId,
+                        regionId: databaseHost?.regionId
                     };
                     tableData.push(perTableData);
                 }
@@ -702,7 +705,8 @@ export const disableOfflineRows = (data: any) => {
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
     let result = assessmentData.map((instanceData: any) => {
         let updatedAssessmentData = { ...instanceData };
-        const host = hostData?.[instanceData.databaseHostId];
+        const host =
+            hostData?.[uniqueHostRow(instanceData.databaseHostId, instanceData?.credentialId, instanceData.regionId)];
         if (!host) {
             updatedAssessmentData.loadingStatus = isLoading;
         } else {

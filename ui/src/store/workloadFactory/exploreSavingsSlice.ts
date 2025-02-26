@@ -11,6 +11,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     loading: false,
     unmanagedExploreSavingsHost: [],
     selectedInstanceId: '',
+    selectedExCredId: '',
+    selectedExRegionId: '',
     selectedOnPremHostId: '',
     selectedPartnerInstanceId: '',
     selectedServerName: '',
@@ -282,6 +284,12 @@ const exploreSavingsSlice = createSlice({
         setSelectedInstanceId(state, action: PayloadAction<any>) {
             state.selectedInstanceId = action.payload;
         },
+        setSelectedExCredId(state, action: PayloadAction<any>) {
+            state.selectedExCredId = action.payload;
+        },
+        setSelectedExRegionId(state, action: PayloadAction<any>) {
+            state.selectedExRegionId = action.payload;
+        },
         setSelectedOnPremHostId(state, action: PayloadAction<any>) {
             state.selectedOnPremHostId = action.payload;
         },
@@ -344,6 +352,8 @@ const exploreSavingsSlice = createSlice({
             state.selectedCloneRefresh = null;
             state.monthlyChangeRate = 8;
             state.selectedInstanceId = '';
+            state.selectedExCredId = '';
+            state.selectedExCredId = '';
             state.selectedOnPremHostId = '';
             state.selectedPartnerInstanceId = '';
             state.selectedServerName = '';
@@ -467,6 +477,13 @@ const exploreSavingsSlice = createSlice({
         },
         setStorageSavingsOnPremLoading(state, action: PayloadAction<any>) {
             state.storageSavingsOnPremLoading = action.payload;
+        },
+        setSelectedEsPageInstance(state, action: PayloadAction<any>) {
+            state.selectedInstanceId = action.payload.instanceId;
+            state.selectedExCredId = action.payload.credentialId;
+            state.selectedExRegionId = action.payload.regionId;
+            state.selectedDeploymentModel = action.payload.deploymentModel;
+            state.selectedServerName = action.payload.serverName;
         }
     }
 });
@@ -512,6 +529,8 @@ export const {
     setSelectedVolumeTabForSecondary,
     setUnmanagedExploreSavingsHost,
     setSelectedInstanceId,
+    setSelectedExCredId,
+    setSelectedExRegionId,
     setSelectedOnPremHostId,
     setSelectedPartnerInstanceId,
     setSelectedServerName,
@@ -535,7 +554,8 @@ export const {
     addOnPremRegionsList,
     setOnPremRegionsLoading,
     setOnPremStorageAndComputeInfo,
-    setOnPremStorageAndComputeInfoFull
+    setOnPremStorageAndComputeInfoFull,
+    setSelectedEsPageInstance
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

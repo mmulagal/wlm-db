@@ -147,6 +147,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstanceName = action.payload.instanceName;
             state.selectedGwInstanceCredId = action.payload.credId;
             state.selectedGwInstanceRegionId = action.payload.regionId;
+            state.selectedDatabaseStorageType = action.payload.storageType;
         }
     }
 });

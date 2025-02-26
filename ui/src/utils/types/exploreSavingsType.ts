@@ -30,6 +30,8 @@ export interface ExploreSavingsSliceEntities {
     loading: boolean;
     unmanagedExploreSavingsHost: Array<any>;
     selectedInstanceId: string;
+    selectedExCredId: string;
+    selectedExRegionId: string;
     selectedOnPremHostId: string;
     selectedPartnerInstanceId: string;
     selectedServerName: string;
