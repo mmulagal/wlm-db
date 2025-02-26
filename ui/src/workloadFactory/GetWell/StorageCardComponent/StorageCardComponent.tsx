@@ -108,13 +108,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     !cardData?.sizingViolations?.underProvisionedDrives?.length))
         ) {
             return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
-            // } else if (
-            //     cardData?.id === 'log-drive-size' &&
-            //     (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-            //         (cardData?.sizingViolations?.overProvisionedDrives?.length &&
-            //             !cardData?.sizingViolations?.underProvisionedDrives?.length))
-            // ) {
-            //     return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             cardData?.id === 'tempdb-drive-size' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
@@ -124,7 +117,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             (cardData?.id === 'tempdb-drive-size' ||
-                // cardData?.id === 'log-drive-size' ||
                 cardData?.id === 'headroom') &&
             cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
             !cardData?.sizingViolations?.underProvisionedDrives?.length &&
