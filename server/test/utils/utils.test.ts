@@ -140,5 +140,6 @@ describe(' Secrets Manager string', () => {
         expect(response.FSxDataVolumeSize).toEqual(2048 * 1024);
         expect(response.FSxLogVolumeSize).toEqual(Math.ceil(.25 * 2048 * 1024));
         expect(response.FSxTempDbVolumeSize).toEqual(0);
+        expect(response.FSxQuorumVolumeSize).toEqual(0);
     });
 });
