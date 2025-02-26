@@ -668,14 +668,17 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                     foreach ($property in $drive.PSObject.Properties) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                         }
+                    # When database has data files in multiple different drives, pick dataaccess path for the data drive currently being considered
                     $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0 -and $_.accessPaths[0].startswith($drive.dataDriveLetter)) {$_.accessPaths[0]} }
+                    # When database has multiple data files in the same drive, filter out the duplicate data access paths
+                    $dataAccessPaths = $dataAccessPaths | Select -unique
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
                     $driveObject | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetail.svmName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetail.diskNumber
                     $driveObject | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetail.lunSerialNumber
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths        
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths   
                     if($logVolumeLunDetail.accessPaths -and $logVolumeLunDetail.accessPaths.Count -gt 0) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetail.accessPaths[0]
                         }
