@@ -267,7 +267,7 @@ const GetWell = () => {
                 id: 4,
                 label: GENERAL.APPLICATION,
                 value: 'Application_sub',
-                category: GENERAL.APPLICATION
+                category: 'Application'
             },
             {
                 id: 5,
@@ -796,9 +796,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 3
-                                                    ? 'All(3)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/3`}
+                                                defaultFilterOptions['all-catagories']?.length === 4
+                                                    ? 'All(4)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/4`}
                                             </DsTypography>
                                         </div>
 
