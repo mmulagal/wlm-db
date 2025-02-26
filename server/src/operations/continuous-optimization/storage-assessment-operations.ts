@@ -336,7 +336,7 @@ async function calculateStorageDrift(
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
                                 objectName,
-                                value: value ? value.toString() : '',
+                                value: value.toString(),
                                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
                             });
                         }
@@ -380,7 +380,7 @@ async function calculateStorageDrift(
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
                                 objectName,
-                                value: value ? value.toString() : '',
+                                value: value.toString(),
                                 objectType: ASSESSMENT_RESOURCE_TYPE.LUN
                             });
                         }
