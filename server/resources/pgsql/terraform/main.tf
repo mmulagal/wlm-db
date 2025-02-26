@@ -92,7 +92,7 @@ module "fsxn_standalone" {
   is_standalone                     = local.is_standalone
 }
 
-module "fsxn_fci" {
+module "fsxn_ha" {
   source = "./modules/fsxn"
   count  = local.is_standalone ? 0 : 1
 
@@ -217,7 +217,7 @@ module "ha_pgsql_node1" {
   source = "./modules/ec2"
   count  = local.is_standalone ? 0 : 1
 
-  depends_on                       = [module.vpc_endpoints, module.validation_node1, module.validation_node2, module.fsxn_fci]
+  depends_on                       = [module.vpc_endpoints, module.validation_node1, module.validation_node2, module.fsxn_ha]
   ec2_role_name                    = var.deployment_name
   enable_cloudwatch_log_feature    = var.enable_cloud_watch_log_feature
   ami_id                           = var.sql_ami_id
@@ -230,12 +230,12 @@ module "ha_pgsql_node1" {
   sql_svm_name                     = var.sql_svm_name
   fsx_data_volume_name             = var.fsx_data_volume_name
   fsx_log_volume_name              = var.fsx_log_volume_name
-  fsx_file_system_id               = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn_fci[0].fsx_fs_logical_id // may be the output of the fsx if its new
+  fsx_file_system_id               = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn_ha[0].fsx_fs_logical_id // may be the output of the fsx if its new
   pgsql_node_initialization_s3_url = var.pgsql_node_initialization_s3_url
   sql_node_aws_location            = var.aws_location
   route_table_id                   = var.route_table1_id
   ebs_volume_size                  = var.ebs_volume_size
-  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_fci[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_ha[0].fsxn_security_group_id : var.ontap_security_group_id
   sql_fsx_server_net_bios_name     = local.sql_fsx_server_net_bios_name
   workload_instance_type           = var.workload_instance_type
   sql_node_name                    = "PGSQL-Node-1"
@@ -244,9 +244,9 @@ module "ha_pgsql_node1" {
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
   sql_service_account_password     = var.sql_service_account_password
-  fsx_svm_id                       = module.fsxn_fci[0].fsx_svm_id
+  fsx_svm_id                       = module.fsxn_ha[0].fsx_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
-  fsx_svm_uuid                     = module.fsxn_fci[0].fsx_svm_uuid
+  fsx_svm_uuid                     = module.fsxn_ha[0].fsx_svm_uuid
 
   private_subnet2_id = var.private_subnet2_id
   route_table2_id    = var.route_table2_id
@@ -254,14 +254,14 @@ module "ha_pgsql_node1" {
   network_interface_id   = aws_network_interface.pgsql_node_ni_1[0].id
   network_interface_1_id = aws_network_interface.pgsql_node_ni_1[0].id
   network_interface_2_id = aws_network_interface.pgsql_node_ni_2[0].id
-  iam_instance_profile   = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
+  iam_instance_profile   = aws_iam_instance_profile.ha_pgsql_fsx_profile[0].name
 }
 
 module "ha_pgsql_node2" {
   source = "./modules/ec2"
   count  = local.is_standalone ? 0 : 1
 
-  depends_on                       = [module.vpc_endpoints, module.validation_node1, module.validation_node2, module.fsxn_fci]
+  depends_on                       = [module.vpc_endpoints, module.validation_node1, module.validation_node2, module.fsxn_ha]
   ec2_role_name                    = var.deployment_name
   enable_cloudwatch_log_feature    = var.enable_cloud_watch_log_feature
   ami_id                           = var.sql_ami_id
@@ -274,12 +274,12 @@ module "ha_pgsql_node2" {
   sql_svm_name                     = var.sql_svm_name
   fsx_data_volume_name             = var.fsx_data_volume_name
   fsx_log_volume_name              = var.fsx_log_volume_name
-  fsx_file_system_id               = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn_fci[0].fsx_fs_logical_id // may be the output of the fsx if its new
+  fsx_file_system_id               = local.existing_ontap_fsx ? var.fsx_file_system_id : module.fsxn_ha[0].fsx_fs_logical_id // may be the output of the fsx if its new
   pgsql_node_initialization_s3_url = var.pgsql_node_initialization_s3_url
   sql_node_aws_location            = var.aws_location
   route_table_id                   = var.route_table1_id
   ebs_volume_size                  = var.ebs_volume_size
-  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_fci[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_ha[0].fsxn_security_group_id : var.ontap_security_group_id
   sql_fsx_server_net_bios_name     = local.sql_fsx_server_net_bios_name_2
   workload_instance_type           = var.workload_instance_type
   sql_node_name                    = "PGSQL-Node-2"
@@ -288,14 +288,14 @@ module "ha_pgsql_node2" {
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
   sql_service_account_password     = var.sql_service_account_password
-  fsx_svm_id                       = module.fsxn_fci[0].fsx_replica_svm_id
+  fsx_svm_id                       = module.fsxn_ha[0].fsx_replica_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
-  fsx_svm_uuid                     = module.fsxn_fci[0].fsx_replica_svm_uuid
+  fsx_svm_uuid                     = module.fsxn_ha[0].fsx_replica_svm_uuid
 
   private_subnet2_id     = var.private_subnet2_id
   route_table2_id        = var.route_table2_id
   network_interface_id   = aws_network_interface.pgsql_node_ni_2[0].id
   network_interface_1_id = aws_network_interface.pgsql_node_ni_1[0].id
   network_interface_2_id = aws_network_interface.pgsql_node_ni_2[0].id
-  iam_instance_profile   = aws_iam_instance_profile.fci_sql_fsx_profile[0].name
+  iam_instance_profile   = aws_iam_instance_profile.ha_pgsql_fsx_profile[0].name
 }

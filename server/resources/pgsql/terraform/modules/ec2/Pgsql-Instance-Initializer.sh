@@ -208,15 +208,16 @@ configure_pgsql() {
 }
 
 configure_replication() {
-    local deployment_name=$1
-    local sql_service_account_password=$2
-    local fsx_data_volume_name=$3
-    local fsx_log_volume_name=$4
+    local node_name=$1
+    local deployment_name=$2
+    local sql_service_account_password=$3
+    local fsx_data_volume_name=$4
+    local fsx_log_volume_name=$5
 
-    echo "Configuring replication with deployment_name=${deployment_name}, sql_service_account_password=${sql_service_account_password}, fsx_data_volume_name=${fsx_data_volume_name}, fsx_log_volume_name=${fsx_log_volume_name}"
+    echo "Configuring replication with node_name=${node_name}, deployment_name=${deployment_name}, sql_service_account_password=${sql_service_account_password}, fsx_data_volume_name=${fsx_data_volume_name}, fsx_log_volume_name=${fsx_log_volume_name}"
 
-    if [ -z "${fsx_log_volume_name}" ]; then
-        # Call configure-replica-primary.sh if fsx_log_volume_name is empty
+    if [ "$node_name" = "PGSQL-Node-1" ]; then
+        # Call configure-replica-primary.sh for primary node
         echo "Configuring primary"
         if ! sudo /home/ec2-user/cfn/scripts/setup/configure-replica-primary.sh \
             -a "${deployment_name}" \
@@ -225,8 +226,8 @@ configure_replication() {
             echo "Error configuring replication (primary)"
             return 1
         fi
-    else
-        # Call configure-replica-secondary.sh if fsx_log_volume_name has a value
+    elif [ "$node_name" = "PGSQL-Node-2" ]; then
+        # Call configure-replica-secondary.sh for secondary node
         echo "Configuring secondary"
         if ! sudo /home/ec2-user/cfn/scripts/setup/configure-replica-secondary.sh \
             -a "${deployment_name}" \
@@ -236,6 +237,9 @@ configure_replication() {
             echo "Error configuring replication (secondary)"
             return 1
         fi
+    else
+        echo "Invalid node name: ${node_name}"
+        return 1
     fi
 
     echo "Replication configured successfully"
@@ -311,7 +315,7 @@ main() {
         configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
         configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}"
         
-        configure_replication "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}"
+        configure_replication "${node_name}" "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}"
         rename_host "${sql_server_name}"
     elif [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-2" ]; then
         echo "HA Configuration is enabled and this is the secondary node"
@@ -319,7 +323,7 @@ main() {
         configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}_replica" "${fsx_aggr_name}" "${fsx_data_volume_name}_replica" "${fsx_log_volume_name}_replica" "${fsx_svm_uuid}" "${deployment_name}"
         configure_pgsql "${fsx_data_volume_name}_replica" "${fsx_log_volume_name}_replica" "${sql_version}" "${sql_service_account_password}"
         
-        configure_replication "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}" "${fsx_log_volume_name}"
+        configure_replication "${node_name}" "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}" "${fsx_log_volume_name}"
         rename_host "${sql_server_name}-replica"
     else
         echo "Standalone configuration"

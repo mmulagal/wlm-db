@@ -1,6 +1,6 @@
-resource "aws_iam_instance_profile" "fci_sql_fsx_profile" {
+resource "aws_iam_instance_profile" "ha_pgsql_fsx_profile" {
   count = local.is_standalone ? 0 : 1
-  name  = "${var.deployment_name}_fci_sql_fsx_profile"
+  name  = "${var.deployment_name}_ha_pgsql_fsx_profile"
   role  = var.deployment_name
 }
 
