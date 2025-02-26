@@ -25,6 +25,7 @@ import {
     TIB_IN_BYTE,
     WLF_TABS
 } from '../../../utils/consts';
+import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
@@ -2042,6 +2043,16 @@ export const checkIfEbsProtected = (selectedHostDetailsD?: any, perfMssqlInstanc
             !selectedHostDetails?.loading &&
             perfMssqlInstancesData?.[selectedHostDetails?.id] &&
             !perfMssqlInstancesData?.[selectedHostDetails?.id]?.loading
+        ) {
+            return EBS_PROTECTED_OPTIONS.UNKNOWN;
+        } else if (
+            !selectedHostDetails?.loading &&
+            perfMssqlInstancesData?.[
+                uniqueHostRow(selectedHostDetails?.id, selectedHostDetails?.credentialId, selectedHostDetails?.regionId)
+            ] &&
+            !perfMssqlInstancesData?.[
+                uniqueHostRow(selectedHostDetails?.id, selectedHostDetails?.credentialId, selectedHostDetails?.regionId)
+            ]?.loading
         ) {
             return EBS_PROTECTED_OPTIONS.UNKNOWN;
         }

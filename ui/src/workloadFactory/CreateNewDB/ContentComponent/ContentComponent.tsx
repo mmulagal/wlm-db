@@ -21,21 +21,21 @@ import Collation from './DatabaseInformation/Collation/Collation';
 
 const ContentComponent = () => {
     const dispatch = useDispatch();
-    const { dbHostName, instanceId, instanceName } = useAppSelector(state => state.createNewUser);
+    const { dbHostName, instanceId, instanceName, cdbCredId, cdbRegionId } = useAppSelector(
+        state => state.createNewUser
+    );
     const { resourceId } = useAppSelector(state => state.auth);
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const { data: driveInfoListV2, isFetching: driveInfoListLoadingV2 } = useGetDriveInfoV2Query({
-        credentialId: selectedCredId?.data?.credentialsId,
-        region: selectedRegionCode?.data?.regionCode,
+        credentialId: cdbCredId,
+        region: cdbRegionId,
         id: resourceId,
         instanceId
     });
 
     const { data: collationListV2, isFetching: collationListLoadingV2 } = useGetCollationListV2Query({
-        credentialId: selectedCredId?.data?.credentialsId,
-        region: selectedRegionCode?.data?.regionCode,
+        credentialId: cdbCredId,
+        region: cdbRegionId,
         id: resourceId,
         instanceId
     });

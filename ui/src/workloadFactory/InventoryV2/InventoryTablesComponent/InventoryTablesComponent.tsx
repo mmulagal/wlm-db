@@ -1,7 +1,6 @@
 import { useAppSelector } from '../../../store/storeHooks';
 import HostTable from './HostTable/HostTable';
 import InstancesTable from './InstancesTable/InstancesTable';
-import HostsTable from './HostsTable/HostsTable';
 import styles from './InventoryTablesComponent.module.scss';
 
 const InventoryTablesComponent = () => {

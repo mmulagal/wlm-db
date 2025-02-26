@@ -57,9 +57,6 @@ const PostgreCodebox = () => {
     const [formDataTerraform, setFormDataTerraform] = useState<any>(null); // Saving form data on terraform setup API call
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
 
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
-
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
     const selectedDBName = useAppSelector(state => state.postgreForm.postgreServerName);
@@ -234,11 +231,12 @@ const PostgreCodebox = () => {
             return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             const baseUrl = getBaseUrl();
+            const credDetails = getCredDetails(mssqlFormData);
             const rightPanelResponse = createPgsqlPayload({ mssqlForm: mssqlFormData, postgreForm: pgsqlFormData });
             const restApiPayload = PGSQL_CURL_REQ_TEMPLATE(
                 baseUrl,
-                selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
-                selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
+                credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                credDetails.region || CRED_PLACEHOLDERS.REGION,
                 CRED_PLACEHOLDERS.TOKEN,
                 JSON.stringify(rightPanelResponse, null, 2),
                 isWorkloadFactory

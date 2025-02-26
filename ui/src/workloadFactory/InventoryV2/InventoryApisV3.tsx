@@ -810,7 +810,7 @@ const InventoryApisV3 = () => {
         let noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.map((ec2InstanceId: any) => {
-                if (runningPerfInstanceListRef.current.includes(ec2InstanceId)) {
+                if (runningPerfInstanceListRef.current.includes(uniqueHostRow(ec2InstanceId, credId, regionId))) {
                     return;
                 }
                 mssqlInstancesDataLoad[uniqueHostRow(ec2InstanceId, credId, regionId)] = {
@@ -914,7 +914,7 @@ const InventoryApisV3 = () => {
         let instanceData: any = {};
         // This will loop all unamanged EBS/FSXW rows
         exploreSavingsRows?.map((row: any) => {
-            if (row?.storageType && !potentialSavingsHostDataRef.current?.[row?.id]) {
+            if (row?.storageType && !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]) {
                 if (
                     headerSelectedMultiCredIdsList.includes(runningCredId) &&
                     headerSelectedMultiRegionIdsList.includes(runningRegionId)
@@ -956,8 +956,8 @@ const InventoryApisV3 = () => {
                 }
             } else if (
                 row?.storageType === GENERAL.EBS &&
-                potentialSavingsHostDataRef.current?.[row?.id]?.loading &&
-                !potentialSavingsHostDataRef.current?.[row?.id]?.isProtected
+                potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.loading &&
+                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]?.isProtected
             ) {
                 // In above if we protection data is missing for EBS than we trigger instance API.
                 // This else is used to capture response once instance API is loaded for protection.
@@ -996,7 +996,7 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         // if partner instance ID
-        if (unManagedPerfInstanceIdsList) {
+        if (unManagedPerfInstanceIdsList?.length) {
             callUnmanagedPerfInstanceApi(unManagedPerfInstanceIdsList, false, INSTANCE_API_FIELDS.SUB_TABLE_FIELDS);
         }
     }, [unManagedPerfInstanceIdsList]);
@@ -1246,7 +1246,7 @@ const InventoryApisV3 = () => {
                 callPotentialSavings(exploreSavingsRows, credId, regionId);
             }
         }
-    }, [inventoryTableDataRef.current, removeSecNodeDiscoveredList]);
+    }, [inventoryTableData, removeSecNodeDiscoveredList]);
 
     useEffect(() => {
         if (!refreshBlocked) {

@@ -13,12 +13,14 @@ import { WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance, gwRefreshPage } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        gwRefreshPage,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
 
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
 
@@ -32,9 +34,8 @@ const GetWellApi = () => {
         try {
             dispatch(setOptimizePageLoading(true));
             const result: { data?: any; error?: any } = await assessmentDetailsApi({
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance
             });

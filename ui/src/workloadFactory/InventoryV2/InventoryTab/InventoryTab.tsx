@@ -57,7 +57,7 @@ const InventoryTab = () => {
                 </DsTypography>
             </div>
 
-            <div
+            {/* <div
                 className={
                     selectedTab === 'Databases'
                         ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
@@ -75,7 +75,7 @@ const InventoryTab = () => {
                 >
                     Databases
                 </DsTypography>
-            </div>
+            </div> */}
         </div>
     );
 };

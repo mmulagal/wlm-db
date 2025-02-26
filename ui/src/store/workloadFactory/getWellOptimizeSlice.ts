@@ -10,6 +10,8 @@ const initialState: GetWellSliceInterface = {
     selectedResourceId: '',
     selectedDatabaseInstance: '',
     selectedDatabaseInstanceName: '',
+    selectedGwInstanceCredId: '',
+    selectedGwInstanceRegionId: '',
     selectedDatabaseStorageType: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
@@ -55,6 +57,12 @@ const getWellOptimizeSlice = createSlice({
         setGwDatabaseInstanceName: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstanceName = action.payload;
         },
+        setSelectedGwInstanceCredId: (state, action: PayloadAction<any>) => {
+            state.selectedGwInstanceCredId = action.payload;
+        },
+        setSelectedGwInstanceRegionId: (state, action: PayloadAction<any>) => {
+            state.selectedGwInstanceRegionId = action.payload;
+        },
         setGwDatabaseStorageType: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseStorageType = action.payload;
         },
@@ -93,6 +101,8 @@ const getWellOptimizeSlice = createSlice({
             state.optimizingInstanceData = false;
             state.selectedRecommendedInstance = null;
             state.recommendedInstanceInBulk = {};
+            state.selectedGwInstanceCredId = '';
+            state.selectedGwInstanceRegionId = '';
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -129,6 +139,14 @@ const getWellOptimizeSlice = createSlice({
                 state.recommendedInstanceInBulk[action.payload.type] = {};
             }
             state.recommendedInstanceInBulk[action.payload.type] = action.payload.value;
+        },
+        setGwPageLoadInstanceData: (state, action: PayloadAction<any>) => {
+            state.selectedHostname = action.payload.hostname;
+            state.selectedResourceId = action.payload.resourceId;
+            state.selectedDatabaseInstance = action.payload.instanceId;
+            state.selectedDatabaseInstanceName = action.payload.instanceName;
+            state.selectedGwInstanceCredId = action.payload.credId;
+            state.selectedGwInstanceRegionId = action.payload.regionId;
         }
     }
 });
@@ -159,7 +177,10 @@ export const {
     setInProgressOptimizationData,
     setInProgressHostData,
     setJobToInstanceMap,
-    setRecommendedInstanceInBulk
+    setRecommendedInstanceInBulk,
+    setSelectedGwInstanceCredId,
+    setSelectedGwInstanceRegionId,
+    setGwPageLoadInstanceData
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

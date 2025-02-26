@@ -55,6 +55,7 @@ export interface InventorySliceData {
 export interface InventoryTableData {
     ec2InstanceId?: string;
     ec2InstanceName?: string;
+    resourceId?: string;
     id?: string;
     name?: string;
     hostType?: string;

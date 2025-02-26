@@ -76,9 +76,10 @@ const GetWell = () => {
         gwTimestamp,
         isAssessmentAvailable,
         selectedResourceId,
-        selectedDatabaseInstance
+        selectedDatabaseInstance,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
     } = useAppSelector(state => state.getWellOptimize);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -143,8 +144,8 @@ const GetWell = () => {
     const handleTriggerAssessment = () => {
         setTriggerAssessmentInProgress(true);
         triggerAssessmentApi({
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance
         }).then((res: any) => {

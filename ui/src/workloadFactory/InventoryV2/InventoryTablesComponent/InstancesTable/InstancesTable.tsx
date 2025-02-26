@@ -49,13 +49,15 @@ import {
     setSelectedDatabaseInstance,
     setSelectedDatabaseInstanceName,
     setSelectedHostname,
-    setSelectedResourceId
+    setSelectedResourceId,
+    setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
     setGwDatabaseStorageType,
     setGwHostname,
+    setGwPageLoadInstanceData,
     setGwResourceId,
     setLandingFrom
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
@@ -68,6 +70,7 @@ import { selectedTabSelection } from '../../../../store/workloadFactory/database
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
+    setCdbPageData,
     setDBHostName,
     setInstanceId,
     setInstanceName
@@ -82,8 +85,8 @@ import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.sv
 const InstancesTable = () => {
     const {
         inventoryTableData,
-        inProgressInstances,
-        inventoryExpandedRowHostData: hostData
+        inProgressInstances
+        // inventoryExpandedRowHostData: hostData
     } = useAppSelector(state => state.inventoryV2);
 
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -142,7 +145,7 @@ const InstancesTable = () => {
                                 ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                                 : '',
                             statusColText: inProgressInstances.has(
-                                `${hostData?.ec2InstanceId}_${perRow.databaseInstanceName}`
+                                `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`
                             )
                                 ? INVENTORY_STATUS.IN_PROGRESS
                                 : perRow.statusColText,
@@ -150,7 +153,10 @@ const InstancesTable = () => {
                             regionId: perHost?.regionId,
                             credentialName: perHost?.credentialName,
                             accountId: perHost?.accountId,
-                            regionName: perHost?.regionName
+                            regionName: perHost?.regionName,
+                            resourceId: perHost?.resourceId,
+                            ec2InstanceId: perHost?.ec2InstanceId,
+                            ...perHost
                         };
                     });
                     newTable = [...newTable, ...(perInstanceData || [])];
@@ -181,11 +187,11 @@ const InstancesTable = () => {
                     const updatedState = store.getState();
                     const { inProgressInstances, inventoryTableData }: any = updatedState.inventoryV2;
                     const targettedHost =
-                        inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+                        inventoryTableData[rowData.resourceId] || inventoryTableData[rowData.ec2InstanceId];
                     const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
                         (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
                     );
-                    const inProgressId = `${hostData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
+                    const inProgressId = `${rowData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
                     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
                     unmanageApi({
                         credentialsId: headerSelectedCred?.data?.credentialsId,
@@ -208,7 +214,7 @@ const InstancesTable = () => {
                                     })
                                 );
                             } else {
-                                const updatedInventoryTableData = updateInstanceStatus('unmanage', hostData, rowData);
+                                const updatedInventoryTableData = updateInstanceStatus('unmanage', rowData, rowData);
                                 dispatch(setInventoryTableData(updatedInventoryTableData));
                                 dispatch(
                                     addNotification({
@@ -231,30 +237,54 @@ const InstancesTable = () => {
     const resourceAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedHost =
+            inventoryTableData[uniqueHostRow(rowData.resourceId, rowData.credentialId, rowData.regionId)] ||
+            inventoryTableData[uniqueHostRow(rowData.ec2InstanceId, rowData.credentialId, rowData.regionId)];
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
         );
         dispatch(resetWorkloadFactoryResourceData());
         dispatch(setSelectedHostname(rowData?.name));
-        dispatch(setSelectedResourceId(targettedHost?.resourceId));
-        dispatch(setSelectedDatabaseInstance(targettedDbInstance?.databaseInstanceId));
-        dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+        dispatch(
+            setSelectedResourcePageHostData({
+                resourceId: targettedHost?.resourceId,
+                databaseInstanceId: targettedDbInstance?.databaseInstanceId,
+                databaseInstanceName: targettedDbInstance?.databaseInstanceName,
+                credentialId: targettedHost?.credentialId,
+                regionId: targettedHost?.regionId
+            })
+        );
+        // dispatch(setSelectedResourceId(targettedHost?.resourceId));
+        // dispatch(setSelectedDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        // dispatch(setSelectedDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
     };
 
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost = inventoryTableData[hostData.resourceId] || inventoryTableData[hostData.ec2InstanceId];
+        const targettedHost =
+            inventoryTableData[uniqueHostRow(rowData.resourceId, rowData.credentialId, rowData.regionId)] ||
+            inventoryTableData[uniqueHostRow(rowData.ec2InstanceId, rowData.credentialId, rowData.regionId)];
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
         );
-        dispatch(setGwHostname(rowData?.name));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(targettedHost?.resourceId));
-        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
-        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
+
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: rowData?.name,
+                resourceId: targettedHost?.resourceId,
+                instanceId: targettedDbInstance?.databaseInstanceId,
+                instanceName: targettedDbInstance?.databaseInstanceName,
+                credId: targettedHost?.credentialId,
+                regionId: targettedHost?.regionId
+            })
+        );
+        // dispatch(setGwHostname(rowData?.name));
+        // dispatch(setGwResourceId(targettedHost?.resourceId));
+        // dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
+        // dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
+        // dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
     };
 
     const resetDialogValues = () => {
@@ -282,7 +312,7 @@ const InstancesTable = () => {
             // dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: manageStartMsg }));
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         } else {
-            const updatedInventoryTableData = updateInstanceStatus('detect', hostData, rowData);
+            const updatedInventoryTableData = updateInstanceStatus('detect', rowData, rowData);
             dispatch(setInventoryTableData(updatedInventoryTableData));
             const detectedSuccessMsg = (
                 <div className={styles.notification}>
@@ -295,9 +325,9 @@ const InstancesTable = () => {
             dispatch(setRadioValueDetect(DETECT_HOST_VAR.MOVE_TO_MANAGE));
         }
         // if fsx register is false and only db cred is added than call instance API
-        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[hostData?.ec2InstanceId]]));
+        dispatch(setUnManagedPerfInstanceIdsList([...unManagedPerfInstanceIdsList, ...[rowData?.ec2InstanceId]]));
         if (!isFsxRegister) {
-            dispatch(setDetectedInstanceId(hostData?.ec2InstanceId));
+            dispatch(setDetectedInstanceId(rowData?.ec2InstanceId));
         }
     };
 
@@ -313,7 +343,7 @@ const InstancesTable = () => {
                 const result: any = await registerResourceCred({
                     credentialId: headerSelectedCred?.data?.credentialsId,
                     regionId: headerSelectedRegion?.label2,
-                    instanceId: hostData?.ec2InstanceId,
+                    instanceId: rowData?.ec2InstanceId,
                     payload: createDetectHostPayload(sqlServerInstance, fsxId, rowData)
                 });
                 if (result && !result?.error) {
@@ -402,10 +432,10 @@ const InstancesTable = () => {
                 let disableMessage = '';
                 const disableCreateDb = isSmbProtocol(rowData?.storage?.fsxn?.protocol);
                 const disableCreateDbMsg = disableCreateDb ? GENERAL.SMB_PROTOCOL_DISABLED : '';
-                if (hostData?.status === INVENTORY_STATUS.OFFLINE) {
+                if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
                     disableMessage = GENERAL.HOST_DOWN;
                     disableOption = true;
-                } else if (hostData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+                } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
                     disableMessage = GENERAL.SSM_DOWN;
                     disableOption = true;
                 } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
@@ -472,7 +502,7 @@ const InstancesTable = () => {
                         return true;
                     }
                     if (
-                        hostData?.status === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.status === INVENTORY_STATUS.OFFLINE &&
                         rowData?.statusColText !== INVENTORY_STATUS.MANAGED
                     ) {
                         disableMsg = GENERAL.HOST_DOWN;
@@ -481,7 +511,7 @@ const InstancesTable = () => {
                         return true;
                     }
                     if (
-                        hostData?.ssmState === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE &&
                         rowData?.statusColText !== INVENTORY_STATUS.MANAGED
                     ) {
                         disableMsg = GENERAL.SSM_DOWN;
@@ -517,7 +547,7 @@ const InstancesTable = () => {
                         return true;
                     }
                     if (
-                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.serverInstallationMode === GENERAL.AOAG &&
                         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
                     ) {
                         disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
@@ -574,10 +604,19 @@ const InstancesTable = () => {
                                         }
                                         if (menuId === 'createUserDb') {
                                             dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                            dispatch(updateResourceId(hostData?.resourceId));
-                                            dispatch(setDBHostName(hostData?.name));
-                                            dispatch(setInstanceId(rowData?.databaseInstanceId));
-                                            dispatch(setInstanceName(rowData?.databaseInstanceName));
+                                            dispatch(updateResourceId(rowData?.resourceId));
+                                            dispatch(
+                                                setCdbPageData({
+                                                    dbHostName: rowData?.name,
+                                                    instanceId: rowData?.databaseInstanceId,
+                                                    instanceName: rowData?.databaseInstanceName,
+                                                    cdbCredId: rowData?.credentialId,
+                                                    cdbRegionId: rowData?.regionId
+                                                })
+                                            );
+                                            // dispatch(setDBHostName(hostData?.name));
+                                            // dispatch(setInstanceId(rowData?.databaseInstanceId));
+                                            // dispatch(setInstanceName(rowData?.databaseInstanceName));
                                             navigate('../create-new-user');
                                         }
                                         if (menuId === 'unManage') {
@@ -716,8 +755,8 @@ const InstancesTable = () => {
                 let disableMsg = '';
                 let disableMenu = () => {
                     if (
-                        hostData?.status === INVENTORY_STATUS.OFFLINE ||
-                        hostData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+                        rowData?.status === INVENTORY_STATUS.OFFLINE ||
+                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
                         rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
                         rowData?.status === INVENTORY_STATUS.STOPPED
                     ) {
@@ -744,7 +783,7 @@ const InstancesTable = () => {
                     }
 
                     if (
-                        hostData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.serverInstallationMode === GENERAL.AOAG &&
                         rowData.fileSystemType &&
                         rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
                     ) {
