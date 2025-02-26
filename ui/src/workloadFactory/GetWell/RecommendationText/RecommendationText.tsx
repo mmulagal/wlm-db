@@ -43,7 +43,9 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                     <div className={styles.setSVG}>
                         <InfoIcon />
                     </div>
-                    <DsTypography variant="Regular_14">{data?.info}</DsTypography>
+                    <DsTypography style={{ minWidth: '570px' }} variant="Regular_14">
+                        {data?.info}
+                    </DsTypography>
                 </div>
             )}
 

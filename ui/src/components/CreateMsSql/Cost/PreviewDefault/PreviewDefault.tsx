@@ -239,7 +239,7 @@ const PreviewDefault = () => {
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
         setTimeout(() => {
-            document.querySelector('#easy-create')?.scrollIntoView({
+            document.querySelector('#quick-create')?.scrollIntoView({
                 behavior: 'smooth',
                 block: 'end',
                 inline: 'nearest'

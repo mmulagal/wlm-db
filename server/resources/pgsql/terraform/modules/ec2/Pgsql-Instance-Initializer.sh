@@ -16,6 +16,8 @@ sql_version=${10}
 sql_service_account_password=${11}
 sql_server_name=${12}
 log_feature_enabled=${13} # Set to false if CloudWatch Logs feature is disabled
+node_name=${14}
+is_ha=${15}
 
 
 get_instance_id() {
@@ -45,6 +47,9 @@ download_file() {
         return 1
     fi
     chmod 755 "${dest}"
+
+    echo "Downloaded ${url} to ${dest}"
+    return 0
 }
 
 # Function to install SSM Agent and CloudWatch Agent
@@ -68,12 +73,16 @@ install_agents() {
         echo "Error installing SSM Agent"
         return 1
     fi
+    echo "SSM Agent installed successfully"
 
     echo "Installing CloudWatch Agent"
     if ! sudo yum install -y "${cloudwatch_agent_package}"; then
         echo "Error installing CloudWatch Agent"
         return 1
     fi
+
+    echo "CloudWatch Agent installed successfully"
+    return 0
 }
 
 # Function to configure CloudWatch Logs
@@ -120,6 +129,9 @@ EOF
         echo "Error configuring CloudWatch Logs"
         exit 1
     fi
+
+    echo "CloudWatch Logs configured successfully"
+    return 0
 }
 
 # Function to verify and extract scripts
@@ -132,6 +144,9 @@ unzip_archive() {
         echo "Error unzipping $source"
         return 1
     fi
+
+    echo "Unzipped $source to $destination"
+    return 0
 }
 
 verify_signature() {
@@ -146,6 +161,9 @@ verify_signature() {
         echo "Error verifying signature for $file"
         return 1
     fi
+
+    echo "Signature verified successfully $file"
+    return 0
 }
 
 # Function to configure ONTAP
@@ -166,6 +184,9 @@ configure_ontap() {
         echo "Error configuring ONTAP"
         return 1
     fi
+
+    echo "Ontap configured successfully"
+    return 0
 }
 
 # Function to configure PostgreSQL
@@ -181,6 +202,48 @@ configure_pgsql() {
         echo "Error configuring PostgreSQL"
         return 1
     fi
+
+    echo "PostgreSQL configured successfully"
+    return 0
+}
+
+configure_replication() {
+    local node_name=$1
+    local deployment_name=$2
+    local sql_service_account_password=$3
+    local fsx_data_volume_name=$4
+    local fsx_log_volume_name=$5
+
+    echo "Configuring replication with node_name=${node_name}, deployment_name=${deployment_name}, sql_service_account_password=${sql_service_account_password}, fsx_data_volume_name=${fsx_data_volume_name}, fsx_log_volume_name=${fsx_log_volume_name}"
+
+    if [ "$node_name" = "PGSQL-Node-1" ]; then
+        # Call configure-replica-primary.sh for primary node
+        echo "Configuring primary"
+        if ! sudo /home/ec2-user/cfn/scripts/setup/configure-replica-primary.sh \
+            -a "${deployment_name}" \
+            -b "${sql_service_account_password}" \
+            -c "${fsx_data_volume_name}"; then
+            echo "Error configuring replication (primary)"
+            return 1
+        fi
+    elif [ "$node_name" = "PGSQL-Node-2" ]; then
+        # Call configure-replica-secondary.sh for secondary node
+        echo "Configuring secondary"
+        if ! sudo /home/ec2-user/cfn/scripts/setup/configure-replica-secondary.sh \
+            -a "${deployment_name}" \
+            -b "${sql_service_account_password}" \
+            -c "${fsx_data_volume_name}" \
+            -d "${fsx_log_volume_name}"; then
+            echo "Error configuring replication (secondary)"
+            return 1
+        fi
+    else
+        echo "Invalid node name: ${node_name}"
+        return 1
+    fi
+
+    echo "Replication configured successfully"
+    return 0
 }
 
 # Function to rename host
@@ -193,6 +256,9 @@ rename_host() {
         echo "Error renaming host"
         return 1
     fi
+
+    echo "Host renamed successfully"
+    return 0
 }
 
 # Function to restart host
@@ -236,17 +302,36 @@ main() {
 
     unzip_archive "/home/ec2-user/cfn/signig_files.zip" "/home/ec2-user/cfn"
     
-    verify_signature "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/signig_files/common.zip.sig" "/home/ec2-user/cfn/signig_files/common.zip.pub" "SqlNode1" "${deployment_name}"
-    verify_signature "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/signig_files/setup.zip.sig" "/home/ec2-user/cfn/signig_files/setup.zip.pub" "SqlNode1" "${deployment_name}"
+    verify_signature "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/signig_files/common.zip.sig" "/home/ec2-user/cfn/signig_files/common.zip.pub" "${node_name}" "${deployment_name}"
+    verify_signature "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/signig_files/setup.zip.sig" "/home/ec2-user/cfn/signig_files/setup.zip.pub" "${node_name}" "${deployment_name}"
     
     unzip_archive "/home/ec2-user/cfn/scripts/common.zip" "/home/ec2-user/cfn/scripts"
     unzip_archive "/home/ec2-user/cfn/scripts/setup.zip" "/home/ec2-user/cfn/scripts"
     unzip_archive "/home/ec2-user/cfn/fsx_certs.zip" "/home/ec2-user/cfn"
     unzip_archive "/home/ec2-user/cfn/pgvector.zip" "/home/ec2-user/cfn"
 
-    configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
-    configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}"
-    rename_host "${sql_server_name}"
+    if [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-1" ]; then
+        echo "HA Configuration is enabled and this is the primary node"
+        configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
+        configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}"
+        
+        configure_replication "${node_name}" "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}"
+        rename_host "${sql_server_name}"
+    elif [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-2" ]; then
+        echo "HA Configuration is enabled and this is the secondary node"
+        # here fsx svm id and svm uuid is replica svm id and uuid
+        configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}_replica" "${fsx_aggr_name}" "${fsx_data_volume_name}_replica" "${fsx_log_volume_name}_replica" "${fsx_svm_uuid}" "${deployment_name}"
+        configure_pgsql "${fsx_data_volume_name}_replica" "${fsx_log_volume_name}_replica" "${sql_version}" "${sql_service_account_password}"
+        
+        configure_replication "${node_name}" "${deployment_name}" "${sql_service_account_password}" "${fsx_data_volume_name}" "${fsx_log_volume_name}"
+        rename_host "${sql_server_name}-replica"
+    else
+        echo "Standalone configuration"
+        configure_ontap "${fsx_file_system_id}" "${aws_region}" "${fsx_svm_id}" "${sql_svm_name}" "${fsx_aggr_name}" "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${fsx_svm_uuid}" "${deployment_name}"
+        configure_pgsql "${fsx_data_volume_name}" "${fsx_log_volume_name}" "${sql_version}" "${sql_service_account_password}"
+        rename_host "${sql_server_name}"
+    fi
+
     tag_instance "${instance_id}" "user_data" "completed"
     restart_host
 }

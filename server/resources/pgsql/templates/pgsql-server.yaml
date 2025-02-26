@@ -337,7 +337,7 @@ Resources:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName1'
             BlockDeviceMappings:
-                -   DeviceName: /dev/sda1
+                -   DeviceName: /dev/xvda
                     Ebs:
                         VolumeSize: !Ref EBSVolumeSize
                         VolumeType: gp3
@@ -562,7 +562,7 @@ Resources:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName2'
             BlockDeviceMappings:
-                -   DeviceName: /dev/sda1
+                -   DeviceName: /dev/xvda
                     Ebs:
                         VolumeSize: !Ref EBSVolumeSize
                         VolumeType: gp3

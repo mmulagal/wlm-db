@@ -6,7 +6,8 @@ import {
     DsTooltipInfo,
     Popover,
     DsButton,
-    useDialog
+    useDialog,
+    TooltipInfo
 } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
@@ -266,7 +267,7 @@ const GetWell = () => {
                 id: 4,
                 label: GENERAL.APPLICATION,
                 value: 'Application_sub',
-                category: GENERAL.APPLICATION
+                category: 'Application'
             },
             {
                 id: 5,
@@ -520,7 +521,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 3
+                                                                : 4
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -629,14 +630,11 @@ const GetWell = () => {
                                                             return (
                                                                 <div className={styles['not-optimized-tooltip']}>
                                                                     <div>{option?.label}</div>
-                                                                    <DsTooltipInfo
-                                                                        trigger="hover"
-                                                                        isRelativeToViewPort={false}
-                                                                    >
+                                                                    <TooltipInfo trigger="hover" isAppendedToBody>
                                                                         {' '}
                                                                         Not optimized includes over-provisioned and
                                                                         under-provisioned instances.
-                                                                    </DsTooltipInfo>
+                                                                    </TooltipInfo>
                                                                 </div>
                                                             );
                                                         }
@@ -798,9 +796,9 @@ const GetWell = () => {
                                                 variant="Semibold_14"
                                             >
                                                 {!defaultFilterOptions['all-catagories']?.length ||
-                                                defaultFilterOptions['all-catagories']?.length === 3
-                                                    ? 'All(3)'
-                                                    : `${defaultFilterOptions['all-catagories']?.length}/3`}
+                                                defaultFilterOptions['all-catagories']?.length === 4
+                                                    ? 'All(4)'
+                                                    : `${defaultFilterOptions['all-catagories']?.length}/4`}
                                             </DsTypography>
                                         </div>
 

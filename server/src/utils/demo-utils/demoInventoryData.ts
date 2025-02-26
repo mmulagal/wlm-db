@@ -656,17 +656,17 @@ const ASSESMENT_CONFIG_DATA = {
             {
                 disk: 'Disk 4',
                 accessPath: 'L:\\',
-                policy: 'Other'
+                policy: 'LB'
             },
             {
                 disk: 'Disk 1',
                 accessPath: 'S:\\',
-                policy: 'Other'
+                policy: 'LB'
             },
             {
                 disk: 'Disk 8',
                 accessPath: 'T:\\',
-                policy: 'Other'
+                policy: 'LB'
             }
         ]
     },

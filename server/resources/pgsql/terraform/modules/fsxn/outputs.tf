@@ -77,3 +77,55 @@ output "fsxn_security_group_id" {
   description = "The ID of the fsxn security group."
   value       = local.fsx_is_existing ? null : aws_security_group.ontap_security_group[0].id
 }
+
+# HA
+
+output "fsx_replica_svm_id" {
+  description = "System generated ID of the replica storage virtual machine"
+  value       = var.is_standalone ? "Not Created" : aws_fsx_ontap_storage_virtual_machine.fsx_svm_replica[0].id
+}
+
+output "fsx_replica_svm_uuid" {
+  description = "System generated UUID of the replica storage virtual machine"
+  value       = var.is_standalone ? "Not Created" : aws_fsx_ontap_storage_virtual_machine.fsx_svm_replica[0].uuid
+}
+
+output "fsx_replica_data_volume_logical_id" {
+  description = "Logical ID of the FSx for ONTAP data volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_data_volume_replica[0].id
+}
+
+output "fsx_replica_data_volume_arn" {
+  description = "ARN of the FSx for ONTAP data volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_data_volume_replica[0].arn
+}
+
+output "fsx_replica_data_volume_id" {
+  description = "System generated ID of volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_data_volume_replica[0].id
+}
+
+output "fsx_replica_data_volume_uuid" {
+  description = "System generated UUID of volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_data_volume_replica[0].uuid
+}
+
+output "fsx_replica_log_volume_logical_id" {
+  description = "Logical ID of the FSx for ONTAP log volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_log_volume_replica[0].id
+}
+
+output "fsx_replica_log_volume_arn" {
+  description = "ARN of the FSx for ONTAP log volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_log_volume_replica[0].arn
+}
+
+output "fsx_replica_log_volume_id" {
+  description = "System generated ID of log volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_log_volume_replica[0].id
+}
+
+output "fsx_replica_log_volume_uuid" {
+  description = "System generated UUID of log volume"
+  value       = var.is_standalone ? "not created" : aws_fsx_ontap_volume.fsx_log_volume_replica[0].uuid
+}
