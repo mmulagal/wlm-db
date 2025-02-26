@@ -275,6 +275,10 @@
     }
 }
 
+[class*='TooltipInfo-module_tooltip-base'] {
+    z-index: 1000000;
+}
+
 @media screen and (max-width: 1600px) {
     .getWell {
         .mainSection {

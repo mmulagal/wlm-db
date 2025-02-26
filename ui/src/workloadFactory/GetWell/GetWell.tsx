@@ -6,7 +6,8 @@ import {
     DsTooltipInfo,
     Popover,
     DsButton,
-    useDialog
+    useDialog,
+    TooltipInfo
 } from '@netapp/design-system';
 import styles from './GetWell.module.scss';
 import commonStyles from '../../utils/CommonStyles.module.scss';
@@ -520,7 +521,7 @@ const GetWell = () => {
                                                         }(${
                                                             defaultFilterOptions['all-catagories']?.length > 0
                                                                 ? defaultFilterOptions['all-catagories']?.length
-                                                                : 3
+                                                                : 4
                                                         })`
                                                     }
                                                     placeholder="Placeholder text"
@@ -629,14 +630,11 @@ const GetWell = () => {
                                                             return (
                                                                 <div className={styles['not-optimized-tooltip']}>
                                                                     <div>{option?.label}</div>
-                                                                    <DsTooltipInfo
-                                                                        trigger="hover"
-                                                                        isRelativeToViewPort={false}
-                                                                    >
+                                                                    <TooltipInfo trigger="hover" isAppendedToBody>
                                                                         {' '}
                                                                         Not optimized includes over-provisioned and
                                                                         under-provisioned instances.
-                                                                    </DsTooltipInfo>
+                                                                    </TooltipInfo>
                                                                 </div>
                                                             );
                                                         }
