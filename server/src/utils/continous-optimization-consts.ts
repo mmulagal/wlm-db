@@ -215,6 +215,8 @@ const ASSESSMENT_RESOURCE_TYPE = {
     SQL_INSTANCE: 'SQL instance'
 };
 
+const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -245,5 +247,6 @@ export {
     OPTIMIZATION_CATEGORIES,
     OptimizeMaxDopParams,
     ASSESSMENT_RESOURCE_TYPE,
-    OPTIMIZE_RESILIENCY_CONFIGS
+    OPTIMIZE_RESILIENCY_CONFIGS,
+    VALID_MPIO_LB_POLICIES
 };
