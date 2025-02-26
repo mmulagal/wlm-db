@@ -720,6 +720,8 @@ async function createDeploymentMockDataInDBForPgSql(
     const resourceName = serverName;
     if (sqlDeploymentMode.toLowerCase() === 'standalone') {
         sqlDeploymentMode = 'Standalone';
+    } else {
+        sqlDeploymentMode = 'ha';
     }
     await createDeployment(accountId, {
         deploymentId: stackId,
@@ -753,6 +755,9 @@ async function createDeploymentMockDataInDBForPgSql(
         storageProtocol,
         fsxDataVolumeName: 'wlmdb-data-1234'
     };
+    if (sqlDeploymentMode === 'ha') {
+        metadata.node2InstanceId = `i-${randomize('A0', 17)}`;
+    }
 
     await createResource(accountId, {
         resourceId,
@@ -792,7 +797,8 @@ async function createDeploymentMockDataInDBForPgSql(
         credentialsId,
         region,
         stackName,
-        FSXFileSystemId
+        FSXFileSystemId,
+        sqlDeploymentMode
     );
 
     await createJobs(accountId, data);
