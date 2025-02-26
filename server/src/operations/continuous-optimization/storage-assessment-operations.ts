@@ -5,7 +5,8 @@ import {
     AssessmentCategories,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    ASSESSMENT_RESOURCE_TYPE
+    ASSESSMENT_RESOURCE_TYPE,
+    VALID_MPIO_LB_POLICIES
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 
@@ -433,10 +434,10 @@ async function calculateStorageDrift(
                     .map(([, data]) => data)
                     .flat();
                 objectsInViolation = assessmentDetails
-                    .filter(policyDetail => policyDetail.policy === 'Other')
+                    .filter(policyDetail => !VALID_MPIO_LB_POLICIES.includes(policyDetail.policy))
                     .map(policyDetail => ({
                         objectName: policyDetail.accessPath || policyDetail.disk || '',
-                        value: 'Other',
+                        value: policyDetail.policy,
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
             }

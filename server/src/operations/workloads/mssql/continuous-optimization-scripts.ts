@@ -764,6 +764,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $InstanceDiskNumbers = $InstanceDiskNumbers | select -Unique
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
+        $ValidPolicies = @('RR', 'RRWS')
         $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
             if($InstanceDiskNumbers -notcontains $disk.Number) {
@@ -773,17 +774,19 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             if (-Not ($AccessPaths -is [array])) {
                 $AccessPaths = @($AccessPaths)
             }
-            $object = [PSCustomObject]@{
+            $MatchString = ".*Disk\\s+" + $disk.Number + "\\s+(\\S+)"
+            $MatchGroup = [regex]::match($MpioLBDetails,$MatchString).Groups[1]
+            if($MatchGroup.Success -eq 'True') {
+                $object = [PSCustomObject]@{
                     "disk" = "Disk " + $disk.Number
                     "accessPath" = $AccessPaths[0]
-                    "policy" = $LoadBalancingPolicy
+                    "policy" = $MatchGroup.Value
                 }
-            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
-            if(-Not ($MpioLBDetails -Match $matchString) ) {
+               if ($ValidPolicies -notcontains $MatchGroup.Value) {
                $LoadBalancingPolicy = 'Other'
-               $object.policy = $LoadBalancingPolicy
             }
             $LoadBalancingPolicyDetails += $($object)
+            }
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
         $DriftAssessmentData['os']['mpio-load-balance-policy-details'] = $LoadBalancingPolicyDetails
