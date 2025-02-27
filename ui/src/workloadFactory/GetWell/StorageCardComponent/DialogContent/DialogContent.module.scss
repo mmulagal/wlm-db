@@ -26,10 +26,10 @@
             }
 
             .table {
-                height: 232px;
+                min-height: 100px;
 
                 [class*='Table-module_innerTable'] {
-                    height: 232px !important;
+                    min-height: 100px !important;
                     max-height: 232px !important;
                     overflow: auto !important;
                 }

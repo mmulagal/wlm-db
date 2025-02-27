@@ -6,45 +6,45 @@ import { GENERAL } from '../../../../utils/appConstants';
 
 type MSSQLPatchDialogProps = {
     type: string;
+    missingPatchList?: Array<any>;
 };
 
-const MSSQLPatchDialog = ({ type }: MSSQLPatchDialogProps) => {
-    const tableData = [
-        { id: '1', kb: 'KB 1', name: 'name 1', classification: 'Classification 1', severity: 'Critical' },
-        { id: '2', kb: 'KB 2', name: 'name 2', classification: 'Classification 2', severity: 'High' },
-        { id: '3', kb: 'KB 3', name: 'name 3', classification: 'Classification 3', severity: 'Medium' },
-        { id: '4', kb: 'KB 4', name: 'name 4', classification: 'Classification 4', severity: 'Low' },
-        { id: '5', kb: 'KB 5', name: 'name 5', classification: 'Classification 5', severity: 'Critical' },
-        { id: '6', kb: 'KB 6', name: 'name 6', classification: 'Classification 6', severity: 'High' }
-    ];
+const MSSQLPatchDialog = ({ type, missingPatchList = [] }: MSSQLPatchDialogProps) => {
+    const tableData = missingPatchList?.map((item, index) => {
+        return {
+            ...item,
+            id: index
+        };
+    });
+
     const EncryptionColDefs: ColumnProps[] = [
         {
             Header: 'KB',
-            accessor: 'kb',
+            accessor: 'kbId',
             id: '1',
             isSortable: true,
-            width: '157px'
+            width: '137px'
         },
         {
             Header: 'Name',
-            accessor: 'name',
+            accessor: 'title',
             id: '2',
             isSortable: true,
-            width: '174px'
+            width: '262px'
         },
         {
             Header: 'Classification',
             accessor: 'classification',
             id: '3',
             isSortable: true,
-            width: '202px'
+            width: '164px'
         },
         {
             Header: 'Severity',
             accessor: 'severity',
             id: '4',
             isSortable: true,
-            width: '174px'
+            width: '144px'
         }
     ];
 
@@ -93,11 +93,6 @@ const MSSQLPatchDialog = ({ type }: MSSQLPatchDialogProps) => {
                         <DsTypography variant="Regular_14">
                             Please follow the steps below to install the missing patches:
                         </DsTypography>
-                    </div>
-                    <div className={styles.row}>
-                        <Button onClick={() => {}} variant="link">
-                            View missing patches list
-                        </Button>
                     </div>
                 </div>
             </div>
