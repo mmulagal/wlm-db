@@ -808,6 +808,7 @@ async function validateAndStoreDiscoveredParameters(
             throw new Error('Invalid input parameters');
         }
 
+        credentials = uniqBy(credentials, 'resourceId');
         const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
         const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
         if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials)) {
@@ -1192,13 +1193,16 @@ async function verifyAndCreateCredentials(
         } else {
             const { sql } = JSON.parse(existingParameters);
             if (sql) {
+                const newSqlInstances = sqlCredentials.map(e => e.resourceId);
                 sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
-                    sqlCredentials.push({
-                        resourceId: e.sqlinstancename,
-                        resourceType: RESOURCESTYPE.MSSQL,
-                        username: e.username,
-                        password: e.password
-                    });
+                    if (!newSqlInstances.includes(e.sqlinstancename)) {
+                        sqlCredentials.push({
+                            resourceId: e.sqlinstancename,
+                            resourceType: RESOURCESTYPE.MSSQL,
+                            username: e.username,
+                            password: e.password
+                        });
+                    }
                 });
             }
         }
