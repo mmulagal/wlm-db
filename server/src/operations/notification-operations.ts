@@ -21,7 +21,11 @@ export default async function processEmailRequest(
     const { userEmail } = fields;
 
     const cacheKey = accountId + userEmail;
-    if (isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, config.get('notification.max-emails-per-day'), '1d')) {
+
+    if (
+        !(process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') &&
+        isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, config.get('notification.max-emails-per-day'), '1d')
+    ) {
         throw createError(HttpErrorCodes.TOO_MANY_REQUESTS, 'Too many requests');
     }
 
@@ -44,6 +48,9 @@ export default async function processEmailRequest(
         }
 
         response = await sendSavingsCalculationEmail(accountId, fileBuffer, fileName, userEmail, storageType);
+    } else {
+        response.message = 'Invalid emailType';
+        throw createError(HttpErrorCodes.BAD_REQUEST, response);
     }
 
     return response;
@@ -84,3 +91,5 @@ async function sendSavingsCalculationEmail(
 
     return successMsg;
 }
+
+export { sendSavingsCalculationEmail };
