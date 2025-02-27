@@ -278,7 +278,7 @@ try {
         $msdbLogFile = "'$Using:logPath\MSDBLog.ldf'"
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE tempdb MODIFY FILE (NAME = tempdev, FILENAME = $tempDevFile); ALTER DATABASE tempdb MODIFY FILE (NAME = templog, FILENAME = $tempLogFile);" 
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE model MODIFY FILE (NAME = modeldev, FILENAME = $modelDevFile); ALTER DATABASE model MODIFY FILE (NAME = modellog, FILENAME = $modelLogFile);" 
-        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE MSDB MODIFY FILE (NAME = MSDBData, FILENAME = $msdbDataFile); ALTER DATABASE MSDB MODIFY FILE (NAME = MSDBLog, FILENAME = $msdbLogFile);" 
+        Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master; ALTER DATABASE msdb MODIFY FILE (NAME = MSDBData, FILENAME = $msdbDataFile); ALTER DATABASE msdb MODIFY FILE (NAME = MSDBLog, FILENAME = $msdbLogFile);" 
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultData', REG_SZ, N'$Using:dataPath';" 
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'DefaultLog', REG_SZ, N'$Using:logPath';" 
         Invoke-Sqlcmd -ServerInstance $ServerInstanceName  -Query "USE master;EXEC xp_instance_regwrite N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory', REG_SZ, N'$Using:backupPath';" 
