@@ -25,6 +25,20 @@
                 }
             }
 
+            .table {
+                height: 232px;
+
+                [class*='Table-module_innerTable'] {
+                    height: 232px !important;
+                    max-height: 232px !important;
+                    overflow: auto !important;
+                }
+
+                ::-webkit-scrollbar {
+                    width: 4px;
+                }
+            }
+
             .dialog-body {
                 margin-top: 8px;
                 margin-bottom: 8px;
@@ -61,6 +75,19 @@
                         }
                     }
                 }
+            }
+        }
+
+        .action-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 16px;
+
+            .row {
+                display: flex;
+                gap: 8px;
+                align-items: center;
             }
         }
 

@@ -15,6 +15,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
+import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 type DialogType = {
     type: string;
@@ -683,6 +684,9 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
+
+            case 'Microsoft SQL Server patch':
+                return <MSSQLPatchDialog />;
 
             case 'Multipath I/O Sessions':
                 return (
