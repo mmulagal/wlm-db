@@ -918,6 +918,13 @@ const isValidEmail = (email: string): boolean => {
     return emailRegex.test(email);
 };
 
+function parseMultipleCommandResponse(response: string) {
+    // Multiple SSM command response is of the form {<json1String>}{<json2String>}...{<jsonnString>}, so we need to split the response into individual json objects and return them as an array
+    const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
+
+    return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -971,5 +978,6 @@ export {
     isMssql,
     isPgsql,
     isValidEmail,
-    isRateLimited
+    isRateLimited,
+    parseMultipleCommandResponse
 };

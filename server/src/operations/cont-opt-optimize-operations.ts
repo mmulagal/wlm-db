@@ -40,7 +40,8 @@ import {
     calculateFsxStorageCapacityForHeadroomOptimization,
     sleep,
     retryWithDelay,
-    getServerNameWithHostname
+    getServerNameWithHostname,
+    parseMultipleCommandResponse
 } from '../utils/utils';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
@@ -730,7 +731,7 @@ async function resizeLun(
     const ssmComment = 'Optimizing storage';
     const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
     try {
-        await retryWithDelay(
+        const response = await retryWithDelay(
             callSsmExecution.bind(
                 null,
                 credentialsId,
@@ -742,6 +743,22 @@ async function resizeLun(
             3,
             5000
         );
+
+        const [{ error: optimiseStorageParamsCommandError } = {}, { error: rescanExtendLunSsmCommandError } = {}] =
+            parseMultipleCommandResponse(response);
+        const errorMessages = [];
+
+        if (optimiseStorageParamsCommandError) {
+            errorMessages.push(`Optimise Storage Params Command Error: ${optimiseStorageParamsCommandError}`);
+        }
+
+        if (rescanExtendLunSsmCommandError) {
+            errorMessages.push(`Rescan Extend LUN SSM Command Error: ${rescanExtendLunSsmCommandError}`);
+        }
+
+        if (errorMessages.length > 0) {
+            throw new Error(errorMessages.join(' | '));
+        }
     } catch (error) {
         throw createError(400, `Error while resizing LUN ${error}`);
     }
