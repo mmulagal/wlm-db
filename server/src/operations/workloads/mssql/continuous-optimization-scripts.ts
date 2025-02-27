@@ -857,6 +857,7 @@ Function Rescan-ExtendLUN {
         [string]$DiskSerialNumber
     )
     
+    $PartitionTypes = @('Basic', 'IFS')
     try {
         # Rescan and extend the LUN
         $null = (echo "RESCAN" | diskpart)
@@ -867,7 +868,10 @@ Function Rescan-ExtendLUN {
         }
         
         $diskNumber = $disk.Number
-        $partition = Get-Partition -DiskNumber $diskNumber | Where-Object Type -eq 'Basic'
+        $partition = Get-Partition -DiskNumber $diskNumber | Where-Object { $PartitionTypes  -contains $_.Type }
+        if($null -eq $partition) {
+            throw "No partition of type BASIC/IFS found on disk $diskNumber"
+        }
         $size = ($partition | Get-PartitionSupportedSize).SizeMax
         $partitionNumber = $partition.PartitionNumber
         Resize-Partition -DiskNumber $diskNumber -PartitionNumber $partitionNumber -Size $size
