@@ -327,6 +327,8 @@ interface WorkloadInstance {
     mappedLunUuids?: string[];
     cloudProviderAccountId: string;
     resourceName: string;
+    svmId?: string;
+    svmOntapUuid?: string;
 }
 interface LogDriveDetails {
     lunUuid: string;
