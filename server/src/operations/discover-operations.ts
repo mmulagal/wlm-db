@@ -1739,6 +1739,24 @@ async function manageSqlServerV2(
                     if (isResourceTobeCreated) {
                         const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
                             JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
+                        const ebsVolumes = await paginateDescribeEbsVolumes(credentialsId, region, {
+                            Filters: [
+                                {
+                                    Name: 'attachment.instance-id',
+                                    Values: node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId]
+                                }
+                            ]
+                        });
+                        const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
+                            iops: volume.Iops,
+                            size: volume.Size,
+                            isRoot: volume.Attachments?.some(
+                                attachment => attachment.Device === '/dev/xvda' || attachment.Device === '/dev/sda1'
+                            ),
+                            volumeType: volume.VolumeType,
+                            volumeId: volume.VolumeId,
+                            throughput: volume.Throughput
+                        }));
 
                         await createResource(accountId, {
                             resourceId,
@@ -1761,7 +1779,8 @@ async function manageSqlServerV2(
                                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                                 ...(activeDirectoryIpAddresses && {
                                     activeDirectoryAddress: activeDirectoryIpAddresses.join()
-                                })
+                                }),
+                                ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
                             }
                         });
 
