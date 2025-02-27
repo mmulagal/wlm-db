@@ -758,12 +758,7 @@ export const GETWELL_CONFIG: any = {
     'snapshot-policy': 'scheduled_local_snapshot'
 };
 
-export const GW_CONFIG_OPTIMIZE_NA = [
-    'TempDB placement',
-    GENERAL.LICENSE_SQL_SERVER,
-    GENERAL.OPERATING_SYSTEM_PATCH,
-    GENERAL.MICROSOFT_SQL_PATCH
-];
+export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
     rssProfile: 'RSS profile',
@@ -790,5 +785,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     TEMPDB_PLACEMENT: 'TempDB placement',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     MAXDOP: 'MAXDOP',
-    SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot'
+    SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
+    OPERATING_SYSTEM_PATCH: 'Operating system patch',
+    MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch'
 };

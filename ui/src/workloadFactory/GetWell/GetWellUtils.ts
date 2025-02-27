@@ -754,11 +754,13 @@ export const formatMicrosoftSqlPatchCardConfig = (
     let totalPatches = 0;
     let criticalPatches = 0;
     let importantPatches = 0;
+    let missingPatchList: any = [];
     data?.mssqlPatch?.missingPatchesInEc2Instances?.map(perInstance => {
         totalPatches += perInstance?.criticalMissingPatchesCount || 0;
         totalPatches += perInstance?.importantMissingPatchesCount || 0;
         criticalPatches += perInstance?.criticalMissingPatchesCount || 0;
         importantPatches += perInstance?.importantMissingPatchesCount || 0;
+        missingPatchList = [...missingPatchList, ...(perInstance?.missingPatchDetails || [])];
     });
 
     cardsData = {
@@ -793,7 +795,8 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 critical: criticalPatches,
                 important: importantPatches
             },
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            missingPatchList: missingPatchList
         }
     };
     return cardsData;
@@ -921,6 +924,7 @@ export const formatOsPatchCardConfig = (
     let criticalViolations = 0;
     let securityViolations = 0;
     let otherViolations = 0;
+    let missingPatchList: any = [];
     data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
@@ -928,6 +932,7 @@ export const formatOsPatchCardConfig = (
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
         otherViolations += perInstance?.otherNonCompliantCount || 0;
+        missingPatchList = [...missingPatchList, ...(perInstance?.missingPatchDetails || [])];
     });
 
     cardsData = {
@@ -963,7 +968,8 @@ export const formatOsPatchCardConfig = (
                 security: securityViolations,
                 other: otherViolations
             },
-            recommendationText: item?.recommendation
+            recommendationText: item?.recommendation,
+            missingPatchList: missingPatchList
         }
     };
     return cardsData;

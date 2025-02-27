@@ -787,7 +787,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Data files' ||
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
+            type === GENERAL.OPERATING_SYSTEM_PATCH ||
+            type === GENERAL.MICROSOFT_SQL_PATCH
         ) {
             return 'View';
         } else {

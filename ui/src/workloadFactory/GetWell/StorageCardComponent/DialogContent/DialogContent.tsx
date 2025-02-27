@@ -23,6 +23,7 @@ type DialogType = {
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
     bulkRecommendationOptions?: Array<any>;
+    missingPatchList?: Array<any>;
     operation?: string;
 };
 
@@ -32,6 +33,7 @@ const DialogContent = ({
     missingPermissions,
     recommendedSizeInGib,
     bulkRecommendationOptions = [],
+    missingPatchList = [],
     operation = 'single'
 }: DialogType) => {
     const dispatch = useDispatch();
@@ -686,10 +688,10 @@ const DialogContent = ({
                 );
 
             case 'Microsoft SQL Server patch':
-                return <MSSQLPatchDialog type={'mssqlPatch'} />;
+                return <MSSQLPatchDialog type={'mssqlPatch'} missingPatchList={missingPatchList} />;
 
             case 'Operating system patch':
-                return <MSSQLPatchDialog type={'osPatch'} />;
+                return <MSSQLPatchDialog type={'osPatch'} missingPatchList={missingPatchList} />;
 
             case 'Multipath I/O Sessions':
                 return (

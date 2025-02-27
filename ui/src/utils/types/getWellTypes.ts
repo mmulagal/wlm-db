@@ -106,6 +106,13 @@ export interface PerConfigInterface {
         operationEndTime?: number;
         securityNonCompliantCount?: number;
         otherNonCompliantCount?: number;
+        missingPatchDetails?: Array<{
+            classification?: string;
+            severity?: string;
+            state?: string;
+            title?: string;
+            kbId?: string;
+        }>;
     }>;
     missingPatchesInEc2Instances?: Array<{
         ec2InstanceId?: string;
