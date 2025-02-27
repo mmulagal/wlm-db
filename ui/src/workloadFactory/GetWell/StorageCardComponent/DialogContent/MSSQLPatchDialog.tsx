@@ -3,6 +3,7 @@ import { Table, useTable, Typography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
+import { useMemo } from 'react';
 
 type MSSQLPatchDialogProps = {
     type: string;
@@ -10,12 +11,14 @@ type MSSQLPatchDialogProps = {
 };
 
 const MSSQLPatchDialog = ({ type, missingPatchList = [] }: MSSQLPatchDialogProps) => {
-    const tableData = missingPatchList?.map((item, index) => {
-        return {
-            ...item,
-            id: index
-        };
-    });
+    const tableData = useMemo(() => {
+        return missingPatchList?.map((item, index) => {
+            return {
+                ...item,
+                id: index
+            };
+        })
+    }, [missingPatchList]);
 
     const EncryptionColDefs: ColumnProps[] = [
         {
