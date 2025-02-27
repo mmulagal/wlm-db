@@ -686,7 +686,10 @@ const DialogContent = ({
                 );
 
             case 'Microsoft SQL Server patch':
-                return <MSSQLPatchDialog />;
+                return <MSSQLPatchDialog type={'mssqlPatch'} />;
+
+            case 'Operating system patch':
+                return <MSSQLPatchDialog type={'osPatch'} />;
 
             case 'Multipath I/O Sessions':
                 return (
