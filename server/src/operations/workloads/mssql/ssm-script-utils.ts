@@ -505,7 +505,7 @@ const getMappedOntapVolumesScript = (
         $FSxRegion = '${fsxregion}'
         $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
         $additionalFields = '${fields}'
-        $svmOntapUuid = '${svmOntapUuid}
+        $svmOntapUuid = '${svmOntapUuid}'
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
             $serverInstanceName = $_
