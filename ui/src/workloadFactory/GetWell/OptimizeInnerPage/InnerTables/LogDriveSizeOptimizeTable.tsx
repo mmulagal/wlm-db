@@ -55,7 +55,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             data?.sizingViolations?.overProvisionedDrives?.length &&
             !data?.sizingViolations?.underProvisionedDrives?.length
         ) {
-            return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
+            return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
             !data?.sizingViolations?.underProvisionedDrives?.length &&
             data?.sizingViolations?.ignoredDrives?.length
