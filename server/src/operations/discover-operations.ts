@@ -532,7 +532,8 @@ async function getHostAndSqlInfoFromPsOutput(
                             deploymentTypes.push({
                                 ...(ebsAvailabilityZone && {
                                     zones: [ebsAvailabilityZone],
-                                    type: SINGLE_AZ
+                                    type: SINGLE_AZ,
+                                    storageType: STORAGE_TYPE.EBS
                                 })
                             });
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
@@ -552,7 +553,8 @@ async function getHostAndSqlInfoFromPsOutput(
                             deploymentTypes.push({
                                 type: deploymentType,
                                 zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
-                                ids: subnetIds?.join()
+                                ids: subnetIds?.join(),
+                                storageType: STORAGE_TYPE.FSXN
                             });
                         } else {
                             // SMB shares
@@ -596,7 +598,8 @@ async function getHostAndSqlInfoFromPsOutput(
                                 deploymentTypes.push({
                                     type: deploymentType,
                                     zones: compact(subnetIds?.map(subnetId => subnetListMap.get(subnetId))),
-                                    ids: subnetIds?.join()
+                                    ids: subnetIds?.join(),
+                                    storageType: fileSystemStorageType
                                 });
                             }
                         }
