@@ -92,6 +92,10 @@ const GetWell = () => {
     const [triggerAssessmentApi] = useTriggerInstanceAssessmentMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
+    useEffect(() => {
+        handleFilterClearAll();
+    },[]);
+
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
 
@@ -225,6 +229,7 @@ const GetWell = () => {
     }, [cardData, optimizeFilterTags, ontapConfigTableData, osConfigTableData]);
 
     const refreshGetWellPage = () => {
+        handleFilterClearAll();
         resetGwValuesOnRefresh(dispatch);
         dispatch(setGwRefreshPage(true));
     };
