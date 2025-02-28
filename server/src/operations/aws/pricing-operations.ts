@@ -1018,7 +1018,7 @@ function getPricingByLicenseType(
     });
     let instanceHourlyPrice: number | undefined;
     for (const [, { count, pricingDetails }] of existingInstanceTypesPricingDetails) {
-        if (pricingDetails[licenseType]?.pricePerUnit) {
+        if (pricingDetails && pricingDetails[licenseType]?.pricePerUnit) {
             instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
         }
     }
