@@ -326,7 +326,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return (
                 <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    <DsTypography
+                        style={{ minWidth: '200px', width: 'fit-content' }}
+                        variant="Semibold_14"
+                        isDisabled={disableText}
+                    >
                         {cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 </div>
@@ -845,6 +849,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 style={{
                     height: cardData?.block_three?.smallFont ? '56px' : '64px',
                     minWidth: '200px',
+                    width: 'fit-content',
                     position: 'relative',
                     top: '3px'
                 }}
