@@ -227,7 +227,6 @@ const OptimizeOntapInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
                     }
                 }, 1000);
 

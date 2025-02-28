@@ -30,6 +30,7 @@ export interface GetWellSliceInterface {
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
     recommendedInstanceInBulk?: any;
+    landingFromInnerPage?: boolean;
 }
 
 interface CountBreakDown {

@@ -755,7 +755,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const handleNavigateToOptimizePage = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedOptimizeConfig({ type: type, data: cardData }));
     };
 
