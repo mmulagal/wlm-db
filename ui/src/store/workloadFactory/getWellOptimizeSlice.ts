@@ -27,7 +27,8 @@ const initialState: GetWellSliceInterface = {
     inProgressHostData: {},
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
-    recommendedInstanceInBulk: {}
+    recommendedInstanceInBulk: {},
+    landingFromInnerPage: false
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -129,6 +130,9 @@ const getWellOptimizeSlice = createSlice({
                 state.recommendedInstanceInBulk[action.payload.type] = {};
             }
             state.recommendedInstanceInBulk[action.payload.type] = action.payload.value;
+        },
+        setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
+            state.landingFromInnerPage = action.payload;
         }
     }
 });
@@ -159,7 +163,8 @@ export const {
     setInProgressOptimizationData,
     setInProgressHostData,
     setJobToInstanceMap,
-    setRecommendedInstanceInBulk
+    setRecommendedInstanceInBulk,
+    setLandingFromInnerPage
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;
