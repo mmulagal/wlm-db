@@ -666,7 +666,11 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerAuthentication,
                         storage: compact(uniqBy(storageTypes, v => [v.id, v.svmId, v.protocol].join())),
                         deploymentTypes: compact(
-                            uniqBy(deploymentTypes, 'ids').map(({ type, zones }) => ({ type, zones }))
+                            uniqBy(deploymentTypes, 'ids').map(({ type, zones, storageType }) => ({
+                                type,
+                                zones,
+                                storageType
+                            }))
                         ),
                         ...(databaseCount && { databaseCount }),
                         ...(windowsClusterName && { windowsClusterName }),

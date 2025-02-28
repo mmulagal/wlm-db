@@ -119,7 +119,6 @@ const SqlServerInstanceInfo = Type.Object({
                 zones: Type.Optional(
                     Type.Array(Type.Optional(Type.String({ description: 'Availability zones of FSxN, FSxW or EBS' })))
                 ),
-                ids: Type.Optional(Type.String({ description: 'Subnet ids' })),
                 storageType: Type.Optional(Type.String({ description: 'Storage type of database host' }))
             })
         )
