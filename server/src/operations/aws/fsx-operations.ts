@@ -426,7 +426,8 @@ async function getMappedOntapVolumes(
     isSqlAuthEnabled = false,
     includeLogVolumes = false,
     accountId?: string,
-    executionTimeout?: string
+    executionTimeout?: string,
+    svmOntapUuid?: string
 ) {
     const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
     logger.info(ssmComment, {
@@ -438,7 +439,8 @@ async function getMappedOntapVolumes(
         isSqlAuthEnabled,
         includeLogVolumes,
         accountId,
-        executionTimeout
+        executionTimeout,
+        svmOntapUuid
     });
 
     try {
@@ -452,7 +454,8 @@ async function getMappedOntapVolumes(
             instanceNames,
             isSqlAuthEnabled,
             '',
-            includeLogVolumes
+            includeLogVolumes,
+            svmOntapUuid
         );
 
         const response = await callSsmExecution(

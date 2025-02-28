@@ -808,6 +808,7 @@ async function validateAndStoreDiscoveredParameters(
             throw new Error('Invalid input parameters');
         }
 
+        credentials = uniqBy(credentials, 'resourceId');
         const fsxCredentials = credentials.find(cred => cred.resourceType === RESOURCESTYPE.FSX);
         const sqlCredentials = credentials.filter(cred => cred.resourceType === RESOURCESTYPE.MSSQL);
         if (isEmpty(fsxCredentials) && isEmpty(sqlCredentials)) {
@@ -1192,13 +1193,16 @@ async function verifyAndCreateCredentials(
         } else {
             const { sql } = JSON.parse(existingParameters);
             if (sql) {
+                const newSqlInstances = sqlCredentials.map(e => e.resourceId);
                 sql.forEach((e: { sqlinstancename: string; username: string; password: string }) => {
-                    sqlCredentials.push({
-                        resourceId: e.sqlinstancename,
-                        resourceType: RESOURCESTYPE.MSSQL,
-                        username: e.username,
-                        password: e.password
-                    });
+                    if (!newSqlInstances.includes(e.sqlinstancename)) {
+                        sqlCredentials.push({
+                            resourceId: e.sqlinstancename,
+                            resourceType: RESOURCESTYPE.MSSQL,
+                            username: e.username,
+                            password: e.password
+                        });
+                    }
                 });
             }
         }
@@ -1739,6 +1743,24 @@ async function manageSqlServerV2(
                     if (isResourceTobeCreated) {
                         const { domainName: activeDirectoryDomainName, ipAddresses: activeDirectoryIpAddresses } =
                             JSON.parse(adDetails!)[ACTIVE_DIRECTORY];
+                        const ebsVolumes = await paginateDescribeEbsVolumes(credentialsId, region, {
+                            Filters: [
+                                {
+                                    Name: 'attachment.instance-id',
+                                    Values: node2InstanceId ? [node1InstanceId, node2InstanceId] : [node1InstanceId]
+                                }
+                            ]
+                        });
+                        const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
+                            iops: volume.Iops,
+                            size: volume.Size,
+                            isRoot: volume.Attachments?.some(
+                                attachment => attachment.Device === '/dev/xvda' || attachment.Device === '/dev/sda1'
+                            ),
+                            volumeType: volume.VolumeType,
+                            volumeId: volume.VolumeId,
+                            throughput: volume.Throughput
+                        }));
 
                         await createResource(accountId, {
                             resourceId,
@@ -1761,7 +1783,8 @@ async function manageSqlServerV2(
                                 ...(activeDirectoryDomainName && { activeDirectoryName: activeDirectoryDomainName }),
                                 ...(activeDirectoryIpAddresses && {
                                     activeDirectoryAddress: activeDirectoryIpAddresses.join()
-                                })
+                                }),
+                                ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
                             }
                         });
 
