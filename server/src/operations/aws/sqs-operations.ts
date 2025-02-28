@@ -555,7 +555,8 @@ async function processCloudFormationMessages() {
                                                                         : [node1InstanceId]
                                                                 }
                                                             ]
-                                                        }
+                                                        },
+                                                        accountId
                                                     );
                                                     const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
                                                         iops: volume.Iops,
