@@ -139,22 +139,24 @@ async function createDemoResourcesPerRegion(
     region: string,
     awsAccountId: string
 ) {
-    const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
-    const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
-    if (!fileSystemExists) {
-        const fsxConfiguration = {
-            fsxDeploymentMode: 'MULTI_AZ_1',
-            fsxFileSystemId: randomUUID(),
-            fsxUsername: 'wlmdb-user',
-            fsxPassword: randomize('a0', 10),
-            databaseSize: 1024,
-            ontapSgGroupId: [randomize('a0', 10)],
-            fsxVolThroughput: 256,
-            fsxIOPS: 10,
-            encryptionKey: randomize('a0', 10),
-            snapshotPolicy: 'daily_weekretention'
-        };
-        createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
+    if (region !== 'ap-southeast-5') {
+        const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
+        const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
+        if (!fileSystemExists) {
+            const fsxConfiguration = {
+                fsxDeploymentMode: 'MULTI_AZ_1',
+                fsxFileSystemId: randomUUID(),
+                fsxUsername: 'wlmdb-user',
+                fsxPassword: randomize('a0', 10),
+                databaseSize: 1024,
+                ontapSgGroupId: [randomize('a0', 10)],
+                fsxVolThroughput: 256,
+                fsxIOPS: 10,
+                encryptionKey: randomize('a0', 10),
+                snapshotPolicy: 'daily_weekretention'
+            };
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
+        }
     }
 
     const jobs = await listJobs(accountId, credentialsId, region);
