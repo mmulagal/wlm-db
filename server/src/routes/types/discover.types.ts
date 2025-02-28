@@ -115,10 +115,11 @@ const SqlServerInstanceInfo = Type.Object({
     deploymentTypes: Type.Optional(
         Type.Array(
             Type.Object({
-                type: Type.Optional(Type.String({ description: 'Deployment type of FSx for NetApp' })),
+                type: Type.Optional(Type.String({ description: 'Deployment type of FSxN, FSxW or EBS' })),
                 zones: Type.Optional(
-                    Type.Array(Type.Optional(Type.String({ description: 'Availability zones of FSx for NetApp' })))
-                )
+                    Type.Array(Type.Optional(Type.String({ description: 'Availability zones of FSxN, FSxW or EBS' })))
+                ),
+                storageType: Type.Optional(Type.String({ description: 'Storage type of database host' }))
             })
         )
     ),

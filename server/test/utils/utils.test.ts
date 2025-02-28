@@ -141,7 +141,7 @@ describe(' Secrets Manager string', () => {
     it('calculateFsxnStorageCapacity storage capacity breakdown for pgsql', () => {
         const response = calculateFsxnStorageCapacity(2048, 'fci', 'PGSQL');
         expect(response.FSxDataVolumeSize).toEqual(2048 * 1024);
-        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(.25 * 2048 * 1024));
+        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(0.25 * 2048 * 1024));
         expect(response.FSxTempDbVolumeSize).toEqual(0);
         expect(response.FSxQuorumVolumeSize).toEqual(0);
     });
@@ -154,7 +154,7 @@ describe(' Secrets Manager string', () => {
         const response = parseMultipleCommandResponse(decompressedResponse);
         expect(response.length).toEqual(2);
         expect(response[1].error).toEqual(
-            "Cannot validate argument on parameter 'PartitionNumber'. The argument is null. Provide a valid value for the argument, and then try running the command again."
+            'Cannot validate argument on parameter \'PartitionNumber\'. The argument is null. Provide a valid value for the argument, and then try running the command again.'
         );
     });
 
