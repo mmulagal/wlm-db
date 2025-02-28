@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { faker } from '@faker-js/faker';
 import { createSecrets } from '../../src/operations/aws/secrets-manager-operations';
 import { DEFAULT_AWS_REGION, FCI } from '../../src/utils/consts';
@@ -15,7 +16,9 @@ import {
     convertGiBToBytes,
     calculateFsxnStorageCapacity,
     getRegionDetails,
-    getServerNameWithHostname
+    getServerNameWithHostname,
+    parseMultipleCommandResponse,
+    decompressSSMResponse
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -133,5 +136,32 @@ describe(' Secrets Manager string', () => {
         expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
         expect(getServerNameWithHostname(hostname)).toBe('test-hostname');
         expect(getServerNameWithHostname()).toBe('MSSQLSERVER');
+    });
+
+    it('calculateFsxnStorageCapacity storage capacity breakdown for pgsql', () => {
+        const response = calculateFsxnStorageCapacity(2048, 'fci', 'PGSQL');
+        expect(response.FSxDataVolumeSize).toEqual(2048 * 1024);
+        expect(response.FSxLogVolumeSize).toEqual(Math.ceil(0.25 * 2048 * 1024));
+        expect(response.FSxTempDbVolumeSize).toEqual(0);
+        expect(response.FSxQuorumVolumeSize).toEqual(0);
+    });
+
+    it('Parse multiple SSM commands response', async () => {
+        // eslint-disable-next-line no-useless-escape
+        const decompressedResponse = await decompressSSMResponse(
+            '{\r\n\r\n}\r\n{"error":"Cannot validate argument on parameter \\u0027PartitionNumber\\u0027. The argument is null. Provide a valid value for the argument, and then try running the command again.","status":"failed"}\r\n'
+        );
+        const response = parseMultipleCommandResponse(decompressedResponse);
+        expect(response.length).toEqual(2);
+        expect(response[1].error).toEqual(
+            'Cannot validate argument on parameter \'PartitionNumber\'. The argument is null. Provide a valid value for the argument, and then try running the command again.'
+        );
+    });
+
+    it('Parse multiple SSM commands response no error', async () => {
+        const decompressedResponse = await decompressSSMResponse('{\r\n\r\n}\r\n{\r\n\r\n}');
+        const response = parseMultipleCommandResponse(decompressedResponse);
+        expect(response.length).toEqual(2);
+        expect(isEmpty(response.find(r => r.error))).toBeTruthy();
     });
 });

@@ -479,7 +479,8 @@ const getMappedOntapVolumesScript = (
     instances: string[] = [],
     sqlAuthEnabled: boolean = false,
     fields: string = '',
-    includeLogVolumes: boolean = false
+    includeLogVolumes: boolean = false,
+    svmOntapUuid: string = ''
 ) => `
     #Get Mapped Ontap Volumes
     $WarningPreference = 'SilentlyContinue';
@@ -504,7 +505,7 @@ const getMappedOntapVolumesScript = (
         $FSxRegion = '${fsxregion}'
         $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
         $additionalFields = '${fields}'
-
+        $svmOntapUuid = '${svmOntapUuid}'
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
             $serverInstanceName = $_
@@ -764,6 +765,10 @@ const getMappedOntapVolumesScript = (
                         }
                     }
                     $QueryFilter = $QueryFilter.TrimEnd('|')
+
+                    if ($svmOntapUuid -ne '') {
+                        $QueryFilter += "&svm.uuid=$svmOntapUuid"
+                    }
 
                     $Params = @{
                         "ApiEndPoint" = "/storage/volumes"

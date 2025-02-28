@@ -749,7 +749,7 @@
                                     "name": "log-drive-size",
                                     "recommended": "20-30%",
                                     "current": "5%",
-                                    "status": "not-optimized",
+                                    "status": "over-provisioned",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
                                     "tags": ["Operational excellence"],
@@ -779,32 +779,6 @@
                                             }
                                         ],
                                         "underProvisionedDrives": [
-                                            {
-                                                "databases": ["Nachos"],
-                                                "dataAccessPath": ["F:\\MSSQL"],
-                                                "dataDriveTotalSizeMB": 429420,
-                                                "logAccessPath": "G:\\MSSQL",
-                                                "logDriveTotalSizeMB": 97,
-                                                "svmName": "wlmdb_sqlsvm_1731915150431",
-                                                "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                                                "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f",
-                                                "lunUuid": "ce0cca99-e9fd-42af-9daa-50039625d44d",
-                                                "diskSerialNumber": "lWB4c$XRevTA",
-                                                "sizePercentToDataDrive": 30
-                                            },
-                                            {
-                                                "databases": ["Primordial"],
-                                                "dataAccessPath": ["D:\\MSSQL"],
-                                                "dataDriveTotalSizeMB": 1072200,
-                                                "logAccessPath": "E:\\MSSQL",
-                                                "logDriveTotalSizeMB": 107,
-                                                "svmName": "wlmdb_sqlsvm_1731915150431",
-                                                "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                                "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
-                                                "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
-                                                "diskSerialNumber": "lWB4c$XRevT9",
-                                                "sizePercentToDataDrive": 50
-                                            }
                                         ],
                                         "ignoredDrives": [
                                             {

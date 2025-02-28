@@ -5,7 +5,8 @@ import {
     setDriftAssessmentData,
     setOptimizePageLoading,
     setGwRefreshPage,
-    setIsAssessmentAvailable
+    setIsAssessmentAvailable,
+    setLandingFromInnerPage
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
@@ -13,7 +14,9 @@ import { WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
-    const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
+    const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const {
         selectedResourceId,
         selectedDatabaseInstance,
@@ -26,7 +29,11 @@ const GetWellApi = () => {
 
     useEffect(() => {
         // On page load, call the API to get the assessment details
-        viewOptimizeAction();
+        if (!landingFromInnerPage) {
+            viewOptimizeAction();
+        } else {
+            dispatch(setLandingFromInnerPage(false));
+        }
     }, []);
 
     const runAssessmentDetailsApi = async () => {

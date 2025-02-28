@@ -29,7 +29,8 @@ const initialState: GetWellSliceInterface = {
     inProgressHostData: {},
     jobToInstanceMap: {},
     jobToInstanceMapForBulk: [],
-    recommendedInstanceInBulk: {}
+    recommendedInstanceInBulk: {},
+    landingFromInnerPage: false
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -148,6 +149,9 @@ const getWellOptimizeSlice = createSlice({
             state.selectedGwInstanceCredId = action.payload.credId;
             state.selectedGwInstanceRegionId = action.payload.regionId;
             state.selectedDatabaseStorageType = action.payload.storageType;
+        },
+        setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
+            state.landingFromInnerPage = action.payload;
         }
     }
 });
@@ -181,7 +185,8 @@ export const {
     setRecommendedInstanceInBulk,
     setSelectedGwInstanceCredId,
     setSelectedGwInstanceRegionId,
-    setGwPageLoadInstanceData
+    setGwPageLoadInstanceData,
+    setLandingFromInnerPage
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

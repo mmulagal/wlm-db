@@ -96,10 +96,17 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
-        if (cardData?.id === 'log-drive-size' || cardData?.id === 'tempdb-drive-size') {
+        if (cardData?.id === 'tempdb-drive-size') {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED
+            );
+        }
+        if (cardData?.id === 'log-drive-size') {
+            return (
+                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
         return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
@@ -121,8 +128,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         ) {
             return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
         } else if (
-            (cardData?.id === 'tempdb-drive-size' ||
-                cardData?.id === 'headroom') &&
+            (cardData?.id === 'tempdb-drive-size' || cardData?.id === 'headroom') &&
             cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
             !cardData?.sizingViolations?.underProvisionedDrives?.length &&
             cardData?.sizingViolations?.ignoredDrives?.length
@@ -325,7 +331,11 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         } else {
             return (
                 <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    <DsTypography
+                        style={{ minWidth: '200px', width: 'fit-content' }}
+                        variant="Semibold_14"
+                        isDisabled={disableText}
+                    >
                         {cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
                     </DsTypography>
                 </div>
@@ -752,7 +762,6 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
 
     const handleNavigateToOptimizePage = (type: string) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(setSelectedOptimizeConfig({ type: type, data: cardData }));
     };
 
@@ -784,7 +793,9 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Data files' ||
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
+            type === GENERAL.OPERATING_SYSTEM_PATCH ||
+            type === GENERAL.MICROSOFT_SQL_PATCH
         ) {
             return 'View';
         } else {
@@ -841,6 +852,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 style={{
                     height: cardData?.block_three?.smallFont ? '56px' : '64px',
                     minWidth: '200px',
+                    width: 'fit-content',
                     position: 'relative',
                     top: '3px'
                 }}

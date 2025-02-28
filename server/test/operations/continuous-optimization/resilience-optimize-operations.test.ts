@@ -72,9 +72,11 @@ describe('Should set snapshot policy on volume level', () => {
             'f4b7c5d3-e1f6-4g2a-9b5d',
             {
                 type: [OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY],
-                params: [{
-                    snapshotPolicy: {uuid: 'vol-1234567890abcdef0', name: 'snap-1234567890abcdef0'}
-                }]
+                params: [
+                    {
+                        snapshotPolicy: { uuid: 'vol-1234567890abcdef0', name: 'snap-1234567890abcdef0' }
+                    }
+                ]
             }
         );
         expect(jobId).toBeDefined();

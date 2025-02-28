@@ -29,12 +29,18 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
             className={styles.recommendationText}
             style={{ padding: from === 'dashboard' ? '24px 40px' : '32px 0px 16px 0px' }}
         >
-            {from === 'optimize' && <DsTypography variant="Semibold_14">{data?.title}</DsTypography>}
+            {from === 'optimize' && (
+                <DsTypography variant="Semibold_14" style={{ minWidth: 'fit-content', width: 'fit-content' }}>
+                    {data?.title}
+                </DsTypography>
+            )}
 
             {from === 'dashboard' && (
                 <div className={styles.dashboardHeading}>
                     <Light />
-                    <DsTypography variant="Semibold_14">{data?.title}</DsTypography>
+                    <DsTypography variant="Semibold_14" style={{ minWidth: 'fit-content', width: 'fit-content' }}>
+                        {data?.title}
+                    </DsTypography>
                 </div>
             )}
 

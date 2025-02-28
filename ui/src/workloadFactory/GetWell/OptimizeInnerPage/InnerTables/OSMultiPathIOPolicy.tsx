@@ -31,8 +31,18 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '962px',
+            width: '481px',
             renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Policy',
+            accessor: 'value',
+            id: '3',
+            width: '481px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },

@@ -204,7 +204,6 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     const handleNavigateToOptimizePage = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(
             setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId: hostId, instanceId: instanceId })
         );

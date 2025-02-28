@@ -22,7 +22,7 @@ import {
     HttpErrorCodes,
     RESOURCESTYPE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
-    CUSTOM_SSM_EXECUTION_TIMEOUT
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
 } from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
@@ -74,6 +74,7 @@ import {
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
 import { getResilienceDriftAssessment } from './continuous-optimization/resilience-assessment-operation';
+import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -286,6 +287,16 @@ async function initiateStorageAssessmentCollection(
         instanceRecord
     });
 
+    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        instanceRecord.fsxFileSystem
+    );
+
+    instanceRecord.svmOntapUuid = svms.find(svm =>
+        isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
+    )?.UUID;
+
     const instanceVolumeMapping = (await getMappedOntapVolumes(
         credentialsId,
         region,
@@ -296,7 +307,8 @@ async function initiateStorageAssessmentCollection(
         instanceRecord.sqlAuthEnabled,
         true,
         accountId,
-        CUSTOM_SSM_EXECUTION_TIMEOUT
+        ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+        instanceRecord.svmOntapUuid
     )) as MappedOnTapVolumeResponse[];
 
     if (isEmpty(instanceVolumeMapping)) {
@@ -527,9 +539,10 @@ async function triggerAssessment(
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
     let cloudProviderAccountId;
+    let instanceDetails;
 
     try {
-        const instanceDetails = await getInstanceDetails(
+        instanceDetails = await getInstanceDetails(
             accountId,
             credentialsId,
             region,
@@ -577,7 +590,9 @@ async function triggerAssessment(
             activeNodeInstanceid: activeNodeInstanceId!,
             fsxFileSystem: fileSystemId!,
             cloudProviderAccountId: cloudProviderAccountId || '',
-            resourceName: resource.resource_name || ''
+            resourceName: resource.resource_name || '',
+            svmId:
+                (instanceDetails?.newDatabaseInstanceDetails?.fsx_svm_id as Record<string, string>)[fileSystemId!] || ''
         };
         await driftAssessmentDataCollection(
             accountId,
