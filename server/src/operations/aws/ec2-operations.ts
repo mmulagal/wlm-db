@@ -410,8 +410,10 @@ async function getInstanceTypes(region: string, credentialsId?: string) {
     }));
 
     if (isDemo() && region === 'ap-southeast-5') {
-        // Filtering out m5.* instance for malaysia region
-        filteredInstances = filteredInstances.filter(({ instanceType }) => !instanceType?.startsWith('m5'));
+        // Filtering m6i* & c6i* instances for malaysia region, TODO: as DBS extends support for more regions, this call should be modified to be an actual AWS API call & not a static list
+        filteredInstances = filteredInstances.filter(
+            ({ instanceType }) => instanceType?.startsWith('m6i') || instanceType?.startsWith('c6i')
+        );
     }
 
     return { instanceTypes: filteredInstances };
