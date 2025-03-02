@@ -564,12 +564,8 @@ async function calculatePrice(
                           ...(fsxnDiskSizes?.FSxTempDbVolumeSize && {
                               tempdb: numeral(`${fsxnDiskSizes?.FSxTempDbVolumeSize}MiB`).value() || 0
                           }),
-                          buffer:
-                              (isPgsqlHADeployment ? 2 : 1) *
-                              (numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0),
-                          total:
-                              (isPgsqlHADeployment ? 2 : 1) *
-                              (numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0),
+                          buffer: numeral(`${fsxnDiskSizes?.FSxBufferVolumeSize}MiB`).value() || 0,
+                          total: numeral(`${fsxnDiskSizes?.FSxStorageCapacity}GiB`).value() || 0,
                           ...(fsxnDiskSizes?.FSxQuorumVolumeSize && {
                               quorum: numeral(`${fsxnDiskSizes?.FSxQuorumVolumeSize}MB`).value() || 0
                           })
@@ -1022,7 +1018,7 @@ function getPricingByLicenseType(
     });
     let instanceHourlyPrice: number | undefined;
     for (const [, { count, pricingDetails }] of existingInstanceTypesPricingDetails) {
-        if (pricingDetails[licenseType]?.pricePerUnit) {
+        if (pricingDetails && pricingDetails[licenseType]?.pricePerUnit) {
             instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
         }
     }

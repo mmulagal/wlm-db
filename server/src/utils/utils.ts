@@ -39,7 +39,9 @@ import {
     MAX_DATA_LUN_SIZE_IN_GIB,
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     AWS_REGIONS,
-    RESOURCESTYPE
+    RESOURCESTYPE,
+    HA,
+    FCI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -254,7 +256,8 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
     if (sqlDeploymentMode !== STANDALONE) {
         FSxQuorumVolumeSize = 12000; // 12GB
     }
-
+    const isPgsqlHADeployment =
+        databaseType === DatabaseTypes.PG_SQL && (sqlDeploymentMode === HA || sqlDeploymentMode === FCI);
     if (databaseType === DatabaseTypes.PG_SQL) {
         FSxDataVolumeSize = FSxDataLunSizeInMib; // Absolute value of database size, as there won't be any LUN incase of NFS mounts
         FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
@@ -262,7 +265,11 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
         FSxQuorumVolumeSize = 0; // No Quorum volume for PostgreSQL
     }
 
-    const totalVolumesSize = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
+    const totalVolumesSize =
+        (isPgsqlHADeployment ? 2 : 1) * FSxDataVolumeSize +
+        (isPgsqlHADeployment ? 2 : 1) * FSxLogVolumeSize +
+        FSxTempDbVolumeSize +
+        FSxQuorumVolumeSize;
     // Total FSx Storage Capacity with 35% headroom
     let FSxStorageCapacity = Math.ceil(totalVolumesSize / 0.65);
     const FSxBufferVolumeSize = FSxStorageCapacity - totalVolumesSize;
