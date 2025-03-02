@@ -945,6 +945,7 @@ const InstancesTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Instances"
                         singularTitle="Instance"
+                        exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
                         className={styles.topBarStyle}
                     />
                     <Table

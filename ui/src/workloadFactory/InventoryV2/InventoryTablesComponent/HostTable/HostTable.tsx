@@ -9,7 +9,10 @@ import {
     Button,
     Popover,
     DsTypography,
-    DsFlashingDotsLoader
+    DsFlashingDotsLoader,
+    DsButton,
+    postBlueXPMessage,
+    BlueXPListeners
 } from '@netapp/design-system';
 import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -37,7 +40,9 @@ import {
     INVENTORY_STATUS,
     PARTNER_NODE,
     PREPARE_API_ENDPOINT,
-    SSM_TROUBLESHOOTING_LINK
+    SSM_TROUBLESHOOTING_LINK,
+    WLF_TO_FORM_NAVIGATE,
+    WLF_TO_PROTECT_NAVIGATE
 } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import ManagedHostDialog from '../../InventoryTable/ManagedHostDialog/ManagedHostDialog';
@@ -47,10 +52,11 @@ import { onClickESHost } from '../../../ExploreSavings/ExploreSavingsUtils';
 import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
+import { useNavigate } from 'react-router-dom';
 
 const HostTable = () => {
     const dispatch = useDispatch();
-
+    const navigate = useNavigate();
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
     const [tableData, setTableData] = useState<any>([]);
@@ -849,7 +855,74 @@ const HostTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Hosts"
                         singularTitle="Host"
+                        exportToCsvOptions={{ fileName: 'hostTable.csv' }}
                         className={styles.topBarStyle}
+                        actionsRight={
+                            <div className={styles.deployButton}>
+                                <DsButton
+                                    children="Deploy host"
+                                    variant="Default"
+                                    dropDown={{
+                                        trigger: 'click',
+                                        autoPosition: true,
+                                        items: [
+                                            {
+                                                id: 'wlm-db-deploy-mssql-host',
+                                                label: 'Microsoft SQL Server',
+                                                onClick: () => {
+                                                    if (isWorkloadFactory) {
+                                                        navigate(WLF_TO_FORM_NAVIGATE);
+                                                        postBlueXPMessage({
+                                                            type: BlueXPListeners.navigate,
+                                                            payload: {
+                                                                pathname: './mssql-deploy-wizard',
+                                                                replace: true
+                                                            }
+                                                        });
+                                                    } else {
+                                                        navigate('../../fsxdb/mssql-deploy-wizard');
+                                                        postBlueXPMessage({
+                                                            type: BlueXPListeners.navigate,
+                                                            payload: {
+                                                                pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                                replace: true
+                                                            }
+                                                        });
+                                                    }
+                                                },
+                                                className: 'mssql-deployment-button'
+                                            },
+                                            {
+                                                id: 'wlm-db-deploy-pgsql-host',
+                                                label: 'PostgreSQL Server',
+                                                onClick: () => {
+                                                    if (isWorkloadFactory) {
+                                                        navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                        postBlueXPMessage({
+                                                            type: BlueXPListeners.navigate,
+                                                            payload: {
+                                                                pathname: './postgreSQL-deploy-wizard',
+                                                                replace: true
+                                                            }
+                                                        });
+                                                    } else {
+                                                        navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                        postBlueXPMessage({
+                                                            type: BlueXPListeners.navigate,
+                                                            payload: {
+                                                                pathname: '../../fsxdb/postgreSQL-deploy-wizard',
+                                                                replace: true
+                                                            }
+                                                        });
+                                                    }
+                                                },
+                                                className: 'pgsql-deployment-button'
+                                            }
+                                        ]
+                                    }}
+                                />
+                            </div>
+                        }
                     />
                     <Table
                         //@ts-ignore

@@ -223,14 +223,10 @@
         }
     }
 
-
     [class*='Table-module_scroll'] {
         width: 2248px !important;
     }
 
-    [class*='Table-module_header-row'] {
-        z-index: 4 !important;
-    }
     [class*='Table-module_highlighted-row'] {
         [class*='Table-module_high-row'] {
             // background-color: transparent !important;
@@ -256,7 +252,6 @@
     [class*='Table-module_horizontal-scroll']::-webkit-scrollbar {
         height: 14px !important;
     }
-
 }
 
 @media screen and (max-width: 1500px) {
