@@ -67,6 +67,7 @@ import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
+import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 
 const InstancesTable = () => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
@@ -415,12 +416,291 @@ const InstancesTable = () => {
         );
     };
 
-    const lastColDetails = () => {
-        return {
-            id: '12',
-            Header: '',
-            accessor: 'name',
+    const redirectToAction = (rowData: any) => {
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+        optimizeAction(rowData);
+    };
 
+    const managedHostSubTableColDefs: ColumnProps[] = [
+        {
+            Header: 'Instance name',
+            accessor: 'databaseInstanceName',
+            id: '1',
+            isSortable: true,
+            width: '256px',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const name = rowData?.databaseInstanceName;
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <div className={styles.firstColText}>
+                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
+                            )}
+                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
+                            )}
+                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
+                            )}
+                            <DsTypography variant="Regular_13">
+                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
+                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                    ? INVENTORY_STATUS.ONLINE
+                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                    ? INVENTORY_STATUS.OFFLINE
+                                    : rowData?.status}
+                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                                {!rowData?.status && !rowData?.loading && 'Unknown'}
+                            </DsTypography>
+                        </div>
+                    </div>
+                );
+            }
+        },
+        {
+            Header: 'Host name',
+            accessor: 'name',
+            id: '2',
+            width: '213px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Engine type',
+            accessor: 'hostType',
+            id: '3',
+            width: '213px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Deployment model',
+            accessor: 'serverInstallationMode',
+            id: '4',
+            width: '213px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            Header: 'Management status',
+            accessor: 'statusColText',
+            id: '5',
+            isSortable: false,
+            width: '213px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                if (cellData === INVENTORY_STATUS.UNMANAGED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
+                }
+                if (cellData === INVENTORY_STATUS.UNDETECTED) {
+                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
+                }
+                if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
+                    return (
+                        <div className={styles.inProgress}>
+                            <SmallLoader />
+                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
+                        </div>
+                    );
+                }
+                if (cellData === INVENTORY_STATUS.MANAGED) {
+                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
+                }
+            }
+        },
+        {
+            Header: 'Optimization status',
+            accessor: 'optimizationStatus',
+            id: '6',
+            width: '240px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                let disableMsg = '';
+                let disableMenu = () => {
+                    if (
+                        rowData?.status === INVENTORY_STATUS.OFFLINE ||
+                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
+                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
+                        rowData?.status === INVENTORY_STATUS.STOPPED
+                    ) {
+                        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
+                        return true;
+                    }
+
+                    if (
+                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
+                    ) {
+                        disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
+                        return true;
+                    }
+
+                    if (
+                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
+                    ) {
+                        disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
+                        return true;
+                    }
+
+                    if (
+                        rowData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData.fileSystemType &&
+                        rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
+                    ) {
+                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
+                            return true;
+                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+                            return true;
+                        }
+                    }
+
+                    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
+                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+                            return true;
+                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+                            return true;
+                        }
+                    }
+
+                    if (
+                        (!cellData &&
+                            rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
+                            !rowData?.optimizationStatusLoading) ||
+                        cellData === INVENTORY_STATUS.IN_PROGRESS
+                    ) {
+                        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
+                        return true;
+                    }
+                    return false;
+                };
+
+                return (
+                    <>
+                        {disableMenu() ? (
+                            <div className={styles.naContainer}>
+                                <Popover
+                                    popoverClass={''}
+                                    children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
+                                    trigger="hover"
+                                    delayHide={200}
+                                    interactive={true}
+                                    isAppendedToBody={false}
+                                    container={<TooltipIcon />}
+                                />
+                                <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
+                            </div>
+                        ) : rowData?.optimizationStatusLoading ||
+                          rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS ? (
+                            <DsFlashingDotsLoader />
+                        ) : (
+                            <div className={styles.statusCol}>
+                                <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                <DsButton type="text" onClick={() => redirectToAction(rowData)}>
+                                    View
+                                </DsButton>
+                            </div>
+                        )}
+                    </>
+                );
+            }
+        },
+        {
+            Header: 'Protection status',
+            accessor: 'protectionText',
+            id: '7',
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                const loading = rowData?.loading || rowData?.subLoading;
+                return (
+                    <>
+                        {cellData && <div>{cellData}</div>}
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
+            }
+        },
+        {
+            Header: 'Performance',
+            accessor: 'performance.assessment',
+            id: '8',
+            width: '200px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string, rowData: any) => {
+                const loading = rowData?.loading || rowData?.subLoading;
+                return (
+                    <>
+                        {cellData && <div>{cellData}</div>}
+                        {!cellData && loading && <DsFlashingDotsLoader />}
+                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
+                    </>
+                );
+            }
+        },
+        {
+            id: '9',
+            Header: 'AWS credentials',
+            accessor: 'credentialName',
+            isSortable: true,
+            width: '213px',
+            renderCell: (cellData: any, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            id: '10',
+            Header: 'AWS account',
+            accessor: 'accountId',
+            isSortable: true,
+            width: '213px',
+            renderCell: (cellData: any, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        },
+        {
+            id: '11',
+            Header: 'Region',
+            accessor: 'regionName',
+            isSortable: true,
+            width: '213px',
+            renderCell: (cellData: any, rowData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
+        }
+    ];
+
+    const tableProps = useTable({
+        isSorting: false,
+        columns: managedHostSubTableColDefs,
+        rows: data,
+        pageSize: 10,
+        selectionType: 'none',
+        isHorizontalScroll: true,
+        isManagedColumns: true,
+        isLazyLoading: loading,
+        initialColumnState: initialInstanceTableColState,
+        manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
                 let disableOption = false;
@@ -640,296 +920,8 @@ const InstancesTable = () => {
                         )}
                     </div>
                 );
-            },
-            showHide: true,
-            width: '57px',
-            isSticky: true
-        };
-    };
-
-    const redirectToAction = (rowData: any) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-        optimizeAction(rowData);
-    };
-
-    const managedHostSubTableColDefs: ColumnProps[] = [
-        {
-            Header: 'Instance name',
-            accessor: 'databaseInstanceName',
-            id: '1',
-            isSortable: true,
-            width: '200px',
-            isSticky: true,
-            renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.databaseInstanceName;
-                return (
-                    <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
-                        <div className={styles.firstColText}>
-                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['online']}`}></div>
-                            )}
-                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['offline']}`}></div>
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['unknown']}`}></div>
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                      rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
-                            </DsTypography>
-                        </div>
-                    </div>
-                );
             }
-        },
-        {
-            Header: 'Host name',
-            accessor: 'name',
-            id: '2',
-            width: '213px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            Header: 'Engine type',
-            accessor: 'hostType',
-            id: '3',
-            width: '213px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            Header: 'Deployment model',
-            accessor: 'serverInstallationMode',
-            id: '4',
-            width: '213px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            Header: 'Management status',
-            accessor: 'statusColText',
-            id: '5',
-            isSortable: false,
-            width: '213px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                if (cellData === INVENTORY_STATUS.UNMANAGED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNMANAGED} />;
-                }
-                if (cellData === INVENTORY_STATUS.UNDETECTED) {
-                    return <DotComponent color={'var(--toggle-off-bg)'} value={INVENTORY_STATUS.UNDETECTED} />;
-                }
-                if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
-                    return (
-                        <div className={styles.inProgress}>
-                            <SmallLoader />
-                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
-                        </div>
-                    );
-                }
-                if (cellData === INVENTORY_STATUS.MANAGED) {
-                    return <DotComponent color={'var(--success)'} value={INVENTORY_STATUS.MANAGED} />;
-                }
-            }
-        },
-        {
-            Header: 'Optimization status',
-            accessor: 'optimizationStatus',
-            id: '6',
-            width: '240px',
-            isSortable: true,
-            renderCell: (cellData: string, rowData: any) => {
-                let disableMsg = '';
-                let disableMenu = () => {
-                    if (
-                        rowData?.status === INVENTORY_STATUS.OFFLINE ||
-                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
-                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN ||
-                        rowData?.status === INVENTORY_STATUS.STOPPED
-                    ) {
-                        disableMsg = GENERAL.ONLINE_INSTANCE_ASSESS;
-                        return true;
-                    }
-
-                    if (
-                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        (!rowData.fileSystemType || rowData?.fileSystemType?.toLowerCase() === GENERAL.NOT_AVAILABLE)
-                    ) {
-                        disableMsg = GENERAL.ASSESSMENT_STORAGE_TYPE_UNKNOWN;
-                        return true;
-                    }
-
-                    if (
-                        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-                        (rowData.fileSystemType === GENERAL.EBS || rowData.fileSystemType === GENERAL.FSX_FOR_WINDOWS)
-                    ) {
-                        disableMsg = GENERAL.FSXN_OPTIMIZE_SUPPORTED;
-                        return true;
-                    }
-
-                    if (
-                        rowData?.serverInstallationMode === GENERAL.AOAG &&
-                        rowData.fileSystemType &&
-                        rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
-                    ) {
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
-                            return true;
-                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
-                            return true;
-                        }
-                    }
-
-                    if (rowData.fileSystemType && rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)) {
-                        if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                            disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
-                            return true;
-                        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                            disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
-                            return true;
-                        }
-                    }
-
-                    if (
-                        (!cellData &&
-                            rowData.statusColText !== INVENTORY_STATUS.IN_PROGRESS &&
-                            !rowData?.optimizationStatusLoading) ||
-                        cellData === INVENTORY_STATUS.IN_PROGRESS
-                    ) {
-                        disableMsg = GENERAL.ASSESSMENT_IN_PROGRESS;
-                        return true;
-                    }
-                    return false;
-                };
-
-                return (
-                    <>
-                        {disableMenu() ? (
-                            <div className={styles.naContainer}>
-                                <Popover
-                                    popoverClass={''}
-                                    children={<DsTypography variant="Regular_14">{disableMsg}</DsTypography>}
-                                    trigger="hover"
-                                    delayHide={200}
-                                    interactive={true}
-                                    isAppendedToBody={false}
-                                    container={<TooltipIcon />}
-                                />
-                                <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
-                            </div>
-                        ) : rowData?.optimizationStatusLoading ||
-                          rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS ? (
-                            <DsFlashingDotsLoader />
-                        ) : (
-                            <div className={styles.statusCol}>
-                                <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                <DsButton type="text" onClick={() => redirectToAction(rowData)}>
-                                    View
-                                </DsButton>
-                            </div>
-                        )}
-                    </>
-                );
-            }
-        },
-        {
-            Header: 'Protection status',
-            accessor: 'protectionText',
-            id: '7',
-            width: '180px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                const loading = rowData?.loading || rowData?.subLoading;
-                return (
-                    <>
-                        {cellData && <div>{cellData}</div>}
-                        {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
-            }
-        },
-        {
-            Header: 'Performance',
-            accessor: 'performance.assessment',
-            id: '8',
-            width: '180px',
-            filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
-                const loading = rowData?.loading || rowData?.subLoading;
-                return (
-                    <>
-                        {cellData && <div>{cellData}</div>}
-                        {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
-                    </>
-                );
-            }
-        },
-        {
-            id: '9',
-            Header: 'AWS credentials',
-            accessor: 'credentialName',
-            isSortable: true,
-            width: '180px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            id: '10',
-            Header: 'AWS account',
-            accessor: 'accountId',
-            isSortable: true,
-            width: '180px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        {
-            id: '11',
-            Header: 'Region',
-            accessor: 'regionName',
-            isSortable: true,
-            width: '180px',
-            renderCell: (cellData: any, rowData: any) => {
-                return renderCellData(cellData, rowData, styles);
-            }
-        },
-        lastColDetails()
-    ];
-
-    const tableProps = useTable({
-        isSorting: false,
-        columns: managedHostSubTableColDefs,
-        rows: data,
-        pageSize: 10,
-        selectionType: 'none',
-        isHorizontalScroll: true,
-        isLazyLoading: loading
+        }
     });
 
     useEffect(() => {

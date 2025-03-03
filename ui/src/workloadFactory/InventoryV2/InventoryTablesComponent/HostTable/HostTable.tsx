@@ -53,6 +53,7 @@ import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table'
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useNavigate } from 'react-router-dom';
+import { initialHostsTableColState } from '../../../../utils/manageColumnUtils';
 
 const HostTable = () => {
     const dispatch = useDispatch();
@@ -407,52 +408,6 @@ const HostTable = () => {
         // }
     };
 
-    // const lastColDetails = () => {
-    //     return {
-    //         id: '11',
-    //         Header: '',
-    //         accessor: '',
-    //         width: '184px',
-    //         isSticky: true,
-    //         renderCell: (cellData: any, rowData: any) => {
-    //             const checkForAllManaged = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
-    //             );
-    //             const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
-    //             );
-    //             const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
-    //                 (item: any) =>
-    //                     item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
-    //                     item?.statusColText === INVENTORY_STATUS.MANAGED
-    //             );
-    //             const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
-    //             );
-    //             const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
-    //                 return (
-    //                     (item?.statusColText === INVENTORY_STATUS.MANAGED &&
-    //                         item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-    //                     (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
-    //                         item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-    //                 );
-    //             });
-    //             const checkForAllStorageType = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
-    //             );
-    //             return lastColJSX(
-    //                 rowData,
-    //                 checkForAllManaged,
-    //                 checkForAllUnDetectInstance,
-    //                 checkForAllUnDetectOrManageInstance,
-    //                 checkForAllUnManagedInstance,
-    //                 checkForAllFsxnManagedInstance,
-    //                 checkForAllStorageType
-    //             );
-    //         }
-    //     };
-    // };
-
     const findManageOption = (rowData: any) => {
         let disableOption = false;
         let disableMessage: any = '';
@@ -492,70 +447,6 @@ const HostTable = () => {
             disableOption = true;
         }
         return { disableOption, disableMessage };
-    };
-
-    const lastColDetails = () => {
-        return {
-            id: '12',
-            Header: '',
-            accessor: 'name',
-            showHide: true,
-            width: '57px',
-            isSticky: true,
-            renderCell: (cellData: any, rowData: any) => {
-                let { disableOption, disableMessage } = findManageOption(rowData);
-                const menu = [
-                    {
-                        id: 'manage',
-                        displayName: 'Manage',
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    },
-                    {
-                        id: 'viewInstances',
-                        displayName: 'View instances'
-                    }
-                    // {
-                    //     id: 'viewDatabases',
-                    //     displayName: 'View databases'
-                    // }
-                ];
-
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={[...menu]}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'manage') {
-                                        handleDialog(rowData);
-                                    }
-                                    if (menuId === 'viewInstances') {
-                                        // Open instance tab and filter based on host name
-                                    }
-                                    if (menuId === 'viewDatabases') {
-                                        // Open database tab and filter based on host name
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            }
-        };
     };
 
     const DatabasesColDefs: ColumnProps[] = [
@@ -619,7 +510,7 @@ const HostTable = () => {
             id: '2',
             Header: 'Managed instances',
             accessor: 'totalInstance',
-            width: '216px',
+            width: '200px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
             renderCell: (cellData: any, rowData: any) => {
@@ -644,7 +535,7 @@ const HostTable = () => {
             id: '3',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'serverInstallationMode',
-            width: '216px',
+            width: '236px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -655,7 +546,7 @@ const HostTable = () => {
             Header: 'Attached EC2 nodes',
             accessor: 'instanceListText',
             isSortable: true,
-            width: '212px',
+            width: '329px',
             accessorForTextFilter: 'instanceListText',
             renderCell: (cellData: any, rowData: any) => {
                 return renderInstanceListText(cellData, rowData, styles);
@@ -675,7 +566,7 @@ const HostTable = () => {
             id: '6',
             Header: 'SSM connectivity',
             accessor: 'ssmState',
-            width: '180px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -728,7 +619,7 @@ const HostTable = () => {
             Header: GENERAL.DB_HOST_ESTIMATED_COST,
             accessor: 'totalCost',
             isSortable: true,
-            width: '168px',
+            width: '200px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderEstimatedCost(cellData, rowData, styles);
             }
@@ -738,7 +629,7 @@ const HostTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
-            width: '168px',
+            width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
             }
@@ -748,7 +639,7 @@ const HostTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
-            width: '168px',
+            width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
             }
@@ -758,12 +649,11 @@ const HostTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            width: '188px',
+            width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
             }
-        },
-        lastColDetails()
+        }
     ];
 
     const tableProps = useTable({
@@ -773,8 +663,64 @@ const HostTable = () => {
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isManagedColumns: false,
-        isLazyLoading: loading
+        isManagedColumns: true,
+        isLazyLoading: loading,
+        initialColumnState: initialHostsTableColState,
+        manageColumnsProps: {
+            renderCell: (cellData: any, rowData: any) => {
+                const { disableOption, disableMessage } = findManageOption(rowData);
+                const menu = [
+                    {
+                        id: 'manage',
+                        displayName: 'Manage',
+                        disabled: disableOption,
+                        disabledMessage: disableMessage
+                    },
+                    {
+                        id: 'viewInstances',
+                        displayName: 'View instances'
+                    },
+                    // {
+                    //     id: 'viewDatabases',
+                    //     displayName: 'View databases'
+                    // }
+                ];
+
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={[...menu]}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'manage') {
+                                        handleDialog(rowData);
+                                    }
+                                    if (menuId === 'viewInstances') {
+                                        // Open instance tab and filter based on host name
+                                    }
+                                    if (menuId === 'viewDatabases') {
+                                        // Open database tab and filter based on host name
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            }
+        }
     });
 
     useEffect(() => {
