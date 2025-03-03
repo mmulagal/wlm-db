@@ -19,16 +19,36 @@ const DatabaseHostObjectParams = Type.Object({
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
-const DatabaseHostSummaryParams = Type.Composite([CredentialsIdParams, Type.Object({ databaseHostId: Type.String() })]);
+const DatabaseHostSummaryParams = Type.Composite([
+    CredentialsIdParams,
+    Type.Object({
+        databaseHostId: Type.String({
+            description:
+                'Unique identifier for database hosts managed by Workload Factory. The value for databaseHostId can be found using the GET database hosts API under Resources section in Database.'
+        })
+    })
+]);
 
 const DatabaseHostInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
-    Type.Object({ databaseInstanceId: Type.String() })
+    Type.Object({
+        databaseInstanceId: Type.String({
+            description:
+                'Unique identifier for a database instance managed by Workload Factory. The value for databaseInstanceId can be found using the GET database hosts API under Resources section in Database.'
+        })
+    })
 ]);
 
 const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
     DatabaseHostSummaryParams,
-    Type.Optional(Type.Object({ databaseInstanceId: Type.String() }))
+    Type.Optional(
+        Type.Object({
+            databaseInstanceId: Type.String({
+                description:
+                    'Unique identifier for a database instance managed by Workload Factory. The value for databaseInstanceId can be found using the GET database hosts API under Resources section in Database.'
+            })
+        })
+    )
 ]);
 
 type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;

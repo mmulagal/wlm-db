@@ -3,8 +3,10 @@ import { gotInstanceForInternalRequest } from '../../utils/got';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
+import { isDemo } from '../../utils/utils';
 
 const logger = getLogger();
+const isDemoFlow = isDemo();
 
 interface registerCredentialsResponse {
     fileSystemId: string;
@@ -56,6 +58,10 @@ async function registerFsxOntapCredentials(
 
     const { token } = await getWfServiceToken();
 
+    // Workaround added till GROGU-5485 is resolved
+    if (region === 'ap-southeast-5' && isDemoFlow) {
+        return;
+    }
     const response = await gotInstanceForInternalRequest
         .post(
             `accounts/${accountId}/fsx/v2/credentials/${credentialsId}/regions/${region}/file-systems/${fsxId}/ontap-credentials`,
@@ -97,8 +103,8 @@ async function listFsxOntapCredentials(accountId: string, fsxId: string) {
     return response;
 }
 
-async function listFSXFileSystem(credentialsId: string, region: string, isDemo?: boolean) {
-    logger.info('Get FSX file systems list', { credentialsId, region, isDemo });
+async function listFSXFileSystem(credentialsId: string, region: string, isDemoMode?: boolean) {
+    logger.info('Get FSX file systems list', { credentialsId, region, isDemoMode });
 
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
@@ -109,7 +115,7 @@ async function listFSXFileSystem(credentialsId: string, region: string, isDemo?:
             {
                 headers: {
                     [HEADERS.AUTHORIZATION]: token,
-                    ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
+                    ...(isDemoMode && { [HEADERS.SIMULATOR]: 'true' })
                 }
             }
         )
@@ -117,8 +123,8 @@ async function listFSXFileSystem(credentialsId: string, region: string, isDemo?:
     return items;
 }
 
-async function createFSX(requestBody: FSXREQUESTBODY, isDemo?: boolean) {
-    logger.info('Register fsx in fsx-core', { requestBody, isDemo });
+async function createFSX(requestBody: FSXREQUESTBODY, isDemoMode?: boolean) {
+    logger.info('Register fsx in fsx-core', { requestBody, isDemoMode });
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
@@ -127,7 +133,7 @@ async function createFSX(requestBody: FSXREQUESTBODY, isDemo?: boolean) {
         {
             headers: {
                 [HEADERS.AUTHORIZATION]: token,
-                ...(isDemo && { [HEADERS.SIMULATOR]: 'true' })
+                ...(isDemoMode && { [HEADERS.SIMULATOR]: 'true' })
             },
             json: requestBody
         }
