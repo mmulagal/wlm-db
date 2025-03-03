@@ -639,7 +639,9 @@ export const formatDiscoveredInventoryData = (
                 ...{
                     [uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')]:
                         formatDiscoveredRows(
-                            clusterDiscoveredHost[perRow.ec2InstanceId],
+                            clusterDiscoveredHost[
+                                uniqueHostRow(perRow.ec2InstanceId, perRow.credentialId || '', perRow.regionId || '')
+                            ],
                             credentialMapping,
                             regionMapping
                         )
@@ -1602,7 +1604,7 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && item?.isDetected) {
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
             if (!checkForMixedStorageType(item)) {
                 if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {
                     if (checkForAnySSD(item) && !checkForAnyAOAG(item)) {

@@ -24,7 +24,7 @@ import {
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_ACTIONS, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -117,6 +117,9 @@ const InstancesTable = () => {
         let newTable: any = [];
         if (inventoryTableData) {
             Object.keys(inventoryTableData).map((rowId: string) => {
+                if (inventoryTableData[rowId]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+                    return;
+                }
                 if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
                     let perHost = inventoryTableData?.[rowId];
                     let optimizationStatusLoading = false;
@@ -129,13 +132,20 @@ const InstancesTable = () => {
                         optimizationStatusLoading = allmssqlHostAssessmentLoading;
                         optimizationStatusList = assessRow?.[0]?.instancesAssessment;
                     }
-                    let perInstanceData = inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
+                    let perInstanceData: any = [];
+                    inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
+                        if (
+                            perRow?.fileSystemType === GENERAL.EBS ||
+                            perRow?.fileSystemType === GENERAL.FSX_FOR_WINDOWS
+                        ) {
+                            return;
+                        }
                         let protectionText = getProtectionText(perRow);
                         let optimizationStatus = getOptimizationStatus(
                             perRow?.databaseInstanceId,
                             optimizationStatusList
                         );
-                        return {
+                        let perRowData = {
                             ...perRow,
                             name: perHost?.name,
                             hostType: perHost?.hostType,
@@ -161,6 +171,7 @@ const InstancesTable = () => {
                             resourceId: perHost?.resourceId,
                             ec2InstanceId: perHost?.ec2InstanceId
                         };
+                        perInstanceData.push(perRowData);
                     });
                     newTable = [...newTable, ...(perInstanceData || [])];
                 }

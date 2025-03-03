@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import styles from './ExploreSavingsTableV2.module.scss';
@@ -95,7 +95,24 @@ const ExploreSavingsTableV2 = () => {
             isSticky: true,
             width: '247px',
             renderCell: (cellData: any, rowData: any) => {
-                return (
+                return !rowData?.isDetected ? (
+                    <Popover
+                        popoverClass={styles['copy-popover']}
+                        children={'To explore savings on this host first detect the instances.'}
+                        trigger="hover"
+                        container={
+                            <div
+                                className={styles.detectManageDisable}
+                                onClick={() => {}}
+                                id="explore-savings-table-button"
+                            >
+                                <Typography variant="Regular_14" className={styles.textStyle}>
+                                    {GENERAL.ES_SAVINGS}
+                                </Typography>
+                            </div>
+                        }
+                    />
+                ) : (
                     <div
                         className={styles.detectManage}
                         onClick={() => {

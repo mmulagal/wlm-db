@@ -105,6 +105,9 @@ const HostTable = () => {
                 if (removeSecNodeDiscoveredList.includes(key)) {
                     return;
                 }
+                if (inventoryTableData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+                    return;
+                }
                 let instanceList: any = [];
                 let instanceNameList: any = [];
                 let vpcIdAndNameText = '';
@@ -674,12 +677,12 @@ const HostTable = () => {
                         id: 'manage',
                         displayName: 'Manage',
                         disabled: disableOption,
-                        disabledMessage: disableMessage
+                        infoText: disableMessage
                     },
                     {
                         id: 'viewInstances',
                         displayName: 'View instances'
-                    },
+                    }
                     // {
                     //     id: 'viewDatabases',
                     //     displayName: 'View databases'
