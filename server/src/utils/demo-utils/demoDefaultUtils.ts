@@ -139,6 +139,7 @@ async function createDemoResourcesPerRegion(
     region: string,
     awsAccountId: string
 ) {
+    // Workaround added till GROGU-5485 is resolved
     if (region !== 'ap-southeast-5') {
         const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
         const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
