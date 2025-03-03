@@ -1605,8 +1605,6 @@ async function deployPgSql(
             throw createError(412, `Supported Fsxn disk size should be between 120GiB to ${maxDatabaseSizeInGib}GiB`);
         }
 
-        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
-
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
