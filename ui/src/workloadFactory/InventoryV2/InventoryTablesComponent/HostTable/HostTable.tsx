@@ -22,6 +22,7 @@ import {
     checkForAnySSD,
     checkForMixedStorageType,
     getPartnerNodeEc2InstanceId,
+    handleManageInstances,
     handleManageNotification,
     handleManageTriggerNotification,
     installModuleNotification,
@@ -30,6 +31,7 @@ import {
     renderInstanceListText,
     renderVpcText,
     sortInventoryTableData,
+    uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
@@ -152,131 +154,6 @@ const HostTable = () => {
         }
     }, [inventoryTableData]);
 
-    const handleManageInstances = (rowData: any, instances: any, isDetected?: boolean | undefined) => {
-        const updatedState = store.getState();
-        const { inProgressInstances } = updatedState.inventoryV2;
-        const inProgressIds = instances.map((instance: any) => `${rowData?.ec2InstanceId}_${instance}`);
-        dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
-        handleManageTriggerNotification(instances, dispatch, styles);
-        let payload: any = {
-            ec2InstanceId: rowData?.ec2InstanceId,
-            databaseInstanceNames: instances
-        };
-        if (rowData?.resourceId && isDemoMode) {
-            payload.databaseHostId = rowData.resourceId;
-        }
-        manageInstanceApi({
-            credentialsId: rowData?.credentialId,
-            regionId: rowData?.regionId,
-            payload
-        }).then((res: any) => {
-            const updatedState = store.getState();
-            const { inProgressInstances } = updatedState?.inventoryV2;
-            let updatedInProgressInstances = new Set([...inProgressInstances]);
-            inProgressIds.map((inProgressId: any) => {
-                updatedInProgressInstances.delete(inProgressId);
-            });
-            dispatch(setInProgressInstances(updatedInProgressInstances));
-            if (res?.data?.items) {
-                let successFullInstances: any = [];
-                let failedInstances: any = [];
-                res?.data?.items.map((item: any) => {
-                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
-                        successFullInstances.push(item);
-                    } else {
-                        failedInstances.push(item);
-                    }
-                });
-                handleManageNotification(instances, successFullInstances, '', isDetected, dispatch, styles);
-                const updatedInventoryTableData = updateInstanceStatus(
-                    'manage',
-                    rowData,
-                    instances,
-                    successFullInstances,
-                    res?.data?.resourceId
-                );
-                dispatch(setInventoryTableData(updatedInventoryTableData));
-            } else if (res?.error) {
-                if (res?.error?.status === 422 || res?.error?.status === 500) {
-                    const updatedState = store.getState();
-                    // handle prepare API
-                    const errorList = res?.error?.data?.message?.split('\n');
-                    let prepareApiRequired = false;
-                    let sourceNodePrepareRequired = false;
-                    let partnerNodeEc2Id;
-                    errorList.map((errorItem: any) => {
-                        if (errorItem.includes(PREPARE_API_ENDPOINT)) {
-                            prepareApiRequired = true;
-                            if (errorItem.includes(PARTNER_NODE)) {
-                                partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
-                            } else {
-                                sourceNodePrepareRequired = true;
-                            }
-                        }
-                    });
-                    if (prepareApiRequired) {
-                        if (sourceNodePrepareRequired) {
-                            prepareHostApi({
-                                credentialId: rowData?.credentialId,
-                                regionId: rowData?.regionId,
-                                instanceId: rowData?.ec2InstanceId
-                            }).then((prepareRes: any) => {
-                                if (prepareRes && !prepareRes?.error) {
-                                    const msgObj =
-                                        instances.length === 1
-                                            ? isDetected
-                                                ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
-                                                : GENERAL.PREPARE_INSTANCE_INFO
-                                            : isDetected
-                                            ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
-                                            : GENERAL.PREPARE_INSTANCES_INFO;
-                                    installModuleNotification(
-                                        styles,
-                                        instances.length === 1 ? instances[0] : '',
-                                        dispatch,
-                                        msgObj
-                                    );
-                                } else {
-                                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
-                                }
-                            });
-                        }
-                        if (partnerNodeEc2Id) {
-                            prepareHostApi({
-                                credentialId: rowData?.credentialId,
-                                regionId: rowData?.regionId,
-                                instanceId: partnerNodeEc2Id
-                            }).then((prepareRes: any) => {
-                                if (prepareRes && !prepareRes?.error) {
-                                    const msgObj =
-                                        instances.length === 1
-                                            ? isDetected
-                                                ? GENERAL.PREPARE_DETECTED_INSTANCE_INFO
-                                                : GENERAL.PREPARE_INSTANCE_INFO
-                                            : isDetected
-                                            ? GENERAL.PREPARE_DETECTED_INSTANCES_INFO
-                                            : GENERAL.PREPARE_INSTANCES_INFO;
-                                    installModuleNotification(
-                                        styles,
-                                        instances.length === 1 ? instances[0] : '',
-                                        dispatch,
-                                        msgObj
-                                    );
-                                } else {
-                                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
-                                }
-                            });
-                        }
-                    } else {
-                        handleManageNotification(instances, [], errorList[0], isDetected, dispatch, styles);
-                    }
-                } else {
-                    handleManageNotification(instances, [], '', isDetected, dispatch, styles);
-                }
-            }
-        });
-    };
-
     const handleDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -288,7 +165,14 @@ const HostTable = () => {
                     const updatedState = store.getState();
                     const manageHostSelectedRows = updatedState?.inventoryV2?.manageHostSelectedRows;
                     const selectedInstanceNames = manageHostSelectedRows.map((row: any) => row?.databaseInstanceName);
-                    handleManageInstances(rowData, selectedInstanceNames);
+                    handleManageInstances(
+                        rowData,
+                        selectedInstanceNames,
+                        dispatch,
+                        styles,
+                        manageInstanceApi,
+                        prepareHostApi
+                    );
                 }}
                 closeCallback={() => {
                     closeDialog();

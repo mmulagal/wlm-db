@@ -10,6 +10,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setManageHostSelectedRows } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
+import { uniqueHostRow } from '../../InventoryUtilsV2';
 
 const ManagedHostDialog = ({ dialogData }: any) => {
     const { inProgressInstances } = useAppSelector(state => state?.inventoryV2);
@@ -23,7 +24,11 @@ const ManagedHostDialog = ({ dialogData }: any) => {
         const dbInstances = dialogData?.sqlServerInstances;
         let output = dbInstances.map((obj: any) => {
             const isInstanceInProgress = inProgressInstances.has(
-                `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`
+                uniqueHostRow(
+                    `${dialogData?.ec2InstanceId}_${obj?.databaseInstanceName}`,
+                    dialogData?.credentialId,
+                    dialogData?.regionId
+                )
             );
             if (
                 isInstanceInProgress ||

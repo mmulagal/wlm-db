@@ -12,12 +12,18 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useRegisterResourceCredentialsMutation, useUnmanageMssqlInstanceMutation } from '../../../../utils/apiService';
+import {
+    useManageMssqlInstanceMutation,
+    usePrepareHostMutation,
+    useRegisterResourceCredentialsMutation,
+    useUnmanageMssqlInstanceMutation
+} from '../../../../utils/apiService';
 import {
     detectFieldsValidation,
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    handleManageInstances,
     renderCellData,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
@@ -85,6 +91,9 @@ const InstancesTable = () => {
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
+    const [manageInstanceApi] = useManageMssqlInstanceMutation();
+    const [prepareHostApi] = usePrepareHostMutation();
+
     const [loading, setLoading] = useState(false);
 
     const menuOpenedRowDetail: any = useRef(null);
@@ -147,6 +156,7 @@ const InstancesTable = () => {
                         );
                         let perRowData = {
                             ...perRow,
+                            hostRow: perHost,
                             name: perHost?.name,
                             hostType: perHost?.hostType,
                             serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
@@ -159,7 +169,11 @@ const InstancesTable = () => {
                                 ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                                 : '',
                             statusColText: inProgressInstances.has(
-                                `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`
+                                uniqueHostRow(
+                                    `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`,
+                                    perHost?.credentialId || '',
+                                    perHost?.regionId || ''
+                                )
                             )
                                 ? INVENTORY_STATUS.IN_PROGRESS
                                 : perRow.statusColText,
@@ -201,11 +215,20 @@ const InstancesTable = () => {
                     const updatedState = store.getState();
                     const { inProgressInstances, inventoryTableData }: any = updatedState.inventoryV2;
                     const targettedHost =
-                        inventoryTableData[rowData.resourceId] || inventoryTableData[rowData.ec2InstanceId];
+                        inventoryTableData[
+                            uniqueHostRow(rowData.resourceId, rowData?.credentialId, rowData?.regionId)
+                        ] ||
+                        inventoryTableData[
+                            uniqueHostRow(rowData.ec2InstanceId, rowData?.credentialId, rowData?.regionId)
+                        ];
                     const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
                         (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.databaseInstanceName
                     );
-                    const inProgressId = `${rowData?.ec2InstanceId}_${rowData?.databaseInstanceName}`;
+                    const inProgressId = uniqueHostRow(
+                        `${rowData?.ec2InstanceId}_${rowData?.databaseInstanceName}`,
+                        rowData?.credentialId,
+                        rowData?.regionId
+                    );
                     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), inProgressId])));
                     unmanageApi({
                         credentialsId: targettedHost?.credentialId,
@@ -308,7 +331,15 @@ const InstancesTable = () => {
         const state = store.getState();
         const detectHostRadio = state.inventoryV2.detectHostRadio;
         if (detectHostRadio === DETECT_HOST_VAR.MOVE_TO_MANAGE && fsxId) {
-            // handleManageInstances(hostData, [rowData?.databaseInstanceName], true);
+            handleManageInstances(
+                rowData?.hostRow,
+                [rowData?.databaseInstanceName],
+                dispatch,
+                styles,
+                manageInstanceApi,
+                prepareHostApi,
+                true
+            );
             // const manageStartMsg = (
             //     <div className={styles.notification}>
             //         {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
@@ -882,7 +913,15 @@ const InstancesTable = () => {
                                         }
 
                                         if (menuId === 'manage') {
-                                            // handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
+                                            handleManageInstances(
+                                                rowData?.hostRow,
+                                                [rowData?.databaseInstanceName],
+                                                dispatch,
+                                                styles,
+                                                manageInstanceApi,
+                                                prepareHostApi,
+                                                false
+                                            );
                                         }
                                         if (menuId === 'viewInstance') {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
