@@ -20,7 +20,8 @@ locals {
   operating_system               = local.is_windows ? "Windows" : "Linux"
   sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
   sql_fsx_server_net_bios_name_2 = element(split(",", var.node_net_bios_names), 1)
-  group_set                      = [aws_security_group.workload_security_group.id, var.ontap_security_group_id]
+  ontap_security_groups          = split(",", var.ontap_security_group_id)
+  group_set                      = concat([aws_security_group.workload_security_group.id], local.ontap_security_groups)
 }
 
 provider "aws" {
