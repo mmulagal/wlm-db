@@ -60,15 +60,17 @@ export const ManageColumnsPanel = ({
 
     return (
         <div className={styles['manage-column-panel']}>
-            <div className={styles['manage-content-content']}>
-                {/* Select All Checkbox */}
+            {/* Keep Select All outside the scrollable div */}
+            <div className={styles['select-all-container']}>
                 <Checkbox
                     isChecked={areAllSelectableColumnsChecked}
                     onChange={() => handleSelectAllChange(!areAllSelectableColumnsChecked)}
-                    className={styles['checkbox-container']}
+                    className={`${styles['checkbox-container']} ${styles['select-all']}`}
                 >
                     <span>Select All</span>
                 </Checkbox>
+            </div>
+            <div className={styles['manage-content-content']}>
                 {allColumns.map(({ id, Header }) => {
                     const isChecked = !(internalState[String(id)] && internalState[String(id)].isHidden);
                     const singleColumnState = internalState[String(id)];
