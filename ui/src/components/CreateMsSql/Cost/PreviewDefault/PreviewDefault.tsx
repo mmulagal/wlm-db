@@ -177,13 +177,13 @@ const PreviewDefault = () => {
         {
             accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,
             defaultValue: GENERAL.PD_DISABLED,
-            editable: GENERAL.NOT_AVAILABLE,
+            editable: GENERAL.NO,
             id: '14'
         },
         {
             accordionName: GENERAL.CLOUD_WATCH_MONITORING,
             defaultValue: GENERAL.ENABLED,
-            editable: GENERAL.NOT_AVAILABLE,
+            editable: GENERAL.NO,
             id: '15'
         },
         { accordionName: 'Resource rollback', defaultValue: GENERAL.PD_DISABLED, editable: 'No', id: '16' }
@@ -239,7 +239,7 @@ const PreviewDefault = () => {
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
         setTimeout(() => {
-            document.querySelector('#easy-create')?.scrollIntoView({
+            document.querySelector('#quick-create')?.scrollIntoView({
                 behavior: 'smooth',
                 block: 'end',
                 inline: 'nearest'

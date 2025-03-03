@@ -69,6 +69,10 @@
         gap: 8px;
         align-items: center;
         color: var(--warning);
+        .centerText {
+            position: relative;
+            top: 4.5px;
+        }
     }
 
     .tooltipTable {

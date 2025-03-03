@@ -11,7 +11,12 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
-import { saveFciConfigurationData, savePGSQLConfigurationData, saveStandaloneConfigurationData } from './demoMockdata';
+import {
+    saveFciConfigurationData,
+    savePGSQLConfigurationData,
+    savePGSQLHaConfigurationData,
+    saveStandaloneConfigurationData
+} from './demoMockdata';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -116,6 +121,16 @@ async function createConfigurations(accountId: string, awsAccountId: string, cre
         configName
     );
     saveConfig(accountId, 'SYSTEM', configName, standalonePostgresData, 'pgsql');
+
+    configName = 'PostgreSQL HA deployment in us-east';
+    const haDeploymentPostgresData = savePGSQLHaConfigurationData(
+        'us-east-1',
+        awsAccountId,
+        credentialsId,
+        'haDB',
+        configName
+    );
+    saveConfig(accountId, 'SYSTEM', configName, haDeploymentPostgresData, 'pgsql');
 }
 
 async function createDemoResourcesPerRegion(
@@ -124,22 +139,25 @@ async function createDemoResourcesPerRegion(
     region: string,
     awsAccountId: string
 ) {
-    const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
-    const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
-    if (!fileSystemExists) {
-        const fsxConfiguration = {
-            fsxDeploymentMode: 'MULTI_AZ_1',
-            fsxFileSystemId: randomUUID(),
-            fsxUsername: 'wlmdb-user',
-            fsxPassword: randomize('a0', 10),
-            databaseSize: 1024,
-            ontapSgGroupId: [randomize('a0', 10)],
-            fsxVolThroughput: 256,
-            fsxIOPS: 10,
-            encryptionKey: randomize('a0', 10),
-            snapshotPolicy: 'daily_weekretention'
-        };
-        createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
+    // Workaround added till GROGU-5485 is resolved
+    if (region !== 'ap-southeast-5') {
+        const existingFsxCore = await getFSXFileSystemListForDemo(credentialsId, region, randomize('a0', 10));
+        const fileSystemExists = existingFsxCore.some(obj => obj.name === 'fsx-wlmdb-DEFAULT');
+        if (!fileSystemExists) {
+            const fsxConfiguration = {
+                fsxDeploymentMode: 'MULTI_AZ_1',
+                fsxFileSystemId: randomUUID(),
+                fsxUsername: 'wlmdb-user',
+                fsxPassword: randomize('a0', 10),
+                databaseSize: 1024,
+                ontapSgGroupId: [randomize('a0', 10)],
+                fsxVolThroughput: 256,
+                fsxIOPS: 10,
+                encryptionKey: randomize('a0', 10),
+                snapshotPolicy: 'daily_weekretention'
+            };
+            createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
+        }
     }
 
     const jobs = await listJobs(accountId, credentialsId, region);

@@ -7,7 +7,8 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     NUMASTATIC,
-    SEVERITY
+    SEVERITY,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import { sqlResponseParsing } from '../../utils/utils';
@@ -27,11 +28,17 @@ async function calculateRssConfigDrift(
 ) {
     logger.info('Calculating RSS drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
+    let metadata;
+    let rssConfigAssessment;
     try {
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating rss drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+    try {
         const { assessment: { rssConfig } = {} } = metadata as unknown as Metadata;
-
-        let rssConfigAssessment;
         if (!isEmpty(rssConfig)) {
             rssConfigAssessment = rssConfig as RssConfigAssesment;
         } else {
@@ -74,11 +81,20 @@ async function calculateRssConfigDrift(
             tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
             rssAdapters,
             recommendedAdapterSettings,
-            tcpOffloadState
+            tcpOffloadState,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER
         };
     } catch (error: any) {
         errorMessage = `Error while calculating rss config drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, rssConfig: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }

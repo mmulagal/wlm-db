@@ -426,6 +426,7 @@ Resources:
                   - ssm:GetParameters
                   - ssm:PutParameter
                   - ssm:GetParametersByPath
+                  - ssm:DeleteParameter
                 Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
             
           PolicyName: !Join
@@ -694,12 +695,21 @@ Resources:
           Ref: SQLAMIID
         SQLVersion:
           Ref: SqlVersion
-        SqlFSxServerNetBIOSName:
+        SqlFSxServerNetBIOSName1:
           Fn::Select:
             - "0"
             - Fn::Split:
                 - ","
                 - Ref: NodeNetBIOSNames
+        SqlFSxServerNetBIOSName2:
+          !If
+          - IsHACluster
+          - Fn::Select:
+            - "1"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+          - !Ref AWS::NoValue
         VPCID:
           Ref: VPCID
         VPCCIDR:
@@ -726,13 +736,25 @@ Resources:
         FSxReplicaSvmId:
           !If
             - NewOntapFsx
-            - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmId"
-            - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmId"
+            - !If
+              - IsHACluster
+              - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmId"
+              - !Ref AWS::NoValue
+            - !If
+              - IsHACluster
+              - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmId"
+              - !Ref AWS::NoValue
         FSxReplicaSvmUuid:
           !If
             - NewOntapFsx
-            - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmUuid"
-            - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmUuid"
+            - !If
+              - IsHACluster
+              - !GetAtt "NewFSxStack.Outputs.FSxReplicaSvmUuid"
+              - !Ref AWS::NoValue
+            - !If
+              - IsHACluster
+              - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmUuid"
+              - !Ref AWS::NoValue
         ONTAPSecurityGroupID:
           Ref: ONTAPSecurityGroupID
         FSxDataVolumeName:

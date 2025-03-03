@@ -877,6 +877,8 @@ export const GENERAL = {
     QUORUM_VOLUME: 'Quorum volume',
     QUORUM_SIZE: 'Quorum volume size',
     BUFFER_SIZE: 'Headroom',
+    DATA_REPLICA_VOLUME: 'Data replica volume',
+    LOG_REPLICA_VOLUME: 'Log replica volume',
     MIN_FSX_CAPACITY_MESSAGE: 'The minimum total SSD capacity of an FSx for ONTAP file system is 1,024 GiB.',
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
@@ -1237,6 +1239,8 @@ export const GENERAL = {
         'Rightsizing recommendations are based on analysis from AWS Compute Optimizer which requires 14 days of metrics to provide accurate suggestions.',
     LICENSE_SQL_SERVER: 'License',
     APPLICATION: 'Application (SQL Server)',
+    RESILIENCY: 'Resiliency',
+    SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };

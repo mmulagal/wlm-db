@@ -14,6 +14,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -27,10 +28,16 @@ import {
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 
 import OntapTable from './InnerTables/OntapTable';
+import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
+import NTFSAllocationTable from './InnerTables/NTFSAllocationTable';
+import { useRef, useState } from 'react';
+import OntapTableWithData from './InnerTables/OntapTableWithData';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
+    const userNavigated = useRef(false);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -38,7 +45,8 @@ const OptimizeOntapInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -91,7 +99,8 @@ const OptimizeOntapInnerPage = () => {
         }
     };
 
-    const lastColDetails = (name: string, data?: any, width: any = '302px') => {
+    const lastColDetails = (name: string, data?: any, width: any = '372px') => {
+        //302
         return {
             id: '4',
             Header: '',
@@ -102,7 +111,7 @@ const OptimizeOntapInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {buttonComponent()}
+                        {/* {buttonComponent()} */}
                     </div>
                 );
             }
@@ -170,6 +179,8 @@ const OptimizeOntapInnerPage = () => {
                             Component="button"
                             variant="text"
                             onClick={() => {
+                                if (notificationTimeout) clearTimeout(notificationTimeout);
+                                userNavigated.current = true;
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                 dispatch(clearNotifications());
                             }}
@@ -195,6 +206,8 @@ const OptimizeOntapInnerPage = () => {
                         Component="button"
                         variant="text"
                         onClick={() => {
+                            if (notificationTimeout) clearTimeout(notificationTimeout);
+                            userNavigated.current = true;
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                             dispatch(clearNotifications());
                         }}
@@ -210,6 +223,14 @@ const OptimizeOntapInnerPage = () => {
                         [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
                     })
                 );
+
+                const timeoutId = setTimeout(() => {
+                    if (!userNavigated.current) {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                    }
+                }, 1000);
+
+                setNotificationTimeout(timeoutId);
             }
             handleOptimizeStorageJob(
                 res,
@@ -231,13 +252,60 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const renderTable = () => {
-        return (
-            <OntapTable
-                type={selectedOptimizeConfig?.type}
-                lastColDetails={lastColDetails}
-                handleBulkAction={handleBulkAction}
-            />
-        );
+        switch (selectedOptimizeConfig?.type) {
+            case 'Multipath I/O Policy':
+                return (
+                    <OSMultiPathIOPolicy
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+
+            case 'NTFS allocation unit size':
+                return (
+                    <NTFSAllocationTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Autosize-mode':
+            case 'Snapshot copy reserve':
+            case 'Tiering policy':
+            case 'Tiering minimum cooling days':
+            case 'OS type':
+                return (
+                    <OntapTableWithData
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            default:
+                return (
+                    <OntapTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+        }
+    };
+
+    const setHeading = () => {
+        if (
+            selectedOptimizeConfig?.type !== 'Multipath I/O Policy' &&
+            selectedOptimizeConfig?.type !== 'NTFS allocation unit size'
+        ) {
+            return `ONTAP / ${selectedOptimizeConfig?.type}`;
+        } else {
+            return `Operating system |  ${selectedOptimizeConfig?.type}`;
+        }
     };
     return (
         <div className={styles['optimize-inner-page']}>
@@ -248,12 +316,15 @@ const OptimizeOntapInnerPage = () => {
                             {
                                 title: 'Inventory',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                                 }
                             },
                             {
-                                title: `Host name / Instance name`,
-                                dataTestId: 'wlm-db-optimize-configuration'
+                                title: `${selectedHostname} / ${selectedDatabaseInstanceName}`,
+                                dataTestId: 'wlm-db-optimize-configuration',
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                }
                             },
                             {
                                 title: `${selectedOptimizeConfig?.type}`,
@@ -267,10 +338,7 @@ const OptimizeOntapInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        {(selectedOptimizeConfig?.type !== 'Multipath I/O Policy' ||
-                            selectedOptimizeConfig?.type === 'NTFS allocation unit size') &&
-                            'ONTAP /'}{' '}
-                        {selectedOptimizeConfig?.type}
+                        {setHeading()}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
@@ -278,7 +346,7 @@ const OptimizeOntapInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Instance name
+                        {selectedDatabaseInstanceName || ''}
                     </DsTypography>
                 </div>
 

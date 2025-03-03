@@ -3,7 +3,7 @@ exec > /var/log/netapp_wf/validate-fsx.log 2>&1
 echo "Validating FSx file system by connecting to ONTAP rest api."
 
 # Parse command-line arguments
-while getopts "e:f:r:s:n:a:d:l:p:" opt; do
+while getopts "e:f:r:s:n:a:d:l:p:t:" opt; do
     case $opt in
         e) performfsxvalidation="$OPTARG" ;;
         f) filesystemid="$OPTARG" ;;
@@ -11,7 +11,8 @@ while getopts "e:f:r:s:n:a:d:l:p:" opt; do
         n) stackname="$OPTARG" ;;
         p) parentstackname="$OPTARG" ;;
         s) resource="$OPTARG" ;;
-
+        t) IsTerraform="$OPTARG" ;;
+        *) usage ;;
     esac
 done
 
@@ -21,7 +22,9 @@ instanceId=$(curl -s -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.2
 if [ "$performfsxvalidation" != "true" ]; then
     echo "New FSx file system. Skipping the validation."
     echo "{\"status\": \"Completed\", \"reason\": \"Done.\"}" | jq -c .
-    cfn-signal --exit-code 0 --stack $stackname --resource $resource --region $region --id $instanceId
+    if [ "$IsTerraform" != "true" ]; then
+        cfn-signal --exit-code 0 --stack $stackname --resource $resource --region $region --id $instanceId
+    fi
     exit 0
 fi
 
@@ -86,10 +89,14 @@ ontap_request 'GET' 'cluster?fields=version'
 echo "ONTAP version API response code: $return_result"
 if [[ ($return_result -ge 200 && $return_result -lt 299) || ($return_result -ge 500 && $return_result -lt 600) ]]; then
     echo "{\"status\": \"Completed\", \"reason\": \"Done.\"}" | jq -c .
-    cfn-signal --exit-code 0 --stack $stackname --resource $resource --region $region --id $instanceId
+    if [ "$IsTerraform" != "true" ]; then
+        cfn-signal --exit-code 0 --stack $stackname --resource $resource --region $region --id $instanceId
+    fi
 else
     FailureReason="Unable to reach storage. 1. Check storage credentials are valid 2. Check if routing table allows connection from the subnet 3. Check if storage security group allows HTTPS(443) and NFS(2049) tcp ports."
     echo "{\"status\": \"Failed\", \"reason\": \"$FailureReason\"}" | jq -c .
-    cfn-signal --exit-code 1 --reason "$FailureReason" --stack $stackname --resource $resource --region $region --id $instanceId
+    if [ "$IsTerraform" != "true" ]; then
+        cfn-signal --exit-code 1 --reason "$FailureReason" --stack $stackname --resource $resource --region $region --id $instanceId
+    fi
     exit 1
 fi

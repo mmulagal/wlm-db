@@ -2,9 +2,9 @@ import { FastifyRequest } from 'fastify';
 import castRequest from '../routes/utils';
 
 const storageSizingDescriptions: { [key: string]: string } = {
-    'log-drive-size': 'log drive',
+    'log-drive-size': 'log drive size',
     headroom: 'file system headroom',
-    'tempdb-drive-size': 'tempDB drive'
+    'tempdb-drive-size': 'tempDB drive size'
 };
 
 const storageConfigDescriptions: { [key: string]: string } = {

@@ -311,6 +311,11 @@ enum FileSystemTypes {
     FSXW = 'FSXW'
 }
 
+enum STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES {
+    RESILIENCY = 'resiliency',
+    STORAGE = 'storage',
+    BOTH = 'both'
+}
 const SECRETS_MANAGER = 'secretsmanager';
 const SECRECTS_MANAGER_ACTION_NAMES = ['CreateSecret', 'GetSecretValue', 'ListSecrets'].map(
     action => `${SECRETS_MANAGER}:${action}`
@@ -536,7 +541,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-gov-west-1', 'AWS GovCloud (US-West)'],
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)'],
-    ['ca-west-1', 'Canada (Calgary)']
+    ['ca-west-1', 'Canada (Calgary)'],
+    ['ap-southeast-5', 'Asia Pacific (Malaysia)']
 ]);
 
 const IO2_AVAILABLE_REGIONS = [
@@ -728,6 +734,10 @@ const SQL_RESOURCE_ASSETS = [
     //     name: 'PowerShellSignature',
     //     url: 'Installer/powershell.zip.sig'
     // },
+    {
+        name: 'Dotnet',
+        url: `${WLMDB}/Installer/dotnet.zip`
+    },
     {
         name: 'Sqlspcu',
         url: `${WLMDB}/Installer/sqlspcu.zip`
@@ -1248,6 +1258,7 @@ const MIN_DISKSIZE = 1024;
 const MIN_THROUGHPUT = 128;
 const STANDALONE = 'standalone';
 const FCI = 'fci';
+const HA = 'ha';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
@@ -1385,6 +1396,7 @@ const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+const ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT = '300';
 const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '600';
 
 const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
@@ -1690,6 +1702,9 @@ const PRICING_LICENSE_KEYS = {
     SQL_STD: 'SQL Std',
     SQL_WEB: 'SQL Web'
 };
+
+const GERERIC_JOB_ERROR_MESSAGE = 'Examine the subjobs for comprehensive error messages.';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1834,6 +1849,7 @@ export {
     MIN_DISKSIZE,
     STANDALONE,
     FCI,
+    HA,
     SINGLE_AZ,
     MULTI_AZ,
     MIN_THROUGHPUT,
@@ -2025,5 +2041,8 @@ export {
     PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     PGSQL_TF_VARS_CONFIG,
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
-    PGSQL
+    PGSQL,
+    GERERIC_JOB_ERROR_MESSAGE,
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
 };

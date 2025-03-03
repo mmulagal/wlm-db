@@ -90,11 +90,20 @@ enum OPTIMIZE_SIZING_CONFIGS {
     TEMPDB_DRIVE_SIZE = 'tempdb-drive-size'
 }
 
+enum OPTIMIZE_RESILIENCY_CONFIGS {
+    SNAPSHOT_POLICY = 'snapshot-policy'
+}
+
+enum OptimizeMaxDopParams {
+    MAX_DOP = 'max-dop'
+}
+
 enum OPTIMIZATION_CATEGORIES {
     STORAGE_TIER = 'storage-tier',
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
-    COMPUTE = 'compute'
+    COMPUTE = 'compute',
+    MAXDOP = 'max-dop'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -195,6 +204,19 @@ const NETWORK_PERF = {
 
 const ONPREM_TCO_CREDENTIALS_ID = 'ONPREM_TCO_CREDENTIALS_ID';
 
+const ASSESSMENT_RESOURCE_TYPE = {
+    VOLUME: 'Volume',
+    FILE_SYSTEM: 'File system (FSx for ONTAP)',
+    DRIVE: 'Drive',
+    DATABASE: 'Database',
+    INSTANCE: 'EC2 instance',
+    NETWORK_ADAPTER: 'Network Adapter',
+    LUN: 'Lun',
+    SQL_INSTANCE: 'SQL instance'
+};
+
+const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -222,5 +244,9 @@ export {
     OptimizeComputeParams,
     NETWORK_PERF,
     ONPREM_TCO_CREDENTIALS_ID,
-    OPTIMIZATION_CATEGORIES
+    OPTIMIZATION_CATEGORIES,
+    OptimizeMaxDopParams,
+    ASSESSMENT_RESOURCE_TYPE,
+    OPTIMIZE_RESILIENCY_CONFIGS,
+    VALID_MPIO_LB_POLICIES
 };

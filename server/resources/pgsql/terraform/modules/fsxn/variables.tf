@@ -136,3 +136,13 @@ variable "deployment_name" {
   description = "The name of the deployment"
   type        = string
 }
+
+variable "sql_deployment_mode" {
+  description = "The deployment mode for the PGSQL Server instance."
+  type        = string
+}
+
+variable "is_standalone" {
+  description = "Boolean to determine if the deployment is standalone or HA."
+  type        = bool
+}

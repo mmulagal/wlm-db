@@ -1,13 +1,11 @@
-import { AccordionController, Button, Typography } from '@netapp/design-system';
+import { AccordionController, Typography } from '@netapp/design-system';
 import styles from './PostgressLayout.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import AwsAccount from '../../CreateMsSql/AwsSettings/AwsAccount/AwsAccount';
 import RegionVpc from '../../CreateMsSql/AwsSettings/RegionVpc/RegionVpc';
 import AvailabilityZone from '../../CreateMsSql/AwsSettings/AvailabilityZone/AvailabilityZone';
-import License from '../../CreateMsSql/ApplicationSettings/License/License';
-import SqlServerCollation from '../../CreateMsSql/ApplicationSettings/Collation/SqlServerCollation';
-import DatabaseName from '../../CreateMsSql/ApplicationSettings/DatabaseName/DatabaseName';
+
 import DatabaseCredentials from '../../CreateMsSql/ApplicationSettings/DatabaseCredentials/DatabaseCredentials';
 import KeyPair from '../../CreateMsSql/Connectivity/KeyPair/KepPair';
 import InstanceType from '../../CreateMsSql/InfrastructureSettings/InstanceType/InstanceType';
@@ -27,25 +25,21 @@ import EstimatedCost from '../../CreateMsSql/Cost/EstimatedCost';
 import PostgreOperatingSystem from '../PostgreOperatingSystem/PostgreOperatingSystem';
 import PostgreVersion from '../PostgreVersion/PostgreVersion';
 import PostgreServerName from '../PostgreServerName/PostgreServerName';
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlice';
-import { SQL_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../../utils/consts';
+
+import { DBType, WIZARD_TYPE } from '../../../utils/consts';
 import SecurityGroup from '../../CreateMsSql/AwsSettings/SecurityGroup/SecurityGroup';
 import StorageCapacity from '../../CreateMsSql/InfrastructureSettings/StorageCapacity/StorageCapacity';
 import PreviewDefaultPostgres from '../PreviewDefaultPostgre/PreviewDefaultPostgre';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
 
 function PostgressLayout() {
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
     const dispatch = useDispatch();
 
     useEffect(() => {
-        dispatch(
-            setSelectedDBDeploymentModel({
-                label: GENERAL.SINGLE_INSTANCE,
-                value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-            })
-        );
+        dispatch(setSelectedDatabaseType(DBType.POSTGRESQL));
     }, []);
 
     return (

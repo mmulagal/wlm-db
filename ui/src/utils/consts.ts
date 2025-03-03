@@ -714,11 +714,14 @@ export const GETWELL_VALUES: any = {
     'separate-drive': 'Separate drive',
     'same-drive': 'Same drive',
     same_drive: 'Same drive',
+    'shared-drive': 'Shared drive',
+    shared_drive: 'Shared drive',
     critical: 'Critical',
     warning: 'Warning',
     none: 'None',
     'separate drive': 'Separate drive',
-    'same drive': 'Same drive'
+    'same drive': 'Same drive',
+    'shared drive': 'Shared drive'
 };
 
 export const GETWELL_CONFIG: any = {
@@ -751,18 +754,11 @@ export const GETWELL_CONFIG: any = {
     'sql-license': 'sql_licenses',
     'host-os-patch': 'host_os_patch',
     'mssql-patch': 'microsoft_sql_patch',
-    maxdop: 'maxdop'
+    maxdop: 'maxdop',
+    'snapshot-policy': 'scheduled_local_snapshot'
 };
 
-export const GW_CONFIG_OPTIMIZE_NA = [
-    'Data files (.mdf) placement',
-    'Log files (.ldf) placement',
-    'TempDB placement',
-    GENERAL.LICENSE_SQL_SERVER,
-    GENERAL.OPERATING_SYSTEM_PATCH,
-    GENERAL.RSS_CONFIGURATION,
-    GENERAL.MICROSOFT_SQL_PATCH
-];
+export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
     rssProfile: 'RSS profile',
@@ -788,5 +784,8 @@ export const ASSESSMENT_CONFIG_NAMES = {
     LOG_FILES_LDF: 'Log files (.ldf)',
     TEMPDB_PLACEMENT: 'TempDB placement',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
-    MAXDOP: 'MAXDOP'
+    MAXDOP: 'MAXDOP',
+    SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
+    OPERATING_SYSTEM_PATCH: 'Operating system patch',
+    MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch'
 };

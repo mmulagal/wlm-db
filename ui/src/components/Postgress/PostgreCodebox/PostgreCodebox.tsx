@@ -63,6 +63,7 @@ const PostgreCodebox = () => {
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
     const selectedDBName = useAppSelector(state => state.postgreForm.postgreServerName);
+    const { postgreServerName, postGreVersion } = useAppSelector(state => state.postgreForm);
     const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
 
     const [loadTemplateData] = useGetPgsqlTemplatesMutation();
@@ -70,23 +71,12 @@ const PostgreCodebox = () => {
     const dispatch = useDispatch();
     const { setDialog } = useDialog();
 
-    const terraformUI = () => {
-        return (
-            <div className={styles.terraformContainer}>
-                <div>{GENERAL.TERRAFORM}</div>
-                <div>
-                    <ComingSoon />
-                </div>
-            </div>
-        );
-    };
-
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, CODE_VIEWER.TERRAFORM];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', idx === 3, '');
+            const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
@@ -211,7 +201,8 @@ const PostgreCodebox = () => {
         const actualData = mssqlFormData;
         const credDetails = getCredDetails(actualData);
         const changeObjectForm = {
-            mssqlForm: actualData
+            mssqlForm: actualData,
+            postgreForm: pgsqlFormData
         };
         const resBody: any = createPgsqlPayload(changeObjectForm);
         if (credDetails?.credId) {
@@ -223,6 +214,8 @@ const PostgreCodebox = () => {
         if (changeObjectForm?.mssqlForm?.encryption?.selectedRow?.[0]?.arn) {
             resBody.fsxConfiguration.encryptionKey = changeObjectForm.mssqlForm.encryption.selectedRow[0].arn;
         }
+        resBody.sqlConfiguration.sqlServerName = postgreServerName;
+
         loadTerraformData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
                 setTerraformSetupResponse(data?.data);
@@ -418,7 +411,10 @@ const PostgreCodebox = () => {
                                             <Download
                                                 onClick={() => {
                                                     if (isDemoMode) {
-                                                        downloadTerraformZip(mssqlFormData?.dbDeploymentModel?.value);
+                                                        downloadTerraformZip(
+                                                            mssqlFormData?.dbDeploymentModel?.value,
+                                                            'pgsql'
+                                                        );
                                                     } else {
                                                         handleDownloadTerraform(terraformSetupResponse?.url);
                                                     }

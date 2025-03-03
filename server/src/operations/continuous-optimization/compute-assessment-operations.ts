@@ -8,7 +8,12 @@ import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operati
 import getLogger from '../../utils/logger';
 import { translateFindingReasonCode } from '../aws/compute-optimizer-operations';
 import { getEc2Arn } from '../../utils/utils';
-import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../utils/continous-optimization-consts';
 import { ComputeAssessment, Metadata } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -98,14 +103,23 @@ async function calculateComputeDrift(
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
+    let metadata;
+
+    try {
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating compute drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+
     try {
         let finding;
         let findingReasonCodes;
         let currentInstanceType;
         let recommendationOptions;
-
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
         const { assessment: { compute } = {} } = metadata as unknown as Metadata;
+
         if (!isEmpty(compute)) {
             ({ finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
                 compute as ComputeAssessment);
@@ -169,11 +183,20 @@ async function calculateComputeDrift(
             recommendation: recommendationMessage,
             objectsInViolation,
             tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-            recommendationOptions
+            recommendationOptions,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error: any) {
         errorMessage = `Error while calculating compute drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, compute: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }
@@ -213,7 +236,6 @@ async function managedHostsComputeAssessment(
     } catch (error) {
         errorMessage = `Error while performing compute assessment. ${error}`;
         logger.error(errorMessage);
-
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, computeAssessmentJobId, {

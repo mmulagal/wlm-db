@@ -501,7 +501,7 @@ function processEbsDisks(disks: EBSClassification[]) {
                 }
                 case 'gp3':
                 default: {
-                    volumeIops = Math.min(Math.max(volumeIops, 3000), 1000); // Minimum IOPS is 3000
+                    volumeIops = Math.min(Math.max(volumeIops, 3000), 16000); // Minimum IOPS is 3000
                     throughput = Math.min(Math.max(throughput, 125), 1000); // Minimum throughput is 125 , max is 1000
                     storageAmount = Math.min(Math.max(storageAmountPerDiskType, 1), sizeInGigaBytes(16, 'TiB')); // Minimum volume size is 1 GiB
                     break;
@@ -1378,5 +1378,6 @@ export {
     getOnpremLicenseRecommendations,
     deriveInstanceRequirements,
     getOnPremResourceExploreSavings,
-    saveReportInReportingRegistry
+    saveReportInReportingRegistry,
+    processEbsDisks
 };

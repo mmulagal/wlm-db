@@ -136,7 +136,8 @@ resource "aws_iam_role_policy" "ec2_iam_role_policy" {
           "ssm:GetParameter",
           "ssm:GetParameters",
           "ssm:PutParameter",
-          "ssm:GetParametersByPath"
+          "ssm:GetParametersByPath",
+          "ssm:DeleteParameter"
         ]
         Resource = "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
       }

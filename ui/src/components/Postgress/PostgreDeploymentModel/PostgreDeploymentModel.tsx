@@ -34,28 +34,6 @@ const PostgreDeploymentModel = () => {
                     <Typography>
                         <div className={styles.failOver}>
                             <RadioButton
-                                isChecked={deploymentModel?.label === GENERAL.SINGLE_INSTANCE}
-                                onChange={() => {
-                                    dispatch(
-                                        setSelectedDBDeploymentModel({
-                                            label: GENERAL.SINGLE_INSTANCE,
-                                            value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                                        })
-                                    );
-                                }}
-                                children={GENERAL.STANDALONE_INSTANCE}
-                                className={styles.radio}
-                                data-testid="wlm-db-deployment-model-standalone"
-                            />
-                            <Typography variant="Regular_14" className={styles.failoverText}>
-                                {GENERAL.PGSQL_STANDALONE}
-                            </Typography>
-                        </div>
-
-                        <div className={styles.separator} />
-
-                        <div className={styles.failOver}>
-                            <RadioButton
                                 isChecked={deploymentModel?.label === GENERAL.FAILOVER_CLUSTER}
                                 onChange={() => {
                                     dispatch(
@@ -71,6 +49,27 @@ const PostgreDeploymentModel = () => {
                             />
                             <Typography variant="Regular_14" className={styles.failoverText}>
                                 {GENERAL.PGSQL_HA}
+                            </Typography>
+                        </div>
+
+                        <div className={styles.separator} />
+                        <div className={styles.failOver}>
+                            <RadioButton
+                                isChecked={deploymentModel?.label === GENERAL.SINGLE_INSTANCE}
+                                onChange={() => {
+                                    dispatch(
+                                        setSelectedDBDeploymentModel({
+                                            label: GENERAL.SINGLE_INSTANCE,
+                                            value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                                        })
+                                    );
+                                }}
+                                children={GENERAL.STANDALONE_INSTANCE}
+                                className={styles.radio}
+                                data-testid="wlm-db-deployment-model-standalone"
+                            />
+                            <Typography variant="Regular_14" className={styles.failoverText}>
+                                {GENERAL.PGSQL_STANDALONE}
                             </Typography>
                         </div>
                     </Typography>

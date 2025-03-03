@@ -395,11 +395,12 @@ async function getInstanceTypesFromInstanceRequirementsCommand(
 async function paginateDescribeEbsVolumes(
     credentialsId: string,
     region: string,
-    params: DescribeVolumesCommandInput
+    params: DescribeVolumesCommandInput,
+    accountId?: string
 ): Promise<Volume[]> {
-    logger.info('Paginate describe EBS volumes', { region, params });
+    logger.info('Paginate describe EBS volumes', { region, credentialsId, params, accountId });
 
-    const ec2 = await getEC2Client(region, credentialsId);
+    const ec2 = await getEC2Client(region, credentialsId, accountId);
 
     const volumeList = [];
     for await (const { Volumes } of paginateDescribeVolumes({ client: ec2 }, params)) {

@@ -12,7 +12,12 @@ import getLogger from '../../utils/logger';
 import { LicenseAssessment, Metadata } from '../../utils/common-types';
 import { getInstanceDetails } from '../database-hosts-operations';
 import { ENT_ENGINE_EDITION, FINDING, SQL_STD } from '../../utils/consts';
-import { AssessmentStatus, AwsWellArchitecturedPillars, SEVERITY } from '../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 
@@ -28,10 +33,16 @@ async function calculateLicenseDrift(
     logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
     let errorMessage = '';
+    let licenseAssessment;
+    let metadata;
     try {
-        let licenseAssessment;
-
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating license drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+    try {
         const { assessment: { license } = {} } = metadata as unknown as Metadata;
         if (!isEmpty(license)) {
             licenseAssessment = license as LicenseAssessment;
@@ -67,11 +78,20 @@ async function calculateLicenseDrift(
             severity: SEVERITY.WARNING,
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
-            sqlServerInstances
+            sqlServerInstances,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error: any) {
         errorMessage = `Error while calculating license drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, license: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }

@@ -10,7 +10,8 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     SEVERITY,
-    TEST_CONNECTION_COMMAND
+    TEST_CONNECTION_COMMAND,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
@@ -102,11 +103,18 @@ async function calculateHostOsPatchDrift(
 ) {
     logger.info('Calculating Host OS patch drift', { accountId, credentialsId, region, databaseHostId });
     let errorMessage = '';
+    let metadata;
+    try {
+        [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
+    } catch (error) {
+        errorMessage = `Error while calculating host os patch drift. ${error}`;
+        logger.error({ errorMessage });
+        return { errorMessage };
+    }
+    const metadataObject = metadata as unknown as Metadata;
     try {
         let hostOsPatchAssessment;
 
-        const [{ metadata = {} } = {}] = (await listResources(accountId, databaseHostId, credentialsId, region)) || [];
-        const metadataObject = metadata as unknown as Metadata;
         const { assessment: { hostOsPatch } = {} } = metadataObject;
         if (!isEmpty(hostOsPatch)) {
             hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
@@ -145,11 +153,20 @@ async function calculateHostOsPatchDrift(
             recommendation: recommendationMessage,
             objectsInViolation: ec2InstancesToPatch?.map(({ ec2InstanceId }) => ec2InstanceId),
             tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-            ec2InstancesToPatch
+            ec2InstancesToPatch,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
         };
     } catch (error) {
         errorMessage = `Error while calculating host os patch drift. ${error}`;
         logger.error({ errorMessage });
+        const existingAssessmentData = (metadata as unknown as Metadata).assessment;
+        const assessmentErrors = { ...existingAssessmentData?.errors, hostOsPatch: errorMessage };
+        (metadata as unknown as Metadata).assessment = {
+            ...existingAssessmentData,
+            errors: assessmentErrors,
+            lastAssessedDate: new Date().getTime().toString()
+        };
+        updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
     }
     return { errorMessage };
 }
