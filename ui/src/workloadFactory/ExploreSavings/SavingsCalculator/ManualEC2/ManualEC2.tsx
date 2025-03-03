@@ -69,7 +69,12 @@ const ManualEC2 = () => {
     }, [instanceTypeData]);
 
     useEffect(() => {
-        if (!selectedManualInstanceType) dispatch(setSelectedManualInstanceType(generateInstances[0]));
+        let isPresent = instanceTypeData?.instanceTypes?.filter(
+            (val: any) => val?.instanceType === selectedManualInstanceType?.value
+        );
+        if (!selectedManualInstanceType || !isPresent?.length) {
+            dispatch(setSelectedManualInstanceType(generateInstances[0]));
+        }
     }, [generateInstances]);
     return (
         <div className={styles.manualEc2}>

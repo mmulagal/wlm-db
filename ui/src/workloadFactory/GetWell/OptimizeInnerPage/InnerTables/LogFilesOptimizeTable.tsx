@@ -1,43 +1,30 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
-import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 
 import { useMemo } from 'react';
+import { GENERAL } from '../../../../utils/appConstants';
 
-const LogFilesOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
-    const data = [
-        {
-            serverInstanceName: 'Volume 1',
-            status: 'Up',
-
-            id: '1'
-        },
-        {
-            serverInstanceName: 'Volume 2',
-            status: 'Up',
-
-            id: '2'
-        }
-    ];
-
+const LogFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const tableData = useMemo(() => {
-        return data.map((row: any) => ({
-            ...row
+        let id = 0;
+        return data?.objectsInViolation?.map((row: any) => ({
+            databaseName: row,
+            id: String(id++),
+            cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
-
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Database name',
-            accessor: 'serverInstanceName',
+            accessor: 'databaseName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: '1106px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
@@ -53,7 +40,7 @@ const LogFilesOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) 
         rows: tableData || [],
         pageSize: 50,
         selectionType: 'none',
-        defaultSelectedRows: tableData.map(item => item.id)
+        defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
     return (
@@ -61,8 +48,8 @@ const LogFilesOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) 
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`Impacted volumes`}
-                singularTitle={'Impacted volume'}
+                pluralTitle={`Impacted databases`}
+                singularTitle={'Impacted database'}
             />
 
             <Table

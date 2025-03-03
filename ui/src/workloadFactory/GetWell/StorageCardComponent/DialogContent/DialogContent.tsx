@@ -15,6 +15,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
+import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 type DialogType = {
     type: string;
@@ -22,6 +23,7 @@ type DialogType = {
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
     bulkRecommendationOptions?: Array<any>;
+    missingPatchList?: Array<any>;
     operation?: string;
 };
 
@@ -31,6 +33,7 @@ const DialogContent = ({
     missingPermissions,
     recommendedSizeInGib,
     bulkRecommendationOptions = [],
+    missingPatchList = [],
     operation = 'single'
 }: DialogType) => {
     const dispatch = useDispatch();
@@ -683,6 +686,12 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
+
+            case 'Microsoft SQL Server patch':
+                return <MSSQLPatchDialog type={'mssqlPatch'} missingPatchList={missingPatchList} />;
+
+            case 'Operating system patch':
+                return <MSSQLPatchDialog type={'osPatch'} missingPatchList={missingPatchList} />;
 
             case 'Multipath I/O Sessions':
                 return (

@@ -18,6 +18,8 @@ script_dir="/home/ec2-user/cfn/scripts"
 log_dir="/var/log/netapp_wf"
 log_file="$log_dir/Pgsql-Instance-initializer.log"
 pgsql_node_initialization_s3_url="${pgsql_node_initialization_s3_url}"
+node_name="${node_name}"
+is_ha="${is_ha}"
 
 echo "Deployment Name: $deployment_name"
 
@@ -42,6 +44,34 @@ get_instance_id() {
     echo "$instance_id"
 }
 
+# Function to get the instance private IP and save it to SSM parameter
+get_instance_private_ip() {
+    local deployment_name=$1
+    local aws_region=$2
+    local node_type=$3
+
+    token=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+    privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
+
+    if [ "$node_type" = "primary" ]; then
+        # Save the primary private IP address to an SSM parameter
+        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_primary" --value "{private_ip: '$privateIP'}" --type String --region "$aws_region" --overwrite
+        echo "SSM parameter created with primary private IP: $privateIP"
+    elif [ "$node_type" = "secondary" ]; then
+        # Get MAC address and subnet CIDR
+        MAC=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n 1)
+        subnetCidr=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/subnet-ipv4-cidr-block)
+        prefix=$(echo $subnetCidr | cut -d'/' -f2)
+        privateIPWithCidr="$privateIP/$prefix"
+
+        echo "Private IP with CIDR: $privateIPWithCidr"
+
+        # Save the secondary private IP address with CIDR to an SSM parameter
+        aws ssm put-parameter --name "/netapp/wlmdb/${deployment_name}_secondary" --value "{private_ip: '$privateIPWithCidr'}" --type String --region "$aws_region" --overwrite
+        echo "SSM parameter created with secondary private IP: $privateIPWithCidr"
+    fi
+}
+
 # Ensure necessary security protocols are set
 export AWS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 
@@ -52,12 +82,21 @@ create_deployment_folders
 instance_id=$(get_instance_id)
 echo "Got the Instance ID: $instance_id"
 
+# Main logic to determine node type and get private IP only for HA setup
+if [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-1" ]; then
+    echo "Getting the private IP of the instance Primary"
+    get_instance_private_ip "$deployment_name" "$aws_region" "primary"
+elif [ "${is_ha}" = "true" ] && [ "${node_name}" = "PGSQL-Node-2" ]; then
+    echo "Getting the private IP of the instance Secondary"
+    get_instance_private_ip "$deployment_name" "$aws_region" "secondary"
+fi
+
 # Download the initialization script
 curl -o "$script_dir/Pgsql-Instance-initializer.sh" "$pgsql_node_initialization_s3_url"
 chmod +x "$script_dir/Pgsql-Instance-initializer.sh"
 
 # Construct the command to execute the initialization script
-command="$script_dir/Pgsql-Instance-initializer.sh '$aws_region' '$deployment_name' '$fsx_file_system_id' '$fsx_svm_id' '$sql_svm_name' '$fsx_aggr_name' '$fsx_data_volume_name' '$fsx_log_volume_name' '$fsx_svm_uuid' '$sql_version' '$sql_service_account_password' '$sql_server_name' '$log_feature_enabled'"
+command="$script_dir/Pgsql-Instance-initializer.sh '$aws_region' '$deployment_name' '$fsx_file_system_id' '$fsx_svm_id' '$sql_svm_name' '$fsx_aggr_name' '$fsx_data_volume_name' '$fsx_log_volume_name' '$fsx_svm_uuid' '$sql_version' '$sql_service_account_password' '$sql_server_name' '$log_feature_enabled' '$node_name' '$is_ha'"
 
 echo "Executing command: $command"
 bash -c "$command" &> "$log_file"

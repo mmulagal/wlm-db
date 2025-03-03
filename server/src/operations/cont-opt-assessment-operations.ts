@@ -16,7 +16,14 @@ import {
     StorageAssessment,
     WorkloadInstance
 } from '../utils/common-types';
-import { AuditStatus, ASSESSMENT_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../utils/consts';
+import {
+    AuditStatus,
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
+} from '../utils/consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 
 import {
@@ -67,6 +74,7 @@ import {
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
 import { getResilienceDriftAssessment } from './continuous-optimization/resilience-assessment-operation';
+import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -267,7 +275,8 @@ async function initiateStorageAssessmentCollection(
     region: string,
     databaseHostId: string,
     jobId: string,
-    instanceRecord: WorkloadInstance
+    instanceRecord: WorkloadInstance,
+    jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
 ) {
     logger.info('Initiating storage assessment data collection', {
         accountId,
@@ -278,6 +287,16 @@ async function initiateStorageAssessmentCollection(
         instanceRecord
     });
 
+    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        instanceRecord.fsxFileSystem
+    );
+
+    instanceRecord.svmOntapUuid = svms.find(svm =>
+        isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
+    )?.UUID;
+
     const instanceVolumeMapping = (await getMappedOntapVolumes(
         credentialsId,
         region,
@@ -286,7 +305,10 @@ async function initiateStorageAssessmentCollection(
         instanceRecord.activeNodeInstanceid,
         [instanceRecord.name],
         instanceRecord.sqlAuthEnabled,
-        true
+        true,
+        accountId,
+        ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+        instanceRecord.svmOntapUuid
     )) as MappedOnTapVolumeResponse[];
 
     if (isEmpty(instanceVolumeMapping)) {
@@ -343,37 +365,57 @@ async function initiateStorageAssessmentCollection(
         : !isEmpty(volumes) && !isEmpty(luns) && !isEmpty(os)
         ? JOBSTATUS.COMPLETED
         : JOBSTATUS.WARNING;
+    if (
+        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE.valueOf()
+    ) {
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage configuration assessment',
+            description: 'Storage configuration assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: configJobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage layout assessment',
+            description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage sizing assessment',
+            description: 'Storage sizing assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+    }
 
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage configuration assessment',
-        description: 'Storage configuration assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: configJobStatus,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage layout assessment',
-        description: 'Storage layout assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(layout) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    await registerJob(accountId, credentialsId, region, {
-        name: 'Storage sizing assessment',
-        description: 'Storage sizing assessment',
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        endTime: Date.now(),
-        status: isDemo() ? JOBSTATUS.COMPLETED : isEmpty(sizing) ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
+    if (
+        jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
+        jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
+    ) {
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Resiliency assessment',
+            description: 'Snapshot policy assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: configJobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId: jobId
+        });
+    }
 }
 
 async function driftAssessmentDataCollection(
@@ -407,9 +449,7 @@ async function driftAssessmentDataCollection(
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-        shouldRunStorageAssessment =
-            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment;
+        shouldRunStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
         shouldRunComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldRunLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldRunHostOsPatchAssessment = fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLocaleLowerCase());
@@ -436,7 +476,12 @@ async function driftAssessmentDataCollection(
             region,
             databaseHostId,
             jobId,
-            databaseInstanceRecord
+            databaseInstanceRecord,
+            !shouldRunResilienceAssessment
+                ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
+                : shouldRunStorageAssessment
+                ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
+                : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
         );
     }
 
@@ -494,9 +539,10 @@ async function triggerAssessment(
     let activeNodeInstanceId;
     let newDatabaseInstanceDetails;
     let cloudProviderAccountId;
+    let instanceDetails;
 
     try {
-        const instanceDetails = await getInstanceDetails(
+        instanceDetails = await getInstanceDetails(
             accountId,
             credentialsId,
             region,
@@ -544,7 +590,9 @@ async function triggerAssessment(
             activeNodeInstanceid: activeNodeInstanceId!,
             fsxFileSystem: fileSystemId!,
             cloudProviderAccountId: cloudProviderAccountId || '',
-            resourceName: resource.resource_name || ''
+            resourceName: resource.resource_name || '',
+            svmId:
+                (instanceDetails?.newDatabaseInstanceDetails?.fsx_svm_id as Record<string, string>)[fileSystemId!] || ''
         };
         await driftAssessmentDataCollection(
             accountId,
@@ -794,9 +842,7 @@ async function fetchDriftAssessment(
         // remove the empty spaces in the string & split the fields by comma separated array values
         const fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
 
-        shouldCalculateStorageAssessment =
-            fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase()) ||
-            fieldsValues?.includes(AssessmentCategories.RESILIENCY.toLocaleLowerCase()); // Resilience.snapshot-policy is calculated as part of storage assessment
+        shouldCalculateStorageAssessment = fieldsValues?.includes(AssessmentCategories.STORAGE.toLocaleLowerCase());
         shouldCalculateComputeAssessment = fieldsValues?.includes(AssessmentCategories.COMPUTE.toLocaleLowerCase());
         shouldCalculateLicenseAssessment = fieldsValues?.includes(AssessmentCategories.LICENSE.toLocaleLowerCase());
         shouldCalculateHostOsPatchAssessment = fieldsValues?.includes(
@@ -900,6 +946,8 @@ async function fetchDriftAssessment(
                     const sizing = sizingConfig as ParameterDriftResponseType;
                     if (sizingConfigsOptimized.includes(sizing.name)) {
                         sizing.status = AssessmentStatus.OPTIMIZED;
+                        sizing.objectsInViolation = [];
+                        sizing.totalObjectsInViolation = 0;
                     }
                     return sizing;
                 });
@@ -1296,5 +1344,6 @@ export {
     onDemandTriggerDriftAssessmentDataCollection,
     fetchDriftAssessmentPerHost,
     calculateComputeDrift,
-    fetchDriftAssessmentPerAccount
+    fetchDriftAssessmentPerAccount,
+    initiateStorageAssessmentCollection
 };

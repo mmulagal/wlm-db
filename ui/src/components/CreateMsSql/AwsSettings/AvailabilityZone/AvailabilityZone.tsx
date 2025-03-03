@@ -260,6 +260,14 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
         }
     };
 
+    const pqsqlNode1 = () => {
+        if (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
+            return 'HA configuration - Node 1:';
+        } else {
+            return GENERAL.CLUSTER_CONFIG_PGSQL;
+        }
+    };
+
     return (
         <div className={styles['availability-zone']}>
             <AccordionCard
@@ -275,11 +283,12 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                             {GENERAL.AZ_TEXT}
                         </Typography>
 
-                        <div className={styles.firstContainer}>
+                        <div
+                            className={styles.firstContainer}
+                            style={{ gap: wizardType === WIZARD_TYPE.MSSQL ? '24px' : '40px' }}
+                        >
                             <Typography variant="Regular_14">
-                                {wizardType === WIZARD_TYPE.MSSQL
-                                    ? GENERAL.CLUSTER_CONFIG_NODE_1
-                                    : GENERAL.CLUSTER_CONFIG_PGSQL}
+                                {wizardType === WIZARD_TYPE.MSSQL ? GENERAL.CLUSTER_CONFIG_NODE_1 : pqsqlNode1()}
                             </Typography>
                             <SelectField
                                 label={GENERAL.AZ_Zone}
@@ -341,8 +350,15 @@ const AvailabilityZone = ({ wizardType }: AvailabilityZoneProps) => {
                         </div>
 
                         {deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (
-                            <div className={styles.firstContainer}>
-                                <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_2}</Typography>
+                            <div
+                                className={styles.firstContainer}
+                                style={{ gap: wizardType === WIZARD_TYPE.MSSQL ? '24px' : '40px' }}
+                            >
+                                <Typography variant="Regular_14" className={styles.pgsqlMargin}>
+                                    {wizardType === WIZARD_TYPE.MSSQL
+                                        ? GENERAL.CLUSTER_CONFIG_NODE_2
+                                        : 'HA configuration - Node 2:'}
+                                </Typography>
                                 <SelectField
                                     label={GENERAL.AZ_Zone}
                                     placeholder="Select an availability zone"

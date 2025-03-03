@@ -43,7 +43,12 @@ const prepareHeaders = (
     if (!isWorkloadFactory) {
         headers.set('x-netapp-referer', 'BlueXP');
     }
-    if (endpoint === 'deploySqlTemplate' || endpoint === 'getTemplates') {
+    if (
+        endpoint === 'deploySqlTemplate' ||
+        endpoint === 'getTemplates' ||
+        endpoint === 'deployPgsqlTemplate' ||
+        endpoint === 'getPgsqlTemplates'
+    ) {
         headers.set(
             'triggered-from',
             isChatbot ? 'chatbot' : selectConfig === SELECT_CONFIG.EASY_CREATE ? 'wizard-quick' : 'wizard-advanced'
@@ -964,12 +969,12 @@ export const getWellApi = createApi({
         return {
             getMssqlAssessmentData: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency`
                 })
             }),
             getMssqlAssessmentDataForHost: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch`
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/assessment?fields=storage,compute,license,host-os-patch,rss-config,maxdop,mssql-patch,resiliency`
                 })
             }),
             triggerInstanceAssessment: builder.mutation({

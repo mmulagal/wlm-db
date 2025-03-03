@@ -21,6 +21,7 @@
             .optimizeHeader {
                 position: relative;
                 left: 45.5%;
+                min-width: 140px;
             }
 
             .triggerAssessment {
@@ -273,6 +274,10 @@
         max-height: 2500px !important;
         overflow: hidden;
     }
+}
+
+[class*='TooltipInfo-module_tooltip-base'] {
+    z-index: 100000000 !important;
 }
 
 @media screen and (max-width: 1600px) {

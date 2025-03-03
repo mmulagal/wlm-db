@@ -10,13 +10,13 @@ import { listDatabaseInstanceConfigData } from '../../lib/database/database-inst
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    OptimizeStorageConfigs,
-    SEVERITY,
-    ASSESSMENT_RESOURCE_TYPE
+    OptimizeStorageConfigs
 } from '../../utils/continous-optimization-consts';
+import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
-import { StorageAssessment } from '../../utils/common-types';
+import { DatabaseInstance, databaseInstanceMetadata, StorageAssessment } from '../../utils/common-types';
+import { isDemo } from '../../utils/utils';
+import { getInstanceInfo } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -50,49 +50,62 @@ async function getSnapshotPolicyDriftData(
     databaseInstanceId: string
 ) {
     logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
-    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
-        accountId,
-        region,
-        credentialsId,
-        databaseHostId,
-        databaseInstanceId,
-        AssessmentCategories.STORAGE // Snapshot-policy is stored with storage assesment data
-    );
+    try {
+        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            AssessmentCategories.STORAGE // Snapshot-policy is stored with storage assesment data
+        );
 
-    if (isEmpty(persistedConfigurationData)) {
-        const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
-    }
-    const { config_data: configData } = persistedConfigurationData;
-    const { volumes, errors } = configData as unknown as StorageAssessment;
-
-    if (errors?.volumes) {
-        return { errorMessage: errors.volumes };
-    }
-
-    const snapshotPolicyAssesmentData: SnapshotPolicyAssesmentDataType = {
-        timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
-        tags: [AwsWellArchitecturedPillars.RELIABILITY],
-        severity: SEVERITY.WARNING,
-        status: AssessmentStatus.NOT_OPTIMIZED,
-        violations: [],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    };
-    volumes.forEach(volume => {
-        const volDetails = volume as Record<string, string>;
-        if (
-            isEmpty(volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
-            volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none'
-        ) {
-            snapshotPolicyAssesmentData.violations.push(volDetails?.name);
+        if (isEmpty(persistedConfigurationData)) {
+            const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
         }
-    });
+        const { config_data: configData } = persistedConfigurationData;
+        const { volumes, errors } = configData as unknown as StorageAssessment;
 
-    if (isEmpty(snapshotPolicyAssesmentData.violations)) {
-        snapshotPolicyAssesmentData.status = AssessmentStatus.OPTIMIZED;
+        if (errors?.volumes) {
+            return { errorMessage: errors.volumes };
+        }
+
+        const snapshotPolicyAssesmentData: SnapshotPolicyAssesmentDataType = {
+            ...storageGoldenConfigData.resiliency.snapshotPolicy,
+            timestamp: moment(persistedConfigurationData.creation_time).unix() * 1000,
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            violations: [],
+            totalObjectsAssessed: volumes.length,
+            totalObjectsInViolation: 0
+        };
+        volumes.forEach(volume => {
+            const volDetails = volume as Record<string, string>;
+            if (
+                isEmpty(volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
+                volDetails[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none'
+            ) {
+                snapshotPolicyAssesmentData.violations.push(volDetails?.name);
+            }
+        });
+        if (isDemo()) {
+            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+            const { configsOptimized } =
+                ((instanceDetail as unknown as DatabaseInstance)?.metadata as databaseInstanceMetadata) ?? {};
+            if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
+                snapshotPolicyAssesmentData.violations = [];
+            }
+        }
+
+        if (isEmpty(snapshotPolicyAssesmentData.violations)) {
+            snapshotPolicyAssesmentData.status = AssessmentStatus.OPTIMIZED;
+        }
+        snapshotPolicyAssesmentData.totalObjectsInViolation = snapshotPolicyAssesmentData.violations.length;
+        return snapshotPolicyAssesmentData;
+    } catch (error) {
+        logger.error('Error getting snapshot policy drift data', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
     }
-
-    return snapshotPolicyAssesmentData;
 }
 
 export { getResilienceDriftAssessment };

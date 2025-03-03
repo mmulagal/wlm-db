@@ -4,7 +4,7 @@ import { EmailResponseType } from '../routes/types/notification.types';
 import { sendEmail } from './aws/ses-operations';
 import getLogger from '../utils/logger';
 import { EMAIL_RATE_LIMIT_TYPE, EMAIL_TYPES, HttpErrorCodes, MAX_EMAIL_ATTACHMENT_SIZE } from '../utils/consts';
-import { isRateLimited, isValidEmail } from '../utils/utils';
+import { isDemo, isRateLimited, isValidEmail } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -21,7 +21,11 @@ export default async function processEmailRequest(
     const { userEmail } = fields;
 
     const cacheKey = accountId + userEmail;
-    if (isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, config.get('notification.max-emails-per-day'), '1d')) {
+
+    if (
+        !isDemo() &&
+        isRateLimited(EMAIL_RATE_LIMIT_TYPE, cacheKey, config.get('notification.max-emails-per-day'), '1d')
+    ) {
         throw createError(HttpErrorCodes.TOO_MANY_REQUESTS, 'Too many requests');
     }
 
@@ -44,6 +48,9 @@ export default async function processEmailRequest(
         }
 
         response = await sendSavingsCalculationEmail(accountId, fileBuffer, fileName, userEmail, storageType);
+    } else {
+        response.message = 'Invalid emailType';
+        throw createError(HttpErrorCodes.BAD_REQUEST, response);
     }
 
     return response;
@@ -59,7 +66,7 @@ async function sendSavingsCalculationEmail(
     logger.info('Sending savings calculation email', { accountId, fileName, userEmail, storageType });
     const successMsg = { message: 'Email sent successfully' };
 
-    if (process.env.NODE_ENV === 'demo') {
+    if (isDemo()) {
         return successMsg;
     }
 
@@ -84,3 +91,5 @@ async function sendSavingsCalculationEmail(
 
     return successMsg;
 }
+
+export { sendSavingsCalculationEmail };

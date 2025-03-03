@@ -44,6 +44,8 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             performanceTier: performanceTierObj?.current,
+                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
@@ -94,13 +96,13 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
             filterOptions: 'auto'
         },
         {
-            Header: 'Finding reasons',
-            accessor: 'performanceTier',
+            Header: 'Impacted network adapters',
+            accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, {}, inProgressOptimizationData, inProgressHostData)

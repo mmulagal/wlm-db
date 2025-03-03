@@ -131,7 +131,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'Impacted databases',
+            type: 'Impacted drives',
             value: ''
         },
         recommendation: {
@@ -167,7 +167,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'TempBD placement',
+            type: 'TempBD drive size',
             value: ''
         },
         recommendation: {
@@ -631,6 +631,42 @@ export const cardDataDefault: GwCardDataInterface = {
             }
         },
         tags: ['Performance efficiency']
+    },
+    scheduled_local_snapshot: {
+        id: 'snapshot-policy',
+        category: 'application',
+        block_one: {
+            type: GENERAL.RESILIENCY,
+            value: GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Snapshot policy',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Scheduled local snapshot assessment recommendation',
+            description:
+                'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.'
+        },
+        tags: ['Reliability']
     }
 };
 
@@ -693,7 +729,8 @@ export const formatApplicationCardMainConfig = (
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
-            category: categoryVal
+            category: categoryVal,
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -717,11 +754,13 @@ export const formatMicrosoftSqlPatchCardConfig = (
     let totalPatches = 0;
     let criticalPatches = 0;
     let importantPatches = 0;
+    let missingPatchList: any = [];
     data?.mssqlPatch?.missingPatchesInEc2Instances?.map(perInstance => {
         totalPatches += perInstance?.criticalMissingPatchesCount || 0;
         totalPatches += perInstance?.importantMissingPatchesCount || 0;
         criticalPatches += perInstance?.criticalMissingPatchesCount || 0;
         importantPatches += perInstance?.importantMissingPatchesCount || 0;
+        missingPatchList = [...missingPatchList, ...(perInstance?.missingPatchDetails || [])];
     });
 
     cardsData = {
@@ -755,7 +794,9 @@ export const formatMicrosoftSqlPatchCardConfig = (
             sqlPatchMissingPatches: {
                 critical: criticalPatches,
                 important: importantPatches
-            }
+            },
+            recommendationText: item?.recommendation,
+            missingPatchList: missingPatchList
         }
     };
     return cardsData;
@@ -803,7 +844,62 @@ export const formatMaxdopPatchCardConfig = (
             errorMessage: item?.errorMessage,
             tags: item?.tags,
             id: item?.name,
-            category: categoryVal
+            category: categoryVal,
+            recommendationText: item?.recommendation
+        }
+    };
+    return cardsData;
+};
+
+export const formatSnapshotPolicyCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.resiliency?.snapshotPolicy;
+    let categoryVal = 'resiliency';
+    let itemName = 'snapshot-policy';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
+                }
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal,
+            recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
+            violations: item?.violations
         }
     };
     return cardsData;
@@ -828,6 +924,7 @@ export const formatOsPatchCardConfig = (
     let criticalViolations = 0;
     let securityViolations = 0;
     let otherViolations = 0;
+    let missingPatchList: any = [];
     data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
@@ -835,6 +932,7 @@ export const formatOsPatchCardConfig = (
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
         otherViolations += perInstance?.otherNonCompliantCount || 0;
+        missingPatchList = [...missingPatchList, ...(perInstance?.missingPatchDetails || [])];
     });
 
     cardsData = {
@@ -869,7 +967,9 @@ export const formatOsPatchCardConfig = (
                 critical: criticalViolations,
                 security: securityViolations,
                 other: otherViolations
-            }
+            },
+            recommendationText: item?.recommendation,
+            missingPatchList: missingPatchList
         }
     };
     return cardsData;
@@ -908,11 +1008,28 @@ export const formatRssConfigCardConfig = (
 
     let totalAdapters = item?.rssAdapters?.length || 0;
     let nonOptimizedAdapters = 0;
+    let notOptimizedAdapters: any = [];
+
+    if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
+        findingReasons++;
+        optimizedRows['tcpOffloading'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
+        optimizedValue['tcpOffloading'] = 'Enabled';
+    }
 
     item?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
         if (!adapter?.rssEnabled) {
             findingReasons++;
             nonOptimizedAdapters++;
+            notOptimizedAdapters.push({
+                ...adapter,
+                rssEnabled: adapter?.rssEnabled ? 'Enabled' : 'Disabled',
+                rssProfileStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                rssEnabledStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                baseProcessorNumberStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                receiveQueuesStatus: GENERAL.FINDINGS.NOT_OPTIMIZED,
+                tcpOffloadState: optimizedValue?.tcpOffloading,
+                tcpOffloadStateStatus: optimizedRows?.tcpOffloading
+            });
             optimizedRows['rssProfile'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
             optimizedValue['rssProfile'] = adapter?.rssProfile;
             optimizedRows['rssStatus'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
@@ -956,15 +1073,30 @@ export const formatRssConfigCardConfig = (
                 adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues
             ) {
                 nonOptimizedAdapters++;
+                // notOptimizedAdapters.push(adapter);
+                notOptimizedAdapters.push({
+                    ...adapter,
+                    rssEnabled: adapter?.rssEnabled ? 'Enabled' : 'Disabled',
+                    rssProfileStatus:
+                        adapter?.rssProfile !== item?.recommendedAdapterSettings?.recommendedRssProfile
+                            ? GENERAL.FINDINGS.NOT_OPTIMIZED
+                            : GENERAL.FINDINGS.OPTIMIZED,
+                    rssEnabledStatus: GENERAL.FINDINGS.OPTIMIZED,
+                    baseProcessorNumberStatus:
+                        adapter?.baseProcessorNumber !==
+                        item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+                            ? GENERAL.FINDINGS.NOT_OPTIMIZED
+                            : GENERAL.FINDINGS.OPTIMIZED,
+                    receiveQueuesStatus:
+                        adapter?.numberOfReceiveQueues !== item?.recommendedAdapterSettings?.recommendedReceiveQueues
+                            ? GENERAL.FINDINGS.NOT_OPTIMIZED
+                            : GENERAL.FINDINGS.OPTIMIZED,
+                    tcpOffloadState: optimizedValue?.tcpOffloading,
+                    tcpOffloadStateStatus: optimizedRows?.tcpOffloading
+                });
             }
         }
     });
-
-    if (item?.tcpOffloadState?.toLowerCase() === 'enabled') {
-        findingReasons++;
-        optimizedRows['tcpOffloading'] = GENERAL.FINDINGS.NOT_OPTIMIZED;
-        optimizedValue['tcpOffloading'] = 'Enabled';
-    }
 
     cardsData = {
         ...cardsData,
@@ -999,9 +1131,12 @@ export const formatRssConfigCardConfig = (
             category: categoryVal,
             errorMessage: item?.errorMessage,
             rssAdapters: item?.rssAdapters,
+            recommendedAdapterSettings: item?.recommendedAdapterSettings,
+            notOptimizedAdapters: notOptimizedAdapters,
             tcpOffloadState: item?.tcpOffloadState,
             rssOptimizedRows: optimizedRows,
-            rssOptimizedValues: optimizedValue
+            rssOptimizedValues: optimizedValue,
+            recommendationText: item?.recommendation
         }
     };
     return cardsData;
@@ -1120,7 +1255,10 @@ export const formatIndividualCardMainConfig = (
                     isMissingPermissions: index === 2 ? computeMissingPermissions : null,
                     missingPermissions: item?.missingPermissions,
                     recommendedSizeInGib: item?.recommendedSizeInGib,
-                    sizingViolations: item?.sizingViolations
+                    sizingViolations: item?.sizingViolations,
+                    violationDetails: item?.violationDetails,
+                    objectsInViolation: item?.objectsInViolation,
+                    recommendationText: item?.recommendation
                 }
             };
         });
@@ -1286,6 +1424,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
     let notOptimizedCompute = 0;
     let optimizedApplication = 0;
     let notOptimizedApplication = 0;
+    let optimizedResiliency = 0;
+    let notOptimizedResiliency = 0;
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
@@ -1309,6 +1449,12 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 optimizedApplication++;
             } else {
                 notOptimizedApplication++;
+            }
+        } else if (nestedObject?.category === 'resiliency') {
+            if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED) {
+                optimizedResiliency++;
+            } else {
+                notOptimizedResiliency++;
             }
         }
     });
@@ -1340,20 +1486,47 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
             : 0
     };
 
+    let resiliencyCount = {
+        total: optimizedResiliency + notOptimizedResiliency,
+        optimized: optimizedResiliency,
+        notOptimized: notOptimizedResiliency,
+        percent: optimizedResiliency
+            ? formatNumberWithCustomComma((optimizedResiliency / (optimizedResiliency + notOptimizedResiliency)) * 100)
+            : 0
+    };
+
     let optBreakDown = {
         storage: storageCount,
         compute: computeCount,
         application: applicationCount,
+        resiliency: resiliencyCount,
         total: {
             // Total configuration will be calculated by adding the total number of configurations in the storage layout and sizing
-            total: storageCount?.total + computeCount?.total + applicationCount?.total,
-            optimized: storageCount?.optimized + computeCount?.optimized + applicationCount?.optimized,
-            notOptimized: storageCount?.notOptimized + computeCount?.notOptimized + applicationCount?.notOptimized,
+            total: storageCount?.total + computeCount?.total + applicationCount?.total + resiliencyCount?.total,
+            optimized:
+                storageCount?.optimized +
+                computeCount?.optimized +
+                applicationCount?.optimized +
+                resiliencyCount?.optimized,
+            notOptimized:
+                storageCount?.notOptimized +
+                computeCount?.notOptimized +
+                applicationCount?.notOptimized +
+                resiliencyCount?.notOptimized,
             percent:
-                storageCount?.optimized || computeCount?.optimized || applicationCount?.optimized
+                storageCount?.optimized ||
+                computeCount?.optimized ||
+                applicationCount?.optimized ||
+                resiliencyCount?.optimized
                     ? formatNumberWithCustomComma(
-                          ((storageCount?.optimized + computeCount?.optimized + applicationCount?.optimized || 0) /
-                              (storageCount?.total + computeCount?.total + applicationCount?.total || 1)) *
+                          ((storageCount?.optimized +
+                              computeCount?.optimized +
+                              applicationCount?.optimized +
+                              resiliencyCount?.optimized || 0) /
+                              (storageCount?.total +
+                                  computeCount?.total +
+                                  applicationCount?.total +
+                                  resiliencyCount?.total || 1)) *
                               100
                       )
                     : 0
@@ -1382,6 +1555,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
     cardsData = formatMicrosoftSqlPatchCardConfig(data, optimizingData, cardsData);
 
     cardsData = formatMaxdopPatchCardConfig(data, optimizingData, cardsData);
+
+    cardsData = formatSnapshotPolicyCardConfig(data, optimizingData, cardsData);
 
     cardsData = {
         ...cardsData,
@@ -1585,7 +1760,8 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
         sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
         microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
-        maxdop: { category: 'Application', subCategory: 'Application_sub' }
+        maxdop: { category: 'Application', subCategory: 'Application_sub' },
+        scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' }
     };
 
     Object.keys(cardData).map((key: any) => {
@@ -2249,7 +2425,7 @@ export const nameToIdConfigMapping = (name: string) => {
         : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
         ? 'compute-rightsizing'
         : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-        ? 'maxdop'
+        ? 'max-dop'
         : '';
 };
 

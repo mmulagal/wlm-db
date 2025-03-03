@@ -5,10 +5,16 @@ import getLogger from '../utils/logger';
 import { HttpErrorCodes } from '../utils/consts';
 import { BulkOptimizeGeneralPerHostRequestBodyType } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
-import { optimizeOperatingSystemSettings, optimizeSizing, optimizeStorageTier } from './cont-opt-optimize-operations';
+import {
+    optimizeMaxDop,
+    optimizeOperatingSystemSettings,
+    optimizeSizing,
+    optimizeStorageTier
+} from './cont-opt-optimize-operations';
 import { updateParentJobStatus } from './database/job-operations';
 import { OPTIMIZATION_CATEGORIES, OPTIMIZE_SIZING_CONFIGS } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
+import { listResources } from '../lib/database/db';
 
 const logger = getLogger();
 
@@ -38,6 +44,15 @@ async function bulkOptimization(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
+    // validate the account id, credentials id, region is valid details in the DB
+    const isValid = await validateRequestDetails(accountId, credentialsId, region);
+
+    if (!isValid) {
+        const errorMessage = `Invalid input: The combination of accountId (${accountId}), credentialsId (${credentialsId}), and region (${region}) does not match any records in the database.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
     const jobMetadata: JobMetadata = {
         hostsToOptimize: await formatJobMetadata(hostsToOptimize)
     };
@@ -47,6 +62,8 @@ async function bulkOptimization(
             ? 'Optimize operating system configuration'
             : optimizationCategory === OPTIMIZATION_CATEGORIES.STORAGE_TIER
             ? 'Optimize storage tier'
+            : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
+            ? 'Optimize maxdop configuration'
             : 'Optimize storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -108,6 +125,9 @@ async function handleOptimization(
                     [optimizationSubcategory as unknown as OPTIMIZE_SIZING_CONFIGS],
                     parentJobId
                 );
+                break;
+            case OPTIMIZATION_CATEGORIES.MAXDOP:
+                await optimizeMaxDop(accountId, credentialsId, region, databaseHostId, databaseInstanceId, parentJobId);
                 break;
             default:
                 break;
@@ -253,6 +273,18 @@ async function handleBulkComputeOptimization(
             await updateParentJobStatus(accountId, masterOptimizeParentId);
         }
     }
+}
+
+async function validateRequestDetails(accountId: string, credentialsId: string, region: string) {
+    logger.info(`Validating request details: ${accountId}, ${credentialsId}, ${region}`);
+
+    const [resourceDetail] = await listResources(accountId, undefined, credentialsId, region);
+
+    if (isEmpty(resourceDetail)) {
+        return false;
+    }
+
+    return true;
 }
 
 export { bulkOptimization, bulkComputeOptimization };

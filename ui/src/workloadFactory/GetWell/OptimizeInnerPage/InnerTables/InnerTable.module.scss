@@ -1,6 +1,10 @@
 .inner-table {
     width: 1334px;
 
+    [class*='Table-module_cell'] {
+        color: var(--text-primary) !important;
+    }
+
     .statusContainer {
         display: flex;
         gap: 8px;
@@ -43,6 +47,40 @@
                     fill: var(--text-disabled);
                 }
             }
+        }
+    }
+
+    .container {
+        display: flex;
+        gap: 8px;
+        .sqlServerInstance {
+            max-width: 261px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .colorText {
+            cursor: pointer;
+            color: var(--text-button-primary);
+        }
+        [class*='Popover-module_base'] {
+            max-height: 180px;
+            overflow: auto;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+    }
+
+    .rssCell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        svg {
+            position: relative;
+            top: 2px;
         }
     }
 

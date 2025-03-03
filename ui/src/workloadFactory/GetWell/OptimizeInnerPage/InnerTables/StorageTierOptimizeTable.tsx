@@ -1,7 +1,6 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
-import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
@@ -10,27 +9,15 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
 
-const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
+const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const data = [
-        {
-            serverInstanceName: 'Volume 1',
-            status: 'Up',
-            storageTierPercent: '50%',
-            id: '1'
-        },
-        {
-            serverInstanceName: 'Volume 2',
-            status: 'Up',
-            storageTierPercent: '50%',
-            id: '2'
-        }
-    ];
 
     const tableData = useMemo(() => {
-        return data.map((row: any) => ({
+        let id = 0;
+        return data?.violationDetails?.map((row: any) => ({
             ...row,
+            id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
     }, [data]);
@@ -38,28 +25,28 @@ const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: an
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Volume name',
-            accessor: 'serverInstanceName',
+            accessor: 'objectName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: '481px',
-            renderCell: (cellData: any, rowData: any) => {
-                return <FirstColumnComponent rowData={rowData} />;
+            renderCell: (cellData: any) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
 
         {
-            Header: 'Performance tier',
-            accessor: 'performanceTier',
+            Header: 'Storage tier percentage',
+            accessor: 'value',
             id: '3',
             width: '481px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails(type, {})
+        lastColDetails(type, {}, '372px')
     ];
 
     const tableProps = useTable({
@@ -70,8 +57,9 @@ const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: an
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple',
-        defaultSelectedRows: tableData.map(item => item.id)
+        // selectionType: 'multiple',
+        selectionType: 'none',
+        defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
     useEffect(() => {
@@ -91,8 +79,15 @@ const StorageTierOptimizeTable = ({ type, lastColDetails, handleBulkAction }: an
                 tableProps={tableProps}
                 pluralTitle={`Impacted volumes`}
                 singularTitle={'Impacted volume'}
+                actionsRight={
+                    <div className={styles.optimizeButton}>
+                        <DsButton onClick={handleBulkAction} isThin variant="primary">
+                            Optimize
+                        </DsButton>
+                    </div>
+                }
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

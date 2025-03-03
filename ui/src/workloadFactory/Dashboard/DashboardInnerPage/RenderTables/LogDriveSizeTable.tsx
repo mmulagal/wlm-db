@@ -45,6 +45,8 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                             serverInstanceName: instanceData?.databaseInstanceName,
                             percentDataDriveSize: logDriveSizeObj?.current,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
+                            totalObjectsAssessed: logDriveSizeObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: logDriveSizeObj?.totalObjectsInViolation,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[logDriveSizeObj?.status],
                             sizingViolations: logDriveSizeObj?.sizingViolations,
@@ -96,13 +98,13 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
             filterOptions: 'auto'
         },
         {
-            Header: 'Percentage of data drive size',
-            accessor: 'percentDataDriveSize',
+            Header: 'Impacted drives',
+            accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE, {}, inProgressOptimizationData, inProgressHostData)

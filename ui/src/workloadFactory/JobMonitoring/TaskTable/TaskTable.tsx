@@ -61,7 +61,7 @@ const TaskTable = ({ taskList = [] }: any) => {
         dispatch(setGwDatabaseStorageType(sqlServerDeploymentType));
     };
     const taskDesc = (desc: string, rowData: any) => {
-        if (desc.includes('databaseInstanceId') && desc.includes('resourceId')) {
+        if (desc && desc.includes('databaseInstanceId') && desc.includes('resourceId')) {
             const splitMessage = desc.split(';');
 
             // Extract the first part of the split message
@@ -90,7 +90,7 @@ const TaskTable = ({ taskList = [] }: any) => {
         } else {
             return (
                 <div className={CommonStyles.wrapTextIn2Line} title={desc}>
-                    {desc}
+                    {desc || ''}
                 </div>
             );
         }

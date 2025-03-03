@@ -1,9 +1,10 @@
 locals {
-  log_feature_enabled   = var.enable_cloudwatch_log_feature == true ? "true" : "false"
-  ontap_security_groups = split(",", var.ontap_security_group_id)
-  group_set             = local.ontap_security_groups
-  node_type             = var.sql_node_name == "SQL-Node-1" ? "Primary" : "Secondary"
-  tagName               = (var.sql_node_name == "SQL-Node" || var.sql_node_name == "SQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
+  log_feature_enabled = var.enable_cloudwatch_log_feature == true ? "true" : "false"
+  is_ha               = var.is_standalone == false ? "true" : "false"
+  group_set           = [var.ontap_security_group_id, var.workload_security_group_id]
+  node_type           = var.sql_node_name == "PGSQL-Node-1" ? "Primary" : "Secondary"
+  # tagName             = (var.sql_node_name == "PGSQL-Node" || var.sql_node_name == "PGSQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2
+  tagName = var.sql_fsx_server_net_bios_name
 
   user_data = templatefile("${path.module}/user_data.sh", {
     pgsql_node_initialization_s3_url = var.pgsql_node_initialization_s3_url
@@ -21,16 +22,18 @@ locals {
     fsx_aggr_name                    = var.fsx_aggr_name
     fsx_svm_uuid                     = var.fsx_svm_uuid
     log_feature_enabled              = local.log_feature_enabled
+    node_name                        = var.sql_node_name
+    is_ha                            = local.is_ha
   })
 }
 
-resource "aws_iam_instance_profile" "standalone_sql_fsx_profile" {
+resource "aws_iam_instance_profile" "standalone_pgsql_profile" {
   count = var.is_standalone ? 1 : 0
-  name  = "${var.deployment_name}_sql_fsx_profile"
+  name  = "${var.deployment_name}_pgsql_profile"
   role  = var.ec2_role_name
 }
 
-resource "aws_network_interface" "sql_node_ni" {
+resource "aws_network_interface" "pgsql_node_ni" {
   count             = var.is_standalone ? 1 : 0
   subnet_id         = var.private_subnet_id
   private_ips_count = 2
@@ -43,15 +46,13 @@ resource "aws_network_interface" "sql_node_ni" {
 }
 
 resource "aws_instance" "sql_node" {
-  # depends_on = [null_resource.check_user_data_tag]
-
   ami                  = var.ami_id
   instance_type        = var.workload_instance_type
   key_name             = var.key_pair_name
-  iam_instance_profile = var.is_standalone ? aws_iam_instance_profile.standalone_sql_fsx_profile[0].name : var.iam_instance_profile
+  iam_instance_profile = var.is_standalone ? aws_iam_instance_profile.standalone_pgsql_profile[0].name : var.iam_instance_profile
 
   network_interface {
-    network_interface_id = var.is_standalone ? aws_network_interface.sql_node_ni[0].id : var.network_interface_id
+    network_interface_id = var.is_standalone ? aws_network_interface.pgsql_node_ni[0].id : var.network_interface_id
     device_index         = 0
   }
 

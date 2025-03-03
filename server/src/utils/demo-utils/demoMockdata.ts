@@ -1833,6 +1833,371 @@ function savePGSQLConfigurationData(
         postgreServerName: 'pgsqlserver'
     };
 }
+
+function savePGSQLHaConfigurationData(
+    region: string,
+    awsAccountId: string,
+    credentialsId: string,
+    dbName: string,
+    configName: string
+) {
+    return {
+        awsAccount: {
+            selectedCredential: {
+                value: `DemoDefaultCredential | ${awsAccountId}`,
+                label: `DemoDefaultCredential | ${awsAccountId}`,
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    credentialsId,
+                    name: 'DemoDefaultCredential',
+                    arn: `arn:aws:iam::${awsAccountId}:role/demo_role_auth0637c80cf46e3b8daf81a914e`,
+                    providerAccountId: awsAccountId
+                }
+            }
+        },
+        regionAndVpc: {
+            selectedRegion: {
+                value: region,
+                label: AWS_REGIONS.get(region)!,
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    regionCode: region,
+                    regionName: AWS_REGIONS.get(region)!
+                }
+            },
+            selectedVPC: {
+                value: 'VPC-1 | 172.30.0.0/20',
+                label: 'VPC-1 | 172.30.0.0/20',
+                label2: 'vpc-7d4a2818',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'vpc-7d4a2818',
+                    name: 'VPC-1',
+                    cidrBlock: '172.30.0.0/20',
+                    availabilityZones: {
+                        'availability-zone-1': [
+                            {
+                                id: 'subnet-5a37222d',
+                                state: 'available',
+                                vpcId: 'vpc-ba1ed1de',
+                                cidrBlock: '192.168.16.0/24',
+                                availabilityZone: 'availability-zone-1',
+                                availableIps: 251,
+                                tags: [
+                                    {
+                                        Key: 'KubernetesCluster',
+                                        Value: 'netehenfhk'
+                                    },
+                                    {
+                                        Key: 'eco-groupname',
+                                        Value: 'HCL'
+                                    },
+                                    {
+                                        Key: 'Name',
+                                        Value: 'HCL-CC-1'
+                                    },
+                                    {
+                                        Key: 'eco-shared-resource',
+                                        Value: 'Y'
+                                    }
+                                ],
+                                name: 'HCL-CC-1',
+                                routeTableId: 'rtb-0dde1132a1c54f5e6'
+                            }
+                        ],
+                        'availability-zone-2': [
+                            {
+                                id: 'subnet-74a1b303',
+                                state: 'available',
+                                vpcId: 'vpc-ba1ed1de',
+                                cidrBlock: '192.168.17.0/24',
+                                availabilityZone: 'availability-zone-2',
+                                availableIps: 251,
+                                tags: [
+                                    {
+                                        Key: 'Name',
+                                        Value: 'HCL-CC-2'
+                                    },
+                                    {
+                                        Key: 'eco-shared-resource',
+                                        Value: 'Y'
+                                    },
+                                    {
+                                        Key: 'eco-groupname',
+                                        Value: 'HCL'
+                                    }
+                                ],
+                                name: 'HCL-CC-2',
+                                routeTableId: 'rtb-00d7acd615fac5414'
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        availabilityZones: {
+            selectedAzNode1: {
+                value: 'availability-zone-1',
+                label: 'availability-zone-1',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    availabilityZone: 'availability-zone-1',
+                    subnets: ['subnet-5a37222d']
+                }
+            },
+            selectedSubnetNode1: {
+                value: '192.168.16.0/24',
+                label: 'HCL-CC-1 | 192.168.16.0/24',
+                label2: 'subnet-5a37222d',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'subnet-5a37222d',
+                    state: 'available',
+                    vpcId: 'vpc-ba1ed1de',
+                    cidrBlock: '192.168.16.0/24',
+                    availabilityZone: 'availability-zone-1',
+                    availableIps: 251,
+                    tags: [
+                        {
+                            Key: 'KubernetesCluster',
+                            Value: 'netehenfhk'
+                        },
+                        {
+                            Key: 'eco-groupname',
+                            Value: 'HCL'
+                        },
+                        {
+                            Key: 'Name',
+                            Value: 'HCL-CC-1'
+                        },
+                        {
+                            Key: 'eco-shared-resource',
+                            Value: 'Y'
+                        }
+                    ],
+                    name: 'HCL-CC-1',
+                    routeTableId: 'rtb-0dde1132a1c54f5e6'
+                }
+            },
+            selectedAzNode2: {
+                value: 'availability-zone-2',
+                label: 'availability-zone-2',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    availabilityZone: 'availability-zone-2',
+                    subnets: ['subnet-74a1b303']
+                }
+            },
+            selectedSubnetNode2: {
+                value: '192.168.17.0/24',
+                label: 'HCL-CC-2 | 192.168.17.0/24',
+                label2: 'subnet-74a1b303',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'subnet-74a1b303',
+                    state: 'available',
+                    vpcId: 'vpc-ba1ed1de',
+                    cidrBlock: '192.168.17.0/24',
+                    availabilityZone: 'availability-zone-2',
+                    availableIps: 251,
+                    tags: [
+                        {
+                            Key: 'Name',
+                            Value: 'HCL-CC-2'
+                        },
+                        {
+                            Key: 'eco-shared-resource',
+                            Value: 'Y'
+                        },
+                        {
+                            Key: 'eco-groupname',
+                            Value: 'HCL'
+                        }
+                    ],
+                    name: 'HCL-CC-2',
+                    routeTableId: 'rtb-00d7acd615fac5414'
+                }
+            }
+        },
+        securityGroup: {
+            selectedSecurityType: 'Use an existing security group',
+            selectedExistingSecurityGroup: {
+                value: 'sg-ad2b38d1',
+                label: 'sg-ad2b38d1',
+                label2: 'default',
+                isDisabled: false,
+                disabledTitle: ''
+            }
+        },
+        operatingSystem: {
+            label: 'Amazon Linux 2023',
+            value: '2023'
+        },
+        dbVersion: {
+            value: '2016',
+            label: 'PostgreSql Server 2016'
+        },
+        dbDeploymentModel: {
+            label: 'Failover cluster instance (FCI)',
+            value: 'fci'
+        },
+        license: {
+            selectedLicenseType: 'License included AMI',
+            selectedLicenseId: null,
+            selectedCustomAMI: null
+        },
+        sqlServerCollation: {},
+        dbName,
+        dbCredentials: {
+            name: 'postgres',
+            password: ''
+        },
+        keyPair: {
+            selectedKeyPair: {
+                value: 'Key-Pair-1',
+                label: 'Key-Pair-1',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    id: 'EcP2PDOX6NUQFDKSOMXE',
+                    name: 'Key-Pair-1'
+                }
+            }
+        },
+        instanceType: {
+            value: 'm5.xlarge',
+            label: 'm5.xlarge',
+            label2: '4vCPU, 16 GiB RAM, 4750Mbps',
+            isDisabled: false,
+            disabledTitle: '',
+            data: {
+                instanceType: 'm5.xlarge',
+                vCpus: 4,
+                ramInMib: 16384,
+                iopsInMbps: 4750,
+                architecture: ['x86_64']
+            }
+        },
+        fsxN: {
+            fsxNType: 'fsxn_new',
+            fsxNName: '',
+            fsxNNewUserName: 'fsxadmin',
+            fsxNExistingName: {
+                value: 'fsx-wlmdb-DEFAULT | fs-a1d234bb6e87a',
+                label: 'fsx-wlmdb-DEFAULT | fs-a1d234bb6e87a',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: '',
+                data: {
+                    fileSystemId: 'fs-a1d234bb6e87a',
+                    fileSystemName: 'fsx-wlmdb-DEFAULT',
+                    kmsKeyId: 'arn:aws:kms:eu-south-2:951911461994:key/XESZQNNYHHSRE6VFL'
+                }
+            },
+            fsxNExistingUserName: 'fsxadmin',
+            fsxNPassword: ''
+        },
+        storageCapacity: {
+            capacity: '1024',
+            unit: {
+                value: 'GiB',
+                label: 'GiB',
+                label2: '',
+                isDisabled: false,
+                disabledTitle: ''
+            }
+        },
+        provisionedIOPS: {
+            provisionedType: 'Automatic',
+            IOPSValue: ''
+        },
+        throughput: {
+            value: '128 MBps',
+            label: '128 MBps',
+            label2: '',
+            isDisabled: false,
+            disabledTitle: ''
+        },
+        simpleNotification: {
+            snsState: false,
+            snsARN: null
+        },
+        cloudWatch: true,
+        snapshotPolicyToggle: true,
+        encryption: {
+            encryptionType: 'Select a key from your account',
+            selectedRow: [
+                {
+                    id: 'PzYId8vguOMMrUE6Nqhb',
+                    arn: 'NWDnBoaBUkmdOahJLYss',
+                    name: 'aws/fsx',
+                    origin: 'AWS_KMS',
+                    state: 'Enabled',
+                    isDefault: true,
+                    default: true
+                },
+                {
+                    id: 'Vn0yCBjUEcLlnkFhQCVi',
+                    arn: 'Bvahsy3LuDVcSBJIdow3',
+                    name: 'aws/fsx',
+                    origin: 'AWS_KMS',
+                    state: 'Enabled',
+                    isDefault: true,
+                    default: true
+                },
+                {
+                    id: 'QKHC2REqZJI9vWY9OMfL',
+                    arn: '9iULssaon4glR7XEQWrA',
+                    name: 'aws/fsx',
+                    origin: 'AWS_KMS',
+                    state: 'Enabled',
+                    isDefault: true,
+                    default: true
+                }
+            ],
+            encryptionArn: ''
+        },
+        tags: [
+            {
+                key: '',
+                value: ''
+            }
+        ],
+        saveConfigName: configName,
+        selectConfig: 'Standard create',
+        loadConfig: '',
+        selectedDatabaseType: 'PostgreSQL',
+        postgreDeploymentType: 'High Availability instance',
+        postgreOS: {
+            value: 'Amazon Linux 2023 AMI',
+            label: 'Amazon Linux 2023 AMI',
+            label2: 'Amazon Linux 2023 AMI',
+            isDisabled: false,
+            disabledTitle: ''
+        },
+        postgreVersion: {
+            value: 'postgresql16',
+            label: 'postgresql16',
+            label2: 'postgresql16',
+            isDisabled: false,
+            disabledTitle: ''
+        },
+        postgreServerName: 'postgres'
+    };
+}
+
 function sandboxJobData(
     accountId: string,
     region: string,
@@ -2269,19 +2634,21 @@ function mockPGSqlStandaloneDeployementValidationStack(
     resourceName: string,
     parentJobId: string,
     credentialsId: string,
-    region: string
+    region: string,
+    sqlDeploymentMode: string
 ) {
+    const stackType = sqlDeploymentMode === 'ha' ? 'PgSqlHAStack' : 'PgSqlStandaloneStack';
     const stackId = randomUUID();
-    return [
+    const jobStack = [
         {
             id: stackId,
             account_id: accountId,
-            name: 'Deploying WLMDB-PgSqlStandaloneStack-1732253190348-ValidationStack1-1UCL90TQ3CFAP',
+            name: `Deploying WLMDB-${stackType}-1732253190348-ValidationStack1-1UCL90TQ3CFAP`,
             status: 'COMPLETED',
             resource_name: resourceName,
             credentials_id: credentialsId,
             type: 'DEPLOYMENT',
-            start_time: new Date(Date.now() - 60000 * 14),
+            start_time: new Date(Date.now() - 60000 * 17),
             description: 'Subnet Validation for deployment',
             parent_job_id: parentJobId,
             end_time: new Date(Date.now()),
@@ -2296,8 +2663,8 @@ function mockPGSqlStandaloneDeployementValidationStack(
             status: 'COMPLETED',
             resource_name: resourceName,
             name: 'Deploying ValidationNode1(AWS::EC2::Instance)',
-            description: 'Validating outbound connection to deployment resources in Amazon S3',
-            start_time: new Date(Date.now() - 60000 * 15),
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode)['ValidationNode1(AWS::EC2::Instance)'],
+            start_time: new Date(Date.now() - 60000 * 18),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2312,7 +2679,7 @@ function mockPGSqlStandaloneDeployementValidationStack(
             resource_name: resourceName,
             name: 'Deploying ValidationInstanceProfile(AWS::IAM::InstanceProfile)',
             description: 'Attaching an instance profile to the validation instance',
-            start_time: new Date(Date.now() - 60000 * 16),
+            start_time: new Date(Date.now() - 60000 * 20),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2327,12 +2694,32 @@ function mockPGSqlStandaloneDeployementValidationStack(
             resource_name: resourceName,
             name: 'Deploying DisableIMDSv1(AWS::EC2::LaunchTemplate)',
             description: 'Disabling instance metadata service v1 to use more secure v2',
-            start_time: new Date(Date.now() - 60000 * 17),
+            start_time: new Date(Date.now() - 60000 * 21),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
         }
     ];
+
+    if (sqlDeploymentMode === 'ha') {
+        jobStack.push({
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying ValidationNode2(AWS::EC2::Instance)',
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode)['ValidationNode2(AWS::EC2::Instance)'],
+            start_time: new Date(Date.now() - 60000 * 19),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        });
+    }
+
+    return jobStack;
 }
 
 function mockPGSqlStandaloneDeployementConfigureFSX(
@@ -2342,7 +2729,8 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
     credentialsId: string,
     region: string,
     stackName: string,
-    FSXFileSystemId: string | undefined
+    FSXFileSystemId: string | undefined,
+    sqlDeploymentMode: string
 ) {
     const fsxType = FSXFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
     const stackId = randomUUID();
@@ -2355,7 +2743,7 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
             resource_name: resourceName,
             credentials_id: credentialsId,
             type: 'DEPLOYMENT',
-            start_time: new Date(Date.now() - 60000 * 6),
+            start_time: new Date(Date.now() - 60000 * 9),
             description:
                 fsxType === 'NewFSxStack'
                     ? getSubJobDescriptions('PGSQL').NewFSxStack
@@ -2372,24 +2760,9 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
             type: 'DEPLOYMENT',
             status: 'COMPLETED',
             resource_name: resourceName,
-            name: 'Deploying FSxTempDbVolumeConfiguration(AWS::FSx::Volume)',
-            description: 'Creating a volume to host tempdb',
-            start_time: new Date(Date.now() - 60000 * 7),
-            end_time: new Date(Date.now()),
-            initiator: 'SYSTEM',
-            parent_job_id: stackId
-        },
-        {
-            id: randomUUID(),
-            account_id: accountId,
-            credentials_id: credentialsId,
-            region,
-            type: 'DEPLOYMENT',
-            status: 'COMPLETED',
-            resource_name: resourceName,
             name: 'Deploying FSxDataVolumeConfiguration(AWS::FSx::Volume)',
             description: 'Creating a volume to host data files',
-            start_time: new Date(Date.now() - 60000 * 8),
+            start_time: new Date(Date.now() - 60000 * 12),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2404,7 +2777,7 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
             resource_name: resourceName,
             name: 'Deploying FSxLogVolumeConfiguration(AWS::FSx::Volume)',
             description: 'Creating a volume to host log files',
-            start_time: new Date(Date.now() - 60000 * 9),
+            start_time: new Date(Date.now() - 60000 * 13),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2419,22 +2792,7 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
             resource_name: resourceName,
             name: 'Deploying FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)',
             description: 'Creating a dedicated storage virtual machine (SVM) for the database workload',
-            start_time: new Date(Date.now() - 60000 * 10),
-            end_time: new Date(Date.now()),
-            initiator: 'SYSTEM',
-            parent_job_id: stackId
-        },
-        {
-            id: randomUUID(),
-            account_id: accountId,
-            credentials_id: credentialsId,
-            region,
-            type: 'DEPLOYMENT',
-            status: 'COMPLETED',
-            resource_name: resourceName,
-            name: 'Deploying FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)',
-            description: 'Creating a virtual machine (SVM) for the database workload',
-            start_time: new Date(Date.now() - 60000 * 11),
+            start_time: new Date(Date.now() - 60000 * 14),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2452,7 +2810,7 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
             resource_name: resourceName,
             name: 'Deploying FSxFileSystemConfiguration(AWS::FSx::FileSystem)',
             description: 'Creating a new FSx for ONTAP file system',
-            start_time: new Date(Date.now() - 60000 * 12),
+            start_time: new Date(Date.now() - 60000 * 15),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2467,7 +2825,39 @@ function mockPGSqlStandaloneDeployementConfigureFSX(
             resource_name: resourceName,
             name: 'Deploying ONTAPSecurityGroup(AWS::EC2::SecurityGroup)',
             description: 'Creating a security group for FSx for ONTAP',
-            start_time: new Date(Date.now() - 60000 * 13),
+            start_time: new Date(Date.now() - 60000 * 16),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        });
+    }
+    if (sqlDeploymentMode === 'ha') {
+        FSXDeployementJobStack.push({
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying FSxReplicaLogVolumeConfiguration(AWS::FSx::Volume)',
+            description: 'Creating a volume to host log files for replica instance',
+            start_time: new Date(Date.now() - 60000 * 10),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        });
+        FSXDeployementJobStack.push({
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying FSxReplicaDataVolumeConfiguration(AWS::FSx::Volume)',
+            description: 'Creating a volume to host data files for replica instance',
+            start_time: new Date(Date.now() - 60000 * 11),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2481,20 +2871,22 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
     resourceName: string,
     parentJobId: string,
     credentialsId: string,
-    region: string
+    region: string,
+    sqlDeploymentMode: string
 ) {
+    const stackType = sqlDeploymentMode === 'ha' ? 'PgSqlHAStack' : 'PgSqlStandaloneStack';
     const stackId = randomUUID();
-    return [
+    const jobStack = [
         {
             id: stackId,
             account_id: accountId,
             credentials_id: credentialsId,
-            name: 'Deploying WLMDB-PgSqlStandaloneStack-1732253190348-SQLStandaloneStack-UT03Q9P3LGW2',
+            name: `Deploying WLMDB-${stackType}-1732253190348-PGSQLServerStack-UT03Q9P3LGW2`,
             status: 'COMPLETED',
             resource_name: resourceName,
             type: 'DEPLOYMENT',
             start_time: new Date(Date.now() - 60000 * 2),
-            description: getSubJobDescriptions('PGSQL').SQLStandaloneStack,
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode).PGSQLServerStack,
             parent_job_id: parentJobId,
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM'
@@ -2508,8 +2900,25 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
             status: 'COMPLETED',
             resource_name: resourceName,
             name: 'Deploying SqlNode(AWS::EC2::Instance)',
-            description: getSubJobDescriptions('PGSQL')['SqlNode(AWS::EC2::Instance)'],
-            start_time: new Date(Date.now() - 60000 * 3),
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode)['SqlNode1(AWS::EC2::Instance)'],
+            start_time: new Date(Date.now() - 60000 * 4),
+            end_time: new Date(Date.now()),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying NetworkInterface1(AWS::EC2::NetworkInterface)',
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode)[
+                'NetworkInterface1(AWS::EC2::NetworkInterface)'
+            ],
+            start_time: new Date(Date.now() - 60000 * 5),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2524,7 +2933,7 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
             resource_name: resourceName,
             name: 'Deploying WorkloadSecurityGroup(AWS::EC2::SecurityGroup)',
             description: getSubJobDescriptions('PGSQL')['WorkloadSecurityGroup(AWS::EC2::SecurityGroup)'],
-            start_time: new Date(Date.now() - 60000 * 4),
+            start_time: new Date(Date.now() - 60000 * 7),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2539,12 +2948,48 @@ function mockPGSqlStandaloneDeploymentStackDeployPGSqlInstance(
             resource_name: resourceName,
             name: 'Deploying LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)',
             description: 'Attaching an instance profile to EC2 instances for PGSQL Server nodes',
-            start_time: new Date(Date.now() - 60000 * 5),
+            start_time: new Date(Date.now() - 60000 * 8),
             end_time: Date.now(),
             initiator: 'SYSTEM',
             parent_job_id: stackId
         }
     ];
+    if (sqlDeploymentMode === 'ha') {
+        jobStack.push({
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying SqlNode2(AWS::EC2::Instance)',
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode)['SqlNode2(AWS::EC2::Instance)'],
+            start_time: new Date(Date.now() - 60000 * 3),
+            end_time: Date.now(),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        });
+        jobStack.push({
+            id: randomUUID(),
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            type: 'DEPLOYMENT',
+            status: 'COMPLETED',
+            resource_name: resourceName,
+            name: 'Deploying NetworkInterface2(AWS::EC2::NetworkInterface)',
+            description: getSubJobDescriptions('PGSQL', sqlDeploymentMode)[
+                'NetworkInterface2(AWS::EC2::NetworkInterface)'
+            ],
+            start_time: new Date(Date.now() - 60000 * 6),
+            end_time: Date.now(),
+            initiator: 'SYSTEM',
+            parent_job_id: stackId
+        });
+    }
+
+    return jobStack;
 }
 
 function mockCreateVpcEndpoint(
@@ -2566,7 +3011,7 @@ function mockCreateVpcEndpoint(
             resource_name: resourceName,
             name: 'Deploying WLMDB-PgSqlStandaloneStack-1732697250244-VpcEndpointStack-DEZ6RSGUG92G',
             description: 'Creating VPC endpoints for S3 CloudFormation, SQS, SSM, CloudWatch services',
-            start_time: new Date(Date.now() - 60000 * 18),
+            start_time: new Date(Date.now() - 60000 * 22),
             end_time: new Date(Date.now()),
             initiator: 'SYSTEM',
             parent_job_id: parentJobId
@@ -2581,7 +3026,7 @@ function mockCreateVpcEndpoint(
             resource_name: resourceName,
             name: 'Deploying HttpsSecurityGroup(AWS::EC2::SecurityGroup)',
             description: 'Creating security group to allow HTTPs access',
-            start_time: new Date(Date.now() - 60000 * 19),
+            start_time: new Date(Date.now() - 60000 * 23),
             end_time: Date.now(),
             initiator: 'SYSTEM',
             parent_job_id: stackId
@@ -2595,7 +3040,8 @@ async function mockPGSqlStandaloneDeploymentStack(
     credentialsId: string,
     region: string,
     stackName: string,
-    FSXFileSystemId: string | undefined
+    FSXFileSystemId: string | undefined,
+    sqlDeploymentMode: string
 ) {
     accountId = checkAccount(accountId);
     const stackId = randomUUID();
@@ -2618,7 +3064,8 @@ async function mockPGSqlStandaloneDeploymentStack(
         resourceName,
         stackId,
         credentialsId,
-        region
+        region,
+        sqlDeploymentMode
     );
     const fsxStack = mockPGSqlStandaloneDeployementConfigureFSX(
         accountId,
@@ -2627,14 +3074,16 @@ async function mockPGSqlStandaloneDeploymentStack(
         credentialsId,
         region,
         stackName,
-        FSXFileSystemId
+        FSXFileSystemId,
+        sqlDeploymentMode
     );
     const validationStack = mockPGSqlStandaloneDeployementValidationStack(
         accountId,
         resourceName,
         stackId,
         credentialsId,
-        region
+        region,
+        sqlDeploymentMode
     );
     const vpcEndpointStack = mockCreateVpcEndpoint(accountId, resourceName, stackId, credentialsId, region);
     return [...parentStack, ...vpcEndpointStack, ...validationStack, ...fsxStack, ...pgServerStack];
@@ -2842,6 +3291,7 @@ export {
     optimizeOperatingSystemJobData,
     mockPGSqlStandaloneDeploymentStack,
     savePGSQLConfigurationData,
+    savePGSQLHaConfigurationData,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
     enableMPIOJobData,

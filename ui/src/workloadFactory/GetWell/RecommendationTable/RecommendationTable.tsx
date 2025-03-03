@@ -172,6 +172,14 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         });
     };
 
+    const innerPageCheck = (name: string) => {
+        if (name === 'Multipath I/O Sessions' || name === 'Multipath I/O Status' || from === WLF_TABS.DASHBOARD) {
+            return false;
+        } else {
+            return true;
+        }
+    };
+
     const handleOntapDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
@@ -194,7 +202,6 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     const handleNavigateToOptimizePage = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(
             setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId: hostId, instanceId: instanceId })
         );
@@ -202,11 +209,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     //This is for inner page
     const handleDifferentNavigation = (rowData: any) => {
-        if (
-            selectedHeaderTab === WLF_TABS.OPTIMIZE &&
-            rowData?.name !== 'Multipath I/O Sessions' &&
-            rowData?.name !== 'Multipath I/O Status'
-        ) {
+        if (selectedHeaderTab === WLF_TABS.OPTIMIZE && innerPageCheck(rowData?.name)) {
             handleNavigateToOptimizePage(rowData);
         } else {
             handleOntapDialog(rowData);
@@ -268,19 +271,27 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 } else if (rowData?.type === 'lun') {
                     type = 'LUN path';
                 } else if (rowData?.type === 'os') {
-                    type = 'discs';
+                    type = 'drives';
                 }
 
                 return (
-                    <div>
-                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                            {(rowData?.totalObjectsInViolation || 0) +
-                                ' out of ' +
-                                (rowData?.totalObjectsAssessed || 0) +
-                                ' ' +
-                                type}
-                        </DsTypography>
-                    </div>
+                    <>
+                        {rowData?.name !== 'Multipath I/O Sessions' && rowData?.name !== 'Multipath I/O Status' ? (
+                            <div>
+                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                    {(rowData?.totalObjectsInViolation || 0) +
+                                        ' out of ' +
+                                        (rowData?.totalObjectsAssessed || 0) +
+                                        ' ' +
+                                        type}
+                                </DsTypography>
+                            </div>
+                        ) : (
+                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                {'Storage multipath'}
+                            </DsTypography>
+                        )}
+                    </>
                 );
             }
         },
@@ -371,7 +382,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
-                                                Optimize
+                                                {innerPageCheck(rowData?.name) ? 'View & optimize' : 'Optimize'}
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
@@ -386,7 +397,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     >
                                         <div>
                                             <DsButton variant="secondary" isDisabled={true}>
-                                                Optimize
+                                                {innerPageCheck(rowData?.name) ? 'View & optimize' : 'Optimize'}
                                             </DsButton>
                                         </div>
                                     </TooltipComponent>
@@ -394,10 +405,10 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                     <div id={`${rowData?.id}-optimize`}>
                                         <DsButton
                                             variant="secondary"
-                                            onClick={() => handleOntapDialog(rowData)}
+                                            onClick={() => handleDifferentNavigation(rowData)}
                                             isDisabled={rowData?.status === 'Not optimized' ? false : true}
                                         >
-                                            Optimize
+                                            {innerPageCheck(rowData?.name) ? 'View & optimize' : 'Optimize'}
                                         </DsButton>
                                     </div>
                                 ))}

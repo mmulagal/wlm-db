@@ -39,7 +39,9 @@ import {
     MAX_DATA_LUN_SIZE_IN_GIB,
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     AWS_REGIONS,
-    RESOURCESTYPE
+    RESOURCESTYPE,
+    HA,
+    FCI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -247,18 +249,27 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
     const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
     // All these in MiB
-    const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
-    const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    let FSxTempDbVolumeSize = 0;
-    if (databaseType !== DatabaseTypes.PG_SQL) {
-        FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    }
+    let FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
+    let FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+    let FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
     let FSxQuorumVolumeSize = 0;
-    if (sqlDeploymentMode !== STANDALONE && databaseType !== DatabaseTypes.PG_SQL) {
+    if (sqlDeploymentMode !== STANDALONE) {
         FSxQuorumVolumeSize = 12000; // 12GB
     }
+    const isPgsqlHADeployment =
+        databaseType === DatabaseTypes.PG_SQL && (sqlDeploymentMode === HA || sqlDeploymentMode === FCI);
+    if (databaseType === DatabaseTypes.PG_SQL) {
+        FSxDataVolumeSize = FSxDataLunSizeInMib; // Absolute value of database size, as there won't be any LUN incase of NFS mounts
+        FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+        FSxTempDbVolumeSize = 0; // No TempDB volume for PostgreSQL
+        FSxQuorumVolumeSize = 0; // No Quorum volume for PostgreSQL
+    }
 
-    const totalVolumesSize = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
+    const totalVolumesSize =
+        (isPgsqlHADeployment ? 2 : 1) * FSxDataVolumeSize +
+        (isPgsqlHADeployment ? 2 : 1) * FSxLogVolumeSize +
+        FSxTempDbVolumeSize +
+        FSxQuorumVolumeSize;
     // Total FSx Storage Capacity with 35% headroom
     let FSxStorageCapacity = Math.ceil(totalVolumesSize / 0.65);
     const FSxBufferVolumeSize = FSxStorageCapacity - totalVolumesSize;
@@ -745,9 +756,10 @@ const retryWithDelay = async (fn: any, retries = 3, interval = 5000, finalErr = 
         const resp = await fn();
         return resp;
     } catch (err) {
-        logger.error('Retry failed with error', err);
+        const errorMessage = `Retry failed with error: ${err}`;
+        logger.error(errorMessage);
         if (retries <= 0) {
-            return Promise.reject(finalErr);
+            return Promise.reject(errorMessage);
         }
 
         await sleep(interval);
@@ -812,7 +824,7 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
     const subJobDescriptions: SubJobDescriptions = {
         SQLStandaloneStack: `Deploying an ${dbEngineType} Server standalone instance with recommended best practices`,
         PGSQLServerStack: `Deploying an ${dbEngineType} Server ${
-            stackSqlDeploymentType === 'standalone' ? 'standalone' : 'ha'
+            stackSqlDeploymentType === 'Standalone' ? 'standalone' : 'ha'
         } instance with recommended best practices`,
         SQLServerStack: `Deploying an ${dbEngineType} Server FCI with recommended best practices`,
         NewFSxStack: `Deploying new FSx for ONTAP file system for ${dbEngineType} Server workload`,
@@ -863,14 +875,25 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SsmMessagesEndpoint(AWS::EC2::VPCEndpoint)': 'Creating SSMMessages endpoint',
         'FsxEndpoint(AWS::EC2::VPCEndpoint)': 'Creating FSxN endpoint',
         'CloudwatchLogsEndpoint(AWS::EC2::VPCEndpoint)': 'Creating CloudWatch logs endpoint',
-        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint'
+        'Ec2Endpoint(AWS::EC2::VPCEndpoint)': 'Creating EC2 endpoint',
+        'FSxReplicaDataVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host data files for replica instance',
+        'FSxReplicaSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+            'Creating a dedicated storage virtual machine for replica instance',
+        'FSxReplicaLogVolumeConfiguration(AWS::FSx::Volume)':
+            'Creating a volume to host log files for replica instance',
+        'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
+            stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
+        } EC2 instance`,
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
         subJobDescriptions['ValidationNode1(AWS::EC2::Instance)'] =
-            'Validating outbound connection to deployment resources in Amazon S3';
+            'Validating outbound connection to deployment resources in Amazon S3 for primary validation node';
         subJobDescriptions['ValidationNode2(AWS::EC2::Instance)'] =
-            'Validating outbound connection to deployment resources in Amazon S3';
+            'Validating outbound connection to deployment resources in Amazon S3 for replica validation node';
+        subJobDescriptions.ValidationStack = `Subnet Validation for ${dbEngineType} deployment`;
     }
 
     return subJobDescriptions;
@@ -901,6 +924,13 @@ const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 };
+
+function parseMultipleCommandResponse(response: string) {
+    // Multiple SSM command response is of the form {<json1String>}{<json2String>}...{<jsonnString>}, so we need to split the response into individual json objects and return them as an array
+    const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
+
+    return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
 
 export {
     filterSqlAmis,
@@ -955,5 +985,6 @@ export {
     isMssql,
     isPgsql,
     isValidEmail,
-    isRateLimited
+    isRateLimited,
+    parseMultipleCommandResponse
 };

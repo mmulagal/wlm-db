@@ -61,9 +61,11 @@ Parameters:
     FSxReplicaSvmId:
         Description: ID of the FSx Replica Storage Virtual Machine
         Type: String
+        Default: ''
     FSxReplicaSvmUuid:
         Description: UUID of the FSx Replica Storage Virtual Machine
         Type: String
+        Default: ''
     FSxAggrName:
         Description: Aggregate FSx for ONTAP file system.
         Type: String
@@ -77,9 +79,16 @@ Parameters:
     SQLVersion:
         Description: The version of PostgreSQL to install.
         Type: String
-    SqlFSxServerNetBIOSName:
+    SqlFSxServerNetBIOSName1:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: SqlFSx1
+        Description: NetBIOS name of the PGSQL Server (up to 15 characters).
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlFSxServerNetBIOSName2:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: SqlFSx2
         Description: NetBIOS name of the PGSQL Server (up to 15 characters).
         MaxLength: '15'
         MinLength: '1'
@@ -148,7 +157,7 @@ Resources:
                         - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName1'
                 -   Key: SQLServerName
                     Value: !Ref 'SqlServerName'
     SqlNode1:
@@ -171,10 +180,15 @@ Resources:
                 InstallSSMAgent:
                     commands:
                         a-install-ssm-agent:
-                            command: !Sub
-                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
+                                done
                         b-install-cloudwatch-agent:
-                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
                 CreateDeploymentFolders:
                     commands:
                         a-create-scripts-folder:
@@ -293,12 +307,23 @@ Resources:
                                     FSxLogVolumeName: !Ref 'FSxLogVolumeName'
                                     SQLVersion: !Ref 'SQLVersion'
                                     SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
-                        c-rename-host:
+                        c-configure-replication:
+                            command: !If
+                                - IsHACluster
+                                - !Sub
+                                    - '/home/ec2-user/cfn/scripts/setup/configure-replica-primary.sh 
+                                        -a ${AWS::StackName} 
+                                        -b ${SqlServiceAccountPassword} 
+                                        -c ${FSxDataVolumeName}'
+                                    -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                                        FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                - 'echo "Skipping c-configure-replication because IsHACluster is false."'
+                        d-rename-host:
                             command: !Sub
                                 - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
                                 - SqlServerName: !Ref 'SqlServerName'
-                        c-restart-host:
-                            command: sudo reboot
+                        e-restart-host:
+                            command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -310,9 +335,9 @@ Resources:
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName1'
             BlockDeviceMappings:
-                -   DeviceName: /dev/sda1
+                -   DeviceName: /dev/xvda
                     Ebs:
                         VolumeSize: !Ref EBSVolumeSize
                         VolumeType: gp3
@@ -324,10 +349,12 @@ Resources:
                 'Fn::Base64':
                     !Sub |
                         #!/bin/bash -xe
+                        sleep 10
                         token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
                         echo "Instance ID: $instanceID"
+                        privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
                         FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
                         url=https://cloudformation.${AWS::Region}.amazonaws.com
                         StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
@@ -338,6 +365,8 @@ Resources:
                             exit 1
                         else
                             echo "CF endpoint is reachable."
+                            aws ssm put-parameter --name "/netapp/wlmdb/${AWS::StackName}_primary" --value "{private_ip: '$privateIP'}" --type String
+                            echo "Ssm parameter created"
                             /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource SqlNode1 --region ${AWS::Region}
                         fi
     NetworkInterface2:
@@ -354,9 +383,9 @@ Resources:
                         - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName2'
                 -   Key: SQLServerName
-                    Value: !Ref 'SqlServerName'
+                    Value: !Sub "${SqlServerName}-replica"
     SqlNode2:
         Type: AWS::EC2::Instance
         Condition: IsHACluster
@@ -378,10 +407,15 @@ Resources:
                 InstallSSMAgent:
                     commands:
                         a-install-ssm-agent:
-                            command: !Sub
-                                'sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
+                                done
                         b-install-cloudwatch-agent:
-                            command: 'sudo yum install -y amazon-cloudwatch-agent.x86_64'
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
                 CreateDeploymentFolders:
                     commands:
                         a-create-scripts-folder:
@@ -500,12 +534,22 @@ Resources:
                                     FSxLogVolumeName: !Sub "${FSxLogVolumeName}_replica"
                                     SQLVersion: !Ref 'SQLVersion'
                                     SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
-                        c-rename-host:
+                        c-configure-replication:
                             command: !Sub
-                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}'
+                                - '/home/ec2-user/cfn/scripts/setup/configure-replica-secondary.sh
+                                    -a ${AWS::StackName}
+                                    -b ${SqlServiceAccountPassword}
+                                    -c ${FSxDataVolumeName}
+                                    -d ${FSxLogVolumeName}'
+                                -   SqlServiceAccountPassword: !Ref 'SQLServiceAccountPassword'
+                                    FSxDataVolumeName: !Ref 'FSxDataVolumeName'
+                                    FSxLogVolumeName: !Ref 'FSxLogVolumeName'
+                        d-rename-host:
+                            command: !Sub
+                                - '/home/ec2-user/cfn/scripts/common/rename-host.sh ${SqlServerName}-replica'
                                 - SqlServerName: !Ref 'SqlServerName'
-                        c-restart-host:
-                            command: sudo reboot
+                        e-restart-host:
+                            command: sudo reboot 2> /var/log/netapp_wf/rename-host.log
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -516,9 +560,9 @@ Resources:
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name
-                    Value: !Ref 'SqlFSxServerNetBIOSName'
+                    Value: !Ref 'SqlFSxServerNetBIOSName2'
             BlockDeviceMappings:
-                -   DeviceName: /dev/sda1
+                -   DeviceName: /dev/xvda
                     Ebs:
                         VolumeSize: !Ref EBSVolumeSize
                         VolumeType: gp3
@@ -530,10 +574,16 @@ Resources:
                 'Fn::Base64':
                     !Sub |
                         #!/bin/bash -xe
+                        sleep 10
                         token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s http://169.254.169.254/latest/api/token)
                         echo "Token: $token"
                         instanceID=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/instance-id)
                         echo "Instance ID: $instanceID"
+                        privateIP=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/local-ipv4)
+                        MAC=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ | head -n 1)
+                        subnetCidr=$(curl -H "X-aws-ec2-metadata-token: $token" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/subnet-ipv4-cidr-block)
+                        prefix=$(echo $subnetCidr | cut -d'/' -f2)
+                        privateIPWithCidr="$privateIP/$prefix"
                         FailureReason="CF endpoint is not reachable. Check your subnet outbound connectivity."
                         url=https://cloudformation.${AWS::Region}.amazonaws.com
                         StatusCode=$(curl -s -o /dev/null -w "%{http_code}" $url)
@@ -544,6 +594,8 @@ Resources:
                             exit 1
                         else
                             echo "CF endpoint is reachable."
+                            aws ssm put-parameter --name "/netapp/wlmdb/${AWS::StackName}_secondary" --value "{private_ip: '$privateIPWithCidr'}" --type String
+                            echo "Ssm parameter created"
                             /opt/aws/bin/cfn-init -v -c config --stack ${AWS::StackName} --resource SqlNode2 --region ${AWS::Region}
                         fi
     WorkloadSecurityGroup:
@@ -572,14 +624,10 @@ Outputs:
         Description: Id of PgSql Instance
         Value: !Ref SqlNode1
     SqlNodeIp2:
+        Condition: IsHACluster
         Description: Private IP of PgSql Instance
-        Value: !If
-            - IsHACluster
-            - !GetAtt SqlNode2.PrivateIp
-            - !Ref AWS::NoValue
+        Value: !GetAtt SqlNode2.PrivateIp
     SqlNodeId2:
+        Condition: IsHACluster
         Description: Id of PgSql Instance
-        Value: !If
-            - IsHACluster
-            - !Ref SqlNode2
-            - !Ref AWS::NoValue
+        Value: !Ref SqlNode2

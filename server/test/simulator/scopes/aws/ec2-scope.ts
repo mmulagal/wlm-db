@@ -217,8 +217,8 @@ ec2Mock.on(ModifyVpcAttributeCommand).resolves(modifyVpcAttributesResponse);
 
 // ec2Mock.on(DescribeVolumesCommand).resolves(describeVolumesResponse);
 ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesCommand) => {
-    // Get the VolumeIds from the command parameters
-    const volumeIds = command.VolumeIds;
+    // Get the VolumeIds from the command parameters if not passed assign a random volumeId
+    const volumeIds = command.VolumeIds ? command.VolumeIds : [`vol-${faker.string.alphanumeric(8)}`];
 
     const volumes: Volume[] = volumeIds.map(volumeId => ({
         VolumeId: volumeId,

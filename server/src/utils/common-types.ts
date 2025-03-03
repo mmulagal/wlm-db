@@ -1,6 +1,7 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
+import { Static, Type } from '@sinclair/typebox';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -326,6 +327,8 @@ interface WorkloadInstance {
     mappedLunUuids?: string[];
     cloudProviderAccountId: string;
     resourceName: string;
+    svmId?: string;
+    svmOntapUuid?: string;
 }
 interface LogDriveDetails {
     lunUuid: string;
@@ -380,11 +383,19 @@ interface StorageLayout {
     'default-log-files-location': string;
     'default-data-files-location': string;
 }
+
+interface OSAssessment {
+    'mpio-enabled': boolean;
+    'mpio-iscsi-count': number;
+    'ntfs-allocation-details': Array<{ Key?: string; Value?: string }>;
+    'mpio-load-balance-policy': string;
+    'ntfs-allocation-unit-size': number;
+}
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
     luns: Array<{ Key?: string; Value?: string }>;
-    os: Array<{ Key?: string; Value?: string }>;
+    os: OSAssessment;
     layout: JSON;
     sizing: Sizing;
     errors: {
@@ -481,6 +492,14 @@ interface StorageTierParams extends OptimizeParams {
     svmName: string;
 }
 
+const BulkOptimizeSnapshotPolicyParams = Type.Object({
+    fsxId: Type.String(),
+    region: Type.String(),
+    volUuids: Type.String(),
+    apiBody: Type.String()
+});
+type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
 export {
     Metadata,
     NodeDetails,
@@ -520,5 +539,7 @@ export {
     PgSqlInstanceDetails,
     RssConfigAssesment,
     MaxDOPAssesment,
-    PatchDetail
+    PatchDetail,
+    BulkOptimizeSnapshotPolicyParams,
+    BulkOptimizeSnapshotPolicyParamsType
 };

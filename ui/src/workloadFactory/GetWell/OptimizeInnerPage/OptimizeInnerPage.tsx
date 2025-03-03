@@ -14,6 +14,8 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
+    setLandingFrom,
+    setLandingFromInnerPage,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -31,10 +33,14 @@ import FileSystemHeadroomOptimizeTable from './InnerTables/FileSystemHeaderoomOp
 import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
+import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
+import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
+import { useRef, useState } from 'react';
 
 const OptimizeInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -42,19 +48,26 @@ const OptimizeInnerPage = () => {
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const userNavigated = useRef(false);
 
     const buttonComponent = () => {
-        if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
+        if (
+            selectedOptimizeConfig?.type === 'Data files' ||
+            selectedOptimizeConfig?.type === 'Log files' ||
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+        ) {
             return (
                 <Popover
                     isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -65,11 +78,11 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else if (selectedOptimizeConfig?.type === 'Data files' || selectedOptimizeConfig?.type === 'Log files') {
+        } else if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
                     isAppendedToBody={true}
-                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
                     trigger="hover"
                     delayHide={200}
                     interactive={true}
@@ -108,7 +121,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {buttonComponent()}
+                        {/* {buttonComponent()} */}
                     </div>
                 );
             }
@@ -119,6 +132,7 @@ const OptimizeInnerPage = () => {
     const callOptimizeApi = (type: any) => {
         let payload: null | object = {};
         let apiCall = null;
+
         const state = store.getState();
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
@@ -185,6 +199,8 @@ const OptimizeInnerPage = () => {
                             Component="button"
                             variant="text"
                             onClick={() => {
+                                if (notificationTimeout) clearTimeout(notificationTimeout);
+                                userNavigated.current = true;
                                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                                 dispatch(clearNotifications());
                             }}
@@ -210,6 +226,8 @@ const OptimizeInnerPage = () => {
                         Component="button"
                         variant="text"
                         onClick={() => {
+                            if (notificationTimeout) clearTimeout(notificationTimeout);
+                            userNavigated.current = true;
                             dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
                             dispatch(clearNotifications());
                         }}
@@ -225,6 +243,14 @@ const OptimizeInnerPage = () => {
                         [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
                     })
                 );
+
+                const timeoutId = setTimeout(() => {
+                    if (!userNavigated.current) {
+                        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                    }
+                }, 1000);
+
+                setNotificationTimeout(timeoutId);
             }
             handleOptimizeStorageJob(
                 res,
@@ -258,6 +284,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <StorageTierOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -274,6 +301,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <LogDriveSizeOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -282,6 +310,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <DataFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
@@ -290,11 +319,41 @@ const OptimizeInnerPage = () => {
                 return (
                     <LogFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case 'Network adapter settings':
+            case 'Network adapters':
+                return (
+                    <RSSOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
+                return (
+                    <ScheduledLocalSnapshotOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                     />
                 );
         }
+    };
+
+    const setHeading = () => {
+        if (selectedOptimizeConfig?.type === 'Data files') {
+            return 'Data files (.mdf) placement';
+        }
+        if (selectedOptimizeConfig?.type === 'Log files') {
+            return 'Log files (.ldf) placement';
+        }
+        return selectedOptimizeConfig?.type;
     };
     return (
         <div className={styles['optimize-inner-page']}>
@@ -305,12 +364,18 @@ const OptimizeInnerPage = () => {
                             {
                                 title: 'Inventory',
                                 onClick: () => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
                                 }
                             },
                             {
-                                title: `Host name / Instance name`,
-                                dataTestId: 'wlm-db-optimize-configuration'
+                                title:
+                                    `${selectedHostname} / ${selectedDatabaseInstanceName}` ||
+                                    'Host name/instance name',
+                                dataTestId: 'wlm-db-optimize-configuration',
+                                onClick: () => {
+                                    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setLandingFromInnerPage(true));
+                                }
                             },
                             {
                                 title: `${selectedOptimizeConfig?.type}`,
@@ -324,7 +389,7 @@ const OptimizeInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography data-testid={`wlm-db-${selectedOptimizeConfig?.type}`} variant="Semibold_20">
-                        {selectedOptimizeConfig?.type}
+                        {setHeading()}
                     </DsTypography>
                     <DsTypography
                         data-testid={`wlm-db-manage-instance-inner-page-sub-heading-for-${selectedOptimizeConfig?.type
@@ -332,7 +397,7 @@ const OptimizeInnerPage = () => {
                             .replace(/ /g, '-')}`}
                         variant="Semibold_16"
                     >
-                        Manage instance optimization
+                        {selectedDatabaseInstanceName || ''}
                     </DsTypography>
                 </div>
 

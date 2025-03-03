@@ -115,6 +115,7 @@ async function updateTemplateUrls(
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
             PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
+            Dotnet: decodeURIComponent(signedUrls.get('Dotnet')?.url || ''),
 
             Sqlspcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
             AmazonFailoverCluster: decodeURI(signedUrls.get('AmazonFailoverCluster')?.url || ''),
@@ -182,6 +183,7 @@ async function updateTemplateUrls(
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
             PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
+            Dotnet: decodeURIComponent(signedUrls.get('Dotnet')?.url || ''),
 
             Sqlspcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),

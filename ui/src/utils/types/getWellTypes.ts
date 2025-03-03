@@ -14,6 +14,7 @@ export interface GetWellSliceInterface {
         storage?: CountBreakDown;
         compute?: CountBreakDown;
         application?: CountBreakDown;
+        resiliency?: CountBreakDown;
         total?: CountBreakDown;
     } | null;
     gwRefreshPage: boolean;
@@ -29,6 +30,7 @@ export interface GetWellSliceInterface {
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
     recommendedInstanceInBulk?: any;
+    landingFromInnerPage?: boolean;
 }
 
 interface CountBreakDown {
@@ -59,6 +61,9 @@ export interface AssessmentResponseInterface {
     hostOsPatch?: PerConfigInterface;
     mssqlPatch?: PerConfigInterface;
     maxDOP?: PerConfigInterface;
+    resiliency?: {
+        snapshotPolicy?: PerConfigInterface;
+    };
 }
 
 export interface HostAssessmentResponseInterface {
@@ -93,6 +98,7 @@ export interface PerConfigInterface {
     resourceType?: string;
     totalObjectsAssessed?: number;
     totalObjectsInViolation?: number;
+    violationDetails?: any;
     ec2InstancesToPatch?: Array<{
         baselineId?: string;
         criticalNonCompliantCount?: number;
@@ -101,6 +107,13 @@ export interface PerConfigInterface {
         operationEndTime?: number;
         securityNonCompliantCount?: number;
         otherNonCompliantCount?: number;
+        missingPatchDetails?: Array<{
+            classification?: string;
+            severity?: string;
+            state?: string;
+            title?: string;
+            kbId?: string;
+        }>;
     }>;
     missingPatchesInEc2Instances?: Array<{
         ec2InstanceId?: string;

@@ -24,7 +24,9 @@ import {
     SQL_STD,
     HOURS_IN_MONTH,
     EBS_ROOT_VOLUME,
-    PRICING_LICENSE_KEYS
+    PRICING_LICENSE_KEYS,
+    DatabaseTypes,
+    HA
 } from '../../utils/consts';
 import { DEMO_PRODUCT_RATE } from '../../utils/demo-utils/demoMockdata';
 import getProducts from '../../lib/aws/pricing';
@@ -546,10 +548,19 @@ async function calculatePrice(
                     databaseType
                 ));
                 totalFsxnCost = totalFsxnCost + fsxnStorageCost + fsxnOperationalCost;
+                const isPgsqlHADeployment =
+                    (compute?.sqlDeploymentMode === FCI || compute?.sqlDeploymentMode === HA) &&
+                    databaseType === DatabaseTypes.PG_SQL;
                 const sizeData = fsxnDiskSizes
                     ? {
                           data: numeral(`${fsxnDiskSizes?.FSxDataVolumeSize}MiB`).value() || 0,
+                          ...(isPgsqlHADeployment && {
+                              dataReplica: numeral(`${fsxnDiskSizes?.FSxDataVolumeSize}MiB`).value() || 0
+                          }),
                           log: numeral(`${fsxnDiskSizes?.FSxLogVolumeSize}MiB`).value() || 0,
+                          ...(isPgsqlHADeployment && {
+                              logReplica: numeral(`${fsxnDiskSizes?.FSxLogVolumeSize}MiB`).value() || 0
+                          }),
                           ...(fsxnDiskSizes?.FSxTempDbVolumeSize && {
                               tempdb: numeral(`${fsxnDiskSizes?.FSxTempDbVolumeSize}MiB`).value() || 0
                           }),
@@ -1007,7 +1018,7 @@ function getPricingByLicenseType(
     });
     let instanceHourlyPrice: number | undefined;
     for (const [, { count, pricingDetails }] of existingInstanceTypesPricingDetails) {
-        if (pricingDetails[licenseType]?.pricePerUnit) {
+        if (pricingDetails && pricingDetails[licenseType]?.pricePerUnit) {
             instanceHourlyPrice = Number(instanceHourlyPrice || 0) + pricingDetails[licenseType].pricePerUnit * count;
         }
     }

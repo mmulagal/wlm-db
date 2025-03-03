@@ -71,8 +71,7 @@ model resource {
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
   @@index([resource_id], map: "k_wlmdb_resource_resource_id")
-  @@index([account_id, credentials_id, region, resource_id], map: "k_wlmdb_resource_account_id_credentials_id_region_resource_id")
-  @@unique([resource_id, account_id, credentials_id, region], name: "uk_wlmdb_resource_resource_id_account_id_credentials_id_region", map: "uk_wlmdb_resource_resource_id_account_id_credentials_id_region")
+  @@unique([account_id, credentials_id, region, resource_id], map: "uk_wlmdb_resource_account_id_credentials_id_region_resource_id")
 }
 
 model config {
@@ -244,6 +243,7 @@ enum DEPLOYMENT_STATUS {
 enum DEPLOYMENT_MODEL {
   FCI
   Standalone
+  HA
 }
 
 enum STORAGE_TYPE {
@@ -261,6 +261,7 @@ enum DATABASE_DEPLOYMENT_TYPE {
   Standalone
   FCI
   AOAG
+  HA
 }
 
 enum DATABASE_TYPE {

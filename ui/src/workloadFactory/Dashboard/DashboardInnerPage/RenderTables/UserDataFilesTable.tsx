@@ -40,6 +40,8 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
                             userDataFiles: userDataFilesObj?.current,
+                            totalObjectsAssessed: userDataFilesObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: userDataFilesObj?.totalObjectsInViolation,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[userDataFilesObj?.status],
@@ -89,13 +91,13 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
             filterOptions: 'auto'
         },
         {
-            Header: 'Data files',
-            accessor: 'userDataFiles',
+            Header: 'Impacted databases',
+            accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
             filterOptions: 'auto',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: string, rowData: any) => {
+                return (rowData?.totalObjectsInViolation || 0) + ' out of ' + (rowData?.totalObjectsAssessed || 0);
             }
         },
         lastColDetails(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF, {}, inProgressOptimizationData, inProgressHostData)

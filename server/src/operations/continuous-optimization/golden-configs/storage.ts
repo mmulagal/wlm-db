@@ -1,4 +1,8 @@
-import { AwsWellArchitecturedPillars, SEVERITY } from '../../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../../utils/continous-optimization-consts';
 
 const GOLDEN_CONFIG = {
     configuration: {
@@ -226,7 +230,16 @@ const GOLDEN_CONFIG = {
                 'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
             tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
         }
-    ]
+    ],
+    resiliency: {
+        snapshotPolicy: {
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            severity: SEVERITY.WARNING,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommendation:
+                'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing.'
+        }
+    }
 };
 
 export default GOLDEN_CONFIG;

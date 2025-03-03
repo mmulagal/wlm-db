@@ -145,13 +145,26 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             })
                         );
                     } else {
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                //@ts-ignore
-                                message: resp?.error?.data?.message
-                            })
-                        );
+                        //@ts-ignore
+                        if (resp?.error?.data?.message === 'Too many requests') {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    //@ts-ignore
+                                    message: 'Calculation report was failed to be delivered.',
+                                    additionalText:
+                                        "You've reached the calculation result emails limit for the day. Try again tomorrow."
+                                })
+                            );
+                        } else {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    //@ts-ignore
+                                    message: resp?.error?.data?.message
+                                })
+                            );
+                        }
                     }
 
                     setPrintState(false);
@@ -209,6 +222,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const handleOpenCard = () => {
         setIsCardOpen(!isCardOpen);
     };
+
+    const setFirstContainerClass = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            if (printState) {
+                return `${styles.firstContainer} ${styles.classForManualFsx} ${styles.classForPrint}`;
+            } else {
+                return `${styles.firstContainer} ${styles.classForManualFsx}`;
+            }
+        } else {
+            if (printState) {
+                return `${styles.firstContainer} ${styles.classForPrint}`;
+            } else {
+                return `${styles.firstContainer} `;
+            }
+        }
+    };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
             <div className="scrollArea">
@@ -256,7 +285,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 : styles.savingsHeading
                         }
                     >
-                        <DsTypography variant="Regular_24" style={{ width: '188px', maxWidth: '188px' }}>
+                        <DsTypography variant="Regular_24" style={{ width: 'fit-content', maxWidth: 'fit-content' }}>
                             {GENERAL.SAVINGS_CALCULATOR}
                         </DsTypography>
                         {(!statusData || statusData?.isActive === false) &&
@@ -295,13 +324,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     >
                         {/* Left side code here */}
                         {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
-                            <div
-                                className={
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                        ? `${styles.firstContainer} ${styles.classForManualFsx}`
-                                        : styles.firstContainer
-                                }
-                            >
+                            <div className={setFirstContainerClass()}>
                                 {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                     <>
@@ -342,7 +365,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         )}
 
                         {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
-                            <div className={`${styles.onPremiseContainer} `}>
+                            <div
+                                className={
+                                    printState
+                                        ? `${styles.onPremiseContainer} ${styles.classForPrintOnPrem}`
+                                        : `${styles.onPremiseContainer} `
+                                }
+                            >
                                 <>
                                     <SavingsHeader />
                                     <OnPremRegion />

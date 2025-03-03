@@ -13,7 +13,7 @@ import styles from './Marketing.module.scss';
 import { useState } from 'react';
 import CardComponent from './CardComponent/CardComponent';
 import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../utils/consts';
+import { WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../utils/consts';
 import { useAppSelector } from '../store/storeHooks';
 
 const Marketing = () => {
@@ -75,9 +75,68 @@ const Marketing = () => {
                         </div>
 
                         <div className={styles.buttonSection}>
-                            <DsButton variant="primary" onClick={handleNavigation}>
-                                Get Started
-                            </DsButton>
+                            <DsButton
+                                children=" Get Started"
+                                variant="Default"
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    items: [
+                                        {
+                                            id: 'wlm-db-deploy-mssql-host',
+                                            label: 'Microsoft SQL Server',
+                                            onClick: () => {
+                                                if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_FORM_NAVIGATE);
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: './mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    navigate('../../fsxdb/mssql-deploy-wizard');
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/mssql-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            className: 'mssql-deployment-button'
+                                        },
+                                        {
+                                            id: 'wlm-db-deploy-pgsql-host',
+                                            label: 'PostgreSQL Server',
+                                            onClick: () => {
+                                                if (isWorkloadFactory) {
+                                                    navigate(WLF_TO_PROTECT_NAVIGATE);
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: './postgreSQL-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                } else {
+                                                    navigate('../../fsxdb/postgreSQL-deploy-wizard');
+                                                    postBlueXPMessage({
+                                                        type: BlueXPListeners.navigate,
+                                                        payload: {
+                                                            pathname: '../../fsxdb/postgreSQL-deploy-wizard',
+                                                            replace: true
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            className: 'pgsql-deployment-button'
+                                        }
+                                    ]
+                                }}
+                            />
                         </div>
                     </div>
 
@@ -94,10 +153,14 @@ const Marketing = () => {
                 <div className={styles.section3}>
                     <div className={styles.topSection}>
                         <KB />
+                        <div />
                     </div>
-                    <DsTypography variant="Semibold_24" className={styles.title}>
-                        Workload Factory: Self-managed database automation and operations with FSx for ONTAP
-                    </DsTypography>
+                    <div className={styles.textSection}>
+                        <DsTypography variant="Semibold_24" className={styles.title}>
+                            Workload Factory: Self-managed database automation and operations with FSx for ONTAP
+                        </DsTypography>
+                        <div />
+                    </div>
 
                     <div className={styles.bottomSection}>
                         <div className={styles.commonSection}>
@@ -161,9 +224,12 @@ const Marketing = () => {
                 </div>
 
                 <div className={styles.section4}>
-                    <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                        FSx for ONTAP: intelligent storage for your database workloads
-                    </DsTypography>
+                    <div className={styles.textSection}>
+                        <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
+                            FSx for ONTAP: intelligent storage for your database workloads
+                        </DsTypography>
+                        <div />
+                    </div>
                     <div className={styles.cards}>
                         <div className={styles.commonRow}>
                             <CardComponent

@@ -339,7 +339,8 @@ async function getAmiList(
                     '777534740333', // ap-east-1
                     '460214486919', // eu-south-1
                     '162367869970', // me-south-1
-                    '194652444849' // ca-west-1
+                    '194652444849', // ca-west-1,
+                    '002667544638' // ap-southeast-5
                 ]
             })
         });
@@ -400,13 +401,20 @@ async function getInstanceTypes(region: string, credentialsId?: string) {
         went through the instances listed in Launch wizard and excluded few types. Needs work to filter out
         Created a list of instance that can be excluded EC2_INSTANCE_TYPE_EXCLUDE_LIST
         */
-    const filteredInstances = response.map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo, ProcessorInfo }) => ({
+    let filteredInstances = response.map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo, ProcessorInfo }) => ({
         instanceType: InstanceType,
         iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
         vCpus: VCpuInfo?.DefaultVCpus,
         ramInMib: MemoryInfo?.SizeInMiB,
         architecture: ProcessorInfo?.SupportedArchitectures
     }));
+
+    if (isDemo() && region === 'ap-southeast-5') {
+        // Filtering m6i* & c6i* instances for malaysia region, TODO: as DBS extends support for more regions, this call should be modified to be an actual AWS API call & not a static list
+        filteredInstances = filteredInstances.filter(
+            ({ instanceType }) => instanceType?.startsWith('m6i') || instanceType?.startsWith('c6i')
+        );
+    }
 
     return { instanceTypes: filteredInstances };
 }
