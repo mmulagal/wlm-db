@@ -1058,7 +1058,7 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
 `;
 
 const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
-    # Get vCPU and MAXDOP Details
+    #Get vCPU and MAXDOP Details
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlInstanceName = "${instanceName}"
 
