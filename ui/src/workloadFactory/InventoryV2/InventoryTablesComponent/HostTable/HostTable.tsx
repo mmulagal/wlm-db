@@ -374,7 +374,7 @@ const HostTable = () => {
             rowData.ssmState !== INVENTORY_STATUS.OFFLINE &&
             rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
         ) {
-            return GENERAL.MANAGED_SUPPORT_FOR_EBS_FSXW
+            return GENERAL.MANAGED_SUPPORT_FOR_EBS_FSXW;
         }
 
         if (
@@ -464,18 +464,15 @@ const HostTable = () => {
         );
         const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
             (item: any) =>
-                item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
-                item?.statusColText === INVENTORY_STATUS.MANAGED
+                item?.statusColText === INVENTORY_STATUS.UNDETECTED || item?.statusColText === INVENTORY_STATUS.MANAGED
         );
         const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
             (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
         );
         const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
             return (
-                (item?.statusColText === INVENTORY_STATUS.MANAGED &&
-                    item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-                (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
-                    item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+                (item?.statusColText === INVENTORY_STATUS.MANAGED && item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+                (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
             );
         });
         const checkForAllStorageType = rowData?.sqlServerInstances?.every(
@@ -494,7 +491,7 @@ const HostTable = () => {
         if (disableMessage) {
             disableOption = true;
         }
-        return {disableOption, disableMessage};
+        return { disableOption, disableMessage };
     };
 
     const lastColDetails = () => {
@@ -506,7 +503,7 @@ const HostTable = () => {
             width: '57px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                let {disableOption, disableMessage} = findManageOption(rowData);
+                let { disableOption, disableMessage } = findManageOption(rowData);
                 const menu = [
                     {
                         id: 'manage',
@@ -517,7 +514,7 @@ const HostTable = () => {
                     {
                         id: 'viewInstances',
                         displayName: 'View instances'
-                    },
+                    }
                     // {
                     //     id: 'viewDatabases',
                     //     displayName: 'View databases'
@@ -608,12 +605,12 @@ const HostTable = () => {
             id: '1',
             Header: 'Engine type',
             accessor: 'hostType',
-            isSortable: true,
+            filterOptions: 'auto',
             width: '228px',
             renderCell: (cellData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Regular_13">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
                     </div>
                 );
             }
@@ -633,7 +630,7 @@ const HostTable = () => {
                                 {/* <Typography variant="Semibold_14">
                                     {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
                                 </Typography> */}
-                                <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
+                                <Typography variant="Regular_13">{rowData?.sqlServerInstancesText}</Typography>
                             </>
                         ) : (
                             ''
@@ -743,7 +740,7 @@ const HostTable = () => {
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -753,7 +750,7 @@ const HostTable = () => {
             isSortable: true,
             width: '168px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -763,7 +760,7 @@ const HostTable = () => {
             isSortable: true,
             width: '188px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         lastColDetails()

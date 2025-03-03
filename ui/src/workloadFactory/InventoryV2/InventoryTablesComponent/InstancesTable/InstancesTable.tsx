@@ -18,6 +18,7 @@ import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    renderCellData,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
@@ -65,18 +66,25 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import { setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 
 const InstancesTable = () => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
 
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
+
+    const [loading, setLoading] = useState(false);
 
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
@@ -87,6 +95,22 @@ const InstancesTable = () => {
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+
+    useEffect(() => {
+        setLoading(
+            databaseHostsLoading ||
+                isDiscoverInProgress ||
+                fullHostDataLoading ||
+                isManagedHostListLoading ||
+                fsxCredentialStatusLoading
+        );
+    }, [
+        databaseHostsLoading,
+        isDiscoverInProgress,
+        fullHostDataLoading,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading
+    ]);
 
     useEffect(() => {
         let newTable: any = [];
@@ -134,8 +158,7 @@ const InstancesTable = () => {
                             accountId: perHost?.accountId,
                             regionName: perHost?.regionName,
                             resourceId: perHost?.resourceId,
-                            ec2InstanceId: perHost?.ec2InstanceId,
-                            ...perHost
+                            ec2InstanceId: perHost?.ec2InstanceId
                         };
                     });
                     newTable = [...newTable, ...(perInstanceData || [])];
@@ -452,9 +475,15 @@ const InstancesTable = () => {
 
                         {
                             id: 'createUserDb',
-                            displayName: 'Create user database',
+                            displayName: 'Create database',
                             disabled: disableOption || disableCreateDb,
                             infoText: disableMessage || disableCreateDbMsg
+                        },
+                        {
+                            id: 'createSandbox',
+                            displayName: 'Create sandbox',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'unManage',
@@ -586,10 +615,16 @@ const InstancesTable = () => {
                                                     cdbRegionId: rowData?.regionId
                                                 })
                                             );
-                                            // dispatch(setDBHostName(hostData?.name));
-                                            // dispatch(setInstanceId(rowData?.databaseInstanceId));
-                                            // dispatch(setInstanceName(rowData?.databaseInstanceName));
                                             navigate('../create-new-user');
+                                        }
+                                        if (menuId === 'createSandbox') {
+                                            dispatch(
+                                                setSelectedSandboxHeaderValue({
+                                                    credId: rowData?.credentialId,
+                                                    regionId: rowData?.regionId
+                                                })
+                                            );
+                                            navigate('../create-new-sandbox');
                                         }
                                         if (menuId === 'unManage') {
                                             handleDialog(rowData);
@@ -625,7 +660,7 @@ const InstancesTable = () => {
             accessor: 'databaseInstanceName',
             id: '1',
             isSortable: true,
-            width: '212px',
+            width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
@@ -664,30 +699,30 @@ const InstancesTable = () => {
             Header: 'Host name',
             accessor: 'name',
             id: '2',
-            width: '150px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
             Header: 'Engine type',
             accessor: 'hostType',
             id: '3',
-            width: '150px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
             Header: 'Deployment model',
             accessor: 'serverInstallationMode',
             id: '4',
-            width: '150px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -695,7 +730,7 @@ const InstancesTable = () => {
             accessor: 'statusColText',
             id: '5',
             isSortable: false,
-            width: '190px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
@@ -721,8 +756,8 @@ const InstancesTable = () => {
             Header: 'Optimization status',
             accessor: 'optimizationStatus',
             id: '6',
-            width: '210px',
-            filterOptions: 'auto',
+            width: '240px',
+            isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
                 let disableMenu = () => {
@@ -824,7 +859,7 @@ const InstancesTable = () => {
             Header: 'Protection status',
             accessor: 'protectionText',
             id: '7',
-            width: '130px',
+            width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
@@ -841,7 +876,7 @@ const InstancesTable = () => {
             Header: 'Performance',
             accessor: 'performance.assessment',
             id: '8',
-            width: '160px',
+            width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
@@ -859,9 +894,9 @@ const InstancesTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
-            width: '168px',
+            width: '180px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -869,9 +904,9 @@ const InstancesTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
-            width: '168px',
+            width: '180px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -879,9 +914,9 @@ const InstancesTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            width: '168px',
+            width: '180px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         lastColDetails()
@@ -893,7 +928,8 @@ const InstancesTable = () => {
         rows: data,
         pageSize: 10,
         selectionType: 'none',
-        isHorizontalScroll: true
+        isHorizontalScroll: true,
+        isLazyLoading: loading
     });
 
     useEffect(() => {

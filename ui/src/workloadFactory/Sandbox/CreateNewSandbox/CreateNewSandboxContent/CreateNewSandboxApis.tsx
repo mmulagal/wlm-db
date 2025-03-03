@@ -16,12 +16,11 @@ import {
 
 const CreateSandboxApis = () => {
     const dispatch = useAppDispatch();
+    const { source, aggregatedDbHostList, getDatabaseHosts, target, selectedSandboxCredId, selectedSandboxRegionId } =
+        useAppSelector(state => state.createSandbox);
 
-    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
-    const { source, aggregatedDbHostList, getDatabaseHosts, target } = useAppSelector(state => state.createSandbox);
-
-    const [credId, setCredId] = useState(null);
-    const [regionId, setRegionId] = useState(null);
+    const [credId, setCredId] = useState<string | null>(null);
+    const [regionId, setRegionId] = useState<string | null>(null);
     const [selectedDbHostId, setSelectedDbHostId] = useState<any>(null);
     const [selectedDbName, setSelectedDbName] = useState<any>(null);
     const [selectedInstanceName, setSelectedInstanceName] = useState<any>(null);
@@ -32,10 +31,10 @@ const CreateSandboxApis = () => {
     const [fetchedDatabases, setFetchedDatabases] = useState(false);
 
     useEffect(() => {
-        setCredId(headerSelectedCredSandbox?.data?.credentialsId);
-        setRegionId(headerSelectedRegionSandbox?.label2);
+        setCredId(selectedSandboxCredId);
+        setRegionId(selectedSandboxRegionId);
         dispatch(setAggregatedDbHost([]));
-    }, [headerSelectedCredSandbox, headerSelectedRegionSandbox]);
+    }, [selectedSandboxCredId, selectedSandboxRegionId]);
 
     useEffect(() => {
         setSelectedDbHostId(source?.selectedDatabaseHost?.value);
@@ -59,7 +58,7 @@ const CreateSandboxApis = () => {
             region: regionId,
             nextToken: databaseHostCursor
         },
-        { skip: !credId || !regionId || (aggregatedDbHostList.length && !databaseHostCursor) }
+        { skip: !credId || !regionId || (aggregatedDbHostList.length > 0 && !databaseHostCursor) }
     );
 
     const {

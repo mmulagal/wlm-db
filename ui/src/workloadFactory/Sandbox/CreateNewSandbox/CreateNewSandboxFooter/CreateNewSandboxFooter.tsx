@@ -38,8 +38,8 @@ const CreateNewSandboxFooter = () => {
             dispatch(setIsLoading(true));
             try {
                 const result: any = await createNewSandbox({
-                    credentialId: state?.headers?.headerSelectedCredSandbox?.data?.credentialsId,
-                    region: state?.headers?.headerSelectedRegionSandbox?.data?.regionCode,
+                    credentialId: state.createSandbox?.selectedSandboxCredId,
+                    region: state.createSandbox?.selectedSandboxRegionId,
                     payload: payload
                 });
                 dispatch(setIsLoading(false));

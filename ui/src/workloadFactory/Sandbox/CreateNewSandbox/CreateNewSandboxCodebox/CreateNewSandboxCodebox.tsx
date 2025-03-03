@@ -16,8 +16,6 @@ import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClip
 const CreateNewSandboxCodebox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCredSandbox);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegionSandbox);
     const createSandboxState = useAppSelector(state => state.createSandbox);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -27,8 +25,8 @@ const CreateNewSandboxCodebox = () => {
         const baseUrl = getBaseUrl();
         const restApiPayload = CREATE_SANDBOX_CURL_REQ_TEMPLATE(
             baseUrl,
-            selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
-            selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
+            createSandboxState?.selectedSandboxCredId || CRED_PLACEHOLDERS.CRED_ID,
+            createSandboxState?.selectedSandboxRegionId || CRED_PLACEHOLDERS.REGION,
             CRED_PLACEHOLDERS.TOKEN,
             JSON.stringify(payload, null, 2),
             isWorkloadFactory
@@ -41,8 +39,8 @@ const CreateNewSandboxCodebox = () => {
         return (
             <>
                 <CodeBoxColor
-                    credID={selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID}
-                    region={selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION}
+                    credID={createSandboxState?.selectedSandboxCredId || CRED_PLACEHOLDERS.CRED_ID}
+                    region={createSandboxState?.selectedSandboxRegionId || CRED_PLACEHOLDERS.REGION}
                     actualData={payload}
                     endpoint={CREATE_SANDBOX_ENDPOINT}
                 />
