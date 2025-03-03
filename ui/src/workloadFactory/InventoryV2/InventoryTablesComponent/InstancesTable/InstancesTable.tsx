@@ -986,6 +986,7 @@ const InstancesTable = () => {
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
                         className={styles.topBarStyle}
+                        subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
                     />
                     <Table
                         //@ts-ignore
