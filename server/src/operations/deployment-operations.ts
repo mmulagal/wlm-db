@@ -1602,7 +1602,7 @@ async function deployPgSql(
         let maxDatabaseSizeInGib = ((1 - 0.35) * 192 * 1024) / 1.25;
         maxDatabaseSizeInGib = Number(maxDatabaseSizeInGib / (sqlDeploymentMode === HA ? 2 : 1));
         if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > maxDatabaseSizeInGib) {
-            throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+            throw createError(412, `Supported Fsxn disk size should be between 120GiB to ${maxDatabaseSizeInGib}GiB`);
         }
 
         validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
