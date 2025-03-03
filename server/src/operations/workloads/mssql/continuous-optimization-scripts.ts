@@ -1062,17 +1062,16 @@ const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boole
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlInstanceName = "${instanceName}"
 
- 
-    $ServerInstanceName = "$env:COMPUTERNAME"
-    If ($sqlInstanceName -ne "MSSQLSERVER") {
-        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
-         
-    }
-
     ${slqcmdExecutionTemplate}
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
+    }
+    
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+         
     }
 
     $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
@@ -1187,16 +1186,18 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
     $maxDopValue = ${maxDopValue}
     $isClustered = [System.Convert]::ToBoolean('${isClustered}')
 
-    $ServerInstanceName = "$env:COMPUTERNAME"
-    If ($sqlInstanceName -ne "MSSQLSERVER") {
-        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
-    }
-
     ${slqcmdExecutionTemplate}
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
+
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+         
+    }
+        
     ${GET_FCI_NAME}
 
     # Set the MAXDOP value with RECONFIGURE WITH OVERRIDE
