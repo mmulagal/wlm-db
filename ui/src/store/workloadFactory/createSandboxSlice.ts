@@ -43,7 +43,9 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
     isNA: false,
     showError: false,
     dataFilePath: '',
-    logFilePath: ''
+    logFilePath: '',
+    selectedSandboxCredId: '',
+    selectedSandboxRegionId: ''
 };
 
 const createSandboxSlice = createSlice({
@@ -118,6 +120,16 @@ const createSandboxSlice = createSlice({
         },
         updateLogFilePath: (state, action: PayloadAction<any>) => {
             state.logFilePath = action.payload;
+        },
+        setSelectedSandboxCredId: (state, action: PayloadAction<any>) => {
+            state.selectedSandboxCredId = action.payload;
+        },
+        setSelectedSandboxRegionId: (state, action: PayloadAction<any>) => {
+            state.selectedSandboxRegionId = action.payload;
+        },
+        setSelectedSandboxHeaderValue: (state, action: PayloadAction<any>) => {
+            state.selectedSandboxCredId = action.payload.credId;
+            state.selectedSandboxRegionId = action.payload.regionId;
         }
     }
 });
@@ -145,7 +157,10 @@ export const {
     setDriveInfoState,
     setDbMountPointsState,
     updateDataFilePath,
-    updateLogFilePath
+    updateLogFilePath,
+    setSelectedSandboxCredId,
+    setSelectedSandboxRegionId,
+    setSelectedSandboxHeaderValue
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

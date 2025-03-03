@@ -18,6 +18,7 @@ import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    renderCellData,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
@@ -65,6 +66,7 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import { setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 
 const InstancesTable = () => {
@@ -72,12 +74,18 @@ const InstancesTable = () => {
 
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
+    const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
+    const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
+
+    const [loading, setLoading] = useState(false);
 
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
@@ -88,6 +96,22 @@ const InstancesTable = () => {
 
     const [unmanageApi] = useUnmanageMssqlInstanceMutation();
     const [registerResourceCred] = useRegisterResourceCredentialsMutation();
+
+    useEffect(() => {
+        setLoading(
+            databaseHostsLoading ||
+                isDiscoverInProgress ||
+                fullHostDataLoading ||
+                isManagedHostListLoading ||
+                fsxCredentialStatusLoading
+        );
+    }, [
+        databaseHostsLoading,
+        isDiscoverInProgress,
+        fullHostDataLoading,
+        isManagedHostListLoading,
+        fsxCredentialStatusLoading
+    ]);
 
     useEffect(() => {
         let newTable: any = [];
@@ -135,8 +159,7 @@ const InstancesTable = () => {
                             accountId: perHost?.accountId,
                             regionName: perHost?.regionName,
                             resourceId: perHost?.resourceId,
-                            ec2InstanceId: perHost?.ec2InstanceId,
-                            ...perHost
+                            ec2InstanceId: perHost?.ec2InstanceId
                         };
                     });
                     newTable = [...newTable, ...(perInstanceData || [])];
@@ -675,6 +698,7 @@ const InstancesTable = () => {
         selectionType: 'none',
         isHorizontalScroll: true,
         isManagedColumns: true,
+        isLazyLoading: loading,
         initialColumnState: initialInstanceTableColState,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
@@ -731,9 +755,15 @@ const InstancesTable = () => {
 
                         {
                             id: 'createUserDb',
-                            displayName: 'Create user database',
+                            displayName: 'Create database',
                             disabled: disableOption || disableCreateDb,
                             infoText: disableMessage || disableCreateDbMsg
+                        },
+                        {
+                            id: 'createSandbox',
+                            displayName: 'Create sandbox',
+                            disabled: disableOption,
+                            infoText: disableMessage
                         },
                         {
                             id: 'unManage',
@@ -865,10 +895,16 @@ const InstancesTable = () => {
                                                     cdbRegionId: rowData?.regionId
                                                 })
                                             );
-                                            // dispatch(setDBHostName(hostData?.name));
-                                            // dispatch(setInstanceId(rowData?.databaseInstanceId));
-                                            // dispatch(setInstanceName(rowData?.databaseInstanceName));
                                             navigate('../create-new-user');
+                                        }
+                                        if (menuId === 'createSandbox') {
+                                            dispatch(
+                                                setSelectedSandboxHeaderValue({
+                                                    credId: rowData?.credentialId,
+                                                    regionId: rowData?.regionId
+                                                })
+                                            );
+                                            navigate('../create-new-sandbox');
                                         }
                                         if (menuId === 'unManage') {
                                             handleDialog(rowData);

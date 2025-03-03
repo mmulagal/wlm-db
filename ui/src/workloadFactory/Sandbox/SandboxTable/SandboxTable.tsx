@@ -47,6 +47,7 @@ import ConnectToCiCdContent from './ConnectToCiCdContent/ConnectToCiCdContent';
 import { formatDateWithTime, getFilterOptions, getTimeDifferenceInDays } from '../../../utils/utilityFunctions';
 import { SandboxActions } from '../../../utils/types/sandBoxTypes';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedSandboxHeaderValue } from '../../../store/workloadFactory/createSandboxSlice';
 
 const SandboxTable = () => {
     const navigate = useNavigate();
@@ -786,7 +787,15 @@ const SandboxTable = () => {
                             variant={'primary'}
                             className={'continue-button'}
                             isThin={true}
-                            onClick={() => navigate('../create-new-sandbox')}
+                            onClick={() => {
+                                dispatch(
+                                    setSelectedSandboxHeaderValue({
+                                        credId: headerSelectedCredSandbox?.data?.credentialsId,
+                                        regionId: headerSelectedRegionSandbox?.label2
+                                    })
+                                );
+                                navigate('../create-new-sandbox');
+                            }}
                             id="create-sandbox"
                         >
                             {GENERAL.CREATE_SANDBOX}

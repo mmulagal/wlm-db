@@ -297,260 +297,157 @@ const HostTable = () => {
         );
     };
 
-    // const lastColJSX = (
-    //     rowData: any,
-    //     checkForAllManaged: boolean,
-    //     checkForAllUnDetectInstance: boolean,
-    //     checkForAllUnDetectOrManageInstance: boolean,
-    //     checkForAllUnManagedInstance: boolean,
-    //     checkForAllFsxnManagedInstance: boolean,
-    //     checkForAllStorageType: boolean
-    // ) => {
-    //     //Condition if installation mode is AOAG than disable manage
-    //     if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.AOAG_MANAGE_DISABLE} placement="bottom" width="320px" height="50px">
-    //                 <div className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
-    //     //Condition for if all managed then showing disable managed button with tooltip
-    //     if (rowData?.action && checkForAllManaged) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.ALL_MANAGED_TEXT} placement="bottom" width="320px" height="90px">
-    //                 <div className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
-    //     //Check for all un-detect instances and storage type is N/A
-    //     if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.ALL_UNDETECT_TEXT} placement="bottom" width="320px" height="90px">
-    //                 <div className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
+    const manageDisableMsg = (
+        rowData: any,
+        checkForAllManaged: boolean,
+        checkForAllUnDetectInstance: boolean,
+        checkForAllUnDetectOrManageInstance: boolean,
+        checkForAllUnManagedInstance: boolean,
+        checkForAllFsxnManagedInstance: boolean,
+        checkForAllStorageType: boolean
+    ) => {
+        //Condition if installation mode is AOAG than disable manage
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && rowData?.serverInstallationMode === GENERAL.AOAG) {
+            return GENERAL.AOAG_MANAGE_DISABLE;
+        }
+        //Condition for if all managed then showing disable managed button with tooltip
+        if (rowData?.action && checkForAllManaged) {
+            return GENERAL.ALL_MANAGED_TEXT;
+        }
+        //Check for all un-detect instances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectInstance) {
+            return GENERAL.ALL_UNDETECT_TEXT;
+        }
 
-    //     //Check for all un-detect or managedinstances and storage type is N/A
-    //     if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.NO_UNMANAGED_TO_MANAGE} placement="bottom" width="320px" height="90px">
-    //                 <div className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
+        //Check for all un-detect or managedinstances and storage type is N/A
+        if (rowData?.action === INVENTORY_ACTIONS.MANAGE && checkForAllUnDetectOrManageInstance) {
+            return GENERAL.NO_UNMANAGED_TO_MANAGE;
+        }
 
-    //     //Check for all Explore Savings undetected rows
-    //     if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
-    //         return (
-    //             <TooltipComponent
-    //                 title={GENERAL.ALL_ES_UNDETECTED_ROWS}
-    //                 placement="bottom"
-    //                 width="320px"
-    //                 height="100px"
-    //             >
-    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
+        //Check for all Explore Savings undetected rows
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForAllUnDetectInstance) {
+            return GENERAL.ALL_ES_UNDETECTED_ROWS;
+        }
 
-    //     //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
-    //     if (
-    //         rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-    //         !checkForAllUnDetectInstance &&
-    //         rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-    //         checkForAnyAOAG(rowData)
-    //     ) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.ALL_ES_FSXW_AOAG_ROWS} placement="bottom" width="340px" height="70px">
-    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     } else if (
-    //         rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
-    //         rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
-    //         !checkForAnySSD(rowData)
-    //     ) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.NON_SSD_FSXW_MSG} placement="bottom" width="360px" height="50px">
-    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
+        //Check for any FSXW Explore Savings that is AOAG. FSXW is only supported for standalone and FCI.
+        if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            !checkForAllUnDetectInstance &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            checkForAnyAOAG(rowData)
+        ) {
+            return GENERAL.ALL_ES_FSXW_AOAG_ROWS;
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS &&
+            rowData?.storageType === GENERAL.FSX_FOR_WINDOWS &&
+            !checkForAnySSD(rowData)
+        ) {
+            return GENERAL.NON_SSD_FSXW_MSG;
+        }
 
-    //     if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
-    //         return (
-    //             <TooltipComponent title={GENERAL.MIXED_STORAGE_ES_MSG} placement="bottom" width="260px" height="50px">
-    //                 <div id="inventory-table-option" className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
+        if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS && checkForMixedStorageType(rowData)) {
+            return GENERAL.MIXED_STORAGE_ES_MSG;
+        }
 
-    //     //Condition if storage type is not known and it is still loading for manage case
-    //     if (
-    //         rowData?.action === INVENTORY_ACTIONS.MANAGE &&
-    //         !checkForAllManaged &&
-    //         checkForAllFsxnManagedInstance &&
-    //         rowData?.loading &&
-    //         !checkForAllStorageType
-    //     ) {
-    //         return (
-    //             <TooltipComponent
-    //                 title={GENERAL.INVENTORY_LOADING_DISABLED}
-    //                 placement="bottom"
-    //                 width="170px"
-    //                 height="33px"
-    //             >
-    //                 <div className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     } else if (
-    //         rowData?.action === INVENTORY_ACTIONS.MANAGE &&
-    //         !checkForAllManaged &&
-    //         checkForAllFsxnManagedInstance
-    //     ) {
-    //         //Condition if all fsxn are managed and remaining storage type is unmanaged
-    //         return (
-    //             <TooltipComponent title={GENERAL.ALL_FSXN_MANAGED_TEXT} placement="bottom" width="320px" height="93px">
-    //                 <div className={styles.detectManageDisable}>
-    //                     <Typography variant="Regular_14" className={styles.textStyle}>
-    //                         {rowData?.action}
-    //                     </Typography>
-    //                 </div>
-    //             </TooltipComponent>
-    //         );
-    //     }
+        //Condition if storage type is not known and it is still loading for manage case
+        if (
+            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+            !checkForAllManaged &&
+            checkForAllFsxnManagedInstance &&
+            rowData?.loading &&
+            !checkForAllStorageType
+        ) {
+            return GENERAL.INVENTORY_LOADING_DISABLED;
+        } else if (
+            rowData?.action === INVENTORY_ACTIONS.MANAGE &&
+            !checkForAllManaged &&
+            checkForAllFsxnManagedInstance
+        ) {
+            //Condition if all fsxn are managed and remaining storage type is unmanaged
+            return GENERAL.ALL_FSXN_MANAGED_TEXT;
+        }
 
-    //     //Normal use case to show dialog or move to explore savings
-    //     if (
-    //         rowData?.action &&
-    //         !checkForAllManaged &&
-    //         !rowData?.actionDisable &&
-    //         rowData.ssmState !== INVENTORY_STATUS.OFFLINE
-    //     ) {
-    //         return (
-    //             <div
-    //                 className={styles.detectManage}
-    //                 id={
-    //                     rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
-    //                         ? 'explore-savings-inventory-table'
-    //                         : 'inventory-table-option'
-    //                 }
-    //                 onClick={() => {
-    //                     if (rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-    //                         onClickESHost(dispatch, rowData, isWorkloadFactory);
-    //                     } else {
-    //                         handleDialog(rowData);
-    //                     }
-    //                 }}
-    //             >
-    //                 <Typography variant="Regular_14" className={styles.textStyle}>
-    //                     {rowData?.action}
-    //                 </Typography>
-    //             </div>
-    //         );
-    //     }
-    //     if (
-    //         rowData?.action &&
-    //         !checkForAllManaged &&
-    //         rowData?.actionDisable &&
-    //         rowData.ssmState !== INVENTORY_STATUS.OFFLINE
-    //     ) {
-    //         return (
-    //             <div
-    //                 className={styles.detectManageDisable}
-    //                 id="inventory-table-option"
-    //                 title={rowData?.detectOptionDisableMsg}
-    //             >
-    //                 <Typography variant="Regular_14" className={styles.textStyle}>
-    //                     {rowData?.action}
-    //                 </Typography>
-    //             </div>
-    //         );
-    //     }
-    // };
+        //Normal use case to show dialog or move to explore savings
+        if (
+            rowData?.action &&
+            !checkForAllManaged &&
+            !rowData?.actionDisable &&
+            rowData.ssmState !== INVENTORY_STATUS.OFFLINE &&
+            rowData?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS
+        ) {
+            return GENERAL.MANAGED_SUPPORT_FOR_EBS_FSXW;
+        }
 
-    // const lastColDetails = () => {
-    //     return {
-    //         id: '11',
-    //         Header: '',
-    //         accessor: '',
-    //         width: '184px',
-    //         isSticky: true,
-    //         renderCell: (cellData: any, rowData: any) => {
-    //             const checkForAllManaged = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
-    //             );
-    //             const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
-    //             );
-    //             const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
-    //                 (item: any) =>
-    //                     item?.statusColText === INVENTORY_STATUS.UNDETECTED ||
-    //                     item?.statusColText === INVENTORY_STATUS.MANAGED
-    //             );
-    //             const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
-    //             );
-    //             const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
-    //                 return (
-    //                     (item?.statusColText === INVENTORY_STATUS.MANAGED &&
-    //                         item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
-    //                     (item?.statusColText !== INVENTORY_STATUS.MANAGED &&
-    //                         item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
-    //                 );
-    //             });
-    //             const checkForAllStorageType = rowData?.sqlServerInstances?.every(
-    //                 (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
-    //             );
-    //             return lastColJSX(
-    //                 rowData,
-    //                 checkForAllManaged,
-    //                 checkForAllUnDetectInstance,
-    //                 checkForAllUnDetectOrManageInstance,
-    //                 checkForAllUnManagedInstance,
-    //                 checkForAllFsxnManagedInstance,
-    //                 checkForAllStorageType
-    //             );
-    //         }
-    //     };
-    // };
+        if (
+            rowData?.action &&
+            !checkForAllManaged &&
+            !rowData?.actionDisable &&
+            rowData.ssmState !== INVENTORY_STATUS.OFFLINE &&
+            rowData?.action !== INVENTORY_ACTIONS.EXPLORE_SAVINGS
+        ) {
+            return '';
+        }
+
+        // if (
+        //     rowData?.action &&
+        //     !checkForAllManaged &&
+        //     rowData?.actionDisable &&
+        //     rowData.ssmState !== INVENTORY_STATUS.OFFLINE
+        // ) {
+        //     return (
+        //         <div
+        //             className={styles.detectManageDisable}
+        //             id="inventory-table-option"
+        //             title={rowData?.detectOptionDisableMsg}
+        //         >
+        //             <Typography variant="Regular_14" className={styles.textStyle}>
+        //                 {rowData?.action}
+        //             </Typography>
+        //         </div>
+        //     );
+        // }
+    };
+
+    const findManageOption = (rowData: any) => {
+        let disableOption = false;
+        let disableMessage: any = '';
+        const checkForAllManaged = rowData?.sqlServerInstances?.every(
+            (item: any) => item?.statusColText === INVENTORY_STATUS.MANAGED
+        );
+        const checkForAllUnDetectInstance = rowData?.sqlServerInstances?.every(
+            (item: any) => item?.statusColText === INVENTORY_STATUS.UNDETECTED
+        );
+        const checkForAllUnDetectOrManageInstance = rowData?.sqlServerInstances?.every(
+            (item: any) =>
+                item?.statusColText === INVENTORY_STATUS.UNDETECTED || item?.statusColText === INVENTORY_STATUS.MANAGED
+        );
+        const checkForAllUnManagedInstance = rowData?.sqlServerInstances?.every(
+            (item: any) => item?.statusColText === INVENTORY_STATUS.UNMANAGED
+        );
+        const checkForAllFsxnManagedInstance = rowData?.sqlServerInstances?.every((item: any) => {
+            return (
+                (item?.statusColText === INVENTORY_STATUS.MANAGED && item?.fileSystemType === GENERAL.FSX_FOR_ONTAP) ||
+                (item?.statusColText !== INVENTORY_STATUS.MANAGED && item?.fileSystemType !== GENERAL.FSX_FOR_ONTAP)
+            );
+        });
+        const checkForAllStorageType = rowData?.sqlServerInstances?.every(
+            (item: any) => item?.fileSystemType && item?.fileSystemType !== GENERAL.NOT_AVAILABLE
+        );
+
+        disableMessage = manageDisableMsg(
+            rowData,
+            checkForAllManaged,
+            checkForAllUnDetectInstance,
+            checkForAllUnDetectOrManageInstance,
+            checkForAllUnManagedInstance,
+            checkForAllFsxnManagedInstance,
+            checkForAllStorageType
+        );
+        if (disableMessage) {
+            disableOption = true;
+        }
+        return { disableOption, disableMessage };
+    };
 
     const DatabasesColDefs: ColumnProps[] = [
         {
@@ -599,12 +496,12 @@ const HostTable = () => {
             id: '1',
             Header: 'Engine type',
             accessor: 'hostType',
-            isSortable: true,
+            filterOptions: 'auto',
             width: '228px',
             renderCell: (cellData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
+                        <Typography variant="Regular_13">{cellData || GENERAL.NOT_AVAILABLE}</Typography>
                     </div>
                 );
             }
@@ -624,7 +521,7 @@ const HostTable = () => {
                                 {/* <Typography variant="Semibold_14">
                                     {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
                                 </Typography> */}
-                                <Typography variant="Semibold_14">{rowData?.sqlServerInstancesText}</Typography>
+                                <Typography variant="Regular_13">{rowData?.sqlServerInstancesText}</Typography>
                             </>
                         ) : (
                             ''
@@ -734,7 +631,7 @@ const HostTable = () => {
             isSortable: true,
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -744,7 +641,7 @@ const HostTable = () => {
             isSortable: true,
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         },
         {
@@ -754,7 +651,7 @@ const HostTable = () => {
             isSortable: true,
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return renderCellData(cellData, rowData, styles);
             }
         }
     ];
@@ -771,19 +668,22 @@ const HostTable = () => {
         initialColumnState: initialHostsTableColState,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
+                const { disableOption, disableMessage } = findManageOption(rowData);
                 const menu = [
                     {
                         id: 'manage',
-                        displayName: 'Manage'
+                        displayName: 'Manage',
+                        disabled: disableOption,
+                        disabledMessage: disableMessage
                     },
                     {
                         id: 'viewInstances',
                         displayName: 'View instances'
                     },
-                    {
-                        id: 'viewDatabases',
-                        displayName: 'View databases'
-                    }
+                    // {
+                    //     id: 'viewDatabases',
+                    //     displayName: 'View databases'
+                    // }
                 ];
 
                 return (
@@ -804,10 +704,13 @@ const HostTable = () => {
                                     setOpenedRow(null);
 
                                     if (menuId === 'manage') {
+                                        handleDialog(rowData);
                                     }
                                     if (menuId === 'viewInstances') {
+                                        // Open instance tab and filter based on host name
                                     }
                                     if (menuId === 'viewDatabases') {
+                                        // Open database tab and filter based on host name
                                     }
                                 }
                             }}
