@@ -40,3 +40,79 @@ export const initialJobMonitorColState = {
         isHidden: false
     }
 };
+
+export const initialHostsTableColState = {
+    0: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    1: {
+        isHidden: false
+    },
+    2: {
+        isHidden: false
+    },
+    3: {
+        isHidden: false
+    },
+    4: {
+        isHidden: false
+    },
+    5: {
+        isHidden: false
+    },
+
+    6: {
+        isHidden: false
+    },
+    7: {
+        isHidden: false
+    },
+    8: {
+        isHidden: false
+    },
+    9: {
+        isHidden: false
+    },
+    10: {
+        isHidden: false
+    }
+};
+
+export const initialInstanceTableColState = {
+    1: {
+        isHidden: false,
+        isRemovalDisabled: true
+    },
+    2: {
+        isHidden: false
+    },
+    3: {
+        isHidden: false
+    },
+    4: {
+        isHidden: false
+    },
+    5: {
+        isHidden: false
+    },
+
+    6: {
+        isHidden: false
+    },
+    7: {
+        isHidden: false
+    },
+    8: {
+        isHidden: false
+    },
+    9: {
+        isHidden: false
+    },
+    10: {
+        isHidden: false
+    },
+    11: {
+        isHidden: false
+    }
+};

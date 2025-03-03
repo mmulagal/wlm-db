@@ -65,6 +65,7 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 
 const InstancesTable = () => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
@@ -392,226 +393,6 @@ const InstancesTable = () => {
         );
     };
 
-    const lastColDetails = () => {
-        return {
-            id: '12',
-            Header: '',
-            accessor: 'name',
-
-            renderCell: (cellData: any, rowData: any) => {
-                const menu = [];
-                let disableOption = false;
-                let disableMessage = '';
-                const disableCreateDb = isSmbProtocol(rowData?.storage?.fsxn?.protocol);
-                const disableCreateDbMsg = disableCreateDb ? GENERAL.SMB_PROTOCOL_DISABLED : '';
-                if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
-                    disableMessage = GENERAL.HOST_DOWN;
-                    disableOption = true;
-                } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
-                    disableMessage = GENERAL.SSM_DOWN;
-                    disableOption = true;
-                } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
-                    disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-                    disableOption = true;
-                }
-                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                    menu.push({
-                        id: 'detect',
-                        displayName: 'Detect',
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    });
-                } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                    menu.push({
-                        id: 'manage',
-                        displayName: 'Manage',
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    });
-                } else {
-                    menu.push(
-                        {
-                            id: 'optimize',
-                            displayName: 'Optimize',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
-                        {
-                            id: 'viewInstance',
-                            displayName: 'View instance',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
-
-                        {
-                            id: 'viewDatabases',
-                            displayName: 'View databases',
-                            disabled: disableOption,
-                            infoText: disableMessage
-                        },
-
-                        {
-                            id: 'createUserDb',
-                            displayName: 'Create user database',
-                            disabled: disableOption || disableCreateDb,
-                            infoText: disableMessage || disableCreateDbMsg
-                        },
-                        {
-                            id: 'unManage',
-                            displayName: 'Unmanage'
-                        }
-                    );
-                }
-
-                let disableMsg = '';
-                let width = '';
-                let height = '';
-                let disableMenu = () => {
-                    if (data[0] && data[0]?.loading) {
-                        disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                        width = '170px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.status === INVENTORY_STATUS.OFFLINE &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg = GENERAL.HOST_DOWN;
-                        width = '120px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg = GENERAL.SSM_DOWN;
-                        width = '250px';
-                        height = '50px';
-                        return true;
-                    }
-                    if (
-                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
-                        width = '220px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
-                        rowData?.detectOption === DETECT_HOST_VAR.HIDE
-                    ) {
-                        disableMsg = rowData?.detectOptionDisableMsg;
-                        width = '250px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
-                    ) {
-                        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
-                        width = '340px';
-                        height = '50px';
-                        return true;
-                    }
-                    if (
-                        rowData?.serverInstallationMode === GENERAL.AOAG &&
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
-                    ) {
-                        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
-                        width = '320px';
-                        height = '50px';
-                        return true;
-                    }
-                    return false;
-                };
-
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        {disableMenu() ? (
-                            <TooltipComponent placement={'bottom'} title={disableMsg} width={width} height={height}>
-                                <div className={styles.menuPointerDisabled}>
-                                    <span className={styles.menuPointer}>...</span>
-                                </div>
-                            </TooltipComponent>
-                        ) : (
-                            <MenuPopover
-                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                                menuItems={[...menu]}
-                                toggleMenu={(toggleType: string, menuId: string) => {
-                                    if (toggleType === 'close') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(null);
-                                    } else if (toggleType === 'open') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(rowData.id);
-                                        menuOpenedRowDetail.current = rowData.id;
-                                    } else if (toggleType === 'selectedOption') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(null);
-
-                                        if (menuId === 'optimize') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
-                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
-                                            optimizeAction(rowData);
-                                        }
-
-                                        if (menuId === 'manage') {
-                                            // handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
-                                        }
-                                        if (menuId === 'viewInstance') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                            dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
-                                            resourceAction(rowData);
-                                        }
-                                        if (menuId === 'viewDatabases') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                            dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
-                                            resourceAction(rowData);
-                                        }
-                                        if (menuId === 'createUserDb') {
-                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                            dispatch(updateResourceId(rowData?.resourceId));
-                                            dispatch(
-                                                setCdbPageData({
-                                                    dbHostName: rowData?.name,
-                                                    instanceId: rowData?.databaseInstanceId,
-                                                    instanceName: rowData?.databaseInstanceName,
-                                                    cdbCredId: rowData?.credentialId,
-                                                    cdbRegionId: rowData?.regionId
-                                                })
-                                            );
-                                            // dispatch(setDBHostName(hostData?.name));
-                                            // dispatch(setInstanceId(rowData?.databaseInstanceId));
-                                            // dispatch(setInstanceName(rowData?.databaseInstanceName));
-                                            navigate('../create-new-user');
-                                        }
-                                        if (menuId === 'unManage') {
-                                            handleDialog(rowData);
-                                        }
-                                        if (menuId === 'detect') {
-                                            handleDetectDialog(rowData);
-                                        }
-                                    }
-                                }}
-                                CustomMenu={undefined}
-                                disabledText={undefined}
-                            />
-                        )}
-                    </div>
-                );
-            },
-            showHide: true,
-            width: '57px',
-            isSticky: true
-        };
-    };
-
     const redirectToAction = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
@@ -883,8 +664,7 @@ const InstancesTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
-        },
-        lastColDetails()
+        }
     ];
 
     const tableProps = useTable({
@@ -893,7 +673,219 @@ const InstancesTable = () => {
         rows: data,
         pageSize: 10,
         selectionType: 'none',
-        isHorizontalScroll: true
+        isHorizontalScroll: true,
+        isManagedColumns: true,
+        initialColumnState: initialInstanceTableColState,
+        manageColumnsProps: {
+            renderCell: (cellData: any, rowData: any) => {
+                const menu = [];
+                let disableOption = false;
+                let disableMessage = '';
+                const disableCreateDb = isSmbProtocol(rowData?.storage?.fsxn?.protocol);
+                const disableCreateDbMsg = disableCreateDb ? GENERAL.SMB_PROTOCOL_DISABLED : '';
+                if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.HOST_DOWN;
+                    disableOption = true;
+                } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+                    disableMessage = GENERAL.SSM_DOWN;
+                    disableOption = true;
+                } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+                    disableMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                    disableOption = true;
+                }
+                if (rowData.statusColText === INVENTORY_STATUS.UNDETECTED) {
+                    menu.push({
+                        id: 'detect',
+                        displayName: 'Detect',
+                        disabled: disableOption,
+                        infoText: disableMessage
+                    });
+                } else if (rowData.statusColText === INVENTORY_STATUS.UNMANAGED) {
+                    menu.push({
+                        id: 'manage',
+                        displayName: 'Manage',
+                        disabled: disableOption,
+                        infoText: disableMessage
+                    });
+                } else {
+                    menu.push(
+                        {
+                            id: 'optimize',
+                            displayName: 'Optimize',
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
+                        {
+                            id: 'viewInstance',
+                            displayName: 'View instance',
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
+
+                        {
+                            id: 'viewDatabases',
+                            displayName: 'View databases',
+                            disabled: disableOption,
+                            infoText: disableMessage
+                        },
+
+                        {
+                            id: 'createUserDb',
+                            displayName: 'Create user database',
+                            disabled: disableOption || disableCreateDb,
+                            infoText: disableMessage || disableCreateDbMsg
+                        },
+                        {
+                            id: 'unManage',
+                            displayName: 'Unmanage'
+                        }
+                    );
+                }
+
+                let disableMsg = '';
+                let width = '';
+                let height = '';
+                let disableMenu = () => {
+                    if (data[0] && data[0]?.loading) {
+                        disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
+                        width = '170px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.status === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.HOST_DOWN;
+                        width = '120px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.SSM_DOWN;
+                        width = '250px';
+                        height = '50px';
+                        return true;
+                    }
+                    if (
+                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
+                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
+                    ) {
+                        disableMsg = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+                        width = '220px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
+                        rowData?.detectOption === DETECT_HOST_VAR.HIDE
+                    ) {
+                        disableMsg = rowData?.detectOptionDisableMsg;
+                        width = '250px';
+                        height = '33px';
+                        return true;
+                    }
+                    if (
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP
+                    ) {
+                        disableMsg = GENERAL.FSXN_MANAGE_SUPPORTED;
+                        width = '340px';
+                        height = '50px';
+                        return true;
+                    }
+                    if (
+                        rowData?.serverInstallationMode === GENERAL.AOAG &&
+                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+                    ) {
+                        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+                        width = '320px';
+                        height = '50px';
+                        return true;
+                    }
+                    return false;
+                };
+
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        {disableMenu() ? (
+                            <TooltipComponent placement={'bottom'} title={disableMsg} width={width} height={height}>
+                                <div className={styles.menuPointerDisabled}>
+                                    <span className={styles.menuPointer}>...</span>
+                                </div>
+                            </TooltipComponent>
+                        ) : (
+                            <MenuPopover
+                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                                menuItems={[...menu]}
+                                toggleMenu={(toggleType: string, menuId: string) => {
+                                    if (toggleType === 'close') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+                                    } else if (toggleType === 'open') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(rowData.id);
+                                        menuOpenedRowDetail.current = rowData.id;
+                                    } else if (toggleType === 'selectedOption') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+
+                                        if (menuId === 'optimize') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                            dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+                                            dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                                            optimizeAction(rowData);
+                                        }
+
+                                        if (menuId === 'manage') {
+                                            // handleManageInstances(hostData, [rowData?.databaseInstanceName], false);
+                                        }
+                                        if (menuId === 'viewInstance') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                            dispatch(selectedTabSelection(WLF_TABS.OVERVIEW));
+                                            resourceAction(rowData);
+                                        }
+                                        if (menuId === 'viewDatabases') {
+                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
+                                            dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
+                                            resourceAction(rowData);
+                                        }
+                                        if (menuId === 'createUserDb') {
+                                            dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                            dispatch(updateResourceId(rowData?.resourceId));
+                                            dispatch(
+                                                setCdbPageData({
+                                                    dbHostName: rowData?.name,
+                                                    instanceId: rowData?.databaseInstanceId,
+                                                    instanceName: rowData?.databaseInstanceName,
+                                                    cdbCredId: rowData?.credentialId,
+                                                    cdbRegionId: rowData?.regionId
+                                                })
+                                            );
+                                            // dispatch(setDBHostName(hostData?.name));
+                                            // dispatch(setInstanceId(rowData?.databaseInstanceId));
+                                            // dispatch(setInstanceName(rowData?.databaseInstanceName));
+                                            navigate('../create-new-user');
+                                        }
+                                        if (menuId === 'unManage') {
+                                            handleDialog(rowData);
+                                        }
+                                        if (menuId === 'detect') {
+                                            handleDetectDialog(rowData);
+                                        }
+                                    }
+                                }}
+                                CustomMenu={undefined}
+                                disabledText={undefined}
+                            />
+                        )}
+                    </div>
+                );
+            }
+        }
     });
 
     useEffect(() => {

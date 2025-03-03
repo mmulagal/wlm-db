@@ -53,6 +53,7 @@ import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table'
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useNavigate } from 'react-router-dom';
+import { initialHostsTableColState } from '../../../../utils/manageColumnUtils';
 
 const HostTable = () => {
     const dispatch = useDispatch();
@@ -551,64 +552,6 @@ const HostTable = () => {
     //     };
     // };
 
-    const lastColDetails = () => {
-        return {
-            id: '12',
-            Header: '',
-            accessor: 'name',
-            showHide: true,
-            width: '57px',
-            isSticky: true,
-            renderCell: (cellData: any, rowData: any) => {
-                const menu = [
-                    {
-                        id: 'manage',
-                        displayName: 'Manage'
-                    },
-                    {
-                        id: 'viewInstances',
-                        displayName: 'View instances'
-                    },
-                    {
-                        id: 'viewDatabases',
-                        displayName: 'View databases'
-                    }
-                ];
-
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={[...menu]}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'manage') {
-                                    }
-                                    if (menuId === 'viewInstances') {
-                                    }
-                                    if (menuId === 'viewDatabases') {
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            }
-        };
-    };
-
     const DatabasesColDefs: ColumnProps[] = [
         {
             id: '0',
@@ -813,8 +756,7 @@ const HostTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
-        },
-        lastColDetails()
+        }
     ];
 
     const tableProps = useTable({
@@ -824,8 +766,58 @@ const HostTable = () => {
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isManagedColumns: false,
-        isLazyLoading: loading
+        isManagedColumns: true,
+        isLazyLoading: loading,
+        initialColumnState: initialHostsTableColState,
+        manageColumnsProps: {
+            renderCell: (cellData: any, rowData: any) => {
+                const menu = [
+                    {
+                        id: 'manage',
+                        displayName: 'Manage'
+                    },
+                    {
+                        id: 'viewInstances',
+                        displayName: 'View instances'
+                    },
+                    {
+                        id: 'viewDatabases',
+                        displayName: 'View databases'
+                    }
+                ];
+
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={[...menu]}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'manage') {
+                                    }
+                                    if (menuId === 'viewInstances') {
+                                    }
+                                    if (menuId === 'viewDatabases') {
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            }
+        }
     });
 
     useEffect(() => {
