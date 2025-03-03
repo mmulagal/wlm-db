@@ -550,10 +550,6 @@ const checkRunningStatus = {
     commands: [CHECK_RUNNING_STATUS_WITH_RESTART('$env:computername')]
 };
 
-const maxDOPAssessmentSsm = {
-    commands: [GET_VCPU_AND_MAXDOP_DETAILS('MSSQLSERVER', false)]
-};
-
 const getInstalledSQLVersion = {
     commands: [GET_INSTALLED_MSSQL_VERSION()]
 };
@@ -572,6 +568,7 @@ const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
 const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
+const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -780,8 +777,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getRssConfigAssessmentCommand)
     .on(SendCommandCommand, { Parameters: checkRunningStatus })
     .resolves(listSendCommandCommandResponse.checkRunningStatusCommand)
-    .on(SendCommandCommand, { Parameters: maxDOPAssessmentSsm })
-    .resolves(listSendCommandCommandResponse.getMaxDopAssessmentCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLVersion })
     .resolves(listSendCommandCommandResponse.getInstalledSQLVersionCommand)
     .on(SendCommandCommand, { Parameters: getInstalledSQLPatches })
@@ -799,7 +794,11 @@ ssmMock
     .on(SendCommandCommand, params => {
         return /#Set MAXDOP/.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('setMaxDOP'));
+    .resolves(getSampleCommandResponse('setMaxDOP'))
+    .on(SendCommandCommand, params => {
+        return getVCPUAndMaxDopDetails.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1029,10 +1028,10 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkRunningStatusCommand'
     })
     .resolves(getCommandInvocationResponse.checkRunningStatusCommandResponse)
-    .on(GetCommandInvocationCommand, {
-        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
-    })
-    .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse)
+    // .on(GetCommandInvocationCommand, {
+    //     CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-maxDOPAssessmentDataCommand'
+    // })
+    // .resolves(getCommandInvocationResponse.maxDOPAssessmentDataCommandResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installedSQLPatchesCommand'
     })
@@ -1066,6 +1065,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'setMaxDOP',
             '{"status":"success","message":"MAXDOP set to 4 for instance STVYCUAMIUIG\\\\SIGMA, Configuration option \\u0027show advanced options\\u0027 changed from 1 to 1. Run the RECONFIGURE statement to install. Configuration option \\u0027max degree of parallelism\\u0027 changed from 4 to 4. Run the RECONFIGURE statement to install."}\r\n'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getVCPUAndMaxDOPDetails',
+            '{\"vcpuCount\":4,\"maxDOP\":\"4\"}\r\n'
         )
     );
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
