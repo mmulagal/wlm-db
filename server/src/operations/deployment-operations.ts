@@ -81,7 +81,6 @@ import {
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
     PG_TEMPLATE_CONFIG_MAPPING,
-    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     PGSQL_VERSION,
     AuditStatus,
@@ -1598,7 +1597,8 @@ async function deployPgSql(
 
     try {
         // Get the Max capacity - headroom of 35% for OS and other services
-        // Devide by 1.25 (data + 25% log) to get the max capacity for standalone and HA
+        // Divide by 1.25 (data + 25% log) to get the max database size
+        // Further divide by 2 for HA mode as we would create 2 data volumes
         let maxDatabaseSizeInGib = ((1 - 0.35) * 192 * 1024) / 1.25;
         maxDatabaseSizeInGib = Number(maxDatabaseSizeInGib / (sqlDeploymentMode === HA ? 2 : 1));
         if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > maxDatabaseSizeInGib) {
@@ -1920,13 +1920,11 @@ async function formatPgSqlTemplateParameters(
     }
     templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
 
-    Object.entries(PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
-        if (!servicesWithNoEndpoint.includes(key)) {
-            templateParams.push({
-                ParameterKey: value,
-                ParameterValue: 'true'
-            });
-        }
+    Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: value,
+            ParameterValue: servicesWithNoEndpoint.includes(key) ? 'false' : 'true'
+        });
     });
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -2125,7 +2123,7 @@ async function createCfTemplateForPgsqlDeployment(
         // }
     );
 
-    Object.entries(PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+    Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!servicesWithNoEndpoint.includes(key)) {
             templateParams += `&param_${value}='true'`;
         }
