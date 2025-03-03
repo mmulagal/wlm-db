@@ -57,7 +57,7 @@
     }
 
     .table {
-        width: 81%;
+        width: 100%;
         margin-top: -18px;
         margin-bottom: 96px;
     }
@@ -223,9 +223,9 @@
         }
     }
 
-    [class*='Table-module_scroll'] {
-        width: 2248px !important;
-    }
+    // [class*='Table-module_scroll'] {
+    //     width: 2248px !important;
+    // }
 
     [class*='Table-module_highlighted-row'] {
         [class*='Table-module_high-row'] {

@@ -625,7 +625,7 @@ const InstancesTable = () => {
             accessor: 'databaseInstanceName',
             id: '1',
             isSortable: true,
-            width: '212px',
+            width: '256px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
@@ -664,7 +664,7 @@ const InstancesTable = () => {
             Header: 'Host name',
             accessor: 'name',
             id: '2',
-            width: '150px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -674,7 +674,7 @@ const InstancesTable = () => {
             Header: 'Engine type',
             accessor: 'hostType',
             id: '3',
-            width: '150px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -684,7 +684,7 @@ const InstancesTable = () => {
             Header: 'Deployment model',
             accessor: 'serverInstallationMode',
             id: '4',
-            width: '150px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -695,7 +695,7 @@ const InstancesTable = () => {
             accessor: 'statusColText',
             id: '5',
             isSortable: false,
-            width: '190px',
+            width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 if (cellData === INVENTORY_STATUS.UNMANAGED) {
@@ -721,7 +721,7 @@ const InstancesTable = () => {
             Header: 'Optimization status',
             accessor: 'optimizationStatus',
             id: '6',
-            width: '210px',
+            width: '240px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
@@ -824,7 +824,7 @@ const InstancesTable = () => {
             Header: 'Protection status',
             accessor: 'protectionText',
             id: '7',
-            width: '130px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
@@ -841,7 +841,7 @@ const InstancesTable = () => {
             Header: 'Performance',
             accessor: 'performance.assessment',
             id: '8',
-            width: '160px',
+            width: '200px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const loading = rowData?.loading || rowData?.subLoading;
@@ -859,7 +859,7 @@ const InstancesTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
-            width: '168px',
+            width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -869,7 +869,7 @@ const InstancesTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
-            width: '168px',
+            width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -879,7 +879,7 @@ const InstancesTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
-            width: '168px',
+            width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }

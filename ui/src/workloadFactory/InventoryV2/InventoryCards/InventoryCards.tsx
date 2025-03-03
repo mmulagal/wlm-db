@@ -11,9 +11,10 @@ const InventoryCards = () => {
                 <div className={styles.contentArea}>
                     <DsTypography variant="Semibold_16">Database management</DsTypography>
                     <DsTypography variant="Regular_14">
-                        Managing a database ensures data integrity and consistency, which is crucial for making accurate
-                        decisions. It also enhances data security by implementing access controls and encryption,
-                        protecting sensitive information.
+                        Manage database resources and perform day-to-day operations with FSx for ONTAP. You can check
+                        the status of hosts, instances, and databases, deploy new resources, and stay on top of resource
+                        usage, data protection, and performance. Plus, get optimization recommendations to make sure
+                        your database resources are well-architected.
                     </DsTypography>
                 </div>
             </div>
@@ -22,9 +23,9 @@ const InventoryCards = () => {
                 <div className={styles.contentArea}>
                     <DsTypography variant="Semibold_16">Database optimization</DsTypography>
                     <DsTypography variant="Regular_14">
-                        Optimizing a database enhances its performance, ensuring faster data retrieval and processing,
-                        which boosts overall productivity. It also reduces resource consumption, leading to cost savings
-                        and more efficient use of system resources.
+                        Automatically assess and mitigate issues in database infrastructure to keep your databases
+                        running smoothly and cost-effectively. Continuously scan deployments to get insights and
+                        recommendations to make sure everything aligns with vendor and industry best practices.
                     </DsTypography>
                 </div>
             </div>
