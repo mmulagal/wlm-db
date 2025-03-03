@@ -1597,8 +1597,11 @@ async function deployPgSql(
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
-        // The min can be same as SQLServer, but the max is 192TiB - .35*192 = 124.8TiB / 1.25 = 99.84TiB
-        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > (sqlDeploymentMode === HA ? 1 : 2) * 51118) {
+        // Get the Max capacity - headroom of 35% for OS and other services
+        // Devide by 1.25 (data + 25% log) to get the max capacity for standalone and HA
+        let maxDatabaseSizeInGib = ((1 - 0.35) * 192 * 1024) / 1.25;
+        maxDatabaseSizeInGib = Number(maxDatabaseSizeInGib / (sqlDeploymentMode === HA ? 2 : 1));
+        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > maxDatabaseSizeInGib) {
             throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
         }
 
