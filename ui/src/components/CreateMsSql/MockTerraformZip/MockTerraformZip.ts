@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 
-export const downloadTerraformZip = (deploymentModel?: string) => {
+export const downloadTerraformZip = (deploymentModel?: string, from = 'mssql') => {
     // Create a new instance of JSZip
     var zip = new JSZip();
 
@@ -1391,8 +1391,13 @@ variable "sql_node_initialization_s3_url" {
         var link = document.createElement('a');
         link.href = URL.createObjectURL(content);
 
-        // Set the download attribute with a default file name
-        link.download = `TF-WLMDB-Sql${deploymentModel === 'fci' ? 'Fci' : 'Standalone'}-${new Date().getTime()}`;
+        if (from === 'pgsql') {
+            // Set the download attribute with a default file name
+            link.download = `TF-WLMDB-Pgsql${deploymentModel === 'fci' ? 'Ha' : 'Standalone'}-${new Date().getTime()}`;
+        } else {
+            // Set the download attribute with a default file name
+            link.download = `TF-WLMDB-Sql${deploymentModel === 'fci' ? 'Fci' : 'Standalone'}-${new Date().getTime()}`;
+        }
 
         // Append the anchor to the body
         document.body.appendChild(link);
