@@ -88,7 +88,8 @@ import {
     FCI,
     PGSQL_MASTER_TEMPLATE_PATH,
     AL2023_AMI_NAME,
-    CF_QUOTA_REACHED
+    CF_QUOTA_REACHED,
+    HA
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -1582,7 +1583,7 @@ async function deployPgSql(
 
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
-    const { sqlServerName, sqlVersion } = sqlConfiguration;
+    const { sqlServerName, sqlVersion, sqlDeploymentMode } = sqlConfiguration;
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
     const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
@@ -1596,6 +1597,13 @@ async function deployPgSql(
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
+        // The min can be same as SQLServer, but the max is 192TiB - .35*192 = 124.8TiB / 1.25 = 99.84TiB
+        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > (sqlDeploymentMode === HA ? 1 : 2) * 51118) {
+            throw createError(412, 'Supported Fsxn disk size should be between 120GiB to 130TiB');
+        }
+
+        validateFSXThroughputAndIOPS(fsxVolThroughput, fsxIOPS, region);
+
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
@@ -1720,6 +1728,9 @@ async function deployCfTemplateForPgSql(
     if (cfStackQuotaReached) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
+
+    // Set EnableDnsSupport and EnableDnsHostnames to true
+    await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
 
     const { stackName, templateParameters: templateParams } = await formatPgSqlTemplateParameters(
         networkConfiguration,
