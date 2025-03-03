@@ -105,7 +105,10 @@ async function listFsxOntapCredentials(accountId: string, fsxId: string) {
 
 async function listFSXFileSystem(credentialsId: string, region: string, isDemoMode?: boolean) {
     logger.info('Get FSX file systems list', { credentialsId, region, isDemoMode });
-
+    // Workaround added till GROGU-5485 is resolved
+    if (region === 'ap-southeast-5' && isDemoMode) {
+        return [];
+    }
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
