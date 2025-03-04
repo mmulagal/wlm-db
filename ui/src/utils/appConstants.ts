@@ -1140,21 +1140,22 @@ export const GENERAL = {
     MANAGE_DISABLE_FOR_UNDETECTED:
         'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
-        'All SQL Server instances on this host are either managed or undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are either managed or undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
-        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
     ALL_ES_FSXW_AOAG_ROWS:
         'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     NON_SSD_FSXW_MSG:
         'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
-    MANAGED_SUPPORT_FOR_EBS_FSXW: 'Manage instance is not supported for EBS and FSx for Windows File Server storage type.',
+    MANAGED_SUPPORT_FOR_EBS_FSXW:
+        'Manage instance is not supported for EBS and FSx for Windows File Server storage type.',
     MIXED_STORAGE_ES_MSG: 'Explore Savings for mixed storage type is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [

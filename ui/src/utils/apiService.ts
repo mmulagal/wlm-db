@@ -1099,8 +1099,6 @@ export const {
 } = configApi;
 
 export const {
-    useGetJobsSummaryQuery,
-    useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
     useGetTerraformSetupMutation,
     useGetPgsqlTemplatesMutation,

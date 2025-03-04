@@ -24,7 +24,6 @@ import {
     getOptimizationStatus,
     getProtectionText,
     handleManageInstances,
-    renderCellData,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus

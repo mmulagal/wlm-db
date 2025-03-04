@@ -914,7 +914,11 @@ const InventoryApisV3 = () => {
         let instanceData: any = {};
         // This will loop all unamanged EBS/FSXW rows
         exploreSavingsRows?.map((row: any) => {
-            if (row?.storageType && !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)]) {
+            if (
+                row?.storageType &&
+                !potentialSavingsHostDataRef.current?.[uniqueHostRow(row?.id, credId, regionId)] &&
+                row?.isDetected
+            ) {
                 if (
                     headerSelectedMultiCredIdsList.includes(runningCredId) &&
                     headerSelectedMultiRegionIdsList.includes(runningRegionId)
