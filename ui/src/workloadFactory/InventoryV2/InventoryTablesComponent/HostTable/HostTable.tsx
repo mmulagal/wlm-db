@@ -21,32 +21,21 @@ import {
     checkForAnyAOAG,
     checkForAnySSD,
     checkForMixedStorageType,
-    getPartnerNodeEc2InstanceId,
     handleManageInstances,
-    handleManageNotification,
-    handleManageTriggerNotification,
-    installModuleNotification,
     renderCellData,
     renderEstimatedCost,
     renderInstanceListText,
     renderVpcText,
-    sortInventoryTableData,
-    uniqueHostRow,
-    updateInstanceStatus
+    sortInventoryTableData
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
 import {
-    setInProgressInstances,
-    setInventoryTableData,
     setSelectedFilterValue,
     setSelectedInventoryTab
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import {
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
-    PARTNER_NODE,
-    PREPARE_API_ENDPOINT,
     SSM_TROUBLESHOOTING_LINK,
     WLF_TO_FORM_NAVIGATE,
     WLF_TO_PROTECT_NAVIGATE
@@ -54,8 +43,6 @@ import {
 import styles from '../InventoryTable.module.scss';
 import ManagedHostDialog from '../../InventoryTable/ManagedHostDialog/ManagedHostDialog';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import { onClickESHost } from '../../../ExploreSavings/ExploreSavingsUtils';
 import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';

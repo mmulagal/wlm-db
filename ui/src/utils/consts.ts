@@ -619,7 +619,7 @@ export const INSTANCE_API_FIELDS = {
     UNMANAGED_DEFAULT: [
         'databaseInstanceTopology',
         'usageEstimation',
-        'storage',
+        // 'storage',
         'databaseServer',
         'serverDetails',
         'nodeTopology'
@@ -627,7 +627,7 @@ export const INSTANCE_API_FIELDS = {
     SUB_TABLE_FIELDS: ['protection', 'performance'],
     MIXED_STATUS_FIELDS: [
         'databaseInstanceTopology',
-        'storage',
+        // 'storage',
         'databaseServer',
         'serverDetails',
         'nodeTopology',
