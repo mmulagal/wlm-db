@@ -18,8 +18,6 @@ import {
     setIsManagedHostListLoading,
     setIsPgSqlDatabaseHostsLoading,
     setIsRefreshed,
-    setManagedAssessmentHostData,
-    setManagedAssessmentHostIdsList,
     setMssqlInstancesData,
     setPerfMssqlInstancesData,
     setPotentialSavingsHostData,
@@ -63,7 +61,7 @@ import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savings
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
     const { databaseHostsData, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
-    const { fullHostDataLoading: pgsqlFullHostDataLoading } = useAppSelector(
+    const { databaseHostsData: pgsqlDatabaseHostsData, fullHostDataLoading: pgsqlFullHostDataLoading } = useAppSelector(
         state => state.inventoryV2.getPgSqlDatabaseHosts
     );
     const {
@@ -1225,6 +1223,24 @@ const InventoryApisV3 = () => {
             }
         }
     }, [databaseHostsData]);
+
+    // This data is coming from database-hosts pgsql API
+    useEffect(() => {
+        const state = store.getState();
+        const resetManagedData = state.inventoryV2.resetManagedData;
+        if (!resetManagedData && pgsqlDatabaseHostsData) {
+            const formattedInventoryTableData = formatInventoryTableData(pgsqlDatabaseHostsData);
+
+            // To Avoid overriding
+            let updatedResult = { ...inventoryTableDataRef.current, ...formattedInventoryTableData };
+            if (mssqlInstancesDataRef.current) {
+                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
+                dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
+            } else {
+                dispatch(setInventoryTableData(updatedResult));
+            }
+        }
+    }, [pgsqlDatabaseHostsData]);
 
     useEffect(() => {
         const state = store.getState();

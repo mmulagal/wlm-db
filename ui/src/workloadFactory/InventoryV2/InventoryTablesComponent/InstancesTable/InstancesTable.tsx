@@ -599,6 +599,10 @@ const InstancesTable = () => {
             renderCell: (cellData: string, rowData: any) => {
                 let disableMsg = '';
                 let disableMenu = () => {
+                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+                        disableMsg = GENERAL.PGSQL_ASSESSMENT_NA;
+                        return true;
+                    }
                     if (
                         rowData?.status === INVENTORY_STATUS.OFFLINE ||
                         rowData?.ssmState === INVENTORY_STATUS.OFFLINE ||
@@ -846,6 +850,12 @@ const InstancesTable = () => {
                 let width = '';
                 let height = '';
                 let disableMenu = () => {
+                    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+                        disableMsg = GENERAL.PGSQL_CTA_NA;
+                        width = '230px';
+                        height = '53px';
+                        return true;
+                    }
                     if (data[0] && data[0]?.loading) {
                         disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
                         width = '170px';

@@ -151,7 +151,8 @@ export const FSX_DEPLOYMENT_MODE = {
 export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE: 'fci',
     SINGLE_INSTANCE_VALUE: 'standalone',
-    AOAG: 'aoag'
+    AOAG: 'aoag',
+    HA: 'ha'
 };
 
 export const API_ERRORS = {

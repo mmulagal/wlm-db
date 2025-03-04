@@ -222,6 +222,8 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
             installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
         } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
             installationMode = GENERAL.AOAG;
+        } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+            installationMode = GENERAL.HA;
         }
         return installationMode;
     } else {
@@ -247,6 +249,8 @@ export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined
                 perInstallationMode = GENERAL.AOAG;
             } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                 perInstallationMode = GENERAL.STANDALONE;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+                perInstallationMode = GENERAL.HA;
             }
             if (!installationMode.includes(perInstallationMode)) {
                 installationMode.push(perInstallationMode);
@@ -756,6 +760,8 @@ export const getDiscoverInstallationMode = (row: DiscoverHostInterface) => {
             installationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
         } else if (installationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
             installationMode = GENERAL.AOAG;
+        } else if (installationMode.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+            installationMode = GENERAL.HA;
         }
         return installationMode;
     } else {
@@ -775,6 +781,8 @@ export const getAllDiscoverInstallationMode = (row: DiscoverHostInterface) => {
                 perInstallationMode = GENERAL.AOAG;
             } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
                 perInstallationMode = GENERAL.STANDALONE;
+            } else if (perInstallationMode === SQL_DEPLOYMENT_MODE.HA) {
+                perInstallationMode = GENERAL.HA;
             }
             if (perInstallationMode && !installationMode.includes(perInstallationMode)) {
                 installationMode.push(perInstallationMode);
@@ -1738,6 +1746,8 @@ export const getDiscoveredHostDeploymentV2 = (host: any) => {
         type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
     } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
         type = GENERAL.STANDALONE;
+    } else if (sqlServerDeploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+        type = GENERAL.HA;
     } else {
         type = sqlServerDeploymentType;
     }

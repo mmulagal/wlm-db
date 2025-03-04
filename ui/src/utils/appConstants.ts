@@ -860,6 +860,7 @@ export const GENERAL = {
     ],
     FCI: 'FCI',
     AOAG: 'Always on availability group',
+    HA: 'High availability',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
@@ -1113,8 +1114,10 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    PGSQL_CTA_NA: 'PostgreSQL actions are not supported.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
