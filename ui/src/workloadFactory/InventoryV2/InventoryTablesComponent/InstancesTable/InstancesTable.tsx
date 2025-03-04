@@ -43,6 +43,7 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setRadioValueDetect,
+    setSelectedFilterValue,
     setSelectedHeaderTab,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
@@ -82,7 +83,8 @@ const InstancesTable = () => {
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
-    const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+    const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
+        useAppSelector(state => state.inventoryV2);
 
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
@@ -193,6 +195,32 @@ const InstancesTable = () => {
         }
         setData(newTable);
     }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading]);
+
+    const getInitialFilter = () => {
+        if (selectedInventoryTab === 'Instances' && selectedFilterValue?.flag === true) {
+            dispatch(
+                setSelectedFilterValue({
+                    flag: false,
+                    value: ''
+                })
+            );
+            return {
+                textFilter: '',
+                count: 1,
+                columns: {
+                    '2': {
+                        activeCount: 1,
+                        values: {
+                            [selectedFilterValue?.value]: true
+                        },
+                        valuesArray: [true]
+                    }
+                }
+            };
+        } else {
+            return undefined;
+        }
+    };
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -741,6 +769,7 @@ const InstancesTable = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
+        initialFilterState: getInitialFilter(),
         initialColumnState: initialInstanceTableColState,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
