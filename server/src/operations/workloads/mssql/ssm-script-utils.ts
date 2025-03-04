@@ -720,7 +720,12 @@ const getMappedOntapVolumesScript = (
                             $QueryFilter += [System.Web.HttpUtility]::UrlEncode($SerialNumber) + '|'
                         }
                     }
+                    
                     $QueryFilter = $QueryFilter.TrimEnd('|')
+
+                    if ($svmOntapUuid -ne '') {
+                        $QueryFilter += "&svm.uuid=$svmOntapUuid"
+                    }
 
                     $Params = @{
                         "ApiEndPoint" = "/storage/luns"
