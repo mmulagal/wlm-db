@@ -30,6 +30,10 @@ import {
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
 import {
+    setSelectedFilterValue,
+    setSelectedInventoryTab
+} from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     SSM_TROUBLESHOOTING_LINK,
@@ -582,7 +586,13 @@ const HostTable = () => {
                                         handleDialog(rowData);
                                     }
                                     if (menuId === 'viewInstances') {
-                                        // Open instance tab and filter based on host name
+                                        dispatch(setSelectedInventoryTab('Instances'));
+                                        dispatch(
+                                            setSelectedFilterValue({
+                                                flag: true,
+                                                value: rowData?.name
+                                            })
+                                        );
                                     }
                                     if (menuId === 'viewDatabases') {
                                         // Open database tab and filter based on host name

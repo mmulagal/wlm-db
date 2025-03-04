@@ -55,13 +55,20 @@ const initialInventoryV2State: InventorySliceData = {
         type: '',
         data: {}
     },
-    optimizeInnerPageValues: {}
+    optimizeInnerPageValues: {},
+    selectedFilterValue: {
+        flag: false,
+        value: ''
+    }
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setSelectedFilterValue: (state, action: PayloadAction<any>) => {
+            state.selectedFilterValue = action.payload;
+        },
         setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
             state.selectedInventoryTab = action.payload;
         },
@@ -217,6 +224,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setSelectedFilterValue,
     setSelectedInventoryTab,
     setOptimizeInnerPageValues,
     setSelectedOptimizeConfig,
