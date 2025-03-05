@@ -656,22 +656,22 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT);
+                            }}
+                            data-testid="wlm-db-optimize-maxdop"
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.scheduledLocalSnapshot === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-scheduled-local-snapshot"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
-                                    Optimize
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
+                            Optimize
+                        </DsButton>
                     </div>
                 </div>
             </div>

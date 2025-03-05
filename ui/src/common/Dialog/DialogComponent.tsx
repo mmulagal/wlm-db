@@ -57,6 +57,7 @@ const DialogComponent = ({
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
     const { selectedSnapshotPolicy } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
+    const { selectedConfig } = useAppSelector(state => state.databaseHome);
 
     //Managed Host table button disable
     const { manageHostSelectedRows } = useAppSelector(state => state.inventoryV2);
@@ -95,7 +96,8 @@ const DialogComponent = ({
 
     const disabledCheck = () => {
         if (
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT &&
+            (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
+                selectedConfig === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) &&
             (selectedSnapshotPolicy === null || selectedSnapshotPolicy?.length === 0)
         ) {
             return true;
