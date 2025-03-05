@@ -17,6 +17,8 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/consts';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
+import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
+
 type DialogType = {
     type: string;
     recommendationOptions?: any;
@@ -388,6 +390,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
+
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return missingPermissions && missingPermissions.length ? (
                     driveSizeMissingPermissions(missingPermissions)
@@ -829,6 +832,8 @@ const DialogContent = ({
                     </div>
                 );
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                return <ScheduledLocalSnapshotDalog type={type} />;
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return (
                     <div className={styles['storage-tier-block']}>

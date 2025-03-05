@@ -10,7 +10,7 @@ import {
 } from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
-import { FROM_DIALOG } from '../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
 import { ReactComponent as TooltipIcon } from '../../assets/tooltipGrey.svg';
@@ -55,6 +55,8 @@ const DialogComponent = ({
     const detectHostError = useAppSelector(state => state.msSqlAction.isDetectHostError);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
+    const { selectedSnapshotPolicy } = useAppSelector(state => state.getWellOptimize);
+    const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
 
     //Managed Host table button disable
     const { manageHostSelectedRows } = useAppSelector(state => state.inventoryV2);
@@ -92,6 +94,12 @@ const DialogComponent = ({
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT &&
+            (selectedSnapshotPolicy === null || selectedSnapshotPolicy?.length === 0)
+        ) {
+            return true;
+        }
         if (primaryButtonDisabled) {
             return true;
         }

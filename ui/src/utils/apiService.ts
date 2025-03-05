@@ -1044,6 +1044,18 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getSnapshotPolicies: builder.query({
+                query: ({ credentialId, region, databaseHostId, instanceId }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/snapshot-policies`
+                })
+            }),
+            optimizeResiliency: builder.mutation({
+                query: ({ credentialId, region, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/resiliency`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1179,5 +1191,7 @@ export const {
     useOptimizeStorageTierForBulkMutation,
     useTriggerInstanceAssessmentMutation,
     useOptimizeComputeConfigForBulkMutation,
-    useOptimizeMaxdopConfigForBulkMutation
+    useOptimizeMaxdopConfigForBulkMutation,
+    useLazyGetSnapshotPoliciesQuery,
+    useOptimizeResiliencyMutation
 } = getWellApi;
