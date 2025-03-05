@@ -65,7 +65,8 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                 <DsTypography variant="Semibold_14">Action summary</DsTypography>
                 <DsTypography variant="Regular_14">
                     Workload Factory recommends enabling local snapshots on your FSx for ONTAP filesystem volumes by
-                    applying a snapshot policy to each volume serving the SQL Server workload.
+                    applying a snapshot policy to each volume serving the SQL Server workload. Local snapshots are
+                    instantaneous, capacity-efficient, point-in-time images of your volumes.
                 </DsTypography>
             </div>
 
@@ -113,8 +114,16 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                             <Bullet />
                         </div>
                         <DsTypography variant="Regular_14">
-                            A snapshot policy will be assigned to a volume or several volumes. Local snapshots would be
-                            created automatically based on the assigned policy.
+                            A snapshot policy will be assigned to a volume or several volumes.
+                        </DsTypography>
+                    </div>
+
+                    <div className={styles.row}>
+                        <div>
+                            <Bullet />
+                        </div>
+                        <DsTypography variant="Regular_14">
+                            Local snapshots would be created automatically based on the assigned policy.
                         </DsTypography>
                     </div>
                 </div>
@@ -125,24 +134,6 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                     {GENERAL.NOTE}
                 </DsTypography>
                 <div className={styles.content}>
-                    <div className={styles.row}>
-                        <div>
-                            <Bullet />
-                        </div>
-                        <DsTypography variant="Regular_14">
-                            Snapshot creation is instantaneous and capacity-efficient.
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <div>
-                            <Bullet />
-                        </div>
-                        <DsTypography variant="Regular_14">
-                            Snapshot policies can include multiple retention frequencies (Hourly, Daily, Weekly,
-                            Monthly).
-                        </DsTypography>
-                    </div>
                     <div className={styles.row}>
                         <div>
                             <Bullet />
@@ -159,7 +150,6 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                             NetApp SnapCenter.
                         </DsTypography>
                     </div>
-
                     <div className={styles.row}>
                         <div>
                             <Bullet />
