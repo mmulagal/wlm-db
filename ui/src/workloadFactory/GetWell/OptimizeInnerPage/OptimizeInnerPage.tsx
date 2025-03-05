@@ -94,7 +94,7 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else {
+        } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             return (
                 <DsButton
                     isThin
@@ -115,6 +115,21 @@ const OptimizeInnerPage = () => {
                 >
                     Optimize
                 </DsButton>
+            );
+        } else {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
             );
         }
     };
