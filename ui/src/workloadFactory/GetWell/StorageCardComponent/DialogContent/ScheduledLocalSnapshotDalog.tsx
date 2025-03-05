@@ -155,7 +155,7 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                             <Bullet />
                         </div>
                         <DsTypography variant="Regular_14">
-                            No disruption to you service is expected during this process.
+                            No disruption to your service is expected during this process.
                         </DsTypography>
                     </div>
 
