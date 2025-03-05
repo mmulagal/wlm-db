@@ -105,6 +105,37 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
             </div>
 
             <div className={styles['first-section']} style={{ marginTop: '-30px' }}>
+                <div className={styles.ribbon}>
+                    <div className={styles.leftSde}>
+                        <DsTypography variant="Regular_14">Policy schedule:</DsTypography>
+                    </div>
+
+                    <div className={styles.rightSide}>
+                        <div className={styles.row}>
+                            <div>
+                                <Bullet />
+                            </div>
+                            <DsTypography variant="Regular_14">Every hour, keep the last 6 copies</DsTypography>
+                        </div>
+
+                        <div className={styles.row}>
+                            <div>
+                                <Bullet />
+                            </div>
+                            <DsTypography variant="Regular_14">Once a day, keep the last 2 copies</DsTypography>
+                        </div>
+
+                        <div className={styles.row}>
+                            <div>
+                                <Bullet />
+                            </div>
+                            <DsTypography variant="Regular_14">Once a week, keep the last 1 copy</DsTypography>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
                     What will happen
                 </DsTypography>
