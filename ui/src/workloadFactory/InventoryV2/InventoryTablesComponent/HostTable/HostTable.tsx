@@ -29,10 +29,7 @@ import {
     sortInventoryTableData
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
-import {
-    setSelectedFilterValue,
-    setSelectedInventoryTab
-} from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedFilterValue, setSelectedInventoryTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
@@ -558,11 +555,11 @@ const HostTable = () => {
                     {
                         id: 'viewInstances',
                         displayName: 'View instances'
+                    },
+                    {
+                        id: 'viewDatabases',
+                        displayName: 'View databases'
                     }
-                    // {
-                    //     id: 'viewDatabases',
-                    //     displayName: 'View databases'
-                    // }
                 ];
 
                 return (
@@ -590,12 +587,20 @@ const HostTable = () => {
                                         dispatch(
                                             setSelectedFilterValue({
                                                 flag: true,
-                                                value: rowData?.name
+                                                value: rowData?.name,
+                                                filterType: 'single'
                                             })
                                         );
                                     }
                                     if (menuId === 'viewDatabases') {
-                                        // Open database tab and filter based on host name
+                                        dispatch(setSelectedInventoryTab('Databases'));
+                                        dispatch(
+                                            setSelectedFilterValue({
+                                                flag: true,
+                                                value: rowData?.name,
+                                                filterType: 'single'
+                                            })
+                                        );
                                     }
                                 }
                             }}

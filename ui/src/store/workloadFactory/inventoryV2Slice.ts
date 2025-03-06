@@ -58,7 +58,8 @@ const initialInventoryV2State: InventorySliceData = {
     optimizeInnerPageValues: {},
     selectedFilterValue: {
         flag: false,
-        value: ''
+        value: '',
+        filterType: ''
     }
 };
 
