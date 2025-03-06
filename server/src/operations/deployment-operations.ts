@@ -81,14 +81,14 @@ import {
     TEMPLATE_PRIVATESUBNET1_CIDRBLOCK,
     TEMPLATE_PRIVATESUBNET2_CIDRBLOCK,
     PG_TEMPLATE_CONFIG_MAPPING,
-    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     PGSQL_VERSION,
     AuditStatus,
     FCI,
     PGSQL_MASTER_TEMPLATE_PATH,
     AL2023_AMI_NAME,
-    CF_QUOTA_REACHED
+    CF_QUOTA_REACHED,
+    HA
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -1582,7 +1582,7 @@ async function deployPgSql(
 
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
-    const { sqlServerName, sqlVersion } = sqlConfiguration;
+    const { sqlServerName, sqlVersion, sqlDeploymentMode } = sqlConfiguration;
     const amazonLinuxAmis = await getParametersByPath(credentialsId, region, '/aws/service/ami-amazon-linux-latest');
     const al2023AmiId = amazonLinuxAmis?.find(({ Name }) => Name === AL2023_AMI_NAME)?.Value;
     if (al2023AmiId) {
@@ -1596,6 +1596,15 @@ async function deployPgSql(
     let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${PGSQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
+        // Get the Max capacity - headroom of 35% for OS and other services
+        // Divide by 1.25 (data + 25% log) to get the max database size
+        // Further divide by 2 for HA mode as we would create 2 data volumes
+        let maxDatabaseSizeInGib = ((1 - 0.35) * 192 * 1024) / 1.25;
+        maxDatabaseSizeInGib = Number(maxDatabaseSizeInGib / (sqlDeploymentMode === HA ? 2 : 1));
+        if (databaseSize < DATABASE_MIN_LUN_SIZE_IN_GIB || databaseSize > maxDatabaseSizeInGib) {
+            throw createError(412, `Supported Fsxn disk size should be between 120GiB to ${maxDatabaseSizeInGib}GiB`);
+        }
+
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
@@ -1720,6 +1729,9 @@ async function deployCfTemplateForPgSql(
     if (cfStackQuotaReached) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
+
+    // Set EnableDnsSupport and EnableDnsHostnames to true
+    await enableVpcDnsAttributes(credentialsId, region, networkConfiguration.vpcId);
 
     const { stackName, templateParameters: templateParams } = await formatPgSqlTemplateParameters(
         networkConfiguration,
@@ -1908,13 +1920,11 @@ async function formatPgSqlTemplateParameters(
     }
     templateParams.push({ ParameterKey: EBS_VOLUME_SIZE, ParameterValue: amiSize.toString() });
 
-    Object.entries(PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
-        if (!servicesWithNoEndpoint.includes(key)) {
-            templateParams.push({
-                ParameterKey: value,
-                ParameterValue: 'true'
-            });
-        }
+    Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: value,
+            ParameterValue: servicesWithNoEndpoint.includes(key) ? 'false' : 'true'
+        });
     });
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -2113,7 +2123,7 @@ async function createCfTemplateForPgsqlDeployment(
         // }
     );
 
-    Object.entries(PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
+    Object.entries(MAP_SERVICE_TEMPLATE_PARAMETER).forEach(([key, value]) => {
         if (!servicesWithNoEndpoint.includes(key)) {
             templateParams += `&param_${value}='true'`;
         }

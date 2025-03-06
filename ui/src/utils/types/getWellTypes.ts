@@ -24,6 +24,8 @@ export interface GetWellSliceInterface {
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
+    selectedSnapshotPolicy: any;
+    selectedSnapshot: any;
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;

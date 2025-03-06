@@ -1066,12 +1066,7 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getVCPUAndMaxDOPDetails'
     })
-    .resolves(
-        getSampleCommandResponseWithOutput(
-            'getVCPUAndMaxDOPDetails',
-            '{\"vcpuCount\":4,\"maxDOP\":\"4\"}\r\n'
-        )
-    );
+    .resolves(getSampleCommandResponseWithOutput('getVCPUAndMaxDOPDetails', '{"vcpuCount":4,"maxDOP":"4"}\r\n'));
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

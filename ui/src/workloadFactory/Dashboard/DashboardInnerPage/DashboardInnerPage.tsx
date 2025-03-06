@@ -42,7 +42,8 @@ import {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useOptimizeComputeConfigForBulkMutation,
-    useOptimizeMaxdopConfigForBulkMutation
+    useOptimizeMaxdopConfigForBulkMutation,
+    useOptimizeResiliencyMutation
 } from '../../../utils/apiService';
 import {
     setGwPageLoadInstanceData,
@@ -62,6 +63,7 @@ import MicrosoftSQLPatchTable from './RenderTables/MicrosoftSQLPatchTable';
 import LicenseTable from './RenderTables/LicenseTable';
 import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
+import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -91,6 +93,7 @@ const DashboardInnerPage = () => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeResiliency] = useOptimizeResiliencyMutation();
     const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
     const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
@@ -232,6 +235,22 @@ const DashboardInnerPage = () => {
                 apiCall = optimizeStorageTier;
                 payload = null;
             }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+            apiCall = optimizeResiliency;
+            const state = store.getState();
+            const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
+
+            payload = {
+                type: ['snapshot-policy'],
+                params: [
+                    {
+                        snapshotPolicy: {
+                            uuid: selectedSnapshot?.data?.uuid,
+                            name: selectedSnapshot?.data?.name
+                        }
+                    }
+                ]
+            };
         } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
             apiCall = optimizeMaxdopConfigForBulk;
             if (operation === 'bulk') {
@@ -751,6 +770,22 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.scheduled_local_snapshot?.recommendation?.description
+                    }
+                });
+
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -846,6 +881,10 @@ const DashboardInnerPage = () => {
                 return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                return (
+                    <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
+                );
         }
     };
 
