@@ -67,6 +67,7 @@ async function handleComputeRemediation(
     let jobStatus;
     let errorMessage = '';
     let subJobErrorMessage;
+    let isJobStatusUpdated = false;
 
     let anySubJobFailed = false;
 
@@ -450,37 +451,42 @@ async function handleComputeRemediation(
         jobStatus = JOBSTATUS.FAILED;
         errorMessage = 'No active node found in the cluster';
     } catch (error) {
-        try {
-            if (modifiedInstancesNodeDetails.length > 0) {
-                // In case of failure, rollback the instance type change for the nodes that were successfully updated
-                rollbackComputeOptimize(
-                    accountId,
-                    credentialsId,
-                    region,
-                    storageDetails,
-                    modifiedInstancesNodeDetails,
-                    shouldRollbackClusterOwnership,
-                    activeNodeInstanceId,
-                    oldClusterOwnerNode,
-                    formattedInstanceName
-                );
-            }
-        } catch (rollbackError) {
-            errorMessage = `Error while reverting instance type change ${rollbackError}`;
-            logger.error(errorMessage);
-        }
         errorMessage = `Error while optimizing compute ${error}`;
         logger.error(errorMessage);
-
+        isJobStatusUpdated = true;
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage, formattedInstanceName);
-    } finally {
-        const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {
-            status: parentJobStatus,
+            status: JOBSTATUS.FAILED,
             endTime: Date.now(),
             error: errorMessage
         });
+        if (modifiedInstancesNodeDetails.length > 0) {
+            // In case of failure, rollback the instance type change for the nodes that were successfully updated
+            rollbackComputeOptimize(
+                accountId,
+                credentialsId,
+                region,
+                storageDetails,
+                modifiedInstancesNodeDetails,
+                shouldRollbackClusterOwnership,
+                activeNodeInstanceId,
+                oldClusterOwnerNode,
+                formattedInstanceName
+            ).catch(rollbackError => {
+                errorMessage = `Error while reverting instance type change ${rollbackError}`;
+                logger.error(errorMessage);
+            });
+        }
+    } finally {
+        if (!isJobStatusUpdated) {
+            const parentJobStatus = anySubJobFailed ? JOBSTATUS.FAILED : jobStatus || JOBSTATUS.COMPLETED;
+            await updateJobDetails(accountId, jobId, {
+                status: parentJobStatus,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
     }
 }
 
