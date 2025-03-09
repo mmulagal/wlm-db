@@ -2,10 +2,8 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
 import {
-    TableTopBar,
     Typography,
     useDialog,
-    useTable,
     Button,
     Popover,
     DsTypography,
@@ -40,11 +38,14 @@ import {
 import styles from '../InventoryTable.module.scss';
 import ManagedHostDialog from '../../InventoryTable/ManagedHostDialog/ManagedHostDialog';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
+import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useNavigate } from 'react-router-dom';
 import { initialHostsTableColState } from '../../../../utils/manageColumnUtils';
+import { Table } from '../../../../common/Lib/Table/Table';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { useTable } from '../../../../common/Lib/Table/useTable';
 
 const HostTable = () => {
     const dispatch = useDispatch();

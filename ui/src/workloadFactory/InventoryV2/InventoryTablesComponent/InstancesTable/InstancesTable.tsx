@@ -1,13 +1,4 @@
-import {
-    DsButton,
-    DsFlashingDotsLoader,
-    DsTypography,
-    Popover,
-    Table,
-    TableTopBar,
-    useDialog,
-    useTable
-} from '@netapp/design-system';
+import { DsButton, DsFlashingDotsLoader, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -74,6 +65,9 @@ import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
+import { useTable } from '../../../../common/Lib/Table/useTable';
 
 const InstancesTable = () => {
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);

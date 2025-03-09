@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, Table, TableTopBar, useDialog, useTable } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
@@ -7,6 +7,9 @@ import { initialDatabaseTableColState } from '../../../../utils/manageColumnUtil
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setSelectedFilterValue } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { useTable } from '../../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
+import { Table } from '../../../../common/Lib/Table/Table';
 
 const DatabasesTable = () => {
     const { selectedInventoryTab, selectedFilterValue } = useAppSelector(state => state.inventoryV2);
