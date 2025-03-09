@@ -2035,34 +2035,6 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
-    "maxDOPAssessmentDataCommandResponse": {
-        "$metadata": {
-            "httpStatusCode": 200,
-            "requestId": "e61c4445-17d7-466a-9492-92dabeb73c48",
-            "attempts": 1,
-            "totalRetryDelay": 0
-        },
-        "CloudWatchOutputConfig": {
-            "CloudWatchLogGroupName": "",
-            "CloudWatchOutputEnabled": false
-        },
-        "CommandId": "0262158e-87fc-4528-b00f-5e3b2e35b5fe",
-        "Comment": "Get MaxDOP and VCPU details",
-        "DocumentName": "AWS-RunPowerShellScript",
-        "DocumentVersion": "$DEFAULT",
-        "ExecutionElapsedTime": "PT2.193S",
-        "ExecutionEndDateTime": "2025-01-14T10:12:59.186Z",
-        "ExecutionStartDateTime": "2025-01-14T10:12:57.186Z",
-        "InstanceId": "i-05978dd409ce8e0e6",
-        "PluginName": "aws:runPowerShellScript",
-        "ResponseCode": 0,
-        "StandardErrorContent": "",
-        "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"vcpuCount\":4,\"maxDOP\":\"4\"}\r\n",
-        "StandardOutputUrl": "",
-        "Status": "Success",
-        "StatusDetails": "Success"
-    },
     "getInstalledSQLPatchesCommandResponse": {
         "$metadata": {
             "httpStatusCode": 200,

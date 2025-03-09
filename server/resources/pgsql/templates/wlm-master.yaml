@@ -756,7 +756,10 @@ Resources:
               - !GetAtt "ExistingFSxStack.Outputs.FSxReplicaSvmUuid"
               - !Ref AWS::NoValue
         ONTAPSecurityGroupID:
-          Ref: ONTAPSecurityGroupID
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FsxSecurityGroupID"
+            - !Ref "ONTAPSecurityGroupID"
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
         NumberOfNodes: "1"

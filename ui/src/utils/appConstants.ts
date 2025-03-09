@@ -1136,7 +1136,7 @@ export const GENERAL = {
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
     MANAGE_DISABLE_FOR_UNDETECTED:
-        'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
+        'This instance is currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
         'All SQL Server instances on this host are either managed or undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',

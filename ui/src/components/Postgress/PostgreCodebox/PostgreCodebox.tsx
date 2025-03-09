@@ -411,7 +411,10 @@ const PostgreCodebox = () => {
                                             <Download
                                                 onClick={() => {
                                                     if (isDemoMode) {
-                                                        downloadTerraformZip(mssqlFormData?.dbDeploymentModel?.value);
+                                                        downloadTerraformZip(
+                                                            mssqlFormData?.dbDeploymentModel?.value,
+                                                            'pgsql'
+                                                        );
                                                     } else {
                                                         handleDownloadTerraform(terraformSetupResponse?.url);
                                                     }

@@ -639,17 +639,16 @@ const getMappedOntapVolumesScript = (
                 }
 
                 if ($sqlCredential.useSqlAuth -eq $True) {
-                    $sqlqueryresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2> $MappedVolumesErrorFile;
+                    $sqlqueryresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2>&1
                 } else {
-                    $sqlqueryresponse =  sqlcmd -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2> $MappedVolumesErrorFile;
+                    $sqlqueryresponse =  sqlcmd -S $executableInstance -Q $sqlqueryfordatabaseandvolumelist -y 0 -r1 2>&1
                 }
                 
-                
-                if (Get-Content $MappedVolumesErrorFile) { 
-                  $errorContent = Get-Content $MappedVolumesErrorFile
-                  throw $errorContent
-                 }
-
+                if ($LASTEXITCODE -ne 0) {
+                    $sqlqueryresponse | Out-File -FilePath $MappedVolumesErrorFile
+                    throw $sqlqueryresponse
+                }
+            
                 Function Get-VolumeIdsList($sqlqueryresponse) {        
                     $sqlJsonResponse = $sqlqueryresponse | convertFrom-Json
                 
@@ -720,7 +719,12 @@ const getMappedOntapVolumesScript = (
                             $QueryFilter += [System.Web.HttpUtility]::UrlEncode($SerialNumber) + '|'
                         }
                     }
+                    
                     $QueryFilter = $QueryFilter.TrimEnd('|')
+
+                    if ($svmOntapUuid -ne '') {
+                        $QueryFilter += "&svm.uuid=$svmOntapUuid"
+                    }
 
                     $Params = @{
                         "ApiEndPoint" = "/storage/luns"

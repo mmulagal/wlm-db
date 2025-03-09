@@ -1,6 +1,7 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import GetWellJson from '../data/getWell.json';
 import GetWellHostJson from '../data/getWellHost.json';
+import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
 
 const router = require('express').Router();
@@ -16,6 +17,15 @@ router.get(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, GetWellHostJson);
+        }, 20);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, SnapshotPolicies);
         }, 20);
     }
 );
@@ -90,6 +100,15 @@ router.post(
 
 router.post(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-tier`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: '1234' });
+        }, 2000);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/resiliency`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 202, { jobId: '1234' });

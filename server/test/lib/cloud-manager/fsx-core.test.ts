@@ -19,6 +19,7 @@ describe('FSX core lib', () => {
             'fs-0f32f6c69fb7e40ac',
             'netapp1!'
         );
-        expect(response.ontapCredentialsId).toBeDefined();
+        // Workaround added till GROGU-5485 is resolved
+        expect(response?.ontapCredentialsId).toBeDefined();
     });
 });

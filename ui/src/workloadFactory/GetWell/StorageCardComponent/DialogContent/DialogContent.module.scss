@@ -14,6 +14,27 @@
             gap: 8px;
             max-width: 712px;
 
+            .ribbon {
+                max-width: 712px;
+                width: 712px;
+                height: auto;
+                background: var(--main-background);
+                padding: 16px 40px;
+                display: flex;
+                gap: 40px;
+
+                .rightSide {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+
+                    .row {
+                        display: flex;
+                        gap: 16px;
+                    }
+                }
+            }
+
             .content {
                 display: flex;
                 flex-direction: column;
@@ -30,7 +51,7 @@
 
                 [class*='Table-module_innerTable'] {
                     min-height: 100px !important;
-                    max-height: 232px !important;
+                    max-height: 224px !important;
                     overflow: auto !important;
                 }
 

@@ -1,0 +1,20 @@
+{
+    "snapshotPolicies": [
+        {
+            "uuid": "1",
+            "name": "Daily"
+        },
+        {
+            "uuid": "2",
+            "name": "Weekly"
+        },
+        {
+            "uuid": "3",
+            "name": "Monthly"
+        },
+        {
+            "uuid": "4",
+            "name": "Yearly"
+        }
+    ]
+}
