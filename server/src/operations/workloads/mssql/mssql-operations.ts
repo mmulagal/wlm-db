@@ -132,12 +132,12 @@ async function getDatabasesCount(
 async function getDataBasesSummary(
     resourceId: string,
     activeNodeInstanceId?: string,
-    instanceName?: string,
     sqlAuthEnabled = false,
     accountId?: string,
-    credentialsId?: string
+    credentialsId?: string,
+    databaseInstances?: string[]
 ) {
-    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled, accountId);
+    logger.info('Get databases summary for resource:', resourceId, sqlAuthEnabled, accountId, databaseInstances);
 
     const [resourceDetail] = await listResources(accountId, resourceId, credentialsId);
     if (!resourceDetail) {
@@ -147,24 +147,29 @@ async function getDataBasesSummary(
     const { region, metadata } = resourceDetail;
     const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
     if (!activeNodeInstanceId) {
+        let instanceName;
         ({ activeNodeInstanceId, instanceName } = await getActiveSqlNode(
             credentialsId!,
             region!,
             node1InstanceId,
             node2InstanceId!
         ));
+
+        databaseInstances = [instanceName];
     }
 
-    if (!activeNodeInstanceId || !instanceName) {
+    if (!activeNodeInstanceId || !databaseInstances) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get active instance information');
     }
 
     try {
         sqlAuthEnabled = isDemoFlow ? false : sqlAuthEnabled;
-        const sqlInstanceName = getOriginalDatabaseInstanceName(instanceName);
 
         // Changing the logic, as ssm response compression would take care of long responses.
-        const commands = sqlQueryExecution(sqlInstanceName, instanceName, DATABASES, sqlAuthEnabled);
+        if (isDemoFlow) {
+            databaseInstances = [DEFAULT_INSTANCE_NAME];
+        }
+        const commands = sqlQueryExecutionWithAuth(databaseInstances, DATABASES, sqlAuthEnabled);
         const dbSummary = await callSsmExecution(
             credentialsId!,
             region!,

@@ -1200,7 +1200,8 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     5: 'resourceUtilization',
     6: 'databasesCount',
     7: 'nodeTopology',
-    8: 'storageSavingsFromOntap'
+    8: 'storageSavingsFromOntap',
+    9: 'databases'
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -1293,7 +1294,9 @@ enum DatabaseHostsQueryFields {
     SERVER_DETAILS = 'serverDetails',
     NODE_TOPOLOGY = 'nodeTopology',
     INSTANCE_DETAILS = 'instanceDetails',
-    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology',
+    DATABASES_WITH_PROTECTION = 'databasesWithProtection',
+    DATABASES = 'databases'
 }
 
 enum ServerState {

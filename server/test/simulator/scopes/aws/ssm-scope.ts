@@ -515,7 +515,7 @@ const checkScriptUpdate = {
 };
 
 const dbSummary = {
-    commands: [sqlQueryExecution(DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, DATABASES, false)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES, false)]
 };
 
 const validateMpio = {
