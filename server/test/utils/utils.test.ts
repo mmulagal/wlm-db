@@ -154,7 +154,8 @@ describe(' Secrets Manager string', () => {
         const response = parseMultipleCommandResponse(decompressedResponse);
         expect(response.length).toEqual(2);
         expect(response[1].error).toEqual(
-            'Cannot validate argument on parameter \'PartitionNumber\'. The argument is null. Provide a valid value for the argument, and then try running the command again.'
+            // eslint-disable-next-line quotes
+            "Cannot validate argument on parameter 'PartitionNumber'. The argument is null. Provide a valid value for the argument, and then try running the command again."
         );
     });
 
