@@ -148,8 +148,7 @@
                     "iam:GetRolePolicy",
                     "iam:GetUser",
                     "iam:PutRolePolicy",
-                    "iam:RemoveRoleFromInstanceProfile",
-                    "iam:SimulatePrincipalPolicy"
+                    "iam:RemoveRoleFromInstanceProfile"
                 ],
                 "Resource": "*"
             },
@@ -239,14 +238,6 @@
                     "ssm:DeleteParameters"
                 ],
                 "Resource": "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
-            },
-            {
-                "Sid": "IAMGroup",
-                "Effect": "Allow",
-                "Action": [
-                    "iam:SimulatePrincipalPolicy"
-                ],
-                "Resource": "*"
             }
         ]
     }
