@@ -582,9 +582,9 @@ export const inventoryApi = createApi({
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=mssql,pgsql&nextToken=${nextToken}`;
+                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=MSSQL,PGSQL&nextToken=${nextToken}`;
                     } else {
-                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=mssql,pgsql`;
+                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=MSSQL,PGSQL`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
