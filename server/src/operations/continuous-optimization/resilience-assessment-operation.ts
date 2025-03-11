@@ -30,9 +30,6 @@ const logger = getLogger();
 function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: string }> = []) {
     // if instance has volumes in violation list for snapshot-policy, collect snapshot copy data for additional checks.
     const violations: string[] = [];
-    if (isDemo()) {
-        return violations;
-    }
     volumes.forEach((volDetails: Record<string, string>) => {
         if (
             isEmpty(volDetails[OptimizeStorageConfigs?.SNAPSHOT_POLICY]) ||

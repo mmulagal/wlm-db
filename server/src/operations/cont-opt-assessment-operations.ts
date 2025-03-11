@@ -373,8 +373,10 @@ async function initiateStorageAssessmentCollection(
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
     const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
-    // add snapshot copy details to volumes
-    parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
+    if (!isDemo()) {
+        // add snapshot copy details to volumes
+        parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
+    }
     await createDatabaseInstanceConfigData([
         {
             account_id: accountId,
