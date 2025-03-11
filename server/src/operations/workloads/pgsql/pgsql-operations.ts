@@ -1,19 +1,24 @@
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { generateHash } from '../../../utils/utils';
+import { generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { executeBashSsmCommand } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import {
-    DATABASE_INSTANCE_INDEX_MAPPING,
     DatabaseHostsQueryFields,
     HttpErrorCodes,
     ServerState,
-    STORAGE_PROTOCOLS
+    STORAGE_PROTOCOLS,
+    PGSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    MSSQL_DATABASE_TYPES,
+    ONLINE,
+    OFFLINE,
+    PGSQL_SYSTEM_DATABASES
 } from '../../../utils/consts';
 import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
-import DATABASES_COUNT from './queries';
+import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
 import { getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
+import getDatabaseInstanceTopology from '../utilities/sql-utils';
 
 const logger = getLogger();
 
@@ -150,12 +155,22 @@ async function getPgSqlDatabaseInstancesSummary(
 
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLocaleLowerCase());
     const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLocaleLowerCase());
-
+    const getDatabasesWithoutProtection = fieldsValues?.includes(
+        DatabaseHostsQueryFields.DATABASES.toLocaleLowerCase()
+    );
+    const shouldQueryDatabaseTopology = fieldsValues?.includes(
+        DatabaseHostsQueryFields.DATABASE_INSTANCE_TOPOLOGY.toLocaleLowerCase()
+    );
+    const getPerformanceMetrics = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE.toLocaleLowerCase());
+    const sqlDeploymentType = databaseInstances[0].database_deployment_type;
     let storageData: any;
     let databasesCount: any;
+    let databases: any;
+    let performanceData: any;
+    let databaseInstancetopologyData: any;
     const errormessages: { [index: string]: string } = {};
     try {
-        [storageData, databasesCount] = await Promise.all(
+        [storageData, databaseInstancetopologyData, databasesCount, databases, performanceData] = await Promise.all(
             [
                 ...(getStorageSavings
                     ? [
@@ -172,13 +187,30 @@ async function getPgSqlDatabaseInstancesSummary(
                           )
                       ]
                     : [Promise.resolve()]), // Fetch storage savings data
+                ...(shouldQueryDatabaseTopology
+                    ? [
+                          getDatabaseInstanceTopology(
+                              accountId,
+                              credentialsId,
+                              region,
+                              activeNodeInstanceId,
+                              databaseInstances[0]
+                          )
+                      ]
+                    : [Promise.resolve()]),
                 ...(getDbCount
                     ? [getPgSqlDatabaseCount(accountId, credentialsId, region, activeNodeInstanceId)]
+                    : [Promise.resolve()]),
+                ...(getDatabasesWithoutProtection
+                    ? [getPgSqlDatabasesList(accountId, credentialsId, region, activeNodeInstanceId)]
+                    : [Promise.resolve()]),
+                ...(getPerformanceMetrics
+                    ? [getPgSqlPerformaceMetrics(accountId, credentialsId, region, activeNodeInstanceId)]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
-                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                    if (PGSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                        errormessages[PGSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
                     }
                     logger.error(`Error while fetching data: ${error}.`);
                 })
@@ -208,7 +240,18 @@ async function getPgSqlDatabaseInstancesSummary(
         if (getDbCount && instanceDbCount) {
             databaseInstanceDetails.databaseCount = instanceDbCount || 0;
         }
-
+        if (getDatabasesWithoutProtection && databases) {
+            databaseInstanceDetails.databases = databases || 0;
+        }
+        if (getPerformanceMetrics && performanceData) {
+            databaseInstanceDetails.performance = getPerformanceMetrics
+                ? { assessment: performanceData?.assessment, rwMetrics: performanceData! }
+                : {};
+        }
+        if (shouldQueryDatabaseTopology && databaseInstancetopologyData) {
+            databaseInstanceDetails.databaseInstanceTopology = databaseInstancetopologyData;
+        }
+        databaseInstanceDetails.sqlServerDeploymentType = sqlDeploymentType;
         databaseInstanceDetails.storage = storageData?.[index];
 
         if (!isEmpty(errormessages)) {
@@ -250,11 +293,88 @@ async function getPgSqlDatabaseInstancesDetails(
     return updatedInstanceDetails;
 }
 
+async function getPgSqlDatabasesList(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string
+) {
+    logger.info('Fetching pgsql databases list', { accountId, credentialsId, region, node1InstanceId });
+
+    try {
+        const command = LIST_DATABASES;
+        const response = await executeBashSsmCommand(credentialsId, region, [command], node1InstanceId, accountId);
+        if (response) {
+            const parsedResponse = sqlResponseParsing(response);
+            const databases = parsedResponse.map(
+                (database: { name: string; size: number; status: string; collation: string }) => ({
+                    name: database.name,
+                    size: database.size,
+                    status: database.status.toLowerCase() === 'active' ? ONLINE : OFFLINE,
+                    collation: database.collation ?? '',
+                    type: PGSQL_SYSTEM_DATABASES.includes(database?.name?.toLowerCase())
+                        ? MSSQL_DATABASE_TYPES.SYSTEM
+                        : MSSQL_DATABASE_TYPES.USER
+                })
+            );
+            return databases;
+        }
+        const errorMessage = `Error fetching pgsql database list from nodes: ${node1InstanceId}`;
+        throw createError(errorMessage);
+    } catch (err) {
+        const errorMessage = `Error fetching pgsql database list: ${err}, ${credentialsId}, ${region}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
+async function getPgSqlPerformaceMetrics(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    node1InstanceId: string
+) {
+    logger.info('Fetching pgsql performance metricies', { accountId, credentialsId, region, node1InstanceId });
+
+    try {
+        const command = PERFORMANCE_METRICS;
+        const response = await executeBashSsmCommand(credentialsId, region, [command], node1InstanceId, accountId);
+        if (response) {
+            const parsedResponse = sqlResponseParsing(response);
+
+            if (parsedResponse && !(typeof parsedResponse === 'string' && parsedResponse?.includes('error'))) {
+                const performanceResponse = {
+                    assessment: parsedResponse.assessment,
+                    latency: {
+                        read: parsedResponse.READ_LATENCY,
+                        write: parsedResponse.WRITE_LATENCY,
+                        serverIo: parsedResponse.SERVER_IO_LATENCY
+                    },
+                    iops: { read: parsedResponse.READ_IOPS, write: parsedResponse.WRITE_IOPS },
+                    throughput: {
+                        read: parsedResponse.READ_THROUGHPUT,
+                        write: parsedResponse.WRITE_THROUGHPUT
+                    }
+                };
+                return performanceResponse;
+            }
+        }
+        const errorMessage = `Error fetching pgsql performance metricies from nodes: ${node1InstanceId}`;
+        throw createError(errorMessage);
+    } catch (err) {
+        const errorMessage = `Error fetching pgsql performance metricies: ${err}, ${credentialsId}, ${region}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
+}
+
 export {
     getPgSqlResourceId,
     getPgSqlInstanceInfo,
     getPgSqlStorageSavingsVolumeData,
     getPgSqlDatabaseCount,
     getPgSqlDatabaseInstancesSummary,
-    getPgSqlDatabaseInstancesDetails
+    getPgSqlDatabaseInstancesDetails,
+    getPgSqlDatabasesList,
+    getPgSqlPerformaceMetrics
 };

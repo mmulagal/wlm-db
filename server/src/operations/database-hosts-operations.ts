@@ -21,7 +21,7 @@ import {
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostInstanceSummaryResponseType
 } from '../routes/types/database-hosts.types';
-import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
+import { describeInstance, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
@@ -36,11 +36,9 @@ import {
     SQL_STD,
     SQL_ENT,
     MSSQL_DATABASE_TYPES,
-    MSSQL_SYSTEM_DATABASES,
     PRICING,
     WLMDB_COST_ALLOCATION_TAG,
     SqlServerDeploymentModel,
-    FileSystemTypes,
     CUSTOM,
     SQL_WEB,
     VERSION_2_0,
@@ -54,8 +52,9 @@ import {
     EBS_ROOT_VOLUME,
     DatabaseTypes,
     AWS_ERROR_CODES,
-    DATABASE_INSTANCE_INDEX_MAPPING,
-    DEFAULT_INSTANCE_NAME
+    MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    DEFAULT_INSTANCE_NAME,
+    PGSQL_SYSTEM_DATABASES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -93,18 +92,9 @@ import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
+import getDatabaseInstanceTopology from './workloads/utilities/sql-utils';
 
 const logger = getLogger();
-
-// const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
-//     0: 'serverDetails',
-//     1: 'topology',
-//     2: 'performance',
-//     3: 'storage',
-//     4: 'protection',
-//     5: 'billing/pricing',
-//     6: 'resourceUtilization'
-// };
 
 const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
@@ -957,97 +947,6 @@ async function getDatabaseHostsSummaryV2(
     };
 }
 
-async function getDatabaseInstanceTopology(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    activeNodeInstanceId: string,
-    databaseInstances: any
-) {
-    logger.info(
-        'Fetching database topology data',
-        accountId,
-        credentialsId,
-        activeNodeInstanceId,
-        databaseInstances.database_instance_name
-    );
-
-    const {
-        fsxn_ids: fileSystemId,
-        storage_type: storageType,
-        database_instance_id: databaseInstanceDetails,
-        database_deployment_type: databaseDeploymentType,
-        database_type: databaseType,
-        fsxwId
-    } = databaseInstances;
-
-    let topologyData = {
-        serverType: databaseType,
-        serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
-        fileSystemId: fileSystemId! || fsxwId,
-        fileSystemType:
-            storageType !== undefined
-                ? storageType === STORAGE_TYPE.FSXN
-                    ? FileSystemTypes.FSXONTAP
-                    : storageType === STORAGE_TYPE.FSXW
-                    ? FileSystemTypes.FSXWINDOWS
-                    : storageType
-                : NOT_AVAILABLE
-    };
-    if (activeNodeInstanceId) {
-        let fileSystemStatus;
-        let fileSystemName;
-        let fileSystemDeploymentMode;
-        let fileSystemStorageCapacity;
-        let fileSystemThroughputCapacity;
-        let subnetIds;
-        let availabilityZones: Array<string> | undefined;
-        let fileSystemTags;
-        let fileSystemStorageType;
-        try {
-            if (fileSystemId || fsxwId) {
-                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId || fsxwId] });
-                const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
-                ({
-                    Tags: fileSystemTags,
-                    WindowsConfiguration: { DeploymentType: fileSystemDeploymentMode = undefined } = {},
-                    OntapConfiguration: {
-                        DeploymentType: fileSystemDeploymentMode = undefined,
-                        ThroughputCapacity: fileSystemThroughputCapacity = undefined
-                    } = {},
-                    Lifecycle: fileSystemStatus,
-                    StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds,
-                    StorageType: fileSystemStorageType
-                } = fileSystem);
-
-                fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
-
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-
-                logger.info('availabilityZones', availabilityZones);
-            }
-        } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
-        }
-
-        topologyData = {
-            ...topologyData,
-            ...(fileSystemName && { fileSystemName }),
-            ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
-            ...(fileSystemStatus && { fileSystemStatus }),
-            ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
-            ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(availabilityZones && { availabilityZone: availabilityZones }),
-            ...(fileSystemStorageType && { fileSystemStorageType })
-        };
-    }
-    return topologyData;
-}
-
 async function getDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
@@ -1660,7 +1559,7 @@ async function getDatabaseDetails(
                     size: database.databaseSize,
                     status: database.databaseStatus,
                     collation: database.collationName ?? '',
-                    type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
+                    type: PGSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
                         ? MSSQL_DATABASE_TYPES.SYSTEM
                         : MSSQL_DATABASE_TYPES.USER,
                     ...(getProtection && {
@@ -1912,8 +1811,8 @@ async function getDatabaseInstancesSummary(
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
-                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                    if (MSSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                        errormessages[MSSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
                     }
                     logger.error(`Error while fetching data: ${error}.`);
                 })
