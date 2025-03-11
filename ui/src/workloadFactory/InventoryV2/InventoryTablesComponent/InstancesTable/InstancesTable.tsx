@@ -850,12 +850,12 @@ const InstancesTable = () => {
                         height = '53px';
                         return true;
                     }
-                    if (data[0] && data[0]?.loading) {
-                        disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                        width = '170px';
-                        height = '33px';
-                        return true;
-                    }
+                    // if (rowData?.loading) {
+                    //     disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
+                    //     width = '170px';
+                    //     height = '33px';
+                    //     return true;
+                    // }
                     if (
                         rowData?.status === INVENTORY_STATUS.OFFLINE &&
                         rowData?.statusColText !== INVENTORY_STATUS.MANAGED
