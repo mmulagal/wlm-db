@@ -100,6 +100,7 @@ const ExploreSavingsTableV2 = () => {
                         popoverClass={styles['copy-popover']}
                         children={'To explore savings on this host first detect the instances.'}
                         trigger="hover"
+                        isAppendedToBody={true}
                         container={
                             <div
                                 className={styles.detectManageDisable}
