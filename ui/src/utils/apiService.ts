@@ -385,9 +385,6 @@ export const databaseHomeApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => {
         return {
-            getJobsSummary: builder.query({
-                query: ({ startTime, endTime }) => `v1/jobs/summary?startTime=${startTime}&endTime=${endTime}`
-            }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/cloudformation/template`,
@@ -624,7 +621,17 @@ export const inventoryApi = createApi({
             getFsxCredentialStatus: builder.query({
                 query: ({ regionId, credentialsId, fsxIds }) => ({
                     url: `v1/credentials/${credentialsId}/regions/${regionId}/resources/file-systems/credentials-status?fsxids=${fsxIds}`
-                })
+                }),
+                transformResponse: (response: any, meta, args) => {
+                    if (response) {
+                        response = {
+                            ...response,
+                            credentialId: args?.credentialsId,
+                            regionId: args?.regionId
+                        };
+                    }
+                    return response;
+                }
             }),
             registerResourceCredentials: builder.mutation({
                 query: ({ credentialId, regionId, instanceId, payload }) => ({
@@ -1104,8 +1111,6 @@ export const {
 } = configApi;
 
 export const {
-    useGetJobsSummaryQuery,
-    useLazyGetJobsSummaryQuery,
     useGetTemplatesMutation,
     useGetTerraformSetupMutation,
     useGetPgsqlTemplatesMutation,

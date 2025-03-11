@@ -17,12 +17,7 @@ import {
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import { useDispatch } from 'react-redux';
-import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwHostname,
-    setGwResourceId
-} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { setGwPageLoadInstanceData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import FirstColumnComponent from './FirstColumnCoponent';
 
 const OntapConfig = () => {
@@ -56,6 +51,8 @@ const OntapConfig = () => {
 
                     if (notOptimized.length > 0 || errorCase) {
                         ontapConfigAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
@@ -150,10 +147,17 @@ const OntapConfig = () => {
         lastColDetails()
     ];
     const ExpandedRow = useCallback(({ rowData }: any) => {
-        dispatch(setGwHostname(rowData?.hostName));
-        dispatch(setGwResourceId(rowData?.databaseHostId));
-        dispatch(setGwDatabaseInstance(rowData?.instanceId));
-        dispatch(setGwDatabaseInstanceName(rowData?.serverInstanceName));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: rowData?.hostName,
+                resourceId: rowData?.databaseHostId,
+                instanceId: rowData?.instanceId,
+                instanceName: rowData?.serverInstanceName,
+                credId: rowData?.credentialId,
+                regionId: rowData?.regionId,
+                storageType: rowData?.sqlServerDeploymentType
+            })
+        );
         return (
             <RecommendationTable
                 tableData={rowData?.fullData}

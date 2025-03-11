@@ -12,9 +12,9 @@ const FetchingDataNotification = ({
 }: {
     pendingQueriesCounter: number;
     pendingQueriesLength: number;
-    queriesLength: number;
-    regions?: { value: string; label: string }[];
-    credentials?: { value: string; label: string }[];
+    queriesLength: number | any;
+    regions?: any;
+    credentials?: any;
 }) => {
     const pendingDiff = pendingQueriesCounter - pendingQueriesLength;
     const pendingIndex = queriesLength - pendingQueriesLength;
@@ -33,8 +33,8 @@ const FetchingDataNotification = ({
                 <GridItem lg={8}>
                     {/* @ts-ignore */}
                     <Heading level={4}>Scanning database hosts and instances.</Heading>
-                    {/* <Text>{credentials[Math.floor(pendingIndex/regions.length)]?.name} / {regions[Math.floor(pendingIndex/credentials.length)]?.label}</Text> */}
-                    <Text style={{ padding: '0', margin: '0' }}>Credentails / US East (N. Virginia) | us-east-1</Text>
+                    <Text>{`${credentials} / ${regions}`}</Text>
+                    {/* <Text style={{ padding: '0', margin: '0' }}>Credentails / US East (N. Virginia) | us-east-1</Text> */}
                 </GridItem>
                 <GridItem lg={4}>
                     <ProgressLoader style={{ marginTop: 16 }} percent={(pendingDiff / pendingQueriesCounter) * 100} />

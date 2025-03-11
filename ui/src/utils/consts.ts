@@ -151,7 +151,8 @@ export const FSX_DEPLOYMENT_MODE = {
 export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE: 'fci',
     SINGLE_INSTANCE_VALUE: 'standalone',
-    AOAG: 'aoag'
+    AOAG: 'aoag',
+    HA: 'ha'
 };
 
 export const API_ERRORS = {
@@ -619,7 +620,7 @@ export const INSTANCE_API_FIELDS = {
     UNMANAGED_DEFAULT: [
         'databaseInstanceTopology',
         'usageEstimation',
-        'storage',
+        // 'storage',
         'databaseServer',
         'serverDetails',
         'nodeTopology'
@@ -627,7 +628,7 @@ export const INSTANCE_API_FIELDS = {
     SUB_TABLE_FIELDS: ['protection', 'performance'],
     MIXED_STATUS_FIELDS: [
         'databaseInstanceTopology',
-        'storage',
+        // 'storage',
         'databaseServer',
         'serverDetails',
         'nodeTopology',

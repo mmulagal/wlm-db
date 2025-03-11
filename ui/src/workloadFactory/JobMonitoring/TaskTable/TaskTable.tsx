@@ -14,11 +14,7 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import {
     setCredIdFromJM,
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwResourceId,
+    setGwPageLoadInstanceData,
     setLandingFrom,
     setRegionFromJM
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -53,12 +49,17 @@ const TaskTable = ({ taskList = [] }: any) => {
 
         dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
 
-        dispatch(setGwHostname(hostName));
-
-        dispatch(setGwResourceId(resourceId));
-        dispatch(setGwDatabaseInstance(databaseInstanceId));
-        dispatch(setGwDatabaseInstanceName(databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(sqlServerDeploymentType));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: hostName,
+                resourceId: resourceId,
+                instanceId: databaseInstanceId,
+                instanceName: databaseInstanceName,
+                credId: rowData?.credentialsId,
+                regionId: rowData?.region?.code,
+                storageType: sqlServerDeploymentType
+            })
+        );
     };
     const taskDesc = (desc: string, rowData: any) => {
         if (desc && desc.includes('databaseInstanceId') && desc.includes('resourceId')) {

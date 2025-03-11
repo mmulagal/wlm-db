@@ -13,9 +13,7 @@ import { WLF_TABS } from '../../../utils/consts';
 import {
     addInitialDBCreateData,
     initialCreateNewUserState,
-    setDBHostName,
-    setInstanceId,
-    setInstanceName
+    setCdbPageData
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { GENERAL } from '../../../utils/appConstants';
@@ -35,7 +33,9 @@ const DatabaseHostOverviewV2 = ({ refreshTime, refreshPage }: any) => {
         selectedHostname,
         selectedDatabaseInstanceName,
         selectedDatabaseInstance,
-        selectedResourceId
+        selectedResourceId,
+        selectedResourceCredId,
+        selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
 
     DatabaseHostOverviewApiV2();
@@ -82,10 +82,16 @@ const DatabaseHostOverviewV2 = ({ refreshTime, refreshPage }: any) => {
                                     onClick={() => {
                                         if (!resourceLoadingState) {
                                             dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                            dispatch(setDBHostName(selectedHostname));
+                                            dispatch(
+                                                setCdbPageData({
+                                                    dbHostName: selectedHostname,
+                                                    instanceId: selectedDatabaseInstance,
+                                                    instanceName: selectedDatabaseInstanceName,
+                                                    cdbCredId: selectedResourceCredId,
+                                                    cdbRegionId: selectedResourceRegionId
+                                                })
+                                            );
                                             dispatch(updateResourceId(selectedResourceId));
-                                            dispatch(setInstanceId(selectedDatabaseInstance));
-                                            dispatch(setInstanceName(selectedDatabaseInstanceName));
                                             navigate('../create-new-user');
                                         }
                                     }}

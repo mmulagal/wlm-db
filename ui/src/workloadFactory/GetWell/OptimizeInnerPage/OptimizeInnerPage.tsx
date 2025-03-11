@@ -43,13 +43,18 @@ const OptimizeInnerPage = () => {
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
@@ -274,8 +279,8 @@ const OptimizeInnerPage = () => {
         );
 
         apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload: payload

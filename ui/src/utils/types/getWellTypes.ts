@@ -6,6 +6,8 @@ export interface GetWellSliceInterface {
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
+    selectedGwInstanceCredId: string;
+    selectedGwInstanceRegionId: string;
     selectedDatabaseStorageType: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;

@@ -44,6 +44,8 @@ export interface CreateSandboxEntities {
     showError: boolean;
     dataFilePath: string;
     logFilePath: string;
+    selectedSandboxCredId: string | null;
+    selectedSandboxRegionId: string | null;
 }
 
 export interface CreateSandboxPayloadEntities {

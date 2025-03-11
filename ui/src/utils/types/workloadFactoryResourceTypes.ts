@@ -6,6 +6,8 @@ export interface WorkloadFactoryResourceEntities {
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
+    selectedResourceCredId: any;
+    selectedResourceRegionId: any;
     selectedHostname: string;
     isResourceRefresh: boolean;
 }
