@@ -50,7 +50,7 @@ const initialInventoryV2State: InventorySliceData = {
     allmssqlHostAssessmentData: [],
     allmssqlHostAssessmentLoading: false,
     potentialSavingsHostData: {},
-    selectedInventoryTab: 'Hosts',
+    selectedInventoryTab: 'Instances',
     selectedOptimizeConfig: {
         type: '',
         data: {}
