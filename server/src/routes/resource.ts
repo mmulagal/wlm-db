@@ -47,7 +47,7 @@ export default function resourceRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get('v1/managed-hosts', { schema: GetManagedResourcesSchema }, async (request, reply) => {
+    server.get('/v1/managed-hosts', { schema: GetManagedResourcesSchema }, async (request, reply) => {
         const {
             params: { accountId },
             query: { pageSize, nextToken, credentialsIds, regions, databaseTypes }
