@@ -3,7 +3,8 @@ import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import {
     ResilienceDriftAssessmentResponseType,
-    SnapshotPolicyAssesmentDataType
+    SnapshotPolicyAssesmentDataType,
+    ParameterDriftResponseType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
 import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
@@ -32,8 +33,12 @@ async function getResilienceDriftAssessment(
         const snapshotPolicy =
             (await getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) ||
             Promise.resolve({});
+        const crr =
+            (await getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) ||
+            Promise.resolve({});
         const assessmentData: ResilienceDriftAssessmentResponseType = {
-            snapshotPolicy
+            snapshotPolicy,
+            crr
         };
         return assessmentData;
     } catch (error) {
@@ -107,5 +112,47 @@ async function getSnapshotPolicyDriftData(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
     }
 }
+async function getCrrDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Calculate crr drift data for:', {
+        accountId,
+        region,
+        credentialsId,
+        databaseInstanceId,
+        databaseHostId
+    });
+    try {
+        const response: ParameterDriftResponseType = {
+            name: 'crr',
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            recommended: '',
+            severity: '',
+            recommendation:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.',
+            objectsInViolation: [],
+            sizingViolations: {
+                overProvisionedDrives: [],
+                underProvisionedDrives: []
+            },
+            violationDetails: [],
+            tags: [],
+            missingPermissions: [],
+            recommendedSizeInGib: 0,
+            current: '',
+            totalObjectsAssessed: 0,
+            totalObjectsInViolation: 0,
+            resourceType: ''
+        };
 
+        return response;
+    } catch (error) {
+        logger.error('Error fetching crr drift data:', error);
+        throw error;
+    }
+}
 export { getResilienceDriftAssessment };
