@@ -124,7 +124,7 @@ async function getSnapshotPolicyDriftData(
 
         if (isEmpty(persistedConfigurationData)) {
             const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
-            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+            throw new Error(errorMessage);
         }
         const { config_data: configData } = persistedConfigurationData;
         const { volumes, errors } = configData as unknown as StorageAssessment;
@@ -172,7 +172,7 @@ async function getSnapshotPolicyDriftData(
         return snapshotPolicyAssesmentData;
     } catch (error) {
         logger.error('Error getting snapshot policy drift data', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, (error as Error).message);
+        throw error;
     }
 }
 
