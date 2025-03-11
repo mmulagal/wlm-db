@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import { RouteTags } from '../../utils/consts';
-import { EmailRequestParams, EmailResponse } from '../types/notification.types';
+import { EmailRequestBody, EmailRequestParams, EmailResponse } from '../types/notification.types';
 
 const emailSchema = {
     tags: [RouteTags.NOTIFICATION],
@@ -11,7 +11,7 @@ const emailSchema = {
         emailType: Type.String()
     }),
     consumes: ['multipart/form-data'],
-    body: Type.Any(),
+    body: EmailRequestBody,
     response: {
         200: EmailResponse
     }
