@@ -37,6 +37,7 @@ const SelectSource = () => {
         getDatabaseList,
         aggregatedDbHostList
     } = useAppSelector(state => state.createSandbox);
+    const { selectedCs } = useAppSelector(state => state.createSandbox);
     const { source } = useAppSelector(state => state.createSandbox);
     const { isDemoMode } = useAppSelector(state => state?.auth);
     const { selectedDatabaseHost, selectedDatabaseInstance, selectedDatabase } = source;
@@ -65,6 +66,7 @@ const SelectSource = () => {
     //Function to generate the options for Select Field
     const generateHostName = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
+        let selected_item = null;
         aggregatedDbHostList?.map((obj: any, idx: number) => {
             const isHostUp = obj?.databaseHostStatus?.toLowerCase() === STATUS_CONST.ONLINE.toLowerCase();
             if (isHostUp) {
@@ -77,9 +79,17 @@ const SelectSource = () => {
                     protocolDisable ? GENERAL?.SANDBOX_SMB_PROTOCOL_NOT_SUPPORTED : '',
                     obj
                 );
-                options.push(option);
+                if (selectedCs?.selectedDatabaseHost === obj?.name) {
+                    selected_item = option;
+                } else {
+                    options.push(option);
+                }
             }
         });
+
+        if (selected_item) {
+            options.unshift(selected_item);
+        }
 
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,6 +97,7 @@ const SelectSource = () => {
 
     const generateSourceInstance = useMemo<optionType[]>((): optionType[] => {
         let instanceList = [];
+        let selected_item = null;
         const selectedHostData: any = aggregatedDbHostList.find(
             (hostItem: any) => hostItem?.id === selectedDatabaseHost?.value
         );
@@ -104,23 +115,36 @@ const SelectSource = () => {
         instanceList?.map((obj: any, idx: number) => {
             const option = generateOptionType(obj?.value, obj?.label, '', false, '', obj);
             if (obj?.status?.toLowerCase() === STATUS_CONST.UP.toLowerCase()) {
-                options.push(option);
+                if (selectedCs?.selectedDatabaseInstance === obj?.label) {
+                    selected_item = option;
+                } else {
+                    options.push(option);
+                }
             }
         });
-
+        if (selected_item) {
+            options.unshift(selected_item);
+        }
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedDatabaseHost]);
 
     const generateSourceDatabase = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
+        let selected_item = null;
         databaseListData?.map((obj, idx: number) => {
             if (obj.type !== MSSQL_DATABASE_TYPES.SYSTEM && obj?.status === 'ONLINE') {
                 const option = generateOptionType(obj?.id, obj?.name, '', false, '');
-                options.push(option);
+                if (selectedCs?.selectedDatabase === obj?.name) {
+                    selected_item = option;
+                } else {
+                    options.push(option);
+                }
             }
         });
-
+        if (selected_item) {
+            options.unshift(selected_item);
+        }
         return options;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseListData]);

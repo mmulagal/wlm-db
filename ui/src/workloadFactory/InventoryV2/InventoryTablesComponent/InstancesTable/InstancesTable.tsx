@@ -35,6 +35,7 @@ import {
     setRadioValueDetect,
     setSelectedFilterValue,
     setSelectedHeaderTab,
+    setSelectedInventoryTab,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -63,7 +64,7 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
-import { setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
+import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
@@ -961,9 +962,17 @@ const InstancesTable = () => {
                                             resourceAction(rowData);
                                         }
                                         if (menuId === 'viewDatabases') {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.OVERVIEW));
-                                            dispatch(selectedTabSelection(WLF_TABS.DATABASE_LIST));
-                                            resourceAction(rowData);
+                                            dispatch(setSelectedInventoryTab('Databases'));
+                                            dispatch(
+                                                setSelectedFilterValue({
+                                                    flag: true,
+                                                    value: {
+                                                        hostName: rowData?.name,
+                                                        instanceName: rowData?.databaseInstanceName
+                                                    },
+                                                    filterType: 'multi'
+                                                })
+                                            );
                                         }
                                         if (menuId === 'createUserDb') {
                                             dispatch(addInitialDBCreateData(initialCreateNewUserState));
@@ -984,6 +993,13 @@ const InstancesTable = () => {
                                                 setSelectedSandboxHeaderValue({
                                                     credId: rowData?.credentialId,
                                                     regionId: rowData?.regionId
+                                                })
+                                            );
+                                            dispatch(
+                                                setSelectedCsData({
+                                                    host: rowData?.name,
+                                                    instance: rowData?.databaseInstanceName,
+                                                    database: null
                                                 })
                                             );
                                             navigate('../create-new-sandbox');
