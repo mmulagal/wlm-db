@@ -797,6 +797,11 @@ ssmMock
     })
     .resolves(getSampleCommandResponse('setSnapshotPolicy'))
     .on(SendCommandCommand, params => {
+        const commentString = /# Get list of creation dates for latest snapshot copies of each volume/;
+        return commentString.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('getSnapshotCopyDetails'))
+    .on(SendCommandCommand, params => {
         return /#Set MAXDOP/.test(params.Parameters.commands?.[0]);
     })
     .resolves(getSampleCommandResponse('setMaxDOP'));
@@ -1056,7 +1061,16 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'setSnapshotPolicy',
-            '{ "errors": { }, "response": [ { "uuid": "18873848-d09c-11ef-a0ec-61a27a6bebc8"}, {"uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"}, {"uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"}]}'
+            '{"errors":{},"response":[{"uuid":"18873848-d09c-11ef-a0ec-61a27a6bebc8"},{"uuid":"4155f74d-b1ff-11ef-b315-11b9ce95d982"},{"uuid":"61a6f6da-34d3-11ee-9989-a51720c855dc"}]}'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotCopyDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getSnapshotCopyDetails',
+            '{"errors":{},"response":{"ad251a8f-da34-11ef-b315-11b9ce95d982":"2025-03-10T10:20:02+00:00","74a8a789-c5dd-11ef-b315-11b9ce95d982":"2025-03-10T10:14:23+00:00","438cc269-edeb-11ef-994b-3b81e03bea3e":"2025-03-10T10:17:03+00:00"}}'
         )
     )
     .on(GetCommandInvocationCommand, {
