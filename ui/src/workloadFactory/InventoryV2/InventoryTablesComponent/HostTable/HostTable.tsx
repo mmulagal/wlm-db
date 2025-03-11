@@ -588,7 +588,9 @@ const HostTable = () => {
                                         dispatch(
                                             setSelectedFilterValue({
                                                 flag: true,
-                                                value: rowData?.name,
+                                                value: {
+                                                    hostName: rowData?.name
+                                                },
                                                 filterType: 'single'
                                             })
                                         );
@@ -598,7 +600,9 @@ const HostTable = () => {
                                         dispatch(
                                             setSelectedFilterValue({
                                                 flag: true,
-                                                value: rowData?.name,
+                                                value: {
+                                                    hostName: rowData?.name
+                                                },
                                                 filterType: 'single'
                                             })
                                         );

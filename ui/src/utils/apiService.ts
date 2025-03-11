@@ -668,15 +668,15 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                     if (isDemoMode) {
                         if (nextToken) {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&nextToken=${nextToken}`;
                         } else {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection`;
                         }
                     } else {
                         if (nextToken) {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2&nextToken=${nextToken}`;
                         } else {
-                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                            return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2`;
                         }
                     }
                 },
@@ -695,15 +695,15 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                     if (isDemoMode) {
                         if (nextToken) {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&nextToken=${nextToken}`;
                         } else {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection`;
                         }
                     } else {
                         if (nextToken) {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2&nextToken=${nextToken}`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2&nextToken=${nextToken}`;
                         } else {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation&pageSize=2`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2`;
                         }
                     }
                 },

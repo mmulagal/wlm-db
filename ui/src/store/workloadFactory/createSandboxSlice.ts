@@ -14,6 +14,11 @@ export const initialCreateSandboxState: CreateSandboxEntities = {
         databaseListLoading: false,
         databaseListError: null
     },
+    selectedCs: {
+        selectedDatabaseHost: null,
+        selectedDatabaseInstance: null,
+        selectedDatabase: null
+    },
     source: {
         selectedDatabaseHost: null,
         selectedDatabaseInstance: null,
@@ -66,6 +71,20 @@ const createSandboxSlice = createSlice({
         },
         setDbMountPointsState: (state, action: PayloadAction<any>) => {
             state.getDbMountPoints = action.payload;
+        },
+        setSelectedCsData: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabaseHost = action.payload.host;
+            state.selectedCs.selectedDatabaseInstance = action.payload.instance;
+            state.selectedCs.selectedDatabase = action.payload.database;
+        },
+        setSelectedCsDbHost: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabaseHost = action.payload;
+        },
+        setSelectedCsDbInstance: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabaseInstance = action.payload;
+        },
+        setSelectedCsDatabase: (state, action: PayloadAction<any>) => {
+            state.selectedCs.selectedDatabase = action.payload;
         },
         setSourceDbHost: (state, action: PayloadAction<any>) => {
             state.source.selectedDatabaseHost = action.payload;
@@ -160,7 +179,11 @@ export const {
     updateLogFilePath,
     setSelectedSandboxCredId,
     setSelectedSandboxRegionId,
-    setSelectedSandboxHeaderValue
+    setSelectedSandboxHeaderValue,
+    setSelectedCsData,
+    setSelectedCsDbHost,
+    setSelectedCsDbInstance,
+    setSelectedCsDatabase
 } = createSandboxSlice.actions;
 
 export default createSandboxSlice;

@@ -148,6 +148,16 @@
         width: 150px;
     }
 
+    .colTextProtection {
+        display: flex;
+        gap: 8px;
+
+        .protection {
+            display: flex;
+            gap: 17px;
+        }
+    }
+
     .cost {
         display: flex;
         gap: 16px;

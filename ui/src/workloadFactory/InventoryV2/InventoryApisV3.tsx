@@ -1139,63 +1139,63 @@ const InventoryApisV3 = () => {
     }, [fullPgsqlHostData, pgsqlTopologyHostData, pgsqlFullHostDataLoading]);
 
     // This data is coming from discover API
-    useEffect(() => {
-        const state = store.getState();
-        const resetManagedData = state.inventoryV2.resetManagedData;
-        if (!resetManagedData && !managedHostListLoading && discoveredHostData && discoveredHostData.length) {
-            let newDiscoveredHostData: any = [];
-            discoveredHostData.map((host: any) => {
-                if (host?.sqlServerInstances) {
-                    let perHostNodesList: any = [];
-                    host?.sqlServerInstances?.map((perSql: any) => {
-                        if (perSql?.sqlServerNodes) {
-                            perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
-                        }
-                    });
-                    host = { ...host, nodesList: perHostNodesList };
-                }
-                newDiscoveredHostData.push(host);
-            });
+    // useEffect(() => {
+    //     const state = store.getState();
+    //     const resetManagedData = state.inventoryV2.resetManagedData;
+    //     if (!resetManagedData && !managedHostListLoading && discoveredHostData && discoveredHostData.length) {
+    //         let newDiscoveredHostData: any = [];
+    //         discoveredHostData.map((host: any) => {
+    //             if (host?.sqlServerInstances) {
+    //                 let perHostNodesList: any = [];
+    //                 host?.sqlServerInstances?.map((perSql: any) => {
+    //                     if (perSql?.sqlServerNodes) {
+    //                         perHostNodesList = [...perHostNodesList, ...perSql?.sqlServerNodes];
+    //                     }
+    //                 });
+    //                 host = { ...host, nodesList: perHostNodesList };
+    //             }
+    //             newDiscoveredHostData.push(host);
+    //         });
 
-            let removeRows: any[] = [];
-            let clusterDiscoveredHost: any = {};
-            // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
-            getPrimaryClusterNode(
-                newDiscoveredHostData,
-                removeRows,
-                managedHostList,
-                clusterDiscoveredHost,
-                isDemoMode
-            );
+    //         let removeRows: any[] = [];
+    //         let clusterDiscoveredHost: any = {};
+    //         // This function is used to find nodes available in managed or unmanaged tab. In that case Partner node will be added in removeRows list.
+    //         getPrimaryClusterNode(
+    //             newDiscoveredHostData,
+    //             removeRows,
+    //             managedHostList,
+    //             clusterDiscoveredHost,
+    //             isDemoMode
+    //         );
 
-            const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
-                newDiscoveredHostData,
-                removeRows,
-                clusterDiscoveredHost
-            );
+    //         const formattedDiscoveredInventoryTableData = formatDiscoveredInventoryData(
+    //             newDiscoveredHostData,
+    //             removeRows,
+    //             clusterDiscoveredHost
+    //         );
 
-            const state = store.getState();
-            const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
-            dispatch(setRemoveSecNodeDiscoveredList([...removeSecNodeDiscoveredList, ...removeRows]));
+    //         const state = store.getState();
+    //         const removeSecNodeDiscoveredList = state.inventoryV2.removeSecNodeDiscoveredList;
+    //         dispatch(setRemoveSecNodeDiscoveredList([...removeSecNodeDiscoveredList, ...removeRows]));
 
-            let unmanagedHostList = getUnmanagedHostInstances(
-                formattedDiscoveredInventoryTableData,
-                runningInstanceListRef.current
-            );
-            if (unmanagedHostList && unmanagedHostList?.length > 0) {
-                callInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
-            }
+    //         let unmanagedHostList = getUnmanagedHostInstances(
+    //             formattedDiscoveredInventoryTableData,
+    //             runningInstanceListRef.current
+    //         );
+    //         if (unmanagedHostList && unmanagedHostList?.length > 0) {
+    //             callInstanceApi(unmanagedHostList, false, INSTANCE_API_FIELDS.UNMANAGED_DEFAULT);
+    //         }
 
-            // To Avoid overriding
-            let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
-            if (mssqlInstancesDataRef.current) {
-                const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
-                dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
-            } else {
-                dispatch(setInventoryTableData(updatedResult));
-            }
-        }
-    }, [discoveredHostData, fsxCredentialStatusObj, managedHostListLoading]);
+    //         // To Avoid overriding
+    //         let updatedResult = { ...inventoryTableDataRef.current, ...formattedDiscoveredInventoryTableData };
+    //         if (mssqlInstancesDataRef.current) {
+    //             const updatedInventoryData = updateInstancesApiResponse(mssqlInstancesDataRef.current, updatedResult);
+    //             dispatch(setInventoryTableData({ ...inventoryTableDataRef.current, ...updatedInventoryData }));
+    //         } else {
+    //             dispatch(setInventoryTableData(updatedResult));
+    //         }
+    //     }
+    // }, [discoveredHostData, fsxCredentialStatusObj, managedHostListLoading]);
 
     // This data is coming from database-hosts API
     useEffect(() => {
