@@ -514,6 +514,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
+    $OntapSvmUuid = "${instanceRecord.svmOntapUuid}"
     $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
     $MappedVolumeUuids = '${JSON.stringify(instanceRecord.mappedVolumesUuids)}' | ConvertFrom-Json
     $MappedLunNames = '${JSON.stringify(instanceRecord.mappedLunNames)}' | ConvertFrom-Json
@@ -616,6 +617,11 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     # Lun details
     $APIEndpoint = '/storage/luns'
     $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
+
+    if ($OntapSvmUuid -ne '') {
+        $APIQueryFilter += "&svm.uuid=$OntapSvmUuid"
+    }
+
     $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
     Write-Information "Getting ONTAP LUN details for LUNs: ${instanceRecord.mappedLunNames?.join('|')}"
     try{
@@ -659,7 +665,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
             # Case when database has multiple drives
             if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
-            $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0) {$_.accessPaths[0]} }
             if ($logVolumeLunDetails) {
                 if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
                 foreach($logVolumeLunDetail in $logVolumeLunDetails) {
@@ -669,13 +674,17 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                     foreach ($property in $drive.PSObject.Properties) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
                         }
+                    # When database has data files in multiple different drives, pick dataaccess path for the data drive currently being considered
+                    $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0 -and $_.accessPaths[0].startswith($drive.dataDriveLetter)) {$_.accessPaths[0]} }
+                    # When database has multiple data files in the same drive, filter out the duplicate data access paths
+                    $dataAccessPaths = $dataAccessPaths | Select -unique
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
                     $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
                     $driveObject | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetail.svmName
                     $driveObject | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetail.diskNumber
                     $driveObject | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetail.lunSerialNumber
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths        
+                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths   
                     if($logVolumeLunDetail.accessPaths -and $logVolumeLunDetail.accessPaths.Count -gt 0) {
                         $driveObject | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetail.accessPaths[0]
                         }
@@ -764,6 +773,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         $InstanceDiskNumbers = $InstanceDiskNumbers | select -Unique
         $MpioLBDetails = mpclaim -s -d
         $LoadBalancingPolicy = 'RR'
+        $ValidPolicies = @('RR', 'RRWS')
         $LoadBalancingPolicyDetails = @()
         foreach ($disk in $AllNetappDisks){
             if($InstanceDiskNumbers -notcontains $disk.Number) {
@@ -773,17 +783,19 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             if (-Not ($AccessPaths -is [array])) {
                 $AccessPaths = @($AccessPaths)
             }
-            $object = [PSCustomObject]@{
+            $MatchString = ".*Disk\\s+" + $disk.Number + "\\s+(\\S+)"
+            $MatchGroup = [regex]::match($MpioLBDetails,$MatchString).Groups[1]
+            if($MatchGroup.Success -eq 'True') {
+                $object = [PSCustomObject]@{
                     "disk" = "Disk " + $disk.Number
                     "accessPath" = $AccessPaths[0]
-                    "policy" = $LoadBalancingPolicy
+                    "policy" = $MatchGroup.Value
                 }
-            $matchString = "Disk\\s+" + $disk.Number + "\\s+RR"
-            if(-Not ($MpioLBDetails -Match $matchString) ) {
+               if ($ValidPolicies -notcontains $MatchGroup.Value) {
                $LoadBalancingPolicy = 'Other'
-               $object.policy = $LoadBalancingPolicy
             }
             $LoadBalancingPolicyDetails += $($object)
+            }
         }
         $DriftAssessmentData['os']['mpio-load-balance-policy'] = "$LoadBalancingPolicy"
         $DriftAssessmentData['os']['mpio-load-balance-policy-details'] = $LoadBalancingPolicyDetails
@@ -851,6 +863,7 @@ Function Rescan-ExtendLUN {
         [string]$DiskSerialNumber
     )
     
+    $PartitionTypes = @('Basic', 'IFS')
     try {
         # Rescan and extend the LUN
         $null = (echo "RESCAN" | diskpart)
@@ -861,7 +874,10 @@ Function Rescan-ExtendLUN {
         }
         
         $diskNumber = $disk.Number
-        $partition = Get-Partition -DiskNumber $diskNumber | Where-Object Type -eq 'Basic'
+        $partition = Get-Partition -DiskNumber $diskNumber | Where-Object { $PartitionTypes  -contains $_.Type }
+        if($null -eq $partition) {
+            throw "No partition of type BASIC/IFS found on disk $diskNumber"
+        }
         $size = ($partition | Get-PartitionSupportedSize).SizeMax
         $partitionNumber = $partition.PartitionNumber
         Resize-Partition -DiskNumber $diskNumber -PartitionNumber $partitionNumber -Size $size
@@ -1048,21 +1064,20 @@ const CHECK_RUNNING_STATUS_WITH_RESTART = (serviceName: string) => `
 `;
 
 const GET_VCPU_AND_MAXDOP_DETAILS = (instanceName: string, sqlAuthEnabled: boolean) => `
-    # Get vCPU and MAXDOP Details
+    #Get vCPU and MAXDOP Details
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
     $sqlInstanceName = "${instanceName}"
-
- 
-    $ServerInstanceName = "$env:COMPUTERNAME"
-    If ($sqlInstanceName -ne "MSSQLSERVER") {
-        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
-         
-    }
 
     ${slqcmdExecutionTemplate}
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
+    }
+    
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+         
     }
 
     $vcpus = (Get-WmiObject -Class Win32_ComputerSystem).NumberOfLogicalProcessors
@@ -1215,16 +1230,18 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
     $maxDopValue = ${maxDopValue}
     $isClustered = [System.Convert]::ToBoolean('${isClustered}')
 
-    $ServerInstanceName = "$env:COMPUTERNAME"
-    If ($sqlInstanceName -ne "MSSQLSERVER") {
-        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
-    }
-
     ${slqcmdExecutionTemplate}
     $sqlCredential = @{'useSqlAuth' = $False}
     if($sqlAuthEnabled) {
         ${readSsmParameter(instanceName)}
     }
+
+    $ServerInstanceName = "$env:COMPUTERNAME"
+    If ($sqlInstanceName -ne "MSSQLSERVER") {
+        $ServerInstanceName = "$env:COMPUTERNAME\\$sqlInstanceName"
+         
+    }
+        
     ${GET_FCI_NAME}
 
     # Set the MAXDOP value with RECONFIGURE WITH OVERRIDE

@@ -42,14 +42,11 @@ import {
     useOptimizeStorageSizingForBulkMutation,
     useOptimizeStorageTierForBulkMutation,
     useOptimizeComputeConfigForBulkMutation,
-    useOptimizeMaxdopConfigForBulkMutation
+    useOptimizeMaxdopConfigForBulkMutation,
+    useOptimizeResiliencyMutation
 } from '../../../utils/apiService';
 import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwResourceId,
+    setGwPageLoadInstanceData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -66,6 +63,7 @@ import MicrosoftSQLPatchTable from './RenderTables/MicrosoftSQLPatchTable';
 import LicenseTable from './RenderTables/LicenseTable';
 import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
+import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -95,6 +93,7 @@ const DashboardInnerPage = () => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeResiliency] = useOptimizeResiliencyMutation();
     const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
     const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
@@ -105,9 +104,17 @@ const DashboardInnerPage = () => {
         let payload: null | object | any = {};
         let apiCall = null;
         const state = store.getState();
-        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData, recommendedInstanceInBulk } =
-            state.getWellOptimize;
-        const { headerSelectedCred, headerSelectedRegion } = state.headers;
+        const {
+            selectedDatabaseInstance,
+            selectedResourceId,
+            landingFrom,
+            cardData,
+            recommendedInstanceInBulk,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId
+        } = state.getWellOptimize;
+        let credIdBulk = rowData?.[0]?.credentialId;
+        let reiginIdBulk = rowData?.[0]?.regionId;
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             if (operation === 'bulk') {
                 apiCall = optimizeComputeConfigForBulk;
@@ -228,6 +235,22 @@ const DashboardInnerPage = () => {
                 apiCall = optimizeStorageTier;
                 payload = null;
             }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+            apiCall = optimizeResiliency;
+            const state = store.getState();
+            const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
+
+            payload = {
+                type: ['snapshot-policy'],
+                params: [
+                    {
+                        snapshotPolicy: {
+                            uuid: selectedSnapshot?.data?.uuid,
+                            name: selectedSnapshot?.data?.name
+                        }
+                    }
+                ]
+            };
         } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
             apiCall = optimizeMaxdopConfigForBulk;
             if (operation === 'bulk') {
@@ -364,24 +387,21 @@ const DashboardInnerPage = () => {
         let apiData = {};
         if (operation === 'bulk') {
             apiData = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? credIdBulk : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? reiginIdBulk : regionFromJM,
                 payload: payload
             };
         } else {
             if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
                 apiData = {
-                    credentialId:
-                        landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                    regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                     payload: payload
                 };
             } else {
                 apiData = {
-                    credentialId:
-                        landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                    regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                     databaseHostId: selectedResourceId,
                     instanceId: selectedDatabaseInstance,
                     payload: payload
@@ -478,12 +498,18 @@ const DashboardInnerPage = () => {
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
         );
-        dispatch(setGwHostname(rowData?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(targettedHost?.resourceId));
-        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
-        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: rowData?.hostName,
+                resourceId: targettedHost?.resourceId,
+                instanceId: targettedDbInstance?.databaseInstanceId,
+                instanceName: targettedDbInstance?.databaseInstanceName,
+                credId: targettedHost?.credentialId,
+                regionId: targettedHost?.regionId,
+                storageType: targettedDbInstance?.sqlServerDeploymentType
+            })
+        );
     };
 
     const handleDialog = (type: string, rowData: any, operation?: string) => {
@@ -744,6 +770,22 @@ const DashboardInnerPage = () => {
                     }
                 });
                 break;
+
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.scheduled_local_snapshot?.recommendation?.description
+                    }
+                });
+
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -839,6 +881,10 @@ const DashboardInnerPage = () => {
                 return <NetworkAdapterTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 return <OSPatchTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                return (
+                    <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
+                );
         }
     };
 

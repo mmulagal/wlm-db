@@ -145,7 +145,7 @@ interface UserDatabase {
     size: number;
     status: string;
     type: string;
-    protection: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
+    protection?: { isAwsBackupEnabled: IsAWSBackup; isFsxOntapSnapshotsEnabled: boolean; isSqlNativeEnabled: boolean };
     collation: string;
 }
 
@@ -327,6 +327,8 @@ interface WorkloadInstance {
     mappedLunUuids?: string[];
     cloudProviderAccountId: string;
     resourceName: string;
+    svmId?: string;
+    svmOntapUuid?: string;
 }
 interface LogDriveDetails {
     lunUuid: string;

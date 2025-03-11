@@ -264,7 +264,7 @@
                 display: flex;
                 padding: 40px 0;
                 justify-content: center;
-                width: 67vw;
+                width: 100vw;
             }
 
             .spaceAreaTemp {
@@ -428,8 +428,8 @@
             .contentArea {
                 display: flex;
                 justify-content: space-between;
-                width: 87%;
-                max-width: 1607px;
+                width: calc(83.33% - 4px);
+
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -458,6 +458,16 @@
         .content {
             display: flex;
             gap: 24px;
+
+            .multiSelect {
+                [class*='dsTextFieldFrame'] {
+                    width: 240px !important;
+                }
+
+                [class*='dsDropDownList '] {
+                    width: 400px !important;
+                }
+            }
 
             button {
                 --button-min-width: 160px;

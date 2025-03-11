@@ -40,6 +40,8 @@ const LogDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierTabl
                     const isStorageTierOptimized = isOptimized(logDriveSizeObj?.status);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,

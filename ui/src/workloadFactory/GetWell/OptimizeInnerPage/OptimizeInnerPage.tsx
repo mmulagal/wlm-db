@@ -14,7 +14,7 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setLandingFrom,
+    setLandingFromInnerPage,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -23,6 +23,7 @@ import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
     useOptimizeComputeConfigMutation,
+    useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeStorageTierMutation
@@ -42,26 +43,32 @@ const OptimizeInnerPage = () => {
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
-    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
+    const [optimizeResiliency] = useOptimizeResiliencyMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
     const userNavigated = useRef(false);
 
-    const buttonComponent = () => {
+    const buttonComponent = (rowData: any) => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
-            selectedOptimizeConfig?.type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION
         ) {
             return (
                 <Popover
@@ -92,7 +99,7 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else {
+        } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             return (
                 <DsButton
                     isThin
@@ -100,11 +107,34 @@ const OptimizeInnerPage = () => {
                     isDisabled={false}
                     onClick={() => {
                         // optimizeAction(rowData);
-                        // handleDialog(name, rowData, 'single');
+                        handleDialog(
+                            setDialog,
+                            selectedOptimizeConfig?.type,
+                            callOptimizeApi,
+                            closeDialog,
+                            selectedOptimizeConfig?.data,
+                            'single',
+                            rowData
+                        );
                     }}
                 >
                     Optimize
                 </DsButton>
+            );
+        } else {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
             );
         }
     };
@@ -120,7 +150,7 @@ const OptimizeInnerPage = () => {
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
-                        {/* {buttonComponent()} */}
+                        {buttonComponent(rowData)}
                     </div>
                 );
             }
@@ -128,7 +158,7 @@ const OptimizeInnerPage = () => {
     };
 
     // This is the function that will be called when the optimize button is clicked from main cards
-    const callOptimizeApi = (type: any) => {
+    const callOptimizeApi = (type: any, operation: string, singleRowData: any) => {
         let payload: null | object = {};
         let apiCall = null;
 
@@ -151,6 +181,43 @@ const OptimizeInnerPage = () => {
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
             payload = null;
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+            apiCall = optimizeResiliency;
+            const state = store.getState();
+            const selectedSnapshot = state.getWellOptimize.selectedSnapshot;
+            if (operation === 'bulk') {
+                payload = {
+                    type: ['snapshot-policy'],
+                    params: [
+                        {
+                            snapshotPolicy: {
+                                uuid: selectedSnapshot?.data?.uuid,
+                                name: selectedSnapshot?.data?.name
+                            }
+                            // volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, id }: any) => ({
+                            //     ontapVolumeName: volumeName,
+                            //     ontapVolumeUuid: id
+                            // }))
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    type: ['snapshot-policy'],
+                    params: [
+                        {
+                            snapshotPolicy: {
+                                uuid: selectedSnapshot?.data?.uuid,
+                                name: selectedSnapshot?.data?.name
+                            }
+                            // volumes: {
+                            //     ontapVolumeName: singleRowData?.volumeName,
+                            //     ontapVolumeUuid: singleRowData?.id
+                            // }
+                        }
+                    ]
+                };
+            }
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -212,8 +279,8 @@ const OptimizeInnerPage = () => {
         );
 
         apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload: payload
@@ -246,7 +313,6 @@ const OptimizeInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-                        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
                     }
                 }, 1000);
 
@@ -274,7 +340,8 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type,
             callOptimizeApi,
             closeDialog,
-            selectedOptimizeConfig?.data
+            selectedOptimizeConfig?.data,
+            'bulk'
         );
     };
 
@@ -374,6 +441,7 @@ const OptimizeInnerPage = () => {
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setLandingFromInnerPage(true));
                                 }
                             },
                             {

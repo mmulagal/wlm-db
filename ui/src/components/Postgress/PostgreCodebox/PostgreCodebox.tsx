@@ -3,7 +3,6 @@ import CodeBoxHeading from '../../../common/CodeBoxHeading/CodeBoxHeading';
 import styles from './PostgreCodebox.module.scss';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 import CodeBoxScroll from '../../../common/CodeBoxScroll/CodeBoxScroll';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -56,9 +55,6 @@ const PostgreCodebox = () => {
     const [isTerraformDataLoading, setIsTerraformDataLoading] = useState(false);
     const [formDataTerraform, setFormDataTerraform] = useState<any>(null); // Saving form data on terraform setup API call
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
-
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
@@ -234,11 +230,12 @@ const PostgreCodebox = () => {
             return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             const baseUrl = getBaseUrl();
+            const credDetails = getCredDetails(mssqlFormData);
             const rightPanelResponse = createPgsqlPayload({ mssqlForm: mssqlFormData, postgreForm: pgsqlFormData });
             const restApiPayload = PGSQL_CURL_REQ_TEMPLATE(
                 baseUrl,
-                selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
-                selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
+                credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                credDetails.region || CRED_PLACEHOLDERS.REGION,
                 CRED_PLACEHOLDERS.TOKEN,
                 JSON.stringify(rightPanelResponse, null, 2),
                 isWorkloadFactory
@@ -411,7 +408,10 @@ const PostgreCodebox = () => {
                                             <Download
                                                 onClick={() => {
                                                     if (isDemoMode) {
-                                                        downloadTerraformZip(mssqlFormData?.dbDeploymentModel?.value);
+                                                        downloadTerraformZip(
+                                                            mssqlFormData?.dbDeploymentModel?.value,
+                                                            'pgsql'
+                                                        );
                                                     } else {
                                                         handleDownloadTerraform(terraformSetupResponse?.url);
                                                     }

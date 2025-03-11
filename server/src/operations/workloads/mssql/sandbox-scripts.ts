@@ -1154,7 +1154,7 @@ const detachDbAndRemoveAccessPath = (
 
         $disklist | ForEach-Object {
             $disk = $_
-            $partition = Get-Partition -DiskNumber $disk.Number -PartitionNumber 2
+            $partition = Get-Partition -DiskNumber $disk.Number | Where-Object { $_.Type -eq 'Basic' -or $_.Type -eq 'IFS' }
             Write-Information "$logPrefix Partition: $($partition.PartitionNumber) $($partition.AccessPaths)"
             $partition.AccessPaths | ForEach-Object {
                 $accesspath = $_

@@ -202,15 +202,18 @@ function getMachineDetails(
 
     const byolHourlyPricePerHost = monthlySqlByolCost ? monthlySqlByolCost / HOURS_IN_MONTH : undefined;
     return nodeInstances.map(({ ec2InstanceType: instanceType, ec2UsageOperation = '' }) => {
-        const computeHourlyPrice = instanceTypesPricingDetails.get(instanceType)?.pricingDetails.NA?.pricePerUnit;
+        const computeHourlyPrice = instanceTypesPricingDetails?.get(instanceType)?.pricingDetails
+            ? instanceTypesPricingDetails?.get(instanceType)?.pricingDetails.NA?.pricePerUnit
+            : 0.192; // for regions where pricing details are not available, use a default price for m5.xlarge instance type, earlier we'd throw an error here
         const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(computeHourlyPrice); // compute price is exclusive of license price
 
         const nodeInstanceByolPrice =
             byolHourlyPricePerHost && computeHourlyPrice ? computeHourlyPrice + byolHourlyPricePerHost : undefined;
 
         const instanceHourlyPrice =
-            nodeInstanceByolPrice ||
-            instanceTypesPricingDetails.get(instanceType)?.pricingDetails[licenseType]?.pricePerUnit; // instance price is inclusive of license price (priority to BYOL price if available)
+            nodeInstanceByolPrice || instanceTypesPricingDetails?.get(instanceType)?.pricingDetails
+                ? instanceTypesPricingDetails?.get(instanceType)?.pricingDetails[licenseType]?.pricePerUnit
+                : 0.192; // instance price is inclusive of license price (priority to BYOL price if available)
         const instanceMonthlyPrice = getMonthlyPriceFromHourlyPrice(instanceHourlyPrice);
 
         const licenseMonthlyPrice = WIN_SQL_EC2_USAGE_OPERATION.includes(ec2UsageOperation)

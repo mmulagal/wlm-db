@@ -37,15 +37,17 @@ import store from '../../../store/store';
 const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, hostId, instanceId }: any) => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
-
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const { isDemoMode } = useAppSelector(state => state.auth);
-    const { selectedResourceId, selectedDatabaseInstance, optimizingData, optimizingInstanceData } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        optimizingData,
+        optimizingInstanceData,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
@@ -128,8 +130,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
         );
 
         apiCall({
-            credentialId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-            regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
             databaseHostId: selectedResourceId || hostId,
             instanceId: selectedDatabaseInstance || instanceId,
             payload: payload
@@ -202,7 +204,6 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
 
     const handleNavigateToOptimizePage = (rowData: any) => {
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
-        dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(
             setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId: hostId, instanceId: instanceId })
         );

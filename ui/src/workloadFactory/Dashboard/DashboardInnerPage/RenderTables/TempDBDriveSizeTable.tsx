@@ -41,6 +41,8 @@ const TempDBDriveSizeTable = ({ lastColDetails, handleBulkAction }: StorageTierT
                     const isStorageTierOptimized = isOptimized(tempdbDriveSizeObj?.status);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,

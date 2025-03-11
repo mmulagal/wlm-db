@@ -30,6 +30,10 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Operational excellence']);
                 break;
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+                setTagData(['Reliability']);
+                break;
+
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 setTagData(['Security']);
                 break;

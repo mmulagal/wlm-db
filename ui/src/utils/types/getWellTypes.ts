@@ -6,6 +6,8 @@ export interface GetWellSliceInterface {
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
+    selectedGwInstanceCredId: string;
+    selectedGwInstanceRegionId: string;
     selectedDatabaseStorageType: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
@@ -22,6 +24,8 @@ export interface GetWellSliceInterface {
     optimizingData: any;
     optimizingInstanceData: boolean;
     selectedRecommendedInstance: any;
+    selectedSnapshotPolicy: any;
+    selectedSnapshot: any;
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;
@@ -30,6 +34,7 @@ export interface GetWellSliceInterface {
     jobToInstanceMap: any;
     jobToInstanceMapForBulk: any;
     recommendedInstanceInBulk?: any;
+    landingFromInnerPage?: boolean;
 }
 
 interface CountBreakDown {
@@ -106,6 +111,13 @@ export interface PerConfigInterface {
         operationEndTime?: number;
         securityNonCompliantCount?: number;
         otherNonCompliantCount?: number;
+        missingPatchDetails?: Array<{
+            classification?: string;
+            severity?: string;
+            state?: string;
+            title?: string;
+            kbId?: string;
+        }>;
     }>;
     missingPatchesInEc2Instances?: Array<{
         ec2InstanceId?: string;

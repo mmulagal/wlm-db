@@ -1,6 +1,7 @@
-import { optionType } from '@netapp/design-system/dist/components/Select';
+import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import { get, sortBy, compact, uniqBy, map } from 'lodash';
+import { css } from '@emotion/css';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
@@ -52,6 +53,10 @@ export interface OptionsWithData extends optionType {
     data?: Object;
 }
 
+export interface OptionsWitMultipleData extends optionTypeMulti {
+    data?: Object;
+}
+
 export const generateOptionType = (
     value: string | any,
     label: string | any,
@@ -64,6 +69,25 @@ export const generateOptionType = (
         value: value,
         label: label,
         label2: label2,
+        isDisabled: isDisabled,
+        disabledTitle: disabledTitle,
+        data: data
+    };
+    return option;
+};
+
+export const generateMultipleOptionType = (
+    value: string | any,
+    label: string | any,
+    id: string | number,
+    isDisabled: boolean,
+    disabledTitle: string,
+    data?: Object
+) => {
+    const option: OptionsWitMultipleData = {
+        value: value,
+        label: label,
+        id: id,
         isDisabled: isDisabled,
         disabledTitle: disabledTitle,
         data: data
@@ -1433,14 +1457,53 @@ export const removePasswordInConfig = (payload: any) => {
     return payload;
 };
 
+const isLastSticky = (columns: any[], columnIndex: number) => {
+    return (
+        columns.every((column, index) => column.isSticky || index > columnIndex) && !columns[columnIndex + 1].isSticky
+    );
+};
+
+export const convertPxStringToNumber = (pxWidth: string): number => +pxWidth.slice(0, -2);
+
+const getLeft = (columns: any[], columnIndex: number) => {
+    const left = columns.reduce((acc, column, index) => {
+        if (index < columnIndex) {
+            acc += convertPxStringToNumber(column.width || '0px');
+        }
+        return acc;
+    }, 0);
+    return `${left}px`;
+};
+
+export const getStickyClass = (columns: any, columnIndex: number) => {
+    const column = columns[columnIndex];
+
+    if (!column.isSticky) {
+        return null;
+    }
+    const isStickyLeft = columnIndex < columns?.length / 2;
+    const isLast = isLastSticky(columns, columnIndex);
+    const stickyStyling = isStickyLeft
+        ? {
+              left: getLeft(columns, columnIndex),
+              ...(isLast && { boxShadow: '4px 0 4px 0 var(--Grey200)' })
+          }
+        : {
+              right: getLeft(columns.slice().reverse(), columns.length - columnIndex - 1)
+          };
+    return css({
+        '&': stickyStyling
+    });
+};
+
 export const removeOldApisError = (data: any) => {
     const state = store.getState();
-    const credId = state.headers.headerSelectedCred?.data?.credentialsId;
-    const regionId = state.headers.headerSelectedRegion?.label2;
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     if (data?.endpointName === 'getDatabaseHosts') {
         if (
             data?.originalArgs &&
-            (data?.originalArgs?.credentialId !== credId || data?.originalArgs?.region !== regionId)
+            (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialId) ||
+                !headerSelectedMultiRegionIdsList.includes(data?.originalArgs?.region))
         ) {
             return true;
         } else {
@@ -1449,7 +1512,8 @@ export const removeOldApisError = (data: any) => {
     } else if (data?.endpointName === 'discoverHosts') {
         if (
             data?.originalArgs &&
-            (data?.originalArgs?.credentialsId !== credId || data?.originalArgs?.regionId !== regionId)
+            (!headerSelectedMultiCredIdsList.includes(data?.originalArgs?.credentialsId) ||
+                !headerSelectedMultiRegionIdsList(data?.originalArgs?.regionId))
         ) {
             return true;
         } else {
@@ -1853,4 +1917,24 @@ export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): v
     } else {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
     }
+};
+
+export const makeCredMapping = (data: any) => {
+    let credMapping: HashTable<string> = {};
+    data?.map((cred: any) => {
+        if (cred?.credentialsId) {
+            credMapping[cred.credentialsId] = cred;
+        }
+    });
+    return credMapping;
+};
+
+export const makeRegionMapping = (data: any) => {
+    let regionMapping: HashTable<string> = {};
+    data?.map((region: any) => {
+        if (region?.regionCode) {
+            regionMapping[region.regionCode] = region;
+        }
+    });
+    return regionMapping;
 };

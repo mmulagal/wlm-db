@@ -28,6 +28,8 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
+    POSTGRESQL_TYPE: 'PostgreSQL',
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
@@ -858,6 +860,7 @@ export const GENERAL = {
     ],
     FCI: 'FCI',
     AOAG: 'Always on availability group',
+    HA: 'High availability',
     STANDALONE: 'Standalone',
     SERVICE: 'Service',
     PERMISSIONS: 'Permissions',
@@ -877,6 +880,8 @@ export const GENERAL = {
     QUORUM_VOLUME: 'Quorum volume',
     QUORUM_SIZE: 'Quorum volume size',
     BUFFER_SIZE: 'Headroom',
+    DATA_REPLICA_VOLUME: 'Data replica volume',
+    LOG_REPLICA_VOLUME: 'Log replica volume',
     MIN_FSX_CAPACITY_MESSAGE: 'The minimum total SSD capacity of an FSx for ONTAP file system is 1,024 GiB.',
     VPC_MESSAGE:
         'Ensure your VPC has connectivity to other AWS services (SQS, FSx, EC2, CloudWatch, CloudFormation, SSM) via VPC endpoints and S3 gateway endpoint. If not, endpoints will be created automatically during deployment.',
@@ -1109,8 +1114,10 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
+    PGSQL_CTA_NA: 'PostgreSQL actions are not supported.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
+    PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
     NO_CONFIG_AVAILABLE: 'Configurations data not available.',
     NO_ASSESSMENT_DATA: 'assessment not available.',
     LOG_DRIVE_OVER_PROVISIONED_ERROR: 'Over provisioned log drive size can not be optimized',
@@ -1134,22 +1141,24 @@ export const GENERAL = {
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',
     FSXN_MANAGE_SUPPORTED: 'Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be managed.',
     MANAGE_DISABLE_FOR_UNDETECTED:
-        'This instance is currently undetected. To manege the instance, expand the database host name, and then select "detect" from the menu.',
+        'This instance is currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
     NO_UNMANAGED_TO_MANAGE:
-        'All SQL Server instances on this host are either managed or undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are either managed or undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
     AOAG_MANAGE_DISABLE: 'Manage instance is not supported for Always on availability group deployment model.',
     ALL_MANAGED_TEXT:
-        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+        'All SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
     ALL_FSXN_MANAGED_TEXT:
-        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, expand the database host name, and click the menu.',
+        'All FSx for ONTAP SQL Server instances on this host are currently managed. To explore instance actions or unmanage the instance, click on view instance, and click the menu.',
     ALL_UNDETECT_TEXT:
-        'All SQL Server instances on this host are currently undetected. To manage the instance, expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently undetected. To manage the instance, click on view instance, and then select "detect" from the menu.',
     ALL_ES_UNDETECTED_ROWS:
-        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first expand the database host name, and then select "detect" from the menu.',
+        'All SQL Server instances on this host are currently undetected. To explore savings on this instance first click on view instance, and then select "detect" from the menu.',
     ALL_ES_FSXW_AOAG_ROWS:
         'Explore Savings for FSx for Windows File Server is not supported for Always on availability group deployment model.',
     NON_SSD_FSXW_MSG:
         'Explore Savings for FSx for Windows File Server is only supported for SSD file system storage type.',
+    MANAGED_SUPPORT_FOR_EBS_FSXW:
+        'Manage instance is not supported for EBS and FSx for Windows File Server storage type.',
     MIXED_STORAGE_ES_MSG: 'Explore Savings for mixed storage type is not supported.',
     MANAGE_INSTANCE_SUCCESS_MSG: ['The SQL Server instance ', ' has been successfully managed.'],
     MANAGE_INSTANCE_FAILED_MSG: [

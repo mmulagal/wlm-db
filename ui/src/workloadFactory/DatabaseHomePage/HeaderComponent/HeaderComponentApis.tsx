@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } from '../../../utils/apiService';
 import { AWS_ASSUME_ROLE } from '../../../utils/consts';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
-import { addCredentialsHeaderList, addRegionsHeaderList, addStatus } from '../../../store/workloadFactory/headersSlice';
+import {
+    addCredentialsHeaderList,
+    addRegionsHeaderList,
+    addStatus,
+    setCredentialMapping,
+    setRegionMapping
+} from '../../../store/workloadFactory/headersSlice';
+import { makeCredMapping, makeRegionMapping } from '../../../utils/utilityFunctions';
 
 const HeaderComponentApi = () => {
     const dispatch = useAppDispatch();
@@ -63,6 +70,7 @@ const HeaderComponentApi = () => {
 
     useEffect(() => {
         dispatch(addCredentialsHeaderList({ credentialData, credentialLoading, credentialError }));
+        dispatch(setCredentialMapping(makeCredMapping(credentialData)));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, credentialLoading, credentialError]);
 
@@ -71,6 +79,7 @@ const HeaderComponentApi = () => {
             dispatch(addRegionsHeaderList({ undefined, regionsLoading, regionsError }));
         } else {
             dispatch(addRegionsHeaderList({ regionsData, regionsLoading, regionsError }));
+            dispatch(setRegionMapping(makeRegionMapping(regionsData?.regions)));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [regionsData, regionsError, regionsLoading]);

@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar, Typography, Popover, DsButton } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, Typography, Popover, DsButton, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -6,12 +6,10 @@ import { useEffect, useMemo } from 'react';
 import { getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
-import { useAppSelector } from '../../../../store/storeHooks';
-import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
-    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
 
     const tableData = useMemo(() => {
         let id = 0;
@@ -50,6 +48,22 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
+    }, [data]);
+
+    const disableOptimizeButtonTooltip = useMemo(() => {
+        if (
+            data?.sizingViolations?.overProvisionedDrives?.length &&
+            !data?.sizingViolations?.underProvisionedDrives?.length
+        ) {
+            return GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR;
+        } else if (
+            !data?.sizingViolations?.underProvisionedDrives?.length &&
+            data?.sizingViolations?.ignoredDrives?.length
+        ) {
+            return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
+        } else {
+            return '';
+        }
     }, [data]);
 
     const TableColDefs: ColumnProps[] = [
@@ -171,9 +185,25 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                 singularTitle={'Impacted drive'}
                 actionsRight={
                     <div className={styles.optimizeButton}>
-                        <DsButton onClick={handleBulkAction} isThin variant="primary">
-                            Optimize
-                        </DsButton>
+                        {disableOptimizeButtonTooltip ? (
+                            <Popover
+                                popoverClass={CommonStyles['popover']}
+                                isAppendedToBody={true}
+                                children={
+                                    <DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>
+                                }
+                                trigger="hover"
+                                container={
+                                    <DsButton variant="primary" isDisabled={true}>
+                                        {'Optimize'}
+                                    </DsButton>
+                                }
+                            />
+                        ) : (
+                            <DsButton onClick={handleBulkAction} isThin variant="primary">
+                                Optimize
+                            </DsButton>
+                        )}
                     </div>
                 }
             />

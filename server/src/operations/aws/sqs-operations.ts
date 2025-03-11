@@ -61,6 +61,7 @@ import { getJobDetails, updateJobDetails } from '../database/job-operations';
 import { getPgSqlInstanceInfo } from '../workloads/pgsql/pgsql-operations';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { DeploymentDetails } from '../../utils/common-types';
+import { paginateDescribeEbsVolumes } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -542,7 +543,33 @@ async function processCloudFormationMessages() {
                                                         trackdatabaseType === 'Microsoft SQL server'
                                                             ? RESOURCESTYPE.MSSQL
                                                             : RESOURCESTYPE.PGSQL;
-
+                                                    const ebsVolumes = await paginateDescribeEbsVolumes(
+                                                        credentialsId,
+                                                        region,
+                                                        {
+                                                            Filters: [
+                                                                {
+                                                                    Name: 'attachment.instance-id',
+                                                                    Values: node2InstanceId
+                                                                        ? [node1InstanceId, node2InstanceId]
+                                                                        : [node1InstanceId]
+                                                                }
+                                                            ]
+                                                        },
+                                                        accountId
+                                                    );
+                                                    const ebsVolumesFiltered = ebsVolumes?.map(volume => ({
+                                                        iops: volume.Iops,
+                                                        size: volume.Size,
+                                                        isRoot: volume.Attachments?.some(
+                                                            attachment =>
+                                                                attachment.Device === '/dev/xvda' ||
+                                                                attachment.Device === '/dev/sda1'
+                                                        ),
+                                                        volumeType: volume.VolumeType,
+                                                        volumeId: volume.VolumeId,
+                                                        throughput: volume.Throughput
+                                                    }));
                                                     await createResource(accountId, {
                                                         resourceId,
                                                         credentialsId,
@@ -571,7 +598,10 @@ async function processCloudFormationMessages() {
                                                             storageProtocol:
                                                                 resourceType === RESOURCESTYPE.MSSQL
                                                                     ? STORAGE_PROTOCOLS.ISCSI
-                                                                    : STORAGE_PROTOCOLS.NFS
+                                                                    : STORAGE_PROTOCOLS.NFS,
+                                                            ...(ebsVolumesFiltered && {
+                                                                ebsVolumes: ebsVolumesFiltered
+                                                            })
                                                         }
                                                     });
 

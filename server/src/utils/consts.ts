@@ -255,7 +255,8 @@ const SECRET_WORDS = [
     'fsxNPassword',
     'fsxSecret',
     'domainAdminSecret',
-    'sqlServiceAccountSecret'
+    'sqlServiceAccountSecret',
+    'file'
 ];
 
 const SECRET_STRING_WORDS = [
@@ -1200,7 +1201,8 @@ const DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
     5: 'resourceUtilization',
     6: 'databasesCount',
     7: 'nodeTopology',
-    8: 'storageSavingsFromOntap'
+    8: 'storageSavingsFromOntap',
+    9: 'databases'
 };
 
 enum DATABASE_METRIC_TYPE {
@@ -1258,6 +1260,7 @@ const MIN_DISKSIZE = 1024;
 const MIN_THROUGHPUT = 128;
 const STANDALONE = 'standalone';
 const FCI = 'fci';
+const HA = 'ha';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
@@ -1292,7 +1295,9 @@ enum DatabaseHostsQueryFields {
     SERVER_DETAILS = 'serverDetails',
     NODE_TOPOLOGY = 'nodeTopology',
     INSTANCE_DETAILS = 'instanceDetails',
-    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology'
+    DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology',
+    DATABASES_WITH_PROTECTION = 'databasesWithProtection',
+    DATABASES = 'databases'
 }
 
 enum ServerState {
@@ -1395,6 +1400,7 @@ const SSM_PARAMETERS_BASE_PATH = '/netapp/wlmdb';
 const COMPLETE = 'Complete';
 
 const CUSTOM_SSM_EXECUTION_TIMEOUT = '180';
+const ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT = '300';
 const ASSESSMENT_SSM_EXECUTION_TIMEOUT = '600';
 
 const VALIDATION_NODE_INSTANCETYPE = 'm5.xlarge';
@@ -1605,18 +1611,6 @@ const PGSQL_TEMPLATES_ASSETS = [
 const PGSQL_MASTER_TEMPLATE_DISTRIBUTION = {
     name: TEMPLATE_TYPES.MASTER,
     location: './resources/pgsql/templates/wlm-master.yaml'
-};
-
-const PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER: Record<string, string> = {
-    s3: TEMPLATE_S3_ENDPOINT,
-    cloudformation: TEMPLATE_CLOUDFORMATION_ENDPOINT,
-    ssm: TEMPLATE_SSM_ENDPOINT,
-    sqs: TEMPLATE_SQS_ENDPOINT,
-    logs: TEMPLATE_CLOUDWATCH_LOGS_ENDPOINT,
-    fsx: TEMPLATE_FSX_ENDPOINT,
-    ec2: TEMPLATE_EC2_ENDPOINT,
-    ec2messages: TEMPLATE_EC2MESSAGES_ENDPOINT,
-    ssmmessages: TEMPLATE_SSMMESSAGES_ENDPOINT
 };
 
 const PG_TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -1847,6 +1841,7 @@ export {
     MIN_DISKSIZE,
     STANDALONE,
     FCI,
+    HA,
     SINGLE_AZ,
     MULTI_AZ,
     MIN_THROUGHPUT,
@@ -1994,7 +1989,6 @@ export {
     PGSQL_RESOURCE_ASSETS,
     PGSQL_TEMPLATES_ASSETS,
     PGSQL_MASTER_TEMPLATE_DISTRIBUTION,
-    PGSQL_MAP_SERVICE_TEMPLATE_PARAMETER,
     PG_TEMPLATE_OPTIONAL_PARAMETERS,
     TCO_FEATURE,
     CONTINUOUS_ASSESSMENT_FEATURE,
@@ -2040,5 +2034,6 @@ export {
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
     PGSQL,
     GERERIC_JOB_ERROR_MESSAGE,
-    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES
+    STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
+    ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT
 };

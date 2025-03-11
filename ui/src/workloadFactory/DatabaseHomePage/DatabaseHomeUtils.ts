@@ -21,6 +21,7 @@ import {
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
 
 export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZARD_TYPE.MSSQL) => {
     let totalDatabases = 0;
@@ -575,51 +576,51 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 );
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.severityObj.storageTier = GETWELL_VALUES[perfTierObj?.severity];
+                getAssessmentGroupedByConfigurations.severityObj.storageTier = GETWELL_VALUES[perfTierObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.storageTier;
                 getAssessmentGroupedByConfigurations.fileSystemHeadroom += isFileSystemHeadroomOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.fileSystemHeadroom =
-                    GETWELL_VALUES[headroomObj?.severity];
+                    GETWELL_VALUES[headroomObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.fileSystemHeadroom;
                 getAssessmentGroupedByConfigurations.logDriveSize += isLogDriveSizeOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.logDriveSize =
-                    GETWELL_VALUES[logDriveSizeObj?.severity];
+                    GETWELL_VALUES[logDriveSizeObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.logDriveSize;
                 getAssessmentGroupedByConfigurations.tempdbDriveSize += isTempdbDriveSizeOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.tempdbDriveSize =
-                    GETWELL_VALUES[tempdbDriveSizeObj?.severity];
+                    GETWELL_VALUES[tempdbDriveSizeObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.tempdbDriveSize;
                 getAssessmentGroupedByConfigurations.userDataFiles += isUserDataFilesOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.userDataFiles =
-                    GETWELL_VALUES[userDataFilesObj?.severity];
+                    GETWELL_VALUES[userDataFilesObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.userDataFiles;
                 getAssessmentGroupedByConfigurations.logFiles += isLogFilesOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.severityObj.logFiles = GETWELL_VALUES[logFilesObj?.severity];
+                getAssessmentGroupedByConfigurations.severityObj.logFiles = GETWELL_VALUES[logFilesObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.logFiles;
                 getAssessmentGroupedByConfigurations.tempdbPlacement += isTempdbPlacementOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.tempdbPlacement =
-                    GETWELL_VALUES[tempdbFilesLocationObj?.severity];
+                    GETWELL_VALUES[tempdbFilesLocationObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.tempdbPlacement;
                 getAssessmentGroupedByConfigurations.ontapConfiguration += isOntapConfigurationOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.ontapConfiguration = 'Critical';
                 getAssessmentGroupedByConfigurations.operatingSystem += isOperatingSystemOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystem = 'Critical';
                 getAssessmentGroupedByConfigurations.computeRightsizing += isComputeRightsizingOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.computeRightsizing =
-                    GETWELL_VALUES[instanceAssessmentData?.compute?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.compute?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.computeRightsizing;
                 getAssessmentGroupedByConfigurations.operatingSystemPatch += isOpearingSystemPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystemPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.operatingSystemPatch;
                 getAssessmentGroupedByConfigurations.rssConfiguration += isRssConfigurationOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.rssConfiguration =
-                    GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.rssConfiguration;
                 getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
-                    GETWELL_VALUES[instanceAssessmentData?.license?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.license?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
                 getAssessmentGroupedByConfigurations.mssqlPatch += isMicrosoftSqlPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.mssqlPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.mssqlPatch;
                 getAssessmentGroupedByConfigurations.maxdopPatch += isMaxdopPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.maxdopPatch;
                 getAssessmentGroupedByConfigurations.scheduledLocalSnapshot += isScheduledLocalSnapshotOptimized
                     ? 1
                     : 0;
                 getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
-                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity];
+                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
             }
         });
     });
@@ -647,7 +648,9 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any) => {
                         score: score,
                         databaseInstanceName: instance?.databaseInstanceName,
                         databaseHostId: databaseHost?.databaseHostId,
-                        instanceId: instance?.databaseInstanceId
+                        instanceId: instance?.databaseInstanceId,
+                        credentialId: databaseHost?.credentialId,
+                        regionId: databaseHost?.regionId
                     };
                     tableData.push(perTableData);
                 }
@@ -702,7 +705,8 @@ export const disableOfflineRows = (data: any) => {
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
     let result = assessmentData.map((instanceData: any) => {
         let updatedAssessmentData = { ...instanceData };
-        const host = hostData?.[instanceData.databaseHostId];
+        const host =
+            hostData?.[uniqueHostRow(instanceData.databaseHostId, instanceData?.credentialId, instanceData.regionId)];
         if (!host) {
             updatedAssessmentData.loadingStatus = isLoading;
         } else {

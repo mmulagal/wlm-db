@@ -39,7 +39,9 @@ import {
     MAX_DATA_LUN_SIZE_IN_GIB,
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     AWS_REGIONS,
-    RESOURCESTYPE
+    RESOURCESTYPE,
+    HA,
+    FCI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -247,18 +249,27 @@ function calculateFsxnStorageCapacity(fsxDataLunSize: number, sqlDeploymentMode:
     const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
     // All these in MiB
-    const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
-    const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    let FSxTempDbVolumeSize = 0;
-    if (databaseType !== DatabaseTypes.PG_SQL) {
-        FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    }
+    let FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
+    let FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+    let FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
     let FSxQuorumVolumeSize = 0;
-    if (sqlDeploymentMode !== STANDALONE && databaseType !== DatabaseTypes.PG_SQL) {
+    if (sqlDeploymentMode !== STANDALONE) {
         FSxQuorumVolumeSize = 12000; // 12GB
     }
+    const isPgsqlHADeployment =
+        databaseType === DatabaseTypes.PG_SQL && (sqlDeploymentMode === HA || sqlDeploymentMode === FCI);
+    if (databaseType === DatabaseTypes.PG_SQL) {
+        FSxDataVolumeSize = FSxDataLunSizeInMib; // Absolute value of database size, as there won't be any LUN incase of NFS mounts
+        FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+        FSxTempDbVolumeSize = 0; // No TempDB volume for PostgreSQL
+        FSxQuorumVolumeSize = 0; // No Quorum volume for PostgreSQL
+    }
 
-    const totalVolumesSize = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
+    const totalVolumesSize =
+        (isPgsqlHADeployment ? 2 : 1) * FSxDataVolumeSize +
+        (isPgsqlHADeployment ? 2 : 1) * FSxLogVolumeSize +
+        FSxTempDbVolumeSize +
+        FSxQuorumVolumeSize;
     // Total FSx Storage Capacity with 35% headroom
     let FSxStorageCapacity = Math.ceil(totalVolumesSize / 0.65);
     const FSxBufferVolumeSize = FSxStorageCapacity - totalVolumesSize;
@@ -914,6 +925,13 @@ const isValidEmail = (email: string): boolean => {
     return emailRegex.test(email);
 };
 
+function parseMultipleCommandResponse(response: string) {
+    // Multiple SSM command response is of the form {<json1String>}{<json2String>}...{<jsonnString>}, so we need to split the response into individual json objects and return them as an array
+    const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
+
+    return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -967,5 +985,6 @@ export {
     isMssql,
     isPgsql,
     isValidEmail,
-    isRateLimited
+    isRateLimited,
+    parseMultipleCommandResponse
 };

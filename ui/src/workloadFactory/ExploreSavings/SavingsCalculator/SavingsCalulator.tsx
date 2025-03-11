@@ -145,13 +145,26 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             })
                         );
                     } else {
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                //@ts-ignore
-                                message: resp?.error?.data?.message
-                            })
-                        );
+                        //@ts-ignore
+                        if (resp?.error?.data?.message === 'Too many requests') {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    //@ts-ignore
+                                    message: 'Calculation report was failed to be delivered.',
+                                    additionalText:
+                                        "You've reached the calculation result emails limit for the day. Try again tomorrow."
+                                })
+                            );
+                        } else {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    //@ts-ignore
+                                    message: resp?.error?.data?.message
+                                })
+                            );
+                        }
                     }
 
                     setPrintState(false);
@@ -272,7 +285,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 : styles.savingsHeading
                         }
                     >
-                        <DsTypography variant="Regular_24" style={{ width: '188px', maxWidth: '188px' }}>
+                        <DsTypography variant="Regular_24" style={{ width: 'fit-content', maxWidth: 'fit-content' }}>
                             {GENERAL.SAVINGS_CALCULATOR}
                         </DsTypography>
                         {(!statusData || statusData?.isActive === false) &&

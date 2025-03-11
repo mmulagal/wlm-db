@@ -6,6 +6,7 @@ import {
     setOnPremStorageAndComputeInfoFull,
     setSavingsCalculatorFrom,
     setSelectedDeploymentModel,
+    setSelectedEsPageInstance,
     setSelectedHostDetails,
     setSelectedInstanceId,
     setSelectedOnPremHostDetails,
@@ -76,9 +77,16 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
 
     setTimeout(() => {
         dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-        dispatch(setSelectedInstanceId(''));
+        dispatch(
+            setSelectedEsPageInstance({
+                instanceId: '',
+                credentialId: '',
+                regionId: '',
+                deploymentModel: rowData?.deploymentModel,
+                serverName: rowData?.resourceName || GENERAL.ES_SERVER_NAME
+            })
+        );
         dispatch(setSelectedOnPremHostId(rowData?.resourceId));
-        dispatch(setSelectedDeploymentModel(rowData?.deploymentModel));
         dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
         setESInstanceOnPremData(rowData, dispatch);
     }, 500);
@@ -118,9 +126,15 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
 
     dispatch(setDisableState(true));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-    dispatch(setSelectedInstanceId(rowData?.id));
-    dispatch(setSelectedDeploymentModel(deploymentModel));
-    dispatch(setSelectedServerName(rowData?.name || GENERAL.ES_SERVER_NAME));
+    dispatch(
+        setSelectedEsPageInstance({
+            instanceId: rowData?.id,
+            credentialId: rowData?.credentialId,
+            regionId: rowData?.regionId,
+            deploymentModel: deploymentModel,
+            serverName: rowData?.name || GENERAL.ES_SERVER_NAME
+        })
+    );
     setESInstanceData(rowData, dispatch);
 };
 

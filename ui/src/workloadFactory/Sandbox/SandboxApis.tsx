@@ -11,7 +11,7 @@ import { useGetSandboxListQuery, useGetSandboxSavingsQuery } from '../../utils/a
 const SandboxApis = () => {
     const dispatch = useAppDispatch();
 
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+    const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
     const { getSandboxList, aggregatedSandboxList, allSandboxList } = useAppSelector(state => state.sandbox);
     const { isRefreshed } = useAppSelector(state => state.inventoryV2);
     const { refreshBlocked } = useAppSelector(state => state?.auth);
@@ -22,12 +22,12 @@ const SandboxApis = () => {
 
     useEffect(() => {
         if (!refreshBlocked) {
-            setCredId(headerSelectedCred?.data?.credentialsId);
-            setRegionId(headerSelectedRegion?.label2);
+            setCredId(headerSelectedCredSandbox?.data?.credentialsId);
+            setRegionId(headerSelectedRegionSandbox?.label2);
             dispatch(setAggregatedSandboxList([]));
             dispatch(setAllSandboxList([]));
         }
-    }, [headerSelectedCred, headerSelectedRegion, isRefreshed, refreshBlocked]);
+    }, [headerSelectedCredSandbox, headerSelectedRegionSandbox, isRefreshed, refreshBlocked]);
 
     const {
         data: sandboxList,
