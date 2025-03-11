@@ -51,11 +51,11 @@ import {
     SQL_SERVICE_STATE,
     UNKNOWN,
     WIN_SQL_EC2_USAGE_OPERATION,
-    DEFAULT_INSTANCE_NAME,
     EBS_ROOT_VOLUME,
     DatabaseTypes,
     AWS_ERROR_CODES,
-    DATABASE_INSTANCE_INDEX_MAPPING
+    DATABASE_INSTANCE_INDEX_MAPPING,
+    DEFAULT_INSTANCE_NAME
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -77,13 +77,7 @@ import {
     getMappedOntapVolumes,
     getStorageDataFromOntap
 } from './aws/fsx-operations';
-import {
-    DatabaseInstance,
-    InstanceDetails,
-    Metadata,
-    ResourceDetails,
-    databaseInstanceMetadata
-} from '../utils/common-types';
+import { DatabaseInstance, InstanceDetails, Metadata, ResourceDetails, UserDatabase } from '../utils/common-types';
 import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
 import {
     getCostAllocationTagEC2Resource,
@@ -94,12 +88,7 @@ import {
     calculateFsxnStorageEfficiencyUsingCloudwatch,
     calculateFsxwStorageEfficiencyUsingCloudwatch
 } from './aws/cloud-watch-operations';
-import {
-    getDatabaseInstanceName,
-    getOriginalDatabaseInstanceName,
-    getResourceNameFromTags,
-    isDemo
-} from '../utils/utils';
+import { getResourceNameFromTags, isDemo } from '../utils/utils';
 import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
@@ -155,6 +144,15 @@ type EstimationEbsType = {
 
 interface BackupType {
     [key: string]: boolean;
+}
+
+interface DatabaseDetails {
+    databaseId: number;
+    databaseName: string;
+    creationDate: string;
+    databaseStatus: string;
+    databaseSize: number;
+    collationName: string;
 }
 
 const isDemoFlow = isDemo();
@@ -1301,7 +1299,10 @@ async function getDatabaseHostSummaryV2(
                                 activeNodeInstanceId!,
                                 region,
                                 runningDatabaseInstances,
-                                fields
+                                databaseHostId,
+                                fields,
+                                resourceDetail,
+                                undefined
                             )
                         );
                     }
@@ -1418,6 +1419,7 @@ async function getDatabaseHostInstanceSummary(
         activeNodeInstanceId,
         region,
         [newDatabaseInstanceDetails],
+        databaseHostId,
         fields,
         resourceDetails,
         standbyNodeInstanceId
@@ -1446,12 +1448,8 @@ async function getDatabasesV2(
     const {
         database_instance_name: savedInstanceName,
         fsxn_ids: fileSystemId,
-        metadata,
-        is_default: isdefaultInstance,
         sqlAuthEnabled
     } = newDatabaseInstanceDetails;
-    const { userDatabase = [] } = metadata as unknown as databaseInstanceMetadata;
-    const instanceName = getDatabaseInstanceName(savedInstanceName, isdefaultInstance);
 
     let fieldsValues: Array<string> = [];
 
@@ -1463,18 +1461,20 @@ async function getDatabasesV2(
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
 
     try {
-        return await getDatabaseDetails(
+        const response = await getDatabaseDetails(
             accountId,
             region,
             credentialsId,
             databaseHostId,
             fileSystemId,
             getProtection,
-            userDatabase,
+            [newDatabaseInstanceDetails],
             activeNodeInstanceId,
-            instanceName,
             sqlAuthEnabled
         );
+        logger.debug('Database list response', response);
+        const databases = response[savedInstanceName] || [];
+        return { count: databases.length, items: databases };
     } catch (error) {
         const errorMessage = `Error while fetching database details for host ${databaseHostId} in account ${accountId} , ${error}`;
         logger.error(errorMessage);
@@ -1543,18 +1543,18 @@ async function getInstanceDetails(
         })
     ]);
 
+    if (isEmpty(resourceDetails) || isEmpty(instanceDetails)) {
+        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceId} for ${accountId} is found.`;
+        logger.warn(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
     // Update the database instance details to include storage type as FSXN
     const databaseInstanceDetails = {
         ...instanceDetails,
         storage_type: STORAGE_TYPE.FSXN,
         isManaged: true
     };
-
-    if (isEmpty(resourceDetails) || isEmpty(databaseInstanceDetails)) {
-        const errorMessage = `No database host by id ${databaseHostId} or instance by instance id ${databaseInstanceDetails?.id} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
-    }
 
     const activeNodeResponse = await getActiveNodeAndInstanceDetails(
         accountId,
@@ -1593,9 +1593,8 @@ async function getDatabaseDetails(
     databaseHostId: string,
     fileSystemId: string,
     getProtection: boolean,
-    userDatabase: any,
+    databaseInstances: DatabaseInstance[],
     activeNodeInstanceId?: string,
-    instanceName?: string,
     sqlAuthEnabled?: boolean
 ) {
     logger.info('Getting database details', {
@@ -1605,30 +1604,29 @@ async function getDatabaseDetails(
         databaseHostId,
         fileSystemId,
         activeNodeInstanceId,
-        instanceName,
         getProtection,
-        sqlAuthEnabled
+        sqlAuthEnabled,
+        databaseInstances
     });
-
-    const serverInstanceName = getOriginalDatabaseInstanceName(instanceName) || DEFAULT_INSTANCE_NAME;
     try {
-        const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = {}, ontapBackup = {} } = {}] =
+        const newinstanceNames = databaseInstances.map(instance => instance.database_instance_name);
+        const [{ databases } = { databases: [] }, backedupDatabases, { awsBackup = [], ontapBackup = [] } = {}] =
             await Promise.all(
                 [
                     getDataBasesSummary(
                         databaseHostId,
                         activeNodeInstanceId!,
-                        instanceName,
                         sqlAuthEnabled,
                         accountId,
-                        credentialsId
+                        credentialsId,
+                        newinstanceNames
                     ),
-                    ...(activeNodeInstanceId && getProtection
+                    ...(getProtection
                         ? [
                               getNativeSQLBackedupDatabases(
                                   databaseHostId,
                                   activeNodeInstanceId,
-                                  [serverInstanceName],
+                                  newinstanceNames,
                                   sqlAuthEnabled,
                                   accountId,
                                   credentialsId
@@ -1643,7 +1641,7 @@ async function getDatabaseDetails(
                                   fileSystemId,
                                   false,
                                   activeNodeInstanceId,
-                                  [serverInstanceName],
+                                  newinstanceNames,
                                   sqlAuthEnabled
                               )
                           ]
@@ -1654,51 +1652,53 @@ async function getDatabaseDetails(
                     })
                 )
             );
-        // protection status added for each database
-        const response = databases?.map(
-            (database: {
-                databaseName: string;
-                databaseSize: number;
-                databaseStatus: string;
-                collationName: string;
-            }) => ({
-                name: database.databaseName,
-                size: database.databaseSize,
-                status: database.databaseStatus,
-                collation: database.collationName ?? '',
-                type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
-                    ? MSSQL_DATABASE_TYPES.SYSTEM
-                    : MSSQL_DATABASE_TYPES.USER,
-                ...(getProtection && {
-                    protection: {
-                        isAwsBackupEnabled: {
-                            fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName)
-                        },
-                        isFsxOntapSnapshotsEnabled: isDemoFlow ? true : checkKey(ontapBackup, database.databaseName),
-                        isSqlNativeEnabled: Boolean(
-                            backedupDatabases?.[serverInstanceName] &&
-                                backedupDatabases[serverInstanceName]?.find(
-                                    (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                                )
-                        )
-                    }
+
+        const response = Object.entries(databases).reduce((acc, [instName, dbs]) => {
+            acc[instName] = (dbs as DatabaseDetails[]).map(
+                (database: DatabaseDetails): UserDatabase => ({
+                    name: database.databaseName,
+                    size: database.databaseSize,
+                    status: database.databaseStatus,
+                    collation: database.collationName ?? '',
+                    type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
+                        ? MSSQL_DATABASE_TYPES.SYSTEM
+                        : MSSQL_DATABASE_TYPES.USER,
+                    ...(getProtection && {
+                        protection: {
+                            isAwsBackupEnabled: {
+                                fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName),
+                                fsxw: false,
+                                ebs: false
+                            },
+                            isFsxOntapSnapshotsEnabled: isDemoFlow
+                                ? true
+                                : checkKey(ontapBackup, database.databaseName),
+                            isSqlNativeEnabled: Boolean(
+                                backedupDatabases?.[instName] &&
+                                    backedupDatabases[instName]?.find(
+                                        (e: { backedupDatabases: string }) =>
+                                            e.backedupDatabases === database.databaseName
+                                    )
+                            )
+                        }
+                    })
                 })
-            })
-        );
+            );
+            return acc;
+        }, {} as Record<string, any[]>);
 
         if (isDemo()) {
-            const demoResponse = [...response, ...userDatabase];
-            return {
-                count: demoResponse.length,
-                nextToken: '',
-                items: demoResponse
-            };
+            const defaultResponse = response[DEFAULT_INSTANCE_NAME];
+            databaseInstances!.forEach((databaseInstance: DatabaseInstance, index) => {
+                const instanceName = newinstanceNames[index];
+                const { metadata } = databaseInstance;
+
+                const { userDatabase = [] } = metadata as unknown as Metadata;
+
+                response[instanceName] = [...defaultResponse, ...userDatabase];
+            });
         }
-        return {
-            count: response.length,
-            nextToken: '',
-            items: response
-        };
+        return response;
     } catch (error: any) {
         const errorMessage = error.message;
         logger.error(errorMessage);
@@ -1726,6 +1726,7 @@ async function getDatabaseInstancesSummary(
     activeNodeInstanceId: string,
     region: string,
     databaseInstances: DatabaseInstance[],
+    databaseHostId: string,
     fields?: string,
     resourceDetails?: ResourceDetails,
     standbyNodeInstanceId?: string
@@ -1735,8 +1736,7 @@ async function getDatabaseInstancesSummary(
     at instance level for database-instances api (resource page)
     */
 ) {
-    logger.info(
-        'Fetching summary of database instance',
+    logger.info('Fetching summary of database instance', {
         accountId,
         credentialsId,
         activeNodeInstanceId,
@@ -1745,14 +1745,19 @@ async function getDatabaseInstancesSummary(
         fields,
         resourceDetails,
         standbyNodeInstanceId
-    );
+    });
 
     let fieldsValues: Array<string> = [];
 
     if (fields) {
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
-
+    const shouldQueryDatabasesWithProtection = fieldsValues?.includes(
+        DatabaseHostsQueryFields.DATABASES_WITH_PROTECTION.toLocaleLowerCase()
+    );
+    const shouldQueryDatabasesWithoutProtection = fieldsValues?.includes(
+        DatabaseHostsQueryFields.DATABASES.toLocaleLowerCase()
+    );
     const shouldQueryServerDetails = fieldsValues?.includes(
         DatabaseHostsQueryFields.SERVER_DETAILS.toLocaleLowerCase()
     );
@@ -1777,17 +1782,27 @@ async function getDatabaseInstancesSummary(
     let databasesCount: any;
     let nodeTopologyData: any;
     let ontapStorageSavings: any;
+    let databases: any;
     const errormessages: { [index: string]: string } = {};
 
     const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
     let isSqlAuthEnabled = false;
-    if (shouldQueryServerDetails || getPerformance || getProtection || getResourceutilization || getDbCount) {
+    if (
+        shouldQueryServerDetails ||
+        getPerformance ||
+        getProtection ||
+        getResourceutilization ||
+        getDbCount ||
+        shouldQueryDatabasesWithProtection ||
+        shouldQueryDatabasesWithoutProtection
+    ) {
         // const instances = await determineSqlAuthEnabled(accountId, credentialsId, activeNodeInstanceId, region, databaseInstances);
         isSqlAuthEnabled = isDemoFlow
             ? isSqlAuthEnabled
             : databaseInstances.some((instance: any) => instance.sqlAuthEnabled);
     }
     const shouldGetStorageSavingsFromOntap = databaseInstances.some(i => i.isManaged && !isDemoFlow);
+    const { co_relation_id: fsxnId } = resourceDetails!;
 
     try {
         [
@@ -1799,7 +1814,8 @@ async function getDatabaseInstancesSummary(
             resourceUtilizationData,
             databasesCount,
             nodeTopologyData,
-            ontapStorageSavings
+            ontapStorageSavings,
+            databases
         ] = await Promise.all(
             [
                 ...(shouldQueryServerDetails
@@ -1838,7 +1854,7 @@ async function getDatabaseInstancesSummary(
                           )
                       ]
                     : [Promise.resolve()]), // Fetch storage savings data
-                ...(getProtection
+                ...(getProtection && !shouldQueryDatabasesWithProtection
                     ? [
                           getProtectionStatus(
                               activeNodeInstanceId,
@@ -1878,6 +1894,21 @@ async function getDatabaseInstancesSummary(
                     : [Promise.resolve()]),
                 ...(getStorageSavings && shouldGetStorageSavingsFromOntap
                     ? [getStorageDataFromOntap(activeNodeInstanceId, databaseInstances, isSqlAuthEnabled)]
+                    : [Promise.resolve()]),
+                ...(shouldQueryDatabasesWithProtection || shouldQueryDatabasesWithoutProtection
+                    ? [
+                          getDatabaseDetails(
+                              accountId,
+                              region,
+                              credentialsId,
+                              databaseHostId!,
+                              fsxnId!,
+                              shouldQueryDatabasesWithProtection,
+                              databaseInstances,
+                              activeNodeInstanceId,
+                              isSqlAuthEnabled
+                          )
+                      ]
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
@@ -1958,6 +1989,59 @@ async function getDatabaseInstancesSummary(
         if (getProtection && protectionData) {
             databaseInstanceDetails.protection = protectionData?.[index];
         }
+        if (shouldQueryDatabasesWithProtection && getProtection && databases?.[instanceName]) {
+            let isSqlNativeEnabled: string | boolean = 'N/A';
+            let isFsxOntapSnapshotsEnabled: string | boolean = 'N/A';
+            const isAwsBackupEnabled: { fsxn: string | boolean } = {
+                fsxn: 'N/A'
+            };
+            let protectedDatabases = 0;
+
+            databases?.[instanceName].forEach(
+                (database: {
+                    protection: {
+                        isSqlNativeEnabled: any;
+                        isFsxOntapSnapshotsEnabled: any;
+                        isAwsBackupEnabled: { fsxn: any };
+                    };
+                }) => {
+                    if (database.protection.isSqlNativeEnabled === true) {
+                        isSqlNativeEnabled = true;
+                        protectedDatabases += 1;
+                    } else if (database.protection.isSqlNativeEnabled === false && isSqlNativeEnabled !== true) {
+                        isSqlNativeEnabled = false;
+                    }
+                    if (database.protection.isFsxOntapSnapshotsEnabled === true) {
+                        isFsxOntapSnapshotsEnabled = true;
+                    } else if (
+                        database.protection.isFsxOntapSnapshotsEnabled === false &&
+                        isFsxOntapSnapshotsEnabled !== true
+                    ) {
+                        isFsxOntapSnapshotsEnabled = false;
+                    }
+                    if (database.protection.isAwsBackupEnabled.fsxn === true) {
+                        isAwsBackupEnabled.fsxn = true;
+                    } else if (
+                        database.protection.isAwsBackupEnabled.fsxn === false &&
+                        isAwsBackupEnabled.fsxn !== true
+                    ) {
+                        isAwsBackupEnabled.fsxn = false;
+                    }
+                }
+            );
+            if (!protectionData) {
+                protectionData = {};
+            }
+            protectionData = {
+                isSqlNativeEnabled,
+                isFsxOntapSnapshotsEnabled,
+                isAwsBackupEnabled,
+                protectedDatabases
+            };
+            logger.info('Protection data', protectionData);
+            databaseInstanceDetails.protection = protectionData;
+        }
+
         if (!isEmpty(errormessages)) {
             databaseInstanceDetails.errors = errormessages;
         }
@@ -1967,6 +2051,12 @@ async function getDatabaseInstancesSummary(
                 ...ontapStorageSavings[instanceName],
                 protocol: databaseInstance.storage_protocol ? databaseInstance.storage_protocol.split(',') : []
             };
+        }
+        if (
+            databases?.[instanceName] &&
+            (shouldQueryDatabasesWithProtection || shouldQueryDatabasesWithoutProtection)
+        ) {
+            databaseInstanceDetails.databases = databases[instanceName];
         }
         return databaseInstanceDetails;
     });
