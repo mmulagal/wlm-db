@@ -72,6 +72,7 @@ export interface TableTopBarProps {
     lazyLoadingText?: string;
     /** Should use Tabs instead of title? */
     TabsProps?: any;
+    subTitle?: string;
 }
 
 export const TableTopBar = ({
@@ -87,7 +88,8 @@ export const TableTopBar = ({
     searchInputProps,
     titleClassName = '',
     LeftComponent,
-    lazyLoadingText = 'Loading'
+    lazyLoadingText = 'Loading',
+    subTitle
 }: TableTopBarProps) => {
     const { organizedRows, updateTextFilter, rows, filterState, resetFilters, selectionState, isLazyLoading } =
         tableProps;
@@ -103,42 +105,47 @@ export const TableTopBar = ({
         <div className={classNames(styles.base, className)}>
             {LeftComponent}
             <Typography variant={'Semibold_16'} isEllipsis={true} className={classNames(styles.title, titleClassName)}>
-                <span>{itemCount === 1 ? singularTitle : pluralTitle}</span>
-                <span>({itemCount === filteredItemCount ? itemCount : filteredItemCount + '/' + itemCount})</span>
-                {info && <TooltipInfo isAppendedToBody={true}>{info}</TooltipInfo>}
-                {showFilterText && (
-                    <span>{`| Filtered by${textFilter ? ' search' : ''}${
-                        textFilter && filterState?.count > 0 ? ' & ' : ''
-                    }${
-                        filterState?.count ? ` ${filterState?.count} parameter${filterState?.count > 1 ? 's' : ''}` : ''
-                    }`}</span>
-                )}
-                {showSelectionText && (
-                    <span>{`| ${
-                        selectionState?.count === itemCount ? 'All selected' : `${selectionState?.count} selected`
-                    }`}</span>
-                )}
-                {showFilterText && (
-                    <Button
-                        variant={'text'}
-                        className={styles['reset-button']}
-                        onClick={() => {
-                            resetFilters();
-                            setInputTextFilter('');
-                        }}
-                    >
-                        Reset filters
-                    </Button>
-                )}
-                {isLazyLoading && (
-                    <div className={styles['lazy-loading-indication']}>
-                        <Typography variant={'Semibold_16'}>|</Typography>
-                        <DsFlashingDotsLoader className={styles['lazy-loading']} />
-                        <Typography variant={'Regular_14'} color={'var(--text-disabled)'}>
-                            {lazyLoadingText}
-                        </Typography>
-                    </div>
-                )}
+                <div className={styles.tableMainTitleContainer}>
+                    <span>{itemCount === 1 ? singularTitle : pluralTitle}</span>
+                    <span>({itemCount === filteredItemCount ? itemCount : filteredItemCount + '/' + itemCount})</span>
+                    {info && <TooltipInfo isAppendedToBody={true}>{info}</TooltipInfo>}
+                    {showFilterText && (
+                        <span>{`| Filtered by${textFilter ? ' search' : ''}${
+                            textFilter && filterState?.count > 0 ? ' & ' : ''
+                        }${
+                            filterState?.count
+                                ? ` ${filterState?.count} parameter${filterState?.count > 1 ? 's' : ''}`
+                                : ''
+                        }`}</span>
+                    )}
+                    {showSelectionText && (
+                        <span>{`| ${
+                            selectionState?.count === itemCount ? 'All selected' : `${selectionState?.count} selected`
+                        }`}</span>
+                    )}
+                    {showFilterText && (
+                        <Button
+                            variant={'text'}
+                            className={styles['reset-button']}
+                            onClick={() => {
+                                resetFilters();
+                                setInputTextFilter('');
+                            }}
+                        >
+                            Reset filters
+                        </Button>
+                    )}
+                    {isLazyLoading && (
+                        <div className={styles['lazy-loading-indication']}>
+                            <Typography variant={'Semibold_16'}>|</Typography>
+                            <DsFlashingDotsLoader className={styles['lazy-loading']} />
+                            <Typography variant={'Regular_14'} color={'var(--text-disabled)'}>
+                                {lazyLoadingText}
+                            </Typography>
+                        </div>
+                    )}
+                </div>
+                {subTitle && <Typography variant="Regular_14">{subTitle}</Typography>}
             </Typography>
             <div className={styles.actions}>
                 {actionsLeft}
