@@ -1899,9 +1899,9 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
     let awsProtection = val?.protection?.isAwsBackupEnabled;
     let protectionText: any = '';
     if (fsxType) {
-        if (awsProtection?.[fsxType] && awsProtection?.[fsxType] !== GENERAL.NOT_AVAILABLE) {
+        if (awsProtection?.[fsxType] && String(awsProtection?.[fsxType])?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
             protectionText = true;
-        } else if (awsProtection?.[fsxType] === GENERAL.NOT_AVAILABLE) {
+        } else if (String(awsProtection?.[fsxType])?.toLowerCase() === GENERAL.NOT_AVAILABLE) {
             protectionText = GENERAL.NOT_AVAILABLE;
         } else if (!awsProtection?.[fsxType]) {
             protectionText = false;
@@ -1910,15 +1910,15 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
         }
     } else {
         if (
-            (awsProtection?.fsxn && awsProtection?.fsxn !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.fsxw && awsProtection?.fsxw !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.ebs && awsProtection?.ebs !== GENERAL.NOT_AVAILABLE)
+            (awsProtection?.fsxn && String(awsProtection?.fsxn)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.fsxw && String(awsProtection?.fsxw)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.ebs && String(awsProtection?.ebs)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = true;
         } else if (
-            awsProtection?.fsxn === GENERAL.NOT_AVAILABLE ||
-            awsProtection?.fsxw === GENERAL.NOT_AVAILABLE ||
-            awsProtection?.ebs === GENERAL.NOT_AVAILABLE
+            String(awsProtection?.fsxn)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(awsProtection?.fsxw)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(awsProtection?.ebs)?.toLowerCase() === GENERAL.NOT_AVAILABLE
         ) {
             protectionText = GENERAL.NOT_AVAILABLE;
         } else if (awsProtection) {
@@ -1949,11 +1949,14 @@ export const getProtectionText = (data: any) => {
 
     if (fsxType === 'ebs' || fsxType === 'fsxw') {
         if (
-            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = PROTECTION_TEXT_STATUS.YES;
-        } else if (awsBackupEnabled === GENERAL.NOT_AVAILABLE || sqlNativeEnabled === GENERAL.NOT_AVAILABLE) {
+        } else if (
+            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
+        ) {
             protectionText = '';
         } else if (data?.protection) {
             protectionText = PROTECTION_TEXT_STATUS.NO;
@@ -1962,15 +1965,15 @@ export const getProtectionText = (data: any) => {
         }
     } else {
         if (
-            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (fsxOntapEnabled && fsxOntapEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (fsxOntapEnabled && String(fsxOntapEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = PROTECTION_TEXT_STATUS.YES;
         } else if (
-            awsBackupEnabled === GENERAL.NOT_AVAILABLE ||
-            fsxOntapEnabled === GENERAL.NOT_AVAILABLE ||
-            sqlNativeEnabled === GENERAL.NOT_AVAILABLE
+            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(fsxOntapEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
         ) {
             protectionText = '';
         } else if (data?.protection) {

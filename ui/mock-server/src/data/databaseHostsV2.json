@@ -145,11 +145,11 @@
                             "protection": {
                                 "isSqlNativeEnabled": false,
                                 "isAwsBackupEnabled": {
-                                    "fsxn": true,
+                                    "fsxn": "N/A",
                                     "fsxw": false,
                                     "ebs": false
                                 },
-                                "isFsxOntapSnapshotsEnabled": true
+                                "isFsxOntapSnapshotsEnabled": "N/A"
                             }
                         },
                         {
