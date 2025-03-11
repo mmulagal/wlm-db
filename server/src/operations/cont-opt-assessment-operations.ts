@@ -1148,7 +1148,12 @@ async function fetchDriftAssessmentPerHost(
                 managedInstance;
 
             try {
-                const instanceFieldsToQuery = [AssessmentCategories.STORAGE, AssessmentCategories.MAXDOP];
+                // For instance level assessments
+                const instanceFieldsToQuery = [
+                    AssessmentCategories.STORAGE,
+                    AssessmentCategories.MAXDOP,
+                    AssessmentCategories.RESILIENCY
+                ];
 
                 const driftAssessment = await fetchDriftAssessment(
                     accountId,
