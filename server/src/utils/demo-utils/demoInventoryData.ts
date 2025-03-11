@@ -75,50 +75,6 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                     }
                 ]
             },
-            // no windows auth
-            {
-                ec2InstanceId: 'i-p9o5n2m4l8k6j7h',
-                ec2InstanceType: 'm5.2xlarge',
-                ec2UsageOperation: 'RunInstances:0006',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-6',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Enterprise Edition (64-bit)',
-                        sqlServerEngineEdition: 3,
-                        sqlServerProductYear: 2017,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5c',
-                        sqlServerState: 'Running',
-                        isDefaultInstance: false,
-                        sqlServerName: 'SQLServer-PreProd-01',
-                        sqlServerVersion: '16.0.4105.2',
-                        databaseCount: 8,
-                        nodeIps: ['10.0.6.118', '10.0.28.145'],
-                        windowsAuthentication: false,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
-                        sqlServerDeploymentType: 'AOAG',
-                        storage: [
-                            {
-                                type: 'EBS',
-                                id: ebsVolId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'SINGLE_AZ_1',
-                                zones: ['availability-zone-3']
-                            }
-                        ]
-                    }
-                ]
-            },
             {
                 ec2InstanceId: 'i-p9o5n2m4l8k6byol',
                 ec2InstanceType: 'm5.2xlarge',
@@ -143,7 +99,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerVersion: '16.0.4105.2',
                         databaseCount: 8,
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
-                        windowsAuthentication: false,
+                        windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
                         sqlServerDeploymentType: 'AOAG',
