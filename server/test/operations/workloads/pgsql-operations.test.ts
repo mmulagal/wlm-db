@@ -1,7 +1,9 @@
 import {
     getPgSqlDatabaseCount,
     getPgSqlDatabaseInstancesDetails,
+    getPgSqlDatabasesList,
     getPgSqlInstanceInfo,
+    getPgSqlPerformaceMetrics,
     getPgSqlStorageSavingsVolumeData
 } from '../../../src/operations/workloads/pgsql/pgsql-operations';
 import { DatabaseInstance, PgSqlInstanceDetails } from '../../../src/utils/common-types';
@@ -154,5 +156,54 @@ describe('PgSql Database Operations', () => {
 
         expect(dbInstanceId).toEqual('7450008296037943418');
         expect(dbClusterState).toEqual('in production');
+    });
+
+    it('should return the list of databases', async () => {
+        const result = await getPgSqlDatabasesList(accountId, credentialsId, region, node1InstanceId);
+
+        expect(result).toEqual([
+            {
+                name: 'postgres',
+                size: 8106467,
+                status: 'ONLINE',
+                collation: 'C.UTF-8',
+                type: 'System Database'
+            },
+            {
+                name: 'template1',
+                size: 7959011,
+                status: 'OFFLINE',
+                collation: 'C.UTF-8',
+                type: 'System Database'
+            },
+            {
+                name: 'template0',
+                size: 7725583,
+                status: 'OFFLINE',
+                collation: 'C.UTF-8',
+                type: 'System Database'
+            }
+        ]);
+    });
+
+    it('should return the performance metrics', async () => {
+        const result = await getPgSqlPerformaceMetrics(accountId, credentialsId, region, node1InstanceId);
+
+        expect(result).toEqual({
+            assessment: 'Excellent ( <=1 ms )',
+            latency: {
+                read: 0,
+                write: 0,
+                serverIo: 0
+            },
+            iops: {
+                read: 0.08,
+                write: 66.59
+            },
+            throughput: {
+                read: 0.001,
+                write: 0.545
+            }
+        });
     });
 });

@@ -2129,5 +2129,61 @@
                 "href": "/api/storage/snapshot-policies?fields=svm,scope"
             }
         }
+    },
+    "getPgsqlDatabasesCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "ffb9a550-bb94-4ab1-bd04-ff98b648c08e",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "86cc75b0-f24b-4d58-9066-16dd5c3fed1d",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT0.4S",
+        "ExecutionEndDateTime": "2024-12-19T08:35:02.031Z",
+        "ExecutionStartDateTime": "2024-12-19T08:35:02.031Z",
+        "InstanceId": "i-0571e829274d756c9",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"name\":\"postgres\",\"size\":8106467,\"type\":\"user\",\"collation\":\"C.UTF-8\",\"status\":\"active\"},{\"name\":\"template1\",\"size\":7959011,\"type\":\"system\",\"collation\":\"C.UTF-8\",\"status\":\"inactive\"},{\"name\":\"template0\",\"size\":7725583,\"type\":\"system\",\"collation\":\"C.UTF-8\",\"status\":\"inactive\"}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "getPgsqlPerformanceMetricsCommandResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "ffb9a550-bb94-4ab1-bd04-ff98b648c08e",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "CloudWatchOutputConfig": {
+            "CloudWatchLogGroupName": "",
+            "CloudWatchOutputEnabled": false
+        },
+        "CommandId": "86cc75b0-f24b-4d58-9066-16dd5c3fed1d",
+        "Comment": "",
+        "DocumentName": "AWS-RunShellScript",
+        "DocumentVersion": "$DEFAULT",
+        "ExecutionElapsedTime": "PT0.4S",
+        "ExecutionEndDateTime": "2024-12-19T08:35:02.031Z",
+        "ExecutionStartDateTime": "2024-12-19T08:35:02.031Z",
+        "InstanceId": "i-0571e829274d756c9",
+        "PluginName": "aws:runShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"READ_IOPS\" : 0.08, \"WRITE_IOPS\" : 66.59, \"READ_THROUGHPUT\" : 0.001, \"WRITE_THROUGHPUT\" : 0.545, \"READ_LATENCY\" : 0.00, \"WRITE_LATENCY\" : 0.00, \"SERVER_IO_LATENCY\" : 0.00, \"assessment\" : \"Excellent ( <=1 ms )\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }
