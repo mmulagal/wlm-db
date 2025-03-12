@@ -6,7 +6,10 @@ import {
     SnapshotPolicyAssesmentDataType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
-import { listDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
+import {
+    createDatabaseInstanceConfigData,
+    listDatabaseInstanceConfigData
+} from '../../lib/database/database-instance-config';
 import {
     AssessmentCategories,
     AssessmentStatus,
@@ -14,10 +17,20 @@ import {
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
-import { DatabaseInstance, databaseInstanceMetadata, StorageAssessment } from '../../utils/common-types';
-import { isDemo } from '../../utils/utils';
+import {
+    DatabaseInstance,
+    databaseInstanceMetadata,
+    StorageAssessment,
+    WorkloadInstance
+} from '../../utils/common-types';
+import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
+import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
+import { describeFSx, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
+import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
+import { callSsmExecution } from '../aws/ssm-operations';
 
+const isDemoFlow = isDemo();
 const logger = getLogger();
 
 async function getResilienceDriftAssessment(
@@ -88,7 +101,7 @@ async function getSnapshotPolicyDriftData(
                 snapshotPolicyAssesmentData.violations.push(volDetails?.name);
             }
         });
-        if (isDemo()) {
+        if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { configsOptimized } =
                 ((instanceDetail as unknown as DatabaseInstance)?.metadata as databaseInstanceMetadata) ?? {};
@@ -108,4 +121,118 @@ async function getSnapshotPolicyDriftData(
     }
 }
 
-export { getResilienceDriftAssessment };
+async function initiateCrossRegionResiliencyAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    jobId: string,
+    instanceRecord: WorkloadInstance,
+    instanceVolumeMapping: MappedOnTapVolumeResponse[]
+) {
+    logger.info('Initiating cross region resiliency assessment for:', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        jobId
+    });
+
+    const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+        credentialsId,
+        region,
+        instanceRecord.fsxFileSystem
+    );
+
+    instanceRecord.svmOntapUuid = svms.find(svm =>
+        isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
+    )?.UUID;
+
+    if (isEmpty(instanceVolumeMapping)) {
+        const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name}.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    const volumeRecords =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i?.volumeRecords)
+            .flat() || [];
+    instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
+    instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
+
+    instanceRecord.mappedLunNames =
+        Object.values(instanceVolumeMapping)
+            ?.map(i => i.lunNames)
+            .flat() || [];
+
+    const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
+    const ssmComment = 'Get Cross Region Replication Assessment';
+
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        command,
+        instanceRecord.activeNodeInstanceid,
+        ssmComment,
+        accountId,
+        false
+    );
+
+    const parsedResponse = response ? sqlResponseParsing(response) : {};
+    const crrDetails = parsedResponse?.crrDetails;
+    const peerFileSystemIds = crrDetails
+        ?.filter((crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId)
+        .map((crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId);
+
+    // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
+    // 1. No two fsx in any region can have same id.
+    // 2. On describe-file-system call with region as source fsx  → If error says "File system 'fs-0e39d51dc9d0468ca' does not exist.", then fsx is deployed in a region different from source fsx
+    // 3. With vpc peering or transit gateway, if describe-file-system call with region as source fsx does not result in an error, extract region from ResourceArn (example:
+    if (!isEmpty(peerFileSystemIds)) {
+        await Promise.all(
+            peerFileSystemIds.map(async (peerFileSystemId: string) => {
+                try {
+                    const fsxInfo = await describeFSx(
+                        credentialsId,
+                        region,
+                        { FileSystemIds: [peerFileSystemId] },
+                        accountId
+                    );
+                    const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
+
+                    crrDetails
+                        .filter(
+                            (crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId === peerFileSystemId
+                        )
+                        .forEach((crrDetail: { isCRREnabled: boolean }) => {
+                            crrDetail.isCRREnabled = !resourceArn?.includes(region);
+                        });
+                } catch (error) {
+                    crrDetails
+                        .filter(
+                            (crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId === peerFileSystemId
+                        )
+                        .forEach((crrDetail: { isCRREnabled: boolean }) => {
+                            crrDetail.isCRREnabled = true;
+                        });
+                }
+            })
+        );
+    }
+    parsedResponse.crrDetails = crrDetails;
+    await createDatabaseInstanceConfigData([
+        {
+            account_id: accountId,
+            credentials_id: credentialsId,
+            region,
+            resource_id: databaseHostId,
+            database_instance_id: instanceRecord.id,
+            creation_time: new Date(Date.now()),
+            config_data_type: AssessmentCategories.CRR,
+            config_data: parsedResponse
+        }
+    ]);
+}
+
+export { getResilienceDriftAssessment, initiateCrossRegionResiliencyAssessment };

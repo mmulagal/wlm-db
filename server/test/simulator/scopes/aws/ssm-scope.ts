@@ -98,6 +98,7 @@ import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
 import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
+import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/workloads/mssql/resiliency-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -569,6 +570,7 @@ const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
+const crrAssessmentDataRegex = /#Get CRR details/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -798,7 +800,11 @@ ssmMock
     .on(SendCommandCommand, params => {
         return getVCPUAndMaxDopDetails.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'));
+    .resolves(getSampleCommandResponse('getVCPUAndMaxDOPDetails'))
+    .on(SendCommandCommand, params => {
+        return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1036,6 +1042,10 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-InstalledSQLVersionCommand'
     })
     .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand'
+    })
+    .resolves(getCommandInvocationResponse.getCRRAssessmentCommandResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-listSnapshotPolicies'
     })
