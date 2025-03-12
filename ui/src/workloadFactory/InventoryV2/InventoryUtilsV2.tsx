@@ -7,6 +7,7 @@ import {
     setInventoryTableData,
     setManagedAssessmentHostIdsList,
     setSelectedHeaderTab,
+    setSelectedRowsForManage,
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -1706,6 +1707,57 @@ export const updateInstanceStatus = (
     return updatedInventoryTableData;
 };
 
+export const updateInstanceBulkStatus = (action: InstanceActions, response: any) => {
+    let updatedState = store.getState();
+    let { inventoryTableData }: any = updatedState?.inventoryV2;
+    const updatedInventoryTableData = { ...inventoryTableData };
+
+    response?.map((hostData: any) => {
+        let successFullInstances: any = [];
+        let failedInstances = [];
+        hostData?.items.map((item: any) => {
+            if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                successFullInstances.push(item);
+            } else {
+                failedInstances.push(item);
+            }
+        });
+        const targettedHostIdVal = inventoryTableData?.[
+            uniqueHostRow(hostData?.resourceId, hostData?.credentialsId, hostData?.region)
+        ]
+            ? hostData?.resourceId
+            : hostData?.ec2InstanceId;
+        const targettedHostId = uniqueHostRow(targettedHostIdVal, hostData?.credentialsId, hostData?.region);
+
+        if (action === 'manage') {
+            updatedInventoryTableData[targettedHostId] = {
+                ...inventoryTableData[targettedHostId],
+                managedInstance:
+                    inventoryTableData[targettedHostId].managedInstance + successFullInstances?.length || 0,
+                action: INVENTORY_ACTIONS.MANAGE,
+                actionDisable:
+                    inventoryTableData[targettedHostId].totalInstance ===
+                        inventoryTableData[targettedHostId].managedInstance + successFullInstances?.length || 0,
+                sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
+                    const instanceInRes = successFullInstances.find(
+                        (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
+                    );
+                    if (instanceInRes?.databaseInstanceName) {
+                        return {
+                            ...instanceItem,
+                            databaseInstanceId: instanceInRes.databaseInstanceGuid,
+                            statusColText: INVENTORY_STATUS.MANAGED
+                        };
+                    }
+                    return instanceItem;
+                })
+            };
+        }
+    });
+
+    return updatedInventoryTableData;
+};
+
 export const detectFieldsValidation = (entryData: any) => {
     const state = store.getState();
     const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = state.inventoryV2;
@@ -2427,6 +2479,91 @@ export const handleManageInstances = (
             } else {
                 handleManageNotification(instances, [], '', isDetected, dispatch, styles);
             }
+        }
+    });
+};
+
+export const handleManageInstancesBulk = (
+    selectedRowsForManage: any,
+    dispatch: any,
+    styles: any,
+    manageBulkInstanceApi: any,
+    prepareHostApi: any,
+    isDetected?: boolean | undefined
+) => {
+    const updatedState = store.getState();
+    const { inProgressInstances } = updatedState.inventoryV2;
+    const { isDemoMode } = updatedState.auth;
+    const inProgressIds = selectedRowsForManage.map((instance: any) =>
+        uniqueHostRow(
+            `${instance?.ec2InstanceId}_${instance?.databaseInstanceName}`,
+            instance?.credentialId,
+            instance?.regionId
+        )
+    );
+    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+    let instancesList = selectedRowsForManage.map((instance: any) => instance?.databaseInstanceName);
+    handleManageTriggerNotification(instancesList, dispatch, styles);
+
+    let payload: any = [];
+    let hostInstanceMapping: any = {};
+    let resourceInstanceMapping: any = {};
+    selectedRowsForManage?.map((rowData: any) => {
+        let uniqueRow = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
+        if (hostInstanceMapping?.[uniqueRow]) {
+            hostInstanceMapping[uniqueRow].push(rowData?.databaseInstanceName);
+        } else {
+            hostInstanceMapping[uniqueRow] = [rowData?.databaseInstanceName];
+        }
+        resourceInstanceMapping[uniqueRow] = rowData?.resourceId;
+    });
+
+    Object.keys(hostInstanceMapping).map((key: any) => {
+        let itemArray: any = key.split('_');
+        let perItem: any = {
+            ec2InstanceId: itemArray[0],
+            credentialId: itemArray[1],
+            region: itemArray[2],
+            databaseInstanceNames: hostInstanceMapping[key]
+        };
+        if (resourceInstanceMapping?.[key] && isDemoMode) {
+            payload.databaseHostId = resourceInstanceMapping[key];
+        }
+        payload.push(perItem);
+    });
+
+    manageBulkInstanceApi({
+        payload
+    }).then((res: any) => {
+        const updatedState = store.getState();
+        const { inProgressInstances } = updatedState?.inventoryV2;
+        let updatedInProgressInstances = new Set([...inProgressInstances]);
+        inProgressIds.map((inProgressId: any) => {
+            updatedInProgressInstances.delete(inProgressId);
+        });
+        dispatch(setInProgressInstances(updatedInProgressInstances));
+        if (res?.data?.items) {
+            let successFullInstances: any = [];
+            let failedInstances: any = [];
+            res?.data?.items.map((resource: any) => {
+                resource?.items.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                    } else {
+                        failedInstances.push(item);
+                    }
+                });
+            });
+            handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+
+            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.items);
+            dispatch(setInventoryTableData(updatedInventoryTableData));
+
+            // ToDO - Write prepare case also
+
+            dispatch(setSelectedRowsForManage([]));
+        } else {
+            dispatch(setSelectedRowsForManage([]));
         }
     });
 };

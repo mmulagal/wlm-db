@@ -47,6 +47,7 @@ import {
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedRowsForManage } from '../store/workloadFactory/inventoryV2Slice';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -1115,6 +1116,21 @@ export const checkBoxHandle = (tableData: any, rowsData: any, dispatch: any) => 
     //@ts-ignore
     tableData.allSelected = false;
     dispatch(setSelectedRowsForOptimize([]));
+};
+
+export const checkBoxHandleManage = (tableData: any, rowsData: any, dispatch: any) => {
+    if (!rowsData || rowsData.length === 0) return;
+
+    rowsData.forEach((row: any) => {
+        //@ts-ignore
+        tableData.rows[row.id] = false;
+    });
+
+    //@ts-ignore
+    tableData.count = 0;
+    //@ts-ignore
+    tableData.allSelected = false;
+    dispatch(setSelectedRowsForManage([]));
 };
 
 // Getting the last 7 days

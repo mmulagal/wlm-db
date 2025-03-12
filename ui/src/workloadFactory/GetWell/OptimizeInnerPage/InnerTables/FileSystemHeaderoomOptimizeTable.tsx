@@ -8,7 +8,7 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -105,7 +105,9 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
                 pluralTitle={`Impacted volumes`}
                 singularTitle={'Impacted volume'}
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />}
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}
