@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './DialogContent.module.scss';
-import { Button, DsTypography } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -111,22 +111,30 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                         <DsTypography variant="Regular_14">Policy schedule:</DsTypography>
                     </div>
 
-                    <div className={styles.rightSide}>
-                        {selectedSnapshot?.data?.schedules.length > 0 &&
-                            selectedSnapshot?.data?.schedules.map((schedule: any, idx: number) => (
-                                <div className={styles.row} key={idx}>
-                                    <div>
-                                        <Bullet />
+                    {loadPolicies ? (
+                        <div className={styles.rightSide}>
+                            <DsFlashingDotsLoader />
+                        </div>
+                    ) : (
+                        <div className={styles.rightSide}>
+                            {selectedSnapshot?.data?.schedules &&
+                                selectedSnapshot?.data?.schedules.length > 0 &&
+                                selectedSnapshot?.data?.schedules.map((schedule: any, idx: number) => (
+                                    <div className={styles.row} key={idx}>
+                                        <div>
+                                            <Bullet />
+                                        </div>
+                                        <DsTypography variant="Regular_14">{formatCronSchedule(schedule)}</DsTypography>
                                     </div>
-                                    <DsTypography variant="Regular_14">{formatCronSchedule(schedule)}</DsTypography>
-                                </div>
-                            ))}
+                                ))}
 
-                        {(selectedSnapshot?.data?.schedules === undefined ||
-                            selectedSnapshot?.data?.schedules.length === 0) && (
-                            <DsTypography variant="Regular_14">Not available</DsTypography>
-                        )}
-                    </div>
+                            {(selectedSnapshot?.data?.schedules === undefined ||
+                                (selectedSnapshot?.data?.schedules &&
+                                    selectedSnapshot?.data?.schedules.length === 0)) && (
+                                <DsTypography variant="Regular_14">Not available</DsTypography>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
