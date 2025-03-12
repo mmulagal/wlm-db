@@ -79,6 +79,37 @@ async function collectVolumeSnapshotCopiesData(
     }
 }
 
+async function collectSnapshotCopyData(
+    accountId: string,
+    credentialsId: string,
+    instanceRecord: WorkloadInstance,
+    volumes: Array<{ Key?: string; Value?: string }> = []
+) {
+    const violatedVols = getVolumesWithoutSnapshotPolicy(volumes);
+    try {
+        if (violatedVols.length) {
+            const res = await collectVolumeSnapshotCopiesData(
+                credentialsId,
+                accountId,
+                instanceRecord,
+                volumes,
+                violatedVols
+            );
+            volumes.forEach((volDetail: Record<string, string>) => {
+                const snapshotTimestamp = new Date(res?.[volDetail?.uuid]).getTime().toString();
+                volDetail[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] = snapshotTimestamp ?? null;
+            });
+        }
+        return volumes;
+    } catch (error) {
+        // this is data collection for additional checks, don't throw error from here
+        logger.error(
+            'Error checking for volume snapshot objects details, using snapshot policy data for assessment',
+            error
+        );
+    }
+}
+
 async function getResilienceDriftAssessment(
     accountId: string,
     credentialsId: string,
@@ -173,4 +204,9 @@ async function getSnapshotPolicyDriftData(
     }
 }
 
-export { getResilienceDriftAssessment, getVolumesWithoutSnapshotPolicy, collectVolumeSnapshotCopiesData };
+export {
+    getResilienceDriftAssessment,
+    collectSnapshotCopyData,
+    collectVolumeSnapshotCopiesData,
+    getVolumesWithoutSnapshotPolicy
+};

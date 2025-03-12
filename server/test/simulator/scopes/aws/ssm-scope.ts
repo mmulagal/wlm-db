@@ -1065,7 +1065,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'getSnapshotCopyDetails',
-            '{"errors":{},"response":{"ad251a8f-da34-11ef-b315-11b9ce95d982":"2025-03-10T10:20:02+00:00","74a8a789-c5dd-11ef-b315-11b9ce95d982":"2025-03-10T10:14:23+00:00","438cc269-edeb-11ef-994b-3b81e03bea3e":"2025-03-10T10:17:03+00:00"}}'
+            JSON.stringify(getCommandInvocationResponse.getSnapshotCopyDetailsResponse)
         )
     )
     .on(GetCommandInvocationCommand, {

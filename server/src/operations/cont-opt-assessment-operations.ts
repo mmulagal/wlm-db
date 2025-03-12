@@ -2,7 +2,6 @@ import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
-import { Record } from '@sinclair/typebox';
 import getLogger from '../utils/logger';
 import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
@@ -33,12 +32,7 @@ import {
     listResources,
     updateResourceMetaData
 } from '../lib/database/db';
-import {
-    AssessmentCategories,
-    AssessmentStatus,
-    AssessmentTriggeredBy,
-    OptimizeStorageConfigs
-} from '../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import {
     ComputeDriftResponseType,
     DriftAssessmentResponseType,
@@ -80,9 +74,8 @@ import {
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
 import {
-    collectVolumeSnapshotCopiesData,
-    getResilienceDriftAssessment,
-    getVolumesWithoutSnapshotPolicy
+    collectSnapshotCopyData,
+    getResilienceDriftAssessment
 } from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
@@ -276,37 +269,6 @@ async function initiateComputeLicenseAssessmentCollection(
         }
     } else {
         logger.error('No active node found for the resource', { accountId, databaseHostId, credentialsId, region });
-    }
-}
-
-async function collectSnapshotCopyData(
-    accountId: string,
-    credentialsId: string,
-    instanceRecord: WorkloadInstance,
-    volumes: Array<{ Key?: string; Value?: string }> = []
-) {
-    const violatedVols = getVolumesWithoutSnapshotPolicy(volumes);
-    try {
-        if (violatedVols.length) {
-            const res = await collectVolumeSnapshotCopiesData(
-                credentialsId,
-                accountId,
-                instanceRecord,
-                volumes,
-                violatedVols
-            );
-            volumes.forEach((volDetail: Record<string, string>) => {
-                const snapshotTimestamp = new Date(res?.[volDetail?.uuid]).getTime().toString();
-                volDetail[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] = snapshotTimestamp ?? null;
-            });
-        }
-        return volumes;
-    } catch (error) {
-        // this is data collection for additional checks, don't throw error from here
-        logger.error(
-            'Error checking for volume snapshot objects details, using snapshot policy data for assessment',
-            error
-        );
     }
 }
 
