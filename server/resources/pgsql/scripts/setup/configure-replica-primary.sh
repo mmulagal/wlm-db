@@ -105,3 +105,6 @@ check_status "Failed to add entry to pg_hba.conf"
 echo "Restarting PostgreSQL to apply pg_hba.conf changes..."
 sudo systemctl restart postgresql
 check_status "Failed to restart PostgreSQL service"
+
+sleep 60
+echo "Primary replica configuration completed successfully"
