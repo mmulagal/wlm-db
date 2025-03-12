@@ -122,7 +122,8 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                                 </div>
                             ))}
 
-                        {selectedSnapshot?.data?.schedules.length === 0 && (
+                        {(selectedSnapshot?.data?.schedules === undefined ||
+                            selectedSnapshot?.data?.schedules.length === 0) && (
                             <DsTypography variant="Regular_14">Not available</DsTypography>
                         )}
                     </div>
