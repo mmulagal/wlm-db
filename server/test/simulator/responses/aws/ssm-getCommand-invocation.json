@@ -2092,41 +2092,88 @@
         "StatusDetails": "Success"
     },
     "snapshotListResponse": {
-        "records": [
-            {
-                "uuid": "9ac36021-b918-11ef-b315-11b9ce95d982",
-                "svm": {
-                    "uuid": "3bb505f5-5781-11ee-bbaa-73441e925a97",
-                    "name": "wlmdb_sqlsvm_1734066557644",
-                    "_links": {
-                        "self": {
-                            "href": "/api/svm/svms/d094063c-b912-11ef-a881-1fbfd81226d0"
+        "errors": {
+            "snapshotSchedules": {},
+            "snapshotPolicies": {}
+        },
+        "response": {
+            "snapshotPolicies": {
+                "records": [
+                    {
+                        "uuid": "9ac36021-b918-11ef-b315-11b9ce95d982",
+                        "svm": {
+                            "uuid": "3bb505f5-5781-11ee-bbaa-73441e925a97",
+                            "name": "wlmdb_sqlsvm_1734066557644",
+                            "_links": {
+                                "self": {
+                                    "href": "/api/svm/svms/d094063c-b912-11ef-a881-1fbfd81226d0"
+                                }
+                            }
+                        },
+                        "name": "daily_weekretention",
+                        "scope": "svm",
+                        "copies": [
+                            {
+                                "count": 7,
+                                "prefix": "daily",
+                                "snapmirror_label": "-",
+                                "retention_period": "PT0S",
+                                "schedule": {
+                                    "name": "daily",
+                                    "uuid": "618997c0-34d3-11ee-9989-a51720c855dc"
+                                }
+                            }
+                        ],
+                        "_links": {
+                            "self": {
+                                "href": "/api/storage/snapshot-policies/9ac36021-b918-11ef-b315-11b9ce95d982"
+                            }
+                        }
+                    },
+                    {
+                        "uuid": "621ba70e-34d3-11ee-9989-a51720c855dc",
+                        "name": "none",
+                        "scope": "cluster",
+                        "_links": {
+                            "self": {
+                                "href": "/api/storage/snapshot-policies/621ba70e-34d3-11ee-9989-a51720c855dc"
+                            }
                         }
                     }
-                },
-                "name": "daily_weekretention",
-                "scope": "svm",
+                ],
+                "num_records": 2,
                 "_links": {
                     "self": {
-                        "href": "/api/storage/snapshot-policies/9ac36021-b918-11ef-b315-11b9ce95d982"
+                        "href": "/api/storage/snapshot-policies?fields=svm,scope,copies"
                     }
                 }
             },
-            {
-                "uuid": "621ba70e-34d3-11ee-9989-a51720c855dc",
-                "name": "none",
-                "scope": "cluster",
+            "snapshotSchedules": {
+                "records": [
+                    {
+                        "uuid": "618997c0-34d3-11ee-9989-a51720c855dc",
+                        "name": "daily",
+                        "cron": {
+                            "minutes": [
+                                10
+                            ],
+                            "hours": [
+                                0
+                            ]
+                        },
+                        "_links": {
+                            "self": {
+                                "href": "/api/cluster/schedules/618997c0-34d3-11ee-9989-a51720c855dc"
+                            }
+                        }
+                    }
+                ],
+                "num_records": 1,
                 "_links": {
                     "self": {
-                        "href": "/api/storage/snapshot-policies/621ba70e-34d3-11ee-9989-a51720c855dc"
+                        "href": "/api/cluster/schedules?fields=uuid,interval,cron"
                     }
                 }
-            }
-        ],
-        "num_records": 8,
-        "_links": {
-            "self": {
-                "href": "/api/storage/snapshot-policies?fields=svm,scope"
             }
         }
     }
