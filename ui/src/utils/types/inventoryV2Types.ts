@@ -42,7 +42,6 @@ export interface InventorySliceData {
     unManagedPerfInstanceIdsList: Array<string>;
     managedHostInstanceLoading: boolean;
     selectedHeaderTab: string;
-    managedHostInitialColumns: any;
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
     managedAssessmentHostData: any;
@@ -51,6 +50,7 @@ export interface InventorySliceData {
     potentialSavingsHostData: {
         [key: string]: any;
     };
+    selectedRowsForManage: Array<any>;
 }
 
 export interface InventoryTableData {

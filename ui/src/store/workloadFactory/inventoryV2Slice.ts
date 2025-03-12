@@ -41,7 +41,6 @@ const initialInventoryV2State: InventorySliceData = {
     unManagedPerfInstanceIdsList: [],
     managedHostInstanceLoading: false,
     selectedHeaderTab: WLF_TABS.DASHBOARD,
-    managedHostInitialColumns: initialColStateManagedHosts,
     isRefreshed: false,
     optimizeFilterTags: [],
     defaultFilterOptions: {},
@@ -60,7 +59,8 @@ const initialInventoryV2State: InventorySliceData = {
         flag: false,
         value: '',
         filterType: ''
-    }
+    },
+    selectedRowsForManage: []
 };
 
 const inventoryV2Slice = createSlice({
@@ -172,9 +172,6 @@ const inventoryV2Slice = createSlice({
         setManagedHostInstanceLoading: (state, action: PayloadAction<any>) => {
             state.managedHostInstanceLoading = action.payload;
         },
-        setManagedHostColState: (state, action: PayloadAction<any>) => {
-            state.managedHostInitialColumns = action.payload;
-        },
         setSelectedHeaderTab: (state, action: PayloadAction<any>) => {
             state.selectedHeaderTab = action.payload;
         },
@@ -198,6 +195,9 @@ const inventoryV2Slice = createSlice({
         },
         setSelectedOptimizeConfig: (state, action: PayloadAction<any>) => {
             state.selectedOptimizeConfig = action.payload;
+        },
+        setSelectedRowsForManage: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForManage = action.payload;
         },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = true;
@@ -261,7 +261,6 @@ export const {
     setUnManagedPerfInstanceIdsList,
     setManagedHostInstanceLoading,
     setSelectedHeaderTab,
-    setManagedHostColState,
     setIsRefreshed,
     setBreadCrumbSelectedFrom,
     setManagedAssessmentHostIdsList,
@@ -269,7 +268,8 @@ export const {
     addAllMssqlHostAssessmentData,
     setAllMssqlHostAssessmentLoading,
     setPotentialSavingsHostData,
-    resetPerComboData
+    resetPerComboData,
+    setSelectedRowsForManage
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
