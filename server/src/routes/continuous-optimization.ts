@@ -42,7 +42,6 @@ import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
-import { OptimizeResiliencyBodyType } from './types/continuous-optimization.types';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -315,9 +314,9 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             { schema: OptimizeResilienceSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId }
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    body: { requestBody }
                 } = castRequest(request);
-                const requestBody: OptimizeResiliencyBodyType = request.body;
                 const response = await handleResiliecyOptimize(
                     accountId,
                     credentialsId,
