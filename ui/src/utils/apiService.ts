@@ -582,9 +582,9 @@ export const inventoryApi = createApi({
             getManagedHostData: builder.query({
                 query: ({ credentialId, regionId, nextToken = null }) => {
                     if (nextToken) {
-                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts?nextToken=${nextToken}`;
+                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=MSSQL,PGSQL&nextToken=${nextToken}`;
                     } else {
-                        return `v1/mssql/credentials/${credentialId}/regions/${regionId}/resources/managed-hosts`;
+                        return `v1/managed-hosts?credentialsIds=${credentialId}&regions=${regionId}&databaseTypes=MSSQL,PGSQL`;
                     }
                 },
                 transformResponse: (response: any, meta, args) => {
@@ -695,15 +695,15 @@ export const inventoryApiV2 = createApi({
                 query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                     if (isDemoMode) {
                         if (nextToken) {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&nextToken=${nextToken}`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databases&nextToken=${nextToken}`;
                         } else {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databases`;
                         }
                     } else {
                         if (nextToken) {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2&nextToken=${nextToken}`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databases&pageSize=2&nextToken=${nextToken}`;
                         } else {
-                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databasesWithProtection&pageSize=2`;
+                            return `v1/pgsql/credentials/${credentialId}/regions/${regionId}/database-hosts?fields=databaseInstanceTopology,dbCount,performance,storage,protection,usageEstimation,databases&pageSize=2`;
                         }
                     }
                 },

@@ -20,7 +20,7 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
+import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND } from '../../utils/consts';
 import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 
@@ -228,9 +228,9 @@ async function getDeployments(
 async function getResources(
     accountId: string,
     resourceId?: string,
-    credentialsId?: string,
-    region?: string,
-    resourceType?: string,
+    credentialsId?: string | string[],
+    region?: string | string[],
+    resourceType?: string | string[],
     pageSize: number = 200,
     nextToken?: string
 ): Promise<{ count: number; items: Array<ResourceDetails>; nextToken?: string }> {
@@ -243,6 +243,8 @@ async function getResources(
         pageSize,
         nextToken
     });
+
+    resourceType = resourceType || [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
 
     try {
         const recordsPromise = listResources(
