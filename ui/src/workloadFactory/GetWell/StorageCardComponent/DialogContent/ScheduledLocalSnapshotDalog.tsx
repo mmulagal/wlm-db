@@ -10,6 +10,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedSnapshot, setSelectedSnapshotPolicy } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { formatCronSchedule } from './cronUtils';
 
 const ScheduledLocalSnapshotDalog = ({ type }: any) => {
     const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
@@ -111,26 +112,19 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                     </div>
 
                     <div className={styles.rightSide}>
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">Every hour, keep the last 6 copies</DsTypography>
-                        </div>
+                        {selectedSnapshot?.data?.schedules.length > 0 &&
+                            selectedSnapshot?.data?.schedules.map((schedule: any, idx: number) => (
+                                <div className={styles.row} key={idx}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">{formatCronSchedule(schedule)}</DsTypography>
+                                </div>
+                            ))}
 
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">Once a day, keep the last 2 copies</DsTypography>
-                        </div>
-
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">Once a week, keep the last 1 copy</DsTypography>
-                        </div>
+                        {selectedSnapshot?.data?.schedules.length === 0 && (
+                            <DsTypography variant="Regular_14">Not available</DsTypography>
+                        )}
                     </div>
                 </div>
             </div>
