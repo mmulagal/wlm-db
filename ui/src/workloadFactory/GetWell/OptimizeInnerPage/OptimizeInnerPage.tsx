@@ -68,7 +68,8 @@ const OptimizeInnerPage = () => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === GENERAL.CRR
         ) {
             return (
                 <Popover
@@ -410,6 +411,8 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
+            case GENERAL.CRR:
+                return <div>Table here</div>;
         }
     };
 
