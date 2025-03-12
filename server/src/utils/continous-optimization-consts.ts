@@ -9,7 +9,8 @@ enum AssessmentCategories {
     RSS_CONFIG = 'rss-config',
     MAXDOP = 'maxdop',
     MSSQL_PATCH = 'mssql-patch',
-    RESILIENCY = 'resiliency'
+    RESILIENCY = 'resiliency',
+    CRR = 'crr'
 }
 
 enum AssessmentTriggeredBy {
