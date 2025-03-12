@@ -161,11 +161,6 @@ async function initiateCrossRegionResiliencyAssessment(
     instanceRecord.mappedVolumesUuids = volumeRecords.map(volume => volume.uuid as string);
     instanceRecord.mappedVolumeNames = volumeRecords.map(volume => volume.name as string);
 
-    instanceRecord.mappedLunNames =
-        Object.values(instanceVolumeMapping)
-            ?.map(i => i.lunNames)
-            .flat() || [];
-
     const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
     const ssmComment = 'Get Cross Region Replication Assessment';
 
