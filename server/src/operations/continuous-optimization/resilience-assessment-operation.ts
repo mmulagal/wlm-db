@@ -174,8 +174,8 @@ async function initiateCrossRegionResiliencyAssessment(
         false
     );
 
-    const parsedResponse = response ? sqlResponseParsing(response) : {};
-    const crrDetails = parsedResponse?.crrDetails;
+    const { crrDetails, errorMessage } = response ? sqlResponseParsing(response) : { crrDetails: [], errorMessage: '' };
+
     const peerFileSystemIds = crrDetails
         ?.filter((crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId)
         .map((crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId);
@@ -183,7 +183,7 @@ async function initiateCrossRegionResiliencyAssessment(
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.
     // 2. On describe-file-system call with region as source fsx  → If error says "File system 'fs-0e39d51dc9d0468ca' does not exist.", then fsx is deployed in a region different from source fsx
-    // 3. With vpc peering or transit gateway, if describe-file-system call with region as source fsx does not result in an error, extract region from ResourceArn (example:
+    // 3. With vpc peering or transit gateway, if describe-file-system call with region as source fsx does not result in an error, extract region from ResourceArn (example:ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-00e6530a84ccd0a01")
     if (!isEmpty(peerFileSystemIds)) {
         await Promise.all(
             peerFileSystemIds.map(async (peerFileSystemId: string) => {
@@ -196,26 +196,22 @@ async function initiateCrossRegionResiliencyAssessment(
                     );
                     const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
 
-                    crrDetails
-                        .filter(
-                            (crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId === peerFileSystemId
-                        )
-                        .forEach((crrDetail: { isCRREnabled: boolean }) => {
+                    crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
+                        if (crrDetail.peerClusterFsxId === peerFileSystemId) {
                             crrDetail.isCRREnabled = !resourceArn?.includes(region);
-                        });
-                } catch (error) {
-                    crrDetails
-                        .filter(
-                            (crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId === peerFileSystemId
-                        )
-                        .forEach((crrDetail: { isCRREnabled: boolean }) => {
+                        }
+                    });
+                } catch (error: any) {
+                    if (error?.Code && error.Code === 'FileSystemNotFound') {
+                        crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
                             crrDetail.isCRREnabled = true;
                         });
+                    }
                 }
             })
         );
     }
-    parsedResponse.crrDetails = crrDetails;
+
     await createDatabaseInstanceConfigData([
         {
             account_id: accountId,
@@ -225,7 +221,7 @@ async function initiateCrossRegionResiliencyAssessment(
             database_instance_id: instanceRecord.id,
             creation_time: new Date(Date.now()),
             config_data_type: AssessmentCategories.CRR,
-            config_data: parsedResponse
+            config_data: { crrDetails, errorMessage }
         }
     ]);
 }

@@ -136,8 +136,8 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
                     $object["isCRREnabled"] = $false
                 } else {
                     $SVMName = $vserverPeerDetail.svmname
-                    $PeerFsxClusterName = $vserverPeerDetail.peerClusterName
-                    $PeerFsxClusterAWSId = 'fs-' + ($PeerFsxClusterName -split "FsxId" )[-1]
+                    $PeerFsxClusterName = $VserverPeerDetail.peerClusterName
+                    $PeerClusterFsxId = 'fs-' + ($PeerFsxClusterName -split "FsxId" )[-1]
                     $SVMVolumeName = $SVMName + ':' + $volume
                     $SnapMDestinationDetail = $SnapMirrorDestinationDetails | Where-Object { $_.sourcePath -eq $SVMVolumeName }
                     if([string]::IsNullOrEmpty($SnapMDestinationDetail)) {
@@ -149,7 +149,7 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
                         $object["destinationPath"] = $SnapMDestinationDetail.destinationVserverUuid
                         $object["destinationVolumeName"] = $SnapMDestinationDetail.destinationPath
                         $object["peerClusterName"] = $PeerFsxClusterName
-                        $object["peerClusterAWSId"] = $PeerFsxClusterAWSId
+                        $object["peerClusterFsxId"] = $PeerClusterFsxId
                     }
                 }
             }
