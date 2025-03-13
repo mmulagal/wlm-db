@@ -35,6 +35,7 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
+import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
 
 const OptimizeInnerPage = () => {
@@ -412,9 +413,16 @@ const OptimizeInnerPage = () => {
                     />
                 );
             case GENERAL.CRR:
-                return <div>Table here</div>;
-        }
-    };
+                return (
+                    <CRROptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            }
+        };
 
     const setHeading = () => {
         if (selectedOptimizeConfig?.type === 'Data files') {
