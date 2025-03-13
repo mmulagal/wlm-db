@@ -12,12 +12,16 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { formatCronSchedule } from './cronUtils';
 
-const ScheduledLocalSnapshotDalog = ({ type }: any) => {
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+const ScheduledLocalSnapshotDalog = ({ type, data }: any) => {
     const dispatch = useDispatch();
-    const { selectedResourceId, selectedDatabaseInstance, selectedSnapshot, selectedSnapshotPolicy } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedSnapshot,
+        selectedSnapshotPolicy,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const [getSnapshotPolicies] = useLazyGetSnapshotPoliciesQuery();
     const [loadPolicies, setLoadPolicies] = useState(false);
 
@@ -25,10 +29,10 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
         async function getPolicies() {
             setLoadPolicies(true);
             const response = await getSnapshotPolicies({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
-                databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance
+                credentialId: selectedGwInstanceCredId || data?.credentialId,
+                region: selectedGwInstanceRegionId || data?.regionId,
+                databaseHostId: selectedResourceId || data?.databaseHostId,
+                instanceId: selectedDatabaseInstance || data?.instanceId
             });
             dispatch(setSelectedSnapshotPolicy(response?.data?.snapshotPolicies));
             setLoadPolicies(false);
