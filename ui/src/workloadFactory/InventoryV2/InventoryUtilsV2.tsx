@@ -2245,11 +2245,11 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
     );
 };
 
-export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+export const installModuleNotification = (styles: any, dispatch: any, initialMsg: any, hostname?: string) => {
     const prepareHostMsg = (
         <div className={styles.notification}>
             {initialMsg[0]}
-            <span className={styles.bold}>{hostname}</span>
+            {hostname && <span className={styles.bold}>{hostname}</span>}
             {initialMsg[1]}
             {
                 <>
@@ -2438,9 +2438,9 @@ export const handleManageInstances = (
                                         : GENERAL.PREPARE_INSTANCES_INFO;
                                 installModuleNotification(
                                     styles,
-                                    instances.length === 1 ? instances[0] : '',
                                     dispatch,
-                                    msgObj
+                                    msgObj,
+                                    instances.length === 1 ? instances[0] : ''
                                 );
                             } else {
                                 handleManageNotification(instances, [], '', isDetected, dispatch, styles);
@@ -2464,9 +2464,9 @@ export const handleManageInstances = (
                                         : GENERAL.PREPARE_INSTANCES_INFO;
                                 installModuleNotification(
                                     styles,
-                                    instances.length === 1 ? instances[0] : '',
                                     dispatch,
-                                    msgObj
+                                    msgObj,
+                                    instances.length === 1 ? instances[0] : ''
                                 );
                             } else {
                                 handleManageNotification(instances, [], '', isDetected, dispatch, styles);
@@ -2554,16 +2554,79 @@ export const handleManageInstancesBulk = (
                     }
                 });
             });
-            handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            if (successFullInstances?.length) {
+                handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            }
 
             const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.items);
             dispatch(setInventoryTableData(updatedInventoryTableData));
 
             // ToDO - Write prepare case also
+            let triggeredPrepare = handleBulkPrepareCall(res?.data?.items, dispatch, styles, prepareHostApi);
+            if (triggeredPrepare) {
+                const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
+                installModuleNotification(styles, dispatch, msgObj);
+            } else if (!successFullInstances?.length) {
+                handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            }
 
             dispatch(setSelectedRowsForManage([]));
         } else {
             dispatch(setSelectedRowsForManage([]));
         }
     });
+};
+
+export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any, prepareHostApi: any) => {
+    let triggeredPrepare = false;
+    response?.map((resource: any) => {
+        let prepareApiRequired = false;
+        let sourceNodePrepareRequired = false;
+        let partnerNodeEc2Id;
+        resource?.items.map((item: any) => {
+            if (item?.status !== NOTIFICATION_TYPES.SUCCESS) {
+                // handle prepare API
+                const errorList = item?.errorMessage?.split('\n');
+                errorList.map((errorItem: any) => {
+                    if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                        prepareApiRequired = true;
+                        if (errorItem.includes(PARTNER_NODE)) {
+                            partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                        } else {
+                            sourceNodePrepareRequired = true;
+                        }
+                    }
+                });
+            }
+        });
+
+        if (prepareApiRequired) {
+            if (sourceNodePrepareRequired) {
+                triggeredPrepare = true;
+                prepareHostApi({
+                    credentialId: resource?.credentialsId,
+                    regionId: resource?.region,
+                    instanceId: resource?.ec2InstanceId
+                }).then((prepareRes: any) => {
+                    if (prepareRes && !prepareRes?.error) {
+                        triggeredPrepare = true;
+                    }
+                });
+            }
+            if (partnerNodeEc2Id) {
+                triggeredPrepare = true;
+                prepareHostApi({
+                    credentialId: resource?.credentialsId,
+                    regionId: resource?.region,
+                    instanceId: partnerNodeEc2Id
+                }).then((prepareRes: any) => {
+                    if (prepareRes && !prepareRes?.error) {
+                        triggeredPrepare = true;
+                    }
+                });
+            }
+        }
+    });
+
+    return triggeredPrepare;
 };

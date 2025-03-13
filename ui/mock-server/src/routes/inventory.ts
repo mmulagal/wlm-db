@@ -49,6 +49,7 @@ router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/man
 });
 
 router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
+
     setTimeout(() => {
         generateResponse(res, 200, {items: [
             {
@@ -91,8 +92,8 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
                     {
                         databaseInstanceName: 'MSSQLSERVER',
                         databaseInstanceGuid: '3',
-                        status: 'success',
-                        errorMessage: ''
+                        status: 'failed',
+                        errorMessage: '/prepare API'
                     }
                 ]
             }

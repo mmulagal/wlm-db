@@ -852,6 +852,12 @@ export const GENERAL = {
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
+    PREPARE_BULK_INSTANCES_INFO: [
+        'Few instances ',
+        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
     PREPARE_HOST_INFO_TAB3: [
         'Host ',
         ' is now an unmanaged host. It failed to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
