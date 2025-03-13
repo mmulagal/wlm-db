@@ -778,7 +778,7 @@ export const inventoryApiV2 = createApi({
                 })
             }),
             manageBulkMssqlInstance: builder.mutation({
-                query: ({ credentialsId, regionId, payload }) => ({
+                query: ({ payload }) => ({
                     url: `v1/mssql/manage`,
                     method: 'POST',
                     body: payload

@@ -859,7 +859,7 @@ const InstancesTable = () => {
                 }
             };
         });
-    }, [data]);
+    }, [data, selectedRowsForManage]);
 
     const tableProps = useTable({
         isSorting: false,
@@ -1127,39 +1127,6 @@ const InstancesTable = () => {
     });
 
     useEffect(() => {
-        let count = 0;
-
-        for (const key in tableProps.columnsState) {
-            if (
-                tableProps.columnsState[key].hasOwnProperty('isHidden') &&
-                tableProps.columnsState[key].isHidden === false
-            ) {
-                count++;
-            }
-        }
-        if (count > 7) {
-            setTableHorizontalScroll(true);
-        } else {
-            setTableHorizontalScroll(false);
-        }
-    }, [tableProps.columnsState]);
-
-    useEffect(() => {
-        if (isRefreshed) {
-            tableProps?.pagination?.gotoPage(0);
-        }
-    }, [isRefreshed]);
-
-    useEffect(() => {
-        if (resetPage) {
-            if ((data || []).length % pageSize === 1) {
-                tableProps.pagination?.gotoPage(0);
-            }
-        }
-        setResetPage(false);
-    }, [resetPage]);
-
-    useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
         disptach(setSelectedRowsForManage(rowsData));
 
@@ -1169,6 +1136,7 @@ const InstancesTable = () => {
     }, [tableProps.selectionState, inProgressInstances]);
 
     const handleBulkOperation = () => {
+        checkBoxHandleManage(tableProps.selectionState, selectedRowsForManage, disptach);
         handleManageInstancesBulk(
             selectedRowsForManage,
             dispatch,
@@ -1184,11 +1152,7 @@ const InstancesTable = () => {
             <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={
-                        tableHorizontalScroll
-                            ? `${styles.table} ${styles.tableScroll}`
-                            : `${styles.table} ${styles.tableScrollRevert}`
-                    }
+                    className={styles.table}
                 >
                     <TableTopBar
                         //@ts-ignore
