@@ -113,7 +113,9 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
 
                     {loadPolicies ? (
                         <div className={styles.rightSide}>
-                            <DsFlashingDotsLoader />
+                            <div style={{ position: 'relative', top: '8px' }}>
+                                <DsFlashingDotsLoader />
+                            </div>
                         </div>
                     ) : (
                         <div className={styles.rightSide}>
