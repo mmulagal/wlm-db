@@ -9,7 +9,7 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
     const tableData = useMemo(() => {
         let id = 0;
         return data?.objectsInViolation?.map((row: any) => ({
-            databaseName: row,
+            volumeName: row,
             id: String(id++),
             cellProps: { ...row.cellProps, isDisabled: true }
         }));
@@ -17,7 +17,7 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
     const TableColDefs: ColumnProps[] = [
         {
             Header: 'Volume name',
-            accessor: 'databaseName',
+            accessor: 'volumeName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
