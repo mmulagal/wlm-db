@@ -6,10 +6,6 @@ FROM (
     SELECT
         d.datname AS name,
         pg_database_size(d.datname) AS size,
-        CASE
-            WHEN d.datistemplate THEN 'system'
-            ELSE 'user'
-        END AS type,
         d.datcollate AS collation,
         CASE
             WHEN EXISTS (SELECT 1 FROM pg_stat_activity WHERE datname = d.datname) THEN 'active'

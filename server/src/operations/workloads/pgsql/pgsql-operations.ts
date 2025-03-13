@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash-es';
 import { generateHash, sqlResponseParsing } from '../../../utils/utils';
 import { executeBashSsmCommand } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -18,7 +18,7 @@ import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../.
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
 import { getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
-import getDatabaseInstanceTopology from '../utilities/sql-utils';
+import getDatabaseInstanceTopology from '../../../utils/sql-utils';
 
 const logger = getLogger();
 
@@ -32,11 +32,12 @@ async function getPgSqlInstanceInfo(
 ) {
     logger.info('Fetching pg sql instance info', { accountId, nodeIds, instanceName, fsxDataVolumeName });
     const commands = [getPgsqlInstanceData(fsxDataVolumeName)];
+    const comment = 'pgsql instance info';
     let response;
     try {
         for (const nodeId of nodeIds) {
             logger.info('Fetching PGSQL instance GUID', nodeId);
-            response = await executeBashSsmCommand(credentialsId, region, commands, nodeId, accountId);
+            response = await executeBashSsmCommand(credentialsId, region, commands, nodeId, accountId, comment);
             if (response) {
                 return response;
             }
@@ -67,7 +68,15 @@ async function getPgSqlDatabaseCount(
 
     try {
         const command = DATABASES_COUNT;
-        const response = await executeBashSsmCommand(credentialsId, region, [command], node1InstanceId, accountId);
+        const comment = 'pgsql databases count';
+        const response = await executeBashSsmCommand(
+            credentialsId,
+            region,
+            [command],
+            node1InstanceId,
+            accountId,
+            comment
+        );
         if (response) {
             return response;
         }
@@ -98,7 +107,8 @@ async function getPgSqlStorageSavingsVolumeData(
         const endpoint =
             'storage/volumes?fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used';
         const commands = getPgSqlStorageSavings(fsxNId, region, endpoint);
-        response = await executeBashSsmCommand(credentialsId, region, [commands], node1InstanceId);
+        const comment = 'pgsql storage savings';
+        response = await executeBashSsmCommand(credentialsId, region, [commands], node1InstanceId, accountId, comment);
         const {
             records: [volSavingsData]
         } = JSON.parse(response!) || {};
@@ -303,16 +313,37 @@ async function getPgSqlDatabasesList(
 
     try {
         const command = LIST_DATABASES;
-        const response = await executeBashSsmCommand(credentialsId, region, [command], node1InstanceId, accountId);
+        const comment = 'pgsql database list';
+        const response = await executeBashSsmCommand(
+            credentialsId,
+            region,
+            [command],
+            node1InstanceId,
+            accountId,
+            comment
+        );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
+            if (!isArray(parsedResponse)) {
+                throw createError('Error parsing pgsql database list', parsedResponse);
+            }
             const databases = parsedResponse.map(
-                (database: { name: string; size: number; status: string; collation: string }) => ({
-                    name: database.name,
-                    size: database.size,
-                    status: database.status.toLowerCase() === 'active' ? ONLINE : OFFLINE,
-                    collation: database.collation ?? '',
-                    type: PGSQL_SYSTEM_DATABASES.includes(database?.name?.toLowerCase())
+                ({
+                    name,
+                    size,
+                    status,
+                    collation = ''
+                }: {
+                    name: string;
+                    size: number;
+                    status: string;
+                    collation: string;
+                }) => ({
+                    name,
+                    size,
+                    status: status.toLowerCase() === 'active' ? ONLINE : OFFLINE,
+                    collation,
+                    type: PGSQL_SYSTEM_DATABASES.includes(name?.toLowerCase())
                         ? MSSQL_DATABASE_TYPES.SYSTEM
                         : MSSQL_DATABASE_TYPES.USER
                 })
@@ -338,28 +369,46 @@ async function getPgSqlPerformaceMetrics(
 
     try {
         const command = PERFORMANCE_METRICS;
-        const response = await executeBashSsmCommand(credentialsId, region, [command], node1InstanceId, accountId);
+        const comment = 'pgsql performance metrics';
+        const response = await executeBashSsmCommand(
+            credentialsId,
+            region,
+            [command],
+            node1InstanceId,
+            accountId,
+            comment
+        );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
 
             if (parsedResponse && !(typeof parsedResponse === 'string' && parsedResponse?.includes('error'))) {
-                const performanceResponse = {
-                    assessment: parsedResponse.assessment,
+                const {
+                    assessment,
+                    READ_LATENCY: read,
+                    WRITE_LATENCY: write,
+                    SERVER_IO_LATENCY: serverIo,
+                    READ_IOPS: readIops,
+                    WRITE_IOPS: writeIops,
+                    READ_THROUGHPUT: readThroughput,
+                    WRITE_THROUGHPUT: writeThroughput
+                } = parsedResponse;
+                return {
+                    assessment,
                     latency: {
-                        read: parsedResponse.READ_LATENCY,
-                        write: parsedResponse.WRITE_LATENCY,
-                        serverIo: parsedResponse.SERVER_IO_LATENCY
+                        read,
+                        write,
+                        serverIo
                     },
-                    iops: { read: parsedResponse.READ_IOPS, write: parsedResponse.WRITE_IOPS },
+                    iops: { read: readIops, write: writeIops },
                     throughput: {
-                        read: parsedResponse.READ_THROUGHPUT,
-                        write: parsedResponse.WRITE_THROUGHPUT
+                        read: readThroughput,
+                        write: writeThroughput
                     }
                 };
-                return performanceResponse;
             }
+            logger.error(`Error fetching pgsql performance metricies from nodes: ${node1InstanceId}, ${response}`);
         }
-        const errorMessage = `Error fetching pgsql performance metricies from nodes: ${node1InstanceId}`;
+        const errorMessage = `Error fetching pgsql performance metricies from nodes: ${node1InstanceId}, ${response}`;
         throw createError(errorMessage);
     } catch (err) {
         const errorMessage = `Error fetching pgsql performance metricies: ${err}, ${credentialsId}, ${region}`;

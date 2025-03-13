@@ -260,9 +260,9 @@ async function executeBashSsmCommand(
     commands: Array<string>,
     activeNodeInstanceId: string,
     accountId?: string,
+    comment?: string,
     cacheData: boolean = true,
-    executionTimeout?: string,
-    comment?: string
+    executionTimeout?: string
 ) {
     logger.info('Calling SSM bash command execution', credentialsId, region, commands, activeNodeInstanceId);
     const cacheHashKey = generateHash(activeNodeInstanceId + commands);

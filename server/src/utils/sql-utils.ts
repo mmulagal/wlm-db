@@ -1,9 +1,9 @@
 import { STORAGE_TYPE } from '@prisma/client';
-import { describeSubnets } from '../../../lib/aws/ec2';
-import { describeFSx } from '../../../lib/aws/fsx';
-import { FileSystemTypes, NOT_AVAILABLE } from '../../../utils/consts';
-import getLogger from '../../../utils/logger';
-import { DatabaseInstance } from '../../../utils/common-types';
+import { describeSubnets } from '../lib/aws/ec2';
+import { describeFSx } from '../lib/aws/fsx';
+import { FileSystemTypes, NOT_AVAILABLE } from './consts';
+import getLogger from './logger';
+import { DatabaseInstance } from './common-types';
 
 const logger = getLogger();
 

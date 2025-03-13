@@ -54,7 +54,7 @@ import {
     AWS_ERROR_CODES,
     MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
     DEFAULT_INSTANCE_NAME,
-    PGSQL_SYSTEM_DATABASES
+    MSSQL_SYSTEM_DATABASES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -92,7 +92,7 @@ import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
-import getDatabaseInstanceTopology from './workloads/utilities/sql-utils';
+import getDatabaseInstanceTopology from '../utils/sql-utils';
 
 const logger = getLogger();
 
@@ -1559,7 +1559,7 @@ async function getDatabaseDetails(
                     size: database.databaseSize,
                     status: database.databaseStatus,
                     collation: database.collationName ?? '',
-                    type: PGSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
+                    type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
                         ? MSSQL_DATABASE_TYPES.SYSTEM
                         : MSSQL_DATABASE_TYPES.USER,
                     ...(getProtection && {
