@@ -59,6 +59,9 @@ describe('List snapshot policies om svm and cluster level', () => {
             'f4b7c5d3-e1f6-4g2a-9b5d'
         );
         expect(res.snapshotPolicies?.length).toBeGreaterThanOrEqual(1);
+        expect(res.snapshotPolicies?.[0].uuid).toBeDefined();
+        expect(res.snapshotPolicies?.[0].name).toBeDefined();
+        expect(res.snapshotPolicies?.[0].schedules).toBeDefined();
     });
 });
 
