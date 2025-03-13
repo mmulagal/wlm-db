@@ -128,7 +128,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "12",
@@ -187,7 +252,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "13",
@@ -246,7 +376,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "14",
@@ -305,7 +500,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 }
             ]
         },
@@ -436,7 +696,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "22",
@@ -495,7 +820,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "23",
@@ -554,7 +944,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "24",
@@ -613,7 +1068,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 }
             ]
         },
@@ -744,7 +1264,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "32",
@@ -803,7 +1388,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "33",
@@ -862,7 +1512,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "34",
@@ -921,7 +1636,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 }
             ]
         },
@@ -1052,7 +1832,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "42",
@@ -1111,7 +1956,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "43",
@@ -1170,7 +2080,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "44",
@@ -1229,7 +2204,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 }
             ]
         },
@@ -1335,7 +2375,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "52",
@@ -1394,7 +2499,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "53",
@@ -1453,7 +2623,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "54",
@@ -1512,7 +2747,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 }
             ]
         },
@@ -1641,7 +2941,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "62",
@@ -1700,7 +3065,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "63",
@@ -1759,7 +3189,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "64",
@@ -1818,7 +3313,72 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS"
+                        }
+                    ]
                 }
             ]
         }

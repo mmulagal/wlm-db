@@ -135,6 +135,8 @@ const initialState: WorkloadFactoryResourceEntities = {
     selectedResourceId: '',
     selectedDatabaseInstance: '',
     selectedDatabaseInstanceName: '',
+    selectedResourceCredId: '',
+    selectedResourceRegionId: '',
     selectedHostname: '',
     isResourceRefresh: false
 };
@@ -168,11 +170,24 @@ const workloadFactoryResourceSlice = createSlice({
         setSelectedDatabaseInstanceName: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstanceName = action.payload;
         },
+        setSelectedResourceCredId: (state, action: PayloadAction<any>) => {
+            state.selectedResourceCredId = action.payload;
+        },
+        setSelectedResourceRegionId: (state, action: PayloadAction<any>) => {
+            state.selectedResourceRegionId = action.payload;
+        },
         setSelectedHostname: (state, action: PayloadAction<any>) => {
             state.selectedHostname = action.payload;
         },
         setIsResourceRefresh: (state, action: PayloadAction<any>) => {
             state.isResourceRefresh = action.payload;
+        },
+        setSelectedResourcePageHostData: (state, action: PayloadAction<any>) => {
+            state.selectedResourceId = action.payload.resourceId;
+            state.selectedDatabaseInstance = action.payload.databaseInstanceId;
+            state.selectedDatabaseInstanceName = action.payload.databaseInstanceName;
+            state.selectedResourceCredId = action.payload.credentialId;
+            state.selectedResourceRegionId = action.payload.regionId;
         }
     }
 });
@@ -186,7 +201,10 @@ export const {
     setSelectedResourceId,
     setSelectedDatabaseInstance,
     setSelectedDatabaseInstanceName,
+    setSelectedResourceCredId,
+    setSelectedResourceRegionId,
     setSelectedHostname,
-    setIsResourceRefresh
+    setIsResourceRefresh,
+    setSelectedResourcePageHostData
 } = workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

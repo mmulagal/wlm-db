@@ -13,11 +13,13 @@ import {
 
 const DatabaseHostOverviewApiV2 = () => {
     const dispatch = useDispatch();
-    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
-    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
-    const { selectedResourceId, selectedDatabaseInstance, isResourceRefresh } = useAppSelector(
-        state => state.workloadFactoryResource
-    );
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        isResourceRefresh,
+        selectedResourceCredId,
+        selectedResourceRegionId
+    } = useAppSelector(state => state.workloadFactoryResource);
 
     const [resourceDetailsApi] = useLazyGetResourceDetailsV2Query();
     const [databaseListApi] = useLazyGetDatabaseListV2Query();
@@ -36,8 +38,8 @@ const DatabaseHostOverviewApiV2 = () => {
     const runResourceDetailsApi = async () => {
         try {
             const result: any = await resourceDetailsApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
+                credentialId: selectedResourceCredId,
+                region: selectedResourceRegionId,
                 id: selectedResourceId,
                 sqlInstanceId: selectedDatabaseInstance
             });
@@ -62,8 +64,8 @@ const DatabaseHostOverviewApiV2 = () => {
     const runDatabaseDetailsApi = async () => {
         try {
             const result: any = await databaseListApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
+                credentialId: selectedResourceCredId,
+                region: selectedResourceRegionId,
                 id: selectedResourceId,
                 sqlInstanceId: selectedDatabaseInstance,
                 fields: true

@@ -7,8 +7,8 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import BulkActionContainer from '../../../Dashboard/DashboardInnerPage/RenderTables/BulkActionContainer';
 import { GENERAL } from '../../../../utils/appConstants';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -88,7 +88,7 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
                     </div>
                 }
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

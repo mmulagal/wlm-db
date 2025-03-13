@@ -54,7 +54,8 @@ enum OptimizeStorageConfigs {
     TIERING_MINIMUM_COOLING_DAYS = 'tiering-min-cooling-days',
     TIERING_POLICY = 'tiering-policy',
     SPACE_RESERVATION = 'space-reservation-enabled',
-    SPACE_ALLOCATION = 'space-allocation-allocated'
+    SPACE_ALLOCATION = 'space-allocation-allocated',
+    MOST_RECENT_SNAPSHOT_TIMESTAMP = 'most-recent-snapshot-timestamp'
 }
 
 enum OptimizeStorageConfigsJobNames {

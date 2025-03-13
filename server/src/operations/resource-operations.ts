@@ -6,7 +6,6 @@ import {
     DBCREATE_RELATIVE_PATH,
     DEMO_AWS_ACCOUNT_ID,
     HttpErrorCodes,
-    RESOURCESTYPE,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
 } from '../utils/consts';
 import { listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
@@ -67,37 +66,54 @@ async function getFileSystemsCredentialsStatus(accountId: string, fsxids: string
 
 async function getManagedResources(
     accountId: string,
-    credentialsId: string,
-    region: string,
+    credentialsIds?: string,
+    regions?: string,
+    databaseTypes?: string,
     pageSize?: number,
     clientNextToken?: string
 ): Promise<ManageResourcesResponseType> {
-    logger.info('Fetching managed resources for account', {
+    logger.info('Fetching managed resources for multiple parameters', {
         accountId,
-        credentialsId,
-        region,
+        credentialsIds,
+        regions,
+        databaseTypes,
         pageSize,
         clientNextToken
     });
 
+    const credentialIdsList = credentialsIds?.split(',');
+    const regionsList = regions?.split(',');
+    const databaseTypesList = databaseTypes?.split(',');
+
     const { items, nextToken, count } = await getResources(
         accountId,
         undefined,
-        credentialsId,
-        region,
-        RESOURCESTYPE.MSSQL,
+        credentialIdsList,
+        regionsList,
+        databaseTypesList,
         pageSize,
         clientNextToken
     );
 
     return {
-        items: items.map(({ resource_id: resourceId, metadata }) => ({
-            resourceId,
-            instances: compact([
-                (metadata as unknown as Metadata)?.node1InstanceId,
-                (metadata as unknown as Metadata)?.node2InstanceId
-            ])
-        })),
+        items: items.map(
+            ({
+                resource_id: resourceId,
+                credentials_id: credentialId,
+                region,
+                resource_type: databaseType,
+                metadata
+            }) => ({
+                resourceId,
+                instances: compact([
+                    (metadata as unknown as Metadata)?.node1InstanceId,
+                    (metadata as unknown as Metadata)?.node2InstanceId
+                ]),
+                credentialId,
+                region: region || '',
+                databaseType
+            })
+        ),
         count,
         nextToken
     };

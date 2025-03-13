@@ -6,7 +6,9 @@ import {
     AvailableSnapshotPoliciesResponseType,
     BulkOptimizeSnapshotPolicyRequestBody,
     OptimizeResiliencyBodyType,
-    SnapshotPolicyType
+    SnapshotPolicyDetailsType,
+    SnapshotPolicyType,
+    SnapshotScheduleType
 } from '../../routes/types/continuous-optimization.types';
 import {
     BulkOptimizeSnapshotPolicyParamsType,
@@ -140,15 +142,12 @@ async function getAvailableSnapshotPolicyList(
             return svm?.StorageVirtualMachineId === (svmRecord as Record<string, string>)[fsxId];
         });
         if (!svmIdAssignedToInstance) {
-            throw createError(
-                HttpErrorCodes.NOT_FOUND,
-                `No SVM found for the given host ${databaseHostId} and instance ${databaseInstanceId}`
-            );
+            throw Error(`No SVM found for the given host ${databaseHostId} and instance ${databaseInstanceId}`);
         }
 
         const command = [GET_CLUSTER_SNAPSHOT_POLICIES(fsxId, region)];
         const ssmComment = 'Get available snapshot policies';
-        const ssmResponse = await callSsmExecution(
+        const rawResponse = await callSsmExecution(
             credentialsId,
             region,
             command,
@@ -157,23 +156,48 @@ async function getAvailableSnapshotPolicyList(
             accountId,
             true
         );
-        const { records, error } = sqlResponseParsing(ssmResponse) || {};
-        logger.info('Parsed SSM response', records);
-
-        if (!isEmpty(error)) {
-            logger.error('Error executing SSM command while getting snaphot policy list', error);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, error);
+        const {
+            response: { snapshotSchedules, snapshotPolicies },
+            errors: { snapshotSchedules: snapshotSchedulesError, snapshotPolicies: snapshotPoliciesError }
+        } = sqlResponseParsing(rawResponse) || {};
+        if (!isEmpty(snapshotSchedulesError) || !isEmpty(snapshotPoliciesError)) {
+            const errMsg = 'Error executing SSM command while getting snapshot policy list';
+            logger.error(errMsg, { snapshotPoliciesError, snapshotSchedulesError });
+            throw Error(errMsg);
         }
 
-        response.snapshotPolicies = records
+        const eligiblePolicies = snapshotPolicies?.records
             ?.filter(
                 (record: { scope: string; svm: { uuid: string | undefined } }) =>
                     record.scope === 'cluster' || record.svm.uuid === svmIdAssignedToInstance?.UUID
             )
-            .map(({ name, uuid }: SnapshotPolicyType) => ({ name, uuid }));
+            .map((record: { name: string; uuid: string; copies: any }) => record);
+        const eligibleSchedules = snapshotSchedules?.records?.reduce((mp: any, record: Record<string, string>) => {
+            mp[record.uuid] = record;
+            return mp;
+        }, {});
+
+        eligiblePolicies?.forEach((policy: { name: string; uuid: string; copies: any }) => {
+            const policyObj: SnapshotPolicyDetailsType = {
+                uuid: policy?.uuid,
+                name: policy?.name,
+                schedules: []
+            };
+            policy?.copies?.forEach((copyDetails: any) => {
+                const scheduleDetails = eligibleSchedules?.[copyDetails?.schedule?.uuid];
+                const scheduleObj: SnapshotScheduleType = {
+                    uuid: scheduleDetails?.uuid,
+                    name: scheduleDetails?.name,
+                    cron: scheduleDetails?.cron,
+                    retention: copyDetails?.retention_period
+                };
+                policyObj.schedules?.push(scheduleObj);
+            });
+            response.snapshotPolicies?.push(policyObj);
+        });
     } catch (error) {
-        logger.error('Error getting available snapshot policy list', JSON.stringify(error));
-        response.errorMessage = JSON.stringify(error);
+        logger.error('Error getting available snapshot policy list', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, error as Error);
     }
     return response;
 }

@@ -18,6 +18,8 @@ export const initialCreateNewUserState: any = {
     dbHostName: '',
     instanceId: '',
     instanceName: '',
+    cdbCredId: '',
+    cdbRegionId: '',
     isExistingDataDrive: false,
     isExistingLogDrive: false,
     isDataSizeValid: true,
@@ -85,6 +87,12 @@ const createNewUserSlice = createSlice({
         setInstanceName: (state, action: PayloadAction<any>) => {
             state.instanceName = action.payload;
         },
+        setCdbCredId: (state, action: PayloadAction<any>) => {
+            state.cdbCredId = action.payload;
+        },
+        setCdbRegionId: (state, action: PayloadAction<any>) => {
+            state.cdbRegionId = action.payload;
+        },
         setIsExistingDataDrive: (state, action: PayloadAction<any>) => {
             state.isExistingDataDrive = action.payload;
         },
@@ -105,6 +113,13 @@ const createNewUserSlice = createSlice({
         },
         setIsLogVirtualMountPoint: (state, action: PayloadAction<any>) => {
             state.isLogVirtualMountPoint = action.payload;
+        },
+        setCdbPageData: (state, action: PayloadAction<any>) => {
+            state.dbHostName = action.payload.dbHostName;
+            state.instanceId = action.payload.instanceId;
+            state.instanceName = action.payload.instanceName;
+            state.cdbCredId = action.payload.cdbCredId;
+            state.cdbRegionId = action.payload.cdbRegionId;
         }
     }
 });
@@ -127,6 +142,8 @@ export const {
     setDBHostName,
     setInstanceId,
     setInstanceName,
+    setCdbCredId,
+    setCdbRegionId,
     setIsExistingDataDrive,
     setIsExistingLogDrive,
     setIsDataSizeValid,
@@ -134,7 +151,8 @@ export const {
     setSelectedCollation,
     addInitialDBCreateData,
     setIsDataVirtualMountPoint,
-    setIsLogVirtualMountPoint
+    setIsLogVirtualMountPoint,
+    setCdbPageData
 } = createNewUserSlice.actions;
 
 export default createNewUserSlice;

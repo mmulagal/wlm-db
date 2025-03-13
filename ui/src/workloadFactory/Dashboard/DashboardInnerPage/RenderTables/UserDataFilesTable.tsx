@@ -10,13 +10,13 @@ import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHom
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -36,6 +36,8 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                     const isStorageTierOptimized = isOptimized(userDataFilesObj?.status);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
@@ -137,7 +139,9 @@ const UserDataFilesTable = ({ lastColDetails, handleBulkAction }: any) => {
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

@@ -20,6 +20,9 @@ const FileSystemsCredentialsStatusResponse = Type.Object({
 });
 
 const ManageResourcesQueryString = Type.Object({
+    credentialsIds: Type.Optional(Type.String()),
+    regions: Type.Optional(Type.String()),
+    databaseTypes: Type.Optional(Type.String()),
     nextToken: Type.Optional(Type.String()),
     pageSize: Type.Optional(Type.Number())
 });
@@ -29,7 +32,10 @@ const ManageResourcesResponse = Type.Object({
     items: Type.Array(
         Type.Object({
             instances: Type.Array(Type.String()),
-            resourceId: Type.String()
+            resourceId: Type.String(),
+            credentialId: Type.String(),
+            region: Type.String(),
+            databaseType: Type.String()
         })
     ),
     nextToken: Type.Optional(Type.String())

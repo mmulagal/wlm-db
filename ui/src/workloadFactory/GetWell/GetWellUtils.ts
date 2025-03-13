@@ -667,6 +667,42 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.'
         },
         tags: ['Reliability']
+    },
+    crr: {
+        id: 'crr',
+        category: 'application',
+        block_one: {
+            type: GENERAL.RESILIENCY,
+            value: GENERAL.CRR
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Snapshot policy',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Cross-Region Replication (CRR) assessment recommendation',
+            description:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
+        },
+        tags: ['Reliability']
     }
 };
 
@@ -900,6 +936,61 @@ export const formatSnapshotPolicyCardConfig = (
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations
+        }
+    };
+    return cardsData;
+};
+
+export const formatCRRCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.resiliency?.crr;
+    let categoryVal = 'resiliency';
+    let itemName = item?.name || 'crr';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
+                }
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal,
+            recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
+            violations: item?.violations,
+            objectsInViolation: item?.objectsInViolation
         }
     };
     return cardsData;
@@ -1558,6 +1649,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatSnapshotPolicyCardConfig(data, optimizingData, cardsData);
 
+    cardsData = formatCRRCardConfig(data, optimizingData, cardsData);
+
     cardsData = {
         ...cardsData,
         ['ontap_configuration']: {
@@ -1761,7 +1854,8 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
         microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
         maxdop: { category: 'Application', subCategory: 'Application_sub' },
-        scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' }
+        scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
+        crr: { category: 'Resiliency', subCategory: 'Protection' }
     };
 
     Object.keys(cardData).map((key: any) => {
