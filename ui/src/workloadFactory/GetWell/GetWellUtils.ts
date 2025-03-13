@@ -989,7 +989,8 @@ export const formatCRRCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            violations: item?.violations
+            violations: item?.violations,
+            objectsInViolation: item?.objectsInViolation
         }
     };
     return cardsData;
