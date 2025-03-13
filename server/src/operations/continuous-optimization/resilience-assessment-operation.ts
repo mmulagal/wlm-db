@@ -22,7 +22,7 @@ import {
 } from '../../utils/common-types';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
-import { GET_VOLUME_SNAPSHOT_COPIES } from '../workloads/mssql/continuous-optimization-scripts';
+import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
 
 const logger = getLogger();
@@ -56,7 +56,7 @@ async function collectVolumeSnapshotCopiesData(
             .filter((vol: Record<string, string>) => violations?.includes(vol?.name))
             .map((vol: Record<string, string>) => vol?.uuid);
 
-        const command = [GET_VOLUME_SNAPSHOT_COPIES(volumesToCheck, fsxId, region)];
+        const command = [GET_LATEST_SNAPSHOT_TIME(volumesToCheck, fsxId, region)];
         const ssmComment = 'Get snapshot copy details for volumes';
         const rawResponse = await callSsmExecution(
             credentialsId,

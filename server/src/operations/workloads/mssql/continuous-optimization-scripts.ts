@@ -1135,7 +1135,7 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     ${restGetUtilForOntap(fsxId, region, '/storage/snapshot-policies', '', 'fields=svm,scope')}
 `;
 
-const GET_VOLUME_SNAPSHOT_COPIES = (volumeUuids: string[], fsxId: string, region: string) => `
+const GET_LATEST_SNAPSHOT_TIME = (volumeUuids: string[], fsxId: string, region: string) => `
     # Get list of creation dates for latest snapshot copies of each volume
     Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
     ${JSON_CHECK};
@@ -1169,7 +1169,9 @@ const GET_VOLUME_SNAPSHOT_COPIES = (volumeUuids: string[], fsxId: string, region
         Stop-Transcript | Out-Null
         return (Deflate-String $response)
     } catch {
-
+        Write-Information "Error occurred while fetching snapshot copy details: $_.Exception.Message"
+        Stop-Transcript | Out-Null
+        return $_.Exception.Message
     }
 `;
 
@@ -1295,5 +1297,5 @@ export {
     GET_CLUSTER_SNAPSHOT_POLICIES,
     SET_VOLUME_SNAPSHOT_POLICY,
     SET_MAXDOP,
-    GET_VOLUME_SNAPSHOT_COPIES
+    GET_LATEST_SNAPSHOT_TIME
 };
