@@ -33,7 +33,7 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
             dispatch(setSelectedSnapshotPolicy(response?.data?.snapshotPolicies));
             setLoadPolicies(false);
         }
-        if (selectedSnapshotPolicy === null || selectedSnapshotPolicy.length === 0) {
+        if (selectedSnapshotPolicy === null || (selectedSnapshotPolicy && selectedSnapshotPolicy.length === 0)) {
             getPolicies();
         }
     }, [selectedSnapshotPolicy]);
