@@ -1168,6 +1168,46 @@ const GET_CLUSTER_SNAPSHOT_POLICIES = (fsxId: string, region: string) => `
     return (Deflate-String $response)
 `;
 
+const GET_LATEST_SNAPSHOT_TIME = (volumeUuids: string[], fsxId: string, region: string) => `
+    # Get list of creation dates for latest snapshot copies of each volume
+    Start-Transcript -Path ${RESILIENCY_OPTIMIZE_LOG_PATH} -Append | Out-Null
+    ${JSON_CHECK};
+    $response = @{}
+    $response['errors'] = @{}
+    $response['response'] = @{}
+    $volumes = @(${volumeUuids.map(uuid => `'${uuid}'`).join(', ')})
+    $FSxID = '${fsxId}'
+    $FSxRegion = '${region}'
+    $apiEndpoint = '/storage/volumes/'
+    $apiQueryFilter = "order_by=create_time desc&max_records=1"
+    $apiQueryFields = "fields=create_time"
+    ${ontapRestRequest}
+    try {
+        Write-Information "Getting snapshot copy details for volumes: $volumes"
+        foreach($volume in $volumes) {
+            try {
+                Write-Information "Getting snapshot copy details for volume: $volume"
+                $rawRes = Invoke-ONTAPRequest -ApiEndpoint ($apiEndpoint + $volume + '/snapshots') -ApiQueryFilter $apiQueryFilter -ApiQueryFields $apiQueryFields
+                $response.response[$volume] = $rawRes.records.create_time
+            } catch {
+                $response.errors[$volume] = $_.Exception.Message
+                Write-Information "Error occurred while fetching snapshot copy details for volume: $volume. Error: $_.Exception.Message"
+            }
+        }
+        $response = $response | ConvertTo-Json
+        if([string]::IsNullOrEmpty($response)) {
+            throw "Failed to compress the response because the response is either null or empty. $response"
+        }
+        ${compressResponse}
+        Stop-Transcript | Out-Null
+        return (Deflate-String $response)
+    } catch {
+        Write-Information "Error occurred while fetching snapshot copy details: $_.Exception.Message"
+        Stop-Transcript | Out-Null
+        return $_.Exception.Message
+    }
+`;
+
 /**
  * @returns the UUID of the ONTAP job created for setting the snapshot policy;
  * Expected response structure:
@@ -1210,7 +1250,7 @@ const SET_VOLUME_SNAPSHOT_POLICY = (params: BulkOptimizeSnapshotPolicyParamsType
     $res = $res | ConvertTo-Json
 
     if([string]::IsNullOrEmpty($res)) {
-        throw "Failed to compress the response because the response is either null or empty. $response"
+        throw "Failed to compress the response because the response is either null or empty. $res"
     }
     ${compressResponse}
     Stop-Transcript | Out-Null
@@ -1289,5 +1329,6 @@ export {
     GET_INSTALLED_MSSQL_VERSION,
     GET_CLUSTER_SNAPSHOT_POLICIES,
     SET_VOLUME_SNAPSHOT_POLICY,
-    SET_MAXDOP
+    SET_MAXDOP,
+    GET_LATEST_SNAPSHOT_TIME
 };
