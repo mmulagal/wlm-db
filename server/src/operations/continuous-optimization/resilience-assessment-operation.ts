@@ -177,13 +177,14 @@ async function initiateCrossRegionResiliencyAssessment(
     const { crrDetails, errorMessage } = response ? sqlResponseParsing(response) : { crrDetails: [], errorMessage: '' };
 
     const peerFileSystemIds = crrDetails
-        ?.filter((crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId)
-        .map((crrDetail: { peerClusterAWSId: string }) => crrDetail.peerClusterAWSId);
+        ?.filter((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId)
+        .map((crrDetail: { peerClusterFsxId: string }) => crrDetail.peerClusterFsxId);
 
     // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
     // 1. No two fsx in any region can have same id.
     // 2. On describe-file-system call with region as source fsx  → If error says "File system 'fs-0e39d51dc9d0468ca' does not exist.", then fsx is deployed in a region different from source fsx
     // 3. With vpc peering or transit gateway, if describe-file-system call with region as source fsx does not result in an error, extract region from ResourceArn (example:ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-00e6530a84ccd0a01")
+
     if (!isEmpty(peerFileSystemIds)) {
         await Promise.all(
             peerFileSystemIds.map(async (peerFileSystemId: string) => {
