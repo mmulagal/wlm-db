@@ -135,7 +135,7 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
                     $object["isSnapMirrored"] = $false
                     $object["isCRREnabled"] = $false
                 } else {
-                    $SVMName = $vserverPeerDetail.svmname
+                    $SVMName = $VserverPeerDetail.svmname
                     $PeerFsxClusterName = $VserverPeerDetail.peerClusterName
                     $PeerClusterFsxId = 'fs-' + ($PeerFsxClusterName -split "FsxId" )[-1]
                     $SVMVolumeName = $SVMName + ':' + $volume
