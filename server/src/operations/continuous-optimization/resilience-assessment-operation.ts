@@ -299,7 +299,9 @@ async function initiateCrossRegionResiliencyAssessment(
                 } catch (error: any) {
                     if (error?.name && error.name === 'FileSystemNotFound') {
                         crrDetails.forEach((crrDetail: { peerClusterFsxId: string; isCRREnabled: boolean }) => {
-                            crrDetail.isCRREnabled = true;
+                            if (crrDetail.peerClusterFsxId === peerFileSystemId) {
+                                crrDetail.isCRREnabled = true;
+                            }
                         });
                     }
                 }
