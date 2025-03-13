@@ -77,9 +77,10 @@ const GetWell = () => {
         gwTimestamp,
         isAssessmentAvailable,
         selectedResourceId,
-        selectedDatabaseInstance
+        selectedDatabaseInstance,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
     } = useAppSelector(state => state.getWellOptimize);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -94,7 +95,7 @@ const GetWell = () => {
 
     useEffect(() => {
         handleFilterClearAll();
-    },[]);
+    }, []);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         let updatedFilters = [...optimizeFilterTags];
@@ -148,8 +149,8 @@ const GetWell = () => {
     const handleTriggerAssessment = () => {
         setTriggerAssessmentInProgress(true);
         triggerAssessmentApi({
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            regionId: headerSelectedRegion?.label2,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance
         }).then((res: any) => {
@@ -2019,7 +2020,7 @@ const GetWell = () => {
                     )}
 
                     {/* Section six */}
-                    {filteredCardData?.scheduled_local_snapshot && (
+                    {(filteredCardData?.scheduled_local_snapshot || filteredCardData?.crr) && (
                         <div className={styles.sectionClass}>
                             <div className={styles['header-buttons']} style={{ marginTop: '40px' }}>
                                 <DsTypography
@@ -2095,6 +2096,67 @@ const GetWell = () => {
                                                 <RecommendationText
                                                     data={filteredCardData?.scheduled_local_snapshot?.recommendation}
                                                 />
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {filteredCardData?.crr && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.crr}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.CRR}
+                                        />
+                                        <DsAccordion
+                                            id="18"
+                                            variant="Default"
+                                            isDisabled={loading || !cardData?.crr?.block_two?.value}
+                                            isExpanded={isAccordionExpanded('18', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('18', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('18')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.crr?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading || !cardData?.crr?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading || !cardData?.crr?.block_two?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText data={filteredCardData?.crr?.recommendation} />
                                             }
                                         />
                                     </div>

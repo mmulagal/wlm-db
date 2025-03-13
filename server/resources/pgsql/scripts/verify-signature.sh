@@ -33,15 +33,22 @@ instanceID=$(curl -s -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.2
 
 logfilename=/var/log/netapp_wf/$(basename "$FilePath").log
 
+verification_success=true
+error_handler() {
+    echo "An error occurred during signature verification."
+    verification_success=false
+}
+
+trap 'error_handler' ERR
 # Verify signature
 openssl dgst -sha256 -verify "$PubFilePath" -signature "$SignatureFilePath" "$FilePath" > "$logfilename" 2>&1
+trap - ERR
 
-# Check if verified or not
-if grep -q "Verified OK" "$logfilename"; then
+if [ "$verification_success" = true ]; then
     echo "Signature verified successfully."
 else
-    echo "Signature verification failed."
-     if [ "$IsTerraform" != "true" ]; then
+    echo "Signature verification failed. Entering alternative flow..."
+    if [ "$IsTerraform" != "true" ]; then
         cfn-signal --exit-code 1 --stack "$Stackname" --resource "$ResourceID" --reason "Verifying the signature of compressed files failed" --id "$instanceID"
     fi
     exit 1

@@ -562,6 +562,7 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     storage: Type.Optional(StoragePerStorageTypeResponse),
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
     sqlServerDeploymentType: Type.Optional(Type.String()),
+    databases: Type.Optional(Type.Array(DatabasesResponse)),
     errors: Type.Optional(Type.Any())
 });
 type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanceSummaryResponse>;

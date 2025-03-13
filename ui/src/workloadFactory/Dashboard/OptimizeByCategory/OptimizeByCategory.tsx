@@ -10,14 +10,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { useMemo } from 'react';
 import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { getAssessmentHostListGroupedByCategory } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwResourceId,
-    setLandingFrom
-} from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setGwPageLoadInstanceData, setLandingFrom } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection, setSelectedAssessmentRow } from '../../../store/workloadFactory/databaseHomeSlice';
 import { sortListOfDict } from '../../../utils/utilityFunctions';
@@ -27,7 +20,6 @@ import store from '../../../store/store';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import CategoryDialogComponent from '../ManagedInstanceOptimizationBreakdownByCategory/CategoryDialogComponent/CategoryDialogComponent';
-import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 
 const OptimizeByCategory = () => {
     const dispatch = useDispatch();
@@ -44,13 +36,18 @@ const OptimizeByCategory = () => {
 
         const updatedState = store.getState();
         const { selectedAssessmentRow }: any = updatedState.databaseHome;
-
-        dispatch(setGwHostname(selectedAssessmentRow?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(selectedAssessmentRow?.databaseHostId));
-        dispatch(setGwDatabaseInstance(selectedAssessmentRow?.instanceId));
-        dispatch(setGwDatabaseInstanceName(selectedAssessmentRow?.databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(selectedAssessmentRow?.sqlServerDeploymentType));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: selectedAssessmentRow?.hostName,
+                resourceId: selectedAssessmentRow?.databaseHostId,
+                instanceId: selectedAssessmentRow?.instanceId,
+                instanceName: selectedAssessmentRow?.databaseInstanceName,
+                credId: selectedAssessmentRow?.credentialId,
+                regionId: selectedAssessmentRow?.regionId,
+                storageType: selectedAssessmentRow?.sqlServerDeploymentType
+            })
+        );
         setTimeout(() => {
             dispatch(setSelectedAssessmentRow(null));
         }, 5);

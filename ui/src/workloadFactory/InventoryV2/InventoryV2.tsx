@@ -1,12 +1,14 @@
 import styles from './Inventory.module.scss';
-import InventoryHeaderSection from './InventoryHeaderSection/InventoryHeaderSection';
-import InventoryTable from './InventoryTable/InventoryTable';
+import InventoryCards from './InventoryCards/InventoryCards';
+import InventoryTab from './InventoryTab/InventoryTab';
+import InventoryTablesComponent from './InventoryTablesComponent/InventoryTablesComponent';
 
 const InventoryV2 = () => {
     return (
         <div className={styles.inventory}>
-            <InventoryHeaderSection />
-            <InventoryTable />
+            <InventoryCards />
+            <InventoryTab />
+            <InventoryTablesComponent />
         </div>
     );
 };

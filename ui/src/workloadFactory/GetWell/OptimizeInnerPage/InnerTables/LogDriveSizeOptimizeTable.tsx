@@ -7,6 +7,7 @@ import { getSelectedFromSelectionState, getTruncatedItems } from '../../../../ut
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -207,7 +208,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                     </div>
                 }
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

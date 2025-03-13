@@ -9,13 +9,13 @@ import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHom
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import BulkActionContainer from './BulkActionContainer';
 import FirstColumnComponent from './FirstColumnCoponent';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_VALUES, INVENTORY_STATUS } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -39,6 +39,8 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                     const isStorageTierOptimized = isOptimized(headroomObj?.status);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
@@ -142,7 +144,9 @@ const FileSystemHeadroomTable = ({ lastColDetails, handleBulkAction }: StorageTi
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

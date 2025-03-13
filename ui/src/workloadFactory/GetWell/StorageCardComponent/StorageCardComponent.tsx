@@ -48,12 +48,17 @@ import { handleDialog } from './optimizeUtils';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
-    const { isAssessmentAvailable, selectedResourceId, selectedDatabaseInstance, optimizingInstanceData } =
-        useAppSelector(state => state.getWellOptimize);
+    const {
+        isAssessmentAvailable,
+        selectedResourceId,
+        selectedDatabaseInstance,
+        optimizingInstanceData,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
@@ -706,16 +711,14 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
         let apiCallObj = {};
         if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
             apiCallObj = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 payload: payload
             };
         } else {
             apiCallObj = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance,
                 payload: payload
@@ -770,7 +773,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Data files' ||
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
+            type === GENERAL.CRR
         ) {
             handleNavigateToOptimizePage(type);
         } else {
@@ -791,7 +795,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
-            type === GENERAL.MICROSOFT_SQL_PATCH
+            type === GENERAL.MICROSOFT_SQL_PATCH ||
+            type === GENERAL.CRR
         ) {
             return 'View';
         } else {

@@ -46,11 +46,7 @@ import {
     useOptimizeResiliencyMutation
 } from '../../../utils/apiService';
 import {
-    setGwDatabaseInstance,
-    setGwDatabaseInstanceName,
-    setGwDatabaseStorageType,
-    setGwHostname,
-    setGwResourceId,
+    setGwPageLoadInstanceData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -108,9 +104,17 @@ const DashboardInnerPage = () => {
         let payload: null | object | any = {};
         let apiCall = null;
         const state = store.getState();
-        const { selectedDatabaseInstance, selectedResourceId, landingFrom, cardData, recommendedInstanceInBulk } =
-            state.getWellOptimize;
-        const { headerSelectedCred, headerSelectedRegion } = state.headers;
+        const {
+            selectedDatabaseInstance,
+            selectedResourceId,
+            landingFrom,
+            cardData,
+            recommendedInstanceInBulk,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId
+        } = state.getWellOptimize;
+        let credIdBulk = rowData?.[0]?.credentialId;
+        let reiginIdBulk = rowData?.[0]?.regionId;
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             if (operation === 'bulk') {
                 apiCall = optimizeComputeConfigForBulk;
@@ -383,24 +387,21 @@ const DashboardInnerPage = () => {
         let apiData = {};
         if (operation === 'bulk') {
             apiData = {
-                credentialId:
-                    landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? credIdBulk : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? reiginIdBulk : regionFromJM,
                 payload: payload
             };
         } else {
             if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
                 apiData = {
-                    credentialId:
-                        landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                    regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                     payload: payload
                 };
             } else {
                 apiData = {
-                    credentialId:
-                        landingFrom === WLF_TABS.INVENTORY ? headerSelectedCred?.data?.credentialsId : credIdFromJM,
-                    regionId: landingFrom === WLF_TABS.INVENTORY ? headerSelectedRegion?.label2 : regionFromJM,
+                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                     databaseHostId: selectedResourceId,
                     instanceId: selectedDatabaseInstance,
                     payload: payload
@@ -497,12 +498,18 @@ const DashboardInnerPage = () => {
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
         );
-        dispatch(setGwHostname(rowData?.hostName));
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
-        dispatch(setGwResourceId(targettedHost?.resourceId));
-        dispatch(setGwDatabaseInstance(targettedDbInstance?.databaseInstanceId));
-        dispatch(setGwDatabaseInstanceName(targettedDbInstance?.databaseInstanceName));
-        dispatch(setGwDatabaseStorageType(targettedDbInstance?.sqlServerDeploymentType));
+        dispatch(
+            setGwPageLoadInstanceData({
+                hostname: rowData?.hostName,
+                resourceId: targettedHost?.resourceId,
+                instanceId: targettedDbInstance?.databaseInstanceId,
+                instanceName: targettedDbInstance?.databaseInstanceName,
+                credId: targettedHost?.credentialId,
+                regionId: targettedHost?.regionId,
+                storageType: targettedDbInstance?.sqlServerDeploymentType
+            })
+        );
     };
 
     const handleDialog = (type: string, rowData: any, operation?: string) => {

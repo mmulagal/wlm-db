@@ -73,7 +73,10 @@ import {
     calculateMSSQLPatchDrift,
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
-import { getResilienceDriftAssessment } from './continuous-optimization/resilience-assessment-operation';
+import {
+    collectSnapshotCopyData,
+    getResilienceDriftAssessment
+} from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
 const isDemoFlow = isDemo();
@@ -343,6 +346,11 @@ async function initiateStorageAssessmentCollection(
     );
 
     const parsedResponse = response ? sqlResponseParsing(response) : {};
+    const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+    if (!isDemo()) {
+        // add snapshot copy details to volumes
+        parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
+    }
     await createDatabaseInstanceConfigData([
         {
             account_id: accountId,
@@ -357,7 +365,6 @@ async function initiateStorageAssessmentCollection(
     ]);
 
     const resourceWithInstanceName = `${instanceRecord.resourceName}\\${instanceRecord.name}`;
-    const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
     const configJobStatus = isDemo()
         ? JOBSTATUS.COMPLETED
         : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
@@ -1120,7 +1127,12 @@ async function fetchDriftAssessmentPerHost(
                 managedInstance;
 
             try {
-                const instanceFieldsToQuery = [AssessmentCategories.STORAGE, AssessmentCategories.MAXDOP];
+                // For instance level assessments
+                const instanceFieldsToQuery = [
+                    AssessmentCategories.STORAGE,
+                    AssessmentCategories.MAXDOP,
+                    AssessmentCategories.RESILIENCY
+                ];
 
                 const driftAssessment = await fetchDriftAssessment(
                     accountId,

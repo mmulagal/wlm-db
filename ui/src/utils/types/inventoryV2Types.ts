@@ -1,4 +1,6 @@
 export interface InventorySliceData {
+    selectedFilterValue: {} | any;
+    selectedInventoryTab: string;
     optimizeInnerPageValues: {} | any;
     selectedOptimizeConfig: any;
     breadCrumbSelectedFrom: string;
@@ -40,7 +42,6 @@ export interface InventorySliceData {
     unManagedPerfInstanceIdsList: Array<string>;
     managedHostInstanceLoading: boolean;
     selectedHeaderTab: string;
-    managedHostInitialColumns: any;
     isRefreshed: boolean;
     managedAssessmentHostIdsList: Array<string>;
     managedAssessmentHostData: any;
@@ -49,13 +50,16 @@ export interface InventorySliceData {
     potentialSavingsHostData: {
         [key: string]: any;
     };
+    selectedRowsForManage: Array<any>;
 }
 
 export interface InventoryTableData {
     ec2InstanceId?: string;
     ec2InstanceName?: string;
+    resourceId?: string;
     id?: string;
     name?: string;
+    hostType?: string;
     status?: string;
     ssmState?: string;
     totalInstance?: number;
@@ -76,6 +80,11 @@ export interface InventoryTableData {
     storageType?: string;
     sqlServerInstances?: Array<InventoryTableInstanceDatInterface>;
     hasInstanceData?: boolean;
+    credentialId?: string;
+    regionId?: string;
+    credentialName?: string;
+    regionName?: string;
+    accountId?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {
@@ -252,6 +261,7 @@ export interface StorageInterface {
 
 export interface ManagedHostsRowInterface {
     id?: string;
+    hostType?: string;
     name?: string;
     nodeStatus?: string; // running,terminated,pending,shutting-down,stopping,stopped,N\A
     databaseHostStatus?: string;
@@ -384,6 +394,8 @@ export interface DiscoverHostInterface {
         cidrBlock?: string;
     };
     sqlServerInstances?: Array<SQLServerInstancesDiscovered>;
+    credentialId?: string;
+    regionId?: string;
 }
 
 export interface SQLServerInstancesDiscovered {

@@ -19,8 +19,6 @@ const CreateNewUserCodeBox = () => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
     const resourceId = useAppSelector(state => state.auth.resourceId);
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const createNewUser = useAppSelector(state => state.createNewUser);
@@ -40,8 +38,8 @@ const CreateNewUserCodeBox = () => {
         return (
             <>
                 <CodeBoxColor
-                    credID={selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID}
-                    region={selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION}
+                    credID={createNewUser?.cdbCredId || CRED_PLACEHOLDERS.CRED_ID}
+                    region={createNewUser?.cdbRegionId || CRED_PLACEHOLDERS.REGION}
                     actualData={payload}
                     endpoint={CREATE_DB_ENDPOINT(resourceId)}
                 />
@@ -58,8 +56,8 @@ const CreateNewUserCodeBox = () => {
             const baseUrl = getBaseUrl();
             const restApiPayload = CREATE_DB_CURL_REQ_TEMPLATE(
                 baseUrl,
-                selectedCredId?.data?.credentialsId || CRED_PLACEHOLDERS.CRED_ID,
-                selectedRegionCode?.data?.regionCode || CRED_PLACEHOLDERS.REGION,
+                createNewUser?.cdbCredId || CRED_PLACEHOLDERS.CRED_ID,
+                createNewUser?.cdbRegionId || CRED_PLACEHOLDERS.REGION,
                 resourceId || CRED_PLACEHOLDERS.DATABASE_HOST_ID,
                 CRED_PLACEHOLDERS.TOKEN,
                 JSON.stringify(payload, null, 2),

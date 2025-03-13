@@ -22,7 +22,7 @@ const initialInventoryV2State: InventorySliceData = {
         discoveredHostData: null,
         discoverHostLoading: false
     },
-    fsxCredentialStatusObj: null,
+    fsxCredentialStatusObj: {},
     fsxCredentialStatusLoading: false,
     mssqlInstancesData: null,
     perfMssqlInstancesData: null,
@@ -41,7 +41,6 @@ const initialInventoryV2State: InventorySliceData = {
     unManagedPerfInstanceIdsList: [],
     managedHostInstanceLoading: false,
     selectedHeaderTab: WLF_TABS.DASHBOARD,
-    managedHostInitialColumns: initialColStateManagedHosts,
     isRefreshed: false,
     optimizeFilterTags: [],
     defaultFilterOptions: {},
@@ -50,17 +49,30 @@ const initialInventoryV2State: InventorySliceData = {
     allmssqlHostAssessmentData: [],
     allmssqlHostAssessmentLoading: false,
     potentialSavingsHostData: {},
+    selectedInventoryTab: 'Instances',
     selectedOptimizeConfig: {
         type: '',
         data: {}
     },
-    optimizeInnerPageValues: {}
+    optimizeInnerPageValues: {},
+    selectedFilterValue: {
+        flag: false,
+        value: '',
+        filterType: ''
+    },
+    selectedRowsForManage: []
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setSelectedFilterValue: (state, action: PayloadAction<any>) => {
+            state.selectedFilterValue = action.payload;
+        },
+        setSelectedInventoryTab: (state, action: PayloadAction<any>) => {
+            state.selectedInventoryTab = action.payload;
+        },
         setOptimizeInnerPageValues: (state, action: PayloadAction<any>) => {
             state.optimizeInnerPageValues = action.payload;
         },
@@ -160,9 +172,6 @@ const inventoryV2Slice = createSlice({
         setManagedHostInstanceLoading: (state, action: PayloadAction<any>) => {
             state.managedHostInstanceLoading = action.payload;
         },
-        setManagedHostColState: (state, action: PayloadAction<any>) => {
-            state.managedHostInitialColumns = action.payload;
-        },
         setSelectedHeaderTab: (state, action: PayloadAction<any>) => {
             state.selectedHeaderTab = action.payload;
         },
@@ -186,11 +195,38 @@ const inventoryV2Slice = createSlice({
         },
         setSelectedOptimizeConfig: (state, action: PayloadAction<any>) => {
             state.selectedOptimizeConfig = action.payload;
+        },
+        setSelectedRowsForManage: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForManage = action.payload;
+        },
+        resetPerComboData: (state, action: PayloadAction<any>) => {
+            state.resetManagedData = true;
+            state.isManagedHostListLoading = true;
+            state.getDatabaseHosts.databaseHostsLoading = true;
+            state.getPgSqlDatabaseHosts.databaseHostsLoading = true;
+            state.getDatabaseHosts.fullHostDataLoading = true;
+            state.getPgSqlDatabaseHosts.fullHostDataLoading = true;
+            state.allmssqlHostAssessmentLoading = true;
+            state.getDatabaseHosts.databaseHostsData = null;
+            state.getPgSqlDatabaseHosts.databaseHostsData = null;
+            state.discoveredHosts.discoveredHostData = null;
+            state.discoveredHosts.discoverHostLoading = true;
+            state.mssqlInstancesData = null;
+            state.inventoryChartData = null;
+            state.removeSecNodeDiscoveredList = [];
+            state.unManagedPerfInstanceIdsList = [];
+            state.managedAssessmentHostIdsList = [];
+            state.perfMssqlInstancesData = {};
+            state.managedAssessmentHostData = {};
+            state.allmssqlHostAssessmentData = [];
+            state.potentialSavingsHostData = {};
         }
     }
 });
 
 export const {
+    setSelectedFilterValue,
+    setSelectedInventoryTab,
     setOptimizeInnerPageValues,
     setSelectedOptimizeConfig,
     setDefaultFilterOptions,
@@ -225,14 +261,15 @@ export const {
     setUnManagedPerfInstanceIdsList,
     setManagedHostInstanceLoading,
     setSelectedHeaderTab,
-    setManagedHostColState,
     setIsRefreshed,
     setBreadCrumbSelectedFrom,
     setManagedAssessmentHostIdsList,
     setManagedAssessmentHostData,
     addAllMssqlHostAssessmentData,
     setAllMssqlHostAssessmentLoading,
-    setPotentialSavingsHostData
+    setPotentialSavingsHostData,
+    resetPerComboData,
+    setSelectedRowsForManage
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

@@ -82,9 +82,10 @@ const SavingsCalculatorApi = () => {
         requestedPayload,
         requestedRegion,
         onPremNetworkPerformance,
-        onPremStorageAndComputeInfo
+        onPremStorageAndComputeInfo,
+        selectedExCredId,
+        selectedExRegionId
     } = useAppSelector(state => state.exploreSavings);
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
@@ -242,8 +243,8 @@ const SavingsCalculatorApi = () => {
         }
         try {
             const result: any = await getStorageSavingsApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                credentialId: selectedExCredId,
+                regionId: selectedExRegionId,
                 instanceId: selectedInstanceId,
                 payload: payload,
                 type:
@@ -285,8 +286,8 @@ const SavingsCalculatorApi = () => {
         }
         try {
             const result: any = await getViewCalculationsApi({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                credentialId: selectedExCredId,
+                regionId: selectedExRegionId,
                 instanceId: selectedInstanceId,
                 payload: payload,
                 type:
@@ -407,8 +408,8 @@ const SavingsCalculatorApi = () => {
         try {
             let result: any;
             result = await getMssqlInstanceDataApiV2({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                credentialId: selectedExCredId,
+                regionId: selectedExRegionId,
                 instances: selectedInstanceId,
                 fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
                 nextToken: ''
@@ -455,8 +456,8 @@ const SavingsCalculatorApi = () => {
         try {
             let result: any;
             result = await getMssqlInstanceDataApiV2({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                regionId: headerSelectedRegion?.label2,
+                credentialId: selectedExCredId,
+                regionId: selectedExRegionId,
                 instances: selectedPartnerInstanceId,
                 fields: INSTANCE_API_FIELDS.UNMANAGED_DEFAULT.join(','),
                 nextToken: ''
@@ -478,7 +479,7 @@ const SavingsCalculatorApi = () => {
     useEffect(() => {
         dispatch(setStorageSavingsResponse({}));
         dispatch(setStorageSavingsLoading(false));
-    }, [headerSelectedCred, headerSelectedRegion]);
+    }, [selectedExCredId, selectedExRegionId]);
 
     useEffect(() => {
         // This is to call OnPrem Savings calculator API when user changes the values in the Savings calculator page

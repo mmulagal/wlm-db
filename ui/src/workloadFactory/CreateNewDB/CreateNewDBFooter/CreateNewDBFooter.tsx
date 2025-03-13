@@ -18,8 +18,7 @@ const CreateNewUserFooter = () => {
 
     const state = useAppSelector(state => state);
     const resourceId = useAppSelector(state => state.auth.resourceId);
-    const selectedCredId = useAppSelector(state => state.headers.headerSelectedCred);
-    const selectedRegionCode = useAppSelector(state => state.headers.headerSelectedRegion);
+    const { cdbCredId, cdbRegionId } = useAppSelector(state => state.createNewUser);
     const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
 
     const closeHandler = () => {
@@ -39,8 +38,8 @@ const CreateNewUserFooter = () => {
             dispatch(setIsLoading(true));
             try {
                 const result: any = await createNewUserDb({
-                    credentialId: selectedCredId?.data?.credentialsId,
-                    region: selectedRegionCode?.data?.regionCode,
+                    credentialId: cdbCredId,
+                    region: cdbRegionId,
                     id: resourceId,
                     payload: payload
                 });

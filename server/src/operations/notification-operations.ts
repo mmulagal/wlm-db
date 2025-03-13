@@ -37,7 +37,7 @@ export default async function processEmailRequest(
         }
         switch (true) {
             case !fileName || !fileName.endsWith('.pdf'):
-                throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid file name in the request');
+                throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid file extension found, expected .pdf');
             case fileBuffer.length / 1024 > MAX_EMAIL_ATTACHMENT_SIZE:
                 throw createError(HttpErrorCodes.BAD_REQUEST, 'Attachment file size exceeds the limit');
             case !userEmail || !isValidEmail(userEmail):
