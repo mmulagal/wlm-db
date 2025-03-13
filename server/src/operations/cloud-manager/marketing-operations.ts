@@ -361,7 +361,7 @@ function formatEbsCalculationObject(
         instanceAvgDuration,
         EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
         numberOfVolumes: ebsNumberOfVolumes,
-        storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
+        storageAmount: { size: storageAmountSize, unit: storageAmountUnit },
         totalInstanceHours,
         EBSInstanceMonth: ebsInstanceMonth,
         EBSStorageCost: ebsStorageCost,
@@ -390,7 +390,7 @@ function formatEbsCalculationObject(
         instanceAvgDuration,
         hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
         ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-        storageAmountPerVol: convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0,
+        storageAmountPerVol: convertToBytes(storageAmountSize, storageAmountUnit) || 0,
         totalInstanceHours,
         ebsInstanceMonth,
         ebsStorageCost,
@@ -411,7 +411,7 @@ function formatEbsCalculationObject(
         totalCloneMonthlyCost: clonedCopiesCount * (capacity + iops + throughput)
     };
 
-    const storageAmountOfEbs = convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0;
+    const storageAmountOfEbs = convertToBytes(storageAmountSize, storageAmountUnit) || 0;
     const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
 
     const ebsSnapshotCalculation = {

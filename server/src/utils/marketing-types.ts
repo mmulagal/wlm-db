@@ -8,7 +8,7 @@ interface StorageSummary {
 }
 interface EbsCostCalculation {
     storageVolumeType: string;
-    storageAmountPerVol: {
+    storageAmount: {
         size: number;
         unit: string;
     };
