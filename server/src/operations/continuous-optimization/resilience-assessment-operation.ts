@@ -14,7 +14,9 @@ import {
 import {
     AssessmentCategories,
     AssessmentStatus,
-    OptimizeStorageConfigs
+    OptimizeStorageConfigs,
+    SEVERITY,
+    AwsWellArchitecturedPillars
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
@@ -350,27 +352,28 @@ async function getCrrDriftData(
             'No CRR assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.';
         return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
     }
+
     try {
+        const configData = persistedConfigurationData.config_data as { crrDetails: any[] };
+        const crrDetails = configData?.crrDetails || [];
+        const allVolumesOptimized: boolean = crrDetails.every(
+            (detail: { isCRREnabled: boolean }) => detail.isCRREnabled
+        );
+
         const response: ParameterDriftResponseType = {
             name: 'crr',
-            status: AssessmentStatus.NOT_OPTIMIZED,
-            recommended: '',
-            severity: '',
+            status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            severity: SEVERITY.WARNING,
             recommendation:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.',
-            objectsInViolation: [],
-            sizingViolations: {
-                overProvisionedDrives: [],
-                underProvisionedDrives: []
-            },
-            violationDetails: [],
-            tags: [],
-            missingPermissions: [],
-            recommendedSizeInGib: 0,
-            current: '',
-            totalObjectsAssessed: 0,
-            totalObjectsInViolation: 0,
-            resourceType: ''
+            objectsInViolation: allVolumesOptimized
+                ? []
+                : crrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
+            totalObjectsAssessed: crrDetails.length,
+            totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            resourceType: 'Volume',
+            recommended: 'Enable Cross-Region Replication (CRR) for enhanced data durability and availability.'
         };
 
         return response;
