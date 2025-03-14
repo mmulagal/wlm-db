@@ -86,6 +86,30 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
+        } else if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
+            (rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive')
+        ) {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={
+                        rowData?.status === 'Over-provisioned' ? (
+                            <DsTypography variant="Regular_14">{GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR}</DsTypography>
+                        ) : (
+                            <DsTypography variant="Regular_14">{GENERAL.NOT_OPTIMIZED_SHARED_DRIVES}</DsTypography>
+                        )
+                    }
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
+            );
         } else if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
