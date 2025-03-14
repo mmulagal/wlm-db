@@ -361,7 +361,8 @@ function formatEbsCalculationObject(
         instanceAvgDuration,
         EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
         numberOfVolumes: ebsNumberOfVolumes,
-        storageAmount: { size: storageAmountSize, unit: storageAmountUnit },
+        storageAmount: { size: storageAmountSize, unit: storageAmountUnit } = {}, // in case of marketing API manual mode
+        storageAmountPerVol: { size: storageAmountSizeAutoMode, unit: storageAmountUnitAutoMode } = {}, // in case of marketing API auto mode
         totalInstanceHours,
         EBSInstanceMonth: ebsInstanceMonth,
         EBSStorageCost: ebsStorageCost,
@@ -385,12 +386,19 @@ function formatEbsCalculationObject(
         amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
     } = ebsCostCalculationObject;
 
+    const ebsStorageAmountSize =
+        storageAmountSize && storageAmountUnit
+            ? convertToBytes(storageAmountSize, storageAmountUnit) || 0
+            : storageAmountSizeAutoMode && storageAmountUnitAutoMode
+            ? convertToBytes(storageAmountSizeAutoMode, storageAmountUnitAutoMode) || 0
+            : 0;
+
     const ebsCostCalculation = {
         numberOfVolumes: ebsNumberOfVolumes,
         instanceAvgDuration,
         hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
         ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-        storageAmountPerVol: convertToBytes(storageAmountSize, storageAmountUnit) || 0,
+        storageAmountPerVol: ebsStorageAmountSize,
         totalInstanceHours,
         ebsInstanceMonth,
         ebsStorageCost,
@@ -411,11 +419,10 @@ function formatEbsCalculationObject(
         totalCloneMonthlyCost: clonedCopiesCount * (capacity + iops + throughput)
     };
 
-    const storageAmountOfEbs = convertToBytes(storageAmountSize, storageAmountUnit) || 0;
     const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
 
     const ebsSnapshotCalculation = {
-        storageAmount: storageAmountOfEbs * ebsNumberOfVolumes,
+        storageAmount: ebsStorageAmountSize * ebsNumberOfVolumes,
         numberOfVolumes: ebsNumberOfVolumes,
         ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
         amountChangedPerSnapshot,
