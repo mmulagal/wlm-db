@@ -8,7 +8,8 @@ import {
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
-    OptimizeStorageTierParams
+    OptimizeStorageTierParams,
+    UpdateAwsBackupParams
 } from '../../utils/continous-optimization-consts';
 
 const SizingViolationResponse = Type.Object({
@@ -373,7 +374,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
-        ...OptimizeMaxDopParams
+        ...OptimizeMaxDopParams,
+        ...UpdateAwsBackupParams
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
