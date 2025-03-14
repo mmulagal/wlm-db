@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
 import { Volume } from '@aws-sdk/client-fsx';
+import throat from 'throat';
 import {
     Metadata,
     DatabaseInstance,
@@ -43,7 +44,7 @@ import {
     getServerNameWithHostname,
     parseMultipleCommandResponse
 } from '../utils/utils';
-import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
+import { describeFSx, describeFSxStorageVirtualMachines, updateFsxBackup, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -61,6 +62,7 @@ import {
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import {
+    OptimizePerHostRequestBodyType,
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
@@ -2622,6 +2624,100 @@ async function optimizeMaxDop(
     return { jobId: parentJobId };
 }
 
+async function handleUpdateAwsBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHosts: OptimizePerHostRequestBodyType[],
+    masterOptimizeParentId: string
+) {
+    const fsxFilesystemIds: string[] = [];
+    const fsxBackupConfigMap = new Map<
+        string,
+        { AutomaticBackupRetentionDays: number; DailyAutomaticBackupStartTime: string }
+    >();
+    databaseHosts.forEach(host => {
+        if (
+            host.fsxFileSystemId &&
+            !fsxBackupConfigMap.get(host.fsxFileSystemId) &&
+            host.backupRetentionDays &&
+            host.backupStartTime
+        ) {
+            fsxBackupConfigMap.set(host.fsxFileSystemId, {
+                AutomaticBackupRetentionDays: host.backupRetentionDays,
+                DailyAutomaticBackupStartTime: host.backupStartTime
+            });
+            fsxFilesystemIds.push(host.fsxFileSystemId);
+        }
+    });
+
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        '',
+        JOBTYPE.OPTIMIZATION,
+        'Update AWS fsX backup',
+        `Update AWS fsX backup for ${fsxFilesystemIds.join(', ')}`,
+        masterOptimizeParentId,
+        {
+            hostsToOptimize: [
+                {
+                    optimizationType: 'aws-backup',
+                    resourceId: databaseHosts[0].id,
+                    sqlServerInstances: [databaseHosts[0].sqlServerInstances[0]]
+                }
+            ]
+        }
+    );
+    let jobstatus: JOBSTATUS = JOBSTATUS.COMPLETED as JOBSTATUS;
+    const errMsg: string[] = [];
+
+    await Promise.all(
+        Array.from(fsxBackupConfigMap.entries()).map(
+            throat(2, async ([fsxFileSystemId, configuration]) => {
+                try {
+                    await updateFsxBackup(accountId, credentialsId, region, fsxFileSystemId, configuration);
+                } catch (err: any) {
+                    errMsg.push(
+                        `Error occurred while updating AWS fsX backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${err}`
+                    );
+                    jobstatus = JOBSTATUS.FAILED;
+                }
+            })
+        )
+    );
+
+    if (jobstatus === JOBSTATUS.FAILED) {
+        logger.error(errMsg);
+        await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
+        await updateLongRunningAuditGroup(AuditStatus.FAILED, errMsg.join(', '));
+        return;
+    }
+
+    await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
+
+    Promise.all(
+        databaseHosts.map(
+            throat(1, async host => {
+                host.sqlServerInstances.map(
+                    throat(1, async instanceId => {
+                        onDemandTriggerDriftAssessmentDataCollection(
+                            accountId,
+                            credentialsId,
+                            region,
+                            host.id,
+                            instanceId,
+                            AssessmentTriggeredBy.SYSTEM,
+                            AssessmentCategories.AWS_BACKUP
+                        );
+                    })
+                );
+            })
+        )
+    );
+}
+
 async function triggerAssessmentAfterOptimization(
     credentialsId: string,
     region: string,
@@ -2703,5 +2799,6 @@ export {
     optimizeOperatingSystemSettings,
     optimizeStorageTier,
     activeSqlNodeDetails,
-    optimizeMaxDop
+    optimizeMaxDop,
+    handleUpdateAwsBackup
 };

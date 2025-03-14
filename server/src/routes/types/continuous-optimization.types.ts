@@ -326,7 +326,10 @@ type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 const OptimizePerHostRequestBody = Type.Object({
     id: Type.String({ minLength: 1 }),
     sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    instanceType: Type.Optional(Type.String())
+    instanceType: Type.Optional(Type.String()),
+    fsxFileSystemId: Type.Optional(Type.String()),
+    backupRetentionDays: Type.Optional(Type.Number()),
+    backupStartTime: Type.Optional(Type.String())
 });
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
 

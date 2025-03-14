@@ -219,6 +219,12 @@ const BulkOptimizeMaxDopSchema = {
     description: 'Optimize max-dop parameters as per the best practice for selected database instances.'
 };
 
+const BulkOptimizeAwsBackupSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Update FSx for ONTAP backup',
+    description: 'Update FSx for ONTAP backup parameters.'
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -235,5 +241,6 @@ export {
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
-    BulkOptimizeMaxDopSchema
+    BulkOptimizeMaxDopSchema,
+    BulkOptimizeAwsBackupSchema
 };

@@ -9,7 +9,8 @@ enum AssessmentCategories {
     RSS_CONFIG = 'rss-config',
     MAXDOP = 'maxdop',
     MSSQL_PATCH = 'mssql-patch',
-    RESILIENCY = 'resiliency'
+    RESILIENCY = 'resiliency',
+    AWS_BACKUP = 'aws-backup'
 }
 
 enum AssessmentTriggeredBy {
@@ -91,11 +92,16 @@ enum OPTIMIZE_SIZING_CONFIGS {
 }
 
 enum OPTIMIZE_RESILIENCY_CONFIGS {
-    SNAPSHOT_POLICY = 'snapshot-policy'
+    SNAPSHOT_POLICY = 'snapshot-policy',
+    AWS_BACKUP = 'aws-backup'
 }
 
 enum OptimizeMaxDopParams {
     MAX_DOP = 'max-dop'
+}
+
+enum UpdateAwsBackupParams {
+    AWS_BACKUP = 'aws-backup'
 }
 
 enum OPTIMIZATION_CATEGORIES {
@@ -104,6 +110,7 @@ enum OPTIMIZATION_CATEGORIES {
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
     MAXDOP = 'max-dop'
+    // AWS_BACKUP = 'aws-backup'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -246,6 +253,7 @@ export {
     ONPREM_TCO_CREDENTIALS_ID,
     OPTIMIZATION_CATEGORIES,
     OptimizeMaxDopParams,
+    UpdateAwsBackupParams,
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
     VALID_MPIO_LB_POLICIES
