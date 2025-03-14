@@ -1,7 +1,9 @@
 import createError from 'http-errors';
 import moment from 'moment';
 import { isEmpty } from 'lodash-es';
+// import { any } from 'bluebird';
 import {
+    ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
     SnapshotPolicyAssesmentDataType,
     ParameterDriftResponseType
@@ -34,6 +36,9 @@ import { describeFSx, describeFSxStorageVirtualMachines } from '../../lib/aws/fs
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
 import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { describeFSx, describeFSxBackups } from '../../lib/aws/fsx';
+import { getInstanceDetails } from '../database-hosts-operations';
+import { getFsxnVolIdsFromOntapVolIds } from '../aws/fsx-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -135,9 +140,12 @@ async function getResilienceDriftAssessment(
             getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
         ]);
 
+        const awsBackup =
+            (await getawsBackup(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) || {};
         const assessmentData: ResilienceDriftAssessmentResponseType = {
             snapshotPolicy,
-            crr: crrData
+            crr: crrData,
+            awsBackup: awsBackup as ParameterDriftResponseType
         };
         return assessmentData;
     } catch (error) {
@@ -215,6 +223,171 @@ async function getSnapshotPolicyDriftData(
         logger.error('Error getting snapshot policy drift data', error);
         throw error;
     }
+}
+
+async function getawsBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Getting FSX details', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
+    const awsBackupAssesmentData: ParameterDriftResponseType = {
+        ...storageGoldenConfigData.resiliency.awsBackup,
+        name: 'scheduled-fsx-for-ontap-backups',
+        status: AssessmentStatus.NOT_OPTIMIZED,
+        totalObjectsInViolation: 0,
+        recommended: 'To have the AWS Backup enabled',
+        objectsInViolation: []
+    };
+
+    // Fetch the FSX ID for given instance
+    let newDatabaseInstanceDetails;
+    let instanceDetails;
+
+    try {
+        instanceDetails = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+
+        newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
+    } catch (error) {
+        const errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
+        logger.error(errorMessage);
+        return errorMessage;
+    }
+
+    const { fsxn_ids: fileSystemId } = newDatabaseInstanceDetails || {};
+
+    // Fetch the OnTap volumes from storage assessment
+    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentCategories.STORAGE
+    );
+
+    // Check that the persisted configuration data exists
+    if (isEmpty(persistedConfigurationData)) {
+        const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+        throw new Error(errorMessage);
+    }
+
+    // Extract configuration data from the persisted data
+    const { config_data: configData } = persistedConfigurationData;
+    const { volumes, errors } = configData as unknown as StorageAssessment;
+    logger.info(volumes);
+
+    // If there are errors related to volumes, return early
+    if (errors?.volumes) {
+        return { errorMessage: errors.volumes };
+    }
+    const ontapVolIds: string[] = [];
+    volumes.forEach(volume => {
+        const volDetails = volume as Record<string, string>;
+        ontapVolIds.push(volDetails?.uuid);
+    });
+
+    // Retrieve the FSx volume IDs and the mapping from Ontap volume IDs to FSx volume IDs
+    const fsxVolumeIdList: string[] = [];
+    const uuidVolumeIdMap: Record<string, string> = {};
+
+    const { volumeIds, uuidVolumeIdMap: newUuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
+        credentialsId,
+        region,
+        fileSystemId,
+        ontapVolIds
+    );
+
+    fsxVolumeIdList.push(...volumeIds);
+    Object.assign(uuidVolumeIdMap, newUuidVolumeIdMap);
+
+    // This FSx call checks for the presence of AutomaticBackupRetentionDays and DailyAutomaticBackupStartTime for a specified FSx ID.
+    // If these parameters are found, it confirms that the backup is enabled for the Ontap FSx.
+
+    const fsxbackups = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+    interface FSxBackupHashMap {
+        [key: string]: boolean;
+    }
+    const backupHashMap: FSxBackupHashMap = {};
+    let errorMessage = '';
+
+    try {
+        if (!fsxbackups.FileSystems || fsxbackups.FileSystems.length === 0) {
+            logger.info('No FileSystems found in the response.');
+            errorMessage = 'No FileSystems found in the response.';
+            return errorMessage;
+        }
+    } catch (error) {
+        errorMessage = `Error while assessing FSx backups: ${(error as Error).message}`;
+        logger.error({ errorMessage, error });
+        return errorMessage;
+    }
+
+    for (const fs of fsxbackups.FileSystems) {
+        if (
+            fs.FileSystemId &&
+            fs.OntapConfiguration &&
+            fs.OntapConfiguration.AutomaticBackupRetentionDays !== undefined &&
+            fs.OntapConfiguration.DailyAutomaticBackupStartTime !== undefined
+        ) {
+            logger.info(`FileSystem ${fs.FileSystemId} has AWS Backup enabled`);
+            if (fs.FileSystemId) {
+                backupHashMap[fs.FileSystemId] = true;
+            }
+            awsBackupAssesmentData.totalObjectsAssessed = Object.keys(backupHashMap).length;
+            awsBackupAssesmentData.status = AssessmentStatus.OPTIMIZED;
+
+            return awsBackupAssesmentData;
+        }
+
+        logger.info(`FileSystem ${fs.FileSystemId} has AWS Backup disabled`);
+        if (!fileSystemId) {
+            throw new Error('FileSystemId is undefined');
+        }
+
+        // If AWS backup is disabled for a specified FSx,
+        // verify whether any backups exist for the volumes by executing the describe FSx backup command.
+        awsBackupAssesmentData.objectsInViolation = [];
+        for (const fsxVolId of fsxVolumeIdList) {
+            const volumeBackups = await describeFSxBackups(credentialsId, region, {
+                Filters: [
+                    {
+                        Name: 'volume-id',
+                        Values: [fsxVolId]
+                    }
+                ]
+            });
+
+            try {
+                if (volumeBackups.Backups && volumeBackups.Backups.length > 0) {
+                    backupHashMap[fsxVolId] = true;
+                } else {
+                    logger.info(`No backups found for ${fs.FileSystemId}`);
+                    backupHashMap[fsxVolId] = false;
+                }
+            } catch (error) {
+                logger.error(`Error describing backups for ${fs.FileSystemId}: ${error}`);
+            }
+        }
+        if (fs.FileSystemId) {
+            awsBackupAssesmentData.objectsInViolation.push(fs.FileSystemId);
+        }
+        awsBackupAssesmentData.totalObjectsInViolation = awsBackupAssesmentData.objectsInViolation.length;
+        awsBackupAssesmentData.totalObjectsAssessed = awsBackupAssesmentData.objectsInViolation.length;
+    }
+
+    if (awsBackupAssesmentData.totalObjectsInViolation === 0) {
+        awsBackupAssesmentData.status = AssessmentStatus.OPTIMIZED;
+    }
+    return awsBackupAssesmentData;
 }
 
 async function initiateCrossRegionResiliencyAssessment(
