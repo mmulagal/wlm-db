@@ -344,23 +344,23 @@ export const getTotalManagedAggrCost = (mssqlCostObj: any, pgsqlCostObj: any) =>
         storageCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.storageCost) + parseInt(pgsqlCostObj.storageCost)) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+            100
         ),
         computeCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.computeCost) + parseInt(pgsqlCostObj.computeCost)) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+            100
         ),
         connectivityCostPercent: formatFractionalNumber(
             (parseInt(mssqlCostObj.connectivityCost) +
                 parseInt(pgsqlCostObj.connectivityCost) /
-                    (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+                (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
+            100
         ),
         otherCostPercent: formatFractionalNumber(
             ((parseInt(mssqlCostObj.otherCost) + parseInt(pgsqlCostObj.otherCost)) /
                 (parseInt(mssqlCostObj.totalCost) + parseInt(pgsqlCostObj.totalCost))) *
-                100
+            100
         ),
         requireBillingPerm:
             mssqlCostObj.requireBillingPerm ||
@@ -470,6 +470,8 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isScheduledLoclaSnapshotOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.snapshotPolicy?.status
                 );
+                const isScheduledAWSBackUpOptimized = isOptimized(instanceAssessmentData?.resiliency?.awsBackup?.status);
+
                 const isCRROptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
@@ -487,6 +489,9 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                     assessmentGroupedByCategory.application++;
                 }
                 if (isScheduledLoclaSnapshotOptimized && isCRROptimized) {
+                    assessmentGroupedByCategory.resiliency++;
+                }
+                if (isScheduledAWSBackUpOptimized) {
                     assessmentGroupedByCategory.resiliency++;
                 }
             }
@@ -513,6 +518,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         mssqlPatch: 0,
         maxdopPatch: 0,
         scheduledLocalSnapshot: 0,
+        scheduledawsBackup: 0,
         crr: 0,
         total: 0,
         severityObj: {}
@@ -576,6 +582,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isMaxdopPatchOptimized = isOptimized(instanceAssessmentData?.maxDOP?.status);
                 const isScheduledLocalSnapshotOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.snapshotPolicy?.status
+                );
+                const isScheduledawsBackupOptimized = isOptimized(
+                    instanceAssessmentData?.resiliency?.awsBackup?.status
                 );
                 const isCrrOptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
@@ -641,6 +650,23 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
                     GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
+
+
+                getAssessmentGroupedByConfigurations.scheduledawsBackup += isScheduledawsBackupOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
+                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.awsBackup?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
+
+
+
+
+
+
+
+
+
                 getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.crr =
                     GETWELL_VALUES[instanceAssessmentData?.resiliency?.crr?.severity] ||

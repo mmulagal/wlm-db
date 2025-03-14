@@ -703,6 +703,42 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
         tags: ['Reliability']
+    },
+    scheduled_FSx_for_ONTAP_backups: {
+        id: 'aws-backup-policy',
+        category: 'application',
+        block_one: {
+            type: GENERAL.RESILIENCY,
+            value: GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'AWS backup policy',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'File system (FSx for ONTAP)',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Scheduled FSx for ONTAP backups recommendation',
+            description:
+                'Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. \nUse FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+        },
+        tags: ['Reliability']
     }
 };
 
@@ -936,6 +972,61 @@ export const formatSnapshotPolicyCardConfig = (
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
             violations: item?.violations
+        }
+    };
+    return cardsData;
+};
+
+
+export const formatAWSBackUpPolicyCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.resiliency?.awsBackup;
+    let categoryVal = 'resiliency';
+    let itemName = 'aws-backup-policy';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
+                }
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal,
+            recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
+            objectsInViolation: item?.objectsInViolation
         }
     };
     return cardsData;
@@ -1175,7 +1266,7 @@ export const formatRssConfigCardConfig = (
                     rssEnabledStatus: GENERAL.FINDINGS.OPTIMIZED,
                     baseProcessorNumberStatus:
                         adapter?.baseProcessorNumber !==
-                        item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+                            item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
                             ? GENERAL.FINDINGS.NOT_OPTIMIZED
                             : GENERAL.FINDINGS.OPTIMIZED,
                     receiveQueuesStatus:
@@ -1572,8 +1663,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         notOptimized: notOptimizedApplication,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
-                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
-              )
+                (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+            )
             : 0
     };
 
@@ -1606,20 +1697,20 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 resiliencyCount?.notOptimized,
             percent:
                 storageCount?.optimized ||
-                computeCount?.optimized ||
-                applicationCount?.optimized ||
-                resiliencyCount?.optimized
+                    computeCount?.optimized ||
+                    applicationCount?.optimized ||
+                    resiliencyCount?.optimized
                     ? formatNumberWithCustomComma(
-                          ((storageCount?.optimized +
-                              computeCount?.optimized +
-                              applicationCount?.optimized +
-                              resiliencyCount?.optimized || 0) /
-                              (storageCount?.total +
-                                  computeCount?.total +
-                                  applicationCount?.total +
-                                  resiliencyCount?.total || 1)) *
-                              100
-                      )
+                        ((storageCount?.optimized +
+                            computeCount?.optimized +
+                            applicationCount?.optimized +
+                            resiliencyCount?.optimized || 0) /
+                            (storageCount?.total +
+                                computeCount?.total +
+                                applicationCount?.total +
+                                resiliencyCount?.total || 1)) *
+                        100
+                    )
                     : 0
         }
     };
@@ -1649,6 +1740,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatSnapshotPolicyCardConfig(data, optimizingData, cardsData);
 
+    cardsData = formatAWSBackUpPolicyCardConfig(data, optimizingData, cardsData);
+
     cardsData = formatCRRCardConfig(data, optimizingData, cardsData);
 
     cardsData = {
@@ -1669,8 +1762,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     ontapNotOptimizedConfig !== 0
                         ? formatNumberWithCustomComma(
-                              (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
-                          ) + '%'
+                            (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
+                        ) + '%'
                         : '0%'
             },
             block_four: {
@@ -1714,8 +1807,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     osNotOptimizedConfig !== 0
                         ? formatNumberWithCustomComma(
-                              (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
-                          ) + '%'
+                            (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
+                        ) + '%'
                         : '0%'
             },
             block_four: {
@@ -1855,6 +1948,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
         maxdop: { category: 'Application', subCategory: 'Application_sub' },
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
+        scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
         crr: { category: 'Resiliency', subCategory: 'Protection' }
     };
 
@@ -2511,16 +2605,16 @@ export const nameToIdConfigMapping = (name: string) => {
     return name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
         ? 'log-drive-size'
         : name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-        ? 'headroom'
-        : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
-        ? 'tempdb-drive-size'
-        : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
-        ? 'performance-tier'
-        : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
-        ? 'compute-rightsizing'
-        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-        ? 'max-dop'
-        : '';
+            ? 'headroom'
+            : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+                ? 'tempdb-drive-size'
+                : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
+                    ? 'performance-tier'
+                    : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
+                        ? 'compute-rightsizing'
+                        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
+                            ? 'max-dop'
+                            : '';
 };
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {

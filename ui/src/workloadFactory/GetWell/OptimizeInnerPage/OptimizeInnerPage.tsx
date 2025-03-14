@@ -35,6 +35,7 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
+import ScheduledFSxForONTAPBackupsTable from './InnerTables/ScheduledFSxForONTAPBackupsTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
 
@@ -102,6 +103,28 @@ const OptimizeInnerPage = () => {
                 />
             );
         } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+            return (
+                <DsButton
+                    isThin
+                    variant="secondary"
+                    isDisabled={false}
+                    onClick={() => {
+                        // optimizeAction(rowData);
+                        handleDialog(
+                            setDialog,
+                            selectedOptimizeConfig?.type,
+                            callOptimizeApi,
+                            closeDialog,
+                            selectedOptimizeConfig?.data,
+                            'single',
+                            rowData
+                        );
+                    }}
+                >
+                    Optimize
+                </DsButton>
+            );
+        } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
             return (
                 <DsButton
                     isThin
@@ -421,8 +444,18 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-            }
-        };
+
+            case GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                return (
+                    <ScheduledFSxForONTAPBackupsTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+        }
+    };
 
     const setHeading = () => {
         if (selectedOptimizeConfig?.type === 'Data files') {

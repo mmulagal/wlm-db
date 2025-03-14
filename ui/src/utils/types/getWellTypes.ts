@@ -26,6 +26,8 @@ export interface GetWellSliceInterface {
     selectedRecommendedInstance: any;
     selectedSnapshotPolicy: any;
     selectedSnapshot: any;
+    selectedawsBackup: any;
+    selectedAWSBackup: any;
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;
@@ -67,6 +69,7 @@ export interface AssessmentResponseInterface {
     maxDOP?: PerConfigInterface;
     resiliency?: {
         snapshotPolicy?: PerConfigInterface;
+        awsBackup?: PerConfigInterface;
         crr?: PerConfigInterface;
     };
 }

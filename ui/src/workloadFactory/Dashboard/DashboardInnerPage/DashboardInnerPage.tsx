@@ -64,6 +64,7 @@ import LicenseTable from './RenderTables/LicenseTable';
 import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
+import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -174,8 +175,8 @@ const DashboardInnerPage = () => {
                                 type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                                     ? 'log-drive-size'
                                     : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                    ? 'headroom'
-                                    : 'tempdb-drive-size',
+                                        ? 'headroom'
+                                        : 'tempdb-drive-size',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -201,8 +202,8 @@ const DashboardInnerPage = () => {
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                            ? 'headroom'
-                            : 'tempdb-drive-size'
+                                ? 'headroom'
+                                : 'tempdb-drive-size'
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
@@ -247,6 +248,22 @@ const DashboardInnerPage = () => {
                         snapshotPolicy: {
                             uuid: selectedSnapshot?.data?.uuid,
                             name: selectedSnapshot?.data?.name
+                        }
+                    }
+                ]
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeResiliency;
+            const state = store.getState();
+            const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
+
+            payload = {
+                type: ['aws-backup-policy'],
+                params: [
+                    {
+                        awsBackup: {
+                            uuid: selectedAWSBackup?.data?.uuid,
+                            name: selectedAWSBackup?.data?.name
                         }
                     }
                 ]
@@ -786,6 +803,20 @@ const DashboardInnerPage = () => {
                 });
 
                 break;
+
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.scheduled_aws_backup?.recommendation?.description
+                    }
+                });
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -884,6 +915,10 @@ const DashboardInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
                 return (
                     <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
+                );
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                return (
+                    <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
                 );
         }
     };

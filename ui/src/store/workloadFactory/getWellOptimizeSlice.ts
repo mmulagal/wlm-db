@@ -24,6 +24,8 @@ const initialState: GetWellSliceInterface = {
     selectedRecommendedInstance: null,
     selectedSnapshotPolicy: null,
     selectedSnapshot: null,
+    selectedawsBackup: null,
+    selectedAWSBackup: null,
     credIdFromJM: '',
     regionFromJM: '',
     landingFrom: '',
@@ -45,6 +47,13 @@ const getWellOptimizeSlice = createSlice({
         setSelectedSnapshotPolicy: (state, action: PayloadAction<any>) => {
             state.selectedSnapshotPolicy = action.payload;
         },
+        setSelectedAWSBackup: (state, action: PayloadAction<any>) => {
+            state.selectedAWSBackup = action.payload;
+        },
+        setSelectedawsBackup: (state, action: PayloadAction<any>) => {
+            state.selectedawsBackup = action.payload;
+        },
+
         setOptimizePageLoading: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = action.payload;
         },
@@ -168,6 +177,8 @@ const getWellOptimizeSlice = createSlice({
 export const {
     setSelectedSnapshot,
     setSelectedSnapshotPolicy,
+    setSelectedAWSBackup,
+    setSelectedawsBackup,
     setJobToInstanceMapForBulk,
     setLandingFrom,
     setCredIdFromJM,
