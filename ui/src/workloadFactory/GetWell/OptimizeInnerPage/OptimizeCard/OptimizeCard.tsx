@@ -125,6 +125,13 @@ const OptimizeCard = () => {
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
+            case GENERAL.CRR:
+                return {
+                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
+                };
             default:
                 return null;
         }

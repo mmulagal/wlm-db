@@ -27,7 +27,7 @@ describe('Process email request operations', () => {
 
     it('should throw error if file name does not contain .pdf', async () => {
         await expect(processEmailRequest(accountId, fileBuffer, 'faultyFileName', fields, emailType)).rejects.toThrow(
-            'Invalid file extension found, expected .pdf'
+            /Invalid file extension found, expected .pdf/
         );
     });
 

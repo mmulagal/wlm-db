@@ -138,3 +138,6 @@ check_status "Failed to install pgvector"
 
 # Create pgvector extension
 sudo -u postgres /usr/bin/psql -c "CREATE EXTENSION vector;"
+
+sleep 60
+echo "PostgreSQL setup is complete."

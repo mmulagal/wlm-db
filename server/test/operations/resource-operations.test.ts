@@ -64,13 +64,16 @@ describe('Resource operations', () => {
 
     it('Get managed database-hosts', async () => {
         const expected = {
-            count: 1,
             items: [
                 {
                     resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
-                    instances: ['i-07e76a4b916548dc0', 'i-0880a21327284f67c']
+                    instances: ['i-07e76a4b916548dc0', 'i-0880a21327284f67c'],
+                    credentialId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                    region: 'ap-southeast-1',
+                    databaseType: 'MSSQL'
                 }
             ],
+            count: 1,
             nextToken: undefined
         };
 

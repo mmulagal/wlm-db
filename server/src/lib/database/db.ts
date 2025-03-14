@@ -6,7 +6,7 @@ import {
     DATABASE_DEPLOYMENT_TYPE,
     DATABASE_TYPE
 } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from '../../utils/utils';
@@ -303,20 +303,20 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 async function listResources(
     accountId?: string,
     resourceId?: string,
-    credentialsId?: string,
-    region?: string,
-    resourceType?: string,
+    credentialIds?: string | string[],
+    region?: string | string[],
+    resourceType?: string | string[],
     fsxId?: string,
     metaFilters?: { [x: string]: string | number | boolean },
     pageSize?: number,
     nextToken?: string
 ) {
-    logger.info('Listing resources', {
+    logger.info('Listing resources for params', {
         accountId,
         resourceId,
         resourceType,
         region,
-        credentialsId,
+        credentialIds,
         metaFilters,
         pageSize,
         nextToken
@@ -325,14 +325,17 @@ async function listResources(
     if (accountId) {
         accountId = checkAccount(accountId);
     }
+    resourceType = resourceType ? (isArray(resourceType) ? resourceType : [resourceType]) : undefined;
+    region = region ? (isArray(region) ? region : [region]) : undefined;
+    credentialIds = credentialIds ? (isArray(credentialIds) ? credentialIds : [credentialIds]) : undefined;
 
     return prisma.client.resource.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
-            ...(resourceType && { resource_type: resourceType }),
-            ...(region && { region }),
-            ...(credentialsId && { credentials_id: credentialsId }),
+            ...(resourceType && { resource_type: { in: resourceType } }),
+            ...(region && { region: { in: region } }),
+            ...(credentialIds && { credentials_id: { in: credentialIds } }),
             ...(fsxId && { co_relation_id: fsxId }),
             ...(metaFilters && {
                 AND: Object.entries(metaFilters).map(([key, val]) => ({

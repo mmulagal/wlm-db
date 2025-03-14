@@ -7,6 +7,7 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
@@ -175,7 +176,7 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
                 pluralTitle={`Impacted network adapters`}
                 singularTitle={'Impacted network adapter'}
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer onClick={handleBulkAction} />} */}
+            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />} */}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

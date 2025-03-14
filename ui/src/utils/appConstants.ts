@@ -852,6 +852,12 @@ export const GENERAL = {
         'Job monitoring',
         ' to see when the modules have been installed.'
     ],
+    PREPARE_BULK_INSTANCES_INFO: [
+        'Few instances ',
+        'are unable to become managed instances because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
+        'Job monitoring',
+        ' to see when the modules have been installed.'
+    ],
     PREPARE_HOST_INFO_TAB3: [
         'Host ',
         ' is now an unmanaged host. It failed to become a managed host because dependent PowerShell modules are not installed. Workload Factory will install the modules and then you can try again. Check ',
@@ -1248,6 +1254,7 @@ export const GENERAL = {
     APPLICATION: 'Application (SQL Server)',
     RESILIENCY: 'Resiliency',
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
+    CRR: 'Cross-Region Replication (CRR)',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"
 };

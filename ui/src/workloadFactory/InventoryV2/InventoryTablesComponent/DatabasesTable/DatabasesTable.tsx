@@ -51,7 +51,10 @@ const DatabasesTable = () => {
                             return;
                         }
                         perRow?.databases?.map((perDatabase: any) => {
-                            let protectionText = getProtectionText(perRow);
+                            let protectionText = getProtectionText({
+                                ...perDatabase,
+                                fileSystemType: perRow?.fileSystemType
+                            });
                             let protectionVal = '';
                             if (protectionText === PROTECTION_TEXT_STATUS.YES) {
                                 protectionVal = GENERAL.PROTECTED;
@@ -241,16 +244,16 @@ const DatabasesTable = () => {
                 let awsBackup = isAwsBackupEnabledText(rowData, '');
                 if (
                     protectionData?.isFsxOntapSnapshotsEnabled &&
-                    protectionData?.isFsxOntapSnapshotsEnabled !== GENERAL.NOT_AVAILABLE
+                    String(protectionData?.isFsxOntapSnapshotsEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
                 ) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (awsBackup && awsBackup !== GENERAL.NOT_AVAILABLE) {
+                if (awsBackup && String(awsBackup)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
                 if (
                     protectionData?.isSqlNativeEnabled &&
-                    protectionData?.isSqlNativeEnabled !== GENERAL.NOT_AVAILABLE
+                    String(protectionData?.isSqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE
                 ) {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }

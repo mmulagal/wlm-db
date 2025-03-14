@@ -144,7 +144,7 @@ router.post(
 );
 
 router.get(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/resources/managed-hosts`,
+    `${BASE_URL}/v1/managed-hosts`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, ManagedInstanceList);

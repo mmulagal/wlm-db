@@ -1,9 +1,10 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import {
+    useManageBulkMssqlInstanceMutation,
     useManageMssqlInstanceMutation,
     usePrepareHostMutation,
     useRegisterResourceCredentialsMutation,
@@ -15,11 +16,18 @@ import {
     getOptimizationStatus,
     getProtectionText,
     handleManageInstances,
+    handleManageInstancesBulk,
     saveFsxInCredRegisteredObj,
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { createDetectHostPayload, formatSizeTwoPrecision, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import {
+    checkBoxHandleManage,
+    createDetectHostPayload,
+    formatSizeTwoPrecision,
+    getSelectedFromSelectionState,
+    isSmbProtocol
+} from '../../../../utils/utilityFunctions';
 import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_ACTIONS, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
@@ -36,6 +44,7 @@ import {
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
+    setSelectedRowsForManage,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -69,12 +78,16 @@ import { initialInstanceTableColState } from '../../../../utils/manageColumnUtil
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const InstancesTable = () => {
+    const disptach = useDispatch();
     const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
 
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading } = useAppSelector(state => state.inventoryV2);
+    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading, selectedRowsForManage } = useAppSelector(
+        state => state.inventoryV2
+    );
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
@@ -88,6 +101,7 @@ const InstancesTable = () => {
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const [manageInstanceApi] = useManageMssqlInstanceMutation();
+    const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
 
     const [loading, setLoading] = useState(false);
@@ -120,6 +134,7 @@ const InstancesTable = () => {
 
     useEffect(() => {
         let newTable: any = [];
+        let id: number = 0;
         if (inventoryTableData) {
             Object.keys(inventoryTableData).map((rowId: string) => {
                 if (inventoryTableData[rowId]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
@@ -152,6 +167,7 @@ const InstancesTable = () => {
                         );
                         let perRowData = {
                             ...perRow,
+                            id: String(id++),
                             hostRow: perHost,
                             name: perHost?.name,
                             hostType: perHost?.hostType,
@@ -535,7 +551,11 @@ const InstancesTable = () => {
             width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -545,7 +565,11 @@ const InstancesTable = () => {
             width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -555,7 +579,11 @@ const InstancesTable = () => {
             width: '213px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -702,9 +730,17 @@ const InstancesTable = () => {
                 const loading = rowData?.loading || rowData?.subLoading;
                 return (
                     <>
-                        {cellData && <div>{cellData}</div>}
+                        {cellData && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {cellData}
+                            </DsTypography>
+                        )}
                         {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
+                        {!cellData && !loading && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {GENERAL.NOT_AVAILABLE}
+                            </DsTypography>
+                        )}
                     </>
                 );
             }
@@ -719,9 +755,17 @@ const InstancesTable = () => {
                 const loading = rowData?.loading || rowData?.subLoading;
                 return (
                     <>
-                        {cellData && <div>{cellData}</div>}
+                        {cellData && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {cellData}
+                            </DsTypography>
+                        )}
                         {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && GENERAL.NOT_AVAILABLE}
+                        {!cellData && !loading && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {GENERAL.NOT_AVAILABLE}
+                            </DsTypography>
+                        )}
                     </>
                 );
             }
@@ -733,7 +777,11 @@ const InstancesTable = () => {
             isSortable: true,
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -743,7 +791,11 @@ const InstancesTable = () => {
             isSortable: true,
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -753,17 +805,69 @@ const InstancesTable = () => {
             isSortable: true,
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || GENERAL.NOT_AVAILABLE}
+                    </DsTypography>
+                );
             }
         }
     ];
 
+    const disableManageCheck = (rowData: any) => {
+        let errorMessage = '';
+        let isDisabled = false;
+        if (rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED) {
+            isDisabled = true;
+            errorMessage = 'Only unmanaged instances can be managed';
+        } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
+            isDisabled = true;
+            errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
+        } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP) {
+            isDisabled = true;
+            errorMessage = GENERAL.FSXN_MANAGE_SUPPORTED;
+        } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+            isDisabled = true;
+            errorMessage = GENERAL.HOST_DOWN;
+        } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+            isDisabled = true;
+            errorMessage = GENERAL.SSM_DOWN;
+        } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+            isDisabled = true;
+            errorMessage = GENERAL.SQL_SERVER_INSTANCE_DOWN;
+        } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+            isDisabled = true;
+            errorMessage = GENERAL.PGSQL_CTA_NA;
+        }
+        return { isDisabled, errorMessage };
+    };
+
+    const updatedTableData = useMemo(() => {
+        return data?.map((row: any) => {
+            const { isDisabled, errorMessage } = disableManageCheck(row);
+            return {
+                ...row,
+                cellProps: {
+                    ...row.cellProps,
+                    isDisabled: isDisabled,
+                    selectionProps: {
+                        title: errorMessage,
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
+                }
+            };
+        });
+    }, [data, selectedRowsForManage]);
+
     const tableProps = useTable({
         isSorting: false,
         columns: managedHostSubTableColDefs,
-        rows: data,
+        rows: updatedTableData,
         pageSize: 10,
-        selectionType: 'none',
+        // selectionType: 'multiple',
+        // defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -1023,48 +1127,32 @@ const InstancesTable = () => {
     });
 
     useEffect(() => {
-        let count = 0;
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+        disptach(setSelectedRowsForManage(rowsData));
 
-        for (const key in tableProps.columnsState) {
-            if (
-                tableProps.columnsState[key].hasOwnProperty('isHidden') &&
-                tableProps.columnsState[key].isHidden === false
-            ) {
-                count++;
-            }
+        if (rowsData.length > 0 && inProgressInstances?.length) {
+            checkBoxHandleManage(tableProps.selectionState, rowsData, disptach);
         }
-        if (count > 7) {
-            setTableHorizontalScroll(true);
-        } else {
-            setTableHorizontalScroll(false);
-        }
-    }, [tableProps.columnsState]);
+    }, [tableProps.selectionState, inProgressInstances]);
 
-    useEffect(() => {
-        if (isRefreshed) {
-            tableProps?.pagination?.gotoPage(0);
-        }
-    }, [isRefreshed]);
-
-    useEffect(() => {
-        if (resetPage) {
-            if ((data || []).length % pageSize === 1) {
-                tableProps.pagination?.gotoPage(0);
-            }
-        }
-        setResetPage(false);
-    }, [resetPage]);
+    const handleBulkOperation = () => {
+        checkBoxHandleManage(tableProps.selectionState, selectedRowsForManage, disptach);
+        handleManageInstancesBulk(
+            selectedRowsForManage,
+            dispatch,
+            styles,
+            manageBulkInstanceApi,
+            prepareHostApi,
+            false
+        );
+    };
 
     return (
         <>
             <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={
-                        tableHorizontalScroll
-                            ? `${styles.table} ${styles.tableScroll}`
-                            : `${styles.table} ${styles.tableScrollRevert}`
-                    }
+                    className={styles.table}
                 >
                     <TableTopBar
                         //@ts-ignore
@@ -1075,6 +1163,9 @@ const InstancesTable = () => {
                         className={styles.topBarStyle}
                         subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
                     />
+                    {selectedRowsForManage.length > 0 && (
+                        <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
+                    )}
                     <Table
                         //@ts-ignore
                         tableProps={tableProps}

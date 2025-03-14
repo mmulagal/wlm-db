@@ -6,7 +6,6 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import BulkActionContainer from './BulkActionContainer';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -16,6 +15,7 @@ import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 interface MaxdopTableProps {
     lastColDetails: any;
@@ -139,7 +139,9 @@ const MaxDopTable = ({ lastColDetails, handleBulkAction }: MaxdopTableProps) => 
                 pluralTitle={`Not-optimized instances`}
                 singularTitle={'Not-optimized instance'}
             />
-            {selectedRowsForOptimize.length > 0 && <BulkActionContainer onClick={handleBulkOperation} />}
+            {selectedRowsForOptimize.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkOperation} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

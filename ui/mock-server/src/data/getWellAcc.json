@@ -29,7 +29,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -79,7 +79,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -129,7 +129,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -179,7 +179,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -229,7 +229,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -279,7 +279,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -329,7 +329,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -379,7 +379,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "Auto",
@@ -429,7 +429,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -484,7 +484,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "windows_gpt",
@@ -537,7 +537,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -590,7 +590,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -640,7 +640,7 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
@@ -658,14 +658,13 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 6,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
                                                 "objectType": "Drive"
                                             }
                                         ]
-                    
                                     },
                                     {
                                         "name": "ntfs-allocation-unit-size",
@@ -778,8 +777,7 @@
                                                 "sizePercentToDataDrive": 50
                                             }
                                         ],
-                                        "underProvisionedDrives": [
-                                        ],
+                                        "underProvisionedDrives": [],
                                         "ignoredDrives": [
                                             {
                                                 "databases": ["msdb"],
@@ -1067,19 +1065,27 @@
                         "resiliency": {
                             "snapshotPolicy": {
                                 "timestamp": 1740049582000,
-                                "tags": [
-                                    "Reliability"
-                                ],
+                                "tags": ["Reliability"],
                                 "violations": ["testing"],
                                 "severity": "warning",
                                 "status": "not-optimized",
                                 "resourceType": "Volume",
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": "sql-instance-volume-count",
+                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                                "tags": "Reliability",
+                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                             }
                         }
                     }
-                    
                 },
                 {
                     "databaseInstanceId": "42",
@@ -1105,7 +1111,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -1155,7 +1161,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -1205,7 +1211,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -1255,7 +1261,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -1305,7 +1311,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -1355,7 +1361,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -1405,7 +1411,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -1455,7 +1461,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "Auto",
@@ -1505,7 +1511,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -1560,7 +1566,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "windows_gpt",
@@ -1613,7 +1619,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -1666,7 +1672,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -1716,7 +1722,7 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
@@ -1734,14 +1740,13 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 6,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
                                                 "objectType": "Drive"
                                             }
                                         ]
-                    
                                     },
                                     {
                                         "name": "ntfs-allocation-unit-size",
@@ -2169,19 +2174,27 @@
                         "resiliency": {
                             "snapshotPolicy": {
                                 "timestamp": 1740049582000,
-                                "tags": [
-                                    "Reliability"
-                                ],
+                                "tags": ["Reliability"],
                                 "violations": ["testing"],
                                 "severity": "warning",
                                 "status": "not-optimized",
                                 "resourceType": "Volume",
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": "sql-instance-volume-count",
+                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                                "tags": "Reliability",
+                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                             }
                         }
                     }
-                    
                 },
                 {
                     "databaseInstanceId": "43",
@@ -2207,7 +2220,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -2257,7 +2270,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -2307,7 +2320,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -2357,7 +2370,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -2407,7 +2420,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -2457,7 +2470,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -2507,7 +2520,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -2557,7 +2570,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "Auto",
@@ -2607,7 +2620,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -2662,7 +2675,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "windows_gpt",
@@ -2715,7 +2728,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -2768,7 +2781,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -2818,7 +2831,7 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
@@ -2836,14 +2849,13 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 6,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
                                                 "objectType": "Drive"
                                             }
                                         ]
-                    
                                     },
                                     {
                                         "name": "ntfs-allocation-unit-size",
@@ -3271,19 +3283,27 @@
                         "resiliency": {
                             "snapshotPolicy": {
                                 "timestamp": 1740049582000,
-                                "tags": [
-                                    "Reliability"
-                                ],
+                                "tags": ["Reliability"],
                                 "violations": ["testing"],
                                 "severity": "warning",
                                 "status": "not-optimized",
                                 "resourceType": "Volume",
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": "sql-instance-volume-count",
+                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                                "tags": "Reliability",
+                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                             }
                         }
                     }
-                    
                 },
                 {
                     "databaseInstanceId": "44",
@@ -3319,7 +3339,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -3369,7 +3389,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -3419,7 +3439,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -3469,7 +3489,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -3519,7 +3539,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -3569,7 +3589,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -3619,7 +3639,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -3669,7 +3689,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "Auto",
@@ -3719,7 +3739,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -3774,7 +3794,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "windows_gpt",
@@ -3827,7 +3847,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -3880,7 +3900,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -3930,7 +3950,7 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
@@ -3948,14 +3968,13 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 6,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
                                                 "objectType": "Drive"
                                             }
                                         ]
-                    
                                     },
                                     {
                                         "name": "ntfs-allocation-unit-size",
@@ -4383,19 +4402,27 @@
                         "resiliency": {
                             "snapshotPolicy": {
                                 "timestamp": 1740049582000,
-                                "tags": [
-                                    "Reliability"
-                                ],
+                                "tags": ["Reliability"],
                                 "violations": ["testing"],
                                 "severity": "warning",
                                 "status": "not-optimized",
                                 "resourceType": "Volume",
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": "sql-instance-volume-count",
+                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                                "tags": "Reliability",
+                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                             }
                         }
                     }
-                    
                 },
                 {
                     "databaseInstanceId": "32",
@@ -4421,7 +4448,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -4471,7 +4498,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -4521,7 +4548,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -4571,7 +4598,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -4621,7 +4648,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -4671,7 +4698,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -4721,7 +4748,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -4771,7 +4798,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "Auto",
@@ -4821,7 +4848,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -4876,7 +4903,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "windows_gpt",
@@ -4929,7 +4956,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -4982,7 +5009,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -5032,7 +5059,7 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
@@ -5050,14 +5077,13 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 6,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
                                                 "objectType": "Drive"
                                             }
                                         ]
-                    
                                     },
                                     {
                                         "name": "ntfs-allocation-unit-size",
@@ -5485,19 +5511,27 @@
                         "resiliency": {
                             "snapshotPolicy": {
                                 "timestamp": 1740049582000,
-                                "tags": [
-                                    "Reliability"
-                                ],
+                                "tags": ["Reliability"],
                                 "violations": ["testing"],
                                 "severity": "warning",
                                 "status": "not-optimized",
                                 "resourceType": "Volume",
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": "sql-instance-volume-count",
+                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                                "tags": "Reliability",
+                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                             }
                         }
                     }
-                    
                 },
                 {
                     "databaseInstanceId": "33",
@@ -5523,7 +5557,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -5573,7 +5607,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "false",
@@ -5623,7 +5657,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -5673,7 +5707,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "off",
@@ -5723,7 +5757,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -5773,7 +5807,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -5823,7 +5857,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -5873,7 +5907,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "Auto",
@@ -5923,7 +5957,7 @@
                                             "wlmdb_sqllog_1733414521",
                                             "capacityvol"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -5978,7 +6012,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "windows_gpt",
@@ -6031,7 +6065,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -6084,7 +6118,7 @@
                                             "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
                                             "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
                                         ],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "mantar",
                                                 "value": "2",
@@ -6134,7 +6168,7 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
@@ -6152,14 +6186,13 @@
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 6,
                                         "objectsInViolation": ["disk1"],
-                                        "violationDetails" : [
+                                        "violationDetails": [
                                             {
                                                 "objectName": "disk1",
                                                 "value": "2",
                                                 "objectType": "Drive"
                                             }
                                         ]
-                    
                                     },
                                     {
                                         "name": "ntfs-allocation-unit-size",
@@ -6587,19 +6620,27 @@
                         "resiliency": {
                             "snapshotPolicy": {
                                 "timestamp": 1740049582000,
-                                "tags": [
-                                    "Reliability"
-                                ],
+                                "tags": ["Reliability"],
                                 "violations": ["testing"],
                                 "severity": "warning",
                                 "status": "not-optimized",
                                 "resourceType": "Volume",
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            "crr": {
+                                "name": "crr",
+                                "severity": "warning",
+                                "status": "not-optimized",
+                                "resourceType": "Volume",
+                                "totalObjectsAssessed": "sql-instance-volume-count",
+                                "totalObjectsInViolation": "sql-instance-volume-count-in-violation",
+                                "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
+                                "tags": "Reliability",
+                                "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                             }
                         }
                     }
-                    
                 },
                 {
                     "databaseInstanceId": "34",
