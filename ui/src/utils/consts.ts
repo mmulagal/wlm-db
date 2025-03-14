@@ -790,5 +790,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
     MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
-    CRR: 'Crr'
+    CRR: 'Crr',
+    ONTAP: 'ontap',
+    OS: 'os'
 };

@@ -3,16 +3,18 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnCoponent';
 import { useEffect, useMemo } from 'react';
-import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
 const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
 
     const tableData = useMemo(() => {
         let id = 0;
@@ -66,9 +68,9 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        // if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-        //     checkBoxHandle(tableProps.selectionState, rowsData, disptach);
-        // }
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.OS]?.length) {
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
+        }
     }, [tableProps.selectionState]);
 
     return (

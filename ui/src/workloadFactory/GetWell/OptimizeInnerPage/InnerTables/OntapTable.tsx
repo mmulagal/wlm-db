@@ -69,7 +69,7 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.ONTAP]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState]);

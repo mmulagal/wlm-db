@@ -84,10 +84,10 @@ const OntapTableWithData = ({ type, data, lastColDetails, handleBulkAction }: an
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.ONTAP]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
-    }, [tableProps.selectionState]);
+    }, [tableProps.selectionState, inProgressOptimizationData]);
 
     return (
         <div className={styles['inner-table']}>
