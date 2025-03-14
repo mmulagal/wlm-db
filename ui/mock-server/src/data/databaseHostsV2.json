@@ -134,7 +134,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": "N/A",
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": "N/A"
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "12",                             
@@ -199,7 +345,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "13",                             
@@ -264,7 +556,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "14",                             
@@ -329,7 +767,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -460,7 +1044,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "22",
@@ -519,7 +1249,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "23",                             
@@ -584,7 +1460,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "24",                             
@@ -649,7 +1671,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "Standalone",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -780,7 +1948,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "32",
@@ -839,7 +2153,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "33",
@@ -898,7 +2358,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "34",
@@ -957,7 +2563,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -1088,7 +2840,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "42",
@@ -1147,7 +3045,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "43",
@@ -1206,7 +3250,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "44",
@@ -1265,7 +3455,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -1371,7 +3707,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "52",
@@ -1430,7 +3912,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "53",
@@ -1489,7 +4117,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "54",
@@ -1548,7 +4322,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -1677,7 +4597,153 @@
                         }
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "62",                             
@@ -1742,7 +4808,153 @@
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "63",                             
@@ -1807,7 +5019,153 @@
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 },
                 {
                     "databaseInstanceId": "64",                             
@@ -1872,7 +5230,153 @@
                         }  
                     },
                     "sqlServerDeploymentType": "FCI",
-                    "databaseInstanceErrors": ""
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "AssetManagement",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "HRAudit",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "PrivateBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "SalesData",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ExpenseTracker",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "TimeSheet",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "RetailBanking_sandbox",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
                 }
             ]
         }

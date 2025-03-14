@@ -79,7 +79,7 @@ async function handleComputeRemediation(
     let storageDetails = { svmId: '', fsxId: '' };
 
     try {
-        const [{ id: resourceId, resource_id: databaseHostId, metadata }] = resourceDetails;
+        const [{ resource_id: databaseHostId, metadata }] = resourceDetails;
         const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
         ({ activeNodeInstanceId = '' } = await getActiveSqlNode(
             credentialsId,
@@ -437,12 +437,12 @@ async function handleComputeRemediation(
                 },
                 lastAssessedDate: new Date().getTime().toString()
             };
-            await updateResourceMetaData(accountId, credentialsId, resourceId, metadata);
+            await updateResourceMetaData(accountId, credentialsId, databaseHostId, metadata);
             jobStatus = JOBSTATUS.COMPLETED;
             if (isDemo()) {
                 const updatedMetadata = cloneDeep(metadata) as unknown as Metadata;
                 updatedMetadata.isComputeOptimized = true;
-                await updateResourceMetaData(accountId, credentialsId, resourceId, updatedMetadata);
+                await updateResourceMetaData(accountId, credentialsId, databaseHostId, updatedMetadata);
             }
             await updateLongRunningAuditGroup(AuditStatus.SUCCESS, undefined, formattedInstanceName);
             return;

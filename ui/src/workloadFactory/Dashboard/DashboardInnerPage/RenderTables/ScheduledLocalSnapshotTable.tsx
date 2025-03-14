@@ -6,7 +6,6 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useMemo } from 'react';
 import { isOptimized, mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import BulkActionContainer from './BulkActionContainer';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -40,6 +39,8 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
                     const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
                     if (!isStorageTierOptimized) {
                         storageTierAssessmentData.push({
+                            credentialId: hostData?.credentialId,
+                            regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,

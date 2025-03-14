@@ -67,6 +67,7 @@ export interface AssessmentResponseInterface {
     maxDOP?: PerConfigInterface;
     resiliency?: {
         snapshotPolicy?: PerConfigInterface;
+        crr?: PerConfigInterface;
     };
 }
 

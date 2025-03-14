@@ -172,8 +172,10 @@ const OptimizeResilienceSchema = {
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeResiliencyBody,
     tags: [RouteTags.ASSESSMENT],
-    resourceRequest: {
-        200: AvailableSnapshotPoliciesResponse
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
     }
 };
 

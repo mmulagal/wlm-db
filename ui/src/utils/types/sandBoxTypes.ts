@@ -22,6 +22,11 @@ export interface CreateSandboxEntities {
         dbMountPointsData: any;
         dbMountPointsLoading: boolean;
     };
+    selectedCs: {
+        selectedDatabaseHost: any;
+        selectedDatabaseInstance: any;
+        selectedDatabase: any;
+    };
     source: {
         selectedDatabaseHost: any;
         selectedDatabaseInstance: any;

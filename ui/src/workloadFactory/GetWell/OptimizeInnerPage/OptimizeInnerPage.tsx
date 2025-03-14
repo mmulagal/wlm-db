@@ -35,6 +35,7 @@ import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
+import CRROptimizeTable from './InnerTables/CRROptimizeTable';
 import { useRef, useState } from 'react';
 
 const OptimizeInnerPage = () => {
@@ -68,7 +69,8 @@ const OptimizeInnerPage = () => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === GENERAL.CRR
         ) {
             return (
                 <Popover
@@ -410,8 +412,17 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-        }
-    };
+            case GENERAL.CRR:
+                return (
+                    <CRROptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                    />
+                );
+            }
+        };
 
     const setHeading = () => {
         if (selectedOptimizeConfig?.type === 'Data files') {

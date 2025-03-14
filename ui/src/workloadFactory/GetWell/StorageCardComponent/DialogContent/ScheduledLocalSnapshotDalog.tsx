@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './DialogContent.module.scss';
-import { Button, DsTypography } from '@netapp/design-system';
+import { Button, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -10,13 +10,18 @@ import { useDispatch } from 'react-redux';
 import { setSelectedSnapshot, setSelectedSnapshotPolicy } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { formatCronSchedule } from './cronUtils';
 
-const ScheduledLocalSnapshotDalog = ({ type }: any) => {
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
+const ScheduledLocalSnapshotDalog = ({ type, data }: any) => {
     const dispatch = useDispatch();
-    const { selectedResourceId, selectedDatabaseInstance, selectedSnapshot, selectedSnapshotPolicy } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedSnapshot,
+        selectedSnapshotPolicy,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    } = useAppSelector(state => state.getWellOptimize);
     const [getSnapshotPolicies] = useLazyGetSnapshotPoliciesQuery();
     const [loadPolicies, setLoadPolicies] = useState(false);
 
@@ -24,15 +29,15 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
         async function getPolicies() {
             setLoadPolicies(true);
             const response = await getSnapshotPolicies({
-                credentialId: headerSelectedCred?.data?.credentialsId,
-                region: headerSelectedRegion?.label2,
-                databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance
+                credentialId: selectedGwInstanceCredId || data?.credentialId,
+                region: selectedGwInstanceRegionId || data?.regionId,
+                databaseHostId: selectedResourceId || data?.databaseHostId,
+                instanceId: selectedDatabaseInstance || data?.instanceId
             });
             dispatch(setSelectedSnapshotPolicy(response?.data?.snapshotPolicies));
             setLoadPolicies(false);
         }
-        if (selectedSnapshotPolicy === null || selectedSnapshotPolicy.length === 0) {
+        if (selectedSnapshotPolicy === null || (selectedSnapshotPolicy && selectedSnapshotPolicy.length === 0)) {
             getPolicies();
         }
     }, [selectedSnapshotPolicy]);
@@ -110,28 +115,32 @@ const ScheduledLocalSnapshotDalog = ({ type }: any) => {
                         <DsTypography variant="Regular_14">Policy schedule:</DsTypography>
                     </div>
 
-                    <div className={styles.rightSide}>
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
+                    {loadPolicies ? (
+                        <div className={styles.rightSide}>
+                            <div style={{ position: 'relative', top: '8px' }}>
+                                <DsFlashingDotsLoader />
                             </div>
-                            <DsTypography variant="Regular_14">Every hour, keep the last 6 copies</DsTypography>
                         </div>
+                    ) : (
+                        <div className={styles.rightSide}>
+                            {selectedSnapshot?.data?.schedules &&
+                                selectedSnapshot?.data?.schedules.length > 0 &&
+                                selectedSnapshot?.data?.schedules.map((schedule: any, idx: number) => (
+                                    <div className={styles.row} key={idx}>
+                                        <div>
+                                            <Bullet />
+                                        </div>
+                                        <DsTypography variant="Regular_14">{formatCronSchedule(schedule)}</DsTypography>
+                                    </div>
+                                ))}
 
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">Once a day, keep the last 2 copies</DsTypography>
+                            {(selectedSnapshot?.data?.schedules === undefined ||
+                                (selectedSnapshot?.data?.schedules &&
+                                    selectedSnapshot?.data?.schedules.length === 0)) && (
+                                <DsTypography variant="Regular_14">Not available</DsTypography>
+                            )}
                         </div>
-
-                        <div className={styles.row}>
-                            <div>
-                                <Bullet />
-                            </div>
-                            <DsTypography variant="Regular_14">Once a week, keep the last 1 copy</DsTypography>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
 

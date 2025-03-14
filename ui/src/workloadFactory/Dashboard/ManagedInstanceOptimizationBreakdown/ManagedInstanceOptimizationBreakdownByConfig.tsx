@@ -674,6 +674,42 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </DsButton>
                     </div>
                 </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.CRR}
+                        percentage={Math.round(((configData.crr || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.crr}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CRR]?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0}
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <TooltipComponent
+                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                            placement="bottom"
+                            width="120px"
+                            height="30px"
+                        >
+                            <div>
+                                <DsButton data-testid="wlm-db-optimize-crr" variant="secondary" isDisabled={true}>
+                                    Optimize
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    </div>
+                </div>
             </div>
         </div>
     );

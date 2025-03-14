@@ -756,7 +756,8 @@ export const GETWELL_CONFIG: any = {
     'host-os-patch': 'host_os_patch',
     'mssql-patch': 'microsoft_sql_patch',
     maxdop: 'maxdop',
-    'snapshot-policy': 'scheduled_local_snapshot'
+    'snapshot-policy': 'scheduled_local_snapshot',
+    crr: 'crr'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
@@ -788,5 +789,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MAXDOP: 'MAXDOP',
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
-    MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch'
+    MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
+    CRR: 'Crr'
 };

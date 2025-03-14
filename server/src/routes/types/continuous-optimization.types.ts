@@ -280,6 +280,30 @@ const BulkOptimizePerHostRequestBody = Type.Object({
     )
 });
 
+const SnapshotSchedule = Type.Object({
+    uuid: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String()),
+    cron: Type.Optional(
+        Type.Object({
+            hours: Type.Optional(Type.Array(Type.Number())),
+            minutes: Type.Optional(Type.Array(Type.Number())),
+            weekdays: Type.Optional(Type.Array(Type.Number())),
+            months: Type.Optional(Type.Array(Type.Number())),
+            days: Type.Optional(Type.Array(Type.Number()))
+        })
+    ),
+    retention: Type.Optional(Type.String()),
+    interval: Type.Optional(Type.String())
+});
+type SnapshotScheduleType = Static<typeof SnapshotSchedule>;
+
+const SnapshotPolicyDetails = Type.Object({
+    uuid: Type.String(),
+    name: Type.String(),
+    schedules: Type.Optional(Type.Array(SnapshotSchedule))
+});
+type SnapshotPolicyDetailsType = Static<typeof SnapshotPolicyDetails>;
+
 const SnapshotPolicy = Type.Object({
     uuid: Type.String(),
     name: Type.String()
@@ -287,7 +311,7 @@ const SnapshotPolicy = Type.Object({
 type SnapshotPolicyType = Static<typeof SnapshotPolicy>;
 
 const AvailableSnapshotPoliciesResponse = Type.Object({
-    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicy)),
+    snapshotPolicies: Type.Optional(Type.Array(SnapshotPolicyDetails)),
     errorMessage: Type.Optional(Type.String())
 });
 
@@ -385,8 +409,12 @@ export {
     MSSQLPatchDriftResponseType,
     SnapshotPolicyAssesmentDataType,
     ResilienceDriftAssessmentResponseType,
+    SnapshotSchedule,
+    SnapshotScheduleType,
     SnapshotPolicy,
     SnapshotPolicyType,
+    SnapshotPolicyDetails,
+    SnapshotPolicyDetailsType,
     OntapVolumeType,
     AvailableSnapshotPoliciesResponse,
     AvailableSnapshotPoliciesResponseType,

@@ -7,6 +7,7 @@ import {
     setInventoryTableData,
     setManagedAssessmentHostIdsList,
     setSelectedHeaderTab,
+    setSelectedRowsForManage,
     setUnManagedPerfInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -1706,6 +1707,57 @@ export const updateInstanceStatus = (
     return updatedInventoryTableData;
 };
 
+export const updateInstanceBulkStatus = (action: InstanceActions, response: any) => {
+    let updatedState = store.getState();
+    let { inventoryTableData }: any = updatedState?.inventoryV2;
+    const updatedInventoryTableData = { ...inventoryTableData };
+
+    response?.map((hostData: any) => {
+        let successFullInstances: any = [];
+        let failedInstances = [];
+        hostData?.items.map((item: any) => {
+            if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                successFullInstances.push(item);
+            } else {
+                failedInstances.push(item);
+            }
+        });
+        const targettedHostIdVal = inventoryTableData?.[
+            uniqueHostRow(hostData?.resourceId, hostData?.credentialsId, hostData?.region)
+        ]
+            ? hostData?.resourceId
+            : hostData?.ec2InstanceId;
+        const targettedHostId = uniqueHostRow(targettedHostIdVal, hostData?.credentialsId, hostData?.region);
+
+        if (action === 'manage') {
+            updatedInventoryTableData[targettedHostId] = {
+                ...inventoryTableData[targettedHostId],
+                managedInstance:
+                    inventoryTableData[targettedHostId].managedInstance + successFullInstances?.length || 0,
+                action: INVENTORY_ACTIONS.MANAGE,
+                actionDisable:
+                    inventoryTableData[targettedHostId].totalInstance ===
+                        inventoryTableData[targettedHostId].managedInstance + successFullInstances?.length || 0,
+                sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
+                    const instanceInRes = successFullInstances.find(
+                        (item: any) => item?.databaseInstanceName === instanceItem?.databaseInstanceName
+                    );
+                    if (instanceInRes?.databaseInstanceName) {
+                        return {
+                            ...instanceItem,
+                            databaseInstanceId: instanceInRes.databaseInstanceGuid,
+                            statusColText: INVENTORY_STATUS.MANAGED
+                        };
+                    }
+                    return instanceItem;
+                })
+            };
+        }
+    });
+
+    return updatedInventoryTableData;
+};
+
 export const detectFieldsValidation = (entryData: any) => {
     const state = store.getState();
     const { detectManageUserName, detectManagePassword, detectOntapUsername, detectOntapPassword } = state.inventoryV2;
@@ -1899,9 +1951,9 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
     let awsProtection = val?.protection?.isAwsBackupEnabled;
     let protectionText: any = '';
     if (fsxType) {
-        if (awsProtection?.[fsxType] && awsProtection?.[fsxType] !== GENERAL.NOT_AVAILABLE) {
+        if (awsProtection?.[fsxType] && String(awsProtection?.[fsxType])?.toLowerCase() !== GENERAL.NOT_AVAILABLE) {
             protectionText = true;
-        } else if (awsProtection?.[fsxType] === GENERAL.NOT_AVAILABLE) {
+        } else if (String(awsProtection?.[fsxType])?.toLowerCase() === GENERAL.NOT_AVAILABLE) {
             protectionText = GENERAL.NOT_AVAILABLE;
         } else if (!awsProtection?.[fsxType]) {
             protectionText = false;
@@ -1910,15 +1962,15 @@ export const isAwsBackupEnabledText = (val: any, fsxType: string) => {
         }
     } else {
         if (
-            (awsProtection?.fsxn && awsProtection?.fsxn !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.fsxw && awsProtection?.fsxw !== GENERAL.NOT_AVAILABLE) ||
-            (awsProtection?.ebs && awsProtection?.ebs !== GENERAL.NOT_AVAILABLE)
+            (awsProtection?.fsxn && String(awsProtection?.fsxn)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.fsxw && String(awsProtection?.fsxw)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (awsProtection?.ebs && String(awsProtection?.ebs)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = true;
         } else if (
-            awsProtection?.fsxn === GENERAL.NOT_AVAILABLE ||
-            awsProtection?.fsxw === GENERAL.NOT_AVAILABLE ||
-            awsProtection?.ebs === GENERAL.NOT_AVAILABLE
+            String(awsProtection?.fsxn)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(awsProtection?.fsxw)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(awsProtection?.ebs)?.toLowerCase() === GENERAL.NOT_AVAILABLE
         ) {
             protectionText = GENERAL.NOT_AVAILABLE;
         } else if (awsProtection) {
@@ -1949,11 +2001,14 @@ export const getProtectionText = (data: any) => {
 
     if (fsxType === 'ebs' || fsxType === 'fsxw') {
         if (
-            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = PROTECTION_TEXT_STATUS.YES;
-        } else if (awsBackupEnabled === GENERAL.NOT_AVAILABLE || sqlNativeEnabled === GENERAL.NOT_AVAILABLE) {
+        } else if (
+            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
+        ) {
             protectionText = '';
         } else if (data?.protection) {
             protectionText = PROTECTION_TEXT_STATUS.NO;
@@ -1962,15 +2017,15 @@ export const getProtectionText = (data: any) => {
         }
     } else {
         if (
-            (awsBackupEnabled && awsBackupEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (fsxOntapEnabled && fsxOntapEnabled !== GENERAL.NOT_AVAILABLE) ||
-            (sqlNativeEnabled && sqlNativeEnabled !== GENERAL.NOT_AVAILABLE)
+            (awsBackupEnabled && String(awsBackupEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (fsxOntapEnabled && String(fsxOntapEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE) ||
+            (sqlNativeEnabled && String(sqlNativeEnabled)?.toLowerCase() !== GENERAL.NOT_AVAILABLE)
         ) {
             protectionText = PROTECTION_TEXT_STATUS.YES;
         } else if (
-            awsBackupEnabled === GENERAL.NOT_AVAILABLE ||
-            fsxOntapEnabled === GENERAL.NOT_AVAILABLE ||
-            sqlNativeEnabled === GENERAL.NOT_AVAILABLE
+            String(awsBackupEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(fsxOntapEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE ||
+            String(sqlNativeEnabled)?.toLowerCase() === GENERAL.NOT_AVAILABLE
         ) {
             protectionText = '';
         } else if (data?.protection) {
@@ -2190,11 +2245,11 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
     );
 };
 
-export const installModuleNotification = (styles: any, hostname: string, dispatch: any, initialMsg: any) => {
+export const installModuleNotification = (styles: any, dispatch: any, initialMsg: any, hostname?: string) => {
     const prepareHostMsg = (
         <div className={styles.notification}>
             {initialMsg[0]}
-            <span className={styles.bold}>{hostname}</span>
+            {hostname && <span className={styles.bold}>{hostname}</span>}
             {initialMsg[1]}
             {
                 <>
@@ -2383,9 +2438,9 @@ export const handleManageInstances = (
                                         : GENERAL.PREPARE_INSTANCES_INFO;
                                 installModuleNotification(
                                     styles,
-                                    instances.length === 1 ? instances[0] : '',
                                     dispatch,
-                                    msgObj
+                                    msgObj,
+                                    instances.length === 1 ? instances[0] : ''
                                 );
                             } else {
                                 handleManageNotification(instances, [], '', isDetected, dispatch, styles);
@@ -2409,9 +2464,9 @@ export const handleManageInstances = (
                                         : GENERAL.PREPARE_INSTANCES_INFO;
                                 installModuleNotification(
                                     styles,
-                                    instances.length === 1 ? instances[0] : '',
                                     dispatch,
-                                    msgObj
+                                    msgObj,
+                                    instances.length === 1 ? instances[0] : ''
                                 );
                             } else {
                                 handleManageNotification(instances, [], '', isDetected, dispatch, styles);
@@ -2426,4 +2481,152 @@ export const handleManageInstances = (
             }
         }
     });
+};
+
+export const handleManageInstancesBulk = (
+    selectedRowsForManage: any,
+    dispatch: any,
+    styles: any,
+    manageBulkInstanceApi: any,
+    prepareHostApi: any,
+    isDetected?: boolean | undefined
+) => {
+    const updatedState = store.getState();
+    const { inProgressInstances } = updatedState.inventoryV2;
+    const { isDemoMode } = updatedState.auth;
+    const inProgressIds = selectedRowsForManage.map((instance: any) =>
+        uniqueHostRow(
+            `${instance?.ec2InstanceId}_${instance?.databaseInstanceName}`,
+            instance?.credentialId,
+            instance?.regionId
+        )
+    );
+    dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
+    let instancesList = selectedRowsForManage.map((instance: any) => instance?.databaseInstanceName);
+    handleManageTriggerNotification(instancesList, dispatch, styles);
+
+    let payload: any = [];
+    let hostInstanceMapping: any = {};
+    let resourceInstanceMapping: any = {};
+    selectedRowsForManage?.map((rowData: any) => {
+        let uniqueRow = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
+        if (hostInstanceMapping?.[uniqueRow]) {
+            hostInstanceMapping[uniqueRow].push(rowData?.databaseInstanceName);
+        } else {
+            hostInstanceMapping[uniqueRow] = [rowData?.databaseInstanceName];
+        }
+        resourceInstanceMapping[uniqueRow] = rowData?.resourceId;
+    });
+
+    Object.keys(hostInstanceMapping).map((key: any) => {
+        let itemArray: any = key.split('_');
+        let perItem: any = {
+            ec2InstanceId: itemArray[0],
+            credentialId: itemArray[1],
+            region: itemArray[2],
+            databaseInstanceNames: hostInstanceMapping[key]
+        };
+        if (resourceInstanceMapping?.[key] && isDemoMode) {
+            payload.databaseHostId = resourceInstanceMapping[key];
+        }
+        payload.push(perItem);
+    });
+
+    manageBulkInstanceApi({
+        payload
+    }).then((res: any) => {
+        const updatedState = store.getState();
+        const { inProgressInstances } = updatedState?.inventoryV2;
+        let updatedInProgressInstances = new Set([...inProgressInstances]);
+        inProgressIds.map((inProgressId: any) => {
+            updatedInProgressInstances.delete(inProgressId);
+        });
+        dispatch(setInProgressInstances(updatedInProgressInstances));
+        if (res?.data?.items) {
+            let successFullInstances: any = [];
+            let failedInstances: any = [];
+            res?.data?.items.map((resource: any) => {
+                resource?.items.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                    } else {
+                        failedInstances.push(item);
+                    }
+                });
+            });
+            if (successFullInstances?.length) {
+                handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            }
+
+            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.items);
+            dispatch(setInventoryTableData(updatedInventoryTableData));
+
+            // ToDO - Write prepare case also
+            let triggeredPrepare = handleBulkPrepareCall(res?.data?.items, dispatch, styles, prepareHostApi);
+            if (triggeredPrepare) {
+                const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
+                installModuleNotification(styles, dispatch, msgObj);
+            } else if (!successFullInstances?.length) {
+                handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
+            }
+
+            dispatch(setSelectedRowsForManage([]));
+        } else {
+            dispatch(setSelectedRowsForManage([]));
+        }
+    });
+};
+
+export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any, prepareHostApi: any) => {
+    let triggeredPrepare = false;
+    response?.map((resource: any) => {
+        let prepareApiRequired = false;
+        let sourceNodePrepareRequired = false;
+        let partnerNodeEc2Id;
+        resource?.items.map((item: any) => {
+            if (item?.status !== NOTIFICATION_TYPES.SUCCESS) {
+                // handle prepare API
+                const errorList = item?.errorMessage?.split('\n');
+                errorList.map((errorItem: any) => {
+                    if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                        prepareApiRequired = true;
+                        if (errorItem.includes(PARTNER_NODE)) {
+                            partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                        } else {
+                            sourceNodePrepareRequired = true;
+                        }
+                    }
+                });
+            }
+        });
+
+        if (prepareApiRequired) {
+            if (sourceNodePrepareRequired) {
+                triggeredPrepare = true;
+                prepareHostApi({
+                    credentialId: resource?.credentialsId,
+                    regionId: resource?.region,
+                    instanceId: resource?.ec2InstanceId
+                }).then((prepareRes: any) => {
+                    if (prepareRes && !prepareRes?.error) {
+                        triggeredPrepare = true;
+                    }
+                });
+            }
+            if (partnerNodeEc2Id) {
+                triggeredPrepare = true;
+                prepareHostApi({
+                    credentialId: resource?.credentialsId,
+                    regionId: resource?.region,
+                    instanceId: partnerNodeEc2Id
+                }).then((prepareRes: any) => {
+                    if (prepareRes && !prepareRes?.error) {
+                        triggeredPrepare = true;
+                    }
+                });
+            }
+        }
+    });
+
+    return triggeredPrepare;
 };

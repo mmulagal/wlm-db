@@ -98,3 +98,6 @@ check_status "Failed to set permissions"
 echo "Starting PostgreSQL..."
 sudo systemctl start postgresql
 check_status "Failed to start PostgreSQL service"
+
+sleep 60
+echo "Replica setup completed successfully"

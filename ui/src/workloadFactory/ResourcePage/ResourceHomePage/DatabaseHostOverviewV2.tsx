@@ -123,9 +123,7 @@ const DatabaseHostOverviewV2 = ({ refreshTime, refreshPage }: any) => {
             </div>
 
             <div className={styles.secondLevel}>
-                <OverviewTabs />
-                {selectedTab === WLF_TABS.OVERVIEW && <DatabaseOverviewLayout />}
-                {selectedTab === WLF_TABS.DATABASE_LIST && <DatabaseListTable />}
+                <DatabaseOverviewLayout />
             </div>
         </div>
     );

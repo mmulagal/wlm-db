@@ -1,4 +1,5 @@
 // ToDo - Write utils dunction for dashboard page here
+import { get } from 'lodash';
 import store from '../../store/store';
 import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -469,6 +470,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 const isScheduledLoclaSnapshotOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.snapshotPolicy?.status
                 );
+                const isCRROptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 if (isComputeOptimized && isOperatingSystemPatchOptimized && isRssConfigurationOptimized) {
                     assessmentGroupedByCategory.compute++;
@@ -484,7 +486,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 if (isApplicationOptimized && isMicrosoftSqlPatchOptimized && isMaxdopPatchOptimized) {
                     assessmentGroupedByCategory.application++;
                 }
-                if (isScheduledLoclaSnapshotOptimized) {
+                if (isScheduledLoclaSnapshotOptimized && isCRROptimized) {
                     assessmentGroupedByCategory.resiliency++;
                 }
             }
@@ -511,6 +513,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
         mssqlPatch: 0,
         maxdopPatch: 0,
         scheduledLocalSnapshot: 0,
+        crr: 0,
         total: 0,
         severityObj: {}
     };
@@ -574,53 +577,74 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any) => {
                 const isScheduledLocalSnapshotOptimized = isOptimized(
                     instanceAssessmentData?.resiliency?.snapshotPolicy?.status
                 );
+                const isCrrOptimized = isOptimized(instanceAssessmentData?.resiliency?.crr?.status);
 
                 getAssessmentGroupedByConfigurations.storageTier += isStorageTierOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.severityObj.storageTier = GETWELL_VALUES[perfTierObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.storageTier;
+                getAssessmentGroupedByConfigurations.severityObj.storageTier =
+                    GETWELL_VALUES[perfTierObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.storageTier;
                 getAssessmentGroupedByConfigurations.fileSystemHeadroom += isFileSystemHeadroomOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.fileSystemHeadroom =
-                    GETWELL_VALUES[headroomObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.fileSystemHeadroom;
+                    GETWELL_VALUES[headroomObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.fileSystemHeadroom;
                 getAssessmentGroupedByConfigurations.logDriveSize += isLogDriveSizeOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.logDriveSize =
-                    GETWELL_VALUES[logDriveSizeObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.logDriveSize;
+                    GETWELL_VALUES[logDriveSizeObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.logDriveSize;
                 getAssessmentGroupedByConfigurations.tempdbDriveSize += isTempdbDriveSizeOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.tempdbDriveSize =
-                    GETWELL_VALUES[tempdbDriveSizeObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.tempdbDriveSize;
+                    GETWELL_VALUES[tempdbDriveSizeObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.tempdbDriveSize;
                 getAssessmentGroupedByConfigurations.userDataFiles += isUserDataFilesOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.userDataFiles =
-                    GETWELL_VALUES[userDataFilesObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.userDataFiles;
+                    GETWELL_VALUES[userDataFilesObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.userDataFiles;
                 getAssessmentGroupedByConfigurations.logFiles += isLogFilesOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.severityObj.logFiles = GETWELL_VALUES[logFilesObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.logFiles;
+                getAssessmentGroupedByConfigurations.severityObj.logFiles =
+                    GETWELL_VALUES[logFilesObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.logFiles;
                 getAssessmentGroupedByConfigurations.tempdbPlacement += isTempdbPlacementOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.tempdbPlacement =
-                    GETWELL_VALUES[tempdbFilesLocationObj?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.tempdbPlacement;
+                    GETWELL_VALUES[tempdbFilesLocationObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.tempdbPlacement;
                 getAssessmentGroupedByConfigurations.ontapConfiguration += isOntapConfigurationOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.ontapConfiguration = 'Critical';
                 getAssessmentGroupedByConfigurations.operatingSystem += isOperatingSystemOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystem = 'Critical';
                 getAssessmentGroupedByConfigurations.computeRightsizing += isComputeRightsizingOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.computeRightsizing =
-                    GETWELL_VALUES[instanceAssessmentData?.compute?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.computeRightsizing;
+                    GETWELL_VALUES[instanceAssessmentData?.compute?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.computeRightsizing;
                 getAssessmentGroupedByConfigurations.operatingSystemPatch += isOpearingSystemPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystemPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.operatingSystemPatch;
+                    GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.operatingSystemPatch;
                 getAssessmentGroupedByConfigurations.rssConfiguration += isRssConfigurationOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.rssConfiguration =
-                    GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.rssConfiguration;
+                    GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.rssConfiguration;
                 getAssessmentGroupedByConfigurations.applicationSqlServer += isApplicationSqlServerOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
-                    GETWELL_VALUES[instanceAssessmentData?.license?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
+                    GETWELL_VALUES[instanceAssessmentData?.license?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
                 getAssessmentGroupedByConfigurations.mssqlPatch += isMicrosoftSqlPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.mssqlPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.mssqlPatch;
+                    GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.mssqlPatch;
                 getAssessmentGroupedByConfigurations.maxdopPatch += isMaxdopPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.maxdopPatch;
+                    GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.maxdopPatch;
                 getAssessmentGroupedByConfigurations.scheduledLocalSnapshot += isScheduledLocalSnapshotOptimized
                     ? 1
                     : 0;
                 getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
-                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity] || getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
+                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.snapshotPolicy?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
+                getAssessmentGroupedByConfigurations.crr += isCrrOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.severityObj.crr =
+                    GETWELL_VALUES[instanceAssessmentData?.resiliency?.crr?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.crr;
             }
         });
     });
