@@ -51,7 +51,7 @@ router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/man
 router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
 
     setTimeout(() => {
-        generateResponse(res, 200, {items: [
+        generateResponse(res, 200, [
             {
                 // error: 'error',
                 resourceId: '123',
@@ -97,7 +97,7 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
                     }
                 ]
             }
-        ]});
+        ]);
     }, 3000);
 });
 

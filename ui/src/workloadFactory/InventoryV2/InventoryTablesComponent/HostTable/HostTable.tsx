@@ -12,7 +12,7 @@ import {
     postBlueXPMessage,
     BlueXPListeners
 } from '@netapp/design-system';
-import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
+import { useManageBulkMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 import {
@@ -68,7 +68,7 @@ const HostTable = () => {
 
     const [loading, setLoading] = useState(false);
 
-    const [manageInstanceApi] = useManageMssqlInstanceMutation();
+    const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -160,7 +160,7 @@ const HostTable = () => {
                         selectedInstanceNames,
                         dispatch,
                         styles,
-                        manageInstanceApi,
+                        manageBulkInstanceApi,
                         prepareHostApi
                     );
                 }}

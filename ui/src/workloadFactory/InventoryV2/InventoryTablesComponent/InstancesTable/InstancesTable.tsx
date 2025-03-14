@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import {
     useManageBulkMssqlInstanceMutation,
-    useManageMssqlInstanceMutation,
     usePrepareHostMutation,
     useRegisterResourceCredentialsMutation,
     useUnmanageMssqlInstanceMutation
@@ -100,7 +99,6 @@ const InstancesTable = () => {
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
-    const [manageInstanceApi] = useManageMssqlInstanceMutation();
     const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
 
@@ -374,7 +372,7 @@ const InstancesTable = () => {
                 [rowData?.databaseInstanceName],
                 dispatch,
                 styles,
-                manageInstanceApi,
+                manageBulkInstanceApi,
                 prepareHostApi,
                 true
             );
@@ -866,8 +864,8 @@ const InstancesTable = () => {
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
         pageSize: 10,
-        // selectionType: 'multiple',
-        // defaultSelectedRows: [],
+        selectionType: 'multiple',
+        defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -1055,7 +1053,7 @@ const InstancesTable = () => {
                                                 [rowData?.databaseInstanceName],
                                                 dispatch,
                                                 styles,
-                                                manageInstanceApi,
+                                                manageBulkInstanceApi,
                                                 prepareHostApi,
                                                 false
                                             );
