@@ -18,8 +18,7 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
         let id = 0;
         return data?.violationDetails?.map((row: any) => ({
             ...row,
-            id: String(id++),
-            cellProps: { ...row.cellProps, isDisabled: true }
+            id: String(id++)
         }));
     }, [data]);
 
@@ -58,9 +57,8 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        // selectionType: 'multiple',
-        selectionType: 'none',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
@@ -80,15 +78,10 @@ const OSMultiPathIOPolicy = ({ type, data, lastColDetails, handleBulkAction }: a
                 tableProps={tableProps}
                 pluralTitle={`Impacted drives`}
                 singularTitle={'Impacted drive'}
-                actionsRight={
-                    <div className={styles.optimizeButton}>
-                        <DsButton onClick={handleBulkAction} isThin variant="primary">
-                            Optimize
-                        </DsButton>
-                    </div>
-                }
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />} */}
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

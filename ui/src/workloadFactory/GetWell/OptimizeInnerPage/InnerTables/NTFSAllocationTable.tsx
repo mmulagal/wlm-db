@@ -18,8 +18,7 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
         let id = 0;
         return data?.violationDetails?.map((row: any) => ({
             ...row,
-            id: String(id++),
-            cellProps: { ...row.cellProps, isDisabled: true }
+            id: String(id++)
         }));
     }, [data]);
 
@@ -59,7 +58,7 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
         rows: tableData || [],
         pageSize: 50,
         selectionType: 'multiple',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
