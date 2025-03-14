@@ -1,7 +1,6 @@
 import createError from 'http-errors';
 import moment from 'moment';
 import { isEmpty } from 'lodash-es';
-// import { any } from 'bluebird';
 import {
     ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
