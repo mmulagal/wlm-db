@@ -2571,6 +2571,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case GENERAL.MAXDOP_PATCH:
             configKey = 'maxdopPatch';
             break;
+        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+            configKey = 'scheduledLocalSnapshot';
+            break;
     }
     const optimizedInstances = configData[configKey] || 0;
     dispatch(
