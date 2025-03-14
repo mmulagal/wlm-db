@@ -2414,14 +2414,11 @@ export const handleManageInstances = (
                 dispatch(setInventoryTableData(updatedInventoryTableData));
             } else {
                 // handle prepare API
-                let errorList: any = null;
-                res?.data?.[0]?.items?.map((item: any) => {
-                    errorList = item?.errorMessage?.split('\n') || errorList;
-                });
+                let errorList = res?.data?.[0]?.hostErrorMessage?.split('\n');
                 let prepareApiRequired = false;
                 let sourceNodePrepareRequired = false;
                 let partnerNodeEc2Id;
-                errorList.map((errorItem: any) => {
+                errorList?.map((errorItem: any) => {
                     if (errorItem.includes(PREPARE_API_ENDPOINT)) {
                         prepareApiRequired = true;
                         if (errorItem.includes(PARTNER_NODE)) {
@@ -2485,7 +2482,11 @@ export const handleManageInstances = (
                         });
                     }
                 } else {
-                    handleManageNotification(instances, [], errorList[0], isDetected, dispatch, styles);
+                    let otherErrorList: any = null;
+                    res?.data?.[0]?.items?.map((item: any) => {
+                        otherErrorList = item?.errorMessage?.split('\n') || otherErrorList;
+                    });
+                    handleManageNotification(instances, [], otherErrorList[0], isDetected, dispatch, styles);
                 }
             }
         } else if (res?.error) {
@@ -2580,7 +2581,7 @@ export const handleManageInstancesBulk = (
             if (triggeredPrepare) {
                 const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
                 installModuleNotification(styles, dispatch, msgObj);
-            } else if (!successFullInstances?.length) {
+            } else if (!successFullInstances?.length && failedInstances?.length) {
                 handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
             }
 
@@ -2594,23 +2595,18 @@ export const handleManageInstancesBulk = (
 export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any, prepareHostApi: any) => {
     let triggeredPrepare = false;
     response?.map((resource: any) => {
+        let errorList = resource?.hostErrorMessage?.split('\n');
         let prepareApiRequired = false;
         let sourceNodePrepareRequired = false;
         let partnerNodeEc2Id;
-        resource?.items.map((item: any) => {
-            if (item?.status !== NOTIFICATION_TYPES.SUCCESS) {
-                // handle prepare API
-                const errorList = item?.errorMessage?.split('\n');
-                errorList.map((errorItem: any) => {
-                    if (errorItem.includes(PREPARE_API_ENDPOINT)) {
-                        prepareApiRequired = true;
-                        if (errorItem.includes(PARTNER_NODE)) {
-                            partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
-                        } else {
-                            sourceNodePrepareRequired = true;
-                        }
-                    }
-                });
+        errorList?.map((errorItem: any) => {
+            if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                prepareApiRequired = true;
+                if (errorItem.includes(PARTNER_NODE)) {
+                    partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                } else {
+                    sourceNodePrepareRequired = true;
+                }
             }
         });
 
