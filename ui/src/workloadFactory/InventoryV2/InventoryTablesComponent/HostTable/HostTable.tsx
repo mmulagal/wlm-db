@@ -14,7 +14,6 @@ import {
 } from '@netapp/design-system';
 import { useManageBulkMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
-import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 import {
     checkForAnyAOAG,
     checkForAnySSD,
@@ -23,8 +22,7 @@ import {
     renderCellData,
     renderEstimatedCost,
     renderInstanceListText,
-    renderVpcText,
-    sortInventoryTableData
+    renderVpcText
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
 import {
@@ -53,9 +51,7 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 const HostTable = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
-    const removeSecNodeDiscoveredList = useAppSelector(state => state.inventoryV2.removeSecNodeDiscoveredList);
-    const [tableData, setTableData] = useState<any>([]);
+    const hostTableRows = useAppSelector(state => state.inventoryV2.hostTableRows);
 
     const { setDialog, closeDialog } = useDialog();
 
@@ -68,7 +64,6 @@ const HostTable = () => {
         state => state.inventoryV2
     );
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
-    const { isDemoMode } = useAppSelector(state => state.auth);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const [loading, setLoading] = useState(false);
@@ -94,60 +89,6 @@ const HostTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading
     ]);
-
-    useEffect(() => {
-        if (inventoryTableData) {
-            let result: any = [];
-            Object.keys(inventoryTableData).map((key: string) => {
-                if (removeSecNodeDiscoveredList.includes(key)) {
-                    return;
-                }
-                if (inventoryTableData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                    return;
-                }
-                let instanceList: any = [];
-                let instanceNameList: any = [];
-                let vpcIdAndNameText = '';
-                const allocatedCapacity = inventoryTableData[key]?.allocatedCapacity || '';
-                inventoryTableData[key]?.ec2Details?.map((row: any) => {
-                    if (row?.name) {
-                        instanceNameList.push(row?.name);
-                    }
-                    if (row?.name && row?.id) {
-                        instanceList.push(row?.name + ' | ID: ' + row?.id);
-                    } else if (row?.id) {
-                        instanceList.push(GENERAL.NOT_AVAILABLE + ' | ID: ' + row?.id);
-                    }
-                });
-                if (inventoryTableData[key]?.vpcId && inventoryTableData[key]?.vpcName) {
-                    vpcIdAndNameText = inventoryTableData[key]?.vpcName + ' | ID: ' + inventoryTableData[key]?.vpcId;
-                } else if (inventoryTableData[key]?.vpcId) {
-                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + inventoryTableData[key]?.vpcId;
-                } else {
-                    vpcIdAndNameText = GENERAL.NOT_AVAILABLE + ' | ID: ' + GENERAL.NOT_AVAILABLE;
-                }
-                const rowData = {
-                    ...inventoryTableData[key],
-                    sqlServerInstancesText:
-                        inventoryTableData[key]?.totalInstance !== 0
-                            ? inventoryTableData[key]?.managedInstance +
-                              ' out of ' +
-                              inventoryTableData[key]?.totalInstance
-                            : '',
-                    instanceListText: instanceList.join(','),
-                    instanceNameListText: instanceNameList.join(', '),
-                    vpcIdAndNameText: vpcIdAndNameText,
-                    allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
-                    nameForSorting: inventoryTableData[key]?.name?.toLowerCase()
-                };
-                result.push(rowData);
-            });
-            // sort it based on action and whether it is disable or enable
-            setTableData(sortInventoryTableData(result));
-        } else {
-            setTableData([]);
-        }
-    }, [inventoryTableData]);
 
     const handleDialog = (rowData: any) => {
         setDialog(
@@ -544,7 +485,7 @@ const HostTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: tableData,
+        rows: hostTableRows,
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -634,7 +575,7 @@ const HostTable = () => {
 
     useEffect(() => {
         if (resetPage) {
-            if ((tableData || []).length % pageSize === 1) {
+            if ((hostTableRows || []).length % pageSize === 1) {
                 tableProps.pagination?.gotoPage(0);
             }
         }

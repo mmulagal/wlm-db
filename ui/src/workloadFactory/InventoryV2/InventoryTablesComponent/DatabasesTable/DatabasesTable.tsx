@@ -1,6 +1,6 @@
 import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { INVENTORY_ACTIONS, INVENTORY_STATUS, PROTECTION_TEXT_STATUS } from '../../../../utils/consts';
+import { INVENTORY_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -11,7 +11,7 @@ import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useEffect, useRef, useState } from 'react';
 import { formatSize } from '../../../../utils/utilityFunctions';
-import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryUtilsV2';
+import { isAwsBackupEnabledText } from '../../InventoryUtilsV2';
 import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
@@ -19,74 +19,17 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { useNavigate } from 'react-router-dom';
 
 const DatabasesTable = () => {
-    const { selectedInventoryTab, selectedFilterValue, inventoryTableData, tableManageColumnState } = useAppSelector(
+    const { selectedInventoryTab, selectedFilterValue, databaseTableRows, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqldatabaseHostsLoading, fullHostDataLoading: pgsqlfullHostDataLoading } =
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const dispatch = useDispatch();
-    const [data, setData] = useState<any>();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        let newTable: any = [];
-        if (inventoryTableData) {
-            Object.keys(inventoryTableData).map((rowId: string) => {
-                if (inventoryTableData[rowId]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                    return;
-                }
-                if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
-                    let perHost = inventoryTableData?.[rowId];
-                    inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
-                        if (
-                            perRow?.fileSystemType === GENERAL.EBS ||
-                            perRow?.fileSystemType === GENERAL.FSX_FOR_WINDOWS ||
-                            !perRow?.databases
-                        ) {
-                            return;
-                        }
-                        perRow?.databases?.map((perDatabase: any) => {
-                            let protectionText = getProtectionText({
-                                ...perDatabase,
-                                fileSystemType: perRow?.fileSystemType
-                            });
-                            let protectionVal = '';
-                            if (protectionText === PROTECTION_TEXT_STATUS.YES) {
-                                protectionVal = GENERAL.PROTECTED;
-                            } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
-                                protectionVal = GENERAL.NOT_PROTECTED;
-                            } else {
-                                protectionVal = GENERAL.NOT_AVAILABLE;
-                            }
-                            let perRowData = {
-                                ...perDatabase,
-                                isProtected: protectionVal,
-                                hostRow: perHost,
-                                instanceRow: perRow,
-                                hostName: perHost?.name,
-                                hostType: perHost?.hostType,
-                                databaseInstanceId: perRow?.databaseInstanceId,
-                                databaseInstanceName: perRow?.databaseInstanceName,
-                                credentialId: perHost?.credentialId,
-                                regionId: perHost?.regionId,
-                                credentialName: perHost?.credentialName,
-                                accountId: perHost?.accountId,
-                                regionName: perHost?.regionName,
-                                resourceId: perHost?.resourceId,
-                                ec2InstanceId: perHost?.ec2InstanceId
-                            };
-                            newTable.push(perRowData);
-                        });
-                    });
-                }
-            });
-        }
-        setData(newTable);
-    }, [inventoryTableData]);
 
     const getInitialFilter = () => {
         if (
@@ -349,7 +292,7 @@ const DatabasesTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: data,
+        rows: databaseTableRows,
         pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,

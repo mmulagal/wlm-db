@@ -11,9 +11,6 @@ import {
 } from '../../../../utils/apiService';
 import {
     detectFieldsValidation,
-    getDiscoveredHostDeploymentV2,
-    getOptimizationStatus,
-    getProtectionText,
     handleManageInstances,
     handleManageInstancesBulk,
     saveFsxInCredRegisteredObj,
@@ -23,11 +20,10 @@ import {
 import {
     checkBoxHandleManage,
     createDetectHostPayload,
-    formatSizeTwoPrecision,
     getSelectedFromSelectionState,
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
-import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_ACTIONS, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -81,14 +77,12 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 
 const InstancesTable = () => {
     const disptach = useDispatch();
-    const { inventoryTableData, inProgressInstances, tableManageColumnState } = useAppSelector(
+    const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
 
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading, selectedRowsForManage } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { selectedRowsForManage } = useAppSelector(state => state.inventoryV2);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
@@ -104,7 +98,6 @@ const InstancesTable = () => {
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
-    const [data, setData] = useState<any>();
 
     const dispatch = useDispatch();
 
@@ -126,80 +119,6 @@ const InstancesTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading
     ]);
-
-    useEffect(() => {
-        let newTable: any = [];
-        let id: number = 0;
-        if (inventoryTableData) {
-            Object.keys(inventoryTableData).map((rowId: string) => {
-                if (inventoryTableData[rowId]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                    return;
-                }
-                if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
-                    let perHost = inventoryTableData?.[rowId];
-                    let optimizationStatusLoading = false;
-                    let optimizationStatusList: any = [];
-                    let assessRow = allmssqlHostAssessmentData?.filter(
-                        (perRow: any) =>
-                            uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === rowId
-                    );
-                    if (assessRow.length > 0) {
-                        optimizationStatusLoading = allmssqlHostAssessmentLoading;
-                        optimizationStatusList = assessRow?.[0]?.instancesAssessment;
-                    }
-                    let perInstanceData: any = [];
-                    inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
-                        if (
-                            perRow?.fileSystemType === GENERAL.EBS ||
-                            perRow?.fileSystemType === GENERAL.FSX_FOR_WINDOWS
-                        ) {
-                            return;
-                        }
-                        let protectionText = getProtectionText(perRow);
-                        let optimizationStatus = getOptimizationStatus(
-                            perRow?.databaseInstanceId,
-                            optimizationStatusList
-                        );
-                        let perRowData = {
-                            ...perRow,
-                            id: String(id++),
-                            hostRow: perHost,
-                            name: perHost?.name,
-                            hostType: perHost?.hostType,
-                            serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
-                            loading: inventoryTableData?.[rowId]?.loading,
-                            subLoading: perRow?.loading,
-                            optimizationStatusLoading: optimizationStatusLoading,
-                            optimizationStatus: optimizationStatus,
-                            protectionText: protectionText,
-                            allocatedCapacityText: perRow?.allocatedCapacity
-                                ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
-                                : '',
-                            statusColText: inProgressInstances.has(
-                                uniqueHostRow(
-                                    `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`,
-                                    perHost?.credentialId || '',
-                                    perHost?.regionId || ''
-                                )
-                            )
-                                ? INVENTORY_STATUS.IN_PROGRESS
-                                : perRow.statusColText,
-                            credentialId: perHost?.credentialId,
-                            regionId: perHost?.regionId,
-                            credentialName: perHost?.credentialName,
-                            accountId: perHost?.accountId,
-                            regionName: perHost?.regionName,
-                            resourceId: perHost?.resourceId,
-                            ec2InstanceId: perHost?.ec2InstanceId
-                        };
-                        perInstanceData.push(perRowData);
-                    });
-                    newTable = [...newTable, ...(perInstanceData || [])];
-                }
-            });
-        }
-        setData(newTable);
-    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading]);
 
     const getInitialFilter = () => {
         if (selectedInventoryTab === 'Instances' && selectedFilterValue?.flag === true) {
@@ -841,7 +760,7 @@ const InstancesTable = () => {
     };
 
     const updatedTableData = useMemo(() => {
-        return data?.map((row: any) => {
+        return instanceTableRows?.map((row: any) => {
             const { isDisabled, errorMessage } = disableManageCheck(row);
             return {
                 ...row,
@@ -857,7 +776,7 @@ const InstancesTable = () => {
                 }
             };
         });
-    }, [data, selectedRowsForManage]);
+    }, [instanceTableRows, selectedRowsForManage]);
 
     const tableProps = useTable({
         isSorting: false,
