@@ -659,7 +659,7 @@ const HostTable = () => {
                         singularTitle="Host"
                         exportToCsvOptions={{ fileName: 'hostTable.csv' }}
                         className={styles.topBarStyle}
-                        subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
+                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                         actionsRight={
                             <div className={styles.deployButton}>
                                 <DsButton
