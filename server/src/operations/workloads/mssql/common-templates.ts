@@ -2,7 +2,7 @@
 // Assumes that the following variables are defined in the script:
 //  - $FSxID: FSx ID
 //  - $FSxRegion: FSx region
-const ontapRestRequest = `
+const invokeOntapRequestTemplate = `
         Add-Type @"
             using System.Net;
             using System.Security.Cryptography.X509Certificates;
@@ -26,13 +26,6 @@ const ontapRestRequest = `
             Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
         }
         $ProgressPreference = 'SilentlyContinue'
-        $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$FSxID" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
-        $FSxUserName = $SsmParameter.fsx.username
-        $FSxPassword = $SsmParameter.fsx.password
-        $FSxPasswordSecureString = ConvertTo-SecureString $FSxPassword -AsPlainText -Force
-        $FSxCredentials = New-Object System.Management.Automation.PSCredential($FSxUserName, $FSxPasswordSecureString)
-        $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-        $FSxHostName = "management.$FSxID.fsx.$FSxRegion.amazonaws.com"
 
         $isprivatesubnet = $False
         if ($connection -eq $False) {
@@ -62,7 +55,13 @@ const ontapRestRequest = `
                 [string]$method = 'GET',
 
                 [Parameter(Mandatory = $false)]
-                [string]$body
+                [string]$body,
+
+                [Parameter(Mandatory = $false)]
+                [string]$FSxCredentialsInBase64 = $FSxCredentialsInBase64,
+
+                [Parameter(Mandatory = $false)]
+                [string]$FSxHostName = $FSxHostName
             )
 
             Write-Information "Invoke ONTAP rest request $APIEndpoint $APIQueryFilter $ApiQueryFields $method $body"
@@ -94,6 +93,35 @@ const ontapRestRequest = `
                 return Invoke-RestMethod @Params
             }
         }
+`;
+
+const ontapRestRequestBootstrap = `
+        Function Get-FSxNDetails {
+            param(
+                [Parameter(Mandatory = $false)]
+                [string]$fsxId = $FSxID
+            )
+            write-debug "fsxId to get ontap creds: $fsxId"
+            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$fsxId" -WithDecryption $True).Value | Out-String | ConvertFrom-Json
+            $FSxUserName = $SsmParameter.fsx.username
+            $FSxPassword = $SsmParameter.fsx.password
+            $FSxPasswordSecureString = ConvertTo-SecureString $FSxPassword -AsPlainText -Force
+            $FSxCredentials = New-Object System.Management.Automation.PSCredential($FSxUserName, $FSxPasswordSecureString)
+            $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
+            $FSxHostName = "management.$fsxId.fsx.$FSxRegion.amazonaws.com"
+            return @{
+                FSxCredentialsInBase64 = $FSxCredentialsInBase64
+                FSxHostName = $FSxHostName
+            }
+        }
+`;
+
+const ontapRestRequest = `
+        ${invokeOntapRequestTemplate}
+        ${ontapRestRequestBootstrap}
+        $FSxNDetails = Get-FSxNDetails
+        $FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
+        $FSxHostName = $FSxNDetails.FSxHostName
 `;
 
 const ontapJobStatusTemplate = `
@@ -140,4 +168,10 @@ const compressResponse = `
     }
 `;
 
-export { ontapRestRequest, ontapJobStatusTemplate, compressResponse };
+export {
+    ontapRestRequest,
+    ontapJobStatusTemplate,
+    compressResponse,
+    ontapRestRequestBootstrap,
+    invokeOntapRequestTemplate
+};
