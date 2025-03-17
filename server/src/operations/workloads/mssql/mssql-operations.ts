@@ -1395,9 +1395,9 @@ async function getActiveSqlNodeAndInstanceDetails(
                 inActiveNodes.push({ nodeId, connStatus: connectionStatus?.Status ?? '' });
             }
         }
-        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${[
+        const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${JSON.stringify([
             ...inActiveNodes
-        ]} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
+        ])} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     } catch (err) {
         const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId}, resource name: ${resourceName} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
