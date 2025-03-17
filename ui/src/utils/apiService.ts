@@ -770,13 +770,6 @@ export const inventoryApiV2 = createApi({
                     method: 'DELETE'
                 })
             }),
-            manageMssqlInstance: builder.mutation({
-                query: ({ credentialsId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/manage`,
-                    method: 'POST',
-                    body: payload
-                })
-            }),
             manageBulkMssqlInstance: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/manage`,
@@ -1159,7 +1152,6 @@ export const {
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
-    useManageMssqlInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery

@@ -2352,7 +2352,7 @@ export const handleManageInstances = (
     instances: any,
     dispatch: any,
     styles: any,
-    manageInstanceApi: any,
+    manageBulkInstanceApi: any,
     prepareHostApi: any,
     isDetected?: boolean | undefined
 ) => {
@@ -2364,16 +2364,21 @@ export const handleManageInstances = (
     );
     dispatch(setInProgressInstances(new Set([...Array.from(inProgressInstances), ...inProgressIds])));
     handleManageTriggerNotification(instances, dispatch, styles);
-    let payload: any = {
+    let payloadItem: any = {
         ec2InstanceId: rowData?.ec2InstanceId,
-        databaseInstanceNames: instances
+        databaseInstanceNames: instances,
+        credentialsId: rowData?.credentialId,
+        regionId: rowData?.regionId
     };
     if (rowData?.resourceId && isDemoMode) {
-        payload.databaseHostId = rowData.resourceId;
+        payloadItem.databaseHostId = rowData.resourceId;
     }
-    manageInstanceApi({
-        credentialsId: rowData?.credentialId,
-        regionId: rowData?.regionId,
+
+    let payload = {
+        items: [payloadItem]
+    };
+
+    manageBulkInstanceApi({
         payload
     }).then((res: any) => {
         const updatedState = store.getState();
@@ -2383,34 +2388,37 @@ export const handleManageInstances = (
             updatedInProgressInstances.delete(inProgressId);
         });
         dispatch(setInProgressInstances(updatedInProgressInstances));
-        if (res?.data?.items) {
+
+        if (res?.data) {
             let successFullInstances: any = [];
             let failedInstances: any = [];
-            res?.data?.items.map((item: any) => {
-                if (item.status === NOTIFICATION_TYPES.SUCCESS) {
-                    successFullInstances.push(item);
-                } else {
-                    failedInstances.push(item);
-                }
+            res?.data?.map((resource: any) => {
+                resource?.items.map((item: any) => {
+                    if (item.status === NOTIFICATION_TYPES.SUCCESS) {
+                        successFullInstances.push(item);
+                    } else {
+                        failedInstances.push(item);
+                    }
+                });
             });
-            handleManageNotification(instances, successFullInstances, '', isDetected, dispatch, styles);
-            const updatedInventoryTableData = updateInstanceStatus(
-                'manage',
-                rowData,
-                instances,
-                successFullInstances,
-                res?.data?.resourceId
-            );
-            dispatch(setInventoryTableData(updatedInventoryTableData));
-        } else if (res?.error) {
-            if (res?.error?.status === 422 || res?.error?.status === 500) {
-                const updatedState = store.getState();
+
+            if (successFullInstances.length > 0) {
+                handleManageNotification(instances, successFullInstances, '', isDetected, dispatch, styles);
+                const updatedInventoryTableData = updateInstanceStatus(
+                    'manage',
+                    rowData,
+                    instances,
+                    successFullInstances,
+                    res?.data?.resourceId
+                );
+                dispatch(setInventoryTableData(updatedInventoryTableData));
+            } else {
                 // handle prepare API
-                const errorList = res?.error?.data?.message?.split('\n');
+                let errorList = res?.data?.[0]?.hostErrorMessage?.split('\n');
                 let prepareApiRequired = false;
                 let sourceNodePrepareRequired = false;
                 let partnerNodeEc2Id;
-                errorList.map((errorItem: any) => {
+                errorList?.map((errorItem: any) => {
                     if (errorItem.includes(PREPARE_API_ENDPOINT)) {
                         prepareApiRequired = true;
                         if (errorItem.includes(PARTNER_NODE)) {
@@ -2474,11 +2482,15 @@ export const handleManageInstances = (
                         });
                     }
                 } else {
-                    handleManageNotification(instances, [], errorList[0], isDetected, dispatch, styles);
+                    let otherErrorList: any = null;
+                    res?.data?.[0]?.items?.map((item: any) => {
+                        otherErrorList = item?.errorMessage?.split('\n') || otherErrorList;
+                    });
+                    handleManageNotification(instances, [], otherErrorList[0], isDetected, dispatch, styles);
                 }
-            } else {
-                handleManageNotification(instances, [], '', isDetected, dispatch, styles);
             }
+        } else if (res?.error) {
+            handleManageNotification(instances, [], '', isDetected, dispatch, styles);
         }
     });
 };
@@ -2505,7 +2517,7 @@ export const handleManageInstancesBulk = (
     let instancesList = selectedRowsForManage.map((instance: any) => instance?.databaseInstanceName);
     handleManageTriggerNotification(instancesList, dispatch, styles);
 
-    let payload: any = [];
+    let payloadList: any = [];
     let hostInstanceMapping: any = {};
     let resourceInstanceMapping: any = {};
     selectedRowsForManage?.map((rowData: any) => {
@@ -2527,10 +2539,14 @@ export const handleManageInstancesBulk = (
             databaseInstanceNames: hostInstanceMapping[key]
         };
         if (resourceInstanceMapping?.[key] && isDemoMode) {
-            payload.databaseHostId = resourceInstanceMapping[key];
+            perItem.databaseHostId = resourceInstanceMapping[key];
         }
-        payload.push(perItem);
+        payloadList.push(perItem);
     });
+
+    let payload = {
+        items: payloadList
+    };
 
     manageBulkInstanceApi({
         payload
@@ -2542,10 +2558,10 @@ export const handleManageInstancesBulk = (
             updatedInProgressInstances.delete(inProgressId);
         });
         dispatch(setInProgressInstances(updatedInProgressInstances));
-        if (res?.data?.items) {
+        if (res?.data) {
             let successFullInstances: any = [];
             let failedInstances: any = [];
-            res?.data?.items.map((resource: any) => {
+            res?.data?.map((resource: any) => {
                 resource?.items.map((item: any) => {
                     if (item.status === NOTIFICATION_TYPES.SUCCESS) {
                         successFullInstances.push(item);
@@ -2558,15 +2574,14 @@ export const handleManageInstancesBulk = (
                 handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
             }
 
-            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data?.items);
+            const updatedInventoryTableData = updateInstanceBulkStatus('manage', res?.data);
             dispatch(setInventoryTableData(updatedInventoryTableData));
 
-            // ToDO - Write prepare case also
-            let triggeredPrepare = handleBulkPrepareCall(res?.data?.items, dispatch, styles, prepareHostApi);
+            let triggeredPrepare = handleBulkPrepareCall(res?.data, dispatch, styles, prepareHostApi);
             if (triggeredPrepare) {
                 const msgObj = GENERAL.PREPARE_BULK_INSTANCES_INFO;
                 installModuleNotification(styles, dispatch, msgObj);
-            } else if (!successFullInstances?.length) {
+            } else if (!successFullInstances?.length && failedInstances?.length) {
                 handleManageNotification(instancesList, successFullInstances, '', isDetected, dispatch, styles);
             }
 
@@ -2580,23 +2595,18 @@ export const handleManageInstancesBulk = (
 export const handleBulkPrepareCall = (response: any, dispatch: any, styles: any, prepareHostApi: any) => {
     let triggeredPrepare = false;
     response?.map((resource: any) => {
+        let errorList = resource?.hostErrorMessage?.split('\n');
         let prepareApiRequired = false;
         let sourceNodePrepareRequired = false;
         let partnerNodeEc2Id;
-        resource?.items.map((item: any) => {
-            if (item?.status !== NOTIFICATION_TYPES.SUCCESS) {
-                // handle prepare API
-                const errorList = item?.errorMessage?.split('\n');
-                errorList.map((errorItem: any) => {
-                    if (errorItem.includes(PREPARE_API_ENDPOINT)) {
-                        prepareApiRequired = true;
-                        if (errorItem.includes(PARTNER_NODE)) {
-                            partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
-                        } else {
-                            sourceNodePrepareRequired = true;
-                        }
-                    }
-                });
+        errorList?.map((errorItem: any) => {
+            if (errorItem.includes(PREPARE_API_ENDPOINT)) {
+                prepareApiRequired = true;
+                if (errorItem.includes(PARTNER_NODE)) {
+                    partnerNodeEc2Id = getPartnerNodeEc2InstanceId(errorItem);
+                } else {
+                    sourceNodePrepareRequired = true;
+                }
             }
         });
 

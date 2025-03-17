@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import {
     useManageBulkMssqlInstanceMutation,
-    useManageMssqlInstanceMutation,
     usePrepareHostMutation,
     useRegisterResourceCredentialsMutation,
     useUnmanageMssqlInstanceMutation
@@ -100,7 +99,6 @@ const InstancesTable = () => {
     const [pageSize, setPageSize] = useState(25);
     const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
-    const [manageInstanceApi] = useManageMssqlInstanceMutation();
     const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
 
@@ -221,7 +219,7 @@ const InstancesTable = () => {
                     '2': {
                         activeCount: 1,
                         values: {
-                            [selectedFilterValue?.value]: true
+                            [selectedFilterValue?.value?.hostName]: true
                         },
                         valuesArray: [true]
                     }
@@ -374,7 +372,7 @@ const InstancesTable = () => {
                 [rowData?.databaseInstanceName],
                 dispatch,
                 styles,
-                manageInstanceApi,
+                manageBulkInstanceApi,
                 prepareHostApi,
                 true
             );
@@ -775,6 +773,7 @@ const InstancesTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -789,6 +788,7 @@ const InstancesTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
+            filterOptions: 'auto',
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -803,6 +803,7 @@ const InstancesTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -866,8 +867,8 @@ const InstancesTable = () => {
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
         pageSize: 10,
-        // selectionType: 'multiple',
-        // defaultSelectedRows: [],
+        selectionType: 'multiple',
+        defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
@@ -1055,7 +1056,7 @@ const InstancesTable = () => {
                                                 [rowData?.databaseInstanceName],
                                                 dispatch,
                                                 styles,
-                                                manageInstanceApi,
+                                                manageBulkInstanceApi,
                                                 prepareHostApi,
                                                 false
                                             );
