@@ -436,7 +436,7 @@ const DatabasesTable = () => {
                         pluralTitle="Databases"
                         singularTitle="Database"
                         exportToCsvOptions={{ fileName: 'databaseTable.csv' }}
-                        subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
+                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     <Table
                         //@ts-ignore

@@ -1162,7 +1162,7 @@ const InstancesTable = () => {
                         pluralTitle="Instances"
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
-                        subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
+                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />
