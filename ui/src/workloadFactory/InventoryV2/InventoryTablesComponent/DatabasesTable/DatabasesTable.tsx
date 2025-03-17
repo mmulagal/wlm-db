@@ -350,7 +350,7 @@ const DatabasesTable = () => {
         isSorting: false,
         columns: DatabasesColDefs,
         rows: data,
-        pageSize: 10,
+        pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,
         isManagedColumns: true,
@@ -436,7 +436,6 @@ const DatabasesTable = () => {
                         pluralTitle="Databases"
                         singularTitle="Database"
                         exportToCsvOptions={{ fileName: 'databaseTable.csv' }}
-                        className={styles.topBarStyle}
                         subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
                     />
                     <Table

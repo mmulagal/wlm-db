@@ -6,7 +6,8 @@ import {
     setOptimizePageLoading,
     setGwRefreshPage,
     setIsAssessmentAvailable,
-    setLandingFromInnerPage
+    setLandingFromInnerPage,
+    setGwSelectedRowFsxId
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
 import { formatGetWellData, resetGwValuesOnRefresh } from './GetWellUtils';
@@ -51,6 +52,7 @@ const GetWellApi = () => {
                 formatGetWellData(dispatch, result.data);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
+                dispatch(setGwSelectedRowFsxId(result?.data?.resiliency?.awsBackup?.objectsInViolation?.[0]));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
                 dispatch(setOptimizePageLoading(false));

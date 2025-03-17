@@ -729,7 +729,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'Filesystem',
+            type: 'File system',
             value: '',
             smallFont: true
         },

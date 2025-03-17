@@ -55,7 +55,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0}
                     />
@@ -95,7 +95,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0}
                     />
@@ -135,7 +135,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0}
                     />
@@ -175,7 +175,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0}
                     />
@@ -215,7 +215,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0}
                     />
@@ -255,7 +255,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0}
                     />
@@ -291,7 +291,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0}
                     />
@@ -367,7 +367,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.['Operating system']?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                     />
 
@@ -405,7 +405,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.COMPUTE_RIGHTSIZING]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData['compute-rightsizing']?.length > 0}
                     />
@@ -446,7 +446,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.OPERATING_SYSTEM_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                     />
 
@@ -485,7 +485,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.RSS_CONFIGURATION]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                     />
 
@@ -526,7 +526,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.LICENSE_SQL_SERVER]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                     />
 
@@ -565,7 +565,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.MICROSOFT_SQL_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                     />
 
@@ -604,7 +604,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[GENERAL.MAXDOP_PATCH]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                     />
 
@@ -646,7 +646,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length ||
                                 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
                             inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]?.length > 0
@@ -688,7 +688,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         optimizePercentage={Math.round(
                             ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.CRR]?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0}
                     />
@@ -715,22 +715,21 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <BarComponent
                         color="#5E8DCD"
                         headingText={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
-                        percentage={Math.round(
-                            ((configData.scheduledFSxForONTAPBackups || 0) / (configData.total || 1)) * 100
-                        )}
-                        beforeOutOf={configData.scheduledFSxForONTAPBackups}
+                        percentage={Math.round(((configData.scheduledawsBackup || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.scheduledawsBackup}
                         afterOutOf={configData.total}
                         bottomText="Optimized instances:"
                         width={windowSize.width > 1700 ? '360px' : '280px'}
                         from="dashboard"
                         optimizePercentage={Math.round(
-                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length ||
-                                0) /
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                ?.length || 0) /
                                 (configData.total || 1)) *
-                            100
+                                100
                         )}
                         loading={
-                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length > 0
+                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                ?.length > 0
                         }
                     />
 
@@ -747,8 +746,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             isDisabled={
                                 allmssqlHostAssessmentLoading ||
                                 configData?.total === 0 ||
-                                configData?.scheduledFSxForONTAPBackups === configData?.total ||
-                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length > 0
+                                configData?.scheduledawsBackup === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                    ?.length > 0
                             }
                         >
                             Optimize
