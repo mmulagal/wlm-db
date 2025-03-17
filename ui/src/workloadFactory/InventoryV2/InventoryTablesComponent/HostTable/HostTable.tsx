@@ -12,7 +12,7 @@ import {
     postBlueXPMessage,
     BlueXPListeners
 } from '@netapp/design-system';
-import { useManageMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
+import { useManageBulkMssqlInstanceMutation, usePrepareHostMutation } from '../../../../utils/apiService';
 import { GENERAL } from '../../../../utils/appConstants';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 import {
@@ -68,7 +68,7 @@ const HostTable = () => {
 
     const [loading, setLoading] = useState(false);
 
-    const [manageInstanceApi] = useManageMssqlInstanceMutation();
+    const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -160,7 +160,7 @@ const HostTable = () => {
                         selectedInstanceNames,
                         dispatch,
                         styles,
-                        manageInstanceApi,
+                        manageBulkInstanceApi,
                         prepareHostApi
                     );
                 }}
@@ -506,6 +506,7 @@ const HostTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -516,6 +517,7 @@ const HostTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
+            filterOptions: 'auto',
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -526,6 +528,7 @@ const HostTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);

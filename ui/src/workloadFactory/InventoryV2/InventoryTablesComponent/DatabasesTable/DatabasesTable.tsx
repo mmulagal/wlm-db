@@ -319,6 +319,7 @@ const DatabasesTable = () => {
             id: '8',
             width: '184px',
             isSortable: true,
+            filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -328,6 +329,7 @@ const DatabasesTable = () => {
             accessor: 'accountId',
             id: '9',
             width: '184px',
+            filterOptions: 'auto',
             isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -339,6 +341,7 @@ const DatabasesTable = () => {
             id: '10',
             width: '184px',
             isSortable: true,
+            filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }

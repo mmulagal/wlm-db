@@ -51,7 +51,7 @@ router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/man
 router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
 
     setTimeout(() => {
-        generateResponse(res, 200, {items: [
+        generateResponse(res, 200, [
             {
                 // error: 'error',
                 resourceId: '123',
@@ -62,10 +62,11 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
                     {
                         databaseInstanceName: 'SIGMA',
                         databaseInstanceGuid: '3',
-                        status: 'success',
-                        errorMessage: ''
+                        // status: 'failed',
+                        // errorMessage: 'some err'
                     }
-                ]
+                ],
+                "hostErrorMessage": "Unable to manage instance 'i-05978dd409ce8e0e6'. Reason: PowerShell modules AWS.Tools.EC2,AWS.Tools.FSx,AWS.Tools.SimpleSystemsManagement,NetApp.ONTAP are required for managing the resource. Install them manually by referring to https://learn.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7.4) or using the API \"/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare\".\nFiles required for database operations are not available. Install them using the API \"/accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}/instances/{instanceId}/prepare\"."
             },
             {
                 // error: 'error',
@@ -93,11 +94,11 @@ router.post(`${BASE_URL}/v1/mssql/manage`, async (req: {}, res: any) => {
                         databaseInstanceName: 'MSSQLSERVER',
                         databaseInstanceGuid: '3',
                         status: 'failed',
-                        errorMessage: '/prepare API'
+                        errorMessage: 'some API'
                     }
                 ]
             }
-        ]});
+        ]);
     }, 3000);
 });
 
