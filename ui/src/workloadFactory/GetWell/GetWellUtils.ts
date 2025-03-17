@@ -977,7 +977,6 @@ export const formatSnapshotPolicyCardConfig = (
     return cardsData;
 };
 
-
 export const formatAWSBackUpPolicyCardConfig = (
     data: AssessmentResponseInterface,
     optimizingData: { [key: string]: string },
@@ -1266,7 +1265,7 @@ export const formatRssConfigCardConfig = (
                     rssEnabledStatus: GENERAL.FINDINGS.OPTIMIZED,
                     baseProcessorNumberStatus:
                         adapter?.baseProcessorNumber !==
-                            item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
+                        item?.recommendedAdapterSettings?.recommendedBaseProcessorNumber
                             ? GENERAL.FINDINGS.NOT_OPTIMIZED
                             : GENERAL.FINDINGS.OPTIMIZED,
                     receiveQueuesStatus:
@@ -1663,8 +1662,8 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
         notOptimized: notOptimizedApplication,
         percent: optimizedApplication
             ? formatNumberWithCustomComma(
-                (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
-            )
+                  (optimizedApplication / (optimizedApplication + notOptimizedApplication)) * 100
+              )
             : 0
     };
 
@@ -1697,20 +1696,20 @@ export const formatOptimizationBreakDown = (cardsData: any) => {
                 resiliencyCount?.notOptimized,
             percent:
                 storageCount?.optimized ||
-                    computeCount?.optimized ||
-                    applicationCount?.optimized ||
-                    resiliencyCount?.optimized
+                computeCount?.optimized ||
+                applicationCount?.optimized ||
+                resiliencyCount?.optimized
                     ? formatNumberWithCustomComma(
-                        ((storageCount?.optimized +
-                            computeCount?.optimized +
-                            applicationCount?.optimized +
-                            resiliencyCount?.optimized || 0) /
-                            (storageCount?.total +
-                                computeCount?.total +
-                                applicationCount?.total +
-                                resiliencyCount?.total || 1)) *
-                        100
-                    )
+                          ((storageCount?.optimized +
+                              computeCount?.optimized +
+                              applicationCount?.optimized +
+                              resiliencyCount?.optimized || 0) /
+                              (storageCount?.total +
+                                  computeCount?.total +
+                                  applicationCount?.total +
+                                  resiliencyCount?.total || 1)) *
+                              100
+                      )
                     : 0
         }
     };
@@ -1762,8 +1761,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     ontapNotOptimizedConfig !== 0
                         ? formatNumberWithCustomComma(
-                            (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
-                        ) + '%'
+                              (ontapNotOptimizedConfig / (ontapOptimizedConfig + ontapNotOptimizedConfig)) * 100
+                          ) + '%'
                         : '0%'
             },
             block_four: {
@@ -1807,8 +1806,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
                 value:
                     osNotOptimizedConfig !== 0
                         ? formatNumberWithCustomComma(
-                            (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
-                        ) + '%'
+                              (osNotOptimizedConfig / (osOptimizedConfig + osNotOptimizedConfig)) * 100
+                          ) + '%'
                         : '0%'
             },
             block_four: {
@@ -2605,16 +2604,16 @@ export const nameToIdConfigMapping = (name: string) => {
     return name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
         ? 'log-drive-size'
         : name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-            ? 'headroom'
-            : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
-                ? 'tempdb-drive-size'
-                : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
-                    ? 'performance-tier'
-                    : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
-                        ? 'compute-rightsizing'
-                        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
-                            ? 'max-dop'
-                            : '';
+        ? 'headroom'
+        : name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
+        ? 'tempdb-drive-size'
+        : name === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER
+        ? 'performance-tier'
+        : name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING
+        ? 'compute-rightsizing'
+        : name === ASSESSMENT_CONFIG_NAMES.MAXDOP
+        ? 'max-dop'
+        : '';
 };
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any) => {
@@ -2667,6 +2666,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             configKey = 'scheduledLocalSnapshot';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+            configKey = 'scheduledawsBackup';
             break;
     }
     const optimizedInstances = configData[configKey] || 0;

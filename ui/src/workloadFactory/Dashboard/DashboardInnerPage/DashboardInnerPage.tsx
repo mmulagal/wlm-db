@@ -175,8 +175,8 @@ const DashboardInnerPage = () => {
                                 type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                                     ? 'log-drive-size'
                                     : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                        ? 'headroom'
-                                        : 'tempdb-drive-size',
+                                    ? 'headroom'
+                                    : 'tempdb-drive-size',
                             databaseHosts: Object.values(
                                 rowData.reduce(
                                     (
@@ -202,8 +202,8 @@ const DashboardInnerPage = () => {
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
                             ? 'log-drive-size'
                             : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                ? 'headroom'
-                                : 'tempdb-drive-size'
+                            ? 'headroom'
+                            : 'tempdb-drive-size'
                 };
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
@@ -814,9 +814,10 @@ const DashboardInnerPage = () => {
                     tagHeight: '233px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.scheduled_aws_backup?.recommendation?.description
+                        description: cardDataDefault?.scheduled_FSx_for_ONTAP_backups?.recommendation?.description
                     }
                 });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -917,9 +918,7 @@ const DashboardInnerPage = () => {
                     <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
                 );
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                return (
-                    <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
-                );
+                return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
 
