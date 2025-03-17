@@ -9,6 +9,7 @@ export interface GetWellSliceInterface {
     selectedGwInstanceCredId: string;
     selectedGwInstanceRegionId: string;
     selectedDatabaseStorageType: string;
+    selectedRowFsxId: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
     ontapConfigTableData: PerConfigInterface[] | null;

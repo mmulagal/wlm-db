@@ -13,6 +13,7 @@ const initialState: GetWellSliceInterface = {
     selectedGwInstanceCredId: '',
     selectedGwInstanceRegionId: '',
     selectedDatabaseStorageType: '',
+    selectedRowFsxId: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
     ontapConfigTableData: null,
@@ -25,9 +26,9 @@ const initialState: GetWellSliceInterface = {
     selectedSnapshotPolicy: null,
     selectedSnapshot: null,
     selectedAWSBackup: {
-        numberOfDays: 1,
+        numberOfDays: 30,
         hour: 1,
-        minute: 1
+        minute: 0
     },
     credIdFromJM: '',
     regionFromJM: '',
@@ -68,6 +69,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setGwResourceId: (state, action: PayloadAction<any>) => {
             state.selectedResourceId = action.payload;
+        },
+        setGwSelectedRowFsxId: (state, action: PayloadAction<any>) => {
+            state.selectedRowFsxId = action.payload;
         },
         setGwDatabaseInstance: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstance = action.payload;
@@ -111,6 +115,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
             state.selectedDatabaseStorageType = '';
+            state.selectedRowFsxId = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
@@ -207,7 +212,8 @@ export const {
     setSelectedGwInstanceCredId,
     setSelectedGwInstanceRegionId,
     setGwPageLoadInstanceData,
-    setLandingFromInnerPage
+    setLandingFromInnerPage,
+    setGwSelectedRowFsxId
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

@@ -33,6 +33,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeStorageConfigMutation,
@@ -67,6 +68,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -650,6 +652,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     }
                 ]
             };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            payload = {
+                type: ['aws-backup'],
+                databaseHosts: [
+                    {
+                        id: selectedResourceId,
+                        sqlServerInstances: [selectedDatabaseInstance],
+                        fsxFileSystemId: selectedRowFsxId,
+                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                    }
+                ]
+            };
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -774,8 +792,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             type === 'Log files' ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CRR ||
-            type === GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+            type === GENERAL.CRR
         ) {
             handleNavigateToOptimizePage(type);
         } else {
@@ -789,7 +806,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     const setButtonText = () => {
-        if (type === 'Storage tier' || type === 'Log drive size' || type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT || type === GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+        if (type === 'Storage tier' || type === 'Log drive size' || type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT) {
             return 'View & optimize';
         } else if (
             type === 'Data files' ||
@@ -894,7 +911,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                 cardData?.block_one?.value !== 'ONTAP' &&
                 cardData?.block_one?.value !== 'Operating system' &&
                 (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
-                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
+                cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                     <div className={styles.buttonSection} style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}>
                         <TooltipComponent
                             title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
@@ -910,8 +927,8 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                         </TooltipComponent>
                     </div>
                 ) : optimizingInstanceData &&
-                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
-                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
+                  cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
                     <TooltipComponent
                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                         placement="bottom"
