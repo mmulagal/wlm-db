@@ -3,7 +3,8 @@ import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import {
     ResilienceDriftAssessmentResponseType,
-    SnapshotPolicyAssesmentDataType
+    SnapshotPolicyAssesmentDataType,
+    ParameterDriftResponseType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
 import {
@@ -13,7 +14,10 @@ import {
 import {
     AssessmentCategories,
     AssessmentStatus,
-    OptimizeStorageConfigs
+    OptimizeStorageConfigs,
+    SEVERITY,
+    AwsWellArchitecturedPillars,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
@@ -126,11 +130,14 @@ async function getResilienceDriftAssessment(
 ) {
     logger.info('Getting resilience drift assessment for:', { credentialsId, databaseInstanceId, databaseHostId });
     try {
-        const snapshotPolicy =
-            (await getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) ||
-            Promise.resolve({});
+        const [snapshotPolicy, crrData] = await Promise.all([
+            getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+            getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+        ]);
+
         const assessmentData: ResilienceDriftAssessmentResponseType = {
-            snapshotPolicy
+            snapshotPolicy,
+            crr: crrData
         };
         return assessmentData;
     } catch (error) {
@@ -317,7 +324,62 @@ async function initiateCrossRegionResiliencyAssessment(
         }
     ]);
 }
+async function getCrrDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Calculate crr drift data for:', {
+        accountId,
+        region,
+        credentialsId,
+        databaseInstanceId,
+        databaseHostId
+    });
+    const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+        accountId,
+        region,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId,
+        AssessmentCategories.CRR
+    );
+    if (isEmpty(persistedConfigurationData)) {
+        const errorMessage =
+            'No CRR assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.';
+        return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
+    }
 
+    try {
+        const { crrDetails } = persistedConfigurationData.config_data as { crrDetails: any[] };
+        const allVolumesOptimized: boolean = crrDetails.every(
+            (detail: { isCRREnabled: boolean }) => detail.isCRREnabled
+        );
+
+        const response: ParameterDriftResponseType = {
+            name: 'crr',
+            status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            severity: SEVERITY.WARNING,
+            recommendation:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.',
+            objectsInViolation: allVolumesOptimized
+                ? []
+                : crrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
+            totalObjectsAssessed: crrDetails.length,
+            totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommended: 'crr-enabled'
+        };
+
+        return response;
+    } catch (error) {
+        logger.error('Error fetching crr drift data:', error);
+        return { errorMessage: (error as Error).message } as ParameterDriftResponseType & { errorMessage: string };
+    }
+}
 export {
     getResilienceDriftAssessment,
     initiateCrossRegionResiliencyAssessment,
