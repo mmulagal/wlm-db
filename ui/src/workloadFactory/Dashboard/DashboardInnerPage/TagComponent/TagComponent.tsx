@@ -34,6 +34,10 @@ const TagComponent = ({ tagHeight }: TagComponentProps) => {
                 setTagData(['Reliability']);
                 break;
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                setTagData(['Reliability']);
+                break;
+
             case GENERAL.OPERATING_SYSTEM_PATCH:
                 setTagData(['Security']);
                 break;

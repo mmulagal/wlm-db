@@ -21,7 +21,7 @@ interface StorageTierTableProps {
     handleBulkAction: any;
 }
 
-const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps) => {
+const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProps) => {
     const disptach = useDispatch();
     const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
         state => state.inventoryV2
@@ -29,28 +29,27 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let awsBackupAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
-                    if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                    const awsBackupObj = instanceData?.assessments?.resiliency?.awsBackup;
+                    const isAwsBackupOptimized = isOptimized(awsBackupObj?.status);
+                    if (!isAwsBackupOptimized) {
+                        awsBackupAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
-                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
-                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
+                            performanceTier: awsBackupObj?.current,
+                            totalObjectsAssessed: awsBackupObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: awsBackupObj?.totalObjectsInViolation,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData
+                            assessmentStatus: GETWELL_VALUES[awsBackupObj?.status],
+                            data: instanceData,
+                            objectsInViolation: awsBackupObj?.objectsInViolation
                         });
                     }
                 }
@@ -58,7 +57,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            awsBackupAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
@@ -100,7 +99,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
             filterOptions: 'auto'
         },
         {
-            Header: 'Impacted volumes',
+            Header: 'Filesystem Name',
             accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
@@ -110,7 +109,7 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
             }
         },
         lastColDetails(
-            ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+            ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
             {},
             inProgressOptimizationData,
             inProgressHostData
@@ -163,4 +162,4 @@ const ScheduledLocalSnapshotTable = ({ lastColDetails, handleBulkAction }: Stora
     );
 };
 
-export default ScheduledLocalSnapshotTable;
+export default ScheduledAWSBackupTable;
