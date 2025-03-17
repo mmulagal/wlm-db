@@ -129,12 +129,11 @@ async function getResilienceDriftAssessment(
 ) {
     logger.info('Getting resilience drift assessment for:', { credentialsId, databaseInstanceId, databaseHostId });
     try {
-        const snapshotPolicy =
-            (await getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) ||
-            Promise.resolve({});
-        const crr =
-            (await getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)) ||
-            Promise.resolve({});
+        const [snapshotPolicy, crr] = await Promise.all([
+            getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+            getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+        ]);
+
         const assessmentData: ResilienceDriftAssessmentResponseType = {
             snapshotPolicy,
             crr
