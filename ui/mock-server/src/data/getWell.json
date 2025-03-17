@@ -929,7 +929,7 @@
                 "missingPermissions": [
                     "fsx:UpdateVolume"
                 ],
-                "resourceType": "File system (FSx for ONTAP)"
+                "resourceType": "File system headroom"
             }
         ],
         "layout": [
@@ -1319,7 +1319,7 @@
             ],
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "resourceType": "File system (FSx for ONTAP)"
+            "resourceType": "Filesystem"
         }
     }
 }

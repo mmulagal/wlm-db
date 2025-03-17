@@ -729,7 +729,7 @@ export const cardDataDefault: GwCardDataInterface = {
             value: ''
         },
         block_six: {
-            type: 'File system (FSx for ONTAP)',
+            type: 'Filesystem',
             value: '',
             smallFont: true
         },

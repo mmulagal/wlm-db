@@ -29,28 +29,27 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let awsBackupAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
-                    if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                    const awsBackupObj = instanceData?.assessments?.resiliency?.awsBackup;
+                    const isAwsBackupOptimized = isOptimized(awsBackupObj?.status);
+                    if (!isAwsBackupOptimized) {
+                        awsBackupAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
-                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
-                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
+                            performanceTier: awsBackupObj?.current,
+                            totalObjectsAssessed: awsBackupObj?.totalObjectsAssessed,
+                            totalObjectsInViolation: awsBackupObj?.totalObjectsInViolation,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData
+                            assessmentStatus: GETWELL_VALUES[awsBackupObj?.status],
+                            data: instanceData,
+                            objectsInViolation: awsBackupObj?.objectsInViolation
                         });
                     }
                 }
@@ -58,21 +57,24 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            awsBackupAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
-                ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
                 selectedRowsForOptimize
             );
         } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
+            return disableOptimizeCheckBoxForErrCase(
+                tableData,
+                ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+            );
         }
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
@@ -97,7 +99,7 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
             filterOptions: 'auto'
         },
         {
-            Header: 'File system (FSx for ONTAP) Name',
+            Header: 'Filesystem Name',
             accessor: 'totalObjectsInViolation',
             id: '3',
             width: '320px',
@@ -131,13 +133,16 @@ const ScheduledAWSBackupTable = ({ lastColDetails, handleBulkAction }: StorageTi
 
         disptach(setSelectedRowsForOptimize(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (
+            rowsData.length > 0 &&
+            inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]?.length
+        ) {
             checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>

@@ -43,7 +43,8 @@ import {
     useOptimizeStorageTierForBulkMutation,
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
-    useOptimizeResiliencyMutation
+    useOptimizeResiliencyMutation,
+    useOptimizeAwsBackupMutation
 } from '../../../utils/apiService';
 import {
     setGwPageLoadInstanceData,
@@ -95,6 +96,7 @@ const DashboardInnerPage = () => {
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
     const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
@@ -253,18 +255,19 @@ const DashboardInnerPage = () => {
                 ]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-            apiCall = optimizeResiliency;
+            apiCall = optimizeAwsBackup;
             const state = store.getState();
             const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
 
             payload = {
-                type: ['aws-backup-policy'],
-                params: [
+                type: ['aws-backup'],
+                databaseHosts: [
                     {
-                        awsBackup: {
-                            uuid: selectedAWSBackup?.data?.uuid,
-                            name: selectedAWSBackup?.data?.name
-                        }
+                        id: rowData?.databaseHostId,
+                        sqlServerInstances: [rowData?.instanceId],
+                        fsxFileSystemId: rowData?.objectsInViolation?.[0],
+                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
                     }
                 ]
             };

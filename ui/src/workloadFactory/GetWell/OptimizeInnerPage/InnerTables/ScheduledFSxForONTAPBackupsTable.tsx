@@ -16,15 +16,15 @@ const ScheduledFSxForONTAPBackupsTable = ({ type, data, lastColDetails, handleBu
     const tableData = useMemo(() => {
         let id = 0;
         return data?.objectsInViolation?.map((row: any) => ({
-            FilesystemName: row,
+            filesystemName: row,
             id: String(id++)
         }));
     }, [data]);
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'File system (FSx for ONTAP) Name',
-            accessor: 'FilesystemName',
+            Header: 'Filesystem Name',
+            accessor: 'filesystemName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
@@ -46,8 +46,8 @@ const ScheduledFSxForONTAPBackupsTable = ({ type, data, lastColDetails, handleBu
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'multiple'
-        // defaultSelectedRows: tableData.map((item: any) => item.id)
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
@@ -65,8 +65,8 @@ const ScheduledFSxForONTAPBackupsTable = ({ type, data, lastColDetails, handleBu
             <TableTopBar
                 //@ts-ignore
                 tableProps={tableProps}
-                pluralTitle={`File system (FSx for ONTAP) Names`}
-                singularTitle={'File system (FSx for ONTAP) Name'}
+                pluralTitle={`Filesystem Names`}
+                singularTitle={'Filesystem Name'}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />

@@ -1070,6 +1070,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeAwsBackup: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/resiliency/aws-backup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1206,5 +1213,6 @@ export const {
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
-    useOptimizeResiliencyMutation
+    useOptimizeResiliencyMutation,
+    useOptimizeAwsBackupMutation
 } = getWellApi;

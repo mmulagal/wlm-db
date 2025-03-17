@@ -22,6 +22,7 @@ import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
@@ -62,6 +63,7 @@ const OptimizeInnerPage = () => {
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const userNavigated = useRef(false);
@@ -102,29 +104,10 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
-            return (
-                <DsButton
-                    isThin
-                    variant="secondary"
-                    isDisabled={false}
-                    onClick={() => {
-                        // optimizeAction(rowData);
-                        handleDialog(
-                            setDialog,
-                            selectedOptimizeConfig?.type,
-                            callOptimizeApi,
-                            closeDialog,
-                            selectedOptimizeConfig?.data,
-                            'single',
-                            rowData
-                        );
-                    }}
-                >
-                    Optimize
-                </DsButton>
-            );
-        } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+        } else if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+        ) {
             return (
                 <DsButton
                     isThin
@@ -243,6 +226,22 @@ const OptimizeInnerPage = () => {
                     ]
                 };
             }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
+            payload = {
+                type: ['aws-backup'],
+                databaseHosts: [
+                    {
+                        //   id: rowData?.databaseHostId,
+                        //   sqlServerInstances: [rowData?.instanceId],
+                        fsxFileSystemId: '',
+                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                    }
+                ]
+            };
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;

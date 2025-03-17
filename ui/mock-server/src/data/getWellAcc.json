@@ -904,7 +904,7 @@
                                     "missingPermissions": [
                                         "fsx:UpdateVolume"
                                     ],
-                                    "resourceType": "File system (FSx for ONTAP)"
+                                    "resourceType": "Filesystem"
                                 }
                             ],
                             "layout": [
@@ -1206,7 +1206,7 @@
                                 ],
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
-                                "resourceType": "File system (FSx for ONTAP)"
+                                "resourceType": "Filesystem"
                             }
                         }
                     }
@@ -2145,7 +2145,7 @@
                                     "missingPermissions": [
                                         "fsx:UpdateVolume"
                                     ],
-                                    "resourceType": "File system (FSx for ONTAP)"
+                                    "resourceType": "Filesystem"
                                 }
                             ],
                             "layout": [
@@ -2447,7 +2447,7 @@
                                 ],
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
-                                "resourceType": "File system (FSx for ONTAP)"
+                                "resourceType": "Filesystem"
                             }
                         }
                     }
@@ -3386,7 +3386,7 @@
                                     "missingPermissions": [
                                         "fsx:UpdateVolume"
                                     ],
-                                    "resourceType": "File system (FSx for ONTAP)"
+                                    "resourceType": "Filesystem"
                                 }
                             ],
                             "layout": [
@@ -3688,7 +3688,7 @@
                                 ],
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
-                                "resourceType": "File system (FSx for ONTAP)"
+                                "resourceType": "Filesystem"
                             }
                         }
                     }
@@ -4637,7 +4637,7 @@
                                     "missingPermissions": [
                                         "fsx:UpdateVolume"
                                     ],
-                                    "resourceType": "File system (FSx for ONTAP)"
+                                    "resourceType": "Filesystem"
                                 }
                             ],
                             "layout": [
@@ -4939,7 +4939,7 @@
                                 ],
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
-                                "resourceType": "File system (FSx for ONTAP)"
+                                "resourceType": "Filesystem"
                             }
                         }
                     }
@@ -5878,7 +5878,7 @@
                                     "missingPermissions": [
                                         "fsx:UpdateVolume"
                                     ],
-                                    "resourceType": "File system (FSx for ONTAP)"
+                                    "resourceType": "Filesystem"
                                 }
                             ],
                             "layout": [
@@ -6180,7 +6180,7 @@
                                 ],
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
-                                "resourceType": "File system (FSx for ONTAP)"
+                                "resourceType": "Filesystem"
                             }
                         }
                     }
@@ -7119,7 +7119,7 @@
                                     "missingPermissions": [
                                         "fsx:UpdateVolume"
                                     ],
-                                    "resourceType": "File system (FSx for ONTAP)"
+                                    "resourceType": "Filesystem"
                                 }
                             ],
                             "layout": [
@@ -7421,7 +7421,7 @@
                                 ],
                                 "totalObjectsAssessed": 1,
                                 "totalObjectsInViolation": 1,
-                                "resourceType": "File system (FSx for ONTAP)"
+                                "resourceType": "Filesystem"
                             }
                         }
                     }
