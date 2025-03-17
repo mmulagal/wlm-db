@@ -2161,6 +2161,77 @@ const GetWell = () => {
                                         />
                                     </div>
                                 )}
+
+                                {filteredCardData?.scheduled_FSx_for_ONTAP_backups && (
+                                    <div className={styles.combineComponent}>
+                                        <StorageCardComponent
+                                            cardData={filteredCardData?.scheduled_FSx_for_ONTAP_backups}
+                                            optimizePrintState={optimizePrintState}
+                                            type={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
+                                        />
+                                        <DsAccordion
+                                            id="19"
+                                            variant="Default"
+                                            isDisabled={
+                                                loading || !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two?.value
+                                            }
+                                            isExpanded={isAccordionExpanded('19', optimizePrintState)}
+                                            onExpandChange={isExpanded => {
+                                                handleAccordionExpanded('19', isExpanded);
+                                            }}
+                                            onClick={() => setClickedAccordionId('19')}
+                                            title={
+                                                <div className={styles.tagPlacement}>
+                                                    {filteredCardData?.scheduled_FSx_for_ONTAP_backups?.tags?.map(
+                                                        (perTag: string, index: number) => {
+                                                            return (
+                                                                <div key={index}>
+                                                                    <Tag text={perTag} />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+                                                </div>
+                                            }
+                                            headerActions={[
+                                                <div className={styles.headerAction}>
+                                                    <div
+                                                        className={
+                                                            isDarkTheme && !loading ? styles['dark-theme-light'] : ''
+                                                        }
+                                                    >
+                                                        {loading ||
+                                                        !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two?.value ? (
+                                                            <LightDisabled />
+                                                        ) : (
+                                                            <Light />
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            color:
+                                                                loading ||
+                                                                !cardData?.scheduled_FSx_for_ONTAP_backups?.block_two
+                                                                    ?.value
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                    >
+                                                        View recommendation
+                                                    </div>
+                                                </div>
+                                            ]}
+                                            children={
+                                                <RecommendationText
+                                                    data={
+                                                        filteredCardData?.scheduled_FSx_for_ONTAP_backups
+                                                            ?.recommendation
+                                                    }
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

@@ -163,29 +163,42 @@ const MultiInstanceUnmanageResponseBody = Type.Object({
     )
 });
 
-const MultiInstanceManageMsSqlRequestBody = Type.Object({
+const BulkManageMsSqlRequestBody = Type.Object({
+    credentialsId: Type.String({ description: 'Credentials ID' }),
+    region: Type.String({ description: 'AWS region' }),
     ec2InstanceId: Type.String({ description: 'EC2 instance Id' }),
     databaseInstanceNames: Type.Array(Type.String({ description: 'List of MS SQL database instances' })),
     databaseHostId: Type.Optional(Type.String({ description: 'Database host ID' }))
 });
-
-const MultiInstanceManageResponseBody = Type.Object({
-    resourceId: Type.String({ description: 'Workload Factory resource ID.' }),
-    items: Type.Array(
-        Type.Object({
-            databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
-            databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
-            status: Type.String({ description: 'Status of database instance unmanage operation.' }),
-            errorMessage: Type.Optional(
-                Type.String({ description: 'Error details, if any, of a failed database instance management.' })
-            )
-        })
-    )
+const MultiInstanceManageMsSqlRequestBody = Type.Object({
+    items: Type.Array(BulkManageMsSqlRequestBody)
 });
 
-// const ManageMsSqlResponseBody = Type.Object({
-//     resourceId: Type.String({ description: 'ID of the managed resource' })
-// });
+type MultiInstanceManageMsSqlRequestBodyType = Static<typeof BulkManageMsSqlRequestBody>;
+
+const MultiInstanceManageResponseBody = Type.Array(
+    Type.Object({
+        resourceId: Type.Optional(Type.String({ description: 'Workload Factory resource ID.' })),
+        ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
+        region: Type.String({ description: 'AWS region' }),
+        credentialsId: Type.String({ description: 'Credentials ID' }),
+        hostErrorMessage: Type.Optional(
+            Type.String({ description: 'Error details, if any, of a failed host management.' })
+        ),
+        items: Type.Array(
+            Type.Object({
+                databaseInstanceName: Type.String({ description: 'SQL Server database instance name.' }),
+                databaseInstanceGuid: Type.Optional(Type.String({ description: 'SQL Server database instance GUID.' })),
+                status: Type.Optional(Type.String({ description: 'Status of database instance unmanage operation.' })),
+                errorMessage: Type.Optional(
+                    Type.String({ description: 'Error details, if any, of a failed database instance management.' })
+                )
+            })
+        )
+    })
+);
+
+type MultiInstanceManageResponseBodyType = Static<typeof MultiInstanceManageResponseBody>;
 
 const PrepareResourceResponseBody = Type.Object({
     jobId: Type.String({ description: 'Resource preparation job ID' })
@@ -261,5 +274,7 @@ export {
     MultiInstanceUnmanageResponseBody,
     MultiInstanceManageResponseBody,
     DatabaseInstanceQueryString,
-    MultiInstanceManageMsSqlRequestBody
+    MultiInstanceManageMsSqlRequestBody,
+    MultiInstanceManageMsSqlRequestBodyType,
+    MultiInstanceManageResponseBodyType
 };
