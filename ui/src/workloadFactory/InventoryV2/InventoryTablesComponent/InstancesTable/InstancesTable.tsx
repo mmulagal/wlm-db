@@ -863,7 +863,7 @@ const InstancesTable = () => {
         isSorting: false,
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
-        pageSize: 10,
+        pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: [],
         isHorizontalScroll: true,
@@ -1162,7 +1162,6 @@ const InstancesTable = () => {
                         pluralTitle="Instances"
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
-                        className={styles.topBarStyle}
                         subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
                     />
                     {selectedRowsForManage.length > 0 && (
