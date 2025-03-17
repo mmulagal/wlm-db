@@ -17,7 +17,8 @@ import {
     DriftAssessmentResponsePerAccount,
     BulkOptimizeGeneralRequestBody,
     AvailableSnapshotPoliciesResponse,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    OptimizeGenericRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -134,6 +135,7 @@ const OptimizeStorageTierSchema = {
     description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
+    body: OptimizeGenericRequestBody,
     response: {
         200: Type.Object({
             jobId: Type.String()

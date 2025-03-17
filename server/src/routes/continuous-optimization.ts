@@ -193,7 +193,8 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             { schema: OptimizeStorageTierSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { objectsToOptimize }
                 } = castRequest(request);
 
                 const response = await optimizeStorageTier(
@@ -201,7 +202,8 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseInstanceId
+                    databaseInstanceId,
+                    objectsToOptimize
                 );
                 return reply.send(response);
             }

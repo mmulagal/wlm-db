@@ -2204,7 +2204,8 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         databaseType,
         awsAccountId,
         instanceMetadata,
-        databaseHostId
+        databaseHostId,
+        volumesToOptimize
     } = storageTierParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -2221,25 +2222,27 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         parentJobId
     );
 
+    let volumeNames = volumesToOptimize ?? [];
     try {
-        const instanceVolumeMapping =
-            (await getMappedOntapVolumes(
-                credentialsId,
-                region,
-                fsxId,
-                false,
-                activeNodeInstanceId!,
-                [instanceName],
-                sqlAuthEnabled,
-                true
-            )) || [];
+        if (isEmpty(volumesToOptimize)) {
+            const instanceVolumeMapping =
+                (await getMappedOntapVolumes(
+                    credentialsId,
+                    region,
+                    fsxId,
+                    false,
+                    activeNodeInstanceId!,
+                    [instanceName],
+                    sqlAuthEnabled,
+                    true
+                )) || [];
 
-        const volumeRecords =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeRecords)
-                .flat() || [];
-        const volumeNames = volumeRecords.map(volume => volume.name as string);
-
+            const volumeRecords =
+                Object.values(instanceVolumeMapping)
+                    ?.map(i => i?.volumeRecords)
+                    .flat() || [];
+            volumeNames = volumeRecords.map(volume => volume.name as string);
+        }
         const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
         const apiEndpoint = '/private/cli/volume';
 
@@ -2332,6 +2335,7 @@ async function optimizeStorageTier(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    objectsToOptimize?: string[],
     masterOptimizeParentId?: string
 ) {
     logger.info(
@@ -2398,7 +2402,8 @@ async function optimizeStorageTier(
             svmName,
             svmId,
             awsAccountId,
-            instanceMetadata
+            instanceMetadata,
+            volumesToOptimize: objectsToOptimize
         } as StorageTierParams);
     } catch (error) {
         const errorMessage = `Error while optimizing storage-tier ${error}`;
