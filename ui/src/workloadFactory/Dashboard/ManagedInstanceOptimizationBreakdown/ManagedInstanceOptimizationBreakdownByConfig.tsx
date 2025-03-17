@@ -492,25 +492,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(GENERAL.RSS_CONFIGURATION);
+                            }}
+                            data-testid="wlm-db-optimize-maxdop"
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData.rssConfiguration === configData?.total ||
+                                inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-rss-configuration"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
-                                    Optimize
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
+                            Optimize
+                        </DsButton>
                     </div>
                 </div>
-
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
