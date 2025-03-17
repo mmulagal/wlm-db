@@ -114,7 +114,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                    body: { type }
+                    body: { configurationName, objectsToOptimize }
                 } = castRequest(request);
 
                 const response = await optimizeSizing(
@@ -123,7 +123,9 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    type
+                    [configurationName],
+                    undefined,
+                    objectsToOptimize
                 );
                 return reply.send(response);
             }

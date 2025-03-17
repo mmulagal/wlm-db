@@ -487,7 +487,8 @@ async function modifySizingAttributes(
     configData: StorageAssessment,
     serverNameWithHostName: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    objectsToOptimize?: string[]
 ) {
     logger.info('Modifying sizing attributes ', {
         accountId,
@@ -549,7 +550,8 @@ async function modifySizingAttributes(
                         serverNameWithHostName,
                         databaseHostId,
                         databaseInstanceId,
-                        activeNodeInstanceId
+                        activeNodeInstanceId,
+                        objectsToOptimize
                     );
                     childJobsStatus.push(result);
                     break;
@@ -774,7 +776,8 @@ async function logDriveOptimization(
     serverNameWithHostName: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    objectsToOptimize?: string[]
 ) {
     logger.info('Optimizing log drive ', {
         accountId,
@@ -804,13 +807,22 @@ async function logDriveOptimization(
         AssessmentStatus.UNDER_PROVISIONED,
         'log-drive-size'
     );
+
     let jobStatus: string = '';
     let errorMessage: string = '';
     try {
         if (underProvisionedDrives.length > 0) {
-            const underProvisionedOntapVolIds =
-                compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
-
+            let underProvisionedOntapVolIds = compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
+            if (!isEmpty(objectsToOptimize)) {
+                underProvisionedOntapVolIds =
+                    compact(
+                        underProvisionedDrives
+                            .filter(
+                                drive => drive.ontapVolumeName && objectsToOptimize?.includes(drive.ontapVolumeName)
+                            )
+                            .map(drive => drive.ontapVolumeUuid)
+                    ) || [];
+            }
             const { volumeIds: fsxVolumeIdList, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
                 credentialsId,
                 region,
@@ -1080,7 +1092,8 @@ async function optimizeSizing(
     databaseHostId: string,
     databaseInstanceId: string,
     types: OPTIMIZE_SIZING_CONFIGS[],
-    masterOptimizeParentId?: string
+    masterOptimizeParentId?: string,
+    objectsToOptimize?: string[]
 ) {
     logger.info('Optimizing sizing ', { accountId, credentialsId, region, databaseHostId, databaseInstanceId, types });
 
@@ -1139,7 +1152,8 @@ async function optimizeSizing(
         storageAssessmentConfigData,
         serverNameWithHostName,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceId,
+        objectsToOptimize
     );
 
     return { jobId };
