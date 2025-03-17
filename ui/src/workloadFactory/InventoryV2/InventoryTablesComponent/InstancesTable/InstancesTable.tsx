@@ -219,7 +219,7 @@ const InstancesTable = () => {
                     '2': {
                         activeCount: 1,
                         values: {
-                            [selectedFilterValue?.value]: true
+                            [selectedFilterValue?.value?.hostName]: true
                         },
                         valuesArray: [true]
                     }
@@ -773,6 +773,7 @@ const InstancesTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -787,6 +788,7 @@ const InstancesTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
+            filterOptions: 'auto',
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -801,6 +803,7 @@ const InstancesTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '213px',
             renderCell: (cellData: any, rowData: any) => {
                 return (

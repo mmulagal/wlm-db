@@ -506,6 +506,7 @@ const HostTable = () => {
             Header: 'AWS credentials',
             accessor: 'credentialName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -516,6 +517,7 @@ const HostTable = () => {
             Header: 'AWS account',
             accessor: 'accountId',
             isSortable: true,
+            filterOptions: 'auto',
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
@@ -526,6 +528,7 @@ const HostTable = () => {
             Header: 'Region',
             accessor: 'regionName',
             isSortable: true,
+            filterOptions: 'auto',
             width: '254px',
             renderCell: (cellData: any, rowData: any) => {
                 return renderCellData(cellData, rowData, styles);
