@@ -17,7 +17,7 @@ import {
     UnmanageInstanceParams,
     DatabaseInstanceQueryString
 } from '../types/discover.types';
-import { GenericHeaders, CredentialsIdParams } from '../types/generic.types';
+import { GenericHeaders, CredentialsIdParams, AccountIdParams } from '../types/generic.types';
 
 const DiscoveryBaseRequest = {
     Headers: GenericHeaders,
@@ -86,7 +86,7 @@ const UnManageMsSqlSchema = {
 
 const ManageMsSqlSchemaV2 = {
     ...DiscoveryBaseRequest,
-    params: CredentialsIdParams,
+    params: AccountIdParams,
     body: MultiInstanceManageMsSqlRequestBody,
     summary: 'Manage SQL Server instances',
     description: 'Manage SQL Server instances',
