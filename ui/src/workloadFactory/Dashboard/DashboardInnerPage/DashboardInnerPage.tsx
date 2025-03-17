@@ -66,6 +66,7 @@ import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
+import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -236,7 +237,7 @@ const DashboardInnerPage = () => {
                 };
             } else {
                 apiCall = optimizeStorageTier;
-                payload = null;
+                payload = {};
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
@@ -514,7 +515,7 @@ const DashboardInnerPage = () => {
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost = inventoryTableData[rowData?.databaseHostId];
+        const targettedHost = inventoryTableData[uniqueHostRow(rowData?.databaseHostId, rowData?.credentialId, rowData?.regionId)];
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
         );
