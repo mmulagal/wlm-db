@@ -746,6 +746,10 @@ async function decompressSSMResponse(response: string) {
         const result = await inflateRawPromise(buffer);
         return result.toString();
     } catch (err) {
+        if (err instanceof Error && err?.message?.toLowerCase()?.includes('invalid block type')) {
+            logger.error('Trying to decompress response that is not base64 encoded', response);
+            return response;
+        }
         logger.error('Error decompressing SSM response', err);
         throw createError('Error decompressing SSM response');
     }

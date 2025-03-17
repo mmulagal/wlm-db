@@ -60,11 +60,12 @@ async function describeFSxFileSystems(credentialsId: string, region: string) {
 async function describeFSx(
     credentialsId: string,
     region: string,
-    input: DescribeFileSystemsCommandInput
+    input: DescribeFileSystemsCommandInput,
+    accountId?: string
 ): Promise<DescribeFileSystemsCommandOutput> {
-    logger.info('Describe a FSx filesystem:', { credentialsId, region, input });
+    logger.info('Describe a FSx filesystem:', { credentialsId, region, input, accountId });
 
-    const client = await getFSxClient(credentialsId, region);
+    const client = await getFSxClient(credentialsId, region, accountId);
     const response = await client.send(new DescribeFileSystemsCommand(input));
     logger.debug('Describe a FSx file system response:', response);
 
