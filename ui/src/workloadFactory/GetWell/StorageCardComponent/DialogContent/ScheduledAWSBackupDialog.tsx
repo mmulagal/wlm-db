@@ -1,73 +1,52 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import styles from './DialogContent.module.scss';
-import { Button, DsTypography } from '@netapp/design-system';
+import { Button, DsTypography, TextField } from '@netapp/design-system';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
-import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-// import { useLazyGetSnapshotPoliciesQuery } from '../../../../utils/apiService';
-// import { useLazyGetAWSBackupPoliciesQuery } from '../../../../utils/apiService';
 import { useDispatch } from 'react-redux';
-
 import { setSelectedAWSBackup } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
 
 const ScheduledAWSBackupDialog = ({ type }: any) => {
-    const { headerSelectedCred, headerSelectedRegion } = useAppSelector(state => state.headers);
     const dispatch = useDispatch();
-    const { selectedResourceId, selectedDatabaseInstance, selectedAWSBackup } = useAppSelector(
-        state => state.getWellOptimize
-    );
-    // const [getAWSBackupPolicies] = useLazyGetAWSBackupPoliciesQuery();
-    const [loadPolicies, setLoadPolicies] = useState(false);
+    const { selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
 
-    // useEffect(() => {
-    //     async function getPolicies() {
-    //         setLoadPolicies(true);
-    //         const response = await getAWSBackupPolicies({
-    //             credentialId: headerSelectedCred?.data?.credentialsId,
-    //             region: headerSelectedRegion?.label2,
-    //             databaseHostId: selectedResourceId,
-    //             instanceId: selectedDatabaseInstance
-    //         });
-    //         dispatch(selectedawsBackup(response?.data?.AWSBackupPolicies));
-    //         setLoadPolicies(false);
-    //     }
-    //     if (selectedawsBackup === null || selectedawsBackup.length === 0) {
-    //         getPolicies();
-    //     }
-    // }, [selectedawsBackup]);
-
-    const generateAWSBAckupPolicies = useMemo<optionType[]>((): optionType[] => {
-        const options: optionType[] = [];
-        selectedAWSBackup?.map((val: any, idx: number) => {
-            const AWSBackupName = val?.name || '';
-            const option = generateOptionType(AWSBackupName, AWSBackupName, '', false, '', val);
-            options.push(option);
-        });
-
-        return options;
-    }, [selectedAWSBackup]);
-
-    useEffect(() => {
-        if (!selectedAWSBackup) {
-            dispatch(setSelectedAWSBackup(generateAWSBAckupPolicies[0]));
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedAWSBackup]);
-
-    const openCredentialTab = () => {
-        const url = 'https://docs.netapp.com/us-en/workload-fsx-ontap/create-snapshot-policy.html';
-        window.open(url, '_blank', 'noopener');
+    const handleDaysChange = (value: string | number) => {
+        dispatch(setSelectedAWSBackup({ ...selectedAWSBackup, numberOfDays: value.toString() }));
     };
+
+    const handleHoursChange = (value: string | number) => {
+        dispatch(setSelectedAWSBackup({ ...selectedAWSBackup, hour: value.toString() }));
+    };
+
+    const handleMinutesChange = (value: string | number) => {
+        dispatch(setSelectedAWSBackup({ ...selectedAWSBackup, minute: value.toString() }));
+    };
+
+    const checkDaysError = () => {
+        if (Number(selectedAWSBackup?.numberOfDays) < 1 || Number(selectedAWSBackup?.numberOfDays) > 90) {
+            return 'Please enter a value between 1 and 90';
+        }
+    };
+    const checkHoursError = () => {
+        if (Number(selectedAWSBackup?.hour) < 1 || Number(selectedAWSBackup?.hour) > 24) {
+            return 'Please enter a value between 1 and 24';
+        }
+    };
+
+    const checkMinutesError = () => {
+        if (Number(selectedAWSBackup?.minute) < 1 || Number(selectedAWSBackup?.minute) > 60) {
+            return 'Please enter a value between 1 and 60';
+        }
+    };
+
     return (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14">Action summary</DsTypography>
                 <DsTypography variant="Regular_14">
-                    Workload Factory recommends enabling backup on your FSx for ONTAP filesystem to set retention based
-                    scheduled backups of your data volumes
+                    Workload Factory recommends enabling AWS backup on your FSx for ONTAP filesystem to set retention
+                    based scheduled backups of your data volumes.
                 </DsTypography>
             </div>
 
@@ -86,20 +65,17 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                         <DsTypography variant="Regular_14">Number of days.</DsTypography>
                     </div>
                     <div className={styles.row}>
-                        <input
-                            type="number"
-                            min={1}
-                            max={90}
-                            placeholder=""
-                            required
-                            style={{ width: '100px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                            onInput={e => {
-                                const input = e.target as HTMLInputElement;
-                                let value = parseInt(input.value, 10);
-                                if (value > 90) {
-                                    input.value = '90';
-                                }
+                        <TextField
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const inputVal = e.target.value.replace(/[^0-9.,]/g, '');
+                                handleDaysChange(inputVal);
                             }}
+                            placeholder={GENERAL.TAG_KEY_PLACEHOLDER}
+                            value={selectedAWSBackup?.numberOfDays}
+                            className={styles.keyField}
+                            // @ts-ignore
+                            maxlength={90}
+                            error={checkDaysError()}
                         />
                     </div>
                     <div className={styles.content}>
@@ -111,59 +87,42 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                     </div>
 
                     <div className={styles.row} style={{ display: 'flex', alignItems: 'center' }}>
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                marginRight: '5px'
-                            }}
-                        >
+                        <div>
                             <DsTypography variant="Regular_14">Hours</DsTypography>
-                            <input
-                                type="number"
-                                min={0}
-                                max={23}
-                                placeholder=""
-                                required
-                                style={{ width: '75px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                onInput={e => {
-                                    const input = e.target as HTMLInputElement;
-                                    let value = parseInt(input.value, 10);
-                                    if (value > 23) {
-                                        input.value = '23';
-                                    }
+
+                            <TextField
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const inputVal = e.target.value.replace(/[^0-9.,]/g, '');
+                                    handleHoursChange(inputVal);
                                 }}
+                                placeholder={GENERAL.TAG_KEY_PLACEHOLDER}
+                                value={selectedAWSBackup?.hour}
+                                className={styles.keyField}
+                                // @ts-ignore
+                                maxlength={24}
+                                error={checkHoursError()}
                             />
                         </div>
                         <span>:</span>
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                marginLeft: '5px',
-                                marginRight: '5px'
-                            }}
-                        >
+                        <div>
                             <DsTypography variant="Regular_14">Minutes</DsTypography>
-                            <input
-                                type="number"
-                                min={0}
-                                max={59}
-                                placeholder=""
-                                required
-                                style={{ width: '75px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                onInput={e => {
-                                    const input = e.target as HTMLInputElement;
-                                    let value = parseInt(input.value, 10);
-                                    if (value > 59) {
-                                        input.value = '59';
-                                    }
+
+                            <TextField
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const inputVal = e.target.value.replace(/[^0-9.,]/g, '');
+                                    handleMinutesChange(inputVal);
                                 }}
+                                placeholder={GENERAL.TAG_KEY_PLACEHOLDER}
+                                value={selectedAWSBackup?.minute}
+                                className={styles.keyField}
+                                // @ts-ignore
+                                maxlength={24}
+                                error={checkMinutesError()}
                             />
                         </div>
-                        <span>UTC</span>
+                        <DsTypography style={{ position: 'relative', top: '-5px' }} variant="Regular_20">
+                            UTC
+                        </DsTypography>
                     </div>
                 </div>
 
