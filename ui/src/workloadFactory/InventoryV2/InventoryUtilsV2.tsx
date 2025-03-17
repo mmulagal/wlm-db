@@ -2368,7 +2368,7 @@ export const handleManageInstances = (
         ec2InstanceId: rowData?.ec2InstanceId,
         databaseInstanceNames: instances,
         credentialsId: rowData?.credentialId,
-        regionId: rowData?.regionId
+        region: rowData?.regionId
     };
     if (rowData?.resourceId && isDemoMode) {
         payloadItem.databaseHostId = rowData.resourceId;
@@ -2534,7 +2534,7 @@ export const handleManageInstancesBulk = (
         let itemArray: any = key.split('_');
         let perItem: any = {
             ec2InstanceId: itemArray[0],
-            credentialId: itemArray[1],
+            credentialsId: itemArray[1],
             region: itemArray[2],
             databaseInstanceNames: hostInstanceMapping[key]
         };
