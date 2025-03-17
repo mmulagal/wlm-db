@@ -1061,7 +1061,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-            case GENERAL.RSS_CONFIGURATION:
+            case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
                 return (
                     <div className={styles['storage-tier-block']}>
                         <div className={styles['first-section']}>
@@ -1137,7 +1137,7 @@ const DialogContent = ({
                         </div>
                     </div>
                 );
-            }
+        }
     };
 
     return <div className={styles.dialogContent}>{setContent()}</div>;

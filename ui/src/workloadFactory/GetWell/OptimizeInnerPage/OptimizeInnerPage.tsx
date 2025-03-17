@@ -69,7 +69,6 @@ const OptimizeInnerPage = () => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === GENERAL.CRR
         ) {
             return (
@@ -129,6 +128,7 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
         ) {
             return (
@@ -445,8 +445,7 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-            case 'Network adapter settings':
-            case 'Network adapters':
+            case GENERAL.RSS_CONFIGURATION:
                 return (
                     <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
