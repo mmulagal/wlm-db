@@ -3,14 +3,19 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useEffect, useMemo } from 'react';
-import { getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { title } from 'process';
 
 const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
+    const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
+    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
 
     const tableData = useMemo(() => {
         let id = 0;
@@ -47,7 +52,17 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
         return uniqueViolatedRows?.map((row: any) => ({
             ...row,
             id: String(id++),
-            cellProps: { ...row.cellProps, isDisabled: true }
+            cellProps: {
+                isDisabled: row?.status === 'Over-provisioned' || row?.status === 'Shared drive',
+                selectionProps: {
+                    title:
+                        row?.status === 'Over-provisioned'
+                            ? GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR
+                            : row?.status === 'Shared drive'
+                            ? GENERAL.NOT_OPTIMIZED_SHARED_DRIVES
+                            : ''
+                }
+            }
         }));
     }, [data]);
 
@@ -151,7 +166,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                 return cellData ? cellData + '%' : GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails(type, {}, '300px') //230
+        lastColDetails(type, {}, '240px') //230
     ];
 
     const tableProps = useTable({
@@ -162,9 +177,8 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        // selectionType: 'multiple',
-        selectionType: 'none',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
@@ -172,9 +186,9 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        // if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
-        //     checkBoxHandle(tableProps.selectionState, rowsData, disptach);
-        // }
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length) {
+            checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
+        }
     }, [tableProps.selectionState]);
 
     return (
@@ -184,31 +198,10 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                 tableProps={tableProps}
                 pluralTitle={`Impacted drives`}
                 singularTitle={'Impacted drive'}
-                actionsRight={
-                    <div className={styles.optimizeButton}>
-                        {disableOptimizeButtonTooltip ? (
-                            <Popover
-                                popoverClass={CommonStyles['popover']}
-                                isAppendedToBody={true}
-                                children={
-                                    <DsTypography variant="Regular_14">{disableOptimizeButtonTooltip}</DsTypography>
-                                }
-                                trigger="hover"
-                                container={
-                                    <DsButton variant="primary" isDisabled={true}>
-                                        {'Optimize'}
-                                    </DsButton>
-                                }
-                            />
-                        ) : (
-                            <DsButton onClick={handleBulkAction} isThin variant="primary">
-                                Optimize
-                            </DsButton>
-                        )}
-                    </div>
-                }
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />} */}
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

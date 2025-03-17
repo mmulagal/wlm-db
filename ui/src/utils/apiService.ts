@@ -1028,7 +1028,8 @@ export const getWellApi = createApi({
             optimizeStorageTier: builder.mutation({
                 query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
                     url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/storage-tier`,
-                    method: 'POST'
+                    method: 'POST',
+                    body: payload
                 })
             }),
             optimizeStorageTierForBulk: builder.mutation({
