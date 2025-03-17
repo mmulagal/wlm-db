@@ -60,7 +60,7 @@ const HostTable = () => {
     const { setDialog, closeDialog } = useDialog();
 
     const [resetPage, setResetPage] = useState(false);
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useState(50);
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -650,7 +650,7 @@ const HostTable = () => {
             <div className={styles.inventoryTable}>
                 <div
                     //  @ts-ignore
-                    className={styles.table}
+                    className={`${styles.table} ${styles.hostTable}`}
                 >
                     <TableTopBar
                         //@ts-ignore
