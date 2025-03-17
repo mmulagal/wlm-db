@@ -346,7 +346,6 @@ async function getCrrDriftData(
         databaseInstanceId,
         AssessmentCategories.CRR
     );
-    // const response: ResilienceDriftAssessmentResponseType = {};
     if (isEmpty(persistedConfigurationData)) {
         const errorMessage =
             'No CRR assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.';
