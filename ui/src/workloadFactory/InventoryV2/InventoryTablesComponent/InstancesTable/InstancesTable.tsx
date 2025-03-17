@@ -44,6 +44,7 @@ import {
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedRowsForManage,
+    setTableManageColumnState,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -73,7 +74,6 @@ import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
-import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -81,7 +81,9 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 
 const InstancesTable = () => {
     const disptach = useDispatch();
-    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
+    const { inventoryTableData, inProgressInstances, tableManageColumnState } = useAppSelector(
+        state => state.inventoryV2
+    );
 
     const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading, selectedRowsForManage } = useAppSelector(
@@ -92,12 +94,7 @@ const InstancesTable = () => {
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
         useAppSelector(state => state.inventoryV2);
 
-    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
-
     const [menuOpenedRow, setOpenedRow] = useState(null);
-    const [resetPage, setResetPage] = useState(false);
-    const [pageSize, setPageSize] = useState(25);
-    const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
@@ -873,7 +870,7 @@ const InstancesTable = () => {
         isManagedColumns: true,
         isLazyLoading: loading,
         initialFilterState: getInitialFilter(),
-        initialColumnState: initialInstanceTableColState,
+        initialColumnState: tableManageColumnState.instanceTable,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
@@ -1135,6 +1132,10 @@ const InstancesTable = () => {
             checkBoxHandleManage(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressInstances]);
+
+    useEffect(() => {
+        dispatch(setTableManageColumnState({ ...tableManageColumnState, instanceTable: tableProps.columnsState }));
+    }, [tableProps.columnsState]);
 
     const handleBulkOperation = () => {
         checkBoxHandleManage(tableProps.selectionState, selectedRowsForManage, disptach);

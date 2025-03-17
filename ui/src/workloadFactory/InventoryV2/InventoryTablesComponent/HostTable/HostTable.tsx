@@ -27,7 +27,11 @@ import {
     sortInventoryTableData
 } from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
-import { setSelectedFilterValue, setSelectedInventoryTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setSelectedFilterValue,
+    setSelectedInventoryTab,
+    setTableManageColumnState
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
@@ -42,7 +46,6 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { useNavigate } from 'react-router-dom';
-import { initialHostsTableColState } from '../../../../utils/manageColumnUtils';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -61,7 +64,9 @@ const HostTable = () => {
 
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
-    const { isManagedHostListLoading, fsxCredentialStatusLoading } = useAppSelector(state => state.inventoryV2);
+    const { isManagedHostListLoading, fsxCredentialStatusLoading, tableManageColumnState } = useAppSelector(
+        state => state.inventoryV2
+    );
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
     const { isDemoMode } = useAppSelector(state => state.auth);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
@@ -545,7 +550,7 @@ const HostTable = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
-        initialColumnState: initialHostsTableColState,
+        initialColumnState: tableManageColumnState.hostTable,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const { disableOption, disableMessage } = findManageOption(rowData);
@@ -635,6 +640,10 @@ const HostTable = () => {
         }
         setResetPage(false);
     }, [resetPage]);
+
+    useEffect(() => {
+        dispatch(setTableManageColumnState({ ...tableManageColumnState, hostTable: tableProps.columnsState }));
+    }, [tableProps.columnsState]);
 
     return (
         <>
