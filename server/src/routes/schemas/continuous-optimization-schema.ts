@@ -1,5 +1,4 @@
 import { Type } from '@fastify/type-provider-typebox';
-import DescribeFileSystemsCommandOutput from '@aws-sdk/client-fsx';
 import { RouteTags } from '../../utils/consts';
 import { CredentialsIdParams } from '../types/generic.types';
 import {
@@ -167,17 +166,6 @@ const AvailableSnapshotPolicies = {
     }
 };
 
-const FSxNAWSbackupSchema = {
-    ...resourceRequest,
-    summary: 'Get available AWS backups for FSX',
-    description: 'Get available AWS backups for FSX',
-    params: DatabaseHostOptionalInstanceSummaryParams,
-    tags: [RouteTags.ASSESSMENT],
-    response: {
-        200: DescribeFileSystemsCommandOutput
-    }
-};
-
 const OptimizeResilienceSchema = {
     ...resourceRequest,
     summary: 'Optimize resilience parameters for database instances',
@@ -243,7 +231,6 @@ export {
     OptimizeOperatingSystemSchema,
     DriftAssessmentPerHost,
     OptimizeStorageTierSchema,
-    FSxNAWSbackupSchema,
     DriftAssessmentPerAccount,
     AvailableSnapshotPolicies,
     OptimizeResilienceSchema,
