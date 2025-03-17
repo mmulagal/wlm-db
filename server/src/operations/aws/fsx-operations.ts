@@ -338,7 +338,7 @@ async function isFsxnAwsBackupEnabled(
             }, {});
 
             logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
-            return volumeDBMapWithBackupFlag;
+            return { volumeDBMapWithBackupFlag, volumeUuidsInBackups };
         }
         return false;
     }
