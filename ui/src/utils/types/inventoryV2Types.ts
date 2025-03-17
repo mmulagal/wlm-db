@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;
     optimizeInnerPageValues: {} | any;

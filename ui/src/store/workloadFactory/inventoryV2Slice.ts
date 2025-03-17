@@ -2,6 +2,12 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
 import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
+import {
+    initialDatabaseTableColState,
+    initialHostsTableColState,
+    initialInstanceTableColState
+} from '../../utils/manageColumnUtils';
+import { set } from 'lodash';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',
@@ -60,13 +66,21 @@ const initialInventoryV2State: InventorySliceData = {
         value: '',
         filterType: ''
     },
-    selectedRowsForManage: []
+    selectedRowsForManage: [],
+    tableManageColumnState: {
+        instanceTable: initialInstanceTableColState,
+        hostTable: initialHostsTableColState,
+        databaseTable: initialDatabaseTableColState
+    }
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setTableManageColumnState: (state, action: PayloadAction<any>) => {
+            state.tableManageColumnState = action.payload;
+        },
         setSelectedFilterValue: (state, action: PayloadAction<any>) => {
             state.selectedFilterValue = action.payload;
         },
@@ -269,7 +283,8 @@ export const {
     setAllMssqlHostAssessmentLoading,
     setPotentialSavingsHostData,
     resetPerComboData,
-    setSelectedRowsForManage
+    setSelectedRowsForManage,
+    setTableManageColumnState
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

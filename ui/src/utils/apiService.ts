@@ -770,13 +770,6 @@ export const inventoryApiV2 = createApi({
                     method: 'DELETE'
                 })
             }),
-            manageMssqlInstance: builder.mutation({
-                query: ({ credentialsId, regionId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialsId}/regions/${regionId}/manage`,
-                    method: 'POST',
-                    body: payload
-                })
-            }),
             manageBulkMssqlInstance: builder.mutation({
                 query: ({ payload }) => ({
                     url: `v1/mssql/manage`,
@@ -1071,6 +1064,13 @@ export const getWellApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            optimizeAwsBackup: builder.mutation({
+                query: ({ credentialId, regionId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/optimize/resiliency/aws-backup`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -1160,7 +1160,6 @@ export const {
     useLazyGetPgSqlDatabaseHostsListQuery,
     useGetMssqlInstanceDataV2Mutation,
     useUnmanageMssqlInstanceMutation,
-    useManageMssqlInstanceMutation,
     useManageBulkMssqlInstanceMutation,
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery
@@ -1207,5 +1206,6 @@ export const {
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
-    useOptimizeResiliencyMutation
+    useOptimizeResiliencyMutation,
+    useOptimizeAwsBackupMutation
 } = getWellApi;

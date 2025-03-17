@@ -18,6 +18,7 @@ import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL } from '../../../../utils/const
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
+import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
 
 type DialogType = {
     type: string;
@@ -1011,6 +1012,8 @@ const DialogContent = ({
                     </div>
                 );
 
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                return <ScheduledAWSBackupDialog type={type} />;
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
                 return (
                     <div className={styles['storage-tier-block']}>

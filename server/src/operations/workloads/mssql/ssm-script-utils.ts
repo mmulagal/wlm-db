@@ -3,7 +3,12 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, SQL_CASE_INSENSITIV
 /* eslint-disable no-useless-escape */
 
 import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
-import { compressResponse, ontapRestRequest } from './common-templates';
+import {
+    compressResponse,
+    invokeOntapRequestTemplate,
+    ontapRestRequest,
+    ontapRestRequestBootstrap
+} from './common-templates';
 
 const GET_ACTIVE_NODE_DRIVE_INFO = (deploymentType: string, instanceName: string = DEFAULT_INSTANCE_NAME) => ` 
 #Get ACTIVE NODE DRIVE INFO
@@ -480,7 +485,8 @@ const getMappedOntapVolumesScript = (
     sqlAuthEnabled: boolean = false,
     fields: string = '',
     includeLogVolumes: boolean = false,
-    svmOntapUuid: string = ''
+    svmOntapUuid: string = '',
+    instanceLevelFsxnIds: Record<string, object> = {}
 ) => `
     #Get Mapped Ontap Volumes
     $WarningPreference = 'SilentlyContinue';
@@ -506,6 +512,7 @@ const getMappedOntapVolumesScript = (
         $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
         $additionalFields = '${fields}'
         $svmOntapUuid = '${svmOntapUuid}'
+        $instanceLevelFsxnIds = '${JSON.stringify(instanceLevelFsxnIds)}' | ConvertFrom-Json
         ${getSqlCredentials(sqlAuthEnabled)}
         $sqlInstances = $instances | ForEach-Object {
             $serverInstanceName = $_
@@ -521,14 +528,30 @@ const getMappedOntapVolumesScript = (
             }
         }
 
-        ${ontapRestRequest}
+        ${invokeOntapRequestTemplate}
 
+        $visitedFileSystems = @{}
         $instanceRespones = @{}
         $sqlInstances | ForEach-Object {
             try {
                 $sqlCredential = $_.sqlCredential
                 $executableInstance = $_.executableInstance
                 $serverInstanceName = $_.serverInstanceName
+
+                ${ontapRestRequestBootstrap}
+
+                $instanceLevelFsxnId = $($instanceLevelFsxnIds.$serverInstanceName.fsxId)
+                Write-Debug "Instance Level FSxN Id: $instanceLevelFsxnId"
+                if (-not [string]::IsNullOrEmpty($instanceLevelFsxnId)) {
+                    $instanceLevelFsxnId = $FSxID
+                }
+                if (-not $visitedFileSystems.ContainsKey($instanceLevelFsxnId)) {
+                    $FSxNDetails = Get-FSxNDetails -fsxId $instanceLevelFsxnId
+                    $visitedFileSystems += @{$instanceLevelFsxnId = @{
+                        FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
+                        FSxHostName = $FSxNDetails.FSxHostName
+                    }}
+                }
 
                 if (${isSystemDatabase}) {
                     $sqlquery = @"
@@ -734,7 +757,10 @@ const getMappedOntapVolumesScript = (
                     $VolumeLunMapping = @{}
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
-                    
+                        $Params += @{
+                            "FSxCredentialsInBase64" = $($visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64);
+                            "FSxHostName" = $($visitedFilesystems.$instanceLevelFsxnId.FSxHostName);
+                        }
                         $Response = Invoke-ONTAPRequest @Params
 
                         $LunRecords = $Response.records
@@ -769,8 +795,10 @@ const getMappedOntapVolumesScript = (
                         }
                     }
                     $QueryFilter = $QueryFilter.TrimEnd('|')
-
-                    if ($svmOntapUuid -ne '') {
+                    
+                    if (-not [string]::IsNullOrEmpty($($instanceLevelFsxnIds.$serverInstanceName.svmUuid))) {
+                        $QueryFilter += "&svm.uuid=$($instanceLevelFsxnIds.$serverInstanceName.svmUuid)"
+                    } elseif ($svmOntapUuid -ne '') {
                         $QueryFilter += "&svm.uuid=$svmOntapUuid"
                     }
 
@@ -780,7 +808,10 @@ const getMappedOntapVolumesScript = (
 
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=snapshot_count,$additionalFields"}
-                    
+                        $Params += @{
+                            "FSxCredentialsInBase64" = $($visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64);
+                            "FSxHostName" = $($visitedFilesystems.$instanceLevelFsxnId.FSxHostName);
+                        }
 
                         $Response = Invoke-ONTAPRequest @Params
 
@@ -827,7 +858,10 @@ const getMappedOntapVolumesScript = (
                     $volumeIds = @()
                     if ($QueryFilter -ne '') {
                         $Params += @{"ApiQueryFilter" = "name=$QueryFilter" + "&fields=volume"}
-                    
+                        $Params += @{
+                            "FSxCredentialsInBase64" = $($visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64);
+                            "FSxHostName" = $($visitedFilesystems.$instanceLevelFsxnId.FSxHostName);
+                        }
                     
                         $cifsShares = Invoke-ONTAPRequest @Params
                         $cifsRecords = $cifsShares.records

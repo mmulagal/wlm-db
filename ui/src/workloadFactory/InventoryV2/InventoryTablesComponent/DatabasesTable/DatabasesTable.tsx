@@ -3,10 +3,9 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { INVENTORY_ACTIONS, INVENTORY_STATUS, PROTECTION_TEXT_STATUS } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { initialDatabaseTableColState } from '../../../../utils/manageColumnUtils';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setSelectedFilterValue } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
@@ -20,7 +19,7 @@ import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../st
 import { useNavigate } from 'react-router-dom';
 
 const DatabasesTable = () => {
-    const { selectedInventoryTab, selectedFilterValue, inventoryTableData } = useAppSelector(
+    const { selectedInventoryTab, selectedFilterValue, inventoryTableData, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
@@ -319,6 +318,7 @@ const DatabasesTable = () => {
             id: '8',
             width: '184px',
             isSortable: true,
+            filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -328,6 +328,7 @@ const DatabasesTable = () => {
             accessor: 'accountId',
             id: '9',
             width: '184px',
+            filterOptions: 'auto',
             isSortable: true,
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -339,6 +340,7 @@ const DatabasesTable = () => {
             id: '10',
             width: '184px',
             isSortable: true,
+            filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -356,7 +358,7 @@ const DatabasesTable = () => {
             databaseHostsLoading || fullHostDataLoading || pgsqldatabaseHostsLoading || pgsqlfullHostDataLoading,
         //@ts-ignore
         initialFilterState: getInitialFilter(),
-        initialColumnState: initialDatabaseTableColState,
+        initialColumnState: tableManageColumnState.databaseTable,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 let disableOption = false;
@@ -419,8 +421,8 @@ const DatabasesTable = () => {
     });
 
     useEffect(() => {
-        console.log(tableProps);
-    }, [tableProps]);
+        dispatch(setTableManageColumnState({ ...tableManageColumnState, databaseTable: tableProps.columnsState }));
+    }, [tableProps.columnsState]);
     return (
         <>
             <div className={styles.inventoryTable}>

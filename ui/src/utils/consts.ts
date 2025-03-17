@@ -757,6 +757,7 @@ export const GETWELL_CONFIG: any = {
     'mssql-patch': 'microsoft_sql_patch',
     maxdop: 'maxdop',
     'snapshot-policy': 'scheduled_local_snapshot',
+    'aws-backup-policy': 'scheduled_FSx_for_ONTAP_backups',
     crr: 'crr'
 };
 
@@ -792,5 +793,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
     CRR: 'Crr',
     ONTAP: 'ontap',
-    OS: 'os'
+    OS: 'os',
+    SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups'
 };
