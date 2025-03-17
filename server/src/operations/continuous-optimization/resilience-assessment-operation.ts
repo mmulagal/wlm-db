@@ -16,7 +16,8 @@ import {
     AssessmentStatus,
     OptimizeStorageConfigs,
     SEVERITY,
-    AwsWellArchitecturedPillars
+    AwsWellArchitecturedPillars,
+    ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-configs/storage';
 import { HttpErrorCodes } from '../../utils/consts';
@@ -129,14 +130,14 @@ async function getResilienceDriftAssessment(
 ) {
     logger.info('Getting resilience drift assessment for:', { credentialsId, databaseInstanceId, databaseHostId });
     try {
-        const [snapshotPolicy, crr] = await Promise.all([
+        const [snapshotPolicy, crrData] = await Promise.all([
             getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
             getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
         ]);
 
         const assessmentData: ResilienceDriftAssessmentResponseType = {
             snapshotPolicy,
-            crr
+            crr: crrData
         };
         return assessmentData;
     } catch (error) {
@@ -353,8 +354,7 @@ async function getCrrDriftData(
     }
 
     try {
-        const configData = persistedConfigurationData.config_data as { crrDetails: any[] };
-        const crrDetails = configData?.crrDetails || [];
+        const { crrDetails } = persistedConfigurationData.config_data as { crrDetails: any[] };
         const allVolumesOptimized: boolean = crrDetails.every(
             (detail: { isCRREnabled: boolean }) => detail.isCRREnabled
         );
@@ -371,14 +371,14 @@ async function getCrrDriftData(
             totalObjectsAssessed: crrDetails.length,
             totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            resourceType: 'Volume',
-            recommended: 'Enable Cross-Region Replication (CRR) for enhanced data durability and availability.'
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommended: 'crr-enabled'
         };
 
         return response;
     } catch (error) {
         logger.error('Error fetching crr drift data:', error);
-        throw error;
+        return { errorMessage: (error as Error).message } as ParameterDriftResponseType & { errorMessage: string };
     }
 }
 export {
