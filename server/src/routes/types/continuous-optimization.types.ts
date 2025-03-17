@@ -227,7 +227,8 @@ const StorageParameterDriftResponse = Type.Object({
 });
 
 const ResilienceDriftAssessmentResponse = Type.Object({
-    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse]))
+    snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse])),
+    crr: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
 

@@ -11,9 +11,6 @@ import {
 } from '../../../../utils/apiService';
 import {
     detectFieldsValidation,
-    getDiscoveredHostDeploymentV2,
-    getOptimizationStatus,
-    getProtectionText,
     handleManageInstances,
     handleManageInstancesBulk,
     saveFsxInCredRegisteredObj,
@@ -23,11 +20,10 @@ import {
 import {
     checkBoxHandleManage,
     createDetectHostPayload,
-    formatSizeTwoPrecision,
     getSelectedFromSelectionState,
     isSmbProtocol
 } from '../../../../utils/utilityFunctions';
-import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_ACTIONS, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -44,6 +40,7 @@ import {
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setSelectedRowsForManage,
+    setTableManageColumnState,
     setUnManagedPerfInstanceIdsList,
     setValuesForForm
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -73,7 +70,6 @@ import SmallLoader from '../../../../common/SmallLoader/SmallLoader';
 import styles from '../InventoryTable.module.scss';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
-import { initialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -81,23 +77,18 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 
 const InstancesTable = () => {
     const disptach = useDispatch();
-    const { inventoryTableData, inProgressInstances } = useAppSelector(state => state.inventoryV2);
-
-    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
-    const { allmssqlHostAssessmentData, allmssqlHostAssessmentLoading, selectedRowsForManage } = useAppSelector(
+    const { instanceTableRows, inProgressInstances, tableManageColumnState } = useAppSelector(
         state => state.inventoryV2
     );
+
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const { selectedRowsForManage } = useAppSelector(state => state.inventoryV2);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { isManagedHostListLoading, fsxCredentialStatusLoading, selectedInventoryTab, selectedFilterValue } =
         useAppSelector(state => state.inventoryV2);
 
-    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
-
     const [menuOpenedRow, setOpenedRow] = useState(null);
-    const [resetPage, setResetPage] = useState(false);
-    const [pageSize, setPageSize] = useState(25);
-    const [tableHorizontalScroll, setTableHorizontalScroll] = useState(false);
 
     const [manageBulkInstanceApi] = useManageBulkMssqlInstanceMutation();
     const [prepareHostApi] = usePrepareHostMutation();
@@ -107,7 +98,6 @@ const InstancesTable = () => {
     const menuOpenedRowDetail: any = useRef(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
-    const [data, setData] = useState<any>();
 
     const dispatch = useDispatch();
 
@@ -129,80 +119,6 @@ const InstancesTable = () => {
         isManagedHostListLoading,
         fsxCredentialStatusLoading
     ]);
-
-    useEffect(() => {
-        let newTable: any = [];
-        let id: number = 0;
-        if (inventoryTableData) {
-            Object.keys(inventoryTableData).map((rowId: string) => {
-                if (inventoryTableData[rowId]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-                    return;
-                }
-                if (inventoryTableData?.[rowId] && inventoryTableData?.[rowId]?.sqlServerInstances) {
-                    let perHost = inventoryTableData?.[rowId];
-                    let optimizationStatusLoading = false;
-                    let optimizationStatusList: any = [];
-                    let assessRow = allmssqlHostAssessmentData?.filter(
-                        (perRow: any) =>
-                            uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === rowId
-                    );
-                    if (assessRow.length > 0) {
-                        optimizationStatusLoading = allmssqlHostAssessmentLoading;
-                        optimizationStatusList = assessRow?.[0]?.instancesAssessment;
-                    }
-                    let perInstanceData: any = [];
-                    inventoryTableData?.[rowId]?.sqlServerInstances?.map((perRow: any) => {
-                        if (
-                            perRow?.fileSystemType === GENERAL.EBS ||
-                            perRow?.fileSystemType === GENERAL.FSX_FOR_WINDOWS
-                        ) {
-                            return;
-                        }
-                        let protectionText = getProtectionText(perRow);
-                        let optimizationStatus = getOptimizationStatus(
-                            perRow?.databaseInstanceId,
-                            optimizationStatusList
-                        );
-                        let perRowData = {
-                            ...perRow,
-                            id: String(id++),
-                            hostRow: perHost,
-                            name: perHost?.name,
-                            hostType: perHost?.hostType,
-                            serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
-                            loading: inventoryTableData?.[rowId]?.loading,
-                            subLoading: perRow?.loading,
-                            optimizationStatusLoading: optimizationStatusLoading,
-                            optimizationStatus: optimizationStatus,
-                            protectionText: protectionText,
-                            allocatedCapacityText: perRow?.allocatedCapacity
-                                ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
-                                : '',
-                            statusColText: inProgressInstances.has(
-                                uniqueHostRow(
-                                    `${perHost?.ec2InstanceId}_${perRow.databaseInstanceName}`,
-                                    perHost?.credentialId || '',
-                                    perHost?.regionId || ''
-                                )
-                            )
-                                ? INVENTORY_STATUS.IN_PROGRESS
-                                : perRow.statusColText,
-                            credentialId: perHost?.credentialId,
-                            regionId: perHost?.regionId,
-                            credentialName: perHost?.credentialName,
-                            accountId: perHost?.accountId,
-                            regionName: perHost?.regionName,
-                            resourceId: perHost?.resourceId,
-                            ec2InstanceId: perHost?.ec2InstanceId
-                        };
-                        perInstanceData.push(perRowData);
-                    });
-                    newTable = [...newTable, ...(perInstanceData || [])];
-                }
-            });
-        }
-        setData(newTable);
-    }, [inventoryTableData, inProgressInstances, allmssqlHostAssessmentLoading]);
 
     const getInitialFilter = () => {
         if (selectedInventoryTab === 'Instances' && selectedFilterValue?.flag === true) {
@@ -844,7 +760,7 @@ const InstancesTable = () => {
     };
 
     const updatedTableData = useMemo(() => {
-        return data?.map((row: any) => {
+        return instanceTableRows?.map((row: any) => {
             const { isDisabled, errorMessage } = disableManageCheck(row);
             return {
                 ...row,
@@ -860,20 +776,20 @@ const InstancesTable = () => {
                 }
             };
         });
-    }, [data, selectedRowsForManage]);
+    }, [instanceTableRows, selectedRowsForManage]);
 
     const tableProps = useTable({
         isSorting: false,
         columns: managedHostSubTableColDefs,
         rows: updatedTableData,
-        pageSize: 10,
+        pageSize: 50,
         selectionType: 'multiple',
         defaultSelectedRows: [],
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
         initialFilterState: getInitialFilter(),
-        initialColumnState: initialInstanceTableColState,
+        initialColumnState: tableManageColumnState.instanceTable,
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const menu = [];
@@ -1136,6 +1052,10 @@ const InstancesTable = () => {
         }
     }, [tableProps.selectionState, inProgressInstances]);
 
+    useEffect(() => {
+        dispatch(setTableManageColumnState({ ...tableManageColumnState, instanceTable: tableProps.columnsState }));
+    }, [tableProps.columnsState]);
+
     const handleBulkOperation = () => {
         checkBoxHandleManage(tableProps.selectionState, selectedRowsForManage, disptach);
         handleManageInstancesBulk(
@@ -1161,8 +1081,7 @@ const InstancesTable = () => {
                         pluralTitle="Instances"
                         singularTitle="Instance"
                         exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
-                        className={styles.topBarStyle}
-                        subTitle="This table may display duplicate records for the same resource, as each resource can be linked to multiple sets of credentials."
+                        subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     {selectedRowsForManage.length > 0 && (
                         <BulkActionContainer action={'Manage'} onClick={handleBulkOperation} />

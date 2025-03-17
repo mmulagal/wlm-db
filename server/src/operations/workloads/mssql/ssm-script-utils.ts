@@ -542,10 +542,10 @@ const getMappedOntapVolumesScript = (
 
                 $instanceLevelFsxnId = $($instanceLevelFsxnIds.$serverInstanceName.fsxId)
                 Write-Debug "Instance Level FSxN Id: $instanceLevelFsxnId"
-                if (-not [string]::IsNullOrEmpty($instanceLevelFsxnId)) {
+                if ([string]::IsNullOrEmpty($instanceLevelFsxnId)) {
                     $instanceLevelFsxnId = $FSxID
                 }
-                if (-not $visitedFileSystems.ContainsKey($instanceLevelFsxnId)) {
+                if ($instanceLevelFsxnId -ne $null -and -not $visitedFileSystems.ContainsKey($instanceLevelFsxnId)) {
                     $FSxNDetails = Get-FSxNDetails -fsxId $instanceLevelFsxnId
                     $visitedFileSystems += @{$instanceLevelFsxnId = @{
                         FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64

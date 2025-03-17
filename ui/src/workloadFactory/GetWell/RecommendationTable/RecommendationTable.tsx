@@ -375,7 +375,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                             </div>
                             {!optimizePrintState &&
                                 (GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
-                                rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                    rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
                                     <TooltipComponent
                                         title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
                                         placement="bottom"
@@ -389,8 +389,8 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                                         </div>
                                     </TooltipComponent>
                                 ) : optimizingInstanceData &&
-                                  rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
-                                  rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
+                                    rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
+                                    rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
                                     <TooltipComponent
                                         title={GENERAL.OPTIMIZATION_IN_PROGRESS}
                                         placement="bottom"
@@ -439,7 +439,7 @@ const RecommendationTable = ({ tableData, isLoading, optimizePrintState, from, h
                 //@ts-ignore
                 tableProps={tableProps}
                 isDoubleRow={true}
-                // variant="innerTable"
+            // variant="innerTable"
             />
             {/* </div> */}
         </div>

@@ -86,6 +86,30 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
+        } else if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
+            (rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive')
+        ) {
+            return (
+                <Popover
+                    isAppendedToBody={true}
+                    children={
+                        rowData?.status === 'Over-provisioned' ? (
+                            <DsTypography variant="Regular_14">{GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR}</DsTypography>
+                        ) : (
+                            <DsTypography variant="Regular_14">{GENERAL.NOT_OPTIMIZED_SHARED_DRIVES}</DsTypography>
+                        )
+                    }
+                    trigger="hover"
+                    delayHide={200}
+                    interactive={true}
+                    container={
+                        <DsButton variant="secondary" isDisabled={true} isThin>
+                            Optimize
+                        </DsButton>
+                    }
+                />
+            );
         } else if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
@@ -101,12 +125,17 @@ const OptimizeInnerPage = () => {
                     }
                 />
             );
-        } else if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
+        } else if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+        ) {
             return (
                 <DsButton
                     isThin
                     variant="secondary"
-                    isDisabled={false}
+                    isDisabled={rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive'}
                     onClick={() => {
                         // optimizeAction(rowData);
                         handleDialog(
@@ -172,7 +201,6 @@ const OptimizeInnerPage = () => {
                 instanceType: selectedRecommendedInstance?.value
             };
         } else if (
-            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
         ) {
@@ -180,9 +208,33 @@ const OptimizeInnerPage = () => {
             payload = {
                 type: [selectedOptimizeConfig?.data?.id]
             };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
+            apiCall = optimizeStorageSizing;
+
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'log-drive-size',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.ontapVolumeName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'log-drive-size',
+                    objectsToOptimize: [singleRowData?.ontapVolumeName]
+                };
+            }
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
-            payload = null;
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'storage-tier',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.objectName)
+                };
+            } else {
+                payload = {
+                    configurationName: 'storage-tier',
+                    objectsToOptimize: [singleRowData?.objectName]
+                };
+            }
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
             const state = store.getState();
@@ -421,8 +473,8 @@ const OptimizeInnerPage = () => {
                         handleBulkAction={handleBulkAction}
                     />
                 );
-            }
-        };
+        }
+    };
 
     const setHeading = () => {
         if (selectedOptimizeConfig?.type === 'Data files') {

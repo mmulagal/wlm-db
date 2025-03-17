@@ -13,6 +13,7 @@ const initialState: GetWellSliceInterface = {
     selectedGwInstanceCredId: '',
     selectedGwInstanceRegionId: '',
     selectedDatabaseStorageType: '',
+    selectedRowFsxId: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
     ontapConfigTableData: null,
@@ -24,6 +25,11 @@ const initialState: GetWellSliceInterface = {
     selectedRecommendedInstance: null,
     selectedSnapshotPolicy: null,
     selectedSnapshot: null,
+    selectedAWSBackup: {
+        numberOfDays: 30,
+        hour: 1,
+        minute: 0
+    },
     credIdFromJM: '',
     regionFromJM: '',
     landingFrom: '',
@@ -45,6 +51,10 @@ const getWellOptimizeSlice = createSlice({
         setSelectedSnapshotPolicy: (state, action: PayloadAction<any>) => {
             state.selectedSnapshotPolicy = action.payload;
         },
+        setSelectedAWSBackup: (state, action: PayloadAction<any>) => {
+            state.selectedAWSBackup = action.payload;
+        },
+
         setOptimizePageLoading: (state, action: PayloadAction<any>) => {
             state.optimizePageLoading = action.payload;
         },
@@ -59,6 +69,9 @@ const getWellOptimizeSlice = createSlice({
         },
         setGwResourceId: (state, action: PayloadAction<any>) => {
             state.selectedResourceId = action.payload;
+        },
+        setGwSelectedRowFsxId: (state, action: PayloadAction<any>) => {
+            state.selectedRowFsxId = action.payload;
         },
         setGwDatabaseInstance: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseInstance = action.payload;
@@ -102,6 +115,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
             state.selectedDatabaseStorageType = '';
+            state.selectedRowFsxId = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
             state.ontapConfigTableData = null;
@@ -168,6 +182,7 @@ const getWellOptimizeSlice = createSlice({
 export const {
     setSelectedSnapshot,
     setSelectedSnapshotPolicy,
+    setSelectedAWSBackup,
     setJobToInstanceMapForBulk,
     setLandingFrom,
     setCredIdFromJM,
@@ -197,7 +212,8 @@ export const {
     setSelectedGwInstanceCredId,
     setSelectedGwInstanceRegionId,
     setGwPageLoadInstanceData,
-    setLandingFromInnerPage
+    setLandingFromInnerPage,
+    setGwSelectedRowFsxId
 } = getWellOptimizeSlice.actions;
 
 export default getWellOptimizeSlice;

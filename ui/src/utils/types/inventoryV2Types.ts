@@ -1,4 +1,5 @@
 export interface InventorySliceData {
+    tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;
     optimizeInnerPageValues: {} | any;
@@ -51,6 +52,9 @@ export interface InventorySliceData {
         [key: string]: any;
     };
     selectedRowsForManage: Array<any>;
+    hostTableRows: Array<any>;
+    instanceTableRows: Array<any>;
+    databaseTableRows: Array<any>;
 }
 
 export interface InventoryTableData {

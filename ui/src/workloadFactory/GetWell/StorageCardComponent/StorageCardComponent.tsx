@@ -33,6 +33,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeStorageConfigMutation,
@@ -67,6 +68,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -647,6 +649,22 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                                 sqlServerInstances: [selectedDatabaseInstance]
                             }
                         ]
+                    }
+                ]
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            payload = {
+                type: ['aws-backup'],
+                databaseHosts: [
+                    {
+                        id: selectedResourceId,
+                        sqlServerInstances: [selectedDatabaseInstance],
+                        fsxFileSystemId: selectedRowFsxId,
+                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
                     }
                 ]
             };
