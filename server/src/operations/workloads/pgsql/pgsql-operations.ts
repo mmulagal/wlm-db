@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { isArray, isEmpty } from 'lodash-es';
 import { generateHash, sqlResponseParsing } from '../../../utils/utils';
-import { executeBashSsmCommand } from '../../aws/ssm-operations';
+import { callSsmExecution } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import {
     DatabaseHostsQueryFields,
@@ -19,6 +19,8 @@ import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/d
 import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
 import { getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
 import getDatabaseInstanceTopology from '../../../utils/sql-utils';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from './const';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../mssql/const';
 
 const logger = getLogger();
 
@@ -37,7 +39,18 @@ async function getPgSqlInstanceInfo(
     try {
         for (const nodeId of nodeIds) {
             logger.info('Fetching PGSQL instance GUID', nodeId);
-            response = await executeBashSsmCommand(credentialsId, region, commands, nodeId, accountId, comment);
+            response = await callSsmExecution(
+                credentialsId,
+                region,
+                commands,
+                nodeId,
+                comment,
+                accountId,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+            );
             if (response) {
                 return response;
             }
@@ -69,13 +82,17 @@ async function getPgSqlDatabaseCount(
     try {
         const command = DATABASES_COUNT;
         const comment = 'pgsql databases count';
-        const response = await executeBashSsmCommand(
+        const response = await callSsmExecution(
             credentialsId,
             region,
             [command],
             node1InstanceId,
+            comment,
             accountId,
-            comment
+            undefined,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
             return response;
@@ -108,7 +125,18 @@ async function getPgSqlStorageSavingsVolumeData(
             'storage/volumes?fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used';
         const commands = getPgSqlStorageSavings(fsxNId, region, endpoint);
         const comment = 'pgsql storage savings';
-        response = await executeBashSsmCommand(credentialsId, region, [commands], node1InstanceId, accountId, comment);
+        response = await callSsmExecution(
+            credentialsId,
+            region,
+            [commands],
+            node1InstanceId,
+            comment,
+            accountId,
+            undefined,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+        );
         const {
             records: [volSavingsData]
         } = JSON.parse(response!) || {};
@@ -314,13 +342,17 @@ async function getPgSqlDatabasesList(
     try {
         const command = LIST_DATABASES;
         const comment = 'pgsql database list';
-        const response = await executeBashSsmCommand(
+        const response = await callSsmExecution(
             credentialsId,
             region,
             [command],
             node1InstanceId,
+            comment,
             accountId,
-            comment
+            undefined,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
@@ -370,18 +402,22 @@ async function getPgSqlPerformaceMetrics(
     try {
         const command = PERFORMANCE_METRICS;
         const comment = 'pgsql performance metrics';
-        const response = await executeBashSsmCommand(
+        const response = await callSsmExecution(
             credentialsId,
             region,
             [command],
             node1InstanceId,
+            comment,
             accountId,
-            comment
+            undefined,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
         );
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
 
-            if (parsedResponse && !(typeof parsedResponse === 'string' && parsedResponse?.includes('error'))) {
+            if (parsedResponse) {
                 const {
                     assessment,
                     READ_LATENCY: read,
@@ -406,7 +442,6 @@ async function getPgSqlPerformaceMetrics(
                     }
                 };
             }
-            logger.error(`Error fetching pgsql performance metricies from nodes: ${node1InstanceId}, ${response}`);
         }
         const errorMessage = `Error fetching pgsql performance metricies from nodes: ${node1InstanceId}, ${response}`;
         throw createError(errorMessage);

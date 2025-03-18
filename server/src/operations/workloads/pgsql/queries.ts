@@ -17,7 +17,7 @@ FROM (
 " | jq -c '.'
 `;
 
-const PERFORMANCE_METRICS = `sudo -u postgres /usr/bin/psql -t -A -c "
+const PERFORMANCE_METRICS = `sudo -u postgres /usr/bin/psql -c "
 WITH io_stats AS (
     SELECT 
         SUM(blks_read) AS num_of_reads,
