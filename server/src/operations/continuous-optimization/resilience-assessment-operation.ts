@@ -2,9 +2,9 @@ import createError from 'http-errors';
 import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import {
+    ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
-    SnapshotPolicyAssesmentDataType,
-    ParameterDriftResponseType
+    SnapshotPolicyAssesmentDataType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
 import {
@@ -29,11 +29,12 @@ import {
 } from '../../utils/common-types';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
-import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
+import { getInstanceDetails, MappedOnTapVolumeResponse } from '../database-hosts-operations';
 import { describeFSx, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
 import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
+import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 
 const isDemoFlow = isDemo();
 const logger = getLogger();
@@ -130,14 +131,16 @@ async function getResilienceDriftAssessment(
 ) {
     logger.info('Getting resilience drift assessment for:', { credentialsId, databaseInstanceId, databaseHostId });
     try {
-        const [snapshotPolicy, crrData] = await Promise.all([
+        const [snapshotPolicy, crrData, awsBackup] = await Promise.all([
             getSnapshotPolicyDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
-            getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
+            getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId),
+            getAwsBackupDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId)
         ]);
 
         const assessmentData: ResilienceDriftAssessmentResponseType = {
             snapshotPolicy,
-            crr: crrData
+            crr: crrData,
+            awsBackup: awsBackup as ParameterDriftResponseType
         };
         return assessmentData;
     } catch (error) {
@@ -214,6 +217,117 @@ async function getSnapshotPolicyDriftData(
     } catch (error) {
         logger.error('Error getting snapshot policy drift data', error);
         throw error;
+    }
+}
+
+async function getAwsBackupDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string
+) {
+    logger.info('Get AWS Backup assessment data', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+    const awsBackupAssesmentData: ParameterDriftResponseType = {
+        ...storageGoldenConfigData.resiliency.awsBackup,
+        name: 'scheduled-fsx-for-ontap-backups',
+        status: AssessmentStatus.NOT_OPTIMIZED,
+        totalObjectsInViolation: 0,
+        recommended: 'aws-backup-enabled',
+        objectsInViolation: []
+    };
+
+    // Fetch the FSX ID for given instance
+    let newDatabaseInstanceDetails;
+    let instanceDetails;
+
+    try {
+        instanceDetails = await getInstanceDetails(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId
+        );
+
+        newDatabaseInstanceDetails = instanceDetails.newDatabaseInstanceDetails;
+
+        const { fsxn_ids: fileSystemId } = newDatabaseInstanceDetails || {};
+
+        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
+        const isAwsBackupEnabled =
+            fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
+        logger.debug('Is AWS Backup enabled:', isAwsBackupEnabled);
+        if (isAwsBackupEnabled) {
+            awsBackupAssesmentData.totalObjectsAssessed = 1;
+            awsBackupAssesmentData.status = AssessmentStatus.OPTIMIZED;
+            return awsBackupAssesmentData;
+        }
+
+        // Fetch the OnTap volumes from storage assessment
+        const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
+            accountId,
+            region,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            AssessmentCategories.STORAGE
+        );
+
+        // Check that the persisted configuration data exists
+        if (isEmpty(persistedConfigurationData)) {
+            const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            return { errorMessage };
+        }
+
+        // Extract configuration data from the persisted data
+        const { config_data: configData } = persistedConfigurationData;
+        const { volumes, errors } = configData as unknown as StorageAssessment;
+
+        // If there are errors related to volumes, return early
+        if (errors?.volumes) {
+            return { errorMessage: errors.volumes };
+        }
+        const ontapVolumeIds: string[] = [];
+        volumes.forEach(volume => {
+            const volDetails = volume as Record<string, string>;
+            ontapVolumeIds.push(volDetails?.uuid);
+        });
+
+        const { volumeUuidsInBackups } =
+            (await isFsxnAwsBackupEnabled(
+                credentialsId,
+                region,
+                fileSystemId,
+                [...new Set(ontapVolumeIds)],
+                undefined
+            )) || {};
+
+        logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
+        awsBackupAssesmentData.totalObjectsAssessed = 1;
+        awsBackupAssesmentData.status = AssessmentStatus.NOT_OPTIMIZED;
+        awsBackupAssesmentData.totalObjectsInViolation = 1;
+        awsBackupAssesmentData.objectsInViolation = [fileSystemId];
+        if (volumeUuidsInBackups) {
+            const ontapVolumeSet = new Set(ontapVolumeIds);
+            const backupVolumeSet = new Set(volumeUuidsInBackups);
+
+            const allUuidsMatch = [...ontapVolumeSet].every(uuid => backupVolumeSet.has(uuid));
+            awsBackupAssesmentData.status = allUuidsMatch ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            awsBackupAssesmentData.totalObjectsInViolation = allUuidsMatch ? 0 : 1;
+            awsBackupAssesmentData.objectsInViolation = allUuidsMatch ? [] : [fileSystemId];
+        }
+        return awsBackupAssesmentData;
+    } catch (error) {
+        const errorMessage = `Error while assessing aws backup: ${error}.`;
+        logger.error(errorMessage);
+        return { errorMessage };
     }
 }
 

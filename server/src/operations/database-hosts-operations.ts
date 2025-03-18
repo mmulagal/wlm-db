@@ -1540,7 +1540,9 @@ async function getDatabaseDetails(
                     ...(getProtection && {
                         protection: {
                             isAwsBackupEnabled: {
-                                fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName),
+                                fsxn: isDemoFlow
+                                    ? true
+                                    : checkKey(awsBackup.volumeDBMapWithBackupFlag, database.databaseName),
                                 fsxw: false,
                                 ebs: false
                             },

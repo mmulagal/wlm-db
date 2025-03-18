@@ -46,7 +46,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             fsxResponse.volumeMap.volumeDBMap,
             `i-${faker.string.alpha(17)}`
         );
-        expect(response.master).toEqual(true);
+        expect(response?.volumeDBMapWithBackupFlag.master).toEqual(true);
     });
 
     it('Get Ontap volume snapshots count', async () => {
