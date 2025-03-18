@@ -22,6 +22,7 @@ import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../.
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeComputeConfigForBulkMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeResiliencyMutation,
     useOptimizeStorageConfigMutation,
@@ -61,6 +62,7 @@ const OptimizeInnerPage = () => {
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
+    const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const userNavigated = useRef(false);
@@ -200,6 +202,41 @@ const OptimizeInnerPage = () => {
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
+        } else if (type === GENERAL.RSS_CONFIGURATION) {
+            apiCall = optimizeComputeConfigForBulk;
+            if (operation === 'bulk') {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: selectedHostname,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    networkAdapters: selectedRowsForOptimizeInnerPage.map(
+                                        (item: any) => item?.adapterName
+                                    )
+                                }
+                            ]
+                        }
+                    ]
+                };
+            } else {
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: selectedHostname,
+                                    sqlServerInstances: [selectedDatabaseInstance],
+                                    networkAdapters: [singleRowData?.adapterName]
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else if (
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE

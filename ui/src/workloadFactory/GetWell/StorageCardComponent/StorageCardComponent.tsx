@@ -806,12 +806,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     const setButtonText = () => {
-        if (type === 'Storage tier' || type === 'Log drive size' || type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT) {
+        if (
+            type === 'Storage tier' ||
+            type === 'Log drive size' ||
+            type === GENERAL.RSS_CONFIGURATION ||
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+        ) {
             return 'View & optimize';
         } else if (
             type === 'Data files' ||
             type === 'Log files' ||
-            type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
             type === GENERAL.MICROSOFT_SQL_PATCH ||
             type === GENERAL.CRR

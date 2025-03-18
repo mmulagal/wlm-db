@@ -163,6 +163,45 @@ const DashboardInnerPage = () => {
                     instanceType: selectedRecommendedInstance?.value
                 };
             }
+        } else if (type === GENERAL.RSS_CONFIGURATION) {
+            if (operation === 'bulk') {
+                apiCall = optimizeComputeConfigForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'rss-config',
+                            databaseHosts: Object.values(
+                                //@ts-ignore
+                                rowData.reduce((acc, { hostName, instanceId, networkAdapters }) => {
+                                    if (!acc[hostName]) {
+                                        acc[hostName] = { id: hostName, sqlServerInstances: [], networkAdapters: [] };
+                                    }
+                                    acc[hostName].sqlServerInstances.push(instanceId);
+                                    acc[hostName].networkAdapters.push(...networkAdapters);
+                                    return acc;
+                                }, {})
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeComputeConfigForBulk;
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: rowData?.hostName,
+                                    sqlServerInstances: [rowData?.instanceId],
+                                    networkAdapters: rowData?.networkAdapters
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
         } else if (
             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
