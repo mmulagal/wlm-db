@@ -41,7 +41,7 @@ timeout=60
 
 while [ $elapsed_time -lt $timeout ]; do
     instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
-    
+    pg_pool_instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgpool" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
     if [ $? -eq 0 ]; then
         echo "SSM parameter found"
         break
@@ -62,8 +62,19 @@ ip_details=$(extract_ip "$valid_instance_details")
 secondary_server_IP=$(echo "$ip_details" | awk '{print $1}')
 echo "ip details fetched"
 
+if is_valid_json "$pg_pool_instance_details"; then
+    valid_pgpool_instance_details="$pg_pool_instance_details"
+else
+    valid_pgpool_instance_details=$(convert_to_json_string "$pg_pool_instance_details")
+fi
+
+pgpool_ip_details=$(extract_ip "$valid_pgpool_instance_details")
+pgpool_server_IP=$(echo "$pgpool_ip_details" | awk '{print $1}')
+echo "pgpool server ip details fetched"
+
 # Delete the parameter from SSM
 aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary"
+aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgpool"
 
 # (1) Define variables for file paths.
 PG_DATA_DIR="/$fsxdatavolumename"
@@ -99,6 +110,7 @@ check_status "Failed to alter users"
 
 # (6) Update pg_hba.conf to allow replication from secondary's IP
 echo "host    replication     replicator      $secondary_server_IP         md5" | sudo tee -a "$PG_HBA"
+echo "host    all             all             $pgpool_server_IP/32         trust" | sudo tee -a "$PG_HBA"
 check_status "Failed to add entry to pg_hba.conf"
 
 # (7) Restart PostgreSQL again after pg_hba.conf change
