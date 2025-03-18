@@ -363,7 +363,7 @@ const OptimizeGenericRequestBody = Type.Object({
         ...OPTIMIZE_SIZING_CONFIGS,
         ...OptimizeStorageTierParams
     }),
-    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
+    objectsToOptimize: Type.Optional(Type.Array(Type.String({ minLength: 1 })))
 });
 
 const DriftAssessmentResponsePerAccount = Type.Object({

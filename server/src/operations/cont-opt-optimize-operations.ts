@@ -817,9 +817,7 @@ async function logDriveOptimization(
                 underProvisionedOntapVolIds =
                     compact(
                         underProvisionedDrives
-                            .filter(
-                                drive => drive.ontapVolumeName && objectsToOptimize?.includes(drive.ontapVolumeName)
-                            )
+                            .filter(drive => drive.logAccessPath && objectsToOptimize?.includes(drive.logAccessPath))
                             .map(drive => drive.ontapVolumeUuid)
                     ) || [];
             }
