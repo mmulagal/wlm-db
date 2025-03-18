@@ -205,28 +205,20 @@ async function updateFsxCapacity(
     }
 }
 
-async function updateFsxBackup(
+async function updateFileSystem(
     accountId: string,
     credentialsId: string,
     region: string,
-    fsxFileSystemId: string,
-    configuration: {
-        AutomaticBackupRetentionDays: number;
-        DailyAutomaticBackupStartTime: string;
-    }
+    input: UpdateFileSystemCommand
 ) {
-    logger.info('Updating FSX backup policy', { credentialsId, region, fsxFileSystemId });
+    logger.info('Updating File System:', { accountId, credentialsId, region });
     try {
         const client = await getFSxClient(credentialsId, region, accountId);
-        const response = await client.send(
-            new UpdateFileSystemCommand({
-                FileSystemId: fsxFileSystemId,
-                OntapConfiguration: configuration
-            })
-        );
-        logger.debug('FSX file system backup policy updated successfully:', response);
+        const response = await client.send(input);
+        logger.debug('File system updated successfully:', response);
     } catch (err) {
-        logger.error(`Error updating fsx file system backup policy for fsxFileSystemId: ${fsxFileSystemId}`, err);
+        logger.error('Error updating file system:', err);
+        throw err;
     }
 }
 
@@ -250,6 +242,6 @@ export {
     createTag,
     updateFsxVolumeSize,
     updateFsxCapacity,
-    updateFsxBackup,
+    updateFileSystem,
     describeVolumes
 };

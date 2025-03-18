@@ -223,8 +223,8 @@ const BulkOptimizeMaxDopSchema = {
 
 const BulkOptimizeAwsBackupSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Update FSx for ONTAP backup',
-    description: 'Update FSx for ONTAP backup parameters.'
+    summary: 'Enable AWS FSx for ONTAP automatic backup',
+    description: 'Enable AWS FSx for ONTAP automatic backup.'
 };
 
 export {

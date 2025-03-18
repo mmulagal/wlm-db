@@ -44,7 +44,7 @@ import {
     getServerNameWithHostname,
     parseMultipleCommandResponse
 } from '../utils/utils';
-import { describeFSx, describeFSxStorageVirtualMachines, updateFsxBackup, updateFsxCapacity } from '../lib/aws/fsx';
+import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -71,6 +71,7 @@ import {
     getFsxnVolIdsFromOntapVolIds,
     getIscsiTargetAddresses,
     getMappedOntapVolumes,
+    updateFsxBackup,
     updateVolumeSizeAndWaitForUpdate
 } from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
@@ -2651,14 +2652,16 @@ async function handleUpdateAwsBackup(
         }
     });
 
+    const jobDescription = `Enable AWS FSx for ONTAP automatic backup for filesystems ${fsxFilesystemIds.join(', ')}`;
+
     const jobId = await handleOptimizeJobCreation(
         accountId,
         credentialsId,
         region,
         '',
         JOBTYPE.OPTIMIZATION,
-        'Update AWS fsX backup',
-        `Update AWS fsX backup for ${fsxFilesystemIds.join(', ')}`,
+        'Update AWS FSx for ONTAP backup',
+        jobDescription,
         masterOptimizeParentId,
         {
             hostsToOptimize: [
@@ -2680,7 +2683,7 @@ async function handleUpdateAwsBackup(
                     await updateFsxBackup(accountId, credentialsId, region, fsxFileSystemId, configuration);
                 } catch (err: any) {
                     errMsg.push(
-                        `Error occurred while updating AWS fsX backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${err}`
+                        `Error occurred while updating AWS FSx for ONTAP backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${err}`
                     );
                     jobstatus = JOBSTATUS.FAILED;
                 }
@@ -2688,33 +2691,13 @@ async function handleUpdateAwsBackup(
         )
     );
 
-    if (jobstatus === JOBSTATUS.FAILED) {
+    if (errMsg.length !== 0) {
         logger.error(errMsg);
-        await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
-        await updateLongRunningAuditGroup(AuditStatus.FAILED, errMsg.join(', '));
-        return;
     }
-
     await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
-
-    Promise.all(
-        databaseHosts.map(
-            throat(1, async host => {
-                host.sqlServerInstances.map(
-                    throat(1, async instanceId => {
-                        onDemandTriggerDriftAssessmentDataCollection(
-                            accountId,
-                            credentialsId,
-                            region,
-                            host.id,
-                            instanceId,
-                            AssessmentTriggeredBy.SYSTEM,
-                            AssessmentCategories.AWS_BACKUP
-                        );
-                    })
-                );
-            })
-        )
+    await updateLongRunningAuditGroup(
+        jobstatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+        errMsg.join(', ')
     );
 }
 

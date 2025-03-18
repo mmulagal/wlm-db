@@ -4,7 +4,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { faker } from '@faker-js/faker';
-import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
+import { ListTagsForResourceCommandInput, UpdateFileSystemCommand } from '@aws-sdk/client-fsx';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
@@ -19,7 +19,8 @@ import {
     describeFSxBackups,
     describeFSx,
     listResourceTags,
-    createTag
+    createTag,
+    updateFileSystem
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
@@ -91,5 +92,18 @@ describe('Testcases for Amazon FSx resources', () => {
     it('Create tag for given fsx resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         await expect(createTag(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, fsxArn, tag)).resolves.not.toThrow();
+    });
+
+    it('Update FileSystem', async () => {
+        const input = new UpdateFileSystemCommand({
+            FileSystemId: FSX_FILESYSTEM_ID,
+            OntapConfiguration: {
+                AutomaticBackupRetentionDays: 10,
+                DailyAutomaticBackupStartTime: '10:00'
+            }
+        });
+        await expect(
+            updateFileSystem(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, input)
+        ).resolves.not.toThrow();
     });
 });

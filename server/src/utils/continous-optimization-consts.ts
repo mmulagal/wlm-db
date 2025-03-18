@@ -101,17 +101,12 @@ enum OptimizeMaxDopParams {
     MAX_DOP = 'max-dop'
 }
 
-enum UpdateAwsBackupParams {
-    AWS_BACKUP = 'aws-backup'
-}
-
 enum OPTIMIZATION_CATEGORIES {
     STORAGE_TIER = 'storage-tier',
     STORAGE_SIZING = 'storage-sizing',
     OPERATING_SYSTEM = 'operating-system',
     COMPUTE = 'compute',
     MAXDOP = 'max-dop'
-    // AWS_BACKUP = 'aws-backup'
 }
 
 const DRIFT_ASSESSMENT_QUEUE = 'WLMDB-AssessmentQueue';
@@ -254,7 +249,6 @@ export {
     ONPREM_TCO_CREDENTIALS_ID,
     OPTIMIZATION_CATEGORIES,
     OptimizeMaxDopParams,
-    UpdateAwsBackupParams,
     ASSESSMENT_RESOURCE_TYPE,
     OPTIMIZE_RESILIENCY_CONFIGS,
     VALID_MPIO_LB_POLICIES

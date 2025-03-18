@@ -16,8 +16,7 @@ import { updateParentJobStatus } from './database/job-operations';
 import {
     OPTIMIZATION_CATEGORIES,
     OPTIMIZE_RESILIENCY_CONFIGS,
-    OPTIMIZE_SIZING_CONFIGS,
-    UpdateAwsBackupParams
+    OPTIMIZE_SIZING_CONFIGS
 } from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
@@ -165,8 +164,14 @@ async function handleBulkOptimization(
     try {
         await Promise.all(
             hostsToOptimize.map(async ({ type: optimizationSubcategory, databaseHosts }) => {
-                if (optimizationSubcategory === UpdateAwsBackupParams.AWS_BACKUP) {
-                    handleUpdateAwsBackup(accountId, credentialsId, region, databaseHosts, masterOptimizeParentId);
+                if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
+                    await handleUpdateAwsBackup(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHosts,
+                        masterOptimizeParentId
+                    );
                 } else {
                     await Promise.all(
                         databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances }) => {

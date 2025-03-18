@@ -8,8 +8,7 @@ import {
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigs,
-    OptimizeStorageTierParams,
-    UpdateAwsBackupParams
+    OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 
 const SizingViolationResponse = Type.Object({
@@ -348,14 +347,26 @@ const OptimizeSizingRequestBody = Type.Object({
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
-const OptimizePerHostRequestBody = Type.Object({
-    id: Type.String({ minLength: 1 }),
-    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    instanceType: Type.Optional(Type.String()),
+const UpdateFSxNBackupRequestBody = Type.Object({
     fsxFileSystemId: Type.Optional(Type.String()),
-    backupRetentionDays: Type.Optional(Type.Number()),
-    backupStartTime: Type.Optional(Type.String())
+    backupRetentionDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90 })),
+    backupStartTime: Type.Optional(
+        Type.String({
+            description: '00:00 to 23:59 padded UTC timestamp',
+            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        })
+    )
 });
+
+const OptimizePerHostRequestBody = Type.Intersect([
+    Type.Object({
+        id: Type.String({ minLength: 1 }),
+        sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        instanceType: Type.Optional(Type.String())
+    }),
+    UpdateFSxNBackupRequestBody
+]);
+
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
 
 const OptimizeOperatingSystemRequestBody = Type.Object({
@@ -375,7 +386,7 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
         ...OptimizeMaxDopParams,
-        ...UpdateAwsBackupParams
+        ...OPTIMIZE_RESILIENCY_CONFIGS
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });

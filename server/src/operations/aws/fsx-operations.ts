@@ -3,7 +3,12 @@ import randomize from 'randomatic';
 import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
+import {
+    DescribeBackupsCommandInput,
+    ListTagsForResourceCommandInput,
+    Tag,
+    UpdateFileSystemCommand
+} from '@aws-sdk/client-fsx';
 import { attempt, compact, isEmpty } from 'lodash-es';
 import ms from 'ms';
 import {
@@ -15,7 +20,8 @@ import {
     createTag,
     describeFSx,
     describeVolumes,
-    updateFsxVolumeSize
+    updateFsxVolumeSize,
+    updateFileSystem
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -735,6 +741,25 @@ async function getIscsiTargetAddresses(credentialsId: string, region: string, fs
     return iscsiTargetAddresses;
 }
 
+async function updateFsxBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fsxFileSystemId: string,
+    configuration: {
+        AutomaticBackupRetentionDays: number;
+        DailyAutomaticBackupStartTime: string;
+    }
+) {
+    logger.info('Updating FSX backup policy', { credentialsId, region, fsxFileSystemId });
+    const command = new UpdateFileSystemCommand({
+        FileSystemId: fsxFileSystemId,
+        OntapConfiguration: configuration
+    });
+
+    await updateFileSystem(accountId, credentialsId, region, command);
+}
+
 export {
     getFSxFileSystemsList,
     isFsxnAwsBackupEnabled,
@@ -752,5 +777,6 @@ export {
     getFsxVolumeDetails,
     getFsxnVolIdsFromOntapVolIds,
     updateVolumeSizeAndWaitForUpdate,
-    getIscsiTargetAddresses
+    getIscsiTargetAddresses,
+    updateFsxBackup
 };
