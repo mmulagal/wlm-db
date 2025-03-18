@@ -4,8 +4,7 @@ import { isEmpty } from 'lodash-es';
 import {
     ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
-    SnapshotPolicyAssesmentDataType,
-    ParameterDriftResponseType
+    SnapshotPolicyAssesmentDataType
 } from '../../routes/types/continuous-optimization.types';
 import getLogger from '../../utils/logger';
 import {
@@ -30,13 +29,11 @@ import {
 } from '../../utils/common-types';
 import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { getInstanceInfo } from '../database/database-operations';
-import { MappedOnTapVolumeResponse } from '../database-hosts-operations';
+import { getInstanceDetails, MappedOnTapVolumeResponse } from '../database-hosts-operations';
 import { describeFSx, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../workloads/mssql/resiliency-scripts';
 import { GET_LATEST_SNAPSHOT_TIME } from '../workloads/mssql/continuous-optimization-scripts';
 import { callSsmExecution } from '../aws/ssm-operations';
-import { describeFSx } from '../../lib/aws/fsx';
-import { getInstanceDetails } from '../database-hosts-operations';
 import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 
 const isDemoFlow = isDemo();
