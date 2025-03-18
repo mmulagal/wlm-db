@@ -16,6 +16,7 @@ import {
     disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
 
 interface StorageTierTableProps {
     lastColDetails: any;
@@ -30,31 +31,44 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let rssConfigAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
+                    const rssConfigObj = instanceData?.assessments?.rssConfig;
+                    const isStorageTierOptimized = isOptimized(rssConfigObj?.status);
+                    let nonOptimizedAdapters = 0;
+                    rssConfigObj?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
+                        if (!adapter?.rssEnabled) {
+                            nonOptimizedAdapters++;
+                        } else {
+                            if (
+                                adapter?.rssProfile !==
+                                    rssConfigObj?.recommendedAdapterSettings?.recommendedRssProfile ||
+                                adapter?.baseProcessorNumber !==
+                                    rssConfigObj?.recommendedAdapterSettings?.recommendedBaseProcessorNumber ||
+                                adapter?.numberOfReceiveQueues !==
+                                    rssConfigObj?.recommendedAdapterSettings?.recommendedReceiveQueues
+                            ) {
+                                nonOptimizedAdapters++;
+                            }
+                        }
+                    });
                     if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                        rssConfigAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
-                            totalObjectsAssessed: performanceTierObj?.totalObjectsAssessed,
-                            totalObjectsInViolation: performanceTierObj?.totalObjectsInViolation,
+                            performanceTier: rssConfigObj?.current,
+                            totalObjectsAssessed: rssConfigObj?.rssAdapters?.length || 0,
+                            totalObjectsInViolation: nonOptimizedAdapters,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
+                            assessmentStatus: GETWELL_VALUES[rssConfigObj?.status],
                             data: instanceData,
-                            networkAdapters: instanceData?.assessments?.rssConfig?.rssAdapters?.map(
-                                (adapter: any) => adapter?.adapterName
-                            )
+                            networkAdapters: rssConfigObj?.rssAdapters?.map((adapter: any) => adapter?.adapterName)
                         });
                     }
                 }
@@ -62,7 +76,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            rssConfigAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
