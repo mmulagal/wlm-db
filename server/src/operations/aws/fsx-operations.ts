@@ -307,24 +307,26 @@ async function isFsxnAwsBackupEnabled(
             fileSystemId,
             volumeUuids
         );
+        const backups: Backup[] = [];
         if (!isEmpty(volumeIds)) {
             const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
-
-            const backups: Backup[] = [];
-            volumeChunks.map(
-                throat(3, async volumeIdsChunk => {
-                    const input: DescribeBackupsCommandInput = {
-                        Filters: [
-                            {
-                                Name: 'volume-id',
-                                Values: volumeIdsChunk
-                            }
-                        ]
-                    };
-                    const { Backups } = await describeFSxBackups(credentialsId, region, input);
-                    backups.push(...Backups!);
-                })
+            await Promise.all(
+                volumeChunks.map(
+                    throat(3, async volumeIdsChunk => {
+                        const input: DescribeBackupsCommandInput = {
+                            Filters: [
+                                {
+                                    Name: 'volume-id',
+                                    Values: volumeIdsChunk
+                                }
+                            ]
+                        };
+                        const { Backups } = await describeFSxBackups(credentialsId, region, input);
+                        backups.push(...Backups!);
+                    })
+                )
             );
+
             // Update the volumeDBMap to mark the volumes that have backups.
             const volumeUuidsInBackups: string[] = [];
             backups?.forEach(backup => {
