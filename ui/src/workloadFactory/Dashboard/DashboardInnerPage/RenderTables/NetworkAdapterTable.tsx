@@ -51,7 +51,10 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
                             assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
-                            data: instanceData
+                            data: instanceData,
+                            networkAdapters: instanceData?.assessments?.rssConfig?.rssAdapters?.map(
+                                (adapter: any) => adapter?.adapterName
+                            )
                         });
                     }
                 }
