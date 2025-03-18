@@ -240,7 +240,7 @@ async function getAwsBackupDriftData(
         name: 'scheduled-fsx-for-ontap-backups',
         status: AssessmentStatus.NOT_OPTIMIZED,
         totalObjectsInViolation: 0,
-        recommended: 'To have AWS Backup enabled',
+        recommended: 'aws-backup-enabled',
         objectsInViolation: []
     };
 
@@ -261,7 +261,7 @@ async function getAwsBackupDriftData(
     } catch (error) {
         const errorMessage = `Error while fetching instance details: ${accountId} ${databaseInstanceId}. Error: ${error}.`;
         logger.error(errorMessage);
-        return errorMessage;
+        return { errorMessage };
     }
 
     const { fsxn_ids: fileSystemId } = newDatabaseInstanceDetails || {};
@@ -269,7 +269,7 @@ async function getAwsBackupDriftData(
     const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] });
     const isAwsBackupEnabled =
         fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
-    logger.info('Is AWS Backup enabled:', isAwsBackupEnabled);
+    logger.debug('Is AWS Backup enabled:', isAwsBackupEnabled);
     if (isAwsBackupEnabled) {
         awsBackupAssesmentData.totalObjectsAssessed = 1;
         awsBackupAssesmentData.status = AssessmentStatus.OPTIMIZED;
@@ -289,7 +289,7 @@ async function getAwsBackupDriftData(
     // Check that the persisted configuration data exists
     if (isEmpty(persistedConfigurationData)) {
         const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
-        throw new Error(errorMessage);
+        return { errorMessage };
     }
 
     // Extract configuration data from the persisted data
@@ -301,29 +301,22 @@ async function getAwsBackupDriftData(
         return { errorMessage: errors.volumes };
     }
     const ontapVolumeIds: string[] = [];
-    const ontapVolumeMap: { name: string }[] = [];
+    const ontapVolumeMap: undefined = undefined;
     volumes.forEach(volume => {
         const volDetails = volume as Record<string, string>;
         ontapVolumeIds.push(volDetails?.uuid);
-        ontapVolumeMap.push({ name: volDetails?.name });
     });
 
-    logger.info('Ontap volume ids:', ontapVolumeIds);
-    logger.info('Ontap volume map:', ontapVolumeMap);
+    const { volumeUuidsInBackups } =
+        (await isFsxnAwsBackupEnabled(
+            credentialsId,
+            region,
+            fileSystemId,
+            [...new Set(ontapVolumeIds)],
+            ontapVolumeMap
+        )) || {};
 
-    const backupResult = await isFsxnAwsBackupEnabled(
-        credentialsId,
-        region,
-        fileSystemId,
-        [...new Set(ontapVolumeIds)],
-        ontapVolumeMap
-    );
-
-    const volumeUuidsInBackups =
-        backupResult && typeof backupResult === 'object' && 'volumeUuidsInBackups' in backupResult
-            ? backupResult.volumeUuidsInBackups
-            : undefined;
-    logger.info('Is on-demand backup enabled:', volumeUuidsInBackups);
+    logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
     awsBackupAssesmentData.totalObjectsAssessed = 1;
     if (volumeUuidsInBackups) {
         const ontapVolumeSet = new Set(ontapVolumeIds);
