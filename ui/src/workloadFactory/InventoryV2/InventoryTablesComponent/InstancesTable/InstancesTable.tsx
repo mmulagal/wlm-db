@@ -868,8 +868,8 @@ const InstancesTable = () => {
                 let disableMenu = () => {
                     if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
                         disableMsg = GENERAL.PGSQL_CTA_NA;
-                        width = '230px';
-                        height = '53px';
+                        width = '110px';
+                        height = '33px';
                         return true;
                     }
                     // if (rowData?.loading) {
