@@ -250,7 +250,7 @@ const DatabasesTable = () => {
             accessor: 'size',
             id: '7',
             width: '200px',
-            filterOptions: 'auto',
+            isSortable: true,
             renderCell: (cellData: any) => {
                 return formatSize(cellData);
             }
