@@ -18,7 +18,8 @@ import {
     getRegionDetails,
     getServerNameWithHostname,
     parseMultipleCommandResponse,
-    decompressSSMResponse
+    decompressSSMResponse,
+    divideArrayIntoChunks
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -164,5 +165,11 @@ describe(' Secrets Manager string', () => {
         const response = parseMultipleCommandResponse(decompressedResponse);
         expect(response.length).toEqual(2);
         expect(isEmpty(response.find(r => r.error))).toBeTruthy();
+    });
+
+    it('Divide array into chunks', () => {
+        const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const response = divideArrayIntoChunks(array, 3);
+        expect(response.length).toEqual(4);
     });
 });
