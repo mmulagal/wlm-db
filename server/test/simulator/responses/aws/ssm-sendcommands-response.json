@@ -1633,6 +1633,7 @@
             "RequestedDateTime": "2023-08-28T14:57:41.365Z"
         }
     },
+
     "getCRRAssessmentDataCommand": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -1642,7 +1643,44 @@
         },
         "Command": {
             "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand",
-            "DocumentName": "AWS-RunPowerShellScript",
+            "DocumentName": "AWS-RunShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+
+    "getPgsqldatabasesCommand": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldatabasesCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldatabasesCommand",
+            "DocumentName": "AWS-RunShellScript",
+            "ExpiresAfter": "2023-08-28T16:57:41.365Z",
+            "InstanceIds": ["i-0880a21327284f67c"],
+            "MaxConcurrency": "50",
+            "MaxErrors": "0",
+            "OutputS3Region": "ap-southeast-1",
+            "RequestedDateTime": "2023-08-28T14:57:41.365Z"
+        }
+    },
+    "getPgsqlPerformanceMetricsCommand": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlPerformanceMetricsCommand",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Command": {
+            "CommandId": "a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlPerformanceMetricsCommand",
+            "DocumentName": "AWS-RunShellScript",
             "ExpiresAfter": "2023-08-28T16:57:41.365Z",
             "InstanceIds": ["i-0880a21327284f67c"],
             "MaxConcurrency": "50",
