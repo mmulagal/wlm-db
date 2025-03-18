@@ -66,7 +66,7 @@ const NetworkAdapterTable = ({ lastColDetails, handleBulkAction }: StorageTierTa
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]) {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
                 ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
