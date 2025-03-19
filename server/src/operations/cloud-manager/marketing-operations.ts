@@ -94,6 +94,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
             const { ec2InstanceDescription, isPrimary, volumes } = instance;
 
             if (volumes) {
+                // volumes is sent only in case of EBS
                 if (hasDuplicateVolumeType(volumes)) {
                     throw new Error('Duplicate volume types are not allowed');
                 }
@@ -104,7 +105,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
                         volumeType,
                         volumeNumber,
                         storageAmount: {
-                            size: sizeInGigaBytes(storageAmount, 'B'),
+                            size: sizeInGigaBytes(storageAmount, 'B') * volumeNumber, // As per GROGU-5182 , marketing API expects total storage amount for all volumes
                             unit: 'GiB'
                         },
                         volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
