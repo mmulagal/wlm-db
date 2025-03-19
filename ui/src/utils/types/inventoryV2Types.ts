@@ -89,6 +89,7 @@ export interface InventoryTableData {
     credentialName?: string;
     regionName?: string;
     accountId?: string;
+    statusColText?: string;
 }
 
 export interface InventoryTableInstanceDatInterface {

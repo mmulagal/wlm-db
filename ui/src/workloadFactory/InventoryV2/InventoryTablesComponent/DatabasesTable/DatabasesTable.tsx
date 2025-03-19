@@ -316,6 +316,9 @@ const DatabasesTable = () => {
                 if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
                     disableOption = true;
                     disableMessage = 'Create sandbox option is not available for PostgreSQL databases.';
+                } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
+                    disableOption = true;
+                    disableMessage = 'Create sandbox option is not available for system database.';
                 }
                 const menu = [
                     {

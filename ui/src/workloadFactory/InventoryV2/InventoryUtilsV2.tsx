@@ -1054,6 +1054,38 @@ export const sortInventoryTableData = (data: Array<InventoryTableData>) => {
     return result;
 };
 
+export const sortInstanceTableData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+
+    const statusWeights: any = {
+        [INVENTORY_STATUS.CASE_SENSITIVE_UP]: 3000,
+        [INVENTORY_STATUS.RUNNING]: 3000,
+        [INVENTORY_STATUS.CASE_SENSITIVE_DOWN]: 2000,
+        [INVENTORY_STATUS.STOPPED]: 2000,
+        [INVENTORY_STATUS.UNKNOWN]: 1000,
+        '': 0
+    };
+
+    const isManagedWeights: any = {
+        [INVENTORY_STATUS.MANAGED]: 300,
+        [INVENTORY_STATUS.UNMANAGED]: 200,
+        [INVENTORY_STATUS.IN_PROGRESS]: 200,
+        [INVENTORY_STATUS.UNDETECTED]: 100,
+        '': 0
+    };
+
+    const result = data.slice().sort((a, b) => {
+        const weightA = statusWeights[a.status || ''] + isManagedWeights[a?.statusColText || ''];
+        const weightB = statusWeights[b.status || ''] + isManagedWeights[b?.statusColText || ''];
+
+        return weightB - weightA;
+    });
+
+    return result;
+};
+
 export const getMhUnmanagedInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningInstanceList: Array<string>
