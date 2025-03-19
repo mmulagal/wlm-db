@@ -8,12 +8,7 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
 import '../simulator/scopes/aws/compute-optimizer-scope';
 
-import {
-    handleUpdateAwsBackup,
-    optimizeMaxDop,
-    optimizeSizing,
-    optimizeStorage
-} from '../../src/operations/cont-opt-optimize-operations';
+import { optimizeMaxDop, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
