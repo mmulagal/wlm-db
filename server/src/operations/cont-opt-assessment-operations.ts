@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
 import getLogger from '../utils/logger';
-import { generateHash, isDemo, sqlResponseParsing } from '../utils/utils';
+import { isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
@@ -84,6 +84,34 @@ import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 const isDemoFlow = isDemo();
 const logger = getLogger();
 
+async function updateAssesmentDataInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
+    const {
+        account_id: accountId,
+        region,
+        credentials_id: credentialsId,
+        resource_id: databaseHostId,
+        database_instance_id: databaseInstanceId
+    } = managedInstance;
+    const { metadata } = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const driftAssessmentData = await fetchDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    );
+    (metadata as unknown as DatabaseInstanceMetadata).assessment = driftAssessmentData;
+    try {
+        await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
+    } catch (error) {
+        logger.error('Error while updating assessment data in instance metadata', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            error
+        });
+    }
+}
 async function initiateComputeLicenseAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -751,6 +779,13 @@ async function triggerDriftAssessmentDataCollection(initiatedBy: string, fields?
                     if (parentJobStatus !== JOBSTATUS.FAILED) {
                         await updateParentJobStatus(accountId, parentJobId);
                     }
+
+                    // Lets update assessment result in instance metadata
+                    await Promise.all(
+                        managedInstances.map(async managedInstance => {
+                            await updateAssesmentDataInInstanceMetadata(managedInstance);
+                        })
+                    );
                 }
             }
         })
@@ -1036,19 +1071,6 @@ async function fetchDriftAssessment(
         driftAssessmentData.resiliency = resilienceAssessmentResponse as ResilienceDriftAssessmentResponseType;
     }
 
-    // Lets update assessment result in metadata
-    const { metadata } = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-    const savedAssessmentData = (metadata as unknown as DatabaseInstanceMetadata).assessment;
-    const savedAssessmentDataHash = generateHash(JSON.stringify(savedAssessmentData));
-    const driftAssessmentDataHash = generateHash(JSON.stringify(driftAssessmentData));
-    if (savedAssessmentDataHash !== driftAssessmentDataHash) {
-        (metadata as unknown as DatabaseInstanceMetadata).assessment = driftAssessmentData;
-        try {
-            await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
-        } catch (error) {
-            logger.error('Error while updating metadata', { accountId, databaseHostId, databaseInstanceId, error });
-        }
-    }
     return driftAssessmentData;
 }
 
@@ -1233,6 +1255,9 @@ async function handleAssessment(
             // If the masterAssessmentJobId failed, we don't want to overwrite the master assessment status
             await updateParentJobStatus(accountId, masterAssessmentJobId);
         }
+
+        // Lets update assessment result in instance metadata
+        await updateAssesmentDataInInstanceMetadata(managedInstance);
     }
     if (initiatedBy === AssessmentTriggeredBy.USER) {
         const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
