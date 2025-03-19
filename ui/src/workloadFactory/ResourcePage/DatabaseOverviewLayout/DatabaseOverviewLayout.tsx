@@ -36,10 +36,6 @@ const DatabaseOverviewLayout = () => {
                 <div className={styles.storagePerformanceContainer}>
                     <StoragePerformance />
                 </div>
-
-                <div className={styles.diagramContainer}>
-                    <Diagram />
-                </div>
             </div>
 
             <div className={styles.rightSidePart}>

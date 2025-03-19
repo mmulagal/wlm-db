@@ -3,6 +3,7 @@ import React, {
     MouseEventHandler,
     ReactNode,
     useCallback,
+    useEffect,
     useLayoutEffect,
     useMemo,
     useRef,
@@ -208,6 +209,7 @@ const HeaderCell = ({
 const useHorizontalScroll = (columns: ColumnProps[], pagesCount: number) => {
     const tableBodyRef = useRef<HTMLDivElement | null>(null);
     const tableHeaderRef = useRef<HTMLDivElement | null>(null);
+    const bottomScrollbarRef = useRef<HTMLDivElement | null>(null); // Reference for bottom scrollbar
     const [scrollWidth, setScrollWidth] = useState<number>(0);
 
     const tableBodyCallbackRef = useCallback(
@@ -226,6 +228,83 @@ const useHorizontalScroll = (columns: ColumnProps[], pagesCount: number) => {
         }
     }, [tableBodyRef?.current?.scrollWidth]);
 
+    // Allow only vertical scrolling with mouse wheel
+    useLayoutEffect(() => {
+        const handleWheel = (event: WheelEvent) => {
+            if (tableBodyRef.current) {
+                tableBodyRef.current.scrollTop += event.deltaY; // Only vertical scrolling
+            }
+        };
+
+        const table = tableBodyRef.current;
+        table?.addEventListener('wheel', handleWheel, { passive: false });
+
+        return () => table?.removeEventListener('wheel', handleWheel);
+    }, []);
+
+    // Enable horizontal scrolling with Arrow Keys
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!tableBodyRef.current) return;
+
+            const table = tableBodyRef.current;
+            const scrollAmount = 50; // Adjust scroll sensitivity
+
+            switch (event.key) {
+                case 'ArrowUp':
+                    table.scrollTop -= scrollAmount;
+                    break;
+                case 'ArrowDown':
+                    table.scrollTop += scrollAmount;
+                    break;
+                case 'ArrowLeft':
+                    table.scrollLeft -= scrollAmount;
+                    break;
+                case 'ArrowRight':
+                    table.scrollLeft += scrollAmount;
+                    break;
+                default:
+                    return;
+            }
+
+            // Keep header scroll in sync
+            if (tableHeaderRef.current) {
+                tableHeaderRef.current.scrollLeft = table.scrollLeft;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // Sync the bottom scrollbar with table scrolling
+    useEffect(() => {
+        const syncScroll = () => {
+            if (tableBodyRef.current && bottomScrollbarRef.current) {
+                bottomScrollbarRef.current.scrollLeft = tableBodyRef.current.scrollLeft;
+            }
+        };
+
+        const table = tableBodyRef.current;
+        table?.addEventListener('scroll', syncScroll, { passive: true });
+
+        return () => table?.removeEventListener('scroll', syncScroll);
+    }, []);
+
+    // Sync table scroll with bottom scrollbar interaction
+    useEffect(() => {
+        const syncTableScroll = () => {
+            if (bottomScrollbarRef.current && tableBodyRef.current) {
+                tableBodyRef.current.scrollLeft = bottomScrollbarRef.current.scrollLeft;
+            }
+        };
+
+        const scrollbar = bottomScrollbarRef.current;
+        scrollbar?.addEventListener('scroll', syncTableScroll, { passive: true });
+
+        return () => scrollbar?.removeEventListener('scroll', syncTableScroll);
+    }, []);
+
     const scrollWidthClass = useMemo(() => {
         return css`
             width: ${scrollWidth}px;
@@ -243,6 +322,7 @@ const useHorizontalScroll = (columns: ColumnProps[], pagesCount: number) => {
         tableHeaderRef,
         scrollWidthClass,
         scrollBottomClass,
+        bottomScrollbarRef,
         tableBodyCallbackRef
     };
 };
@@ -453,8 +533,14 @@ export const Table = React.forwardRef(
         const gridTemplateColumnsClass = css`
             grid-template-columns: ${gridTemplateColumns as unknown as string};
         `;
-        const { tableBodyRef, tableHeaderRef, scrollWidthClass, scrollBottomClass, tableBodyCallbackRef } =
-            useHorizontalScroll(columns, pagination?.pageCount);
+        const {
+            tableBodyRef,
+            tableHeaderRef,
+            scrollWidthClass,
+            bottomScrollbarRef,
+            scrollBottomClass,
+            tableBodyCallbackRef
+        } = useHorizontalScroll(columns, pagination?.pageCount);
         return (
             <div className={classNames(styles['table-wrapper'], styles[variant])}>
                 <div
@@ -530,6 +616,7 @@ export const Table = React.forwardRef(
                 {isHorizontalScroll && (
                     <div
                         className={classNames(styles['horizontal-scroll'], scrollBottomClass)}
+                        ref={bottomScrollbarRef}
                         onScroll={(e: React.UIEvent<HTMLDivElement>) => {
                             const newScrollLeft = (e.target as HTMLElement)?.scrollLeft;
                             if (tableBodyRef.current && tableHeaderRef.current) {

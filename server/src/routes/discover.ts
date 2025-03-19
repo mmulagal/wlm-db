@@ -41,19 +41,13 @@ export default function discoverRoutes(fastify: FastifyInstance) {
         return apiInfo;
     });
 
-    server.post(`${DISCOVER_MSSQL_API_PATH}/manage`, { schema: ManageMsSqlSchemaV2 }, async request => {
+    server.post('/v1/mssql/manage', { schema: ManageMsSqlSchemaV2 }, async request => {
         const {
-            params: { accountId, credentialsId, region },
-            body: { ec2InstanceId, databaseInstanceNames, databaseHostId }
+            params: { accountId },
+            body: { items }
         } = castRequest(request);
-        const apiInfo = await manageSqlServerV2(
-            accountId,
-            credentialsId,
-            region,
-            ec2InstanceId,
-            databaseInstanceNames,
-            databaseHostId
-        );
+        logger.info(`Manage SQL Server instances for account ${accountId}, ${items}`);
+        const apiInfo = await manageSqlServerV2(accountId, items);
         return apiInfo;
     });
 

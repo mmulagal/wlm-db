@@ -10,7 +10,8 @@ enum AssessmentCategories {
     MAXDOP = 'maxdop',
     MSSQL_PATCH = 'mssql-patch',
     RESILIENCY = 'resiliency',
-    AWS_BACKUP = 'aws-backup'
+    AWS_BACKUP = 'aws-backup',
+    CRR = 'crr'
 }
 
 enum AssessmentTriggeredBy {

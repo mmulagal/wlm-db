@@ -9,6 +9,7 @@ export interface GetWellSliceInterface {
     selectedGwInstanceCredId: string;
     selectedGwInstanceRegionId: string;
     selectedDatabaseStorageType: string;
+    selectedRowFsxId: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;
     ontapConfigTableData: PerConfigInterface[] | null;
@@ -26,6 +27,7 @@ export interface GetWellSliceInterface {
     selectedRecommendedInstance: any;
     selectedSnapshotPolicy: any;
     selectedSnapshot: any;
+    selectedAWSBackup: any;
     credIdFromJM: string;
     regionFromJM: string;
     landingFrom: string;
@@ -67,6 +69,7 @@ export interface AssessmentResponseInterface {
     maxDOP?: PerConfigInterface;
     resiliency?: {
         snapshotPolicy?: PerConfigInterface;
+        awsBackup?: PerConfigInterface;
         crr?: PerConfigInterface;
     };
 }

@@ -68,7 +68,7 @@ const isDialogPrimaryBtnDisabled = rowData => {
     return rowData?.name === 'OS type' || rowData?.name === 'NTFS allocation unit size';
 };
 
-export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData) => {
+export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     setDialog(
         <DialogComponent
             header={`${rowData?.name} optimization`}
@@ -76,7 +76,7 @@ export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowDa
             primaryButton={GENERAL.CONTINUE}
             secondaryButton={GENERAL.CANCEL}
             callback={() => {
-                callOptimizeApi(rowData);
+                callOptimizeApi(rowData, operation, singleRowData);
             }}
             closeCallback={() => {
                 closeDialog();

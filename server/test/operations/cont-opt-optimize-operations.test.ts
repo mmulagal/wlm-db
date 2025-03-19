@@ -8,7 +8,12 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/cloud-watch-scope';
 import '../simulator/scopes/aws/compute-optimizer-scope';
 
-import { optimizeMaxDop, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
+import {
+    handleUpdateAwsBackup,
+    optimizeMaxDop,
+    optimizeSizing,
+    optimizeStorage
+} from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
@@ -346,5 +351,11 @@ describe('Continuous optimization optimize operations', () => {
         );
 
         expect(response.jobId).toBeDefined();
+    });
+
+    it('Optimize aws backup', async () => {
+        await expect(
+            handleUpdateAwsBackup(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, [], 'test-jobid')
+        ).resolves.not.toThrow();
     });
 });

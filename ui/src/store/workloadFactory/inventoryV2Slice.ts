@@ -2,6 +2,12 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { InventorySliceData } from '../../utils/types/inventoryV2Types';
 import { DETECT_HOST_VAR, WLF_TABS } from '../../utils/consts';
 import { initialColStateManagedHosts } from '../../utils/utilityFunctions';
+import {
+    initialDatabaseTableColState,
+    initialHostsTableColState,
+    initialInstanceTableColState
+} from '../../utils/manageColumnUtils';
+import { set } from 'lodash';
 
 const initialInventoryV2State: InventorySliceData = {
     breadCrumbSelectedFrom: '',
@@ -60,13 +66,24 @@ const initialInventoryV2State: InventorySliceData = {
         value: '',
         filterType: ''
     },
-    selectedRowsForManage: []
+    selectedRowsForManage: [],
+    tableManageColumnState: {
+        instanceTable: initialInstanceTableColState,
+        hostTable: initialHostsTableColState,
+        databaseTable: initialDatabaseTableColState
+    },
+    hostTableRows: [],
+    instanceTableRows: [],
+    databaseTableRows: []
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setTableManageColumnState: (state, action: PayloadAction<any>) => {
+            state.tableManageColumnState = action.payload;
+        },
         setSelectedFilterValue: (state, action: PayloadAction<any>) => {
             state.selectedFilterValue = action.payload;
         },
@@ -199,6 +216,20 @@ const inventoryV2Slice = createSlice({
         setSelectedRowsForManage: (state, action: PayloadAction<any>) => {
             state.selectedRowsForManage = action.payload;
         },
+        setHostTableRows: (state, action: PayloadAction<any>) => {
+            state.hostTableRows = action.payload;
+        },
+        setInstanceTableRows: (state, action: PayloadAction<any>) => {
+            state.instanceTableRows = action.payload;
+        },
+        setDatabaseTableRows: (state, action: PayloadAction<any>) => {
+            state.databaseTableRows = action.payload;
+        },
+        setInventoryTablesRows: (state, action: PayloadAction<any>) => {
+            state.hostTableRows = action.payload?.hosts;
+            state.instanceTableRows = action.payload?.instances;
+            state.databaseTableRows = action.payload?.databases;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = true;
             state.isManagedHostListLoading = true;
@@ -269,7 +300,12 @@ export const {
     setAllMssqlHostAssessmentLoading,
     setPotentialSavingsHostData,
     resetPerComboData,
-    setSelectedRowsForManage
+    setSelectedRowsForManage,
+    setTableManageColumnState,
+    setHostTableRows,
+    setInstanceTableRows,
+    setDatabaseTableRows,
+    setInventoryTablesRows
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
