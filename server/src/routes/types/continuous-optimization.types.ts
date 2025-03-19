@@ -360,6 +360,14 @@ const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
 });
 
+const OptimizeGenericRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OPTIMIZE_SIZING_CONFIGS,
+        ...OptimizeStorageTierParams
+    }),
+    objectsToOptimize: Type.Optional(Type.Array(Type.String({ minLength: 1 })))
+});
+
 const DriftAssessmentResponsePerAccount = Type.Object({
     count: Type.Number(),
     assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHost),
@@ -428,5 +436,6 @@ export {
     BulkOptimizeGeneralPerHostRequestBodyType,
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    OptimizeGenericRequestBody
 };

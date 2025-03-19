@@ -490,6 +490,7 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
 interface StorageTierParams extends OptimizeParams {
     svmId: string;
     svmName: string;
+    volumesToOptimize?: string[];
 }
 
 const BulkOptimizeSnapshotPolicyParams = Type.Object({

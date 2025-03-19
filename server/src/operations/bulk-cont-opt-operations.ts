@@ -112,6 +112,7 @@ async function handleOptimization(
                     region,
                     databaseHostId,
                     databaseInstanceId,
+                    undefined,
                     parentJobId
                 );
                 break;
