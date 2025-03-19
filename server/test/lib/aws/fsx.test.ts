@@ -4,7 +4,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { faker } from '@faker-js/faker';
-import { ListTagsForResourceCommandInput, UpdateFileSystemCommand } from '@aws-sdk/client-fsx';
+import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
