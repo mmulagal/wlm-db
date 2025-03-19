@@ -33,7 +33,7 @@ extract_ip() {
     local privateIp=$(echo "$json_string" | jq -r '.private_ip')
     echo "$privateIp"
 }
-
+sleep 30s
 echo "Parent Stack Name: $parent_stack_name"
 interval=10  # Polling interval in seconds
 elapsed_time=0
@@ -42,6 +42,7 @@ timeout=60
 while [ $elapsed_time -lt $timeout ]; do
     instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
     pg_pool_instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgpool" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
+    pgpool_public_key=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgPoolPubKey" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-primary.log")
     if [ $? -eq 0 ]; then
         echo "SSM parameter found"
         break
@@ -72,9 +73,12 @@ pgpool_ip_details=$(extract_ip "$valid_pgpool_instance_details")
 pgpool_server_IP=$(echo "$pgpool_ip_details" | awk '{print $1}')
 echo "pgpool server ip details fetched"
 
-# Delete the parameter from SSM
-aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary"
-aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgpool"
+# Configurations for passwordless ssh
+sudo mkdir -p /home/postgres/.ssh
+sudo echo "$pgpool_public_key" >> /home/postgres/.ssh/authorized_keys
+sudo chown -R postgres:postgres /home/postgres/.ssh /home/postgres/.ssh/authorized_keys
+sudo chmod  700 /home/postgres/.ssh
+sudo chmod 600 /home/postgres/.ssh/authorized_keys
 
 # (1) Define variables for file paths.
 PG_DATA_DIR="/$fsxdatavolumename"
@@ -117,6 +121,10 @@ check_status "Failed to add entry to pg_hba.conf"
 echo "Restarting PostgreSQL to apply pg_hba.conf changes..."
 sudo systemctl restart postgresql
 check_status "Failed to restart PostgreSQL service"
+
+# Delete the parameter from SSM
+aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_secondary"
+aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgpool"
 
 sleep 60
 echo "Primary replica configuration completed successfully"

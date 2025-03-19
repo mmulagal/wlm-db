@@ -625,6 +625,7 @@ Resources:
                 configSets:
                     config:
                         - InstallSSMAgent
+                        - ConfigureCWLogs
                         - CreateDeploymentFolders
                         - FetchResources
                         - ScriptSignatureVerificationandExtract
@@ -637,6 +638,25 @@ Resources:
                                 for i in {1..3}; do
                                     sudo yum install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm && break || sleep 1;
                                 done
+                        b-install-cloudwatch-agent:
+                            command: !Sub |
+                                for i in {1..3}; do
+                                    sudo yum install -y amazon-cloudwatch-agent.x86_64 && break || sleep 1;
+                                done
+                ConfigureCWLogs:
+                    files:
+                        /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json:
+                            content: !Sub |
+                                {{{ PgsqlCloudWatchConfig }}}
+                            mode: '000644'
+                            owner: cwagent
+                            group: cwagent
+                    commands:
+                        a-configure-cwlogs:
+                            command: !If
+                                - LogFeatureEnabled
+                                - sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+                                - echo "CloudWatch Logs feature is disabled."
                 CreateDeploymentFolders:
                     commands:
                         a-create-scripts-folder:
@@ -667,11 +687,6 @@ Resources:
                             group: ec2-user
                         /home/ec2-user/cfn/scripts/setup.zip:
                             source: {{{ ScriptSetup }}}
-                            mode: '000755'
-                            owner: ec2-user
-                            group: ec2-user
-                        /home/ec2-user/cfn/fsx_certs.zip:
-                            source: {{{ FsxCertificates }}}
                             mode: '000755'
                             owner: ec2-user
                             group: ec2-user
@@ -720,7 +735,7 @@ Resources:
                             command: !Sub 'cfn-signal -e $? --resource PgPoolNode --stack ${AWS::StackName} --region ${AWS::Region}'
         Properties:
             IamInstanceProfile: !Ref LaunchWizardSqlFSxProfile
-            InstanceType: 't2.medium'
+            InstanceType: 't3.medium'
             ImageId: !Ref AMIID
             Tags:
                 -   Key: Name

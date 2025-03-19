@@ -46,7 +46,8 @@ timeout=60
 
 while [ $elapsed_time -lt $timeout ]; do
     instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_primary" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-secondary.log")
-    
+    pg_pool_instance_details=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgpool" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-secondary.log")
+    pgpool_public_key=$(aws ssm get-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgPoolPubKey" --query "Parameter.Value" --output text 2>>"/var/log/netapp_wf/configure-replica-secondary.log")
     if [ $? -eq 0 ]; then
         echo "SSM parameter found"
         break
@@ -67,8 +68,12 @@ ip_details=$(extract_ip "$valid_instance_details")
 primary_server_IP=$(echo "$ip_details" | awk '{print $1}')
 echo "ip details fetched"
 
-# Delete the parameter from SSM
-aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_primary"
+# Configurations for passwordless ssh
+sudo mkdir -p /home/postgres/.ssh
+sudo echo "$pgpool_public_key" >> /home/postgres/.ssh/authorized_keys
+sudo chown -R postgres:postgres /home/postgres/.ssh /home/postgres/.ssh/authorized_keys
+sudo chmod  700 /home/postgres/.ssh
+sudo chmod 600 /home/postgres/.ssh/authorized_keys
 
 # (1) Stop PostgreSQL
 echo "Stopping PostgreSQL..."
@@ -98,6 +103,10 @@ check_status "Failed to set permissions"
 echo "Starting PostgreSQL..."
 sudo systemctl start postgresql
 check_status "Failed to start PostgreSQL service"
+
+# Delete the parameter from SSM
+aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_primary"
+aws ssm delete-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgPoolPubKey"
 
 sleep 60
 echo "Replica setup completed successfully"

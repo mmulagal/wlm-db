@@ -26,6 +26,11 @@ extract_ip() {
     echo "$privateIp"
 }
 
+#Generate ssh keys for passwordless authentication for failover commands
+ssh-keygen -t rsa -f /home/ec2-user/.ssh/id_rsa_pgpool -N ""
+PUBLIC_KEY=$(cat /home/ec2-user/.ssh/id_rsa_pgpool.pub)
+aws ssm put-parameter --name "/netapp/wlmdb/${parent_stack_name}_pgPoolPubKey" --value "$PUBLIC_KEY" --type "String"
+
 echo "Parent Stack Name: $parent_stack_name"
 interval=10  # Polling interval in seconds
 elapsed_time=0
@@ -62,6 +67,7 @@ fi
 
 secondary_ip_details=$(extract_ip "$valid_secondary_instance_details")
 secondary_server_IP=$(echo "$secondary_ip_details" | awk '{print $1}')
+secondary_server_IP_without_Cidr="${secondary_server_IP%/*}"
 echo "secondary server ip details fetched"
 
 # Path to the pgpool.conf file
@@ -110,7 +116,6 @@ cp /usr/local/etc/pool_hba.conf.sample /usr/local/etc/pool_hba.conf
 # Add the md5 password for the replicator user to the pool_passwd file
 sudo /usr/local/bin/pg_md5 -m -u replicator "$service_account_password"
 # Update or add the required parameters
-#update_config "backend_clustering_mode" "'streaming_replication'" "$PGPOOL_CONF"
 update_config "listen_addresses" "'*'" "$PGPOOL_CONF"
 update_config "port" "9999" "$PGPOOL_CONF"
 
@@ -118,15 +123,15 @@ update_config "port" "9999" "$PGPOOL_CONF"
 update_config "backend_hostname0" "'${primary_server_IP}'" "$PGPOOL_CONF"
 update_config "backend_port0" "5432" "$PGPOOL_CONF"
 update_config "backend_weight0" "1" "$PGPOOL_CONF"
-update_config "backend_data_directory0" "'${fsxdatavolumename}'" "$PGPOOL_CONF"
+update_config "backend_data_directory0" "'/${fsxdatavolumename}'" "$PGPOOL_CONF"
 update_config "backend_flag0" "'ALLOW_TO_FAILOVER'" "$PGPOOL_CONF"
 update_config "backend_application_name0" "'server0'" "$PGPOOL_CONF"
 
 # Add secondary server details
-update_config "backend_hostname1" "'${secondary_server_IP}'" "$PGPOOL_CONF"
+update_config "backend_hostname1" "'${secondary_server_IP_without_Cidr}'" "$PGPOOL_CONF"
 update_config "backend_port1" "5432" "$PGPOOL_CONF"
 update_config "backend_weight1" "1" "$PGPOOL_CONF"
-update_config "backend_data_directory1" "'${fsxdatavolumename}'" "$PGPOOL_CONF"
+update_config "backend_data_directory1" "'/${fsxdatavolumename}'" "$PGPOOL_CONF"
 update_config "backend_flag1" "'ALLOW_TO_FAILOVER'" "$PGPOOL_CONF"
 update_config "backend_application_name1" "'server1'" "$PGPOOL_CONF"
 
@@ -150,10 +155,14 @@ update_config "sr_check_period" "10" "$PGPOOL_CONF"
 update_config "sr_check_user" "'replicator'" "$PGPOOL_CONF"
 update_config "sr_check_password" "'${service_account_password}'" "$PGPOOL_CONF"
 update_config "sr_check_database" "'postgres'" "$PGPOOL_CONF"
-update_config "failover_command" "'/home/ec2-user/cfn/scripts/setup/failover.sh %d %P %H %M %R'" "$PGPOOL_CONF"
+update_config "failover_command" "'/home/ec2-user/cfn/scripts/setup/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'" "$PGPOOL_CONF"
 update_config "failover_on_backend_error" "on" "$PGPOOL_CONF"
 
 echo "host    all             all             $primary_server_IP/32         trust" | sudo tee -a "$PG_HBA"
 echo "host    all             all             $secondary_server_IP         trust" | sudo tee -a "$PG_HBA"
 
+# Wait for PostgreSQL to start in the primary and secondary servers
+sleep 5m
+#Start pgpool
+sudo pgpool
 echo "pgpool.conf has been updated successfully."
