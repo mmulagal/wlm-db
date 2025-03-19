@@ -3,9 +3,10 @@ import randomize from 'randomatic';
 import createError from 'http-errors';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
+import { Backup, DescribeBackupsCommandInput, ListTagsForResourceCommandInput, Tag } from '@aws-sdk/client-fsx';
 import { attempt, compact, isEmpty } from 'lodash-es';
 import ms from 'ms';
+import throat from 'throat';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -31,7 +32,7 @@ import {
 import { getNetworkInterfacesList } from './ec2-operations';
 import { DatabaseInstance, ResourceDetails, VolumeSpaceRecord } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { convertToBytes, getFsxArn, isDemo, sleep } from '../../utils/utils';
+import { convertToBytes, divideArrayIntoChunks, getFsxArn, isDemo, sleep } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
@@ -306,20 +307,29 @@ async function isFsxnAwsBackupEnabled(
             fileSystemId,
             volumeUuids
         );
+        const backups: Backup[] = [];
         if (!isEmpty(volumeIds)) {
-            const input: DescribeBackupsCommandInput = {
-                Filters: [
-                    {
-                        Name: 'volume-id',
-                        Values: volumeIds
-                    }
-                ]
-            };
-            const backups = await describeFSxBackups(credentialsId, region, input);
+            const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
+            await Promise.all(
+                volumeChunks.map(
+                    throat(3, async volumeIdsChunk => {
+                        const input: DescribeBackupsCommandInput = {
+                            Filters: [
+                                {
+                                    Name: 'volume-id',
+                                    Values: volumeIdsChunk
+                                }
+                            ]
+                        };
+                        const { Backups } = await describeFSxBackups(credentialsId, region, input);
+                        backups.push(...Backups!);
+                    })
+                )
+            );
 
             // Update the volumeDBMap to mark the volumes that have backups.
             const volumeUuidsInBackups: string[] = [];
-            backups.Backups?.forEach(backup => {
+            backups?.forEach(backup => {
                 const volumeId = backup.Volume?.VolumeId;
                 if (volumeId && uuidVolumeIdMap[volumeId]) {
                     const volumeUuid = uuidVolumeIdMap[volumeId];

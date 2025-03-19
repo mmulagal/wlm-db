@@ -157,6 +157,7 @@ async function getSnapshotPolicyDriftData(
     databaseInstanceId: string
 ) {
     logger.info('Calculate snapshot policy drift data for:', { credentialsId, databaseInstanceId, databaseHostId });
+    let errorMessage;
     try {
         const [persistedConfigurationData] = await listDatabaseInstanceConfigData(
             accountId,
@@ -168,8 +169,8 @@ async function getSnapshotPolicyDriftData(
         );
 
         if (isEmpty(persistedConfigurationData)) {
-            const errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
-            throw new Error(errorMessage);
+            errorMessage = `No ${AssessmentCategories.RESILIENCY} assessment data found. Assessment is scheduled to run every 24 hours and may not have run on the instance. Please try again later.`;
+            return { errorMessage };
         }
         const { config_data: configData } = persistedConfigurationData;
         const { volumes, errors } = configData as unknown as StorageAssessment;
@@ -215,8 +216,8 @@ async function getSnapshotPolicyDriftData(
 
         return snapshotPolicyAssesmentData;
     } catch (error) {
-        logger.error('Error getting snapshot policy drift data', error);
-        throw error;
+        errorMessage = `Error getting snapshot policy drift data: ${error}`;
+        return { errorMessage };
     }
 }
 
