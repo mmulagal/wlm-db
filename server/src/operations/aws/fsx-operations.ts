@@ -766,12 +766,12 @@ async function updateFsxBackup(
     }
 ) {
     logger.info('Updating FSX backup policy', { credentialsId, region, fsxFileSystemId });
-    const command = new UpdateFileSystemCommand({
-        FileSystemId: fsxFileSystemId,
-        OntapConfiguration: configuration
-    });
-
-    await updateFileSystem(accountId, credentialsId, region, command);
+    try {
+        let resp = await updateFileSystem(accountId, credentialsId, region, fsxFileSystemId, configuration);
+    } catch (err) {
+        logger.error('Error updating file system:', err);
+        throw err;
+    }
 }
 
 export {

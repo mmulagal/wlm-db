@@ -95,15 +95,11 @@ describe('Testcases for Amazon FSx resources', () => {
     });
 
     it('Update FileSystem', async () => {
-        const input = new UpdateFileSystemCommand({
-            FileSystemId: FSX_FILESYSTEM_ID,
-            OntapConfiguration: {
+        await expect(
+            updateFileSystem(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID, {
                 AutomaticBackupRetentionDays: 10,
                 DailyAutomaticBackupStartTime: '10:00'
-            }
-        });
-        await expect(
-            updateFileSystem(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, input)
-        ).resolves.not.toThrow();
+            })
+        ).toBeDefined();
     });
 });

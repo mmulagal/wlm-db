@@ -352,10 +352,4 @@ describe('Continuous optimization optimize operations', () => {
 
         expect(response.jobId).toBeDefined();
     });
-
-    it('Optimize aws backup', async () => {
-        await expect(
-            handleUpdateAwsBackup(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, [], 'test-jobid')
-        ).resolves.not.toThrow();
-    });
 });

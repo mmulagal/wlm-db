@@ -210,17 +210,20 @@ async function updateFileSystem(
     accountId: string,
     credentialsId: string,
     region: string,
-    input: UpdateFileSystemCommand
+    fsxFileSystemId: string,
+    configuration: {
+        AutomaticBackupRetentionDays: number;
+        DailyAutomaticBackupStartTime: string;
+    }
 ) {
     logger.info('Updating File System:', { accountId, credentialsId, region });
-    try {
-        const client = await getFSxClient(credentialsId, region, accountId);
-        const response = await client.send(input);
-        logger.debug('File system updated successfully:', response);
-    } catch (err) {
-        logger.error('Error updating file system:', err);
-        throw err;
-    }
+    const client = await getFSxClient(credentialsId, region, accountId);
+    const command = new UpdateFileSystemCommand({
+        FileSystemId: fsxFileSystemId,
+        OntapConfiguration: configuration
+    });
+    const response = await client.send(command);
+    return response;
 }
 
 async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {

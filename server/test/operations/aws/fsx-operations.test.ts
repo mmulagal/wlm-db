@@ -109,7 +109,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
         await expect(
             updateFsxBackup(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID, {
                 AutomaticBackupRetentionDays: 10,
-                DailyAutomaticBackupStartTime: '12:00'
+                DailyAutomaticBackupStartTime: '10:00'
             })
         ).resolves.not.toThrow();
     });
