@@ -889,7 +889,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
             stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
         } EC2 instance`,
-        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`,
+        'PgPoolNode(AWS::EC2::Instance)': 'Configuring PgPool instance'
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
