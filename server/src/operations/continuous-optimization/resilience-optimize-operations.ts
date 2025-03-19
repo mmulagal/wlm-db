@@ -8,14 +8,10 @@ import {
     OptimizeResiliencyBodyType,
     SnapshotPolicyDetailsType,
     SnapshotPolicyType,
-    SnapshotScheduleType
+    SnapshotScheduleType,
+    BulkOptimizeSnapshotPolicyParamsType
 } from '../../routes/types/continuous-optimization.types';
-import {
-    BulkOptimizeSnapshotPolicyParamsType,
-    databaseInstanceMetadata,
-    Metadata,
-    WorkloadInstance
-} from '../../utils/common-types';
+import { DatabaseInstanceMetadata, Metadata, WorkloadInstance } from '../../utils/common-types';
 import { AuditStatus, CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../utils/consts';
 import { activeSqlNodeDetails } from '../cont-opt-optimize-operations';
 import {
@@ -209,7 +205,7 @@ async function setSnapshotPolicyForVolumes(
     region: string,
     snapshotPolicy: SnapshotPolicyType,
     parentJobId?: string,
-    instanceMetadata?: databaseInstanceMetadata
+    instanceMetadata?: DatabaseInstanceMetadata
 ) {
     logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -286,7 +282,7 @@ async function setSnapshotPolicyForVolumes(
                 instanceRecord.id,
                 [OptimizeStorageConfigs.SNAPSHOT_POLICY],
                 'STORAGE',
-                instanceMetadata || ({} as databaseInstanceMetadata)
+                instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
         }
         jobStatus = JOBSTATUS.COMPLETED;
@@ -377,7 +373,7 @@ async function handleResiliecyOptimize(
             region,
             snapshotPolicy,
             jobId,
-            (instanceMetadata ?? {}) as databaseInstanceMetadata
+            (instanceMetadata ?? {}) as DatabaseInstanceMetadata
         );
 
         // trigger assesment to update the assessment config data

@@ -1,7 +1,6 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
-import { Static, Type } from '@sinclair/typebox';
 
 interface LicenseAssessment {
     licenseFinding: string;
@@ -123,11 +122,13 @@ interface Metadata {
     isHostOsPatchOptimized?: boolean;
     assessment?: ResourceAssessmentData;
 }
-interface databaseInstanceMetadata {
+
+interface DatabaseInstanceMetadata {
     // this is used to retreive the newly created user databases in database list for demo
     userDatabase?: Array<UserDatabase>;
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
+    assessment?: any;
 }
 
 interface CreateDbMetrics {
@@ -281,7 +282,7 @@ interface DatabaseInstance {
     database_instance_id: string;
     database_type: string;
     is_default: boolean;
-    metadata: databaseInstanceMetadata | JsonValue;
+    metadata: DatabaseInstanceMetadata | JsonValue;
     created_time?: string | Date;
     database_deployment_type?: string;
     fsxn_ids: string;
@@ -492,14 +493,6 @@ interface StorageTierParams extends OptimizeParams {
     svmName: string;
 }
 
-const BulkOptimizeSnapshotPolicyParams = Type.Object({
-    fsxId: Type.String(),
-    region: Type.String(),
-    volUuids: Type.String(),
-    apiBody: Type.String()
-});
-type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
-
 export {
     Metadata,
     NodeDetails,
@@ -514,7 +507,7 @@ export {
     UserDatabase,
     MissingPermission,
     MissingPermissionInterface,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     Sandbox,
     DatabaseInstance,
     InstanceDetails,
@@ -539,7 +532,5 @@ export {
     PgSqlInstanceDetails,
     RssConfigAssesment,
     MaxDOPAssesment,
-    PatchDetail,
-    BulkOptimizeSnapshotPolicyParams,
-    BulkOptimizeSnapshotPolicyParamsType
+    PatchDetail
 };

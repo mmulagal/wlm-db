@@ -385,6 +385,14 @@ const BulkOptimizeGeneralRequestBody = Type.Object({
 
 type BulkOptimizeGeneralRequestBodyType = Static<typeof BulkOptimizeGeneralRequestBody>;
 
+const BulkOptimizeSnapshotPolicyParams = Type.Object({
+    fsxId: Type.String(),
+    region: Type.String(),
+    volUuids: Type.String(),
+    apiBody: Type.String()
+});
+type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
 export {
     DriftAssessmentResponse,
     DriftAssessmentResponseType,
@@ -428,5 +436,7 @@ export {
     BulkOptimizeGeneralPerHostRequestBodyType,
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    BulkOptimizeSnapshotPolicyParams,
+    BulkOptimizeSnapshotPolicyParamsType
 };

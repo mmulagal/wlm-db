@@ -3,14 +3,14 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import Promise from 'bluebird';
 import getLogger from '../utils/logger';
-import { isDemo, sqlResponseParsing } from '../utils/utils';
+import { generateHash, isDemo, sqlResponseParsing } from '../utils/utils';
 import { getFsxStorageDetails, getMappedOntapVolumes } from './aws/fsx-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceDetails, MappedOnTapVolumeResponse } from './database-hosts-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from './workloads/mssql/continuous-optimization-scripts';
 import {
     DatabaseInstance,
-    databaseInstanceMetadata,
+    DatabaseInstanceMetadata,
     DatabaseInstancesIncludingResource,
     Metadata,
     StorageAssessment,
@@ -30,6 +30,7 @@ import {
     listAllManagedInstances,
     listDatabaseInstances,
     listResources,
+    updateInstanceMetadata,
     updateResourceMetaData
 } from '../lib/database/db';
 import { AssessmentCategories, AssessmentStatus, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
@@ -927,10 +928,10 @@ async function fetchDriftAssessment(
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
             const storageConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
-            const osConfigsOptimized = (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.OS || [];
+                (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+            const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
             const sizingConfigsOptimized =
-                (instanceMetadata as databaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+                (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
 
             if (storageConfigsOptimized.length > 0) {
                 const optimizeConfig = (configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) =>
@@ -1035,6 +1036,19 @@ async function fetchDriftAssessment(
         driftAssessmentData.resiliency = resilienceAssessmentResponse as ResilienceDriftAssessmentResponseType;
     }
 
+    // Lets update assessment result in metadata
+    const { metadata } = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    const savedAssessmentData = (metadata as unknown as DatabaseInstanceMetadata).assessment;
+    const savedAssessmentDataHash = generateHash(JSON.stringify(savedAssessmentData));
+    const driftAssessmentDataHash = generateHash(JSON.stringify(driftAssessmentData));
+    if (savedAssessmentDataHash !== driftAssessmentDataHash) {
+        (metadata as unknown as DatabaseInstanceMetadata).assessment = driftAssessmentData;
+        try {
+            await updateInstanceMetadata(accountId, databaseInstanceId, metadata);
+        } catch (error) {
+            logger.error('Error while updating metadata', { accountId, databaseHostId, databaseInstanceId, error });
+        }
+    }
     return driftAssessmentData;
 }
 
