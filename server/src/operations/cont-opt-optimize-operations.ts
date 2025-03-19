@@ -14,7 +14,8 @@ import {
     TempDbDriveDetails,
     OptimizeMpioIscsiSessionsParams,
     StorageTierParams,
-    MaxDOPAssesment
+    MaxDOPAssesment,
+    AwsFsxNBackupConfig
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -2633,10 +2634,7 @@ async function handleUpdateAwsBackup(
     masterOptimizeParentId: string
 ) {
     const fsxFilesystemIds: string[] = [];
-    const fsxBackupConfigMap = new Map<
-        string,
-        { AutomaticBackupRetentionDays: number; DailyAutomaticBackupStartTime: string }
-    >();
+    const fsxBackupConfigMap = new Map<string, AwsFsxNBackupConfig>();
     databaseHosts.forEach(host => {
         if (
             host.fsxFileSystemId &&
@@ -2645,8 +2643,8 @@ async function handleUpdateAwsBackup(
             host.backupStartTime
         ) {
             fsxBackupConfigMap.set(host.fsxFileSystemId, {
-                AutomaticBackupRetentionDays: host.backupRetentionDays,
-                DailyAutomaticBackupStartTime: host.backupStartTime
+                automaticBackupRetentionDays: host.backupRetentionDays,
+                dailyAutomaticBackupStartTime: host.backupStartTime
             });
             fsxFilesystemIds.push(host.fsxFileSystemId);
         }

@@ -500,6 +500,11 @@ const BulkOptimizeSnapshotPolicyParams = Type.Object({
 });
 type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
 
+interface AwsFsxNBackupConfig {
+    automaticBackupRetentionDays: number;
+    dailyAutomaticBackupStartTime: string;
+}
+
 export {
     Metadata,
     NodeDetails,
@@ -541,5 +546,6 @@ export {
     MaxDOPAssesment,
     PatchDetail,
     BulkOptimizeSnapshotPolicyParams,
-    BulkOptimizeSnapshotPolicyParamsType
+    BulkOptimizeSnapshotPolicyParamsType,
+    AwsFsxNBackupConfig
 };
