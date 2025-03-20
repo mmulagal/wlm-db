@@ -152,7 +152,26 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                             <div>
                                 <Bullet />
                             </div>
-                            <DsTypography variant="Regular_14">The backup window will be scheduled for</DsTypography>
+                            <DsTypography variant="Regular_14">The backup window will be scheduled for:</DsTypography>
+                        </div>
+
+                        <div className={styles.row} style={{ marginLeft: '60px' }}>
+                            <DsTypography variant="Regular_14">
+                                Daily automatic backup window:{' '}
+                                {selectedAWSBackup?.hour < 10 ? `0${selectedAWSBackup?.hour}` : selectedAWSBackup?.hour}
+                                :
+                                {selectedAWSBackup?.minute < 10
+                                    ? `0${selectedAWSBackup?.minute}`
+                                    : selectedAWSBackup?.minute}{' '}
+                                UTC
+                            </DsTypography>
+                        </div>
+
+                        <div className={styles.row} style={{ marginLeft: '60px' }}>
+                            <DsTypography variant="Regular_14">
+                                Automatic backup retention period: {selectedAWSBackup?.numberOfDays}{' '}
+                                {selectedAWSBackup?.numberOfDays > 1 ? 'days' : 'day'}
+                            </DsTypography>
                         </div>
                     </div>
                 </div>
