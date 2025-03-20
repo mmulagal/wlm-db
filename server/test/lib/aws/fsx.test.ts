@@ -19,7 +19,8 @@ import {
     describeFSxBackups,
     describeFSx,
     listResourceTags,
-    createTag
+    createTag,
+    updateFileSystem
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
@@ -91,5 +92,17 @@ describe('Testcases for Amazon FSx resources', () => {
     it('Create tag for given fsx resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         await expect(createTag(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, fsxArn, tag)).resolves.not.toThrow();
+    });
+
+    it('Update FileSystem', async () => {
+        await expect(
+            updateFileSystem(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
+                FileSystemId: FSX_FILESYSTEM_ID,
+                OntapConfiguration: {
+                    AutomaticBackupRetentionDays: 10,
+                    DailyAutomaticBackupStartTime: '10:00'
+                }
+            })
+        ).toBeDefined();
     });
 });
