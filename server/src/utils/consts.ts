@@ -545,6 +545,7 @@ const AWS_REGIONS = new Map<string, string>([
     ['ca-west-1', 'Canada (Calgary)'],
     ['ap-southeast-5', 'Asia Pacific (Malaysia)']
 ]);
+const AWS_REGION_KEYS = Array.from(AWS_REGIONS.keys());
 
 const IO2_AVAILABLE_REGIONS = [
     'us-east-2',
@@ -2050,5 +2051,6 @@ export {
     GERERIC_JOB_ERROR_MESSAGE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
-    PGSQL_SYSTEM_DATABASES
+    PGSQL_SYSTEM_DATABASES,
+    AWS_REGION_KEYS
 };
