@@ -99,7 +99,7 @@ const DialogComponent = ({
             Number(selectedAWSBackup?.hour) < 1 ||
             Number(selectedAWSBackup?.hour) > 24 ||
             Number(selectedAWSBackup?.minute) < 0 ||
-            Number(selectedAWSBackup?.minute) > 60
+            Number(selectedAWSBackup?.minute) > 59
         ) {
             return true;
         }

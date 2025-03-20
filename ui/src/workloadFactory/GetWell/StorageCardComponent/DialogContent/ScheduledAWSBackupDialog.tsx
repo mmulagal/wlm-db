@@ -35,8 +35,8 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
     };
 
     const checkMinutesError = () => {
-        if (Number(selectedAWSBackup?.minute) < 0 || Number(selectedAWSBackup?.minute) > 60) {
-            return 'Please enter a value between 0 and 60';
+        if (Number(selectedAWSBackup?.minute) < 0 || Number(selectedAWSBackup?.minute) > 59) {
+            return 'Please enter a value between 0 and 59';
         }
     };
 
