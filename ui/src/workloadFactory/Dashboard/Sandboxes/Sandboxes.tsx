@@ -13,8 +13,8 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 
 const Sandboxes = () => {
     const dispatch = useDispatch();
-    const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
-    const { isNA, aggregatedSandboxList } = useAppSelector(state => state.sandbox);
+    const { isNA } = useAppSelector(state => state.sandbox);
+    const { loading, data: aggregatedSandboxList } = useAppSelector(state => state.inventoryV2.dashSandboxList);
 
     const redirectToSandbox = (range: string) => {
         dispatch(
@@ -37,7 +37,7 @@ const Sandboxes = () => {
             </div>
 
             <div className={styles.mainSection}>
-                <SandboxChart />
+                <SandboxChart aggregatedSandboxList={aggregatedSandboxList} loading={loading} />
                 <div className={styles.rightSide}>
                     <DsTypography variant="Semibold_14" style={{ marginBottom: '16px' }}>
                         Sandboxes distribution by age

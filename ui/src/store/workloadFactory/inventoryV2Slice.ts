@@ -74,7 +74,17 @@ const initialInventoryV2State: InventorySliceData = {
     },
     hostTableRows: [],
     instanceTableRows: [],
-    databaseTableRows: []
+    databaseTableRows: [],
+    dashSandboxList: {
+        data: [],
+        loading: false,
+        error: ''
+    },
+    dashSandboxSavings: {
+        data: [],
+        loading: false,
+        error: ''
+    }
 };
 
 const inventoryV2Slice = createSlice({
@@ -230,6 +240,18 @@ const inventoryV2Slice = createSlice({
             state.instanceTableRows = action.payload?.instances;
             state.databaseTableRows = action.payload?.databases;
         },
+        setDashSandboxListData: (state, action: PayloadAction<any>) => {
+            state.dashSandboxList.data = action.payload;
+        },
+        setDashSandboxListLoading: (state, action: PayloadAction<any>) => {
+            state.dashSandboxList.loading = action.payload;
+        },
+        setDashSandboxSavingsData: (state, action: PayloadAction<any>) => {
+            state.dashSandboxSavings.data = action.payload;
+        },
+        setDashSandboxSavingsLoading: (state, action: PayloadAction<any>) => {
+            state.dashSandboxSavings.loading = action.payload;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = true;
             state.isManagedHostListLoading = true;
@@ -242,6 +264,8 @@ const inventoryV2Slice = createSlice({
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
             state.discoveredHosts.discoveredHostData = null;
             state.discoveredHosts.discoverHostLoading = true;
+            state.dashSandboxList.loading = true;
+            state.dashSandboxSavings.loading = true;
             state.mssqlInstancesData = null;
             state.inventoryChartData = null;
             state.removeSecNodeDiscoveredList = [];
@@ -305,7 +329,11 @@ export const {
     setHostTableRows,
     setInstanceTableRows,
     setDatabaseTableRows,
-    setInventoryTablesRows
+    setInventoryTablesRows,
+    setDashSandboxListData,
+    setDashSandboxListLoading,
+    setDashSandboxSavingsData,
+    setDashSandboxSavingsLoading
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

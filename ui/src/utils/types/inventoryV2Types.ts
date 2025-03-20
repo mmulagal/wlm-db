@@ -55,6 +55,16 @@ export interface InventorySliceData {
     hostTableRows: Array<any>;
     instanceTableRows: Array<any>;
     databaseTableRows: Array<any>;
+    dashSandboxList: {
+        data: Array<any>;
+        loading: boolean;
+        error: string;
+    };
+    dashSandboxSavings: {
+        data: Array<any>;
+        loading: boolean;
+        error: string;
+    };
 }
 
 export interface InventoryTableData {

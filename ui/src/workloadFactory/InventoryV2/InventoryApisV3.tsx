@@ -6,6 +6,10 @@ import {
     addPgSqlDatabaseHostsData,
     resetPerComboData,
     setAllMssqlHostAssessmentLoading,
+    setDashSandboxListData,
+    setDashSandboxListLoading,
+    setDashSandboxSavingsData,
+    setDashSandboxSavingsLoading,
     setFsxCredentialStatus,
     setFsxCredentialStatusLoading,
     setInventoryChartData,
@@ -35,7 +39,9 @@ import {
     useLazyGetFsxCredentialStatusQuery,
     useLazyGetManagedHostDataQuery,
     useLazyGetPgsqlDatabaseHostsFullDataV2Query,
-    useLazyGetPgSqlDatabaseHostsListQuery
+    useLazyGetPgSqlDatabaseHostsListQuery,
+    useLazyGetSandboxListQuery,
+    useLazyGetSandboxSavingsQuery
 } from '../../utils/apiService';
 import {
     addInstanceIdToGetPerf,
@@ -128,6 +134,10 @@ const InventoryApisV3 = () => {
     // Get all managed hosts assessment data
     const [getAllMssqlHostAssessmentAPI] = useLazyGetAllMssqlHostsAssessmentDataQuery();
     const [allmssqlHostAssessmentData, setAllmssqlHostAssessmentData] = useState<any>([]);
+
+    // Get all sandbox API data
+    const [getSandboxListApi] = useLazyGetSandboxListQuery();
+    const [getSandboxSavingsApi] = useLazyGetSandboxSavingsQuery();
 
     const fsxCredentialStatusObjRef: any = useRef(null);
     const mssqlInstancesDataRef: any = useRef(null);
@@ -278,17 +288,24 @@ const InventoryApisV3 = () => {
             let topologyHostData: any = {};
             let pgsqlTopologyHostData: any = {};
             let assessmentData: any = [];
+            let sandboxListData: any = [];
+            let sandboxSavingsData: any = [];
             getDatabaseHostsList(topologyHostData, null, credId, regionId);
             getPgSqlDatabaseHostsList(pgsqlTopologyHostData, null, credId, regionId);
             getDatabaseHostsFullData(fullHostData, null, credId, regionId);
             getPgsqlDatabaseHostsFullData(fullPgsqlHostData, null, credId, regionId);
             getAllMssqlHostAssessmentData(assessmentData, null, credId, regionId);
+            // sandbox APIs
+            getAllSandboxListData(sandboxListData, null, credId, regionId);
+            getAllSandboxSavingsData(sandboxSavingsData, credId, regionId);
         } else {
             dispatch(setIsDatabaseHostsLoading(false));
             dispatch(setIsPgSqlDatabaseHostsLoading(false));
             dispatch(setIsFullHostDataLoading(false));
             dispatch(setIsFullPgSqlHostDataLoading(false));
             dispatch(setAllMssqlHostAssessmentLoading(false));
+            dispatch(setDashSandboxListLoading(false));
+            dispatch(setDashSandboxSavingsLoading(false));
         }
     };
 
@@ -798,6 +815,100 @@ const InventoryApisV3 = () => {
         }
     };
 
+    const getAllSandboxListData = async (
+        sandboxListData: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsList.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getSandboxListApi({
+                    credentialId: credId,
+                    region: regionId,
+                    nextToken: nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        sandboxListData = [
+                            ...sandboxListData,
+                            ...(Array.isArray(result?.data?.items)
+                                ? result.data.items.map((sandbox: any) => ({
+                                      ...sandbox,
+                                      credentialId: credId,
+                                      regionId: regionId
+                                  }))
+                                : [])
+                        ];
+                        if (result?.data?.nextToken) {
+                            dispatch(setDashSandboxListData(sandboxListData));
+                            getAllSandboxListData(
+                                sandboxListData,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setDashSandboxListLoading(false));
+                            dispatch(setDashSandboxListData(sandboxListData));
+                        }
+                    } else {
+                        dispatch(setDashSandboxListLoading(false));
+                        dispatch(setDashSandboxListData(sandboxListData));
+                    }
+                }
+            } catch (error) {
+                dispatch(setDashSandboxListLoading(false));
+                dispatch(setDashSandboxListData(sandboxListData));
+            }
+        }
+    };
+
+    const getAllSandboxSavingsData = async (
+        sandboxSavingsData: any,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsList.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsList.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getSandboxSavingsApi({
+                    credentialId: credId,
+                    region: regionId
+                });
+                if (
+                    headerSelectedMultiCredIdsList.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsList.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        let perSandboxAPI = {
+                            ...result?.data,
+                            credentialId: credId,
+                            regionId: regionId
+                        };
+                        sandboxSavingsData = [...sandboxSavingsData, perSandboxAPI];
+                        dispatch(setDashSandboxSavingsLoading(false));
+                        dispatch(setDashSandboxSavingsData(sandboxSavingsData));
+                    } else {
+                        dispatch(setDashSandboxSavingsLoading(false));
+                        dispatch(setDashSandboxSavingsData(sandboxSavingsData));
+                    }
+                }
+            } catch (error) {
+                dispatch(setDashSandboxSavingsLoading(false));
+                dispatch(setDashSandboxSavingsData(sandboxSavingsData));
+            }
+        }
+    };
+
     // This is to call instance API to get perf and protection data
     const callUnmanagedPerfInstanceApi = (
         instancesList: Array<string>,
@@ -1037,6 +1148,8 @@ const InventoryApisV3 = () => {
         dispatch(setUnmanagedExploreSavingsHost([]));
         dispatch(setPotentialSavingsValues(null));
         dispatch(addAllMssqlHostAssessmentData([]));
+        dispatch(setDashSandboxListData([]));
+        dispatch(setDashSandboxSavingsData([]));
     };
 
     // This will trigger getManagedHostList, getDatabaseHostsList and getDatabaseHostsFullData on change of cred, region and refresh.

@@ -156,7 +156,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     JobMonitoringApi();
     SavingsCalculatorApi();
     SavingsCalculatorManualApi();
-    SandboxApis();
+    // SandboxApis();
 
     useEffect(() => {
         let tabValue = setTabValue(tab, selectedHeaderTab);

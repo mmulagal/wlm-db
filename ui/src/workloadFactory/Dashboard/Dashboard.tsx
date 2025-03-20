@@ -20,6 +20,7 @@ const Dashboard = () => {
     const [openAccordion, setOpenAccordion] = useState(false);
     const mssqlHostDataLoading = useAppSelector(state => state.inventoryV2.getDatabaseHosts.fullHostDataLoading);
     const pgsqlHostDataLoading = useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts.fullHostDataLoading);
+    const savingsDataLoading = useAppSelector(state => state.inventoryV2.dashSandboxSavings.loading);
 
     const hostStorageSavingsData = useMemo(() => {
         return getTotalManagedAggrStorageSavings(mssqlHostStorageSavingsData, pgsqlHostStorageSavingsData);
@@ -53,7 +54,7 @@ const Dashboard = () => {
                     <div className={styles.commonContainer}>
                         <StorageSavings
                             hostData={hostStorageSavingsData}
-                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading}
+                            hostsLoading={mssqlHostDataLoading || pgsqlHostDataLoading || savingsDataLoading}
                         />
                     </div>
 

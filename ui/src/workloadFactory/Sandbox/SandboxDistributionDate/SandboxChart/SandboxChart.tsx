@@ -10,12 +10,10 @@ import { getSandboxDistributionByAge } from '../../SandboxUtility';
 
 Chart.register(...registerables);
 
-const SandboxChart = () => {
+const SandboxChart = ({ aggregatedSandboxList, loading }: any) => {
     const ref = useRef<HTMLCanvasElement>(null);
-    const loading = useAppSelector(state => state.sandbox.getSandboxList.sandboxListLoading);
     const [doughnutChart, setDoughnutChart] = useState<any>();
     const { isNA } = useAppSelector(state => state.sandbox);
-    const { aggregatedSandboxList } = useAppSelector(state => state.sandbox);
 
     const doughnutOptions = {
         plugins: {

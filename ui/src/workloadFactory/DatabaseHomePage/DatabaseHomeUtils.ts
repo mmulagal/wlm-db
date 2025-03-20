@@ -214,10 +214,11 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
         });
     });
 
-    if (sandboxSavings) {
-        totalConsume += (sandboxSavings?.consumedStorage || 0) + (sandboxSavings?.savedStorage || 0);
-        storageSavings += sandboxSavings?.savedStorage || 0;
-    }
+    sandboxSavings?.map((val: any) => {
+        totalConsume += (val?.consumedStorage || 0) + (val?.savedStorage || 0);
+        storageSavings += val?.savedStorage || 0;
+    });
+
     const storageConsume = totalConsume - storageSavings;
 
     return {

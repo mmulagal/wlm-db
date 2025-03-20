@@ -22,7 +22,7 @@ const SandboxDistributionDate = () => {
             </div>
 
             <div className={styles.mainSection}>
-                <SandboxChart />
+                <SandboxChart aggregatedSandboxList={aggregatedSandboxList} loading={loading} />
 
                 <div className={styles.rightSide}>
                     <div className={styles.individualRow}>

@@ -1167,6 +1167,7 @@ export const {
 
 export const {
     useGetSandboxListQuery,
+    useLazyGetSandboxListQuery,
     useGetSandboxSavingsQuery,
     useLazyGetSandboxSavingsQuery,
     useCreateSandboxMutation,
