@@ -657,14 +657,18 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
             const state = store.getState();
             const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
             payload = {
-                type: ['aws-backup'],
-                databaseHosts: [
+                hostsToOptimize: [
                     {
-                        id: selectedResourceId,
-                        sqlServerInstances: [selectedDatabaseInstance],
-                        fsxFileSystemId: selectedRowFsxId,
-                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                        type: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                fsxFileSystemId: selectedRowFsxId,
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                            }
+                        ]
                     }
                 ]
             };

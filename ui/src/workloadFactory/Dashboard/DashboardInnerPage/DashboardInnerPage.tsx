@@ -300,14 +300,18 @@ const DashboardInnerPage = () => {
             const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
 
             payload = {
-                type: ['aws-backup'],
-                databaseHosts: [
+                hostsToOptimize: [
                     {
-                        id: rowData?.databaseHostId,
-                        sqlServerInstances: [rowData?.instanceId],
-                        fsxFileSystemId: rowData?.objectsInViolation?.[0],
-                        backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                        backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                        type: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: rowData?.databaseHostId,
+                                sqlServerInstances: [rowData?.instanceId],
+                                fsxFileSystemId: rowData?.objectsInViolation?.[0],
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                            }
+                        ]
                     }
                 ]
             };
