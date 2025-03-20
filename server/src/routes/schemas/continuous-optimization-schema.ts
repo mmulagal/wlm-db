@@ -103,8 +103,8 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Optimize compute for a database instance',
-    description: 'Optimize compute as per the best practice for the selected database instance.',
+    summary: 'Optimize compute rightsizing for a database instance',
+    description: 'Optimize compute rightsizing as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.ASSESSMENT],
