@@ -11,6 +11,7 @@ import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    sortInstanceTableData,
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
@@ -192,7 +193,7 @@ const InventoryV2 = () => {
             dispatch(
                 setInventoryTablesRows({
                     hosts: sortInventoryTableData(hostTableRows),
-                    instances: instanceTableRows,
+                    instances: sortInstanceTableData(instanceTableRows),
                     databases: databaseTableRows
                 })
             );

@@ -51,7 +51,11 @@ import {
 import { useAppSelector } from '../../store/storeHooks';
 import { useState, useEffect, useMemo } from 'react';
 import GetWellApi from './GetWellApi';
-import { resetGwData, setGwRefreshPage } from '../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    resetGwData,
+    setGwRefreshPage,
+    setIsInnerPageOptimize
+} from '../../store/workloadFactory/getWellOptimizeSlice';
 //@ts-ignore
 //import domToPdf from 'dom-to-pdf';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
@@ -79,7 +83,8 @@ const GetWell = () => {
         selectedResourceId,
         selectedDatabaseInstance,
         selectedGwInstanceCredId,
-        selectedGwInstanceRegionId
+        selectedGwInstanceRegionId,
+        isInnerPageOptimize
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -234,6 +239,13 @@ const GetWell = () => {
         resetGwValuesOnRefresh(dispatch);
         dispatch(setGwRefreshPage(true));
     };
+
+    useEffect(() => {
+        if (isInnerPageOptimize) {
+            refreshGetWellPage();
+            dispatch(setIsInnerPageOptimize(false));
+        }
+    }, [isInnerPageOptimize]);
 
     const handleFilterClearAll = () => {
         dispatch(setOptimizeFilterTags([]));

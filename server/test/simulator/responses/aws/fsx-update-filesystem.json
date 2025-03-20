@@ -1,0 +1,88 @@
+{
+	"$metadata": {
+		"httpStatusCode": 200,
+		"requestId": "180cda3a-606a-4173-bcd8-61fcaf173f0b",
+		"attempts": 1,
+		"totalRetryDelay": 0
+	},
+	"FileSystem": {
+		"CreationTime": "2025-03-18T01:06:08.288Z",
+		"FileSystemId": "fs-000c1dfa58a192b03",
+		"FileSystemType": "ONTAP",
+		"KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
+		"Lifecycle": "AVAILABLE",
+		"NetworkInterfaceIds": [
+			"eni-0259f734341716b22",
+			"eni-01636a5351a0dbe02"
+		],
+		"OntapConfiguration": {
+			"AutomaticBackupRetentionDays": 20,
+			"DailyAutomaticBackupStartTime": "10:24",
+			"DeploymentType": "MULTI_AZ_1",
+			"DiskIopsConfiguration": {
+				"Iops": 7074,
+				"Mode": "AUTOMATIC"
+			},
+			"EndpointIpAddressRange": "198.19.255.0/24",
+			"Endpoints": {
+				"Intercluster": {
+					"DNSName": "intercluster.fs-000c1dfa58a192b03.fsx.ap-southeast-1.amazonaws.com",
+					"IpAddresses": [
+						"10.0.142.101",
+						"10.0.186.103"
+					]
+				},
+				"Management": {
+					"DNSName": "management.fs-000c1dfa58a192b03.fsx.ap-southeast-1.amazonaws.com",
+					"IpAddresses": [
+						"198.19.255.232"
+					]
+				}
+			},
+			"HAPairs": 1,
+			"PreferredSubnetId": "subnet-06d046751a5ebe220",
+			"RouteTableIds": [
+				"rtb-0586fe72120723ea3",
+				"rtb-0df47e996ef7861de"
+			],
+			"ThroughputCapacity": 128,
+			"ThroughputCapacityPerHAPair": 128,
+			"WeeklyMaintenanceStartTime": "1:05:00"
+		},
+		"OwnerId": "464262061435",
+		"ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-000c1dfa58a192b03",
+		"StorageCapacity": 2358,
+		"StorageType": "SSD",
+		"SubnetIds": [
+			"subnet-06d046751a5ebe220",
+			"subnet-052a0db3b141193e7"
+		],
+		"Tags": [
+			{
+				"Key": "aws:cloudformation:stack-name",
+				"Value": "WLMDB-SqlFciStack-1742258796806-NewFSxStack-10ZCKIAWS2X0E"
+			},
+			{
+				"Key": "aws:cloudformation:logical-id",
+				"Value": "FSxFileSystemConfiguration"
+			},
+			{
+				"Key": "created_by_flow",
+				"Value": "WLMDB"
+			},
+			{
+				"Key": "aws:cloudformation:stack-id",
+				"Value": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1742258796806-NewFSxStack-10ZCKIAWS2X0E/0edde940-0395-11f0-8129-0afa2fa96211"
+			},
+			{
+				"Key": "wlmdb-cost-resource",
+				"Value": "fs-000c1dfa58a192b03"
+			},
+			{
+				"Key": "Name",
+				"Value": "wlmdb-fsx-1742258796806"
+			}
+		],
+		"VpcId": "vpc-0100cefdf732ef9e9"
+	}
+}

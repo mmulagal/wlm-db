@@ -404,6 +404,7 @@ const OptimizeInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);
 
@@ -420,7 +421,10 @@ const OptimizeInnerPage = () => {
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                '',
+                {},
+                true
             );
         });
     };

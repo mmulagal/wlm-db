@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
 import { Volume } from '@aws-sdk/client-fsx';
+import throat from 'throat';
 import {
     Metadata,
     DatabaseInstance,
@@ -13,7 +14,8 @@ import {
     TempDbDriveDetails,
     OptimizeMpioIscsiSessionsParams,
     StorageTierParams,
-    MaxDOPAssesment
+    MaxDOPAssesment,
+    AwsFsxNBackupConfig
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -61,6 +63,7 @@ import {
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import {
+    OptimizePerHostRequestBodyType,
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
@@ -69,6 +72,7 @@ import {
     getFsxnVolIdsFromOntapVolIds,
     getIscsiTargetAddresses,
     getMappedOntapVolumes,
+    updateFsxBackup,
     updateVolumeSizeAndWaitForUpdate
 } from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
@@ -2639,6 +2643,79 @@ async function optimizeMaxDop(
     return { jobId: parentJobId };
 }
 
+async function handleUpdateAwsBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHosts: OptimizePerHostRequestBodyType[],
+    masterOptimizeParentId: string
+) {
+    const fsxFilesystemIds: string[] = [];
+    const fsxBackupConfigMap = new Map<string, AwsFsxNBackupConfig>();
+    databaseHosts.forEach(host => {
+        if (
+            host.fsxFileSystemId &&
+            !fsxBackupConfigMap.get(host.fsxFileSystemId) &&
+            host.backupRetentionDays &&
+            host.backupStartTime
+        ) {
+            fsxBackupConfigMap.set(host.fsxFileSystemId, {
+                automaticBackupRetentionDays: host.backupRetentionDays,
+                dailyAutomaticBackupStartTime: host.backupStartTime
+            });
+            fsxFilesystemIds.push(host.fsxFileSystemId);
+        }
+    });
+
+    const jobDescription = `Enable AWS FSx for ONTAP automatic backup for filesystems ${fsxFilesystemIds.join(', ')}`;
+
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        '',
+        JOBTYPE.OPTIMIZATION,
+        'Update AWS FSx for ONTAP backup',
+        jobDescription,
+        masterOptimizeParentId,
+        {
+            hostsToOptimize: [
+                {
+                    optimizationType: 'aws-backup',
+                    resourceId: databaseHosts[0].id,
+                    sqlServerInstances: [databaseHosts[0].sqlServerInstances[0]]
+                }
+            ]
+        }
+    );
+    let jobstatus: JOBSTATUS = JOBSTATUS.COMPLETED as JOBSTATUS;
+    const errMsg: string[] = [];
+
+    await Promise.all(
+        Array.from(fsxBackupConfigMap.entries()).map(
+            throat(2, async ([fsxFileSystemId, configuration]) => {
+                try {
+                    await updateFsxBackup(accountId, credentialsId, region, fsxFileSystemId, configuration);
+                } catch (err: any) {
+                    errMsg.push(
+                        `Error occurred while updating AWS FSx for ONTAP backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${err}`
+                    );
+                    jobstatus = JOBSTATUS.FAILED;
+                }
+            })
+        )
+    );
+
+    if (errMsg.length !== 0) {
+        logger.error(errMsg);
+    }
+    await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
+    await updateLongRunningAuditGroup(
+        jobstatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+        errMsg.join(', ')
+    );
+}
+
 async function triggerAssessmentAfterOptimization(
     credentialsId: string,
     region: string,
@@ -2720,5 +2797,6 @@ export {
     optimizeOperatingSystemSettings,
     optimizeStorageTier,
     activeSqlNodeDetails,
-    optimizeMaxDop
+    optimizeMaxDop,
+    handleUpdateAwsBackup
 };
