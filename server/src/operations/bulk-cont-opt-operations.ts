@@ -6,13 +6,18 @@ import { HttpErrorCodes } from '../utils/consts';
 import { BulkOptimizeGeneralPerHostRequestBodyType } from '../routes/types/continuous-optimization.types';
 import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
 import {
+    handleUpdateAwsBackup,
     optimizeMaxDop,
     optimizeOperatingSystemSettings,
     optimizeSizing,
     optimizeStorageTier
 } from './cont-opt-optimize-operations';
 import { updateParentJobStatus } from './database/job-operations';
-import { OPTIMIZATION_CATEGORIES, OPTIMIZE_SIZING_CONFIGS } from '../utils/continous-optimization-consts';
+import {
+    OPTIMIZATION_CATEGORIES,
+    OPTIMIZE_RESILIENCY_CONFIGS,
+    OPTIMIZE_SIZING_CONFIGS
+} from '../utils/continous-optimization-consts';
 import optimizeCompute from './continuous-optimization/compute-optimize-operations';
 import { listResources } from '../lib/database/db';
 
@@ -20,10 +25,13 @@ const logger = getLogger();
 
 async function formatJobMetadata(hostsToOptimize: BulkOptimizeGeneralPerHostRequestBodyType[]) {
     return hostsToOptimize.flatMap(({ type, databaseHosts }) =>
-        databaseHosts.map(({ id, sqlServerInstances }) => ({
+        databaseHosts.map(({ id, sqlServerInstances, fsxFileSystemId, backupRetentionDays, backupStartTime }) => ({
             resourceId: id,
             sqlServerInstances,
-            optimizationType: type
+            optimizationType: type,
+            fsxFileSystemId,
+            backupRetentionDays,
+            backupStartTime
         }))
     );
 }
@@ -64,6 +72,8 @@ async function bulkOptimization(
             ? 'Optimize storage tier'
             : optimizationCategory === OPTIMIZATION_CATEGORIES.MAXDOP
             ? 'Optimize maxdop configuration'
+            : optimizationCategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP
+            ? 'Optimize AWS Backup configuration'
             : 'Optimize storage sizing';
 
     const parentJobId = await handleOptimizeJobCreation(
@@ -112,6 +122,7 @@ async function handleOptimization(
                     region,
                     databaseHostId,
                     databaseInstanceId,
+                    undefined,
                     parentJobId
                 );
                 break;
@@ -154,27 +165,37 @@ async function handleBulkOptimization(
     try {
         await Promise.all(
             hostsToOptimize.map(async ({ type: optimizationSubcategory, databaseHosts }) => {
-                await Promise.all(
-                    databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances }) => {
-                        if (isEmpty(sqlServerInstances)) {
-                            logger.error(`No instances given for resource ${databaseHostId}.`);
-                        }
-                        await Promise.all(
-                            sqlServerInstances.map(async instance => {
-                                await handleOptimization(
-                                    accountId,
-                                    credentialsId,
-                                    region,
-                                    optimizationCategory,
-                                    optimizationSubcategory,
-                                    databaseHostId,
-                                    instance,
-                                    masterOptimizeParentId
-                                );
-                            })
-                        );
-                    })
-                );
+                if (optimizationSubcategory === OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP) {
+                    await handleUpdateAwsBackup(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHosts,
+                        masterOptimizeParentId
+                    );
+                } else {
+                    await Promise.all(
+                        databaseHosts.map(async ({ id: databaseHostId, sqlServerInstances }) => {
+                            if (isEmpty(sqlServerInstances)) {
+                                logger.error(`No instances given for resource ${databaseHostId}.`);
+                            }
+                            await Promise.all(
+                                sqlServerInstances.map(async instance => {
+                                    await handleOptimization(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        optimizationCategory,
+                                        optimizationSubcategory,
+                                        databaseHostId,
+                                        instance,
+                                        masterOptimizeParentId
+                                    );
+                                })
+                            );
+                        })
+                    );
+                }
             })
         );
     } catch (error: any) {

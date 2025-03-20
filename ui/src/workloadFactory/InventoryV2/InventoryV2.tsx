@@ -6,11 +6,12 @@ import InventoryTab from './InventoryTab/InventoryTab';
 import InventoryTablesComponent from './InventoryTablesComponent/InventoryTablesComponent';
 import { INVENTORY_ACTIONS, INVENTORY_STATUS, PROTECTION_TEXT_STATUS } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
-import { formatSizeTwoPrecision } from '../../utils/utilityFunctions';
+import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
     getDiscoveredHostDeploymentV2,
     getOptimizationStatus,
     getProtectionText,
+    sortInstanceTableData,
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
@@ -178,6 +179,7 @@ const InventoryV2 = () => {
                                 credentialName: perHost?.credentialName,
                                 accountId: perHost?.accountId,
                                 regionName: perHost?.regionName,
+                                sizeRange: categorizeStorageSize(formatSize(perDatabase?.size)),
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId
                             };
@@ -191,7 +193,7 @@ const InventoryV2 = () => {
             dispatch(
                 setInventoryTablesRows({
                     hosts: sortInventoryTableData(hostTableRows),
-                    instances: instanceTableRows,
+                    instances: sortInstanceTableData(instanceTableRows),
                     databases: databaseTableRows
                 })
             );

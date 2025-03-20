@@ -228,7 +228,8 @@ const StorageParameterDriftResponse = Type.Object({
 
 const ResilienceDriftAssessmentResponse = Type.Object({
     snapshotPolicy: Type.Optional(Type.Union([SnapshotPolicyAssesmentData, ErrorResponse])),
-    crr: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
+    crr: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
+    awsBackup: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse]))
 });
 type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssessmentResponse>;
 
@@ -348,15 +349,38 @@ const OptimizeSizingRequestBody = Type.Object({
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
-const OptimizePerHostRequestBody = Type.Object({
-    id: Type.String({ minLength: 1 }),
-    sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    instanceType: Type.Optional(Type.String())
+const UpdateFSxNBackupRequestBody = Type.Object({
+    fsxFileSystemId: Type.Optional(Type.String()),
+    backupRetentionDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90 })),
+    backupStartTime: Type.Optional(
+        Type.String({
+            description: '00:00 to 23:59 padded UTC timestamp',
+            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
+        })
+    )
 });
+
+const OptimizePerHostRequestBody = Type.Intersect([
+    Type.Object({
+        id: Type.String({ minLength: 1 }),
+        sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
+        instanceType: Type.Optional(Type.String())
+    }),
+    UpdateFSxNBackupRequestBody
+]);
+
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
 
 const OptimizeOperatingSystemRequestBody = Type.Object({
     configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
+});
+
+const OptimizeGenericRequestBody = Type.Object({
+    configurationName: Type.Enum({
+        ...OPTIMIZE_SIZING_CONFIGS,
+        ...OptimizeStorageTierParams
+    }),
+    objectsToOptimize: Type.Optional(Type.Array(Type.String({ minLength: 1 })))
 });
 
 const DriftAssessmentResponsePerAccount = Type.Object({
@@ -371,7 +395,8 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
         ...OptimizeOperatingSystemParams,
         ...OptimizeStorageTierParams,
         ...OptimizeComputeParams,
-        ...OptimizeMaxDopParams
+        ...OptimizeMaxDopParams,
+        ...OPTIMIZE_RESILIENCY_CONFIGS
     }),
     databaseHosts: Type.Array(OptimizePerHostRequestBody)
 });
@@ -427,5 +452,6 @@ export {
     BulkOptimizeGeneralPerHostRequestBodyType,
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    OptimizeGenericRequestBody
 };

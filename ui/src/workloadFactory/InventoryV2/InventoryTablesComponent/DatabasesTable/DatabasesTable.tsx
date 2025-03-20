@@ -247,12 +247,18 @@ const DatabasesTable = () => {
         },
         {
             Header: 'Database size',
-            accessor: 'size',
+            accessor: 'sizeRange',
             id: '7',
             width: '200px',
-            isSortable: true,
-            renderCell: (cellData: any) => {
-                return formatSize(cellData);
+            filterOptions: [
+                { label: '0 - 100 MiB', value: '0 - 100 MiB' },
+                { label: '100 MiB - 1 GiB', value: '100 MiB - 1 GiB' },
+                { label: '1 GiB - 10 GiB', value: '1 GiB - 10 GiB' },
+                { label: '10 GiB - 5 TiB', value: '10 GiB - 5 TiB' },
+                { label: '5 TiB+', value: '5 TiB+' }
+            ],
+            renderCell: (cellData: any, rowData: any) => {
+                return formatSize(rowData?.size);
             }
         },
         {
@@ -310,6 +316,9 @@ const DatabasesTable = () => {
                 if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
                     disableOption = true;
                     disableMessage = 'Create sandbox option is not available for PostgreSQL databases.';
+                } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
+                    disableOption = true;
+                    disableMessage = 'Create sandbox option is not available for system database.';
                 }
                 const menu = [
                     {

@@ -15,6 +15,7 @@ import {
     setInProgressOptimizationData,
     setJobToInstanceMap,
     setLandingFrom,
+    setLandingFromInnerPage,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -243,6 +244,7 @@ const OptimizeOntapInnerPage = () => {
                 const timeoutId = setTimeout(() => {
                     if (!userNavigated.current) {
                         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                        dispatch(setLandingFromInnerPage(true));
                     }
                 }, 1000);
 
@@ -258,7 +260,10 @@ const OptimizeOntapInnerPage = () => {
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                statusType
+                statusType,
+                '',
+                {},
+                true
             );
         });
     };
@@ -340,6 +345,7 @@ const OptimizeOntapInnerPage = () => {
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+                                    dispatch(setLandingFromInnerPage(true));
                                 }
                             },
                             {

@@ -1591,6 +1591,10 @@ const PGSQL_RESOURCE_ASSETS = [
     {
         name: 'PGSQLPackages',
         url: `${WLMDB}/pgsql/packages/pgvector.zip`
+    },
+    {
+        name: 'PGPOOLPackage',
+        url: `${WLMDB}/pgsql/packages/pgpool.zip`
     }
 ];
 

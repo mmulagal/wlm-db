@@ -7,9 +7,9 @@ import {
     DatabaseHostSummaryParams,
     DatabaseQueryString
 } from '../types/database-hosts.types';
+
 import {
     OptimizeStorageRequestBody,
-    OptimizeSizingRequestBody,
     DriftAssessmentResponse,
     OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody,
@@ -17,7 +17,8 @@ import {
     DriftAssessmentResponsePerAccount,
     BulkOptimizeGeneralRequestBody,
     AvailableSnapshotPoliciesResponse,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    OptimizeGenericRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -91,7 +92,7 @@ const OptimizeSizingSchema = {
     summary: 'Optimize storage sizing for a database instance',
     description: 'Optimize sizing parameters as per the best practice for the selected database instance.',
     params: DatabaseHostInstanceSummaryParams,
-    body: OptimizeSizingRequestBody,
+    body: OptimizeGenericRequestBody,
     tags: [RouteTags.ASSESSMENT],
     response: {
         200: Type.Object({
@@ -134,6 +135,7 @@ const OptimizeStorageTierSchema = {
     description: 'Optimize storage-tier parameters as per the best practice for the selected database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ASSESSMENT],
+    body: OptimizeGenericRequestBody,
     response: {
         200: Type.Object({
             jobId: Type.String()
@@ -221,6 +223,12 @@ const BulkOptimizeMaxDopSchema = {
     description: 'Optimize max-dop parameters as per the best practice for selected database instances.'
 };
 
+const BulkOptimizeAwsBackupSchema = {
+    ...BulkOptimizeGeneralSchema,
+    summary: 'Enable AWS FSx for ONTAP automatic backup',
+    description: 'Enable AWS FSx for ONTAP automatic backup.'
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -237,5 +245,6 @@ export {
     BulkOptimizeOperatingSystemSchema,
     BulkOptimizeStorageTierSchema,
     BulkOptimizeComputeSchema,
-    BulkOptimizeMaxDopSchema
+    BulkOptimizeMaxDopSchema,
+    BulkOptimizeAwsBackupSchema
 };

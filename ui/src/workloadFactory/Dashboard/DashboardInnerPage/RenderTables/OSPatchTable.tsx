@@ -30,25 +30,23 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
     const tableData = useMemo(() => {
-        let storageTierAssessmentData: any = [];
+        let hostOsPatchAssessmentData: any = [];
         allmssqlHostAssessmentData.map((hostData: any) => {
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    const performanceTierObj = instanceData?.assessments?.storage?.sizing?.find(
-                        (item: any) => item.name === 'performance-tier'
-                    );
-                    const isStorageTierOptimized = isOptimized(performanceTierObj?.status);
-                    if (!isStorageTierOptimized) {
-                        storageTierAssessmentData.push({
+                    const hostOsPatchObj = instanceData?.assessments?.hostOsPatch;
+                    const isRowOptimized = isOptimized(hostOsPatchObj?.status);
+                    if (!isRowOptimized) {
+                        hostOsPatchAssessmentData.push({
                             credentialId: hostData?.credentialId,
                             regionId: hostData?.regionId,
                             databaseHostId: hostData?.databaseHostId,
                             instanceId: instanceData?.databaseInstanceId,
                             serverInstanceName: instanceData?.databaseInstanceName,
-                            performanceTier: performanceTierObj?.current,
+                            performanceTier: hostOsPatchObj?.current,
                             id: hostData?.databaseHostId + '_' + instanceData?.databaseInstanceId,
                             hostName: hostData?.databaseHostName,
-                            assessmentStatus: GETWELL_VALUES[performanceTierObj?.status],
+                            assessmentStatus: GETWELL_VALUES[hostOsPatchObj?.status],
                             data: instanceData
                         });
                     }
@@ -57,21 +55,21 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
         });
         return mapHostStatusToAssessmentData(
             inventoryTableData,
-            storageTierAssessmentData,
+            hostOsPatchAssessmentData,
             getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
         );
     }, [allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts]);
 
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length) {
             return disableOptimizeCheckBoxForOptimizeCase(
                 tableData,
-                ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+                ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
                 selectedRowsForOptimize
             );
         } else {
-            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.STORAGE_TIER);
+            return disableOptimizeCheckBoxForErrCase(tableData, ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH);
         }
     }, [selectedRowsForOptimize, tableData, inProgressOptimizationData]);
 
@@ -105,7 +103,12 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
-        lastColDetails(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, {}, inProgressOptimizationData, inProgressHostData)
+        lastColDetails(
+            ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+            {},
+            inProgressOptimizationData,
+            inProgressHostData
+        )
     ];
 
     const tableProps = useTable({
@@ -125,13 +128,16 @@ const OSPatchTable = ({ lastColDetails, handleBulkAction }: StorageTierTableProp
 
         disptach(setSelectedRowsForOptimize(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length) {
+        if (
+            rowsData.length > 0 &&
+            inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]?.length
+        ) {
             checkBoxHandle(tableProps.selectionState, rowsData, disptach);
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
     const handleBulkOperation = () => {
-        handleBulkAction(ASSESSMENT_CONFIG_NAMES.STORAGE_TIER, selectedRowsForOptimize);
+        handleBulkAction(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH, selectedRowsForOptimize);
     };
     return (
         <div className={styles.renderTable}>

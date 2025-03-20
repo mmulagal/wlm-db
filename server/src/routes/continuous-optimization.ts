@@ -9,6 +9,7 @@ import {
 import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES,
+    OPTIMIZE_RESILIENCY_CONFIGS,
     OptimizeStorageParams
 } from '../utils/continous-optimization-consts';
 import {
@@ -27,7 +28,8 @@ import {
     BulkOptimizeComputeSchema,
     AvailableSnapshotPolicies,
     BulkOptimizeMaxDopSchema,
-    OptimizeResilienceSchema
+    OptimizeResilienceSchema,
+    BulkOptimizeAwsBackupSchema
 } from './schemas/continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -114,7 +116,7 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
-                    body: { type }
+                    body: { configurationName, objectsToOptimize }
                 } = castRequest(request);
 
                 const response = await optimizeSizing(
@@ -123,7 +125,9 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    type
+                    [configurationName],
+                    undefined,
+                    objectsToOptimize
                 );
                 return reply.send(response);
             }
@@ -193,7 +197,8 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             { schema: OptimizeStorageTierSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId }
+                    params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
+                    body: { objectsToOptimize }
                 } = castRequest(request);
 
                 const response = await optimizeStorageTier(
@@ -201,7 +206,8 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     databaseHostId,
-                    databaseInstanceId
+                    databaseInstanceId,
+                    objectsToOptimize
                 );
                 return reply.send(response);
             }
@@ -342,6 +348,25 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
                     credentialsId,
                     region,
                     OPTIMIZATION_CATEGORIES.MAXDOP,
+                    hostsToOptimize
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/optimize/resilency/aws-backup`,
+            { schema: BulkOptimizeAwsBackupSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    body: { hostsToOptimize }
+                } = castRequest(request);
+
+                const response = await bulkOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    OPTIMIZE_RESILIENCY_CONFIGS.AWS_BACKUP,
                     hostsToOptimize
                 );
                 return reply.send(response);

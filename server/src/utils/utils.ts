@@ -889,7 +889,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
             stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
         } EC2 instance`,
-        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`,
+        'PgPoolNode(AWS::EC2::Instance)': 'Configuring PgPool instance'
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
@@ -934,6 +935,21 @@ function parseMultipleCommandResponse(response: string) {
     const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
 
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
+
+function divideArrayIntoChunks(array: any[], chunkSize: number) {
+    const chunksArray = array.reduce((resultArray: any[][], item, index) => {
+        const chunkIndex = Math.floor(index / chunkSize);
+
+        if (!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+        }
+
+        resultArray[chunkIndex].push(item);
+
+        return resultArray;
+    }, []);
+    return chunksArray;
 }
 
 export {
@@ -990,5 +1006,6 @@ export {
     isPgsql,
     isValidEmail,
     isRateLimited,
-    parseMultipleCommandResponse
+    parseMultipleCommandResponse,
+    divideArrayIntoChunks
 };
