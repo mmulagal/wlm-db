@@ -850,6 +850,12 @@ async function fetchDriftAssessment(
         databaseInstanceId,
         fields
     });
+    try {
+        await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    } catch (error) {
+        logger.error('Error fetching instance details:', error);
+        throw error;
+    }
 
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
