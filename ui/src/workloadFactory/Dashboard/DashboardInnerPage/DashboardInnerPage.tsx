@@ -67,6 +67,7 @@ import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
 import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -309,7 +310,7 @@ const DashboardInnerPage = () => {
                                 sqlServerInstances: [rowData?.instanceId],
                                 fsxFileSystemId: rowData?.objectsInViolation?.[0],
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                                backupStartTime: selectedAWSBackup?.hour + ':' + selectedAWSBackup?.minute
+                                backupStartTime: backupStartTime(selectedAWSBackup)
                             }
                         ]
                     }
