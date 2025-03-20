@@ -6,10 +6,7 @@
             "FileSystemType": "ONTAP",
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
             "Lifecycle": "AVAILABLE",
-            "NetworkInterfaceIds": [
-                "eni-0f21c7486b651ca11",
-                "eni-01a4d0d5f61d75ee4"
-            ],
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
             "OntapConfiguration": {
                 "DeploymentType": "MULTI_AZ_1",
                 "DiskIopsConfiguration": {
@@ -20,22 +17,15 @@
                 "Endpoints": {
                     "Intercluster": {
                         "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.24.147",
-                            "172.31.11.147"
-                        ]
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
                     },
                     "Management": {
                         "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.255.204"
-                        ]
+                        "ipAddresses": ["172.31.255.204"]
                     }
                 },
                 "PreferredSubnetId": "subnet-f4484e80",
-                "RouteTableIds": [
-                    "rtb-65aeb107"
-                ],
+                "RouteTableIds": ["rtb-65aeb107"],
                 "ThroughputCapacity": 512,
                 "WeeklyMaintenanceStartTime": "1:14:30"
             },
@@ -43,10 +33,7 @@
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-03773e21b2f0e39b4",
             "StorageCapacity": 35840,
             "StorageType": "SSD",
-            "SubnetIds": [
-                "subnet-f4484e80",
-                "subnet-4cdd3b29"
-            ],
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
                 {
                     "Key": "Name",
@@ -62,9 +49,7 @@
             "FileSystemType": "OPENZFS",
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
             "Lifecycle": "AVAILABLE",
-            "NetworkInterfaceIds": [
-                "eni-0f5884c4d92452685"
-            ],
+            "NetworkInterfaceIds": ["eni-0f5884c4d92452685"],
             "OntapConfiguration": {
                 "AutomaticBackupRetentionDays": 30,
                 "CopyTagsToBackups": false,
@@ -83,9 +68,7 @@
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0e6e7434cb27e5701",
             "StorageCapacity": 64,
             "StorageType": "SSD",
-            "SubnetIds": [
-                "subnet-4cdd3b29"
-            ],
+            "SubnetIds": ["subnet-4cdd3b29"],
             "Tags": [
                 {
                     "Key": "Name",
@@ -100,10 +83,7 @@
             "FileSystemType": "ONTAP",
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061425:key/0a96542a-f57b-487c-a0fc-4dba89",
             "Lifecycle": "AVAILABLE",
-            "NetworkInterfaceIds": [
-                "eni-0f21c7486b651ca11",
-                "eni-01a4d0d5f61d75ee4"
-            ],
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
             "OntapConfiguration": {
                 "AutomaticBackupRetentionDays": 30,
                 "DailyAutomaticBackupStartTime": "15:30",
@@ -116,22 +96,15 @@
                 "Endpoints": {
                     "Intercluster": {
                         "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.24.147",
-                            "172.31.11.147"
-                        ]
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
                     },
                     "Management": {
                         "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.255.204"
-                        ]
+                        "ipAddresses": ["172.31.255.204"]
                     }
                 },
                 "PreferredSubnetId": "subnet-f4484e80",
-                "RouteTableIds": [
-                    "rtb-65aeb107"
-                ],
+                "RouteTableIds": ["rtb-65aeb107"],
                 "ThroughputCapacity": 128,
                 "WeeklyMaintenanceStartTime": "1:14:30"
             },
@@ -139,10 +112,7 @@
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
             "StorageCapacity": 25600,
             "StorageType": "SSD",
-            "SubnetIds": [
-                "subnet-f4484e80",
-                "subnet-4cdd3b29"
-            ],
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
                 {
                     "Key": "Name",
@@ -157,10 +127,7 @@
             "FileSystemType": "ONTAP",
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061425:key/0a96542a-f57b-487c-a0fc-4dba89",
             "Lifecycle": "AVAILABLE",
-            "NetworkInterfaceIds": [
-                "eni-0f21c7486b651ca11",
-                "eni-01a4d0d5f61d75ee4"
-            ],
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
             "OntapConfiguration": {
                 "AutomaticBackupRetentionDays": 30,
                 "DailyAutomaticBackupStartTime": "15:30",
@@ -173,22 +140,15 @@
                 "Endpoints": {
                     "Intercluster": {
                         "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.24.147",
-                            "172.31.11.147"
-                        ]
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
                     },
                     "Management": {
                         "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.255.204"
-                        ]
+                        "ipAddresses": ["172.31.255.204"]
                     }
                 },
                 "PreferredSubnetId": "subnet-f4484e80",
-                "RouteTableIds": [
-                    "rtb-65aeb107"
-                ],
+                "RouteTableIds": ["rtb-65aeb107"],
                 "ThroughputCapacity": 128,
                 "WeeklyMaintenanceStartTime": "1:14:30"
             },
@@ -196,10 +156,7 @@
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
             "StorageCapacity": 25600,
             "StorageType": "SSD",
-            "SubnetIds": [
-                "subnet-f4484e80",
-                "subnet-4cdd3b29"
-            ],
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
                 {
                     "Key": "Name",
@@ -214,10 +171,7 @@
             "FileSystemType": "ONTAP",
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061425:key/0a96542a-f57b-487c-a0fc-4dba89",
             "Lifecycle": "AVAILABLE",
-            "NetworkInterfaceIds": [
-                "eni-0f21c7486b651ca11",
-                "eni-01a4d0d5f61d75ee4"
-            ],
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
             "OntapConfiguration": {
                 "AutomaticBackupRetentionDays": 30,
                 "DailyAutomaticBackupStartTime": "15:30",
@@ -230,22 +184,15 @@
                 "Endpoints": {
                     "Intercluster": {
                         "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.24.147",
-                            "172.31.11.147"
-                        ]
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
                     },
                     "Management": {
                         "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
-                        "ipAddresses": [
-                            "172.31.255.204"
-                        ]
+                        "ipAddresses": ["172.31.255.204"]
                     }
                 },
                 "PreferredSubnetId": "subnet-f4484e80",
-                "RouteTableIds": [
-                    "rtb-65aeb107"
-                ],
+                "RouteTableIds": ["rtb-65aeb107"],
                 "ThroughputCapacity": 128,
                 "WeeklyMaintenanceStartTime": "1:14:30"
             },
@@ -253,10 +200,7 @@
             "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
             "StorageCapacity": 25600,
             "StorageType": "SSD",
-            "SubnetIds": [
-                "subnet-f4484e80",
-                "subnet-4cdd3b29"
-            ],
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
             "Tags": [
                 {
                     "Key": "Name",
