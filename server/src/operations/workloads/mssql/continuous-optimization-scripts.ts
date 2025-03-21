@@ -111,8 +111,12 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             foreach ($winvolume in $winvolumes) {
                 # check in winvolume volume id is null or empty string
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
+<<<<<<< HEAD
                     
                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+=======
+                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+>>>>>>> master
                         $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
                         $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
                         $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
@@ -123,6 +127,10 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
                         $partition = $partitionmap[$winvolume.volumeid]["partition"]
                 
                 }
+<<<<<<< HEAD
+=======
+                
+>>>>>>> master
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
