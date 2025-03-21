@@ -105,14 +105,24 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             $responseObject = [ordered]@{}
             $responseObject['data'] = @()
             $responseObject['log'] = @()
-             $responseObject['tempDb'] = @()
+            $responseObject['tempDb'] = @()
+            $partitionmap = @{}
             $winvolumes = $sqlresponse | ConvertFrom-Json
             foreach ($winvolume in $winvolumes) {
                 # check in winvolume volume id is null or empty string
                 if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
-                    
-                    $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
-                    $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+                        $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                        $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                        $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
+                                                      "partition" = $partition
+                                         }
+                    } else {
+                        $vol = $partitionmap[$winvolume.volumeid]["volume"]
+                        $partition = $partitionmap[$winvolume.volumeid]["partition"]
+                
+                }
+                
                     if ($vol.bustype -eq 'iscsi') {
                         $object = @{
                         "name" = $winvolume.name
