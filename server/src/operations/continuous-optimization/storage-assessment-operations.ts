@@ -30,14 +30,14 @@ interface DatabaseVolumeRecord {
     fileId?: number;
     lunSerialNumber: string;
     name: string;
-    fileName: string;
+    // fileName: string;
     lunPath: string;
     volumeUuid: string;
     sizeInMb: number;
     fileType: number;
     logVolume?: string;
     logLunPath?: string;
-    logFileName?: string;
+    // logFileName?: string;
     logSize?: number;
     logVolumeUuid?: string;
     databaseSizeInGb?: number;
@@ -517,7 +517,7 @@ async function calculateStorageDrift(
                     const volDetails = data as DatabaseVolumeRecord;
                     volDetails.logVolume = log.volumeName;
                     volDetails.logLunPath = log.lunPath;
-                    volDetails.logFileName = log.fileName;
+                    // volDetails.logFileName = log.fileName;
                     volDetails.logSizeInMb = log.sizeInMb;
                     volDetails.logVolumeUuid = log.ontapVolumeUuid;
                     volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
