@@ -1,5 +1,4 @@
 import { countBy, isEmpty, isNull } from 'lodash-es';
-import createError from 'http-errors';
 import moment from 'moment';
 import {
     AssessmentCategories,
@@ -18,7 +17,6 @@ import {
     GenericViolationResponseType
 } from '../../routes/types/continuous-optimization.types';
 import { LogDriveDetails, StorageAssessment, TempDbDriveDetails } from '../../utils/common-types';
-import { HttpErrorCodes } from '../../utils/consts';
 import { calculateFsxStorageCapacityForHeadroomOptimization, convertToBytes } from '../../utils/utils';
 import getMissingPermissionsList from '../aws/iam-operations';
 import { getFsxStorageDetails } from '../aws/fsx-operations';
@@ -302,7 +300,7 @@ async function calculateStorageDrift(
 
     if (isEmpty(persistedConfigurationData)) {
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        return { errorMessage };
     }
 
     const driftAssessmentData: StorageParameterDriftResponseType = {
