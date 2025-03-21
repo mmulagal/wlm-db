@@ -112,6 +112,7 @@ const ontapRestRequestBootstrap = `
             return @{
                 FSxCredentialsInBase64 = $FSxCredentialsInBase64
                 FSxHostName = $FSxHostName
+                FSxCredentials= $FSxCredentials
             }
         }
 `;
@@ -122,6 +123,7 @@ const ontapRestRequest = `
         $FSxNDetails = Get-FSxNDetails
         $FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
         $FSxHostName = $FSxNDetails.FSxHostName
+        $FSxCredentials= $FSxNDetails.FSxCredentials
 `;
 
 const ontapJobStatusTemplate = `
