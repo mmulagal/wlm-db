@@ -345,18 +345,16 @@ describe('Continuous optimization optimize operations', () => {
     });
 
     it('Bulk optimize compute parameters', async () => {
-        const response = await bulkComputeOptimization(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, [
-            {
-                type: OptimizeComputeParams.COMPUTE,
-                databaseHosts: [
-                    {
-                        id: RESOURCE_ID,
-                        sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
-                        instanceType: 'm5.large'
-                    }
-                ]
-            }
-        ]);
+        const response = await bulkComputeOptimization(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            type: OptimizeComputeParams.COMPUTE,
+            databaseHosts: [
+                {
+                    id: RESOURCE_ID,
+                    sqlServerInstances: ['f4b7c5d3-e1f6-4g2a-9b5d'],
+                    instanceType: 'm5.large'
+                }
+            ]
+        });
 
         expect(response.jobId).toBeDefined();
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });

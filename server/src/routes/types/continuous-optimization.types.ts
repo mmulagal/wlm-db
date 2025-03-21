@@ -350,7 +350,8 @@ type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 const OptimizePerHostRequestBody = Type.Object({
     id: Type.String({ minLength: 1 }),
     sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
-    instanceType: Type.Optional(Type.String())
+    instanceType: Type.Optional(Type.String()),
+    networkAdapters: Type.Optional(Type.Array(Type.String()))
 });
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;
 
@@ -376,6 +377,15 @@ const BulkOptimizeGeneralPerHostRequestBody = Type.Object({
 });
 
 type BulkOptimizeGeneralPerHostRequestBodyType = Static<typeof BulkOptimizeGeneralPerHostRequestBody>;
+
+const BulkOptimizeComputePerHostRequestBody = Type.Object({
+    type: Type.Enum({
+        ...OptimizeComputeParams
+    }),
+    databaseHosts: Type.Array(OptimizePerHostRequestBody)
+});
+
+type BulkOptimizeComputePerHostRequestBodyType = Static<typeof BulkOptimizeComputePerHostRequestBody>;
 
 const BulkOptimizeGeneralRequestBody = Type.Object({
     hostsToOptimize: Type.Array(BulkOptimizeGeneralPerHostRequestBody)
@@ -426,5 +436,7 @@ export {
     BulkOptimizeGeneralPerHostRequestBodyType,
     GenericViolationResponseType,
     OptimizeResiliencyBodyType,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    BulkOptimizeComputePerHostRequestBodyType,
+    BulkOptimizeComputePerHostRequestBody
 };

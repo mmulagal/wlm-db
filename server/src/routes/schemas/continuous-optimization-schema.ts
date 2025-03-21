@@ -17,7 +17,8 @@ import {
     DriftAssessmentResponsePerAccount,
     BulkOptimizeGeneralRequestBody,
     AvailableSnapshotPoliciesResponse,
-    OptimizeResiliencyBody
+    OptimizeResiliencyBody,
+    BulkOptimizeComputePerHostRequestBody
 } from '../types/continuous-optimization.types';
 
 const resourceRequest = {
@@ -210,9 +211,17 @@ const BulkOptimizeStorageTierSchema = {
 };
 
 const BulkOptimizeComputeSchema = {
-    ...BulkOptimizeGeneralSchema,
+    ...resourceRequest,
+    params: CredentialsIdParams,
+    tags: [RouteTags.ASSESSMENT],
+    body: BulkOptimizeComputePerHostRequestBody,
     summary: 'Optimize compute',
-    description: 'Optimize compute parameters as per the best practice for selected database instances.'
+    description: 'Optimize compute parameters as per the best practice for selected database instances.',
+    response: {
+        200: Type.Object({
+            jobId: Type.String()
+        })
+    }
 };
 
 const BulkOptimizeMaxDopSchema = {

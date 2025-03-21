@@ -42,6 +42,7 @@ import {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize
 } from '../operations/continuous-optimization/resilience-optimize-operations';
+import { BulkOptimizeComputePerHostRequestBodyType } from './types/continuous-optimization.types';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 
@@ -285,10 +286,15 @@ export default function continuousOptimizationRoutes(fastify: FastifyInstance) {
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region },
-                    body: { hostsToOptimize }
+                    body: hostsToOptimize
                 } = castRequest(request);
 
-                const response = await bulkComputeOptimization(accountId, credentialsId, region, hostsToOptimize);
+                const response = await bulkComputeOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    hostsToOptimize as BulkOptimizeComputePerHostRequestBodyType
+                );
                 return reply.send(response);
             }
         )

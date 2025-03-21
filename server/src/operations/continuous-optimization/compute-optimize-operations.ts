@@ -909,6 +909,90 @@ async function updateNodeInstanceType(
     }
 }
 
+async function getClusterNodeInstanceIds(accountId: string, credentialsId: string, region: string, instanceId: string) {
+    const clusterNetworkIpDetails = await callSsmExecution(
+        credentialsId,
+        region,
+        CLUSTER_NETWORK_IP_INFO_PS1,
+        instanceId,
+        'Get cluster network IPs',
+        accountId,
+        undefined,
+        '300'
+    );
+    let clusterNodeInstanceIds: string[] = [];
+    if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
+        throw createError('Failed to get network interface details during compute optimization.');
+    } else if (clusterNetworkIpDetails) {
+        const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
+        // get all nodes in a cluster
+        const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
+        if (clusterNetworkIps.length > 1) {
+            const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps);
+            clusterNodeInstanceIds = compact(clusterNodeDetails.map(({ ec2InstanceId }) => ec2InstanceId));
+        }
+    }
+    return clusterNodeInstanceIds;
+}
+
+async function transferClusterOwnershipToStandbyNode(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string
+) {
+    try {
+        const sqlNodeDetails = await callSsmExecution(
+            credentialsId,
+            region,
+            [GET_CLUSTER_NODE_NAMES()],
+            activeNodeInstanceId,
+            'Get all node names in the cluster',
+            accountId,
+            undefined,
+            '300'
+        );
+        const { ownerNode, clusterNodes } = sqlResponseParsing(sqlNodeDetails);
+        // pick one of the nodes in the cluster to transfer primary node ownership
+        let targetNodeName;
+        for (const nodeName of clusterNodes) {
+            const resp = await callSsmExecution(
+                credentialsId,
+                region,
+                [CHECK_NODE_STATUS(nodeName)],
+                activeNodeInstanceId,
+                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.',
+                accountId
+            );
+            const { status } = sqlResponseParsing(resp);
+            if (status === 'success') {
+                targetNodeName = nodeName;
+                break;
+            }
+        }
+
+        // move all cluster groups to the selected node
+        if (targetNodeName) {
+            const nodesTransferred = await moveClusterGroupOwnership(
+                credentialsId,
+                region,
+                targetNodeName,
+                activeNodeInstanceId
+            );
+            logger.info('Primary node ownership transferred to', {
+                targetNodeName,
+                nodesTransferred
+            });
+        } else {
+            throw createError(500, 'Failed to find a node to transfer primary node ownership');
+        }
+        return { targetNodeName, ownerNode };
+    } catch (error) {
+        logger.error(`Failed to transfer sql node ownership in the cluster, ${error}`);
+        throw error;
+    }
+}
+
 async function handleRollbackClusterOwnership(
     accountId: string,
     credentialsId: string,
@@ -1113,4 +1197,11 @@ async function rollbackComputeOptimize(
     }
 }
 
-export { handleComputeRemediation, checkRunningStatus };
+export {
+    handleComputeRemediation,
+    checkRunningStatus,
+    getClusterNodeInstanceIds,
+    transferClusterOwnershipToStandbyNode,
+    moveClusterGroupOwnership,
+    handleRollbackClusterOwnership
+};
