@@ -151,9 +151,9 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
     
             $QueryFilter = ''
             $serialNumbers = @()
-            $serialNumbers += $responseObject.data | ForEach-Object {Select-Object -ExpandProperty $_.lunSerialNumber}
-            $serialNumbers += $responseObject.log | ForEach-Object {Select-Object -ExpandProperty $_.lunSerialNumber}
-            $serialNumbers += $responseObject.tempDb | ForEach-Object {Select-Object -ExpandProperty $_.lunSerialNumber}
+            $serialNumbers += $responseObject.data | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.log | ForEach-Object { $_.lunSerialNumber }
+            $serialNumbers += $responseObject.tempDb | ForEach-Object { $_.lunSerialNumber }
             $serialNumbers = $serialNumbers | Select-Object -Unique
             foreach ($serialNumber in $serialNumbers) {
                 $QueryFilter += $serialNumber + '|'
