@@ -864,6 +864,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
             'Creating network interfaces for the EC2 instance in standby subnet',
         'NetworkInterface1(AWS::EC2::NetworkInterface)':
             'Creating network interfaces for the EC2 instance in primary subnet',
+        'NetworkInterface3(AWS::EC2::NetworkInterface)':
+            'Creating network interface for PgPool instance in primary subnet',
         'ValidationNode2(AWS::EC2::Instance)':
             'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
         'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
