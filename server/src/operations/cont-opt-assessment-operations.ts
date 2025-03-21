@@ -928,7 +928,7 @@ async function fetchDriftAssessment(
             : Promise.resolve({})
     ]);
 
-    if (!isEmpty(storageAssessmentResponse)) {
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;

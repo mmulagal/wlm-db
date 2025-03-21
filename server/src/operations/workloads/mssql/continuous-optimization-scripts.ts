@@ -141,9 +141,9 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
     
             $QueryFilter = ''
             $serialNumbers = @()
-            $serialNumbers += $responseObject.data | Select-Object -ExpandProperty lunSerialNumber
-            $serialNumbers += $responseObject.log | Select-Object -ExpandProperty lunSerialNumber
-            $serialNumbers += $responseObject.tempDb | Select-Object -ExpandProperty lunSerialNumber
+            $serialNumbers += $responseObject.data | ForEach-Object {Select-Object -ExpandProperty $_.lunSerialNumber}
+            $serialNumbers += $responseObject.log | ForEach-Object {Select-Object -ExpandProperty $_.lunSerialNumber}
+            $serialNumbers += $responseObject.tempDb | ForEach-Object {Select-Object -ExpandProperty $_.lunSerialNumber}
             $serialNumbers = $serialNumbers | Select-Object -Unique
             foreach ($serialNumber in $serialNumbers) {
                 $QueryFilter += $serialNumber + '|'
@@ -378,7 +378,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) 
     {
         $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
-        Write-Information "Data drive is not a NetApp drive. $defaultDataDriveDetails"
+        Write-Information "Data drive $defaultDataDriveDetails.dataDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails )) {
@@ -389,7 +389,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
    if($netappDataDrives -notcontains $defaultLogDriveDetails.logDriveLetter) 
     {
         $driveDetailsErrors["instanceLogDrivesError"] = "Log drive is not a NetApp drive."
-        Write-Information "Log drive is not a NetApp drive. $defaultLogDriveDetails"
+        Write-Information "Log drive $defaultLogDriveDetails.logDriveLetter is not a NetApp drive."
     }
     else {
     $defaultLogDrive = 'shared-drive'
@@ -402,7 +402,7 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     if($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) 
     {
         $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
-        Write-Information "TempDB drive is not a NetApp drive. $defaultTempDBDriveDetails"
+        Write-Information "TempDB drive $defaultTempDBDriveDetails.tempdbDriveLetter is not a NetApp drive."
     }
     else {
     if(($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {

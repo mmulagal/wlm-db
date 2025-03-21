@@ -235,7 +235,7 @@ type ResilienceDriftAssessmentResponseType = Static<typeof ResilienceDriftAssess
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 const DriftAssessmentResponse = Type.Object({
-    storage: Type.Optional(StorageParameterDriftResponse),
+    storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
     license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
