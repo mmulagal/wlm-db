@@ -364,7 +364,7 @@ async function activeSqlNodeDetails(
             : false;
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to optimize instnace ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to optimize instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
