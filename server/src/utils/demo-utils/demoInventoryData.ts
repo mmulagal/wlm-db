@@ -739,7 +739,8 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'daily_weekretention',
-            'tiering-min-cooling-days': 17
+            'tiering-min-cooling-days': 17,
+            uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         },
         {
             name: 'wlmdb_sqltemp_1728552629461',
@@ -752,7 +753,8 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'daily_weekretention',
-            'tiering-min-cooling-days': 17
+            'tiering-min-cooling-days': 17,
+            uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         },
         {
             name: 'wlmdb_sqldata_1728574994',
@@ -765,7 +767,8 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'none',
-            'tiering-min-cooling-days': 17
+            'tiering-min-cooling-days': 17,
+            uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         }
     ],
     filesystemId: 'fs-07a22f282fd4f5a20'

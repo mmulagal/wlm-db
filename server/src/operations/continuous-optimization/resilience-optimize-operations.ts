@@ -397,7 +397,8 @@ async function handleResiliecyOptimize(
             databaseHostId,
             databaseInstanceId,
             AssessmentTriggeredBy.SYSTEM,
-            AssessmentCategories.RESILIENCY
+            AssessmentCategories.RESILIENCY,
+            jobId
         );
     }
     return { jobId };

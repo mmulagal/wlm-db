@@ -285,9 +285,9 @@ const OptimizeInnerPage = () => {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
                             },
-                            volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, id }: any) => ({
+                            volumes: selectedRowsForOptimizeInnerPage.map(({ volumeName, ontapVolumeUuid }: any) => ({
                                 ontapVolumeName: volumeName,
-                                ontapVolumeUuid: id
+                                ontapVolumeUuid: ontapVolumeUuid
                             }))
                         }
                     ]
@@ -301,10 +301,12 @@ const OptimizeInnerPage = () => {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
                             },
-                            volumes: {
-                                ontapVolumeName: singleRowData?.volumeName,
-                                ontapVolumeUuid: singleRowData?.id
-                            }
+                            volumes: [
+                                {
+                                    ontapVolumeName: singleRowData?.volumeName,
+                                    ontapVolumeUuid: singleRowData?.ontapVolumeUuid
+                                }
+                            ]
                         }
                     ]
                 };
