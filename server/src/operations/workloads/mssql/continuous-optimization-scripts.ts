@@ -148,7 +148,6 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             foreach ($serialNumber in $serialNumbers) {
                 $QueryFilter += $serialNumber + '|'
             }
-
             $QueryFilter = $QueryFilter.TrimEnd('|')
             $Params = @{
                 "ApiEndPoint" = "/storage/luns"
