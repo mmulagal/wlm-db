@@ -522,6 +522,9 @@ export const headersApi = createApi({
             getHeadersRegions: builder.query({
                 query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
             }),
+            getHeadersRegionsWithoutCred: builder.query({
+                query: () => ({ url: `v1/fsx/regions` })
+            }),
             getStatus: builder.query({
                 query: () => `v1/status`
             })
@@ -1138,7 +1141,12 @@ export const {
 
 export const { useSendMsgMutation } = chatbotApi;
 
-export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
+export const {
+    useGetHeadersCredentialsQuery,
+    useGetHeadersRegionsQuery,
+    useGetHeadersRegionsWithoutCredQuery,
+    useGetStatusQuery
+} = headersApi;
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;
 

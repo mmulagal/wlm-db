@@ -2,7 +2,6 @@ import { StatusRes } from './databaseHomeTypes';
 import { Credentials, Regions } from './mssqlTypes';
 
 export interface HeaderTypeEntities {
-    multiSelectData: any;
     headerSelectedCred: any;
     headerSelectedCredSandbox: any;
     headerSelectedRegionSandbox: any;
@@ -30,5 +29,4 @@ export interface HeaderTypeEntities {
     };
     refreshTime: string | null;
     dashboardRefresh: boolean;
-    multiSelectStatus: any;
 }

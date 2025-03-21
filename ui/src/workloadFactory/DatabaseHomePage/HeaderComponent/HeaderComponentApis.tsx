@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } from '../../../utils/apiService';
+import {
+    useGetHeadersCredentialsQuery,
+    useGetHeadersRegionsQuery,
+    useGetHeadersRegionsWithoutCredQuery,
+    useGetStatusQuery
+} from '../../../utils/apiService';
 import { AWS_ASSUME_ROLE } from '../../../utils/consts';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
@@ -19,9 +24,6 @@ const HeaderComponentApi = () => {
     // CredentialId state
     const [selectedCredId, setSelectedCredId] = useState(undefined);
 
-    // credSkip to skip APi call when credentialId is not defined
-    const [credSkip, setCredSkip] = useState(true);
-
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
 
@@ -39,10 +41,10 @@ const HeaderComponentApi = () => {
         data: regionsData,
         isFetching: regionsLoading,
         isError: regionsError
-    } = useGetHeadersRegionsQuery(
-        { credentialId: selectedCredId },
+    } = useGetHeadersRegionsWithoutCredQuery(
+        {},
         {
-            skip: credSkip
+            skip: skipApiCall
         }
     );
 
@@ -62,9 +64,6 @@ const HeaderComponentApi = () => {
         const credId = selectedCredential?.data ? selectedCredential.data?.credentialsId : undefined;
         if (credId) {
             setSelectedCredId(credId);
-            setCredSkip(false);
-        } else {
-            setCredSkip(true);
         }
     }, [selectedCredential]);
 
