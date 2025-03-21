@@ -790,7 +790,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
 
         $SimplifiedDriveDetails = @()
         foreach($drive in $consolidatedDriveDetails) {
-            $Detail = $SimplifiedDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
+            $Detail = $SimplifiedDriveDetails | Where-Object { $_.logAccessPath -eq $drive.logAccessPath -and $_.dataAccessPath -eq $drive.dataAccessPath }
             if($null -eq $Detail) {
                 $SimplifiedDriveDetails += $drive
             }  else {

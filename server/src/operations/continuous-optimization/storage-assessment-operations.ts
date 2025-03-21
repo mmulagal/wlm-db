@@ -23,6 +23,11 @@ import { getFsxStorageDetails } from '../aws/fsx-operations';
 import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../aws/cloud-watch-operations';
 
 const logger = getLogger();
+
+interface DatabaseRecord {
+    name: string;
+    sizeInMb: number;
+}
 interface DatabaseVolumeRecord {
     ontapVolumeUuid: string | undefined;
     svm: string;
@@ -42,6 +47,7 @@ interface DatabaseVolumeRecord {
     logVolumeUuid?: string;
     databaseSizeInGb?: number;
     logSizeInMb?: number;
+    databaseDetails?: Array<DatabaseRecord>;
 }
 
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
@@ -49,6 +55,41 @@ const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osConfigData = storageGoldenConfigData.configuration.os;
 const layoutConfigData = storageGoldenConfigData.layout;
 const sizingConfigData = storageGoldenConfigData.sizing;
+
+function expandVolumeDataPerDatabaseForLayoutAssessment(data: DatabaseVolumeRecord[]) {
+    const expandedData: DatabaseVolumeRecord[] = [];
+    data.forEach((volume: DatabaseVolumeRecord) => {
+        if (volume.databaseDetails && volume.databaseDetails.length > 0) {
+            volume.databaseDetails.forEach((db: DatabaseRecord) => {
+                const dbVolume = { ...volume };
+                dbVolume.name = db.name;
+                dbVolume.sizeInMb = db.sizeInMb;
+                delete dbVolume.databaseDetails;
+                expandedData.push(dbVolume);
+            });
+        } else {
+            expandedData.push(volume);
+        }
+    });
+    return expandedData;
+}
+
+function expandDatabaseDetailForSizingAssessment(data: LogDriveDetails[]) {
+    const expandedData: LogDriveDetails[] = [];
+    data.forEach((volume: LogDriveDetails) => {
+        const databaseNames = volume.databaseName?.split(',');
+        if (databaseNames.length > 0) {
+            databaseNames.forEach((db: string) => {
+                const dbVolume = { ...volume };
+                dbVolume.databaseName = db;
+                expandedData.push(dbVolume);
+            });
+        } else {
+            expandedData.push(volume);
+        }
+    });
+    return expandedData;
+}
 
 async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
     logger.info('Checking for missing optimize permissions', { credentialsId, region, permissions });
@@ -84,7 +125,8 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
     const ignoredDrives: SizingViolationResponseType[] = [];
     const optimisedDrives: SizingViolationResponseType[] = [];
 
-    const driveDetails = Array.isArray(logVolumes) ? logVolumes : [logVolumes];
+    // DBS-5449: To address truncation databases sharing log disk are combined. For right sizing assessment, we need to expand the data
+    const driveDetails = expandDatabaseDetailForSizingAssessment(Array.isArray(logVolumes) ? logVolumes : [logVolumes]);
 
     const filteredDriveDetails: LogDriveDetails[] = driveDetails.reduce((acc: LogDriveDetails[], driveDetail) => {
         // Case 1: Log drive is shared by multiple databases
@@ -506,10 +548,15 @@ async function calculateStorageDrift(
         let severity = 'critical';
         let databasesInViolation: string[] = [];
         goldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
-
-        const dataVolumes = userDatabaseLayoutAssessment?.data;
-        const logVolumes = userDatabaseLayoutAssessment?.log;
+        // DBS-5449: To address truncation databases databases sharing disk are combined. For layout assessment, we need to expand the data
+        const dataVolumes = expandVolumeDataPerDatabaseForLayoutAssessment(
+            userDatabaseLayoutAssessment?.data
+        ) as DatabaseVolumeRecord[];
+        const logVolumes = expandVolumeDataPerDatabaseForLayoutAssessment(
+            userDatabaseLayoutAssessment?.log
+        ) as DatabaseVolumeRecord[];
         const dataLogVolumeDetails: DatabaseVolumeRecord[] = [];
+
         dataVolumes.map((data: DatabaseVolumeRecord) =>
             logVolumes.forEach((log: DatabaseVolumeRecord) => {
                 // Ignore system databases for layout assessment: DBS-4639
@@ -517,7 +564,6 @@ async function calculateStorageDrift(
                     const volDetails = data as DatabaseVolumeRecord;
                     volDetails.logVolume = log.volumeName;
                     volDetails.logLunPath = log.lunPath;
-                    // volDetails.logFileName = log.fileName;
                     volDetails.logSizeInMb = log.sizeInMb;
                     volDetails.logVolumeUuid = log.ontapVolumeUuid;
                     volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
