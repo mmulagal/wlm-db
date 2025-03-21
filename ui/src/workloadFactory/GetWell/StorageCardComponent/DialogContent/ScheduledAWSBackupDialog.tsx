@@ -230,7 +230,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                You can still manually initiate backup and restore operations via AWS console.
+                                You can still manually initiate backup and restore operations via workload factory.
                             </DsTypography>
                         </div>
 
