@@ -291,7 +291,8 @@ const DashboardInnerPage = () => {
                         snapshotPolicy: {
                             uuid: selectedSnapshot?.data?.uuid,
                             name: selectedSnapshot?.data?.name
-                        }
+                        },
+                        volumes: rowData?.violations
                     }
                 ]
             };
