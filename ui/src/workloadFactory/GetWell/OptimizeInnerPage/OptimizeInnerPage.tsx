@@ -301,10 +301,12 @@ const OptimizeInnerPage = () => {
                                 uuid: selectedSnapshot?.data?.uuid,
                                 name: selectedSnapshot?.data?.name
                             },
-                            volumes: {
-                                ontapVolumeName: singleRowData?.volumeName,
-                                ontapVolumeUuid: singleRowData?.ontapVolumeUuid
-                            }
+                            volumes: [
+                                {
+                                    ontapVolumeName: singleRowData?.volumeName,
+                                    ontapVolumeUuid: singleRowData?.ontapVolumeUuid
+                                }
+                            ]
                         }
                     ]
                 };
