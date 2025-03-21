@@ -1080,7 +1080,7 @@ const InstancesTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Instances"
                         singularTitle="Instance"
-                        exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
+                        exportToCsvOptions={{ fileName: `instanceTable-${Date.now()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     {selectedRowsForManage.length > 0 && (
