@@ -239,8 +239,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                The retention period and scheduling can be modified as needed for FSx for ONTAP in AWS
-                                console.
+                                The retention period and scheduling can be modified as needed via workload factory.
                             </DsTypography>
                         </div>
                     </div>
