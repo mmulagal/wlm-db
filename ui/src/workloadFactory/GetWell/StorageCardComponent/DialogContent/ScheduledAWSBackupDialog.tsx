@@ -182,7 +182,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                A retention policy of X daily backup copies will be set
+                                A retention policy of daily backup copies will be set
                             </DsTypography>
                         </div>
                         <div className={styles.row}>
@@ -230,7 +230,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                You can still manually initiate backup and restore operations via Workload Factory.
+                                You can still manually initiate backup and restore operations via AWS console.
                             </DsTypography>
                         </div>
 
@@ -239,7 +239,8 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                The retention period and scheduling can be modified as needed.
+                                The retention period and scheduling can be modified as needed for FSx for ONTAP in AWS
+                                console.
                             </DsTypography>
                         </div>
                     </div>
