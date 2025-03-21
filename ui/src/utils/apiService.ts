@@ -1062,8 +1062,8 @@ export const getWellApi = createApi({
                 })
             }),
             optimizeResiliency: builder.mutation({
-                query: ({ credentialId, region, databaseHostId, instanceId, payload }) => ({
-                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/resiliency`,
+                query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
+                    url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/optimize/resiliency`,
                     method: 'POST',
                     body: payload
                 })

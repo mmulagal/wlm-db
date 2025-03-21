@@ -27,8 +27,8 @@ const initialState: GetWellSliceInterface = {
     selectedSnapshot: null,
     selectedAWSBackup: {
         numberOfDays: 30,
-        hour: 1,
-        minute: 0
+        hour: '01',
+        minute: '00'
     },
     credIdFromJM: '',
     regionFromJM: '',

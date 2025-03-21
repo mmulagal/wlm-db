@@ -82,7 +82,7 @@ const resourceRequest = {
 const DatabasesCreateSchema = {
     tags: [RouteTags.RESOURCE],
     params: CreateDatabaseParams,
-    summary: 'Create a new user databases in a server ',
+    summary: 'Create a new user database in a server ',
     description: 'Create a new user database in a server',
     body: CreateDatabseRequestBody,
     response: {

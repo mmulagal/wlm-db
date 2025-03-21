@@ -191,6 +191,10 @@ export const categorizeStorageSize = (value: string): string => {
     }
 };
 
+export const backupStartTime = (selectedAWSBackup: any) => {
+    return `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
+};
+
 // Helper function to convert "GiB" into bytes
 const convertToBytes = (sizeStr: string): number => {
     const units: { [key: string]: number } = {
