@@ -115,7 +115,13 @@ const InventoryV2 = () => {
                             subLoading: perRow?.loading,
                             optimizationStatusLoading: optimizationStatusLoading,
                             optimizationStatus: optimizationStatus,
-                            protectionText: protectionText,
+                            protectionText:
+                                protectionText === PROTECTION_TEXT_STATUS.YES
+                                    ? 'Protected'
+                                    : protectionText === PROTECTION_TEXT_STATUS.NO
+                                    ? 'Not Protected'
+                                    : GENERAL.NOT_AVAILABLE,
+
                             allocatedCapacityText: perRow?.allocatedCapacity
                                 ? formatSizeTwoPrecision(perRow?.allocatedCapacity)
                                 : '',

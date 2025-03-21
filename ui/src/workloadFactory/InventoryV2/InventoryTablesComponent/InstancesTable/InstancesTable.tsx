@@ -419,16 +419,6 @@ const InstancesTable = () => {
         optimizeAction(rowData);
     };
 
-    const protectedCellData = (cellData: string) => {
-        if (cellData === 'Yes') {
-            return 'Protected';
-        } else if (cellData === 'No') {
-            return 'Not Protected';
-        } else {
-            return GENERAL.NOT_AVAILABLE;
-        }
-    };
-
     const managedHostSubTableColDefs: ColumnProps[] = [
         {
             Header: 'Instance name',
@@ -659,7 +649,7 @@ const InstancesTable = () => {
                         {cellData && (
                             <div className={styles.colTextProtection}>
                                 <div className={styles.protection}>
-                                    {cellData === 'Yes' && (
+                                    {cellData === 'Protected' && (
                                         <ProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -667,7 +657,7 @@ const InstancesTable = () => {
                                             }}
                                         />
                                     )}
-                                    {cellData === 'No' && (
+                                    {cellData === 'Not Protected' && (
                                         <NotProtectedIcon
                                             style={{
                                                 //@ts-ignore
@@ -675,7 +665,7 @@ const InstancesTable = () => {
                                             }}
                                         />
                                     )}
-                                    <DsTypography variant="Regular_14">{protectedCellData(cellData)}</DsTypography>
+                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
                                 </div>
                             </div>
                         )}
