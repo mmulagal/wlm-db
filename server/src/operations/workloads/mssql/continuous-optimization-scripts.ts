@@ -140,15 +140,15 @@ const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
             Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseObject"
     
             $QueryFilter = ''
-            foreach ($vol in $responseObject.data) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
+            $serialNumbers = @()
+            $serialNumbers += $responseObject.data | Select-Object -ExpandProperty lunSerialNumber
+            $serialNumbers += $responseObject.log | Select-Object -ExpandProperty lunSerialNumber
+            $serialNumbers += $responseObject.tempDb | Select-Object -ExpandProperty lunSerialNumber
+            $serialNumbers = $serialNumbers | Select-Object -Unique
+            foreach ($serialNumber in $serialNumbers) {
+                $QueryFilter += $serialNumber + '|'
             }
-            foreach ($vol in $responseObject.log) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
-            foreach ($vol in $responseObject.tempDb) {
-                $QueryFilter += $vol.lunSerialNumber + '|'
-            }
+
             $QueryFilter = $QueryFilter.TrimEnd('|')
             $Params = @{
                 "ApiEndPoint" = "/storage/luns"
