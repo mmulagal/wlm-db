@@ -204,7 +204,7 @@ const StorageParameterErrorResponse = Type.Object({
 const SnapshotPolicyAssesmentData = Type.Object({
     timestamp: Type.Number(),
     tags: Type.Array(Type.String()),
-    violations: Type.Array(Type.String()),
+    violations: Type.Array(OntapVolume),
     severity: Type.String(),
     status: Type.String(),
     resourceType: Type.String(),

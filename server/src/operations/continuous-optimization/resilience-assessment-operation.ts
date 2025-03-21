@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import {
+    OntapVolumeType,
     ParameterDriftResponseType,
     ResilienceDriftAssessmentResponseType,
     SnapshotPolicyAssesmentDataType
@@ -197,7 +198,8 @@ async function getSnapshotPolicyDriftData(
                     volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') &&
                 latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())
             ) {
-                snapshotPolicyAssesmentData.violations.push(volDetails?.name);
+                const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
+                snapshotPolicyAssesmentData.violations.push(vol);
             }
         });
         if (isDemoFlow) {
