@@ -330,7 +330,6 @@ const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT}
 const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         SELECT 
             DISTINCT (LEFT(mf.physical_name, 2)) AS dataDriveLetter,
-            mf.physical_name AS dataDrivePath,
             ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
         FROM 
             sys.master_files mf
@@ -383,7 +382,6 @@ const INSTANCE_USER_DB_DRIVE_SIZES = `
         SELECT (SELECT 
             d.name AS databaseName,
             LEFT(mf.physical_name, 2) AS dataDriveLetter,
-            mf.physical_name AS dataDrivePath,
             ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
         FROM 
             sys.databases d

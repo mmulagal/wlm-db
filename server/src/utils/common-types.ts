@@ -334,8 +334,6 @@ interface LogDriveDetails {
     lunUuid: string;
     svmName: string;
     databaseName: string;
-    logDrivePath: string;
-    dataDrivePath: string;
     logAccessPath: string;
     dataAccessPath: string;
     logDriveLetter: string;
