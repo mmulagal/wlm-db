@@ -135,11 +135,13 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
         const logDrive = acc.find(el => el.diskNumber === driveDetail.diskNumber);
         if (logDrive) {
             // Add all data drives (not shared) to the same log drive - DBS-4838
-            if (!driveDetail.dataAccessPath?.includes(logDrive.dataAccessPath)) {
+            // In the case multiple data drives are shared by the same log drive, add the data drive to the log drive and append the dataAccessPath
+            if (!logDrive.dataAccessPath?.includes(driveDetail.dataAccessPath)) {
                 logDrive.dataAccessPath += `,${driveDetail.dataAccessPath}`;
                 logDrive.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
             }
-            if (!driveDetail.databaseName?.includes(logDrive.databaseName)) {
+            // Append all databases sharing the same data and log drives as impacted databases - DBS-4838
+            if (!logDrive.databaseName?.includes(driveDetail.databaseName)) {
                 logDrive.databaseName += `,${driveDetail.databaseName}`;
             }
         } else {
