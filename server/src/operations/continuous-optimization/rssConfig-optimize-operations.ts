@@ -18,7 +18,7 @@ import {
     moveClusterGroupOwnership,
     transferClusterOwnershipToStandbyNode
 } from './compute-optimize-operations';
-import { startInstance, waitForInstanceOk } from '../../lib/aws/ec2';
+import { waitForInstanceOk } from '../../lib/aws/ec2';
 import { AuditStatus } from '../../utils/consts';
 import { managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
 
@@ -57,7 +57,6 @@ async function optimizeNetworkAdapters(
             logger.error(msg, ssmError);
             throw new Error(msg);
         }
-        await startInstance(credentialsId, region, instanceId);
         await waitForInstanceOk(credentialsId, region, instanceId);
     } catch (error) {
         errMsg = (error as Error).message;
