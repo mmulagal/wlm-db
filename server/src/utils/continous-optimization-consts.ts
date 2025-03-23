@@ -9,7 +9,9 @@ enum AssessmentCategories {
     RSS_CONFIG = 'rss-config',
     MAXDOP = 'maxdop',
     MSSQL_PATCH = 'mssql-patch',
-    RESILIENCY = 'resiliency'
+    RESILIENCY = 'resiliency',
+    AWS_BACKUP = 'aws-backup',
+    CRR = 'crr'
 }
 
 enum AssessmentTriggeredBy {
@@ -93,7 +95,8 @@ enum OPTIMIZE_SIZING_CONFIGS {
 }
 
 enum OPTIMIZE_RESILIENCY_CONFIGS {
-    SNAPSHOT_POLICY = 'snapshot-policy'
+    SNAPSHOT_POLICY = 'snapshot-policy',
+    AWS_BACKUP = 'aws-backup'
 }
 
 enum OptimizeMaxDopParams {

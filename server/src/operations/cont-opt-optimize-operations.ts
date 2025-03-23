@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { compact, isEmpty } from 'lodash-es';
 import { Volume } from '@aws-sdk/client-fsx';
+import throat from 'throat';
 import {
     Metadata,
     DatabaseInstance,
@@ -13,7 +14,8 @@ import {
     TempDbDriveDetails,
     OptimizeMpioIscsiSessionsParams,
     StorageTierParams,
-    MaxDOPAssesment
+    MaxDOPAssesment,
+    AwsFsxNBackupConfig
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -61,6 +63,7 @@ import {
 import getLogger from '../utils/logger';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
 import {
+    OptimizePerHostRequestBodyType,
     OptimizeStorageRequestParamsType,
     SizingViolationResponseType
 } from '../routes/types/continuous-optimization.types';
@@ -69,6 +72,7 @@ import {
     getFsxnVolIdsFromOntapVolIds,
     getIscsiTargetAddresses,
     getMappedOntapVolumes,
+    updateFsxBackup,
     updateVolumeSizeAndWaitForUpdate
 } from './aws/fsx-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
@@ -360,7 +364,7 @@ async function activeSqlNodeDetails(
             : false;
 
     if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to optimize instnace ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        const errorMessage = `Unable to optimize instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -487,7 +491,8 @@ async function modifySizingAttributes(
     configData: StorageAssessment,
     serverNameWithHostName: string,
     databaseHostId: string,
-    databaseInstanceId: string
+    databaseInstanceId: string,
+    objectsToOptimize?: string[]
 ) {
     logger.info('Modifying sizing attributes ', {
         accountId,
@@ -549,7 +554,8 @@ async function modifySizingAttributes(
                         serverNameWithHostName,
                         databaseHostId,
                         databaseInstanceId,
-                        activeNodeInstanceId
+                        activeNodeInstanceId,
+                        objectsToOptimize
                     );
                     childJobsStatus.push(result);
                     break;
@@ -774,7 +780,8 @@ async function logDriveOptimization(
     serverNameWithHostName: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    objectsToOptimize?: string[]
 ) {
     logger.info('Optimizing log drive ', {
         accountId,
@@ -804,13 +811,20 @@ async function logDriveOptimization(
         AssessmentStatus.UNDER_PROVISIONED,
         'log-drive-size'
     );
+
     let jobStatus: string = '';
     let errorMessage: string = '';
     try {
         if (underProvisionedDrives.length > 0) {
-            const underProvisionedOntapVolIds =
-                compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
-
+            let underProvisionedOntapVolIds = compact(underProvisionedDrives.map(drive => drive.ontapVolumeUuid)) || [];
+            if (!isEmpty(objectsToOptimize)) {
+                underProvisionedOntapVolIds =
+                    compact(
+                        underProvisionedDrives
+                            .filter(drive => drive.logAccessPath && objectsToOptimize?.includes(drive.logAccessPath))
+                            .map(drive => drive.ontapVolumeUuid)
+                    ) || [];
+            }
             const { volumeIds: fsxVolumeIdList, uuidVolumeIdMap } = await getFsxnVolIdsFromOntapVolIds(
                 credentialsId,
                 region,
@@ -1080,7 +1094,8 @@ async function optimizeSizing(
     databaseHostId: string,
     databaseInstanceId: string,
     types: OPTIMIZE_SIZING_CONFIGS[],
-    masterOptimizeParentId?: string
+    masterOptimizeParentId?: string,
+    objectsToOptimize?: string[]
 ) {
     logger.info('Optimizing sizing ', { accountId, credentialsId, region, databaseHostId, databaseInstanceId, types });
 
@@ -1139,7 +1154,8 @@ async function optimizeSizing(
         storageAssessmentConfigData,
         serverNameWithHostName,
         databaseHostId,
-        databaseInstanceId
+        databaseInstanceId,
+        objectsToOptimize
     );
 
     return { jobId };
@@ -2204,7 +2220,8 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         databaseType,
         awsAccountId,
         instanceMetadata,
-        databaseHostId
+        databaseHostId,
+        volumesToOptimize
     } = storageTierParams;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -2221,25 +2238,27 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
         parentJobId
     );
 
+    let volumeNames = volumesToOptimize ?? [];
     try {
-        const instanceVolumeMapping =
-            (await getMappedOntapVolumes(
-                credentialsId,
-                region,
-                fsxId,
-                false,
-                activeNodeInstanceId!,
-                [instanceName],
-                sqlAuthEnabled,
-                true
-            )) || [];
+        if (isEmpty(volumesToOptimize)) {
+            const instanceVolumeMapping =
+                (await getMappedOntapVolumes(
+                    credentialsId,
+                    region,
+                    fsxId,
+                    false,
+                    activeNodeInstanceId!,
+                    [instanceName],
+                    sqlAuthEnabled,
+                    true
+                )) || [];
 
-        const volumeRecords =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeRecords)
-                .flat() || [];
-        const volumeNames = volumeRecords.map(volume => volume.name as string);
-
+            const volumeRecords =
+                Object.values(instanceVolumeMapping)
+                    ?.map(i => i?.volumeRecords)
+                    .flat() || [];
+            volumeNames = volumeRecords.map(volume => volume.name as string);
+        }
         const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
         const apiEndpoint = '/private/cli/volume';
 
@@ -2332,6 +2351,7 @@ async function optimizeStorageTier(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
+    objectsToOptimize?: string[],
     masterOptimizeParentId?: string
 ) {
     logger.info(
@@ -2398,7 +2418,8 @@ async function optimizeStorageTier(
             svmName,
             svmId,
             awsAccountId,
-            instanceMetadata
+            instanceMetadata,
+            volumesToOptimize: objectsToOptimize
         } as StorageTierParams);
     } catch (error) {
         const errorMessage = `Error while optimizing storage-tier ${error}`;
@@ -2622,6 +2643,79 @@ async function optimizeMaxDop(
     return { jobId: parentJobId };
 }
 
+async function handleUpdateAwsBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHosts: OptimizePerHostRequestBodyType[],
+    masterOptimizeParentId: string
+) {
+    const fsxFilesystemIds: string[] = [];
+    const fsxBackupConfigMap = new Map<string, AwsFsxNBackupConfig>();
+    databaseHosts.forEach(host => {
+        if (
+            host.fsxFileSystemId &&
+            !fsxBackupConfigMap.get(host.fsxFileSystemId) &&
+            host.backupRetentionDays &&
+            host.backupStartTime
+        ) {
+            fsxBackupConfigMap.set(host.fsxFileSystemId, {
+                automaticBackupRetentionDays: host.backupRetentionDays,
+                dailyAutomaticBackupStartTime: host.backupStartTime
+            });
+            fsxFilesystemIds.push(host.fsxFileSystemId);
+        }
+    });
+
+    const jobDescription = `Enable AWS FSx for ONTAP automatic backup for filesystems ${fsxFilesystemIds.join(', ')}`;
+
+    const jobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        '',
+        JOBTYPE.OPTIMIZATION,
+        'Update AWS FSx for ONTAP backup',
+        jobDescription,
+        masterOptimizeParentId,
+        {
+            hostsToOptimize: [
+                {
+                    optimizationType: 'aws-backup',
+                    resourceId: databaseHosts[0].id,
+                    sqlServerInstances: [databaseHosts[0].sqlServerInstances[0]]
+                }
+            ]
+        }
+    );
+    let jobstatus: JOBSTATUS = JOBSTATUS.COMPLETED as JOBSTATUS;
+    const errMsg: string[] = [];
+
+    await Promise.all(
+        Array.from(fsxBackupConfigMap.entries()).map(
+            throat(2, async ([fsxFileSystemId, configuration]) => {
+                try {
+                    await updateFsxBackup(accountId, credentialsId, region, fsxFileSystemId, configuration);
+                } catch (err: any) {
+                    errMsg.push(
+                        `Error occurred while updating AWS FSx for ONTAP backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${err}`
+                    );
+                    jobstatus = JOBSTATUS.FAILED;
+                }
+            })
+        )
+    );
+
+    if (errMsg.length !== 0) {
+        logger.error(errMsg);
+    }
+    await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
+    await updateLongRunningAuditGroup(
+        jobstatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+        errMsg.join(', ')
+    );
+}
+
 async function triggerAssessmentAfterOptimization(
     credentialsId: string,
     region: string,
@@ -2703,5 +2797,6 @@ export {
     optimizeOperatingSystemSettings,
     optimizeStorageTier,
     activeSqlNodeDetails,
-    optimizeMaxDop
+    optimizeMaxDop,
+    handleUpdateAwsBackup
 };

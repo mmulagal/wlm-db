@@ -739,7 +739,8 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'daily_weekretention',
-            'tiering-min-cooling-days': 17
+            'tiering-min-cooling-days': 17,
+            uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         },
         {
             name: 'wlmdb_sqltemp_1728552629461',
@@ -752,7 +753,8 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'daily_weekretention',
-            'tiering-min-cooling-days': 17
+            'tiering-min-cooling-days': 17,
+            uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         },
         {
             name: 'wlmdb_sqldata_1728574994',
@@ -765,10 +767,50 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'none',
-            'tiering-min-cooling-days': 17
+            'tiering-min-cooling-days': 17,
+            uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         }
     ],
     filesystemId: 'fs-07a22f282fd4f5a20'
 };
 
-export { inventoryDemoData, ASSESMENT_CONFIG_DATA };
+const ASSESSMENT_CRR_CONFIG_DATA = {
+    errors: '',
+    crrDetails: [
+        {
+            volumeName: 'wlmdb_sqldata_1728552629461',
+            peerSVMName: 'wlmdb_sqlsvm_1737955690776',
+            isCRREnabled: true,
+            sourceSvmUuid: '6aec6a14-b23f-11ef-a881-1fbfd81226d0',
+            isSnapMirrored: true,
+            peerClusterName: 'FsxId01d9727eb6a7d3e9a',
+            peerClusterAWSId: 'fs-01d9727eb6a7d3e9a',
+            destinationVolumeName: 'wlmdb_sqldata_1728552629461_dp',
+            destinationPath: 'wlmdb_sqlsvm_1737955690776:wlmdb_sqldata_1728552629461_dp'
+        },
+        {
+            volumeName: 'wlmdb_sqltemp_1728552629461',
+            peerSVMName: 'wlmdb_sqlsvm_1737955690776',
+            isCRREnabled: true,
+            sourceSvmUuid: '6aec6a14-b23f-11ef-a881-1fbfd81226d0',
+            isSnapMirrored: true,
+            peerClusterName: 'FsxId01d9727eb6a7d3e9a',
+            peerClusterAWSId: 'fs-01d9727eb6a7d3e9a',
+            destinationVolumeName: 'wlmdb_sqltemp_1728552629461_dp',
+            destinationPath: 'wlmdb_sqlsvm_1737955690776:wlmdb_sqltemp_1728552629461_dp'
+        },
+        {
+            volumeName: 'wlmdb_sqldata_1728574994',
+            peerSVMName: 'wlmdb_sqlsvm_1737955690776',
+            isCRREnabled: true,
+            sourceSvmUuid: '6aec6a14-b23f-11ef-a881-1fbfd81226d0',
+            isSnapMirrored: true,
+            peerClusterName: 'FsxId01d9727eb6a7d3e9a',
+            peerClusterAWSId: 'fs-01d9727eb6a7d3e9a',
+            destinationVolumeName: 'wlmdb_sqldata_1728574994_dp',
+            destinationPath: 'wlmdb_sqlsvm_1737955690776:wlmdb_sqldata_1728574994_dp'
+        }
+    ]
+};
+
+export { inventoryDemoData, ASSESMENT_CONFIG_DATA, ASSESSMENT_CRR_CONFIG_DATA };

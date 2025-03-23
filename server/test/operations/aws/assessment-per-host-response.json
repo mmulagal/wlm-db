@@ -403,7 +403,10 @@
                         "tags": [
                             "Reliability"
                         ],
-                        "violations": ["wlmdb_sqldata_1728574994"],
+                        "violations": [{
+                            "ontapVolumeName": "wlmdb_sqldata_1728574994",
+                            "ontapVolumeUuid":"40366e18-b84d-11ef-b315-11b9ce95d982"
+                        }],
                         "severity": "warning",
                         "status": "optimized",
                         "resourceType": "Volume",
@@ -812,7 +815,10 @@
                         "tags": [
                             "Reliability"
                         ],
-                        "violations": ["wlmdb_sqldata_1728574994"],
+                        "violations": [{
+                            "ontapVolumeName": "wlmdb_sqldata_1728574994",
+                            "ontapVolumeUuid":"40366e18-b84d-11ef-b315-11b9ce95d982"
+                        }],
                         "severity": "warning",
                         "status": "optimized",
                         "resourceType": "Volume",
@@ -1219,7 +1225,10 @@
                         "tags": [
                             "Reliability"
                         ],
-                        "violations": ["wlmdb_sqldata_1728574994"],
+                        "violations": [{
+                            "ontapVolumeName": "wlmdb_sqldata_1728574994",
+                            "ontapVolumeUuid":"40366e18-b84d-11ef-b315-11b9ce95d982"
+                            }],
                         "severity": "warning",
                         "status": "optimized",
                         "resourceType": "Volume",

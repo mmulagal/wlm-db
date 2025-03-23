@@ -19,7 +19,8 @@ import {
     DescribeBackupsCommandInput,
     UpdateVolumeCommand,
     UpdateFileSystemCommand,
-    DescribeVolumesCommand
+    DescribeVolumesCommand,
+    UpdateFileSystemCommandInput
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -60,11 +61,12 @@ async function describeFSxFileSystems(credentialsId: string, region: string) {
 async function describeFSx(
     credentialsId: string,
     region: string,
-    input: DescribeFileSystemsCommandInput
+    input: DescribeFileSystemsCommandInput,
+    accountId?: string
 ): Promise<DescribeFileSystemsCommandOutput> {
-    logger.info('Describe a FSx filesystem:', { credentialsId, region, input });
+    logger.info('Describe a FSx filesystem:', { credentialsId, region, input, accountId });
 
-    const client = await getFSxClient(credentialsId, region);
+    const client = await getFSxClient(credentialsId, region, accountId);
     const response = await client.send(new DescribeFileSystemsCommand(input));
     logger.debug('Describe a FSx file system response:', response);
 
@@ -205,6 +207,19 @@ async function updateFsxCapacity(
     }
 }
 
+async function updateFileSystem(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    input: UpdateFileSystemCommandInput
+) {
+    logger.info('Updating File System:', { accountId, credentialsId, region, input });
+    const client = await getFSxClient(credentialsId, region, accountId);
+    const command = new UpdateFileSystemCommand(input);
+    const response = await client.send(command);
+    return response;
+}
+
 async function describeVolumes(credentialsId: string, region: string, params: DescribeVolumesCommandInput) {
     logger.info('Describe FSx volumes:', { credentialsId, region, params });
 
@@ -225,5 +240,6 @@ export {
     createTag,
     updateFsxVolumeSize,
     updateFsxCapacity,
+    updateFileSystem,
     describeVolumes
 };

@@ -35,15 +35,28 @@ describe('Discover operations', () => {
     // });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {
-        const resp = await manageSqlServerV2(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-1d9i5v18g5392mf1v', [
-            'NO_SUCH_INSTANCE'
+        const resp = await manageSqlServerV2(ACCOUNT_ID, [
+            {
+                credentialsId: CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                ec2InstanceId: 'i-1d9i5v18g5392mf1v',
+                databaseInstanceNames: ['NO_SUCH_INSTANCE']
+            }
         ]);
 
-        expect(resp.items).toEqual([
+        expect(resp).toEqual([
             {
-                databaseInstanceName: 'NO_SUCH_INSTANCE',
-                status: 'failed',
-                errorMessage: 'SQL Server instance not found.'
+                resourceId: '67e09d3a49604bf2',
+                items: [
+                    {
+                        databaseInstanceName: 'NO_SUCH_INSTANCE',
+                        status: 'failed',
+                        errorMessage: 'SQL Server instance not found.'
+                    }
+                ],
+                credentialsId: CREDENTIALS_ID,
+                region: 'us-east-1',
+                ec2InstanceId: 'i-1d9i5v18g5392mf1v'
             }
         ]);
     });

@@ -325,12 +325,11 @@ const GET_SANDBOXES = `${SET_NOCOUNT}
 `;
 
 const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
-        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc ${SQL_CASE_INSENSITIVE} = 'ROWS'  FOR JSON AUTO`;
+        select (select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc ${SQL_CASE_INSENSITIVE} = 'ROWS'  FOR JSON AUTO) as dataDrives`;
 
 const DEFAULT_DATA_DRIVE_SIZE = `${SET_NOCOUNT}
         SELECT 
             DISTINCT (LEFT(mf.physical_name, 2)) AS dataDriveLetter,
-            mf.physical_name AS dataDrivePath,
             ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
         FROM 
             sys.master_files mf
@@ -373,17 +372,16 @@ const TEMPDB_DRIVE_SIZE = `${SET_NOCOUNT}
 `;
 
 const INSTANCE_LOG_DRIVES_QUERY = `${SET_NOCOUNT}
-        select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc ${SQL_CASE_INSENSITIVE} = 'LOG'  FOR JSON AUTO`;
+        select (select distinct LEFT(physical_name, 2) as drives from sys.master_files where type_desc ${SQL_CASE_INSENSITIVE} = 'LOG'  FOR JSON AUTO) as logDrives`;
 
 const INSTANCE_TEMPDB_DRIVES_QUERY = `${SET_NOCOUNT}
         SELECT DISTINCT(SELECT LEFT(physical_name, 1))FROM tempdb.sys.database_files;`;
 
 const INSTANCE_USER_DB_DRIVE_SIZES = `
         ${SET_NOCOUNT}
-        SELECT 
+        SELECT (SELECT 
             d.name AS databaseName,
             LEFT(mf.physical_name, 2) AS dataDriveLetter,
-            mf.physical_name AS dataDrivePath,
             ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
         FROM 
             sys.databases d
@@ -394,11 +392,11 @@ const INSTANCE_USER_DB_DRIVE_SIZES = `
         WHERE 
             d.database_id > 4 or d.name ${SQL_CASE_INSENSITIVE} like '%msdb%'
         ORDER BY 
-            d.name ${FOR_JSON_PATH}`;
+            d.name ${FOR_JSON_PATH}) as userDatabasesDriveSizes`;
 
 const INSTANCE_LOG_DB_DRIVE_SIZES = `
             ${SET_NOCOUNT}
-            SELECT 
+            SELECT (SELECT 
                 d.name AS databaseName,
                 LEFT(mf.physical_name, 2) AS logDriveLetter,
                 mf.physical_name AS logDrivePath,
@@ -412,7 +410,7 @@ const INSTANCE_LOG_DB_DRIVE_SIZES = `
             WHERE 
                 d.database_id > 4 or d.name ${SQL_CASE_INSENSITIVE} like '%msdb%'
             ORDER BY 
-                d.name ${FOR_JSON_PATH}`;
+                d.name ${FOR_JSON_PATH}) as userDatabasesLogDriveSizes`;
 
 export {
     DATABASES,

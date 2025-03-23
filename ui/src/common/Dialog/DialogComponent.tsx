@@ -55,7 +55,7 @@ const DialogComponent = ({
     const detectHostError = useAppSelector(state => state.msSqlAction.isDetectHostError);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const { isRollbackSelected, selectedRollbackSnapshot } = useAppSelector(state => state.sandbox);
-    const { selectedSnapshotPolicy } = useAppSelector(state => state.getWellOptimize);
+    const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
 
@@ -91,10 +91,32 @@ const DialogComponent = ({
         closeDialog(null);
     };
 
+    //Data check for AWS backup dialog
+    const dataCheckForAWSBackup = () => {
+        if (
+            Number(selectedAWSBackup?.numberOfDays) < 1 ||
+            Number(selectedAWSBackup?.numberOfDays) > 90 ||
+            Number(selectedAWSBackup?.hour) < 1 ||
+            Number(selectedAWSBackup?.hour) > 24 ||
+            Number(selectedAWSBackup?.minute) < 0 ||
+            Number(selectedAWSBackup?.minute) > 59
+        ) {
+            return true;
+        }
+    };
+
     const refreshSandboxDisabled =
         dialogFrom === FROM_DIALOG.SANDBOX_REFRESH && isRollbackSelected && !selectedRollbackSnapshot;
 
     const disabledCheck = () => {
+        //Condition to disable primary button for AWS backup dialog
+        if (
+            (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
+                selectedConfig === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) &&
+            dataCheckForAWSBackup()
+        ) {
+            return true;
+        }
         if (
             (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
                 selectedConfig === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) &&

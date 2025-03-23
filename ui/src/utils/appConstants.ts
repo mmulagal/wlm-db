@@ -30,6 +30,8 @@ export const SELECT_CONFIG = {
 export const GENERAL = {
     MICROSOFT_SQL_SERVER_TYPE: 'Microsoft SQL Server',
     POSTGRESQL_TYPE: 'PostgreSQL',
+    USER_DATABASE: 'User Database',
+    SYSTEM_DATABASE: 'System Database',
     MULTIPLE_VALUES: 'Multiple values',
     OPTIMIZE: 'Optimize',
     REBASE_LINE: 'Re-baseline',
@@ -1120,7 +1122,8 @@ export const GENERAL = {
     REFRESH_SNAPSHOT_RADIO: 'Refresh to point in time',
     HOST_DOWN: 'Host is down.',
     SSM_DOWN: 'SSM is not connected.',
-    PGSQL_CTA_NA: 'PostgreSQL actions are not supported.',
+    PGSQL_CTA_NA: 'Coming soon',
+    DATABASE_AVAILABLE_MSG: 'Databases are available for managed instances only.',
     // Otimization status n/a messages
     ONLINE_INSTANCE_ASSESS: 'Only online instances can be assessed.',
     PGSQL_ASSESSMENT_NA: 'Optimization assessment is only available for Microsoft SQL Server managed instances.',
@@ -1254,6 +1257,7 @@ export const GENERAL = {
     APPLICATION: 'Application (SQL Server)',
     RESILIENCY: 'Resiliency',
     SCHEDULED_LOCAL_SNAPSHOT: 'Scheduled local snapshot',
+    SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'Scheduled FSx for ONTAP backups',
     CRR: 'Cross-Region Replication (CRR)',
     MANAGE_INSTANCE_OPTIMIZATION_SCORE_TOOLTIP:
         "Optimization is only available for managed instances that have been assessed and are online.  Offline and unassessed instances aren't available for optimization"

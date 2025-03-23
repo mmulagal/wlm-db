@@ -7,15 +7,18 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
     const dispatch = useDispatch();
-
+    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
+        let id = 0;
         return data?.notOptimizedAdapters?.map((row: any) => ({
             ...row,
-            cellProps: { ...row.cellProps, isDisabled: true }
+            cellProps: { ...row.cellProps, isDisabled: false },
+            id: String(id++)
         }));
     }, [data]);
 
@@ -81,7 +84,7 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             Header: 'RSS profile',
             accessor: 'rssProfileStatus',
             id: '5',
-            width: '174px',
+            width: '150px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (
@@ -103,7 +106,7 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
             Header: 'RSS status',
             accessor: 'rssEnabledStatus',
             id: '6',
-            width: '174px',
+            width: '150px',
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 return (
@@ -143,7 +146,7 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
                 );
             }
         },
-        lastColDetails(type, {}, '245px')
+        lastColDetails(type, {}, '222px')
     ];
 
     const tableProps = useTable({
@@ -154,8 +157,8 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: 'none',
-        defaultSelectedRows: tableData.map((item: any) => item.id)
+        selectionType: 'multiple',
+        defaultSelectedRows: []
     });
 
     useEffect(() => {
@@ -176,7 +179,9 @@ const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
                 pluralTitle={`Impacted network adapters`}
                 singularTitle={'Impacted network adapter'}
             />
-            {/* {selectedRowsForOptimizeInnerPage.length > 0 && <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />} */}
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
+                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+            )}
             <Table
                 //@ts-ignore
                 tableProps={tableProps}

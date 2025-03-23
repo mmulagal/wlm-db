@@ -43,7 +43,8 @@ import {
     useOptimizeStorageTierForBulkMutation,
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
-    useOptimizeResiliencyMutation
+    useOptimizeResiliencyMutation,
+    useOptimizeAwsBackupMutation
 } from '../../../utils/apiService';
 import {
     setGwPageLoadInstanceData,
@@ -64,6 +65,9 @@ import LicenseTable from './RenderTables/LicenseTable';
 import NetworkAdapterTable from './RenderTables/NetworkAdapterTable';
 import OSPatchTable from './RenderTables/OSPatchTable';
 import ScheduledLocalSnapshotTable from './RenderTables/ScheduledLocalSnapshotTable';
+import ScheduledAWSBackupTable from './RenderTables/ScheduledAWSBackupTable';
+import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const DashboardInnerPage = () => {
     const dispatch = useDispatch();
@@ -94,6 +98,7 @@ const DashboardInnerPage = () => {
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [optimizeResiliency] = useOptimizeResiliencyMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
     const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
     const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
@@ -157,6 +162,45 @@ const DashboardInnerPage = () => {
                 const { selectedRecommendedInstance } = state.getWellOptimize;
                 payload = {
                     instanceType: selectedRecommendedInstance?.value
+                };
+            }
+        } else if (type === GENERAL.RSS_CONFIGURATION) {
+            if (operation === 'bulk') {
+                apiCall = optimizeComputeConfigForBulk;
+
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'rss-config',
+                            databaseHosts: Object.values(
+                                //@ts-ignore
+                                rowData.reduce((acc, { hostName, instanceId, networkAdapters }) => {
+                                    if (!acc[hostName]) {
+                                        acc[hostName] = { id: hostName, sqlServerInstances: [], networkAdapters: [] };
+                                    }
+                                    acc[hostName].sqlServerInstances.push(instanceId);
+                                    acc[hostName].networkAdapters.push(...networkAdapters);
+                                    return acc;
+                                }, {})
+                            )
+                        }
+                    ]
+                };
+            } else {
+                apiCall = optimizeComputeConfigForBulk;
+                payload = {
+                    hostsToOptimize: [
+                        {
+                            type: 'rss-config',
+                            databaseHosts: [
+                                {
+                                    id: rowData?.hostName,
+                                    sqlServerInstances: [rowData?.instanceId],
+                                    networkAdapters: rowData?.networkAdapters
+                                }
+                            ]
+                        }
+                    ]
                 };
             }
         } else if (
@@ -233,7 +277,7 @@ const DashboardInnerPage = () => {
                 };
             } else {
                 apiCall = optimizeStorageTier;
-                payload = null;
+                payload = {};
             }
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
             apiCall = optimizeResiliency;
@@ -247,7 +291,29 @@ const DashboardInnerPage = () => {
                         snapshotPolicy: {
                             uuid: selectedSnapshot?.data?.uuid,
                             name: selectedSnapshot?.data?.name
-                        }
+                        },
+                        volumes: rowData?.violations
+                    }
+                ]
+            };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const selectedAWSBackup = state.getWellOptimize.selectedAWSBackup;
+
+            payload = {
+                hostsToOptimize: [
+                    {
+                        type: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: rowData?.databaseHostId,
+                                sqlServerInstances: [rowData?.instanceId],
+                                fsxFileSystemId: rowData?.objectsInViolation?.[0],
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: backupStartTime(selectedAWSBackup)
+                            }
+                        ]
                     }
                 ]
             };
@@ -494,7 +560,8 @@ const DashboardInnerPage = () => {
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost = inventoryTableData[rowData?.databaseHostId];
+        const targettedHost =
+            inventoryTableData[uniqueHostRow(rowData?.databaseHostId, rowData?.credentialId, rowData?.regionId)];
         const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
             (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
         );
@@ -786,6 +853,21 @@ const DashboardInnerPage = () => {
                 });
 
                 break;
+
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                setValueCardData({
+                    optimizationScore: selectedConfigSummary.optimizationScore,
+                    optimizedInstances: selectedConfigSummary.optimizedInstances,
+                    notOptimizedInstances: selectedConfigSummary.notOptimizedInstances,
+                    severity: selectedConfigSummary.severity,
+                    cardHeight: '136px',
+                    tagHeight: '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: cardDataDefault?.scheduled_FSx_for_ONTAP_backups?.recommendation?.description
+                    }
+                });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -885,6 +967,8 @@ const DashboardInnerPage = () => {
                 return (
                     <ScheduledLocalSnapshotTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />
                 );
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                return <ScheduledAWSBackupTable lastColDetails={lastColDetails} handleBulkAction={handleBulkAction} />;
         }
     };
 

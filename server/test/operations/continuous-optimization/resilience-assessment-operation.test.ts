@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import { createResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -18,7 +19,6 @@ import {
 } from '../../../src/operations/continuous-optimization/resilience-assessment-operation';
 import { WorkloadInstance } from '../../../src/utils/common-types';
 import { createDatabaseInstanceConfigData } from '../../../src/lib/database/database-instance-config';
-import { isEmpty } from 'lodash-es';
 
 const INSTANCE_CONFIG = {
     volumes: [
@@ -144,7 +144,7 @@ describe('Snapshot policy assessment', () => {
             volumeAssessmentData as any,
             violations
         );
-        const dates = Object.values(result).map((dates: any) => new Date(dates));
+        const dates = Object.values(result).map((dateValues: any) => new Date(dateValues));
         expect(dates.length).toBeGreaterThan(0);
     });
 });

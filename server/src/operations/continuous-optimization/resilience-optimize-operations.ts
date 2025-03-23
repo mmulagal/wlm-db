@@ -5,6 +5,7 @@ import getLogger from '../../utils/logger';
 import {
     AvailableSnapshotPoliciesResponseType,
     BulkOptimizeSnapshotPolicyRequestBody,
+    OntapVolumeType,
     OptimizeResiliencyBodyType,
     SnapshotPolicyDetailsType,
     SnapshotPolicyType,
@@ -209,7 +210,8 @@ async function setSnapshotPolicyForVolumes(
     region: string,
     snapshotPolicy: SnapshotPolicyType,
     parentJobId?: string,
-    instanceMetadata?: databaseInstanceMetadata
+    instanceMetadata?: databaseInstanceMetadata,
+    volumesToOptimize?: OntapVolumeType[]
 ) {
     logger.info('Setting snapshot policy for volumes of instace: ', { instanceRecord, snapshotPolicy });
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -237,12 +239,17 @@ async function setSnapshotPolicyForVolumes(
             parentJobId,
             jobMetadata
         );
-        const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
-        const volumeRecords =
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeRecords)
-                .flat() || [];
-        const volumeUuids = volumeRecords.map(volume => volume.uuid as string);
+        let volumeUuids = [];
+        if (volumesToOptimize && !isEmpty(volumesToOptimize)) {
+            volumeUuids = volumesToOptimize.map(volume => volume.ontapVolumeUuid as string);
+        } else {
+            const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
+            const volumeRecords =
+                Object.values(instanceVolumeMapping)
+                    ?.map(i => i?.volumeRecords)
+                    .flat() || [];
+            volumeUuids = volumeRecords.map(volume => volume.uuid as string);
+        }
 
         const params: BulkOptimizeSnapshotPolicyParamsType = {
             fsxId: instanceRecord.fsxFileSystem,
@@ -367,9 +374,10 @@ async function handleResiliecyOptimize(
         jobMetadata
     );
     if (shouldOptimizeSnapshotPolicy) {
-        const [{ snapshotPolicy }] = params.filter(
+        const [{ snapshotPolicy, volumes }] = params.filter(
             param => typeof param === typeof BulkOptimizeSnapshotPolicyRequestBody
         );
+
         setSnapshotPolicyForVolumes(
             instanceRecord,
             accountId,
@@ -377,7 +385,8 @@ async function handleResiliecyOptimize(
             region,
             snapshotPolicy,
             jobId,
-            (instanceMetadata ?? {}) as databaseInstanceMetadata
+            (instanceMetadata ?? {}) as databaseInstanceMetadata,
+            volumes
         );
 
         // trigger assesment to update the assessment config data
@@ -388,7 +397,8 @@ async function handleResiliecyOptimize(
             databaseHostId,
             databaseInstanceId,
             AssessmentTriggeredBy.SYSTEM,
-            AssessmentCategories.RESILIENCY
+            AssessmentCategories.RESILIENCY,
+            jobId
         );
     }
     return { jobId };

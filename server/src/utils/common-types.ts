@@ -335,8 +335,6 @@ interface LogDriveDetails {
     lunUuid: string;
     svmName: string;
     databaseName: string;
-    logDrivePath: string;
-    dataDrivePath: string;
     logAccessPath: string;
     dataAccessPath: string;
     logDriveLetter: string;
@@ -491,6 +489,7 @@ interface DatabaseInstancesIncludingResource extends DatabaseInstances {
 interface StorageTierParams extends OptimizeParams {
     svmId: string;
     svmName: string;
+    volumesToOptimize?: string[];
 }
 
 const BulkOptimizeSnapshotPolicyParams = Type.Object({
@@ -500,6 +499,11 @@ const BulkOptimizeSnapshotPolicyParams = Type.Object({
     apiBody: Type.String()
 });
 type BulkOptimizeSnapshotPolicyParamsType = Static<typeof BulkOptimizeSnapshotPolicyParams>;
+
+interface AwsFsxNBackupConfig {
+    automaticBackupRetentionDays: number;
+    dailyAutomaticBackupStartTime: string;
+}
 
 export {
     Metadata,
@@ -542,5 +546,6 @@ export {
     MaxDOPAssesment,
     PatchDetail,
     BulkOptimizeSnapshotPolicyParams,
-    BulkOptimizeSnapshotPolicyParamsType
+    BulkOptimizeSnapshotPolicyParamsType,
+    AwsFsxNBackupConfig
 };

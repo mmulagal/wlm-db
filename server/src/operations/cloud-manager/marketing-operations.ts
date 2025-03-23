@@ -94,6 +94,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
             const { ec2InstanceDescription, isPrimary, volumes } = instance;
 
             if (volumes) {
+                // volumes is sent only in case of EBS
                 if (hasDuplicateVolumeType(volumes)) {
                     throw new Error('Duplicate volume types are not allowed');
                 }
@@ -104,7 +105,7 @@ function getMarketingApiManualModeRequestBody(region: string, params: ManualStor
                         volumeType,
                         volumeNumber,
                         storageAmount: {
-                            size: sizeInGigaBytes(storageAmount, 'B'),
+                            size: sizeInGigaBytes(storageAmount, 'B') * volumeNumber, // As per GROGU-5182 , marketing API expects total storage amount for all volumes
                             unit: 'GiB'
                         },
                         volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
@@ -361,7 +362,8 @@ function formatEbsCalculationObject(
         instanceAvgDuration,
         EBSCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
         numberOfVolumes: ebsNumberOfVolumes,
-        storageAmountPerVol: { size: storageAmountPerVolSize, unit: storageAmountPerVolUnit },
+        storageAmount: { size: storageAmountSize, unit: storageAmountUnit } = {}, // in case of marketing API manual mode
+        storageAmountPerVol: { size: storageAmountSizeAutoMode, unit: storageAmountUnitAutoMode } = {}, // in case of marketing API auto mode
         totalInstanceHours,
         EBSInstanceMonth: ebsInstanceMonth,
         EBSStorageCost: ebsStorageCost,
@@ -385,12 +387,19 @@ function formatEbsCalculationObject(
         amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
     } = ebsCostCalculationObject;
 
+    const ebsStorageAmountSize =
+        storageAmountSize && storageAmountUnit
+            ? convertToBytes(storageAmountSize, storageAmountUnit) || 0
+            : storageAmountSizeAutoMode && storageAmountUnitAutoMode
+            ? convertToBytes(storageAmountSizeAutoMode, storageAmountUnitAutoMode) || 0
+            : 0;
+
     const ebsCostCalculation = {
         numberOfVolumes: ebsNumberOfVolumes,
         instanceAvgDuration,
         hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
         ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
-        storageAmountPerVol: convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0,
+        storageAmountPerVol: ebsStorageAmountSize,
         totalInstanceHours,
         ebsInstanceMonth,
         ebsStorageCost,
@@ -411,11 +420,10 @@ function formatEbsCalculationObject(
         totalCloneMonthlyCost: clonedCopiesCount * (capacity + iops + throughput)
     };
 
-    const storageAmountOfEbs = convertToBytes(storageAmountPerVolSize, storageAmountPerVolUnit) || 0;
     const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
 
     const ebsSnapshotCalculation = {
-        storageAmount: storageAmountOfEbs * ebsNumberOfVolumes,
+        storageAmount: ebsStorageAmountSize * ebsNumberOfVolumes,
         numberOfVolumes: ebsNumberOfVolumes,
         ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
         amountChangedPerSnapshot,

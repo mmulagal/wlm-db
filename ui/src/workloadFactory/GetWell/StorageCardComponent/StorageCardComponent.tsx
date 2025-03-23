@@ -33,6 +33,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useLazyGetSubTaskListQuery,
+    useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useOptimizeStorageConfigMutation,
@@ -45,6 +46,7 @@ import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDi
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 
 const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const dispatch = useDispatch();
@@ -67,6 +69,7 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
     const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
+    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -650,6 +653,26 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
                     }
                 ]
             };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+            apiCall = optimizeAwsBackup;
+            const state = store.getState();
+            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            payload = {
+                hostsToOptimize: [
+                    {
+                        type: ['aws-backup'],
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                fsxFileSystemId: selectedRowFsxId,
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: backupStartTime(selectedAWSBackup)
+                            }
+                        ]
+                    }
+                ]
+            };
         } else {
             // ToDo - More type will come like optimize for sizing and layout here
             apiCall = optimizeStorageConfig;
@@ -788,12 +811,16 @@ const StorageCardComponent = ({ cardData, optimizePrintState, type }: any) => {
     };
 
     const setButtonText = () => {
-        if (type === 'Storage tier' || type === 'Log drive size' || type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT) {
+        if (
+            type === 'Storage tier' ||
+            type === 'Log drive size' ||
+            type === GENERAL.RSS_CONFIGURATION ||
+            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT
+        ) {
             return 'View & optimize';
         } else if (
             type === 'Data files' ||
             type === 'Log files' ||
-            type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
             type === GENERAL.MICROSOFT_SQL_PATCH ||
             type === GENERAL.CRR

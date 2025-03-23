@@ -7,13 +7,14 @@ import {
     setGwTimestamp,
     setInProgressHostData,
     setInProgressOptimizationData,
+    setIsInnerPageOptimize,
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { addAllMssqlHostAssessmentData } from '../../store/workloadFactory/inventoryV2Slice';
+import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -24,7 +25,8 @@ import {
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
-    STATUS_CONST
+    STATUS_CONST,
+    WLF_TABS
 } from '../../utils/consts';
 import {
     AssessmentResponseInterface,
@@ -703,6 +705,42 @@ export const cardDataDefault: GwCardDataInterface = {
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
         tags: ['Reliability']
+    },
+    scheduled_FSx_for_ONTAP_backups: {
+        id: 'aws-backup-policy',
+        category: 'application',
+        block_one: {
+            type: GENERAL.RESILIENCY,
+            value: GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'AWS backup policy',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'File system',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Scheduled FSx for ONTAP backups recommendation',
+            description:
+                'Backing up your SQL Server volumes is crucial for supporting your data retention and compliance requirements. \nUse FSx for ONTAP backup to implement a centrally managed, automated backup and retention strategy for your SQL Server data.'
+        },
+        tags: ['Reliability']
     }
 };
 
@@ -941,6 +979,60 @@ export const formatSnapshotPolicyCardConfig = (
     return cardsData;
 };
 
+export const formatAWSBackUpPolicyCardConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: { [key: string]: string },
+    cardsData: any
+) => {
+    let item: any = data?.resiliency?.awsBackup;
+    let categoryVal = 'resiliency';
+    let itemName = 'aws-backup-policy';
+    let status = item?.status || '';
+    let severity = item?.severity || '';
+    if (optimizingData?.[itemName]) {
+        status = optimizingData?.[itemName];
+    }
+    itemName = GETWELL_CONFIG?.[itemName] || itemName;
+
+    cardsData = {
+        ...cardsData,
+        [itemName]: {
+            ...(cardDataDefault?.[itemName] || {}),
+            block_two: {
+                ...(cardDataDefault?.[itemName]?.block_two || {}),
+                value: GETWELL_VALUES?.[status] || status
+            },
+            block_three: {
+                ...(cardDataDefault?.[itemName]?.block_three || {}),
+                value: item?.current || 0
+            },
+            block_four: {
+                ...(cardDataDefault?.[itemName]?.block_four || {}),
+                value: GETWELL_VALUES?.[severity] || severity
+            },
+            block_five: {
+                ...(cardDataDefault?.[itemName]?.block_five || {}),
+                value: item?.resourceType
+            },
+            block_six: {
+                ...(cardDataDefault?.[itemName]?.block_six || {}),
+                value: item?.current || 0,
+                count: {
+                    totalObjectsAssessed: item?.totalObjectsAssessed,
+                    totalObjectsInViolation: item?.totalObjectsInViolation
+                }
+            },
+            errorMessage: item?.errorMessage,
+            tags: item?.tags,
+            id: item?.name,
+            category: categoryVal,
+            recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
+            objectsInViolation: item?.objectsInViolation
+        }
+    };
+    return cardsData;
+};
+
 export const formatCRRCardConfig = (
     data: AssessmentResponseInterface,
     optimizingData: { [key: string]: string },
@@ -989,7 +1081,8 @@ export const formatCRRCardConfig = (
             id: item?.name,
             category: categoryVal,
             recommendationText: item?.recommendation || cardsData?.[itemName]?.recommendation?.description,
-            violations: item?.violations
+            violations: item?.violations,
+            objectsInViolation: item?.objectsInViolation
         }
     };
     return cardsData;
@@ -1648,6 +1741,8 @@ export const getCardsData = (data: AssessmentResponseInterface, optimizingData: 
 
     cardsData = formatSnapshotPolicyCardConfig(data, optimizingData, cardsData);
 
+    cardsData = formatAWSBackUpPolicyCardConfig(data, optimizingData, cardsData);
+
     cardsData = formatCRRCardConfig(data, optimizingData, cardsData);
 
     cardsData = {
@@ -1854,6 +1949,7 @@ export const applyFilter = (cardData: any, optimizeFilterTags: any) => {
         microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
         maxdop: { category: 'Application', subCategory: 'Application_sub' },
         scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
+        scheduled_FSx_for_ONTAP_backups: { category: 'Resiliency', subCategory: 'Protection' },
         crr: { category: 'Resiliency', subCategory: 'Protection' }
     };
 
@@ -2168,7 +2264,8 @@ export const handleOptimizeStorageJob = (
     dispatch: any,
     type?: any,
     operation?: string,
-    bulkRowData?: any
+    bulkRowData?: any,
+    isOptimizeInnerPage?: boolean
 ) => {
     const state = store.getState();
     let optimizingData = state.getWellOptimize.optimizingData || {};
@@ -2186,6 +2283,9 @@ export const handleOptimizeStorageJob = (
                         updateAssessmentWithCompletedJobs(dispatch, operation, type, jobId, rowData, bulkRowData);
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
+                        if (isOptimizeInnerPage) {
+                            dispatch(setIsInnerPageOptimize(true));
+                        }
                     } else if (status === JOB_MONITORING_STATUS.WARNING) {
                         updateAssessmentWithWarningJobs(
                             dispatch,
@@ -2198,6 +2298,9 @@ export const handleOptimizeStorageJob = (
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
+                        if (isOptimizeInnerPage) {
+                            dispatch(setIsInnerPageOptimize(true));
+                        }
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
                         updateAssessmentWithFailedJobs(
                             dispatch,
@@ -2569,6 +2672,12 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case GENERAL.MAXDOP_PATCH:
             configKey = 'maxdopPatch';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
+            configKey = 'scheduledLocalSnapshot';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+            configKey = 'scheduledawsBackup';
             break;
     }
     const optimizedInstances = configData[configKey] || 0;

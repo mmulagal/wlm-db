@@ -21,8 +21,8 @@ import {
     DatabaseHostSummaryForMultiInstanceResponseType,
     DatabaseHostInstanceSummaryResponseType
 } from '../routes/types/database-hosts.types';
-import { describeInstance, describeSubnets, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
-import { describeFSx } from '../lib/aws/fsx';
+import { describeInstance, describeVolumes, describeVpc, getAmis } from '../lib/aws/ec2';
+import { describeFSx, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
 
 import { calculatePrice } from './aws/pricing-operations';
@@ -36,11 +36,9 @@ import {
     SQL_STD,
     SQL_ENT,
     MSSQL_DATABASE_TYPES,
-    MSSQL_SYSTEM_DATABASES,
     PRICING,
     WLMDB_COST_ALLOCATION_TAG,
     SqlServerDeploymentModel,
-    FileSystemTypes,
     CUSTOM,
     SQL_WEB,
     VERSION_2_0,
@@ -54,8 +52,9 @@ import {
     EBS_ROOT_VOLUME,
     DatabaseTypes,
     AWS_ERROR_CODES,
-    DATABASE_INSTANCE_INDEX_MAPPING,
-    DEFAULT_INSTANCE_NAME
+    MSSQL_DATABASE_INSTANCE_INDEX_MAPPING,
+    DEFAULT_INSTANCE_NAME,
+    MSSQL_SYSTEM_DATABASES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -93,18 +92,9 @@ import { getEBSVolumesForDemo } from './demo-operations';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
+import getDatabaseInstanceTopology from '../utils/sql-utils';
 
 const logger = getLogger();
-
-// const DATABASE_HOSTS_INDEX_MAPPING: { [index: number]: string } = {
-//     0: 'serverDetails',
-//     1: 'topology',
-//     2: 'performance',
-//     3: 'storage',
-//     4: 'protection',
-//     5: 'billing/pricing',
-//     6: 'resourceUtilization'
-// };
 
 const DATABASE_HOSTS_INDEX_MAPPING_V2: { [index: number]: string } = {
     0: 'nodeTopology',
@@ -243,59 +233,6 @@ async function getStorageData(
     }
 }
 
-// async function getStorageData(
-//     resourceDetail: ResourceDetails,
-//     activeNodeInstanceId: string
-// ): Promise<StorageResponseType | undefined> {
-//     logger.info('Getting storage data:', { resourceDetail, activeNodeInstanceId });
-
-//     try {
-//         const { region, co_relation_id: fileSystemId, credentials_id: credentialsId, metadata } = resourceDetail;
-
-//         const { stackname } = metadata as unknown as Metadata;
-
-//         const info = await getStorageDataUsingSSM(
-//             credentialsId,
-//             region!,
-//             fileSystemId!,
-//             'storage/volumes',
-//             `tiering.object_tags="wlmDeploymentId=${stackname?.replaceAll('-', '_')}"`,
-//             'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
-//             activeNodeInstanceId
-//         );
-
-//         logger.info(`Storage data for volumes with deploymentId ${stackname}:`, info);
-
-//         let totalSize = 0;
-//         let totalUsed = 0;
-//         let totalSpaceSavings = 0;
-//         info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
-//             const { size, used } = space;
-//             const { total } = efficiency.space_savings;
-
-//             totalSize += size;
-//             totalUsed += used;
-//             totalSpaceSavings += total;
-//         });
-
-//         return {
-//             size: totalSize,
-//             used: totalUsed,
-//             spaceSavings: totalSpaceSavings
-//         };
-//     } catch (error) {
-//         const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ${JSON.stringify(
-//             error
-//         )}`;
-//         let { message } = error as { message: string };
-//         if (message?.toLocaleLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
-//             message += '. Retry the operation.';
-//             throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, message);
-//         }
-//         throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, errorMessage);
-//     }
-// }
-
 async function getProtectionStatus(
     activeNodeInstanceId: string,
     instanceName: string | undefined,
@@ -338,7 +275,7 @@ async function getProtectionStatus(
                       fsxnId,
                       true,
                       activeNodeInstanceId,
-                      instanceNames,
+                      databaseInstances,
                       isSqlAuth
                   )
                 : Promise.resolve(),
@@ -957,97 +894,6 @@ async function getDatabaseHostsSummaryV2(
     };
 }
 
-async function getDatabaseInstanceTopology(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    activeNodeInstanceId: string,
-    databaseInstances: any
-) {
-    logger.info(
-        'Fetching database topology data',
-        accountId,
-        credentialsId,
-        activeNodeInstanceId,
-        databaseInstances.database_instance_name
-    );
-
-    const {
-        fsxn_ids: fileSystemId,
-        storage_type: storageType,
-        database_instance_id: databaseInstanceDetails,
-        database_deployment_type: databaseDeploymentType,
-        database_type: databaseType,
-        fsxwId
-    } = databaseInstances;
-
-    let topologyData = {
-        serverType: databaseType,
-        serverInstallationMode: databaseDeploymentType !== undefined ? databaseDeploymentType : '',
-        fileSystemId: fileSystemId! || fsxwId,
-        fileSystemType:
-            storageType !== undefined
-                ? storageType === STORAGE_TYPE.FSXN
-                    ? FileSystemTypes.FSXONTAP
-                    : storageType === STORAGE_TYPE.FSXW
-                    ? FileSystemTypes.FSXWINDOWS
-                    : storageType
-                : NOT_AVAILABLE
-    };
-    if (activeNodeInstanceId) {
-        let fileSystemStatus;
-        let fileSystemName;
-        let fileSystemDeploymentMode;
-        let fileSystemStorageCapacity;
-        let fileSystemThroughputCapacity;
-        let subnetIds;
-        let availabilityZones: Array<string> | undefined;
-        let fileSystemTags;
-        let fileSystemStorageType;
-        try {
-            if (fileSystemId || fsxwId) {
-                const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId || fsxwId] });
-                const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
-                ({
-                    Tags: fileSystemTags,
-                    WindowsConfiguration: { DeploymentType: fileSystemDeploymentMode = undefined } = {},
-                    OntapConfiguration: {
-                        DeploymentType: fileSystemDeploymentMode = undefined,
-                        ThroughputCapacity: fileSystemThroughputCapacity = undefined
-                    } = {},
-                    Lifecycle: fileSystemStatus,
-                    StorageCapacity: fileSystemStorageCapacity,
-                    SubnetIds: subnetIds,
-                    StorageType: fileSystemStorageType
-                } = fileSystem);
-
-                fileSystemName = fileSystemTags?.reduce((a = '', tag) => (tag.Key === 'Name' ? tag.Value : a), '');
-
-                const { Subnets: subnets } = await describeSubnets(credentialsId, region, {
-                    SubnetIds: subnetIds
-                });
-                availabilityZones = subnets?.map(subnetId => subnetId?.AvailabilityZone as string);
-
-                logger.info('availabilityZones', availabilityZones);
-            }
-        } catch (error) {
-            logger.error(`Error while fetching details for fsx. Error: ${error}`, databaseInstanceDetails);
-        }
-
-        topologyData = {
-            ...topologyData,
-            ...(fileSystemName && { fileSystemName }),
-            ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
-            ...(fileSystemStatus && { fileSystemStatus }),
-            ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
-            ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
-            ...(availabilityZones && { availabilityZone: availabilityZones }),
-            ...(fileSystemStorageType && { fileSystemStorageType })
-        };
-    }
-    return topologyData;
-}
-
 async function getDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
@@ -1488,7 +1334,7 @@ async function getProtectionDetails(
     fileSystemId: string,
     isSystemDatabase: boolean = false,
     activeNodeInstanceId?: string,
-    instanceNames?: string[],
+    instanceDetails?: DatabaseInstance[],
     isSqlAuthEnabled = false
 ): Promise<{ awsBackup: BackupType; ontapBackup: BackupType }> {
     logger.info('Getting Proteciton details', {
@@ -1498,6 +1344,29 @@ async function getProtectionDetails(
         activeNodeInstanceId
     });
 
+    const instanceOntapDetails = (
+        await Promise.all(
+            (instanceDetails || []).map(async instance => {
+                const [fsxId] = instance?.fsxn_ids?.split(',') || [];
+                const { StorageVirtualMachines: svms = [] } = await describeFSxStorageVirtualMachines(
+                    credentialsId,
+                    region,
+                    fsxId
+                );
+                const instanceLevelSvm = svms.find(
+                    svm => svm?.StorageVirtualMachineId === (instance.fsx_svm_id as Record<string, string>)[fsxId]
+                );
+                return {
+                    [instance.database_instance_name]: {
+                        fsxId,
+                        svmUuid: instanceLevelSvm?.UUID
+                    }
+                };
+            })
+        )
+    ).reduce((acc, curr) => ({ ...acc, ...curr }), {});
+
+    logger.debug('instanceOntapDetails', instanceOntapDetails);
     // Getting the map between database name and associated volume uuid
     const instanceVolumeMapping = ((await getMappedOntapVolumes(
         credentialsId,
@@ -1505,8 +1374,13 @@ async function getProtectionDetails(
         fileSystemId,
         isSystemDatabase,
         activeNodeInstanceId,
-        instanceNames,
-        isSqlAuthEnabled
+        instanceDetails?.map(instance => instance.database_instance_name),
+        isSqlAuthEnabled,
+        false,
+        undefined,
+        undefined,
+        undefined,
+        instanceOntapDetails
     )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
 
     const volumeRecords =
@@ -1641,7 +1515,7 @@ async function getDatabaseDetails(
                                   fileSystemId,
                                   false,
                                   activeNodeInstanceId,
-                                  newinstanceNames,
+                                  databaseInstances,
                                   sqlAuthEnabled
                               )
                           ]
@@ -1666,7 +1540,9 @@ async function getDatabaseDetails(
                     ...(getProtection && {
                         protection: {
                             isAwsBackupEnabled: {
-                                fsxn: isDemoFlow ? true : checkKey(awsBackup, database.databaseName),
+                                fsxn: isDemoFlow
+                                    ? true
+                                    : checkKey(awsBackup.volumeDBMapWithBackupFlag, database.databaseName),
                                 fsxw: false,
                                 ebs: false
                             },
@@ -1912,8 +1788,8 @@ async function getDatabaseInstancesSummary(
                     : [Promise.resolve()])
             ].map((p, index) =>
                 p.catch(error => {
-                    if (DATABASE_INSTANCE_INDEX_MAPPING[index]) {
-                        errormessages[DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
+                    if (MSSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]) {
+                        errormessages[MSSQL_DATABASE_INSTANCE_INDEX_MAPPING[index]] = JSON.stringify(error);
                     }
                     logger.error(`Error while fetching data: ${error}.`);
                 })

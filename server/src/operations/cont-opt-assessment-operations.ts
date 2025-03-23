@@ -74,8 +74,9 @@ import {
     managedHostMSSQLPatchAssessment
 } from './continuous-optimization/mssqlPatch-assessment-operations';
 import {
-    collectSnapshotCopyData,
-    getResilienceDriftAssessment
+    getResilienceDriftAssessment,
+    initiateCrossRegionResiliencyAssessment,
+    collectSnapshotCopyData
 } from './continuous-optimization/resilience-assessment-operation';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 
@@ -280,6 +281,7 @@ async function initiateStorageAssessmentCollection(
     databaseHostId: string,
     jobId: string,
     instanceRecord: WorkloadInstance,
+    instanceVolumeMapping: MappedOnTapVolumeResponse[],
     jobTriggers: STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES = STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
 ) {
     logger.info('Initiating storage assessment data collection', {
@@ -300,20 +302,6 @@ async function initiateStorageAssessmentCollection(
     instanceRecord.svmOntapUuid = svms.find(svm =>
         isDemoFlow ? svm : svm?.StorageVirtualMachineId === instanceRecord.svmId
     )?.UUID;
-
-    const instanceVolumeMapping = (await getMappedOntapVolumes(
-        credentialsId,
-        region,
-        instanceRecord.fsxFileSystem,
-        false,
-        instanceRecord.activeNodeInstanceid,
-        [instanceRecord.name],
-        instanceRecord.sqlAuthEnabled,
-        true,
-        accountId,
-        ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
-        instanceRecord.svmOntapUuid
-    )) as MappedOnTapVolumeResponse[];
 
     if (isEmpty(instanceVolumeMapping)) {
         const errorMessage = `No ONTAP volumes found for the instance ${instanceRecord.name}.`;
@@ -478,6 +466,20 @@ async function driftAssessmentDataCollection(
     }
 
     if (shouldRunStorageAssessment || shouldRunResilienceAssessment) {
+        const instanceVolumeMapping = (await getMappedOntapVolumes(
+            credentialsId,
+            region,
+            databaseInstanceRecord.fsxFileSystem,
+            false,
+            databaseInstanceRecord.activeNodeInstanceid,
+            [databaseInstanceRecord.name],
+            databaseInstanceRecord.sqlAuthEnabled,
+            true,
+            accountId,
+            ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
+            databaseInstanceRecord.svmOntapUuid
+        )) as MappedOnTapVolumeResponse[];
+
         await initiateStorageAssessmentCollection(
             accountId,
             credentialsId,
@@ -485,12 +487,25 @@ async function driftAssessmentDataCollection(
             databaseHostId,
             jobId,
             databaseInstanceRecord,
+            instanceVolumeMapping,
             !shouldRunResilienceAssessment
                 ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.STORAGE
                 : shouldRunStorageAssessment
                 ? STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH
                 : STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY
         );
+
+        if (shouldRunResilienceAssessment) {
+            await initiateCrossRegionResiliencyAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                jobId,
+                databaseInstanceRecord,
+                instanceVolumeMapping
+            );
+        }
     }
 
     if (
@@ -836,6 +851,12 @@ async function fetchDriftAssessment(
         databaseInstanceId,
         fields
     });
+    try {
+        await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
+    } catch (error) {
+        logger.error('Error fetching instance details:', error);
+        throw error;
+    }
 
     let shouldCalculateStorageAssessment = false;
     let shouldCalculateComputeAssessment = false;
@@ -908,7 +929,7 @@ async function fetchDriftAssessment(
             : Promise.resolve({})
     ]);
 
-    if (!isEmpty(storageAssessmentResponse)) {
+    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
         if (isDemoFlow) {
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;

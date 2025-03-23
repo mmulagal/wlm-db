@@ -492,25 +492,24 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <SeparatorComponent variant="vertical" height="60px" />
 
                     <div className={styles.buttonContainer}>
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
-                            placement="bottom"
-                            width="120px"
-                            height="30px"
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(GENERAL.RSS_CONFIGURATION);
+                            }}
+                            data-testid="wlm-db-optimize-maxdop"
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData.rssConfiguration === configData?.total ||
+                                inProgressOptimizationData[GENERAL.RSS_CONFIGURATION]?.length > 0
+                            }
                         >
-                            <div>
-                                <DsButton
-                                    data-testid="wlm-db-optimize-rss-configuration"
-                                    variant="secondary"
-                                    isDisabled={true}
-                                >
-                                    Optimize
-                                </DsButton>
-                            </div>
-                        </TooltipComponent>
+                            Optimize
+                        </DsButton>
                     </div>
                 </div>
-
                 <div className={styles.tile}>
                     <BarComponent
                         color="#5E8DCD"
@@ -708,6 +707,51 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 </DsButton>
                             </div>
                         </TooltipComponent>
+                    </div>
+                </div>
+
+                <div className={styles.tile}>
+                    <BarComponent
+                        color="#5E8DCD"
+                        headingText={GENERAL.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
+                        percentage={Math.round(((configData.scheduledawsBackup || 0) / (configData.total || 1)) * 100)}
+                        beforeOutOf={configData.scheduledawsBackup}
+                        afterOutOf={configData.total}
+                        bottomText="Optimized instances:"
+                        width={windowSize.width > 1700 ? '360px' : '280px'}
+                        from="dashboard"
+                        optimizePercentage={Math.round(
+                            ((inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                ?.length || 0) /
+                                (configData.total || 1)) *
+                                100
+                        )}
+                        loading={
+                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                ?.length > 0
+                        }
+                    />
+
+                    <SeparatorComponent variant="vertical" height="60px" />
+
+                    <div className={styles.buttonContainer}>
+                        <DsButton
+                            variant="secondary"
+                            isThin={true}
+                            onClick={() => {
+                                handleOptimize(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS);
+                            }}
+                            data-testid="wlm-db-optimize-maxdop"
+                            isDisabled={
+                                allmssqlHostAssessmentLoading ||
+                                configData?.total === 0 ||
+                                configData?.scheduledawsBackup === configData?.total ||
+                                inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]
+                                    ?.length > 0
+                            }
+                        >
+                            Optimize
+                        </DsButton>
                     </div>
                 </div>
             </div>

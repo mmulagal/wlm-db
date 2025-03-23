@@ -96,8 +96,13 @@ import {
 } from '../../../../src/operations/workloads/mssql/continuous-optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';
 import { getPgsqlInstanceData } from '../../../../src/operations/workloads/pgsql/pgsql-ssm-script-utils';
-import DATABASES_COUNT from '../../../../src/operations/workloads/pgsql/queries';
+import {
+    DATABASES_COUNT,
+    LIST_DATABASES,
+    PERFORMANCE_METRICS
+} from '../../../../src/operations/workloads/pgsql/queries';
 import { getSampleCommandResponse, getSampleCommandResponseWithOutput } from '../../../utils/ssm-utils';
+import { CROSS_REGION_REPLICATION_SCRIPT } from '../../../../src/operations/workloads/mssql/resiliency-scripts';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -560,6 +565,10 @@ const getInstalledSQLPatches = {
 
 const pgsqldbCount = { commands: [DATABASES_COUNT] };
 
+const pgsqlDatabases = { commands: [LIST_DATABASES] };
+
+const pgsqlPerformanceMetrics = { commands: [PERFORMANCE_METRICS] };
+
 const optimizeRegex = /#Storage Optimization Script/;
 const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
@@ -569,6 +578,7 @@ const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
+const crrAssessmentDataRegex = /#Get CRR details/;
 
 ssmMock
     .on(SendCommandCommand)
@@ -808,7 +818,15 @@ ssmMock
         const commentString = /# Optimize Network Adapters/;
         return commentString.test(params.Parameters.commands?.[0]);
     })
-    .resolves(getSampleCommandResponse('optimizeNetworkAdapters'));
+    .resolves(getSampleCommandResponse('optimizeNetworkAdapters'))
+    .on(SendCommandCommand, { Parameters: pgsqlDatabases })
+    .resolves(listSendCommandCommandResponse.getPgsqldatabasesCommand)
+    .on(SendCommandCommand, { Parameters: pgsqlPerformanceMetrics })
+    .resolves(listSendCommandCommandResponse.getPgsqlPerformanceMetricsCommand)
+    .on(SendCommandCommand, params => {
+        return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1047,6 +1065,10 @@ ssmMock
     })
     .resolves(getCommandInvocationResponse.getInstalledSQLVersionCommandResponse)
     .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand'
+    })
+    .resolves(getCommandInvocationResponse.getCRRAssessmentCommandResponse)
+    .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-listSnapshotPolicies'
     })
     .resolves(
@@ -1094,7 +1116,13 @@ ssmMock
             'optimizeNetworkAdapters',
             JSON.stringify(getCommandInvocationResponse.optimizeNetworkAdaptersResponse)
         )
-    );
+    )
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqldatabasesCommand' })
+    .resolves(getCommandInvocationResponse.getPgsqlDatabasesCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getPgsqlPerformanceMetricsCommand'
+    })
+    .resolves(getCommandInvocationResponse.getPgsqlPerformanceMetricsCommandResponse);
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);

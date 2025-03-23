@@ -174,6 +174,48 @@ export const formatSize = (value: number, passedformat?: string) => {
     return numeral(getByteVal(value, passedformat)).format('0.[00] ib');
 };
 
+export const categorizeStorageSize = (value: string): string => {
+    // Convert value string to bytes for comparison
+    const sizeInBytes = convertToBytes(value);
+
+    if (sizeInBytes >= 0 && sizeInBytes < 100 * 1024 ** 2) {
+        return '0 - 100 MiB';
+    } else if (sizeInBytes >= 100 * 1024 ** 2 && sizeInBytes < 1024 ** 3) {
+        return '100 MiB - 1 GiB';
+    } else if (sizeInBytes >= 1024 ** 3 && sizeInBytes < 10 * 1024 ** 3) {
+        return '1 GiB - 10 GiB';
+    } else if (sizeInBytes >= 10 * 1024 ** 3 && sizeInBytes < 5 * 1024 ** 4) {
+        return '10 GiB - 5 TiB';
+    } else {
+        return '5 TiB+';
+    }
+};
+
+export const backupStartTime = (selectedAWSBackup: any) => {
+    return `${selectedAWSBackup?.hour}:${selectedAWSBackup?.minute}`;
+};
+
+// Helper function to convert "GiB" into bytes
+const convertToBytes = (sizeStr: string): number => {
+    const units: { [key: string]: number } = {
+        B: 1,
+        KiB: 1024,
+        MiB: 1024 ** 2,
+        GiB: 1024 ** 3,
+        TiB: 1024 ** 4
+    };
+
+    const match = sizeStr.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB)$/);
+    if (!match) {
+        throw new Error(`Invalid size format: ${sizeStr}`);
+    }
+
+    const value = parseFloat(match[1]);
+    const unit = match[2];
+
+    return value * units[unit];
+};
+
 export const getByteVal = (value: number, passedformat?: string) => {
     let byteVal = 0;
     if (passedformat === 'kib') {
@@ -1474,8 +1516,13 @@ export const removePasswordInConfig = (payload: any) => {
 };
 
 const isLastSticky = (columns: any[], columnIndex: number) => {
+    if (columnIndex < 0 || columnIndex >= columns.length) {
+        return false; // Prevent out-of-bounds errors
+    }
+
     return (
-        columns.every((column, index) => column.isSticky || index > columnIndex) && !columns[columnIndex + 1].isSticky
+        columns.every((column, index) => column.isSticky || index > columnIndex) &&
+        (columns[columnIndex + 1]?.isSticky === false || columns[columnIndex + 1] === undefined)
     );
 };
 

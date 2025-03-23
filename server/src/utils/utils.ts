@@ -746,6 +746,10 @@ async function decompressSSMResponse(response: string) {
         const result = await inflateRawPromise(buffer);
         return result.toString();
     } catch (err) {
+        if (err instanceof Error && err?.message?.toLowerCase()?.includes('invalid block type')) {
+            logger.error('Trying to decompress response that is not base64 encoded', response);
+            return response;
+        }
         logger.error('Error decompressing SSM response', err);
         throw createError('Error decompressing SSM response');
     }
@@ -860,6 +864,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
             'Creating network interfaces for the EC2 instance in standby subnet',
         'NetworkInterface1(AWS::EC2::NetworkInterface)':
             'Creating network interfaces for the EC2 instance in primary subnet',
+        'NetworkInterface3(AWS::EC2::NetworkInterface)':
+            'Creating network interface for PgPool instance in primary subnet',
         'ValidationNode2(AWS::EC2::Instance)':
             'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
         'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
@@ -885,7 +891,8 @@ function getSubJobDescriptions(dbEngineType: string, stackSqlDeploymentType?: st
         'SqlNode1(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ${
             stackSqlDeploymentType === 'Standalone' ? 'standalone on an' : 'ha on primary'
         } EC2 instance`,
-        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`
+        'SqlNode2(AWS::EC2::Instance)': `Configuring ${dbEngineType} Server ha on replica EC2 instance`,
+        'PgPoolNode(AWS::EC2::Instance)': 'Configuring PgPool instance'
     };
 
     if (dbEngineType === RESOURCESTYPE.PGSQL) {
@@ -930,6 +937,21 @@ function parseMultipleCommandResponse(response: string) {
     const jsonObjects = response.match(/(\{.*?\})(?=\{|\s*$)/g);
 
     return jsonObjects ? jsonObjects.map(obj => JSON.parse(obj)) : [];
+}
+
+function divideArrayIntoChunks(array: any[], chunkSize: number) {
+    const chunksArray = array.reduce((resultArray: any[][], item, index) => {
+        const chunkIndex = Math.floor(index / chunkSize);
+
+        if (!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+        }
+
+        resultArray[chunkIndex].push(item);
+
+        return resultArray;
+    }, []);
+    return chunksArray;
 }
 
 export {
@@ -986,5 +1008,6 @@ export {
     isPgsql,
     isValidEmail,
     isRateLimited,
-    parseMultipleCommandResponse
+    parseMultipleCommandResponse,
+    divideArrayIntoChunks
 };
