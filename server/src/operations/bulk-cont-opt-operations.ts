@@ -267,8 +267,8 @@ async function handleBulkComputeOptimization(
                                             region,
                                             databaseHostId,
                                             sqlServerInstances[0],
-                                            masterOptimizeParentId,
-                                            networkAdapters!
+                                            networkAdapters!,
+                                            masterOptimizeParentId
                                         );
                                         break;
                                     case OptimizeComputeParams.COMPUTE:

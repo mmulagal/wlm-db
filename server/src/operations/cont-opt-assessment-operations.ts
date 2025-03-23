@@ -203,7 +203,8 @@ async function initiateComputeLicenseAssessmentCollection(
                 region,
                 activeNodeInstanceId,
                 resourceName,
-                jobId
+                jobId,
+                metadata as unknown as Metadata
             );
         }
         if (fields?.includes(AssessmentCategories.MAXDOP)) {

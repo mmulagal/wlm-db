@@ -11,7 +11,7 @@ import {
     ASSESSMENT_RESOURCE_TYPE
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import { sqlResponseParsing } from '../../utils/utils';
+import { isDemo, sqlResponseParsing } from '../../utils/utils';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../workloads/mssql/continuous-optimization-scripts';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
@@ -105,7 +105,8 @@ async function managedHostsRssConfigAssessment(
     region: string,
     activeNodeInstanceId: string,
     resourceName: string,
-    parentJobId?: string
+    parentJobId?: string,
+    metadata?: Metadata
 ) {
     logger.info('Managed hosts rss config assessment', {
         accountId,
@@ -130,7 +131,13 @@ async function managedHostsRssConfigAssessment(
     let jobStatus;
     let errorMessage;
     try {
-        rssConfigAssessment = await runRssConfigAssessment(accountId, credentialsId, region, activeNodeInstanceId);
+        rssConfigAssessment = await runRssConfigAssessment(
+            accountId,
+            credentialsId,
+            region,
+            activeNodeInstanceId,
+            metadata
+        );
     } catch (error) {
         errorMessage = `Error while performing rss config assessment. ${error}`;
         logger.error(errorMessage);
@@ -151,7 +158,8 @@ async function runRssConfigAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
-    activeNodeInstanceId: string
+    activeNodeInstanceId: string,
+    metadata?: Metadata
 ) {
     logger.info('Running RSS Config assessment', { accountId, credentialsId, region, activeNodeInstanceId });
     const ssmCommand = GET_RSS_CONFIG_DETAILS();
@@ -214,6 +222,9 @@ async function runRssConfigAssessment(
     }
 
     rssAdapters = rssAdapters.filter(adapter => !adaptersToRemove.includes(adapter.adapterName));
+    if (isDemo()) {
+        rssAdapters = rssAdapters.filter(adapter => !metadata?.isRssConfigOptimized?.includes(adapter.adapterName));
+    }
 
     if (rssAdapters.length > 0 || tcpOffloadState !== 'Disabled') {
         rssConfigOptimizedStatus = AssessmentStatus.NOT_OPTIMIZED;

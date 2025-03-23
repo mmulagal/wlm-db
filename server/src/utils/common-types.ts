@@ -121,6 +121,7 @@ interface Metadata {
     isComputeOptimized?: boolean;
     isLicenseOptimized?: boolean;
     isHostOsPatchOptimized?: boolean;
+    isRssConfigOptimized?: string[];
     assessment?: ResourceAssessmentData;
 }
 interface databaseInstanceMetadata {

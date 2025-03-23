@@ -1,11 +1,11 @@
 import { isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { listResources } from '../../lib/database/db';
+import { listResources, updateResourceMetaData } from '../../lib/database/db';
 import getLogger from '../../utils/logger';
 import { Metadata, RssConfigAssesment } from '../../utils/common-types';
 import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
 import { OPTIMIZATION_CATEGORIES } from '../../utils/continous-optimization-consts';
-import { getServerNameWithHostname, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
+import { getServerNameWithHostname, isDemo, retryWithDelay, sqlResponseParsing } from '../../utils/utils';
 import { callSsmExecution, getSSMConnectionStatus } from '../aws/ssm-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { OPTIMIZE_NETWORK_ADAPTERS } from '../workloads/mssql/continuous-optimization-scripts';
@@ -20,6 +20,7 @@ import {
 } from './compute-optimize-operations';
 import { startInstance, waitForInstanceOk } from '../../lib/aws/ec2';
 import { AuditStatus } from '../../utils/consts';
+import { managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
 
 const logger = getLogger();
 async function optimizeNetworkAdapters(
@@ -70,8 +71,8 @@ async function handleOptimizeRssOptimization(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    parentJobId: string,
-    networkAdapters: string[]
+    networkAdapters: string[],
+    parentJobId?: string | undefined
 ) {
     // create a parent job for network adapter optimization
     logger.info('optimizing RSS config for:', { databaseHostId, databaseInstanceId, credentialsId, region });
@@ -113,6 +114,17 @@ async function handleOptimizeRssOptimization(
             const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
             formattedInstanceName = getServerNameWithHostname(resourceName!, instanceDetail?.database_instance_name);
             await updateLongRunningAuditGroup(undefined, undefined, formattedInstanceName);
+            if (!parentJobId) {
+                parentJobId = await handleOptimizeJobCreation(
+                    accountId,
+                    credentialsId,
+                    region,
+                    accountId,
+                    JOBTYPE.OPTIMIZATION,
+                    `Optimize network adapters for ${formattedInstanceName}`,
+                    `Optimize network adapters for ${formattedInstanceName}`
+                );
+            }
             if (node2InstanceId) {
                 const connectionStatus = await getSSMConnectionStatus(credentialsId, region, node2InstanceId);
                 if (!connectionStatus) {
@@ -285,12 +297,40 @@ async function handleOptimizeRssOptimization(
                     }
                 }
             }
+            if (isDemo()) {
+                const resourceMeta = metadata as unknown as Metadata;
+                let optimizedAdapters = resourceMeta?.isRssConfigOptimized;
+                optimizedAdapters = isEmpty(optimizedAdapters)
+                    ? networkAdapters
+                    : optimizedAdapters?.concat(networkAdapters);
+                resourceMeta.isRssConfigOptimized = optimizedAdapters;
+                updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
+            }
+            // Trigger assessment after optimize
+            managedHostsRssConfigAssessment(
+                accountId,
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                resourceName!,
+                parentJobId,
+                metadata as unknown as Metadata
+            );
         }
     } catch (error) {
         errorMessage = (error as Error).message;
         logger.error(errorMessage);
         if (shouldRollbackClusterOwnership) {
             // rollback cluster ownership transfer back to original node
+            const rollbackJobId = await handleOptimizeJobCreation(
+                accountId,
+                credentialsId,
+                region,
+                formattedInstanceName,
+                JOBTYPE.OPTIMIZATION,
+                'Rollback cluster ownership transfer to primary node',
+                'Rollback cluster ownership transfer to primary node'
+            );
             handleRollbackClusterOwnership(
                 accountId,
                 credentialsId,
@@ -298,7 +338,7 @@ async function handleOptimizeRssOptimization(
                 formattedInstanceName,
                 ownerNode,
                 activeNodeInstanceId,
-                parentJobId
+                rollbackJobId
             );
         }
     } finally {
@@ -307,12 +347,15 @@ async function handleOptimizeRssOptimization(
             errorMessage,
             formattedInstanceName
         );
-        updateJobDetails(accountId, parentJobId, {
-            status: isAnySubjobFailed ? JOBSTATUS.FAILED : JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
+        if (parentJobId) {
+            updateJobDetails(accountId, parentJobId, {
+                status: isAnySubjobFailed ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED,
+                endTime: Date.now(),
+                error: errorMessage
+            });
+        }
     }
+    return parentJobId;
 }
 
 export { handleOptimizeRssOptimization };
