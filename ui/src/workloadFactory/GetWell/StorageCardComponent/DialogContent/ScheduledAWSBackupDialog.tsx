@@ -96,7 +96,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                     <div className={styles.row} style={{ display: 'flex', alignItems: 'center' }}>
                         <div>
                             <SelectField
-                                label={'Hours'}
+                                label={'Hour'}
                                 isClearable={false}
                                 defaultValue={
                                     selectedAWSBackup?.hour
@@ -128,7 +128,7 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                         <span>:</span>
                         <div>
                             <SelectField
-                                label={'Minutes'}
+                                label={'Minute'}
                                 isClearable={false}
                                 defaultValue={
                                     selectedAWSBackup?.minute
