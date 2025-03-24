@@ -74,6 +74,8 @@ import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
 const InstancesTable = () => {
     const disptach = useDispatch();
@@ -645,9 +647,27 @@ const InstancesTable = () => {
                 return (
                     <>
                         {cellData && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </DsTypography>
+                            <div className={styles.colTextProtection}>
+                                <div className={styles.protection}>
+                                    {cellData === 'Protected' && (
+                                        <ProtectedIcon
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--green-60)'
+                                            }}
+                                        />
+                                    )}
+                                    {cellData === 'Not Protected' && (
+                                        <NotProtectedIcon
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--grey-45)'
+                                            }}
+                                        />
+                                    )}
+                                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                </div>
+                            </div>
                         )}
                         {!cellData && loading && <DsFlashingDotsLoader />}
                         {!cellData && !loading && (
@@ -1080,7 +1100,7 @@ const InstancesTable = () => {
                         tableProps={tableProps}
                         pluralTitle="Instances"
                         singularTitle="Instance"
-                        exportToCsvOptions={{ fileName: 'instanceTable.csv' }}
+                        exportToCsvOptions={{ fileName: `instanceTable-${Date.now()}.csv` }}
                         subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     />
                     {selectedRowsForManage.length > 0 && (
