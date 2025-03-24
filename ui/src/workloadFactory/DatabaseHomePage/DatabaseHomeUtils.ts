@@ -396,7 +396,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 );
                 const isAllStorageSizingPresent =
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
-                    instanceAssessmentData.storage.sizing.every((item: any) => {
+                    instanceAssessmentData?.storage.sizing.every((item: any) => {
                         return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
                             item?.name
                         );
@@ -404,7 +404,7 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
                     return isOptimized(item?.status);
                 });
-                const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
+                const isStorageConfigOptimized = Object.values(instanceAssessmentData?.storage?.configuration).every(
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
                 if (
@@ -456,12 +456,12 @@ export const getAssessmentGroupedByCategory = (assessmentData: any) => {
                 });
                 const isAllStorageSizingPresent =
                     instanceAssessmentData?.storage?.sizing?.length === 4 &&
-                    instanceAssessmentData.storage.sizing.every((item: any) => {
+                    instanceAssessmentData?.storage.sizing.every((item: any) => {
                         return ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(
                             item?.name
                         );
                     });
-                const isStorageConfigOptimized = Object.values(instanceAssessmentData.storage?.configuration).every(
+                const isStorageConfigOptimized = Object.values(instanceAssessmentData?.storage?.configuration).every(
                     (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
                 );
                 const isApplicationOptimized = isOptimized(instanceAssessmentData?.license?.status);
