@@ -404,9 +404,13 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                 const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
                     return isOptimized(item?.status);
                 });
-                const isStorageConfigOptimized = Object.values(instanceAssessmentData?.storage?.configuration).every(
-                    (item: any) => item?.every((subItem: any) => isOptimized(subItem?.status))
-                );
+                const isStorageConfigOptimized =
+                    instanceAssessmentData &&
+                    instanceAssessmentData?.storage &&
+                    instanceAssessmentData?.storage?.configuration &&
+                    Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
+                        item?.every((subItem: any) => isOptimized(subItem?.status))
+                    );
                 if (
                     isComputeOptimized &&
                     isRssConfigOptimized &&
